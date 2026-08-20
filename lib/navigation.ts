@@ -19,7 +19,6 @@ export interface NavItem {
   href: string;
   label: string;
   roles: Role[];
-  badge?: number;
   /** Näkyy valikossa mutta ei ole vielä toteutettu (§74). */
   comingSoon?: boolean;
 }
@@ -39,21 +38,21 @@ const FIRM: Role[] = ["accountant", "firm_admin", "firm_staff", "super_admin"];
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Yleiskuva", roles: ALL },
   { href: "/inbox", label: "Saapuneet", roles: ALL },
-  { href: "/documents", label: "Dokumentit", roles: ALL, comingSoon: true },
-  { href: "/transactions", label: "Tapahtumat", roles: ALL, comingSoon: true },
-  { href: "/vat", label: "ALV", roles: ALL, comingSoon: true },
+  { href: "/documents", label: "Dokumentit", roles: ALL },
+  { href: "/transactions", label: "Tapahtumat", roles: ALL },
+  { href: "/vat", label: "ALV", roles: ALL },
   { href: "/review", label: "Tarkistus", roles: ALL },
-  { href: "/trips", label: "Matkat", roles: ALL, comingSoon: true },
+  { href: "/trips", label: "Matkat", roles: ALL },
   { href: "/exports", label: "Viennit", roles: ALL },
-  { href: "/clients", label: "Asiakkaat", roles: FIRM, comingSoon: true },
-  { href: "/reports", label: "Raportit", roles: ALL, comingSoon: true },
-  { href: "/rules", label: "Säännöt", roles: ["super_admin", "firm_admin", "accountant"], comingSoon: true },
-  { href: "/audit", label: "Audit trail", roles: ALL, comingSoon: true },
-  { href: "/settings", label: "Asetukset", roles: ALL, comingSoon: true },
+  { href: "/clients", label: "Asiakkaat", roles: FIRM },
+  { href: "/reports", label: "Raportit", roles: ALL },
+  { href: "/rules", label: "Säännöt", roles: ["super_admin", "firm_admin", "accountant"] },
+  { href: "/audit", label: "Audit trail", roles: ALL },
+  { href: "/settings", label: "Asetukset", roles: ALL },
 ];
 
 export function navigationFor(role: Role): NavItem[] {
-  // Työntekijä näkee vain oman kuittivirtansa.
+  // Työntekijä näkee vain oman kuittivirtansa ja matkansa.
   if (role === "employee") {
     return NAV.filter((i) => ["/dashboard", "/inbox", "/trips"].includes(i.href));
   }

@@ -20,7 +20,7 @@ jotka näyttävät toimivilta mutta eivät tee mitään.
 
 **Toimii**
 
-- Deterministinen, versioitu verosääntömoottori (`lib/tax/`) — 82 testiä
+- Deterministinen, versioitu verosääntömoottori (`lib/tax/`) — 97 testiä
 - Rivikohtainen ALV: yksi dokumentti, monta käsittelyä
 - Rahalaskenta kokonaislukuina, ei liukulukuja
 - Kirjautuminen, rekisteröityminen, uloskirjautuminen (Supabase Auth)
@@ -32,7 +32,11 @@ jotka näyttävät toimivilta mutta eivät tee mitään.
 - Tarkistusjono, jossa jokainen merkintä kertoo täsmällisen syyn
 - Vientinäkymä ja CSV-lataus, estetyt dokumentit syineen näkyvissä
 - Palvelurajapinnat mock-toteutuksin: OCR, VIES, vienti, käyttöoikeudet
-- Laskeutumissivu, yleiskuva, saapuneet, dokumenttinäkymä
+- Matkat: vapaan tekstin jäsennys ja versioidut kilometri-/päivärahasäännöt
+- Kaikki 13 sivupalkin näkymää: yleiskuva, saapuneet, dokumentit, tapahtumat,
+  ALV, tarkistus, matkat, viennit, asiakkaat, raportit, säännöt, audit trail,
+  asetukset
+- Laskeutumissivu
 
 **Vaatii migraatioiden ajon**
 
@@ -43,9 +47,9 @@ kantaa vasten.
 
 **Ei vielä toteutettu**
 
-Timo, matkat, tilitoimistoportaali, admin, raportit, Stripe-laskutus,
-sähköpostivastaanotto, taustajono ja dokumentin hyväksyntä/uudelleenajo.
-Näille on skeema ja rajapinnat. Sivupalkissa ne lukevat **pian**.
+Timo (keskusteleva käyttöliittymä), Stripe-laskutus, sähköpostivastaanotto,
+taustakäsittelyn jono, admin-paneeli, kirjanpitointegraatiot ja asiakkaiden
+kutsuminen. Näille on skeema ja rajapinnat kannassa.
 
 ---
 

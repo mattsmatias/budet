@@ -145,9 +145,20 @@ export default async function DashboardPage() {
                 </Link>
               </li>
               <li>
-                <span className="block cursor-not-allowed rounded-md border border-dashed border-line px-3 py-2 text-sm text-muted">
-                  Luo matka · pian
-                </span>
+                <Link
+                  href="/trips"
+                  className="block rounded-md border border-line px-3 py-2 text-sm hover:border-navy-300"
+                >
+                  Kirjaa matka
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/exports"
+                  className="block rounded-md border border-line px-3 py-2 text-sm hover:border-navy-300"
+                >
+                  Vie kirjanpitoon
+                </Link>
               </li>
             </ul>
           </Panel>
