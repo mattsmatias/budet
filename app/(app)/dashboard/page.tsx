@@ -1,27 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DEMO_DOCUMENTS, demoMetrics } from "@/lib/demo/data";
+import { getAppMode } from "@/lib/auth";
+import { demoDocuments, listDocuments, type DocumentView } from "@/lib/data/documents";
 import { formatMoney } from "@/lib/money";
-import { MetricCard, Notice, Panel, StatusBadge } from "@/components/ui";
+import { EmptyState, MetricCard, Panel, StatusBadge } from "@/components/ui";
+import { DataProblem, ModeNotice } from "@/components/mode-notice";
 
 export const metadata: Metadata = { title: "Yleiskuva" };
 
-const QUICK_ACTIONS = [
-  { label: "Lataa kuitti", href: "/inbox" },
-  { label: "Lataa lasku", href: "/inbox" },
-  { label: "Tarkista merkityt", href: "/inbox?suodatin=tarkistettava" },
-];
+export default async function DashboardPage() {
+  const mode = await getAppMode();
+  const result =
+    mode.kind === "live" ? await listDocuments(mode.org.id) : demoDocuments();
 
-export default function DashboardPage() {
-  const m = demoMetrics();
-  const recent = DEMO_DOCUMENTS.slice(0, 4);
+  const docs = result.ok ? result.data : [];
+  const m = summarise(docs);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">Yleiskuva</h1>
-          <p className="mt-1 text-sm text-muted">Kesäkuu 2026 · demo-aineisto</p>
+          <p className="mt-1 text-sm text-muted">
+            {mode.kind === "live" ? mode.org.name : "Demo-aineisto"}
+          </p>
         </div>
         <Link
           href="/inbox"
@@ -31,10 +33,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <Notice tone="info" title="Tämä on demo-aineisto">
-        Luvut on laskettu oikealla sääntömoottorilla demo-tasoisilla säännöillä.
-        Ne havainnollistavat toimintaa eivätkä ole oikeudellinen kannanotto.
-      </Notice>
+      <ModeNotice mode={mode} />
+      <DataProblem result={result} />
 
       <section aria-label="Tunnusluvut" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Vastaanotettu" value={String(m.received)} />
@@ -53,11 +53,7 @@ export default function DashboardPage() {
           value={formatMoney(m.nonDeductibleCents)}
           hint="Sisältää ratkaisemattomat"
         />
-        <MetricCard
-          label="Rajat ylittävät"
-          value={String(m.crossBorder)}
-          hint={`${m.viesChecks} VIES-tarkistusta`}
-        />
+        <MetricCard label="Rajat ylittävät" value={String(m.crossBorder)} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -70,53 +66,71 @@ export default function DashboardPage() {
               </Link>
             }
           >
-            <ul className="divide-y divide-line">
-              {recent.map((doc) => (
-                <li key={doc.id}>
+            {docs.length === 0 ? (
+              <EmptyState
+                title="Ei vielä dokumentteja"
+                description="Lähetä ensimmäinen kuitti, niin näet rivikohtaisen ALV:n, sääntötunnuksen ja perustelun alle minuutissa."
+                action={
                   <Link
-                    href={`/documents/${doc.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 hover:bg-surface"
+                    href="/inbox"
+                    className="rounded-md bg-gold-400 px-4 py-2 text-sm font-semibold text-navy-900"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{doc.supplier}</p>
-                      <p className="text-xs text-muted">
-                        {doc.documentNumber} · {doc.date} · {doc.country}
-                        {doc.classification.treatmentCount > 1
-                          ? ` · ${doc.classification.treatmentCount} ALV-käsittelyä`
-                          : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm tabular">
-                        {formatMoney(doc.classification.totalVatCents)}
-                      </span>
-                      <StatusBadge status={doc.status} />
-                    </div>
+                    Lähetä dokumentti
                   </Link>
-                </li>
-              ))}
-            </ul>
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-line">
+                {docs.slice(0, 5).map((doc) => (
+                  <li key={doc.id}>
+                    <Link
+                      href={`/documents/${doc.id}`}
+                      className="flex flex-wrap items-center justify-between gap-3 py-3 hover:bg-surface"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{doc.supplier}</p>
+                        <p className="text-xs text-muted">
+                          {doc.documentNumber} · {doc.date} · {doc.country}
+                          {doc.classification.treatmentCount > 1
+                            ? ` · ${doc.classification.treatmentCount} ALV-käsittelyä`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm tabular">
+                          {formatMoney(doc.classification.totalVatCents)}
+                        </span>
+                        <StatusBadge status={doc.status} />
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Panel>
         </div>
 
         <div className="space-y-6">
           <Panel title="Pikatoiminnot">
             <ul className="space-y-2">
-              {QUICK_ACTIONS.map((a) => (
-                <li key={a.label}>
-                  <Link
-                    href={a.href}
-                    className="block rounded-md border border-line px-3 py-2 text-sm hover:border-navy-300"
-                  >
-                    {a.label}
-                  </Link>
-                </li>
-              ))}
               <li>
-                <span
-                  className="block cursor-not-allowed rounded-md border border-dashed border-line px-3 py-2 text-sm text-muted"
-                  title="Ei vielä toteutettu"
+                <Link
+                  href="/inbox"
+                  className="block rounded-md border border-line px-3 py-2 text-sm hover:border-navy-300"
                 >
+                  Lähetä kuitti tai lasku
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/inbox?suodatin=tarkistettava"
+                  className="block rounded-md border border-line px-3 py-2 text-sm hover:border-navy-300"
+                >
+                  Tarkista merkityt
+                </Link>
+              </li>
+              <li>
+                <span className="block cursor-not-allowed rounded-md border border-dashed border-line px-3 py-2 text-sm text-muted">
                   Luo matka · pian
                 </span>
               </li>
@@ -126,11 +140,34 @@ export default function DashboardPage() {
           <Panel title="Määräajat">
             <div className="text-sm">
               <p className="font-medium">ALV-ilmoitus</p>
-              <p className="text-muted">12.7.2026 · 28 päivää</p>
+              <p className="text-muted">12.7.2026</p>
             </div>
           </Panel>
         </div>
       </div>
     </div>
   );
+}
+
+function summarise(docs: DocumentView[]) {
+  const vatCents = docs.reduce((s, d) => s + d.classification.totalVatCents, 0);
+  const deductibleCents = docs.reduce(
+    (s, d) =>
+      s +
+      d.classification.lines
+        .filter((l) => l.decision.deductible === true)
+        .reduce((t, l) => t + (l.decision.vatAmountCents ?? 0), 0),
+    0,
+  );
+
+  return {
+    received: docs.length,
+    processed: docs.filter((d) => !["received", "processing"].includes(d.status)).length,
+    needsReview: docs.filter((d) => d.status === "needs_review").length,
+    approved: docs.filter((d) => d.status === "approved").length,
+    vatCents,
+    deductibleCents,
+    nonDeductibleCents: vatCents - deductibleCents,
+    crossBorder: docs.filter((d) => d.crossBorder).length,
+  };
 }

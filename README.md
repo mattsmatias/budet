@@ -14,29 +14,35 @@ Live: https://budet-app.vercel.app
 
 ## Tilanne
 
-Tämä on rakenteilla oleva tuote. Alla oleva jako kertoo mikä on toteutettu ja
-mikä on arkkitehtuuria odottamassa kytkentää — ei ole olemassa painikkeita
+Rakenteilla oleva tuote. Alla oleva jako kertoo mikä toimii ja mikä on
+arkkitehtuuria odottamassa kytkentää — käyttöliittymässä ei ole painikkeita
 jotka näyttävät toimivilta mutta eivät tee mitään.
 
-**Toteutettu ja testattu**
+**Toimii**
 
 - Deterministinen, versioitu verosääntömoottori (`lib/tax/`) — 82 testiä
 - Rivikohtainen ALV: yksi dokumentti, monta käsittelyä
 - Rahalaskenta kokonaislukuina, ei liukulukuja
-- Tietokantaskeema ja RLS-politiikat (`supabase/migrations/`)
+- Kirjautuminen, rekisteröityminen, uloskirjautuminen (Supabase Auth)
+- Organisaation perustus ja organisaation vaihto
+- Dokumentin lataus: tiiviste, duplikaattisuoja, tallennus, poiminta,
+  luokittelu, päätösten kirjaus, audit-tapahtumat, käyttörajan valvonta
 - Palvelurajapinnat mock-toteutuksin: OCR, VIES, vienti, käyttöoikeudet
 - Viennin estologiikka täsmällisine syineen
 - Laskeutumissivu, yleiskuva, saapuneet, dokumenttinäkymä
 
-**Arkkitehtuuri valmiina, kytkentä auki**
+**Vaatii migraatioiden ajon**
 
-- Autentikointi ja istunnot (skeema ja politiikat valmiina)
-- Tiedostojen lataus ja tallennus
-- Taustakäsittelyn jono (`processing_jobs`)
-- Stripe-laskutus (`plans`, `plan_entitlements`, `subscriptions`)
-- Timo, matkat, tilitoimistoportaali, admin, raportit
+Skeema, RLS-politiikat ja tallennuskorit ovat tiedostoina hakemistossa
+`supabase/migrations/`. Ennen ajoa sovellus toimii demo-tilassa ja kertoo
+sen käyttäjälle. Ajon jälkeen kirjautuminen ja lataus toimivat oikeaa
+kantaa vasten.
 
-Sivupalkin kohdat joiden vieressä lukee **pian** eivät ole toiminnassa.
+**Ei vielä toteutettu**
+
+Timo, matkat, tilitoimistoportaali, admin, raportit, Stripe-laskutus,
+sähköpostivastaanotto, taustajono ja dokumentin hyväksyntä/uudelleenajo.
+Näille on skeema ja rajapinnat. Sivupalkissa ne lukevat **pian**.
 
 ---
 
@@ -63,8 +69,12 @@ ilman tietokantayhteyttä.
 
 ### Migraatiot
 
-Migraatiot ajetaan järjestyksessä `supabase/migrations/`-hakemistosta joko
-Supabasen SQL Editorissa tai CLI:llä:
+**Helpoin tapa:** avaa `supabase/migrations/ALL_IN_ONE.sql`, kopioi koko
+sisältö Supabasen SQL Editoriin ja paina Run. Tiedosto on koottu alla
+olevista ja käärittynä transaktioon, joten se joko menee kokonaan läpi tai
+ei muuta mitään. Aja vain kerran tyhjään projektiin.
+
+Vaihtoehtoisesti CLI:llä:
 
 ```bash
 supabase db push
@@ -78,6 +88,11 @@ supabase db push
 | `0004_billing.sql` | Suunnitelmat, rajat, tilaukset, integraatiot, jono |
 | `0005_rls.sql` | Row Level Security -politiikat |
 | `0006_seed_reference.sql` | Jurisdiktiot, ALV-koodit, hinnasto, demo-säännöt |
+| `0007_auth_storage.sql` | Profiilin luonti, organisaation perustus, tallennuskorit |
+
+Migraatioiden jälkeen: Supabase → Authentication → Providers → Email.
+Sähköpostivahvistuksen voi kehityksessä ottaa pois päältä, jolloin
+rekisteröityminen kirjaa suoraan sisään.
 
 ---
 

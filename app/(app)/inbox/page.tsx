@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DEMO_DOCUMENTS } from "@/lib/demo/data";
+import { getAppMode } from "@/lib/auth";
+import { demoDocuments, listDocuments, type DocumentView } from "@/lib/data/documents";
 import { formatMoney } from "@/lib/money";
-import { ConfidenceBadge, EmptyState, Notice, StatusBadge, VatBadge } from "@/components/ui";
+import { ConfidenceBadge, EmptyState, StatusBadge, VatBadge } from "@/components/ui";
+import { DataProblem, ModeNotice } from "@/components/mode-notice";
+import { UploadDropzone } from "./upload";
 
 export const metadata: Metadata = { title: "Saapuneet" };
 
@@ -17,7 +20,7 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]["key"];
 
-function applyFilter(docs: typeof DEMO_DOCUMENTS, filter: FilterKey) {
+function applyFilter(docs: DocumentView[], filter: FilterKey): DocumentView[] {
   switch (filter) {
     case "tarkistettava":
       return docs.filter((d) => d.status === "needs_review");
@@ -40,22 +43,27 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
   const params = await searchParams;
   const raw = typeof params.suodatin === "string" ? params.suodatin : "kaikki";
   const filter = (FILTERS.find((f) => f.key === raw)?.key ?? "kaikki") as FilterKey;
-  const docs = applyFilter(DEMO_DOCUMENTS, filter);
+
+  const mode = await getAppMode();
+  const result =
+    mode.kind === "live" ? await listDocuments(mode.org.id) : demoDocuments();
+
+  const all = result.ok ? result.data : [];
+  const docs = applyFilter(all, filter);
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold">Saapuneet</h1>
         <p className="mt-1 text-sm text-muted">
-          {docs.length} / {DEMO_DOCUMENTS.length} dokumenttia
+          {docs.length} / {all.length} dokumenttia
         </p>
       </div>
 
-      <Notice tone="info" title="Lataus ei ole vielä kytketty">
-        Tallennus ja taustakäsittely on määritelty tietokantaan ja
-        palvelurajapintoihin, mutta selaimesta lataaminen ei ole vielä
-        toiminnassa. Alla oleva aineisto on demoa.
-      </Notice>
+      <ModeNotice mode={mode} />
+      <DataProblem result={result} />
+
+      <UploadDropzone enabled={mode.kind === "live"} />
 
       <nav aria-label="Suodattimet" className="flex flex-wrap gap-2">
         {FILTERS.map((f) => {
@@ -80,12 +88,18 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
 
       {docs.length === 0 ? (
         <EmptyState
-          title="Ei dokumentteja tällä suodattimella"
-          description="Kokeile toista suodatinta tai poista rajaus."
+          title={all.length === 0 ? "Ei vielä dokumentteja" : "Ei osumia tällä suodattimella"}
+          description={
+            all.length === 0
+              ? "Lähetä ensimmäinen kuitti yllä olevalla lomakkeella."
+              : "Kokeile toista suodatinta tai poista rajaus."
+          }
           action={
-            <Link href="/inbox" className="text-sm text-navy-600 underline underline-offset-4">
-              Näytä kaikki
-            </Link>
+            all.length > 0 ? (
+              <Link href="/inbox" className="text-sm text-navy-600 underline underline-offset-4">
+                Näytä kaikki
+              </Link>
+            ) : undefined
           }
         />
       ) : (
@@ -105,11 +119,12 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
             </thead>
             <tbody className="divide-y divide-line">
               {docs.map((doc) => {
-                const first = doc.classification.lines[0]?.decision;
-                const worst = doc.classification.lines.reduce(
+                const lines = doc.classification.lines;
+                const first = lines[0]?.decision;
+                const worst = lines.reduce(
                   (acc, l) =>
                     l.decision.confidenceScore < acc.confidenceScore ? l.decision : acc,
-                  doc.classification.lines[0].decision,
+                  lines[0]?.decision,
                 );
                 return (
                   <tr key={doc.id} className="hover:bg-surface">
@@ -141,7 +156,7 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <ConfidenceBadge band={worst.confidence} />
+                      {worst ? <ConfidenceBadge band={worst.confidence} /> : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={doc.status} />

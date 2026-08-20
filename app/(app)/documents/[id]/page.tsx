@@ -9,7 +9,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DEMO_DOCUMENTS, getDemoDocument } from "@/lib/demo/data";
+import { getAppMode } from "@/lib/auth";
+import { demoDocument, fetchDocument } from "@/lib/data/documents";
 import { formatMoney, formatRate } from "@/lib/money";
 import { ENGINE_VERSION, reviewReasonLabel } from "@/lib/tax/engine";
 import {
@@ -22,21 +23,17 @@ import {
   VatBadge,
 } from "@/components/ui";
 
-export function generateStaticParams() {
-  return DEMO_DOCUMENTS.map((d) => ({ id: d.id }));
-}
-
 export async function generateMetadata({
   params,
 }: PageProps<"/documents/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const doc = getDemoDocument(id);
-  return { title: doc ? doc.supplier : "Dokumentti" };
+  const { doc } = await load(id);
+  return { title: doc?.supplier ?? "Dokumentti" };
 }
 
 export default async function DocumentPage({ params }: PageProps<"/documents/[id]">) {
   const { id } = await params;
-  const doc = getDemoDocument(id);
+  const { doc, isDemo } = await load(id);
   if (!doc) notFound();
 
   const { classification } = doc;
@@ -58,7 +55,7 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold">{doc.supplier}</h1>
             <StatusBadge status={doc.status} />
-            <DemoBadge>Demo-aineisto</DemoBadge>
+            {isDemo ? <DemoBadge>Demo-aineisto</DemoBadge> : null}
           </div>
           <p className="mt-1 text-sm text-muted">
             {doc.documentNumber} · {doc.date} · {doc.country}
@@ -339,4 +336,18 @@ function deductibleLabel(value: boolean | undefined): string {
   if (value === true) return "Kyllä";
   if (value === false) return "Ei";
   return "Ratkaisematta";
+}
+
+/**
+ * Hakee dokumentin oikeasta lähteestä: kannasta kirjautuneena, muuten
+ * demo-aineistosta. Sivu ei tiedä kummasta se tuli.
+ */
+async function load(id: string) {
+  const mode = await getAppMode();
+  const result =
+    mode.kind === "live" ? await fetchDocument(mode.org.id, id) : demoDocument(id);
+  return {
+    doc: result.ok ? result.data : null,
+    isDemo: mode.kind !== "live",
+  };
 }
