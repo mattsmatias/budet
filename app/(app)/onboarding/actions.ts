@@ -56,13 +56,9 @@ export async function createOrganization(
   });
 
   if (error || !data) {
-    if (error?.message?.includes("create_organization")) {
-      return {
-        error:
-          "Tietokannan rakenteet puuttuvat. Aja migraatiot supabase/migrations-hakemistosta ennen kuin jatkat.",
-      };
-    }
-    return { error: "Organisaation luonti ei onnistunut. Yritä uudelleen." };
+    // Yleinen "yritä uudelleen" piilottaisi syyn, jolloin käyttäjä ei voi
+    // tehdä mitään. Kerrotaan mitä oikeasti tapahtui (§73).
+    return { error: explainRpcError(error) };
   }
 
   const cookieStore = await cookies();
@@ -76,4 +72,49 @@ export async function createOrganization(
 
   revalidatePath("/", "layout");
   redirect("/dashboard");
+}
+
+/**
+ * Kääntää tietokannan virheen ihmisluettavaksi ja toimintakelpoiseksi.
+ *
+ * Jokainen haara kertoo mitä tehdä. Tuntematon virhe näytetään sellaisenaan
+ * — vaikeaselkoinen viesti on silti parempi kuin "yritä uudelleen", koska
+ * sen voi kopioida tukeen.
+ */
+function explainRpcError(error: { code?: string; message?: string; details?: string } | null): string {
+  const message = error?.message ?? "";
+  const code = error?.code ?? "";
+
+  if (code === "PGRST202" || message.includes("schema cache")) {
+    return (
+      "Tietokannan rakenteet puuttuvat. Aja migraatiot " +
+      "supabase/migrations-hakemistosta ennen kuin jatkat."
+    );
+  }
+
+  // Viiteavainvirhe profiles-tauluun: tunnus on luotu ennen kuin profiilit
+  // otettiin käyttöön. Migraatio 0008 täydentää puuttuvat profiilit.
+  if (code === "23503" || message.includes("foreign key") || message.includes("profiles")) {
+    return (
+      "Käyttäjäprofiiliasi ei löydy tietokannasta. Tämä koskee tunnuksia " +
+      "jotka on luotu ennen migraatioita. Aja migraatio 0008_profile_backfill.sql, " +
+      "niin profiili täydentyy ja voit jatkaa."
+    );
+  }
+
+  if (code === "23505" || message.includes("duplicate key")) {
+    return "Samanniminen organisaatio on jo olemassa.";
+  }
+
+  if (message.includes("Kirjautuminen vaaditaan")) {
+    return "Istunto on vanhentunut. Kirjaudu uudelleen sisään.";
+  }
+
+  if (code === "42501" || message.includes("permission denied")) {
+    return "Sinulla ei ole oikeutta luoda organisaatiota.";
+  }
+
+  return message
+    ? `Organisaation luonti epäonnistui: ${message}`
+    : "Organisaation luonti epäonnistui tuntemattomasta syystä.";
 }
