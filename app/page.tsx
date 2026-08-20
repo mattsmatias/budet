@@ -343,32 +343,28 @@ const DOORS = [
     headline: "Päiväraportit jakavat itsensä.",
     scenario:
       "Päiväraportilla ruoka on alennetulla kannalla ja olut yleisellä. Ilman rivikohtaista käsittelyä jako tehdään käsin joka kuukausi.",
-    href: "#alv",
-    hrefLabel: "Katso miten jako toimii",
+    href: "/kenelle/ravintoloille",
   },
   {
     audience: "Kirjanpitäjille",
     headline: "Kaikki asiakkaat yhdessä näkymässä.",
     scenario:
       "Näet kenen aineisto puuttuu, mikä odottaa tarkistusta ja mikä on valmis toimitettavaksi — ilman että jokaista asiakasta pitää avata erikseen.",
-    href: "/clients",
-    hrefLabel: "Asiakasnäkymä",
+    href: "/kenelle/kirjanpitajille",
   },
   {
     audience: "Kevytyrittäjille",
     headline: "Neljännesvuoden ALV ilman iltatöitä.",
     scenario:
       "Kuitit sisään pitkin kautta, ALV-erittely koodeittain ulos. Rivit jotka eivät ratkea päätyvät jonoon perusteltuna, eivät hiljaa väärään koodiin.",
-    href: "/vat",
-    hrefLabel: "ALV-erittely",
+    href: "/kenelle/kevytyrittajille",
   },
   {
-    audience: "Ulkomaalaistaustaisille perustajille",
+    audience: "Kansainvälisille perustajille",
     headline: "Suomen verokohtelu perusteltuna.",
     scenario:
       "Jokainen päätös kertoo minkä säännön nojalla se tehtiin ja mitä faktoja käytettiin. Ei tarvitse luottaa siihen että kone tietää — voit tarkistaa.",
-    href: "/rules",
-    hrefLabel: "Sääntöselain",
+    href: "/kenelle/perustajille",
     note: "Käyttöliittymä on toistaiseksi vain suomeksi.",
   },
 ];
@@ -398,7 +394,7 @@ function FourDoors() {
                 href={door.href}
                 className="mt-4 inline-block text-sm font-medium text-navy-700 underline underline-offset-4"
               >
-                {door.hrefLabel}
+                Lue lisää →
               </Link>
             </div>
           ))}
