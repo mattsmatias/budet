@@ -2,7 +2,8 @@
  * Kertoo käyttäjälle mitä dataa hän katsoo ja miksi.
  *
  * Demo-aineistoa ei saa esittää oikeana (§47, §74), eikä puuttuvaa
- * tietokantaa saa piilottaa tyhjänä listana.
+ * tietokantaa saa piilottaa tyhjänä listana. Kirjautuneelle käyttäjälle
+ * ei koskaan näytetä demolukuja.
  */
 
 import Link from "next/link";
@@ -12,6 +13,26 @@ import type { DataResult } from "@/lib/data/documents";
 
 export function ModeNotice({ mode }: { mode: AppMode }) {
   if (mode.kind === "live") return null;
+
+  if (mode.kind === "setup-required") {
+    return (
+      <Notice tone="warn" title="Tietokannan rakenteet puuttuvat">
+        <p>
+          Olet kirjautunut, mutta tauluja ei ole vielä luotu. Aja migraatiot
+          ennen kuin jatkat — organisaatiota ei voi luoda eikä dokumentteja
+          lähettää ennen sitä.
+        </p>
+        <ol className="mt-2 list-inside list-decimal space-y-1">
+          <li>
+            Avaa <code>supabase/migrations/ALL_IN_ONE.sql</code> ja kopioi koko
+            sisältö.
+          </li>
+          <li>Liitä se Supabasen SQL Editoriin ja paina Run.</li>
+          <li>Lataa tämä sivu uudelleen.</li>
+        </ol>
+      </Notice>
+    );
+  }
 
   if (mode.kind === "no-org") {
     return (

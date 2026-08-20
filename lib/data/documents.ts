@@ -178,3 +178,12 @@ function toView(row: DbDocument): DocumentView {
     classification,
   };
 }
+
+/**
+ * Tyhjä tulos kirjautuneelle käyttäjälle jolla ei ole organisaatiota tai
+ * jonka kannassa ei ole rakenteita. Demo-aineistoa ei näytetä, koska
+ * kirjautunut käyttäjä voisi luulla lukuja omikseen.
+ */
+export function emptyDocuments(): DataResult<DocumentView[]> {
+  return { ok: true, data: [], source: "live" };
+}

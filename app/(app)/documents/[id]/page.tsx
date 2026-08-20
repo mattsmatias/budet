@@ -22,6 +22,7 @@ import {
   StatusBadge,
   VatBadge,
 } from "@/components/ui";
+import { DecisionActions } from "./decision-actions";
 
 export async function generateMetadata({
   params,
@@ -62,14 +63,12 @@ export default async function DocumentPage({ params }: PageProps<"/documents/[id
             {doc.supplierVatId ? ` · ${doc.supplierVatId}` : ""}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <ActionButton primary disabled={classification.needsReview}>
-            Hyväksy
-          </ActionButton>
-          <ActionButton disabled>Muokkaa</ActionButton>
-          <ActionButton disabled>Hylkää</ActionButton>
-          <ActionButton disabled>Aja uudelleen</ActionButton>
-        </div>
+        <DecisionActions
+          documentId={doc.id}
+          needsReview={classification.needsReview}
+          status={doc.status}
+          enabled={!isDemo}
+        />
       </div>
 
       {classification.needsReview ? (
@@ -345,7 +344,11 @@ function deductibleLabel(value: boolean | undefined): string {
 async function load(id: string) {
   const mode = await getAppMode();
   const result =
-    mode.kind === "live" ? await fetchDocument(mode.org.id, id) : demoDocument(id);
+    mode.kind === "live"
+      ? await fetchDocument(mode.org.id, id)
+      : mode.kind === "demo"
+        ? demoDocument(id)
+        : { ok: true as const, data: null, source: "demo" as const };
   return {
     doc: result.ok ? result.data : null,
     isDemo: mode.kind !== "live",

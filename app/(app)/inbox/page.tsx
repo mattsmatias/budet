@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAppMode } from "@/lib/auth";
-import { demoDocuments, listDocuments, type DocumentView } from "@/lib/data/documents";
+import {
+  demoDocuments,
+  emptyDocuments,
+  listDocuments,
+  type DocumentView,
+} from "@/lib/data/documents";
 import { formatMoney } from "@/lib/money";
 import { ConfidenceBadge, EmptyState, StatusBadge, VatBadge } from "@/components/ui";
 import { DataProblem, ModeNotice } from "@/components/mode-notice";
@@ -45,8 +50,14 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
   const filter = (FILTERS.find((f) => f.key === raw)?.key ?? "kaikki") as FilterKey;
 
   const mode = await getAppMode();
+  // Kirjautunut käyttäjä ei koskaan näe demolukuja: ilman organisaatiota
+  // näkymä on tyhjä, ei keksitty.
   const result =
-    mode.kind === "live" ? await listDocuments(mode.org.id) : demoDocuments();
+    mode.kind === "live"
+      ? await listDocuments(mode.org.id)
+      : mode.kind === "demo"
+        ? demoDocuments()
+        : emptyDocuments();
 
   const all = result.ok ? result.data : [];
   const docs = applyFilter(all, filter);

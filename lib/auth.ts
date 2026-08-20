@@ -67,9 +67,24 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   }
 });
 
-/** Organisaatiot joihin käyttäjä kuuluu. Tyhjä = onboarding kesken. */
-export const getMemberships = cache(async (): Promise<Membership[]> => {
-  if (!isSupabaseConfigured()) return [];
+export interface MembershipResult {
+  memberships: Membership[];
+  /** Tosi kun taulut puuttuvat. Eri asia kuin "ei organisaatioita". */
+  schemaMissing: boolean;
+}
+
+/**
+ * Organisaatiot joihin käyttäjä kuuluu.
+ *
+ * Erottelee kaksi tilannetta jotka näyttäisivät muuten samalta: käyttäjällä
+ * ei ole organisaatiota, tai tietokannan rakenteet puuttuvat. Ensimmäisessä
+ * ohjataan onboardingiin, jälkimmäisessä se olisi umpikuja — organisaatiota
+ * ei voi luoda ennen kuin migraatiot on ajettu.
+ */
+export const getMembershipResult = cache(async (): Promise<MembershipResult> => {
+  if (!isSupabaseConfigured()) {
+    return { memberships: [], schemaMissing: false };
+  }
 
   try {
     const supabase = await createClient();
@@ -78,22 +93,39 @@ export const getMemberships = cache(async (): Promise<Membership[]> => {
       .select("id, name, kind, country, role, plan_id, subscription_state, is_demo")
       .order("name");
 
-    if (error || !data) return [];
+    if (error) {
+      return { memberships: [], schemaMissing: isSchemaMissing(error) };
+    }
 
-    return data.map((row) => ({
-      id: row.id as string,
-      name: row.name as string,
-      kind: row.kind as Membership["kind"],
-      country: row.country as string,
-      role: row.role as Role,
-      planId: (row.plan_id as string | null) ?? null,
-      subscriptionState: (row.subscription_state as string | null) ?? null,
-      isDemo: Boolean(row.is_demo),
-    }));
+    return {
+      schemaMissing: false,
+      memberships: (data ?? []).map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        kind: row.kind as Membership["kind"],
+        country: row.country as string,
+        role: row.role as Role,
+        planId: (row.plan_id as string | null) ?? null,
+        subscriptionState: (row.subscription_state as string | null) ?? null,
+        isDemo: Boolean(row.is_demo),
+      })),
+    };
   } catch {
-    return [];
+    return { memberships: [], schemaMissing: false };
   }
 });
+
+export async function getMemberships(): Promise<Membership[]> {
+  return (await getMembershipResult()).memberships;
+}
+
+function isSchemaMissing(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    Boolean(error.message?.includes("schema cache"))
+  );
+}
 
 /**
  * Aktiivinen organisaatio. Valinta säilyy evästeessä, mutta se validoidaan
@@ -130,10 +162,15 @@ export async function requireOrg(returnTo = "/dashboard"): Promise<{
 /**
  * Sovelluksen tila. Sivut käyttävät tätä päättääkseen näyttävätkö oikeaa
  * dataa, demo-aineistoa vai asennusohjeen.
+ *
+ * Demo-aineistoa näytetään VAIN kirjautumattomalle käyttäjälle. Kirjautunut
+ * käyttäjä näkee oman datansa tai tyhjän näkymän — ei koskaan keksittyjä
+ * lukuja, jotka voisi erehtyä lukemaan omakseen (§47, §74).
  */
 export type AppMode =
   | { kind: "live"; user: SessionUser; org: Membership }
   | { kind: "no-org"; user: SessionUser }
+  | { kind: "setup-required"; user: SessionUser }
   | { kind: "demo"; reason: "not_configured" | "not_signed_in" };
 
 export async function getAppMode(): Promise<AppMode> {
@@ -144,8 +181,20 @@ export async function getAppMode(): Promise<AppMode> {
   const user = await getSessionUser();
   if (!user) return { kind: "demo", reason: "not_signed_in" };
 
+  const { memberships, schemaMissing } = await getMembershipResult();
+
+  // Migraatiot ajamatta: onboardingiin ohjaaminen olisi umpikuja, koska
+  // create_organization-funktiota ei ole olemassa.
+  if (schemaMissing) return { kind: "setup-required", user };
+  if (memberships.length === 0) return { kind: "no-org", user };
+
   const org = await getActiveOrg();
   if (!org) return { kind: "no-org", user };
 
   return { kind: "live", user, org };
+}
+
+/** Näytetäänkö demo-aineistoa? Vain kirjautumattomana. */
+export function showsDemoData(mode: AppMode): boolean {
+  return mode.kind === "demo";
 }

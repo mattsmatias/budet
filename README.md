@@ -27,8 +27,11 @@ jotka näyttävät toimivilta mutta eivät tee mitään.
 - Organisaation perustus ja organisaation vaihto
 - Dokumentin lataus: tiiviste, duplikaattisuoja, tallennus, poiminta,
   luokittelu, päätösten kirjaus, audit-tapahtumat, käyttörajan valvonta
+- Hyväksyntä, hylkäys ja päätöksen uudelleenajo — uudelleenajo ei koskaan
+  ylikirjoita historiallista päätöstä, vaan luo uuden `supersedes_id`-ketjuun
+- Tarkistusjono, jossa jokainen merkintä kertoo täsmällisen syyn
+- Vientinäkymä ja CSV-lataus, estetyt dokumentit syineen näkyvissä
 - Palvelurajapinnat mock-toteutuksin: OCR, VIES, vienti, käyttöoikeudet
-- Viennin estologiikka täsmällisine syineen
 - Laskeutumissivu, yleiskuva, saapuneet, dokumenttinäkymä
 
 **Vaatii migraatioiden ajon**

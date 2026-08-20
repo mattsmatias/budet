@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAppMode } from "@/lib/auth";
-import { demoDocuments, listDocuments, type DocumentView } from "@/lib/data/documents";
+import {
+  demoDocuments,
+  emptyDocuments,
+  listDocuments,
+  type DocumentView,
+} from "@/lib/data/documents";
 import { formatMoney } from "@/lib/money";
 import { EmptyState, MetricCard, Panel, StatusBadge } from "@/components/ui";
 import { DataProblem, ModeNotice } from "@/components/mode-notice";
@@ -10,8 +15,14 @@ export const metadata: Metadata = { title: "Yleiskuva" };
 
 export default async function DashboardPage() {
   const mode = await getAppMode();
+  // Kirjautunut käyttäjä ei koskaan näe demolukuja: ilman organisaatiota
+  // näkymä on tyhjä, ei keksitty.
   const result =
-    mode.kind === "live" ? await listDocuments(mode.org.id) : demoDocuments();
+    mode.kind === "live"
+      ? await listDocuments(mode.org.id)
+      : mode.kind === "demo"
+        ? demoDocuments()
+        : emptyDocuments();
 
   const docs = result.ok ? result.data : [];
   const m = summarise(docs);
@@ -22,7 +33,11 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-xl font-semibold">Yleiskuva</h1>
           <p className="mt-1 text-sm text-muted">
-            {mode.kind === "live" ? mode.org.name : "Demo-aineisto"}
+            {mode.kind === "live"
+              ? mode.org.name
+              : mode.kind === "demo"
+                ? "Demo-aineisto"
+                : "Ei aineistoa"}
           </p>
         </div>
         <Link
