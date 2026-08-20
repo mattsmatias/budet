@@ -1,0 +1,193 @@
+/*
+ * RestoFlow — visuaalinen kieli.
+ *
+ * Apple-henkinen: erittäin vaalea harmaa tausta, valkoiset kortit, suuret
+ * pyöristykset, varjot niin hienovaraisia että ne luetaan syvyytenä eikä
+ * koristeena. Väriä käytetään VAIN tilan merkitsemiseen — ei koskaan
+ * pintana, ei koskaan brändinä. Dashboard on harmaa ja valkoinen; värillinen
+ * piste tarkoittaa aina jotain.
+ *
+ * Tokenit on rajattu .restoflow-luokan alle, jotta Verran teema säilyy
+ * koskemattomana samassa sovelluksessa.
+ */
+
+.restoflow {
+  /* Pinnat */
+  --rf-bg: #f5f5f7;
+  --rf-card: #ffffff;
+  --rf-card-hover: #fbfbfd;
+  --rf-inset: #f2f2f5;
+
+  /* Teksti */
+  --rf-text: #1d1d1f;
+  --rf-text-2: #6e6e73;
+  --rf-text-3: #a1a1a6;
+
+  /* Rajat ja varjot */
+  --rf-line: rgba(0, 0, 0, 0.07);
+  --rf-line-strong: rgba(0, 0, 0, 0.12);
+  --rf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --rf-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.045);
+  --rf-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.04), 0 16px 40px rgba(0, 0, 0, 0.08);
+
+  /* Tilavärit. Vihreä = ok, sininen = info, keltainen = odottaa, punainen = ongelma. */
+  --rf-green: #34c759;
+  --rf-green-text: #1d7a35;
+  --rf-green-bg: #e8f8ec;
+
+  --rf-blue: #0071e3;
+  --rf-blue-text: #0057b8;
+  --rf-blue-bg: #e8f2fd;
+
+  --rf-amber: #ff9f0a;
+  --rf-amber-text: #9a5b00;
+  --rf-amber-bg: #fff4e5;
+
+  --rf-red: #ff3b30;
+  --rf-red-text: #c1121b;
+  --rf-red-bg: #ffecea;
+
+  /* Pyöristykset */
+  --rf-r-card: 18px;
+  --rf-r-control: 12px;
+  --rf-r-pill: 980px;
+
+  background: var(--rf-bg);
+  color: var(--rf-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    var(--font-inter), "Helvetica Neue", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+/* Otsikot hieman tiukemmalla kirjainvälillä, kuten SF Pro Display. */
+.restoflow h1,
+.restoflow h2,
+.restoflow h3 {
+  letter-spacing: -0.022em;
+}
+
+/* Numerot tasalevyisinä, jotta sarakkeet eivät hypi. */
+.rf-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* --------------------------------------------------------------------- */
+/* Mikrointeraktiot. Hillittyjä: iOS-tuntuma syntyy nopeudesta ja
+   pehmeästä easingista, ei liikkeen määrästä.                            */
+/* --------------------------------------------------------------------- */
+
+.rf-press {
+  transition:
+    transform 140ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+.rf-press:active {
+  transform: scale(0.972);
+}
+
+.rf-card-hover {
+  transition:
+    transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.rf-card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--rf-shadow-lg);
+}
+
+@keyframes rf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rf-enter {
+  animation: rf-fade-up 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Analyysin pulssi: hengittävä, ei välkkyvä. */
+@keyframes rf-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.rf-breathe {
+  animation: rf-breathe 1.6s ease-in-out infinite;
+}
+
+/* Etenemispalkin liuku poiminnan ajaksi. */
+@keyframes rf-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(320%);
+  }
+}
+.rf-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.85),
+    transparent
+  );
+  animation: rf-sweep 1.4s ease-in-out infinite;
+}
+
+/* Onnistuminen: rasti piirtyy. */
+@keyframes rf-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.rf-draw {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: rf-draw 420ms cubic-bezier(0.65, 0, 0.35, 1) 80ms forwards;
+}
+
+/* Kello käynnissä. */
+@keyframes rf-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.rf-pulse-dot {
+  animation: rf-pulse-dot 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restoflow *,
+  .restoflow *::after,
+  .restoflow *::before {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .rf-press:active {
+    transform: none;
+  }
+}
