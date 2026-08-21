@@ -136,6 +136,7 @@ export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
+  { href: "/admin/havainnot", label: "Havainnot", icon: "trend", requires: "expenses.view" },
   { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
   { href: "/admin/ilmoitukset", label: "Huomiot", icon: "bell", requires: "alerts.view" },
   { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },

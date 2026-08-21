@@ -475,6 +475,120 @@ function deriveReviewReasons(
 }
 
 // ---------------------------------------------------------------------------
+// Asetukset
+// ---------------------------------------------------------------------------
+
+const settingsSchema = z.object({
+  name: z.string().trim().min(1, "Nimi puuttuu.").max(120),
+  timezone: z.string().trim().min(1, "Valitse aikavyöhyke."),
+});
+
+/**
+ * Ravintolan nimi ja aikavyöhyke.
+ *
+ * Aikavyöhyke ei ole kosmeettinen: työaika, kuukausirajat ja vuorojen
+ * päivät lasketaan siinä. Kanta tarkistaa vyöhykkeen olemassaolon, koska
+ * kelvoton arvo ei kaataisi mitään heti vaan laskisi tunnit väärin.
+ */
+export async function updateSettings(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const parsed = settingsSchema.safeParse({
+    name: formData.get("name"),
+    timezone: formData.get("timezone"),
+  });
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { restaurant } = await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("update_restaurant", {
+    p_restaurant: restaurant.id,
+    p_name: parsed.data.name,
+    p_timezone: parsed.data.timezone,
+  });
+
+  if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+
+  return { notice: "Asetukset tallennettu." };
+}
+
+// ---------------------------------------------------------------------------
+// Kuukauden sulkeminen
+// ---------------------------------------------------------------------------
+
+/**
+ * Sulkee kuukauden kirjanpitoon.
+ *
+ * Sulkemisen jälkeen kuukauden kuitteja ei voi lisätä, muuttaa eikä
+ * poistaa — muuten kirjanpitäjälle annettu aineisto ja järjestelmän
+ * sisältö eroaisivat toisistaan huomaamatta. Este on kannan
+ * liipaisimessa, ei täällä.
+ */
+export async function closeMonth(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const month = String(formData.get("month") ?? "");
+  const note = String(formData.get("note") ?? "");
+
+  if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) {
+    return { error: "Valitse kuukausi." };
+  }
+
+  const { restaurant } = await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("close_month", {
+    p_restaurant: restaurant.id,
+    p_month: month,
+    p_note: note || null,
+  });
+
+  if (error) return { error: explain(error, "Kuukauden sulkeminen epäonnistui") };
+
+  revalidatePath("/admin", "layout");
+  return { notice: `Kuukausi ${month} suljettu.` };
+}
+
+/** Avaa suljetun kuukauden uudelleen. Vain omistaja. */
+export async function reopenMonth(formData: FormData): Promise<void> {
+  const month = String(formData.get("month") ?? "");
+  if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) return;
+
+  const { restaurant } = await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+  await supabase.rpc("reopen_month", {
+    p_restaurant: restaurant.id,
+    p_month: month,
+  });
+
+  revalidatePath("/admin", "layout");
+}
+
+// ---------------------------------------------------------------------------
+// Poissaolot
+// ---------------------------------------------------------------------------
+
+/** Peruu poissaoloilmoituksen. RLS sallii oman tai esihenkilölle kenen tahansa. */
+export async function cancelAbsence(formData: FormData): Promise<void> {
+  const id = String(formData.get("absenceId") ?? "");
+  if (!id) return;
+
+  await requireContext("/admin/tyovuorot");
+  const supabase = await createClient();
+  await supabase.from("absences").delete().eq("id", id);
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+}
+
+// ---------------------------------------------------------------------------
 
 function explain(
   error: { code?: string; message?: string } | null,
@@ -497,6 +611,15 @@ function explain(
   }
   if (message.includes("Mennyttä vuoroa")) {
     return "Mennyttä vuoroa ei voi poistaa.";
+  }
+  if (message.includes("Kuukausi on suljettu")) {
+    return "Kuukausi on suljettu kirjanpitoon. Avaa se asetuksista jos muutos on välttämätön.";
+  }
+  if (message.includes("Tuntematon aikavyöhyke")) {
+    return "Tuntematon aikavyöhyke.";
+  }
+  if (message.includes("Kuluvaa tai tulevaa")) {
+    return "Kuluvaa tai tulevaa kuukautta ei voi sulkea.";
   }
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;

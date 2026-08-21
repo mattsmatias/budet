@@ -48,6 +48,8 @@ export interface ExtractionInput {
   sizeBytes: number;
   /** Tiedoston tiiviste duplikaattien tunnistukseen. */
   hash?: string;
+  /** Itse tiedosto. Vain palvelinpoimija tarvitsee sen. */
+  file?: File;
 }
 
 export interface ReceiptExtractor {
@@ -258,5 +260,87 @@ export function uncertainFields(result: ExtractionResult): string[] {
   return fields;
 }
 
-/** Oletuspoimija. Vaihdetaan tästä kun oikea palvelu kytketään. */
-export const receiptExtractor: ReceiptExtractor = new MockReceiptExtractor();
+/**
+ * Palvelinpoimija.
+ *
+ * Kuva lähetetään omalle reitille, joka kutsuu mallia. Avain ei voi olla
+ * selaimessa: NEXT_PUBLIC-muuttuja päätyy sivun lähdekoodiin ja on siten
+ * julkinen. Reitti tarkistaa myös oikeuden, joten poimintaa ei voi ajaa
+ * ravintolan laskuun ilman jäsenyyttä.
+ *
+ * Jos reitti kertoo ettei palvelua ole kytketty, palataan jäljitelmään
+ * eikä kuitin lisäys katkea.
+ */
+export class RemoteReceiptExtractor implements ReceiptExtractor {
+  readonly name = "remote";
+
+  constructor(private readonly fallback: ReceiptExtractor) {}
+
+  async extract(input: ExtractionInput): Promise<ExtractionResult> {
+    if (!input.file) return this.fallback.extract(input);
+
+    const started = Date.now();
+
+    try {
+      const body = new FormData();
+      body.set("file", input.file);
+
+      const response = await fetch("/api/kuitit/poiminta", {
+        method: "POST",
+        body,
+      });
+
+      if (response.status === 501) return this.fallback.extract(input);
+      if (!response.ok) throw new Error(String(response.status));
+
+      const parsed = (await response.json()) as Partial<ExtractionResult>;
+      return { ...emptyResult(), ...parsed, elapsedMs: Date.now() - started };
+    } catch {
+      // Verkkovirhe ei saa estää kuitin kirjaamista: kentät jäävät
+      // tyhjiksi ja käyttäjä täyttää ne itse.
+      return this.fallback.extract(input);
+    }
+  }
+}
+
+/** Tyhjä tulos. Tyhjä arvo on parempi kuin keksitty. */
+export function emptyResult(): ExtractionResult {
+  const unknown = <T>() => ({ value: null as T | null, confidence: "low" as const });
+
+  return {
+    supplier: unknown<string>(),
+    date: unknown<string>(),
+    totalCents: unknown<number>(),
+    vatCents: unknown<number>(),
+    category: unknown<ExpenseCategory>(),
+    paymentMethod: unknown<PaymentMethod>(),
+    receiptNumber: unknown<string>(),
+    items: [],
+    imageQuality: "good",
+    elapsedMs: 0,
+  };
+}
+
+/** Onko oikea poimintapalvelu kytketty? Palvelinpuolen tarkistus. */
+export function isRealExtractor(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY);
+}
+
+/** Poimijan nimi asetusnäkymään. */
+export function extractorName(): string {
+  return isRealExtractor()
+    ? `Claude (${process.env.RECEIPT_MODEL ?? DEFAULT_MODEL})`
+    : "Paikallinen jäljitelmä (mock)";
+}
+
+/** Malli jota poimintareitti käyttää ellei toisin määrätä. */
+export const DEFAULT_MODEL = "claude-sonnet-5";
+
+/**
+ * Oletuspoimija.
+ *
+ * Yrittää palvelinreittiä ja palaa jäljitelmään jos sitä ei ole kytketty.
+ */
+export const receiptExtractor: ReceiptExtractor = new RemoteReceiptExtractor(
+  new MockReceiptExtractor(),
+);

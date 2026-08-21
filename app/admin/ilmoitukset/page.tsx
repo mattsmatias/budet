@@ -3,7 +3,7 @@ import Link from "next/link";
 import { needsReview, reviewReasonCounts } from "@/lib/restoflow/expenses";
 import {
   POSITION_LABELS, REVIEW_REASON_LABELS } from "@/lib/restoflow/types";
-import { Card, DemoNotice, Icon, ICONS, Pill } from "@/components/restoflow/ui";
+import { Card, ScopeNotice, Icon, ICONS, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Ilmoitukset" };
 
@@ -72,10 +72,11 @@ export default async function NotificationsPage() {
         </p>
       </div>
 
-      <DemoNotice>
-        Ilmoitukset johdetaan aineiston tilasta. Sähköposti-ilmoitukset ja
-        lukukuittaukset vaativat käyttäjätilit, joita ei ole vielä kytketty.
-      </DemoNotice>
+      <ScopeNotice>
+        Ilmoitukset johdetaan aineiston tilasta joka latauksella, eikä niitä
+        tallenneta. Kun asia on hoidettu, ilmoitus katoaa itsestään —
+        tallennettu ilmoitus jäisi roikkumaan korjauksen jälkeenkin.
+      </ScopeNotice>
 
       {reasons.length > 0 ? (
         <Card>

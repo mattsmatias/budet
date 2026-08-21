@@ -13,7 +13,7 @@ import { formatMoney } from "@/lib/money";
 import {
   Card,
   CardHeader,
-  DemoNotice,
+  ScopeNotice,
   EmptyState,
   Icon,
   ICONS,
@@ -50,7 +50,7 @@ export default async function SuppliersPage() {
         </p>
       </div>
 
-      <DemoNotice />
+      <ScopeNotice />
 
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3 md:gap-4">
         <MetricCard label="Toimittajia" value={String(totals.length)} />

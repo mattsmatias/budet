@@ -383,6 +383,25 @@ export async function fetchAbsences(
   }));
 }
 
+/**
+ * Suljetut kuukaudet muodossa "2026-07".
+ *
+ * Kanta tallentaa kuukauden ensimmäisenä päivänä, jotta vertailu on
+ * indeksoitavissa. Sovellus laskee kuukausilla merkkijonoina, joten
+ * muunnos tehdään tässä eikä joka kutsupaikassa erikseen.
+ */
+export async function fetchClosedMonths(restaurantId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("closed_months")
+    .select("month")
+    .eq("restaurant_id", restaurantId)
+    .order("month", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map((row) => String(row.month).slice(0, 7));
+}
+
 // ---------------------------------------------------------------------------
 // Koottu näkymädata
 // ---------------------------------------------------------------------------
@@ -395,29 +414,53 @@ export interface RestaurantData {
   budgets: Budget[];
   shifts: Shift[];
   clockEvents: ClockEvent[];
+  absences: Absence[];
+  /** Kuukaudet jotka on lukittu kirjanpitoon, uusin ensin. */
+  closedMonths: string[];
 }
 
 /**
  * Kaikki mitä hallintanäkymä tarvitsee, yhdellä kierroksella.
  *
  * Rinnakkain: kyselyt eivät riipu toisistaan, ja peräkkäin ajettuna
- * sivunlataus kestäisi kuuden kyselyn verran.
+ * sivunlataus kestäisi yhdeksän kyselyn verran.
  */
 export async function fetchRestaurantData(
   restaurantId: string,
 ): Promise<RestaurantData> {
-  const [receipts, users, suppliers, budgets, shifts, openShifts, clockEvents] =
-    await Promise.all([
-      fetchReceipts(restaurantId),
-      fetchUsers(restaurantId),
-      fetchSuppliers(restaurantId),
-      fetchBudgets(restaurantId),
-      fetchShifts(restaurantId),
-      fetchOpenShifts(restaurantId),
-      fetchClockEvents(restaurantId),
-    ]);
+  const [
+    receipts,
+    users,
+    suppliers,
+    budgets,
+    shifts,
+    openShifts,
+    clockEvents,
+    absences,
+    closedMonths,
+  ] = await Promise.all([
+    fetchReceipts(restaurantId),
+    fetchUsers(restaurantId),
+    fetchSuppliers(restaurantId),
+    fetchBudgets(restaurantId),
+    fetchShifts(restaurantId),
+    fetchOpenShifts(restaurantId),
+    fetchClockEvents(restaurantId),
+    fetchAbsences(restaurantId),
+    fetchClosedMonths(restaurantId),
+  ]);
 
-  return { receipts, users, suppliers, budgets, shifts, openShifts, clockEvents };
+  return {
+    receipts,
+    users,
+    suppliers,
+    budgets,
+    shifts,
+    openShifts,
+    clockEvents,
+    absences,
+    closedMonths,
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { ACTIVE_RESTAURANT_COOKIE } from "@/lib/restoflow/session";
@@ -139,4 +139,114 @@ function translateSignUpError(message: string): string {
     return "Liian monta yritystä. Odota hetki ja yritä uudelleen.";
   }
   return `Rekisteröityminen epäonnistui: ${message}`;
+}
+
+// ---------------------------------------------------------------------------
+// Salasanan palautus
+// ---------------------------------------------------------------------------
+
+const emailOnly = z.object({
+  email: z.string().trim().toLowerCase().email("Tarkista sähköpostiosoite."),
+});
+
+/**
+ * Lähettää palautuslinkin.
+ *
+ * Vastaus on sama riippumatta siitä onko tunnusta olemassa. Ero
+ * paljastaisi kenellä on tili — se on tieto jota ulkopuolisen ei kuulu
+ * saada kokeilemalla.
+ */
+export async function requestPasswordReset(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = emailOnly.safeParse({ email: formData.get("email") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${await siteUrl()}/auth/callback?seuraava=/uusi-salasana`,
+  });
+
+  return {
+    notice:
+      "Jos osoitteella on tili, lähetimme sinne palautuslinkin. " +
+      "Linkki on voimassa tunnin.",
+  };
+}
+
+const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Salasanassa on oltava vähintään 8 merkkiä."),
+    confirm: z.string(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Salasanat eivät täsmää.",
+    path: ["confirm"],
+  });
+
+/**
+ * Asettaa uuden salasanan.
+ *
+ * Toimii vain istunnolla jonka palautuslinkki loi. Ilman istuntoa
+ * kutsuja ei ole todistanut pääsyään sähköpostiin.
+ */
+export async function setNewPassword(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      error:
+        "Palautuslinkki on vanhentunut tai jo käytetty. Pyydä uusi linkki.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      error: error.message.includes("same as the old")
+        ? "Uusi salasana ei voi olla sama kuin vanha."
+        : "Salasanan vaihto ei onnistunut. Yritä uudelleen.",
+    };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/admin");
+}
+
+/**
+ * Sovelluksen julkinen osoite palautuslinkkiä varten.
+ *
+ * Ympäristömuuttuja ensin, sitten pyynnön oma origin: kehityksessä
+ * localhost ja tuotannossa oikea domain ilman erillistä asetusta.
+ */
+async function siteUrl(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) {
+    return configured.endsWith("/") ? configured.slice(0, -1) : configured;
+  }
+
+  const headerList = await headers();
+  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
+  const protocol = headerList.get("x-forwarded-proto") ?? "https";
+
+  return host ? `${protocol}://${host}` : "http://localhost:3000";
 }

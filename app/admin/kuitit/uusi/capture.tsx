@@ -76,6 +76,7 @@ export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
         mimeType: file.type || "image/jpeg",
         sizeBytes: file.size,
         hash,
+        file,
       }),
       uploadImage(file, restaurantId, hash)
         .then(setImagePath)
@@ -135,9 +136,10 @@ export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
         <ChooseButton icon="file" label="Lataa tiedosto" onClick={() => fileRef.current?.click()} />
 
         <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Poiminta on tässä versiossa paikallinen jäljitelmä, ei oikea
-          tekoäly — tiedostonimi ratkaisee tuloksen. Kuva tallentuu oikeasti,
-          ja kaikki kentät ovat muokattavissa ennen tallennusta.
+          Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat
+          muokattavissa ennen tallennusta ja epävarmat on merkitty. Jos
+          poimintapalvelua ei ole kytketty, kentät tulevat paikallisesta
+          jäljitelmästä — silloin ne on syytä kirjoittaa itse.
         </p>
       </div>
     );

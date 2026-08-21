@@ -156,6 +156,19 @@ export async function reportAbsence(
   return { notice: "Poissaolo ilmoitettu." };
 }
 
+/** Peruu oman poissaoloilmoituksen. */
+export async function cancelAbsence(formData: FormData): Promise<void> {
+  const id = String(formData.get("absenceId") ?? "");
+  if (!id) return;
+
+  await requireContext("/app/vuorot");
+  const supabase = await createClient();
+  await supabase.from("absences").delete().eq("id", id);
+
+  revalidatePath("/app", "layout");
+  revalidatePath("/admin", "layout");
+}
+
 // ---------------------------------------------------------------------------
 
 /**

@@ -92,3 +92,42 @@ input[type="month"] {
     touch-action: manipulation;
   }
 }
+
+/*
+ * Tulostus.
+ *
+ * PDF syntyy selaimen omasta tulostuksesta, joten navigaatio ja
+ * painikkeet on piilotettava. Erillinen PDF-kirjasto tarkoittaisi toisen
+ * asettelumoottorin ylläpitoa huonommalla lopputuloksella.
+ */
+@media print {
+  nav,
+  aside,
+  header.sticky,
+  .rf-no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Osio ei katkea kesken taulukon, jos sivulle mahtuu kokonaan. */
+  .rf-print-section {
+    break-inside: avoid;
+  }
+
+  .rf-print table {
+    font-size: 11px;
+  }
+
+  /* Linkin osoite ei kuulu paperille: se on aina sovelluksen sisäinen. */
+  a[href]::after {
+    content: none !important;
+  }
+}

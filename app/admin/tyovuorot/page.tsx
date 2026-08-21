@@ -1,8 +1,14 @@
 import { adminContext } from "@/lib/restoflow/page-context";
-import { compareShifts, formatVariance, labourSummary } from "@/lib/restoflow/shifts";
+import {
+  compareShifts,
+  formatVariance,
+  labourSummary,
+  variancePatterns,
+} from "@/lib/restoflow/shifts";
 import { formatDuration } from "@/lib/restoflow/timeclock";
 import { seesPayRates } from "@/lib/restoflow/permissions";
 import {
+  ABSENCE_LABELS,
   POSITION_LABELS,
   SHIFT_STATUS_LABELS,
   type Shift,
@@ -18,12 +24,13 @@ import {
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
+import { cancelAbsence } from "../actions";
 import { EditShift, NewShiftButton } from "./shift-form";
 
 export const metadata = { title: "Työvuorot" };
 
 export default async function AdminShiftsPage() {
-  const { users, shifts, openShifts, clockEvents, today, now, role } =
+  const { users, shifts, openShifts, clockEvents, absences, today, now, role } =
     await adminContext("/admin/tyovuorot");
 
   const upcoming = shifts.filter((s) => s.date >= today);
@@ -37,6 +44,14 @@ export default async function AdminShiftsPage() {
   const comparisons = compareShifts(past, users, clockEvents, now);
   const labour = labourSummary(comparisons);
   const showsRates = seesPayRates(role);
+
+  // Toistuva poikkeama on eri asia kuin yksittäinen: yksi pitkä ilta on
+  // sattuma, kymmenen peräkkäistä on suunnitteluvirhe.
+  const patterns = variancePatterns(comparisons).filter(
+    (pattern) => Math.abs(pattern.averageVarianceMs) > 10 * 60000,
+  );
+
+  const upcomingAbsences = absences.filter((absence) => absence.date >= today);
 
   return (
     <div className="rf-enter space-y-5">
@@ -53,6 +68,65 @@ export default async function AdminShiftsPage() {
         </div>
         <NewShiftButton users={users} defaultDate={today} />
       </div>
+
+      {upcomingAbsences.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Poissaoloilmoitukset"
+            subtitle="Ilmoitus ei peru vuoroa — vuoro on yhä tekijällä"
+          />
+          <ul className="space-y-3">
+            {upcomingAbsences.map((absence) => {
+              const user = users.find((u) => u.id === absence.userId);
+              const shift = shifts.find(
+                (s) => s.userId === absence.userId && s.date === absence.date,
+              );
+
+              return (
+                <li
+                  key={absence.id}
+                  className="flex flex-wrap items-start justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                  style={{ borderColor: "var(--rf-line)" }}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar initials={user?.initials ?? "?"} size={36} />
+                    <div className="min-w-0">
+                      <p className="truncate text-[14px] font-medium">
+                        {user?.name ?? "Tuntematon"}
+                      </p>
+                      <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                        {formatShortDate(absence.date)}
+                        {shift ? ` · vuoro ${shift.startTime}–${shift.endTime}` : " · ei vuoroa"}
+                        {absence.note ? ` · ${absence.note}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Pill tone="warn" dot>
+                      {ABSENCE_LABELS[absence.kind]}
+                    </Pill>
+                    <form action={cancelAbsence}>
+                      <input type="hidden" name="absenceId" value={absence.id} />
+                      <button
+                        type="submit"
+                        className="rf-press px-3 py-1.5 text-[13px] font-medium"
+                        style={{
+                          background: "var(--rf-inset)",
+                          color: "var(--rf-text-2)",
+                          borderRadius: "var(--rf-r-control)",
+                        }}
+                      >
+                        Kuittaa
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
 
       {declined.length > 0 ? (
         <Card>
@@ -147,6 +221,63 @@ export default async function AdminShiftsPage() {
           </ul>
         </Card>
       )}
+
+      {patterns.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Toistuvat poikkeamat"
+            subtitle="Keskimääräinen ero suunniteltuun, vähintään kaksi vuoroa"
+          />
+          <ul className="space-y-3">
+            {patterns.map((pattern) => (
+              <li
+                key={pattern.user?.id ?? "tuntematon"}
+                className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar initials={pattern.user?.initials ?? "?"} size={36} />
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-medium">
+                      {pattern.user?.name ?? "Tuntematon"}
+                    </p>
+                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {pattern.shiftCount} vuoroa · yhteensä{" "}
+                      {formatVariance(pattern.totalVarianceMs)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p
+                    className="rf-tabular text-[15px] font-semibold"
+                    style={{
+                      color:
+                        pattern.averageVarianceMs > 0
+                          ? "var(--rf-amber-text)"
+                          : "var(--rf-text-2)",
+                    }}
+                  >
+                    {formatVariance(pattern.averageVarianceMs)} / vuoro
+                  </p>
+                  {showsRates ? (
+                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {pattern.costImpactCents >= 0 ? "+" : "−"}
+                      {formatMoney(Math.abs(pattern.costImpactCents))} kustannusvaikutus
+                    </p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            Toistuva ylitys ei ole syyte vaan merkki siitä että vuoro on
+            mitoitettu väärin. Tarkista suunniteltu pituus ennen kuin puhut
+            tekijän kanssa.
+          </p>
+        </Card>
+      ) : null}
 
       {comparisons.length > 0 ? (
         <Card padded={false}>

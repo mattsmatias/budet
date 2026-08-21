@@ -4,6 +4,7 @@ import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { RfIcon, ShiftStatusIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState, Pill, SectionLabel } from "@/components/restoflow/ui";
 import { ShiftResponse } from "./respond";
+import { AbsenceReporter } from "./absence";
 
 export const metadata = { title: "Työvuorot" };
 
@@ -11,7 +12,7 @@ const WEEKDAYS = ["ma", "ti", "ke", "to", "pe", "la", "su"];
 
 export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuorot">) {
   const params = await searchParams;
-  const { shifts, today, month } = await employeeContext("/app/vuorot");
+  const { shifts, absences, today, month } = await employeeContext("/app/vuorot");
 
   const selected =
     typeof params.paiva === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.paiva)
@@ -185,6 +186,11 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
           ) : null}
         </>
       )}
+
+      <section>
+        <SectionLabel>Poissaolot</SectionLabel>
+        <AbsenceReporter defaultDate={selected} absences={absences} />
+      </section>
 
       <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
         {month === viewMonth ? "Kuluva kuukausi" : "Toinen kuukausi"} · aikavyöhyke

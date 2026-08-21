@@ -19,7 +19,7 @@ import {
   BarRow,
   Card,
   CardHeader,
-  DemoNotice,
+  ScopeNotice,
   Icon,
   ICONS,
   MetricCard,
@@ -88,7 +88,7 @@ export default async function ExpensesPage({
         </nav>
       </div>
 
-      <DemoNotice />
+      <ScopeNotice />
 
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         <MetricCard

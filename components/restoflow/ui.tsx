@@ -174,12 +174,18 @@ export function BarRow({
   share,
   meta,
   icon,
+  muted,
+  shareLabel,
 }: {
   label: string;
   valueCents: number;
   share: number;
   meta?: string;
   icon?: ReactNode;
+  /** Vaimennettu palkki: vertailukohta, ei tarkastelun kohde. */
+  muted?: boolean;
+  /** Mihin osuus suhteutuu. Oletus: kirjatut kulut. */
+  shareLabel?: string;
 }) {
   const pct = Math.round(share * 100);
 
@@ -202,7 +208,7 @@ export function BarRow({
         className="mt-2 h-1.5 w-full overflow-hidden"
         style={{ background: "var(--rf-inset)", borderRadius: 999 }}
         role="img"
-        aria-label={`${label}: ${pct} prosenttia kirjatuista kuluista`}
+        aria-label={`${label}: ${pct} prosenttia ${shareLabel ?? "kirjatuista kuluista"}`}
       >
         <div
           className="h-full"
@@ -210,7 +216,7 @@ export function BarRow({
             width: `${Math.max(1.5, share * 100)}%`,
             background: "var(--rf-text)",
             borderRadius: 999,
-            opacity: 0.82,
+            opacity: muted ? 0.32 : 0.82,
           }}
         />
       </div>
@@ -250,7 +256,15 @@ export function EmptyState({
  * Näkyy jokaisessa näkymässä. Demo-aineistoa ei saa esittää oikeana, ja
  * kulujen merkitys on kerrottava: kirjatut kuitit, ei pankkitili.
  */
-export function DemoNotice({ children }: { children?: ReactNode }) {
+/**
+ * Rajausilmoitus.
+ *
+ * Ei "demo-ilmoitus": sovellus lukee oikeaa aineistoa. Tämä kertoo mitä
+ * luvut *eivät* sisällä. Väärä väite omasta aineistosta on pahempi kuin
+ * puuttuva selite — kirjautunut käyttäjä ei saa lukea että hänen omat
+ * numeronsa ovat keksittyjä.
+ */
+export function ScopeNotice({ children }: { children?: ReactNode }) {
   return (
     <div
       className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
@@ -266,7 +280,7 @@ export function DemoNotice({ children }: { children?: ReactNode }) {
       <p>
         {children ?? (
           <>
-            Demo-aineisto. Luvut ovat keksittyjä ja tarkoittavat{" "}
+            Luvut tarkoittavat{" "}
             <strong>RestoFlow&rsquo;hun kirjattuja kuluja</strong> — sovellus ei
             näe kassaa eikä pankkitiliä.
           </>

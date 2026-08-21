@@ -1,12 +1,12 @@
+import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { formatMonth, periodTotals } from "@/lib/restoflow/expenses";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
-  DemoNotice,
+  ScopeNotice,
   Icon,
   ICONS,
-  Pill,
 } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Raportit" };
@@ -59,11 +59,11 @@ export default async function ReportsPage() {
         </p>
       </div>
 
-      <DemoNotice>
-        Raportit toimivat oikeasti ja lataavat CSV-tiedoston. Sisältö on
-        demo-aineistoa. CSV käyttää puolipistettä erottimena ja UTF-8-tunnistetta,
-        joten suomalainen Excel avaa sen suoraan oikein.
-      </DemoNotice>
+      <ScopeNotice>
+        CSV käyttää puolipistettä erottimena ja UTF-8-tunnistetta, joten
+        suomalainen Excel avaa sen suoraan oikein. Luvut ovat kuittiaineistosta,
+        eivät kassasta — raportti kertoo mitä on kirjattu, ei mitä on myyty.
+      </ScopeNotice>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {REPORTS.map((report) => (
@@ -97,33 +97,18 @@ export default async function ReportsPage() {
                 Lataa CSV
               </a>
 
-              <span className="inline-flex items-center gap-1.5 opacity-55">
-                <span
-                  className="px-3.5 py-2 text-[14px] font-semibold"
-                  style={{
-                    background: "var(--rf-inset)",
-                    color: "var(--rf-text-2)",
-                    borderRadius: "var(--rf-r-control)",
-                  }}
-                >
-                  Vie PDF
-                </span>
-                <Pill>ei vielä</Pill>
-              </span>
-
-              <span className="inline-flex items-center gap-1.5 opacity-55">
-                <span
-                  className="px-3.5 py-2 text-[14px] font-semibold"
-                  style={{
-                    background: "var(--rf-inset)",
-                    color: "var(--rf-text-2)",
-                    borderRadius: "var(--rf-r-control)",
-                  }}
-                >
-                  Vie Excel
-                </span>
-                <Pill>ei vielä</Pill>
-              </span>
+              <Link
+                href={`/admin/raportit/tulosta?kuukausi=${month}`}
+                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
+                style={{
+                  background: "var(--rf-inset)",
+                  color: "var(--rf-text)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                <Icon path={ICONS.file} size={16} />
+                PDF
+              </Link>
             </div>
           </Card>
         ))}
@@ -135,10 +120,29 @@ export default async function ReportsPage() {
           className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Raportin lähettäminen suoraan kirjanpitäjälle vaatii käyttäjätilit ja
-          sähköpostiyhteyden, joita ei ole vielä kytketty. Toistaiseksi lataa
-          CSV ja lähetä se itse. Emme näytä tässä painiketta joka ei tee mitään.
+          Kutsu kirjanpitäjä käyttäjäksi roolilla <strong>Kirjanpitäjä</strong>,
+          niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse
+          lähettää. Hän ei näe tuntipalkkoja eikä henkilöstön yksityiskohtia.
         </p>
+        <p
+          className="mt-2 max-w-2xl text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          Erillistä Excel-vientiä ei ole, koska CSV on jo Excel-yhteensopiva.
+          Sama tiedosto kahdessa muodossa tarkoittaisi kaksi paikkaa jossa
+          luvut voivat erota.
+        </p>
+        <Link
+          href="/admin/tyontekijat"
+          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          Kutsu kirjanpitäjä
+        </Link>
       </Card>
     </div>
   );
