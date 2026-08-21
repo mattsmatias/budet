@@ -1,34 +1,39 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RECEIPTS, userById, receiptById } from "@/lib/restoflow/data";
+import { requireContext } from "@/lib/restoflow/session";
+import { fetchReceipt, fetchUsers } from "@/lib/restoflow/queries";
+import { checkVat, isMixedReceipt } from "@/lib/restoflow/vat";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
 } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
-import { Card, Icon, ICONS, Pill } from "@/components/restoflow/ui";
+import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
+import { Card, CategoryBubble, Pill } from "@/components/restoflow/ui";
 
-export function generateStaticParams() {
-  return RECEIPTS.map((r) => ({ id: r.id }));
-}
-
-export async function generateMetadata({
-  params,
-}: PageProps<"/app/kuitit/[id]">) {
+export async function generateMetadata({ params }: PageProps<"/app/kuitit/[id]">) {
   const { id } = await params;
-  const receipt = receiptById(id);
-  return { title: receipt ? receipt.supplierName : "Kuitti" };
+  const receipt = await fetchReceipt(id);
+  return { title: receipt?.supplierName ?? "Kuitti" };
 }
 
 export default async function ReceiptDetailPage({
   params,
 }: PageProps<"/app/kuitit/[id]">) {
   const { id } = await params;
-  const receipt = receiptById(id);
+  const { restaurant } = await requireContext("/app/kuitit");
+
+  const receipt = await fetchReceipt(id);
+  // RLS palauttaa tyhjän jos oikeutta ei ole — 404 on oikea vastaus
+  // molemmissa tapauksissa, eikä paljasta onko kuitti olemassa.
   if (!receipt) notFound();
 
-  const addedBy = userById(receipt.addedByUserId);
+  const users = await fetchUsers(restaurant.id);
+  const addedBy = users.find((u) => u.id === receipt.addedByUserId);
+
+  const vat = checkVat(receipt.totalCents, receipt.vatCents, receipt.category);
+  const mixed = isMixedReceipt(receipt.items);
 
   return (
     <div className="rf-enter space-y-4">
@@ -39,60 +44,64 @@ export default async function ReceiptDetailPage({
           className="rf-press -ml-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
-          <Icon path={ICONS.back} size={22} />
+          <RfIcon name="back" size={22} />
         </Link>
         <h1 className="truncate text-[22px] font-semibold tracking-tight">
           {receipt.supplierName}
         </h1>
       </header>
 
-      {/* Kuittikuva. Demossa paikanpitäjä — oikeaa kuvaa ei ole. */}
-      <div
-        className="flex h-52 flex-col items-center justify-center gap-2"
-        style={{
-          background: "var(--rf-inset)",
-          borderRadius: "var(--rf-r-card)",
-          color: "var(--rf-text-3)",
-        }}
-      >
-        <Icon path={ICONS.receipt} size={30} />
-        <p className="text-[13px]">
-          {receipt.hasImage ? "Kuittikuva (ei saatavilla demossa)" : "Ei kuvaa"}
-        </p>
-      </div>
-
-      {/* Yhteenveto */}
       <Card>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[15px] font-semibold">{receipt.supplierName}</p>
-            <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              {formatDate(receipt.date)} · {PAYMENT_LABELS[receipt.paymentMethod]}
-            </p>
+          <div className="flex items-center gap-3">
+            <CategoryBubble category={receipt.category} size={40} />
+            <div>
+              <p className="text-[15px] font-semibold">{receipt.supplierName}</p>
+              <p
+                className="rf-tabular mt-0.5 text-[13px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {formatDate(receipt.date)} · {PAYMENT_LABELS[receipt.paymentMethod]}
+              </p>
+            </div>
           </div>
           <p className="rf-tabular text-[24px] font-semibold">
             {formatMoney(receipt.totalCents)}
           </p>
         </div>
 
-        {receipt.status === "needs_review" ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {receipt.reviewReasons.map((r) => (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {receipt.status === "needs_review" ? (
+            receipt.reviewReasons.map((r) => (
               <Pill key={r} tone="warn" dot>
                 {REVIEW_REASON_LABELS[r]}
               </Pill>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-3">
+            ))
+          ) : (
             <Pill tone="ok" dot>
               Tarkistettu
             </Pill>
-          </div>
-        )}
+          )}
+          {mixed ? <Pill tone="info">Sekakuitti</Pill> : null}
+        </div>
       </Card>
 
-      {/* Kentät */}
+      {vat.explanation ? (
+        <div
+          className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-amber-bg)",
+            color: "var(--rf-amber-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <span aria-hidden="true" className="mt-0.5 shrink-0">
+            <RfIcon name="alert" size={16} />
+          </span>
+          <p>{vat.explanation}</p>
+        </div>
+      ) : null}
+
       <Card>
         <p className="mb-1 text-[13px] font-semibold">Kuittitiedot</p>
         <dl>
@@ -114,38 +123,44 @@ export default async function ReceiptDetailPage({
 
       {receipt.items.length > 0 ? (
         <Card>
-          <p className="mb-3 text-[13px] font-semibold">Rivit</p>
-          <ul className="space-y-2.5">
-            {receipt.items.map((line, i) => (
-              <li key={i} className="flex justify-between gap-4 text-[14px]">
-                <span style={{ color: "var(--rf-text-2)" }}>
-                  {line.description}
-                  {line.quantity !== null ? ` · ${line.quantity} kpl` : ""}
+          <p className="mb-3 text-[13px] font-semibold">
+            Rivit ({receipt.items.length})
+          </p>
+          <ul className="space-y-3">
+            {receipt.items.map((item) => (
+              <li key={item.id} className="flex items-start justify-between gap-3">
+                <span className="flex min-w-0 items-start gap-2.5">
+                  <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <CategoryIcon category={item.category} size={16} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[14px]">{item.description}</span>
+                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {CATEGORY_LABELS[item.category]}
+                      {item.quantity !== null
+                        ? ` · ${item.quantity}${item.unit ? ` ${item.unit}` : " kpl"}`
+                        : ""}
+                      {item.vatRate !== null
+                        ? ` · ALV ${(item.vatRate * 100).toFixed(1).replace(".", ",")} %`
+                        : ""}
+                    </span>
+                  </span>
                 </span>
-                <span className="rf-tabular shrink-0 font-medium">
-                  {formatMoney(line.totalCents)}
+                <span className="rf-tabular shrink-0 text-[14px] font-medium">
+                  {formatMoney(item.totalCents)}
                 </span>
               </li>
             ))}
           </ul>
+
+          {mixed ? (
+            <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              Tämä kuitti jakautuu useaan kategoriaan. Kulut kirjautuvat
+              rivikohtaisesti, ei koko summa yhteen kategoriaan.
+            </p>
+          ) : null}
         </Card>
       ) : null}
-
-      <button
-        type="button"
-        disabled
-        className="w-full py-3.5 text-[16px] font-semibold opacity-40"
-        style={{
-          background: "var(--rf-inset)",
-          color: "var(--rf-text)",
-          borderRadius: "var(--rf-r-control)",
-        }}
-      >
-        Muokkaa
-      </button>
-      <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Muokkaus vaatii tietokantayhteyden, jota ei ole vielä kytketty.
-      </p>
     </div>
   );
 }

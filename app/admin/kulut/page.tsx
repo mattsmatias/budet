@@ -1,5 +1,5 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
-import { DEMO_MONTH, RECEIPTS } from "@/lib/restoflow/data";
 import {
   changeTone,
   formatChange,
@@ -28,25 +28,29 @@ import {
 
 export const metadata = { title: "Kulut" };
 
-const FIRST_MONTH = "2026-05";
-const LAST_MONTH = "2026-08";
 
 export default async function ExpensesPage({
   searchParams,
 }: PageProps<"/admin/kulut">) {
-  const params = await searchParams;
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : DEMO_MONTH;
-  const month = requested >= FIRST_MONTH && requested <= LAST_MONTH ? requested : DEMO_MONTH;
+  const {
+    receipts, month,
+  } = await adminContext("/admin/kulut");
 
-  const current = periodTotals(RECEIPTS, month);
-  const previous = periodTotals(RECEIPTS, previousMonth(month));
+  const params = await searchParams;
+  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const viewMonth = /^\d{4}-\d{2}$/.test(requested) ? requested : month;
+
+  const current = periodTotals(receipts, viewMonth);
+  const previous = periodTotals(receipts, previousMonth(viewMonth));
   const change = relativeChange(current.totalCents, previous.totalCents);
 
-  const categories = totalsByCategory(receiptsInMonth(RECEIPTS, month));
-  const series = monthlySeries(RECEIPTS, LAST_MONTH, 4);
+  const categories = totalsByCategory(receiptsInMonth(receipts, viewMonth));
+  const series = monthlySeries(receipts, viewMonth, 4);
 
-  const canGoBack = previousMonth(month) >= FIRST_MONTH;
-  const canGoForward = nextMonth(month) <= LAST_MONTH;
+  // Taaksepäin voi aina selata; eteenpäin vain kuluvaan kuukauteen asti,
+  // koska tulevaisuudessa ei ole kuluja.
+  const canGoBack = true;
+  const canGoForward = nextMonth(viewMonth) <= month;
 
   return (
     <div className="rf-enter space-y-6">
@@ -60,7 +64,7 @@ export default async function ExpensesPage({
 
         <nav aria-label="Kuukausi" className="flex items-center gap-1">
           <MonthButton
-            href={`/admin/kulut?kuukausi=${previousMonth(month)}`}
+            href={`/admin/kulut?kuukausi=${previousMonth(viewMonth)}`}
             disabled={!canGoBack}
             label="Edellinen kuukausi"
             icon={ICONS.back}
@@ -73,10 +77,10 @@ export default async function ExpensesPage({
               boxShadow: "var(--rf-shadow-sm)",
             }}
           >
-            {formatMonth(month)}
+            {formatMonth(viewMonth)}
           </span>
           <MonthButton
-            href={`/admin/kulut?kuukausi=${nextMonth(month)}`}
+            href={`/admin/kulut?kuukausi=${nextMonth(viewMonth)}`}
             disabled={!canGoForward}
             label="Seuraava kuukausi"
             icon={ICONS.chevron}
@@ -115,7 +119,7 @@ export default async function ExpensesPage({
         <Card>
           <CardHeader
             title="Kategorioittain"
-            subtitle={`${formatMonth(month)} · ${categories.length} kategoriaa`}
+            subtitle={`${formatMonth(viewMonth)} · ${categories.length} kategoriaa`}
           />
           {categories.length === 0 ? (
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
@@ -145,7 +149,7 @@ export default async function ExpensesPage({
             <caption className="sr-only">Kirjatut kulut kuukausittain</caption>
             <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
               {series.map((point) => {
-                const isCurrent = point.month === month;
+                const isCurrent = point.month === viewMonth;
                 return (
                   <tr key={point.month}>
                     <td

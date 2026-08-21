@@ -1,6 +1,6 @@
-import { OPEN_SHIFTS, SHIFTS, userById } from "@/lib/restoflow/data";
+import { adminContext } from "@/lib/restoflow/page-context";
 import {
-  POSITION_LABELS, SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
+  POSITION_LABELS, SHIFT_STATUS_LABELS, type Shift, type User } from "@/lib/restoflow/types";
 import {
   Avatar,
   Card,
@@ -14,18 +14,22 @@ export const metadata = { title: "Työvuorot" };
 const WEEK_START = "2026-08-17";
 const WEEKDAYS = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
 
-export default function AdminShiftsPage() {
+export default async function AdminShiftsPage() {
+  const {
+    users, shifts, openShifts,
+  } = await adminContext("/admin/tyovuorot");
+
   const days = Array.from({ length: 7 }, (_, i) => addDays(WEEK_START, i));
 
-  const pending = SHIFTS.filter((s) => s.status === "pending");
-  const changed = SHIFTS.filter((s) => s.status === "changed");
+  const pending = shifts.filter((s) => s.status === "pending");
+  const changed = shifts.filter((s) => s.status === "changed");
 
   return (
     <div className="rf-enter space-y-6">
       <div>
         <h1 className="text-[30px] font-semibold tracking-tight">Työvuorot</h1>
         <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          Viikko 17.–23.8.2026 · {SHIFTS.length} vuoroa · {OPEN_SHIFTS.length} avointa
+          Viikko 17.–23.8.2026 · {shifts.length} vuoroa · {openShifts.length} avointa
         </p>
       </div>
 
@@ -35,9 +39,9 @@ export default function AdminShiftsPage() {
       </DemoNotice>
 
       <section aria-label="Tilanne" className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Hyväksytyt" value={SHIFTS.filter((s) => s.status === "accepted").length} tone="ok" />
+        <StatCard label="Hyväksytyt" value={shifts.filter((s) => s.status === "accepted").length} tone="ok" />
         <StatCard label="Odottaa hyväksyntää" value={pending.length} tone="warn" />
-        <StatCard label="Avoimet vuorot" value={OPEN_SHIFTS.length} tone="risk" />
+        <StatCard label="Avoimet vuorot" value={openShifts.length} tone="risk" />
       </section>
 
       {/* Viikkonäkymä */}
@@ -48,8 +52,8 @@ export default function AdminShiftsPage() {
         <div className="overflow-x-auto px-5 pb-5">
           <div className="grid min-w-[46rem] grid-cols-7 gap-3">
             {days.map((day, i) => {
-              const dayShifts = SHIFTS.filter((s) => s.date === day);
-              const dayOpen = OPEN_SHIFTS.filter((s) => s.date === day);
+              const dayShifts = shifts.filter((s) => s.date === day);
+              const dayOpen = openShifts.filter((s) => s.date === day);
 
               return (
                 <div key={day}>
@@ -62,7 +66,7 @@ export default function AdminShiftsPage() {
 
                   <div className="space-y-2">
                     {dayShifts.map((shift) => (
-                      <ShiftChip key={shift.id} shift={shift} />
+                      <ShiftChip key={shift.id} shift={shift} users={users} />
                     ))}
 
                     {dayOpen.map((open) => (
@@ -113,7 +117,7 @@ export default function AdminShiftsPage() {
               />
               <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
                 {pending.map((shift) => (
-                  <ShiftRow key={shift.id} shift={shift} />
+                  <ShiftRow key={shift.id} shift={shift} users={users} />
                 ))}
               </ul>
             </Card>
@@ -124,7 +128,7 @@ export default function AdminShiftsPage() {
               <CardHeader title="Muuttuneet vuorot" subtitle={`${changed.length} vuoroa`} />
               <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
                 {changed.map((shift) => {
-                  const employee = userById(shift.userId);
+                  const employee = users.find((u) => u.id === shift.userId);
                   return (
                     <li key={shift.id} className="flex items-center gap-3 py-3">
                       <Avatar initials={employee?.initials ?? "?"} size={32} />
@@ -155,8 +159,8 @@ export default function AdminShiftsPage() {
   );
 }
 
-function ShiftChip({ shift }: { shift: Shift }) {
-  const employee = userById(shift.userId);
+function ShiftChip({ shift, users }: { shift: Shift; users: User[] }) {
+  const employee = users.find((u) => u.id === shift.userId);
   const bg =
     shift.status === "accepted"
       ? "var(--rf-green-bg)"
@@ -182,8 +186,8 @@ function ShiftChip({ shift }: { shift: Shift }) {
   );
 }
 
-function ShiftRow({ shift }: { shift: Shift }) {
-  const employee = userById(shift.userId);
+function ShiftRow({ shift, users }: { shift: Shift; users: User[] }) {
+  const employee = users.find((u) => u.id === shift.userId);
 
   return (
     <li className="flex items-center gap-3 py-3">

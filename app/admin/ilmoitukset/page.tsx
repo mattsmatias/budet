@@ -1,5 +1,5 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
-import { OPEN_SHIFTS, RECEIPTS, SHIFTS, userById } from "@/lib/restoflow/data";
 import { needsReview, reviewReasonCounts } from "@/lib/restoflow/expenses";
 import {
   POSITION_LABELS, REVIEW_REASON_LABELS } from "@/lib/restoflow/types";
@@ -14,11 +14,15 @@ export const metadata = { title: "Ilmoitukset" };
  * vastaa mitään todellista tilaa jäisi roikkumaan senkin jälkeen kun asia
  * on hoidettu.
  */
-export default function NotificationsPage() {
-  const review = needsReview(RECEIPTS);
-  const reasons = reviewReasonCounts(RECEIPTS);
-  const pendingShifts = SHIFTS.filter((s) => s.status === "pending");
-  const changedShifts = SHIFTS.filter((s) => s.status === "changed");
+export default async function NotificationsPage() {
+  const {
+    receipts, users, shifts, openShifts,
+  } = await adminContext("/admin/ilmoitukset");
+
+  const review = needsReview(receipts);
+  const reasons = reviewReasonCounts(receipts);
+  const pendingShifts = shifts.filter((s) => s.status === "pending");
+  const changedShifts = shifts.filter((s) => s.status === "changed");
 
   const items = [
     ...review.map((r) => ({
@@ -34,7 +38,7 @@ export default function NotificationsPage() {
       id: `shift-${s.id}`,
       tone: "info" as const,
       icon: ICONS.calendar,
-      title: `${userById(s.userId)?.name ?? "Työntekijä"} — vuoro odottaa hyväksyntää`,
+      title: `${users.find((u) => u.id === s.userId)?.name ?? "Työntekijä"} — vuoro odottaa hyväksyntää`,
       body: `${formatShortDate(s.date)} · ${s.startTime}–${s.endTime}`,
       href: "/admin/tyovuorot",
       date: s.date,
@@ -43,12 +47,12 @@ export default function NotificationsPage() {
       id: `chg-${s.id}`,
       tone: "info" as const,
       icon: ICONS.calendar,
-      title: `Vuoro muuttui — ${userById(s.userId)?.name ?? ""}`,
+      title: `Vuoro muuttui — ${users.find((u) => u.id === s.userId)?.name ?? ""}`,
       body: `${s.previousStartTime}–${s.previousEndTime} → ${s.startTime}–${s.endTime}`,
       href: "/admin/tyovuorot",
       date: s.date,
     })),
-    ...OPEN_SHIFTS.map((s) => ({
+    ...openShifts.map((s) => ({
       id: `open-${s.id}`,
       tone: "risk" as const,
       icon: ICONS.alert,

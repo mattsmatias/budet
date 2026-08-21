@@ -1,5 +1,5 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
-import { RECEIPTS, userById } from "@/lib/restoflow/data";
 import {
   filterReceipts,
   searchReceipts,
@@ -29,16 +29,20 @@ const FILTERS: { key: ReceiptFilter; label: string }[] = [
 export default async function AdminReceiptsPage({
   searchParams,
 }: PageProps<"/admin/kuitit">) {
+  const {
+    receipts, users,
+  } = await adminContext("/admin/kuitit");
+
   const params = await searchParams;
   const query = typeof params.haku === "string" ? params.haku : "";
   const filter = (typeof params.suodatin === "string" ? params.suodatin : "all") as ReceiptFilter;
   const highlight = typeof params.korosta === "string" ? params.korosta : null;
 
-  const receipts = sortByDateDesc(
-    filterReceipts(searchReceipts(RECEIPTS, query), filter),
+  const visible = sortByDateDesc(
+    filterReceipts(searchReceipts(receipts, query), filter),
   );
 
-  const total = receipts.reduce((s, r) => s + r.totalCents, 0);
+  const total = visible.reduce((s, r) => s + r.totalCents, 0);
 
   return (
     <div className="rf-enter space-y-5">
@@ -46,7 +50,7 @@ export default async function AdminReceiptsPage({
         <div>
           <h1 className="text-[30px] font-semibold tracking-tight">Kuitit</h1>
           <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-            {receipts.length} kuittia · {formatMoney(total)}
+            {visible.length} kuittia · {formatMoney(total)}
           </p>
         </div>
         <form action="/admin/kuitit" className="flex gap-2">
@@ -108,7 +112,7 @@ export default async function AdminReceiptsPage({
         </ul>
       </nav>
 
-      {receipts.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           title={query ? "Ei osumia" : "Ei kuitteja"}
           description={query ? "Kokeile toista hakusanaa." : "Kuitteja ei ole vielä lisätty."}
@@ -133,8 +137,8 @@ export default async function AdminReceiptsPage({
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                {receipts.map((receipt) => {
-                  const addedBy = userById(receipt.addedByUserId);
+                {visible.map((receipt) => {
+                  const addedBy = users.find((u) => u.id === receipt.addedByUserId);
                   const isHighlighted = receipt.id === highlight;
 
                   return (

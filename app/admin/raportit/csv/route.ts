@@ -4,42 +4,80 @@
  * Puolipiste erottimena ja UTF-8 BOM alkuun: suomalainen Excel avaa
  * tiedoston silloin suoraan oikein. Pilkku erottimena rikkoisi
  * desimaalipilkulliset summat.
+ *
+ * Vienti vaatii kirjautumisen ja reports.export-oikeuden. Ilman
+ * tarkistusta osoitteen arvaaminen antaisi koko kuukauden aineiston.
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
+import { can } from "@/lib/restoflow/permissions";
 import {
-  DEMO_MONTH,
-  STAFF,
-  MONTHLY_HOURS,
-  RECEIPTS,
-  userById,
-} from "@/lib/restoflow/data";
+  fetchBudgets,
+  fetchClockEvents,
+  fetchReceipts,
+  fetchUsers,
+} from "@/lib/restoflow/queries";
+import { monthIn } from "@/lib/restoflow/clock-context";
 import {
   receiptsInMonth,
   sortByDateDesc,
   totalsByCategory,
 } from "@/lib/restoflow/expenses";
-import { staffCostCents } from "@/lib/restoflow/timeclock";
+import { budgetProgress } from "@/lib/restoflow/budgets";
+import { totalsBySupplier } from "@/lib/restoflow/suppliers";
+import { staffCostCents, workedBetween } from "@/lib/restoflow/timeclock";
 import {
-  POSITION_LABELS,  CATEGORY_LABELS,
+  CATEGORY_LABELS,
   PAYMENT_LABELS,
+  POSITION_LABELS,
   REVIEW_REASON_LABELS,
 } from "@/lib/restoflow/types";
 
-type ReportKind = "kulut" | "kategoriat" | "kuitit" | "tyoaika" | "henkilostokulut";
+type ReportKind =
+  | "kulut"
+  | "kategoriat"
+  | "kuitit"
+  | "toimittajat"
+  | "budjetit"
+  | "tyoaika"
+  | "henkilostokulut";
 
 const KINDS: ReportKind[] = [
   "kulut",
   "kategoriat",
   "kuitit",
+  "toimittajat",
+  "budjetit",
   "tyoaika",
   "henkilostokulut",
 ];
 
 export async function GET(request: NextRequest) {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Kirjautuminen vaaditaan." }, { status: 401 });
+  }
+
+  const restaurant = await getActiveRestaurant();
+  if (!restaurant) {
+    return NextResponse.json({ error: "Ravintolaa ei löytynyt." }, { status: 404 });
+  }
+
+  if (!can(restaurant.role, "reports.export")) {
+    return NextResponse.json(
+      { error: "Sinulla ei ole oikeutta viedä raportteja." },
+      { status: 403 },
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const kind = searchParams.get("tyyppi") as ReportKind | null;
-  const month = searchParams.get("kuukausi") ?? DEMO_MONTH;
+  const requested = searchParams.get("kuukausi");
+  const month =
+    requested && /^\d{4}-\d{2}$/.test(requested)
+      ? requested
+      : monthIn(restaurant.timezone);
 
   if (!kind || !KINDS.includes(kind)) {
     return NextResponse.json(
@@ -48,7 +86,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const rows = buildRows(kind, month);
+  const rows = await buildRows(kind, restaurant.id, month, restaurant.role);
   const csv = "﻿" + rows.map((r) => r.map(escapeCell).join(";")).join("\r\n");
 
   return new NextResponse(csv, {
@@ -60,11 +98,90 @@ export async function GET(request: NextRequest) {
   });
 }
 
-function buildRows(kind: ReportKind, month: string): string[][] {
-  const inMonth = sortByDateDesc(receiptsInMonth(RECEIPTS, month));
+async function buildRows(
+  kind: ReportKind,
+  restaurantId: string,
+  month: string,
+  role: Parameters<typeof can>[0],
+): Promise<string[][]> {
+  // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
+  const showsRates = can(role, "staff.rates.view");
+
+  if (kind === "tyoaika" || kind === "henkilostokulut") {
+    const [users, events] = await Promise.all([
+      fetchUsers(restaurantId),
+      fetchClockEvents(restaurantId, `${month}-01T00:00:00.000Z`),
+    ]);
+
+    const now = new Date().toISOString();
+    const [year, m] = month.split("-").map(Number);
+    const lastDay = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
+
+    const rows = users.map((u) => {
+      const worked = workedBetween(
+        events.filter((e) => e.userId === u.id),
+        `${month}-01`,
+        lastDay,
+        now,
+      );
+      const hours = Math.round((worked.workedMs / 3600000) * 100) / 100;
+      return {
+        user: u,
+        hours,
+        cost: staffCostCents(worked.workedMs, u.hourlyRateCents ?? 0),
+      };
+    });
+
+    if (kind === "tyoaika") {
+      return [
+        ["Työntekijä", "Tehtävä", "Tunnit"],
+        ...rows.map((r) => [
+          r.user.name,
+          r.user.position ? POSITION_LABELS[r.user.position] : "—",
+          money(Math.round(r.hours * 100)),
+        ]),
+        [],
+        ["Yhteensä", "", money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100))],
+      ];
+    }
+
+    if (!showsRates) {
+      return [
+        ["RestoFlow — henkilöstökuluraportti"],
+        ["Huom", "Roolisi ei salli tuntipalkkojen tarkastelua"],
+      ];
+    }
+
+    return [
+      ["RestoFlow — henkilöstökuluraportti"],
+      ["Kuukausi", month],
+      ["Huom", "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja"],
+      [],
+      ["Työntekijä", "Tehtävä", "Tunnit", "Tuntipalkka", "Kulu"],
+      ...rows.map((r) => [
+        r.user.name,
+        r.user.position ? POSITION_LABELS[r.user.position] : "—",
+        money(Math.round(r.hours * 100)),
+        money(r.user.hourlyRateCents ?? 0),
+        money(r.cost),
+      ]),
+      [],
+      [
+        "Yhteensä",
+        "",
+        money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
+        "",
+        money(rows.reduce((s, r) => s + r.cost, 0)),
+      ],
+    ];
+  }
+
+  const receipts = await fetchReceipts(restaurantId);
+  const inMonth = sortByDateDesc(receiptsInMonth(receipts, month));
 
   switch (kind) {
-    case "kuitit":
+    case "kuitit": {
+      const users = await fetchUsers(restaurantId);
       return [
         ["Päivä", "Toimittaja", "Kategoria", "Maksutapa", "Kuittinumero", "Netto", "ALV", "Yhteensä", "Tila", "Syyt", "Lisännyt"],
         ...inMonth.map((r) => [
@@ -78,12 +195,14 @@ function buildRows(kind: ReportKind, month: string): string[][] {
           money(r.totalCents),
           r.status === "needs_review" ? "Tarkistettava" : "Tarkistettu",
           r.reviewReasons.map((x) => REVIEW_REASON_LABELS[x]).join(", "),
-          userById(r.addedByUserId)?.name ?? "",
+          users.find((u) => u.id === r.addedByUserId)?.name ?? "",
         ]),
       ];
+    }
 
     case "kategoriat": {
       const totals = totalsByCategory(inMonth);
+      const grand = inMonth.reduce((s, r) => s + r.totalCents, 0);
       return [
         ["Kategoria", "Kuitteja", "Osuus", "Yhteensä"],
         ...totals.map((t) => [
@@ -93,7 +212,37 @@ function buildRows(kind: ReportKind, month: string): string[][] {
           money(t.totalCents),
         ]),
         [],
-        ["Yhteensä", String(inMonth.length), "100 %", money(inMonth.reduce((s, r) => s + r.totalCents, 0))],
+        ["Yhteensä", String(inMonth.length), "100 %", money(grand)],
+      ];
+    }
+
+    case "toimittajat": {
+      const totals = totalsBySupplier(inMonth);
+      return [
+        ["Toimittaja", "Kuitteja", "Keskiarvo", "Osuus", "Yhteensä"],
+        ...totals.map((t) => [
+          t.name,
+          String(t.receiptCount),
+          money(t.averageCents),
+          `${Math.round(t.share * 100)} %`,
+          money(t.totalCents),
+        ]),
+      ];
+    }
+
+    case "budjetit": {
+      const budgets = await fetchBudgets(restaurantId);
+      const progress = budgetProgress(receipts, budgets, month);
+      return [
+        ["Kategoria", "Budjetti", "Käytetty", "Jäljellä", "Osuus", "Tila"],
+        ...progress.map((p) => [
+          CATEGORY_LABELS[p.category],
+          p.budgetCents === null ? "" : money(p.budgetCents),
+          money(p.spentCents),
+          p.remainingCents === null ? "" : money(p.remainingCents),
+          p.ratio === null ? "" : `${Math.round(p.ratio * 100)} %`,
+          STATUS_LABELS[p.status],
+        ]),
       ];
     }
 
@@ -120,54 +269,17 @@ function buildRows(kind: ReportKind, month: string): string[][] {
         ["Tarkistettavia", String(inMonth.filter((r) => r.status === "needs_review").length), ""],
       ];
     }
-
-    case "tyoaika":
-      return [
-        ["Työntekijä", "Rooli", "Tunnit"],
-        ...STAFF.map((e) => [
-          e.name,
-          e.position ? POSITION_LABELS[e.position] : "—",
-          String(MONTHLY_HOURS[e.id] ?? 0),
-        ]),
-        [],
-        ["Yhteensä", "", String(Object.values(MONTHLY_HOURS).reduce((s, h) => s + h, 0))],
-      ];
-
-    case "henkilostokulut": {
-      const rows = STAFF.map((e) => {
-        const hours = MONTHLY_HOURS[e.id] ?? 0;
-        return {
-          e,
-          hours,
-          cost: staffCostCents(hours * 3600000, e.hourlyRateCents ?? 0),
-        };
-      });
-
-      return [
-        ["RestoFlow — henkilöstökuluraportti"],
-        ["Kuukausi", month],
-        ["Huom", "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja"],
-        [],
-        ["Työntekijä", "Rooli", "Tunnit", "Tuntipalkka", "Kulu"],
-        ...rows.map(({ e, hours, cost }) => [
-          e.name,
-          e.position ? POSITION_LABELS[e.position] : "—",
-          String(hours),
-          money(e.hourlyRateCents ?? 0),
-          money(cost),
-        ]),
-        [],
-        [
-          "Yhteensä",
-          "",
-          String(rows.reduce((s, r) => s + r.hours, 0)),
-          "",
-          money(rows.reduce((s, r) => s + r.cost, 0)),
-        ],
-      ];
-    }
   }
+
+  return [];
 }
+
+const STATUS_LABELS: Record<string, string> = {
+  ok: "OK",
+  warning: "Lähestyy rajaa",
+  exceeded: "Ylitetty",
+  none: "Ei budjettia",
+};
 
 /** Sentit euroiksi desimaalipilkulla, ilman valuuttamerkkiä. */
 function money(cents: number): string {

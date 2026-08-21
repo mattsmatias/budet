@@ -1,41 +1,48 @@
 import Link from "next/link";
-import { CURRENT_USER_ID, DEMO_TODAY, shiftsFor } from "@/lib/restoflow/data";
+import { employeeContext } from "@/lib/restoflow/page-context";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
-import { Card, Icon, ICONS, Pill, SectionLabel } from "@/components/restoflow/ui";
+import { RfIcon, ShiftStatusIcon } from "@/components/restoflow/icons";
+import { Card, EmptyState, Pill, SectionLabel } from "@/components/restoflow/ui";
+import { ShiftResponse } from "./respond";
 
 export const metadata = { title: "Työvuorot" };
 
-const MONTH = "2026-08";
 const WEEKDAYS = ["ma", "ti", "ke", "to", "pe", "la", "su"];
 
-export default async function ShiftsPage({
-  searchParams,
-}: PageProps<"/app/vuorot">) {
+export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuorot">) {
   const params = await searchParams;
-  const selected = typeof params.paiva === "string" ? params.paiva : DEMO_TODAY;
+  const { shifts, today, month } = await employeeContext("/app/vuorot");
 
-  const shifts = shiftsFor(CURRENT_USER_ID);
+  const selected =
+    typeof params.paiva === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.paiva)
+      ? params.paiva
+      : today;
+
+  const viewMonth = selected.slice(0, 7);
   const byDate = new Map(shifts.map((s) => [s.date, s]));
 
   const selectedShift = byDate.get(selected);
-  const upcoming = shifts.filter((s) => s.date > DEMO_TODAY).slice(0, 4);
-  const changed = shifts.filter((s) => s.status === "changed");
+  const upcoming = shifts.filter((s) => s.date > today).slice(0, 5);
+  const changed = shifts.filter((s) => s.status === "changed" && s.date >= today);
+  const pending = shifts.filter((s) => s.status === "pending" && s.date >= today);
 
   return (
     <div className="rf-enter space-y-5">
       <header className="px-1 pt-2">
         <h1 className="text-[28px] font-semibold tracking-tight">Työvuorot</h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-          Elokuu 2026 · {shifts.length} vuoroa
+          {shifts.length === 0
+            ? "Ei vuoroja"
+            : `${shifts.length} vuoroa · ${pending.length} odottaa vastausta`}
         </p>
       </header>
 
-      {/* Muutosilmoitus ensin: se on ainoa asia joka vaatii huomiota. */}
+      {/* Muutokset ensin: ne ovat ainoa asia joka vaatii huomiota heti. */}
       {changed.map((shift) => (
         <Card key={shift.id}>
           <div className="flex items-start gap-3">
             <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-blue)" }}>
-              <Icon path={ICONS.alert} size={20} />
+              <RfIcon name="alert" size={20} />
             </span>
             <div className="min-w-0">
               <p className="text-[15px] font-semibold">Työvuoro muuttui</p>
@@ -58,140 +65,161 @@ export default async function ShiftsPage({
         </Card>
       ))}
 
-      {/* Kalenteri */}
-      <Card>
-        <div
-          className="mb-3 grid grid-cols-7 text-center text-[11px] font-medium uppercase"
-          style={{ color: "var(--rf-text-3)" }}
-        >
-          {WEEKDAYS.map((d) => (
-            <div key={d}>{d}</div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-y-1">
-          {buildMonthGrid(MONTH).map((cell, i) => {
-            if (!cell) return <div key={`e${i}`} />;
-
-            const shift = byDate.get(cell);
-            const isSelected = cell === selected;
-            const isToday = cell === DEMO_TODAY;
-            const day = Number(cell.slice(8));
-
-            return (
-              <div key={cell} className="flex justify-center">
-                <Link
-                  href={`/app/vuorot?paiva=${cell}`}
-                  aria-current={isSelected ? "date" : undefined}
-                  aria-label={`${day}. elokuuta${shift ? `, työvuoro ${shift.startTime}–${shift.endTime}` : ""}`}
-                  className="rf-press relative flex h-10 w-10 flex-col items-center justify-center"
-                  style={{
-                    background: isSelected ? "var(--rf-text)" : "transparent",
-                    color: isSelected
-                      ? "#fff"
-                      : isToday
-                        ? "var(--rf-blue)"
-                        : "var(--rf-text)",
-                    borderRadius: "50%",
-                    fontWeight: isToday || isSelected ? 600 : 400,
-                  }}
-                >
-                  <span className="rf-tabular text-[15px]">{day}</span>
-                  {shift ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute bottom-1 h-1 w-1 rounded-full"
-                      style={{
-                        background: isSelected
-                          ? "#fff"
-                          : shift.status === "accepted"
-                            ? "var(--rf-green)"
-                            : shift.status === "changed"
-                              ? "var(--rf-blue)"
-                              : "var(--rf-amber)",
-                      }}
-                    />
-                  ) : null}
-                </Link>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Valittu päivä */}
-      <section>
-        <SectionLabel>{formatLongDate(selected)}</SectionLabel>
-        {selectedShift ? (
-          <ShiftCard shift={selectedShift} />
-        ) : (
+      {shifts.length === 0 ? (
+        <EmptyState
+          title="Ei työvuoroja"
+          description="Esihenkilö lisää vuorot hallintanäkymässä. Saat ilmoituksen kun sinulle merkitään vuoro."
+        />
+      ) : (
+        <>
           <Card>
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Ei työvuoroa tänä päivänä.
-            </p>
-          </Card>
-        )}
-      </section>
-
-      {/* Tulevat */}
-      {upcoming.length > 0 ? (
-        <section>
-          <SectionLabel>Tulevat työvuorot</SectionLabel>
-          <Card padded={false}>
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-              {upcoming.map((shift) => (
-                <li key={shift.id}>
-                  <Link
-                    href={`/app/vuorot?paiva=${shift.date}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3.5"
-                  >
-                    <div>
-                      <p className="rf-tabular text-[15px] font-medium">
-                        {shift.startTime}–{shift.endTime}
-                      </p>
-                      <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                        {formatShortDate(shift.date)} · {shift.location}
-                      </p>
-                    </div>
-                    <StatusPill status={shift.status} />
-                  </Link>
-                </li>
+            <div
+              className="mb-3 grid grid-cols-7 text-center text-[11px] font-medium uppercase"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              {WEEKDAYS.map((d) => (
+                <div key={d}>{d}</div>
               ))}
-            </ul>
+            </div>
+
+            <div className="grid grid-cols-7 gap-y-1">
+              {buildMonthGrid(viewMonth).map((cell, i) => {
+                if (!cell) return <div key={`e${i}`} />;
+
+                const shift = byDate.get(cell);
+                const isSelected = cell === selected;
+                const isToday = cell === today;
+                const day = Number(cell.slice(8));
+
+                return (
+                  <div key={cell} className="flex justify-center">
+                    <Link
+                      href={`/app/vuorot?paiva=${cell}`}
+                      aria-current={isSelected ? "date" : undefined}
+                      aria-label={`${day}.${Number(cell.slice(5, 7))}.${shift ? `, vuoro ${shift.startTime}–${shift.endTime}` : ""}`}
+                      className="rf-press relative flex h-10 w-10 flex-col items-center justify-center"
+                      style={{
+                        background: isSelected ? "var(--rf-text)" : "transparent",
+                        color: isSelected
+                          ? "#fff"
+                          : isToday
+                            ? "var(--rf-blue)"
+                            : "var(--rf-text)",
+                        borderRadius: "50%",
+                        fontWeight: isToday || isSelected ? 600 : 400,
+                      }}
+                    >
+                      <span className="rf-tabular text-[15px]">{day}</span>
+                      {shift ? (
+                        <span
+                          aria-hidden="true"
+                          className="absolute bottom-1 h-1 w-1 rounded-full"
+                          style={{ background: isSelected ? "#fff" : dotColor(shift.status) }}
+                        />
+                      ) : null}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
           </Card>
-        </section>
-      ) : null}
+
+          <section>
+            <SectionLabel>{formatLongDate(selected)}</SectionLabel>
+            {selectedShift ? (
+              <Card>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="rf-tabular text-[26px] font-semibold leading-none">
+                      {selectedShift.startTime}–{selectedShift.endTime}
+                    </p>
+                    {selectedShift.location ? (
+                      <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                        {selectedShift.location}
+                      </p>
+                    ) : null}
+                  </div>
+                  <StatusPill status={selectedShift.status} />
+                </div>
+
+                {selectedShift.status === "pending" ? (
+                  <ShiftResponse shiftId={selectedShift.id} />
+                ) : null}
+              </Card>
+            ) : (
+              <Card>
+                <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                  Ei työvuoroa tänä päivänä.
+                </p>
+              </Card>
+            )}
+          </section>
+
+          {upcoming.length > 0 ? (
+            <section>
+              <SectionLabel>Tulevat työvuorot</SectionLabel>
+              <Card padded={false}>
+                <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                  {upcoming.map((shift) => (
+                    <li key={shift.id}>
+                      <Link
+                        href={`/app/vuorot?paiva=${shift.date}`}
+                        className="flex items-center justify-between gap-3 px-5 py-3.5"
+                      >
+                        <div>
+                          <p className="rf-tabular text-[15px] font-medium">
+                            {shift.startTime}–{shift.endTime}
+                          </p>
+                          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                            {formatShortDate(shift.date)}
+                            {shift.location ? ` · ${shift.location}` : ""}
+                          </p>
+                        </div>
+                        <StatusPill status={shift.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          ) : null}
+        </>
+      )}
+
+      <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        {month === viewMonth ? "Kuluva kuukausi" : "Toinen kuukausi"} · aikavyöhyke
+        ravintolan mukaan
+      </p>
     </div>
   );
 }
 
-function ShiftCard({ shift }: { shift: Shift }) {
-  return (
-    <Card>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="rf-tabular text-[26px] font-semibold leading-none">
-            {shift.startTime}–{shift.endTime}
-          </p>
-          <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-            {shift.location}
-          </p>
-        </div>
-        <StatusPill status={shift.status} />
-      </div>
-    </Card>
-  );
-}
-
 function StatusPill({ status }: { status: Shift["status"] }) {
+  const tone =
+    status === "accepted"
+      ? "ok"
+      : status === "changed"
+        ? "info"
+        : status === "declined"
+          ? "risk"
+          : "warn";
+
   return (
-    <Pill
-      tone={status === "accepted" ? "ok" : status === "changed" ? "info" : "warn"}
-      dot
-    >
+    <Pill tone={tone}>
+      <ShiftStatusIcon status={status} size={13} />
       {SHIFT_STATUS_LABELS[status]}
     </Pill>
   );
+}
+
+function dotColor(status: Shift["status"]): string {
+  return status === "accepted"
+    ? "var(--rf-green)"
+    : status === "changed"
+      ? "var(--rf-blue)"
+      : status === "declined"
+        ? "var(--rf-red)"
+        : "var(--rf-amber)";
 }
 
 /** Kuukausiruudukko maanantaista alkaen. Tyhjät solut ovat null. */

@@ -1,7 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { saveReceipt, type ActionState } from "../../actions";
 import {
   receiptExtractor,
   reviewReasonsFor,
@@ -16,24 +19,34 @@ import {
   type PaymentMethod,
 } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
-import { Card, Icon, ICONS, Pill } from "@/components/restoflow/ui";
+import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
+import { Card, Pill } from "@/components/restoflow/ui";
 
 type Phase = "choose" | "analyzing" | "review" | "saved";
+
+const initial: ActionState = {};
 
 /**
  * Kuitin lisäys.
  *
- * Poiminta EI koskaan tallenna suoraan. Käyttäjä näkee tunnistetut tiedot,
+ * Poiminta ei koskaan tallenna suoraan. Käyttäjä näkee tunnistetut tiedot,
  * epävarmat kentät on merkitty, ja jokainen kenttä on muokattavissa ennen
- * tallennusta. Tämä on koko ominaisuuden ydin: kone ehdottaa, ihminen
- * vahvistaa.
+ * tallennusta. Kone ehdottaa, ihminen vahvistaa.
+ *
+ * Kuva ladataan selaimesta suoraan tallennukseen: server actionin kautta se
+ * kulkisi turhaan palvelimen muistin läpi, ja isot kuvat kaatuisivat
+ * pyyntökokorajaan.
  */
-export function CaptureFlow() {
+export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
-  const [fileName, setFileName] = useState<string>("");
+  const [fileName, setFileName] = useState("");
+  const [imagePath, setImagePath] = useState<string | null>(null);
+  const [fileHash, setFileHash] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Muokattavat arvot. Alustetaan poiminnasta, mutta käyttäjä on viimeinen sana.
+  const [state, action] = useActionState(saveReceipt, initial);
+
   const [supplier, setSupplier] = useState("");
   const [date, setDate] = useState("");
   const [totalEuros, setTotalEuros] = useState("");
@@ -42,43 +55,47 @@ export function CaptureFlow() {
   const [payment, setPayment] = useState<PaymentMethod>("unknown");
   const [note, setNote] = useState("");
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File | undefined) {
-    const name = file?.name ?? "kuitti.jpg";
-    setFileName(name);
+    if (!file) return;
+
+    setFileName(file.name);
+    setUploadError(null);
     setPhase("analyzing");
 
-    // Analyysin kesto on tarkoituksellinen: poiminta on demossa
-    // välitön, mutta ilman näkyvää vaihetta käyttäjä ei ymmärrä mitä
-    // tapahtui eikä ehdi lukea että tiedot pitää tarkistaa.
+    // Tiiviste ennen latausta: sama tiedosto tunnistetaan silloinkin kun
+    // se on nimetty uudelleen.
+    const hash = await sha256(file);
+    setFileHash(hash);
+
     const [extraction] = await Promise.all([
       receiptExtractor.extract({
-        fileName: name,
-        mimeType: file?.type ?? "image/jpeg",
-        sizeBytes: file?.size ?? 0,
+        fileName: file.name,
+        mimeType: file.type || "image/jpeg",
+        sizeBytes: file.size,
+        hash,
       }),
-      new Promise((resolve) => setTimeout(resolve, 2200)),
+      uploadImage(file, restaurantId, hash)
+        .then(setImagePath)
+        .catch((e: Error) => setUploadError(e.message)),
+      // Näkyvä vaihe: ilman sitä käyttäjä ei ymmärrä mitä tapahtui eikä
+      // ehdi lukea että tiedot pitää tarkistaa.
+      new Promise((resolve) => setTimeout(resolve, 1600)),
     ]);
 
     setResult(extraction);
     setSupplier(extraction.supplier.value ?? "");
     setDate(extraction.date.value ?? new Date().toISOString().slice(0, 10));
-    setTotalEuros(
-      extraction.totalCents.value === null
-        ? ""
-        : (extraction.totalCents.value / 100).toFixed(2).replace(".", ","),
-    );
-    setVatEuros(
-      extraction.vatCents.value === null
-        ? ""
-        : (extraction.vatCents.value / 100).toFixed(2).replace(".", ","),
-    );
+    setTotalEuros(toEuros(extraction.totalCents.value));
+    setVatEuros(toEuros(extraction.vatCents.value));
     setCategory(extraction.category.value ?? "");
     setPayment(extraction.paymentMethod.value ?? "unknown");
     setPhase("review");
   }
+
+  if (state.notice && phase !== "saved") setPhase("saved");
 
   if (phase === "choose") {
     return (
@@ -92,7 +109,7 @@ export function CaptureFlow() {
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
         <input
-          ref={inputRef}
+          ref={fileRef}
           type="file"
           accept="image/*,application/pdf"
           className="sr-only"
@@ -110,71 +127,37 @@ export function CaptureFlow() {
             boxShadow: "0 4px 20px rgba(0,113,227,0.28)",
           }}
         >
-          <Icon path={ICONS.camera} size={38} />
+          <RfIcon name="camera" size={38} />
           <span className="text-[17px] font-semibold">Kuvaa kuitti</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="rf-press flex w-full items-center gap-3 px-5 py-4"
-          style={{
-            background: "var(--rf-card)",
-            borderRadius: "var(--rf-r-control)",
-            boxShadow: "var(--rf-shadow-sm)",
-          }}
-        >
-          <span style={{ color: "var(--rf-text-2)" }}>
-            <Icon path={ICONS.image} size={22} />
-          </span>
-          <span className="text-[15px] font-medium">Valitse kuva</span>
-        </button>
+        <ChooseButton icon="image" label="Valitse kuva" onClick={() => fileRef.current?.click()} />
+        <ChooseButton icon="file" label="Lataa tiedosto" onClick={() => fileRef.current?.click()} />
 
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="rf-press flex w-full items-center gap-3 px-5 py-4"
-          style={{
-            background: "var(--rf-card)",
-            borderRadius: "var(--rf-r-control)",
-            boxShadow: "var(--rf-shadow-sm)",
-          }}
-        >
-          <span style={{ color: "var(--rf-text-2)" }}>
-            <Icon path={ICONS.file} size={22} />
-          </span>
-          <span className="text-[15px] font-medium">Lataa tiedosto</span>
-        </button>
-
-        <p
-          className="px-1 pt-2 text-[12px] leading-relaxed"
-          style={{ color: "var(--rf-text-3)" }}
-        >
-          Demossa poiminta on paikallinen jäljitelmä, ei oikea tekoäly.
-          Tiedostonimi ratkaisee tuloksen — kokeile nimeä joka sisältää{" "}
-          <strong>metro</strong>, <strong>kespro</strong>, <strong>wolt</strong>{" "}
-          tai <strong>juoma</strong>. Muut nimet tuottavat tarkoituksella
-          epävarman tuloksen.
+        <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Poiminta on tässä versiossa paikallinen jäljitelmä, ei oikea
+          tekoäly — tiedostonimi ratkaisee tuloksen. Kuva tallentuu oikeasti,
+          ja kaikki kentät ovat muokattavissa ennen tallennusta.
         </p>
       </div>
     );
   }
 
-  if (phase === "analyzing") {
-    return <Analyzing fileName={fileName} />;
-  }
-
-  if (phase === "saved") {
-    return <Saved />;
-  }
-
+  if (phase === "analyzing") return <Analyzing fileName={fileName} />;
+  if (phase === "saved") return <Saved receiptId={state.receiptId} />;
   if (!result) return null;
 
   const uncertain = new Set(uncertainFields(result));
   const reasons = reviewReasonsFor(result);
+  const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
   return (
-    <div className="rf-enter space-y-4">
+    <form action={action} className="rf-enter space-y-4">
+      <input type="hidden" name="imagePath" value={imagePath ?? ""} />
+      <input type="hidden" name="imageQuality" value={result.imageQuality} />
+      <input type="hidden" name="fileHash" value={fileHash ?? ""} />
+      <input type="hidden" name="items" value={JSON.stringify(result.items)} />
+
       <div
         className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
         style={{
@@ -184,7 +167,7 @@ export function CaptureFlow() {
         }}
       >
         <span aria-hidden="true" className="mt-0.5 shrink-0">
-          <Icon path={reasons.length > 0 ? ICONS.alert : ICONS.check} size={16} />
+          <RfIcon name={reasons.length > 0 ? "alert" : "check"} size={16} />
         </span>
         <p>
           {reasons.length > 0
@@ -193,24 +176,41 @@ export function CaptureFlow() {
         </p>
       </div>
 
+      {uploadError ? (
+        <p
+          className="px-4 py-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-amber-bg)",
+            color: "var(--rf-amber-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          Kuvan tallennus ei onnistunut ({uploadError}). Kuitin tiedot voi silti
+          tallentaa — kuva puuttuu.
+        </p>
+      ) : null}
+
       <Card>
-        <Field
+        <TextField
           label="Toimittaja"
+          name="supplier"
           value={supplier}
           onChange={setSupplier}
           uncertain={uncertain.has("supplier")}
           hint={result.supplier.hint}
         />
-        <Field
+        <TextField
           label="Päivämäärä"
+          name="date"
+          type="date"
           value={date}
           onChange={setDate}
-          type="date"
           uncertain={uncertain.has("date")}
           hint={result.date.hint}
         />
-        <Field
+        <TextField
           label="Yhteensä"
+          name="total"
           value={totalEuros}
           onChange={setTotalEuros}
           suffix="€"
@@ -218,8 +218,9 @@ export function CaptureFlow() {
           uncertain={uncertain.has("totalCents")}
           hint={result.totalCents.hint}
         />
-        <Field
+        <TextField
           label="ALV"
+          name="vat"
           value={vatEuros}
           onChange={setVatEuros}
           suffix="€"
@@ -230,22 +231,22 @@ export function CaptureFlow() {
 
         <SelectField
           label="Kategoria"
+          name="category"
           value={category}
           onChange={(v) => setCategory(v as ExpenseCategory)}
           uncertain={uncertain.has("category")}
           hint={result.category.hint}
-          options={[
-            ["", "Valitse…"],
-            ...Object.entries(CATEGORY_LABELS),
-          ]}
+          options={[["", "Valitse…"], ...Object.entries(CATEGORY_LABELS)]}
         />
         <SelectField
           label="Maksutapa"
+          name="payment"
           value={payment}
           onChange={(v) => setPayment(v as PaymentMethod)}
+          uncertain={uncertain.has("paymentMethod")}
           options={Object.entries(PAYMENT_LABELS)}
         />
-        <Field label="Muistiinpano" value={note} onChange={setNote} last />
+        <TextField label="Muistiinpano" name="note" value={note} onChange={setNote} last />
       </Card>
 
       {result.items.length > 0 ? (
@@ -253,11 +254,21 @@ export function CaptureFlow() {
           <p className="mb-3 text-[13px] font-semibold">
             Tunnistetut rivit ({result.items.length})
           </p>
-          <ul className="space-y-2">
-            {result.items.map((line, i) => (
-              <li key={i} className="flex justify-between gap-4 text-[14px]">
-                <span style={{ color: "var(--rf-text-2)" }}>{line.description}</span>
-                <span className="rf-tabular shrink-0">{formatMoney(line.totalCents)}</span>
+          <ul className="space-y-2.5">
+            {result.items.map((item, i) => (
+              <li key={i} className="flex items-start justify-between gap-3 text-[14px]">
+                <span className="flex min-w-0 items-start gap-2">
+                  <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <CategoryIcon category={item.category} size={15} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block">{item.description}</span>
+                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {CATEGORY_LABELS[item.category]}
+                    </span>
+                  </span>
+                </span>
+                <span className="rf-tabular shrink-0">{formatMoney(item.totalCents)}</span>
               </li>
             ))}
           </ul>
@@ -274,30 +285,98 @@ export function CaptureFlow() {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setPhase("saved")}
-        disabled={!supplier || !totalEuros || !category}
-        className="rf-press w-full py-3.5 text-[16px] font-semibold disabled:opacity-40"
-        style={{
-          background: "var(--rf-text)",
-          color: "#fff",
-          borderRadius: "var(--rf-r-control)",
-        }}
-      >
-        Tallenna kuitti
-      </button>
+      {state.error ? (
+        <p
+          role="alert"
+          className="px-4 py-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-red-bg)",
+            color: "var(--rf-red-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {state.error}
+        </p>
+      ) : null}
 
-      {!supplier || !totalEuros || !category ? (
+      <SaveButton disabled={!ready} />
+
+      {!ready ? (
         <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
           Toimittaja, summa ja kategoria vaaditaan.
         </p>
       ) : null}
-    </div>
+    </form>
   );
 }
 
 // ---------------------------------------------------------------------------
+
+/**
+ * Lataa kuvan tallennukseen.
+ *
+ * Polku alkaa ravintolan tunnisteella, koska tallennuksen politiikka lukee
+ * pääsyn juuri siitä. Tiedostonimenä tiiviste: sama kuva ei vie tilaa
+ * kahdesti eikä nimestä voi päätellä sisältöä.
+ */
+async function uploadImage(
+  file: File,
+  restaurantId: string,
+  hash: string,
+): Promise<string> {
+  const supabase = createClient();
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const path = `${restaurantId}/${hash}.${extension}`;
+
+  const { error } = await supabase.storage
+    .from("receipts")
+    .upload(path, file, { upsert: true, contentType: file.type || undefined });
+
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+async function sha256(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function toEuros(cents: number | null): string {
+  return cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
+}
+
+// ---------------------------------------------------------------------------
+
+function ChooseButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: "image" | "file";
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rf-press flex w-full items-center gap-3 px-5 py-4"
+      style={{
+        background: "var(--rf-card)",
+        borderRadius: "var(--rf-r-control)",
+        boxShadow: "var(--rf-shadow-sm)",
+      }}
+    >
+      <span style={{ color: "var(--rf-text-2)" }}>
+        <RfIcon name={icon} size={22} />
+      </span>
+      <span className="text-[15px] font-medium">{label}</span>
+    </button>
+  );
+}
 
 function Analyzing({ fileName }: { fileName: string }) {
   return (
@@ -310,11 +389,11 @@ function Analyzing({ fileName }: { fileName: string }) {
           borderRadius: "24px",
         }}
       >
-        <Icon path={ICONS.receipt} size={34} />
+        <RfIcon name="receipt" size={34} />
       </div>
 
       <p className="mt-6 text-[17px] font-semibold">Analysoidaan kuittia…</p>
-      <p className="mt-1 max-w-[16rem] text-center text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+      <p className="mt-1 max-w-[16rem] break-all text-center text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {fileName}
       </p>
 
@@ -325,16 +404,16 @@ function Analyzing({ fileName }: { fileName: string }) {
         aria-label="Kuittia analysoidaan"
       />
 
-      <ul className="mt-8 space-y-2 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+      <ul className="mt-8 space-y-2 text-center text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+        <li>Tallennetaan kuva</li>
         <li>Luetaan toimittaja ja päivämäärä</li>
         <li>Etsitään loppusumma ja ALV</li>
-        <li>Päätellään kategoria</li>
       </ul>
     </div>
   );
 }
 
-function Saved() {
+function Saved({ receiptId }: { receiptId?: string }) {
   return (
     <div className="rf-enter flex flex-col items-center justify-center py-20">
       <div
@@ -358,30 +437,61 @@ function Saved() {
         className="mt-2 max-w-[18rem] text-center text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Tässä demossa kuittia ei tallenneta pysyvästi — tietokantayhteys ei ole
-        vielä kytketty. Oikeassa sovelluksessa se näkyisi nyt listassa ja
-        managerin kulunäkymässä.
+        Se näkyy nyt kuittilistassa ja managerin kulunäkymässä.
       </p>
 
-      <Link
-        href="/app/kuitit"
-        className="rf-press mt-7 px-5 py-3 text-[15px] font-semibold"
-        style={{
-          background: "var(--rf-inset)",
-          color: "var(--rf-text)",
-          borderRadius: "var(--rf-r-control)",
-        }}
-      >
-        Takaisin kuitteihin
-      </Link>
+      <div className="mt-7 flex gap-2.5">
+        {receiptId ? (
+          <Link
+            href={`/app/kuitit/${receiptId}`}
+            className="rf-press px-5 py-3 text-[15px] font-semibold"
+            style={{
+              background: "var(--rf-text)",
+              color: "#fff",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            Avaa kuitti
+          </Link>
+        ) : null}
+        <Link
+          href="/app/kuitit"
+          className="rf-press px-5 py-3 text-[15px] font-semibold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          Kaikki kuitit
+        </Link>
+      </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
+function SaveButton({ disabled }: { disabled: boolean }) {
+  const { pending } = useFormStatus();
 
-function Field({
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className="rf-press w-full py-3.5 text-[16px] font-semibold disabled:opacity-40"
+      style={{
+        background: "var(--rf-text)",
+        color: "#fff",
+        borderRadius: "var(--rf-r-control)",
+      }}
+    >
+      {pending ? "Tallennetaan…" : "Tallenna kuitti"}
+    </button>
+  );
+}
+
+function TextField({
   label,
+  name,
   value,
   onChange,
   type = "text",
@@ -392,6 +502,7 @@ function Field({
   last,
 }: {
   label: string;
+  name: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
@@ -401,12 +512,10 @@ function Field({
   hint?: string;
   last?: boolean;
 }) {
-  const id = `f-${label}`;
+  const id = `f-${name}`;
+
   return (
-    <div
-      className={last ? "py-3" : "border-b py-3"}
-      style={{ borderColor: "var(--rf-line)" }}
-    >
+    <div className={last ? "py-3" : "border-b py-3"} style={{ borderColor: "var(--rf-line)" }}>
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={id} className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {label}
@@ -416,12 +525,12 @@ function Field({
       <div className="mt-1 flex items-baseline gap-1.5">
         <input
           id={id}
+          name={name}
           type={type}
           inputMode={inputMode}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-transparent text-[17px] font-medium outline-none"
-          style={{ color: "var(--rf-text)" }}
         />
         {suffix ? <span className="text-[17px] font-medium">{suffix}</span> : null}
       </div>
@@ -436,6 +545,7 @@ function Field({
 
 function SelectField({
   label,
+  name,
   value,
   onChange,
   options,
@@ -443,13 +553,15 @@ function SelectField({
   hint,
 }: {
   label: string;
+  name: string;
   value: string;
   onChange: (v: string) => void;
   options: [string, string][];
   uncertain?: boolean;
   hint?: string;
 }) {
-  const id = `s-${label}`;
+  const id = `s-${name}`;
+
   return (
     <div className="border-b py-3" style={{ borderColor: "var(--rf-line)" }}>
       <div className="flex items-center justify-between gap-3">
@@ -460,10 +572,10 @@ function SelectField({
       </div>
       <select
         id={id}
+        name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full bg-transparent text-[17px] font-medium outline-none"
-        style={{ color: "var(--rf-text)" }}
       >
         {options.map(([v, l]) => (
           <option key={v} value={v}>
@@ -479,4 +591,3 @@ function SelectField({
     </div>
   );
 }
-

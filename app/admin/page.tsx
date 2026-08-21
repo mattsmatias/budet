@@ -1,15 +1,5 @@
 import Link from "next/link";
-import {
-  BUDGETS,
-  CLOCK_EVENTS,
-  DEMO_MONTH,
-  DEMO_NOW,
-  DEMO_TODAY,
-  MONTHLY_HOURS,
-  RECEIPTS,
-  SHIFTS,
-  STAFF,
-} from "@/lib/restoflow/data";
+import { adminContext } from "@/lib/restoflow/page-context";
 import { alertCounts, buildAlerts } from "@/lib/restoflow/alerts";
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import {
@@ -36,7 +26,6 @@ import {
   Card,
   CardHeader,
   CategoryBubble,
-  DemoNotice,
   Icon,
   ICONS,
   MetricCard,
@@ -56,48 +45,53 @@ export const metadata = { title: "Yleiskuva" };
  *
  * Myyntiä, liikevaihtoa tai kassavirtaa ei näytetä — RestoFlow ei näe niitä.
  */
-export default function AdminDashboard() {
-  const month = DEMO_MONTH;
+export default async function AdminDashboard() {
+  const {
+    receipts, users, budgets, shifts, clockEvents,
+    month, today, now, monthlyHours, restaurant,
+  } = await adminContext("/admin");
 
-  const current = periodTotals(RECEIPTS, month);
-  const previous = periodTotals(RECEIPTS, previousMonth(month));
+  const current = periodTotals(receipts, month);
+  const previous = periodTotals(receipts, previousMonth(month));
   const expenseChange = relativeChange(current.totalCents, previous.totalCents);
 
-  const categories = totalsByCategory(receiptsInMonth(RECEIPTS, month));
-  const suppliers = supplierTotalsInMonth(RECEIPTS, month).slice(0, 5);
-  const recent = sortByDateDesc(RECEIPTS).slice(0, 5);
+  const categories = totalsByCategory(receiptsInMonth(receipts, month));
+  const suppliers = supplierTotalsInMonth(receipts, month).slice(0, 5);
+  const recent = sortByDateDesc(receipts).slice(0, 5);
 
   const alerts = buildAlerts({
-    receipts: RECEIPTS,
-    budgets: BUDGETS,
-    shifts: SHIFTS,
-    users: STAFF,
-    clockEvents: CLOCK_EVENTS,
+    receipts: receipts,
+    budgets: budgets,
+    shifts: shifts,
+    users: users,
+    clockEvents: clockEvents,
     month,
-    today: DEMO_TODAY,
+    today: today,
   });
   const counts = alertCounts(alerts);
 
-  const budgets = budgetProgress(RECEIPTS, BUDGETS, month).filter(
+  const budgetRows = budgetProgress(receipts, budgets, month).filter(
     (b) => b.budgetCents !== null,
   );
 
-  const totalHours = Object.values(MONTHLY_HOURS).reduce((s, h) => s + h, 0);
-  const hoursChange = relativeChange(totalHours, 603);
+  const totalHours = Object.values(monthlyHours).reduce((s, h) => s + h, 0);
+  // Edellisen kuukauden vertailu vaatisi oman kyselynsä; se lisätään kun
+  // työaikaraportti rakennetaan.
+  const hoursChange = null;
 
-  const staffCost = STAFF.reduce(
+  const staffCost = users.reduce(
     (sum, u) =>
-      sum + staffCostCents((MONTHLY_HOURS[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
+      sum + staffCostCents((monthlyHours[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
     0,
   );
 
   // Tänään töissä olleet, pisin aika ensin.
-  const todayHours = STAFF.map((user) => ({
+  const todayHours = users.map((user) => ({
     user,
     worked: workedOnDate(
-      CLOCK_EVENTS.filter((e) => e.userId === user.id),
-      DEMO_TODAY,
-      DEMO_NOW,
+      clockEvents.filter((e) => e.userId === user.id),
+      today,
+      now,
     ),
   }))
     .filter((row) => row.worked.workedMs > 0)
@@ -109,7 +103,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-[30px] font-semibold tracking-tight">Yleiskuva</h1>
           <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-            Ravintola Linnea · {formatMonth(month)}
+            {restaurant.name} · {formatMonth(month)}
           </p>
         </div>
         <Link
@@ -122,8 +116,7 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <DemoNotice />
-
+      
       {/* KPI:t */}
       <section aria-label="Avainluvut" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
@@ -286,7 +279,7 @@ export default function AdminDashboard() {
         <Card className="lg:col-span-2">
           <CardHeader
             title="Budjetit"
-            subtitle={`${formatMonth(month)} · ${budgets.length} kategoriaa`}
+            subtitle={`${formatMonth(month)} · ${budgetRows.length} kategoriaa`}
             action={
               <Link href="/admin/budjetit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
                 Hallinnoi
@@ -294,7 +287,7 @@ export default function AdminDashboard() {
             }
           />
           <ul className="grid gap-4 sm:grid-cols-2">
-            {budgets.slice(0, 6).map((b) => {
+            {budgetRows.slice(0, 6).map((b) => {
               const pct = Math.round((b.ratio ?? 0) * 100);
               const color =
                 b.status === "exceeded"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DEMO_MONTH, RECEIPTS, SUPPLIERS, supplierById } from "@/lib/restoflow/data";
+import { adminContext } from "@/lib/restoflow/page-context";
 import {
   formatChange,
   formatMonth,
@@ -19,36 +19,28 @@ import { formatMoney } from "@/lib/money";
 import {
   Card,
   CardHeader,
-  DemoNotice,
   Icon,
   ICONS,
   MetricCard,
   SeverityDot,
 } from "@/components/restoflow/ui";
 
-export function generateStaticParams() {
-  return SUPPLIERS.map((s) => ({ id: s.id }));
-}
-
-export async function generateMetadata({ params }: PageProps<"/admin/toimittajat/[id]">) {
-  const { id } = await params;
-  return { title: supplierById(id)?.name ?? "Toimittaja" };
-}
+export const metadata = { title: "Toimittaja" };
 
 export default async function SupplierDetailPage({
   params,
 }: PageProps<"/admin/toimittajat/[id]">) {
   const { id } = await params;
-  const supplier = supplierById(id);
-  if (!supplier) notFound();
+  const { receipts, suppliers, month } = await adminContext("/admin/toimittajat");
 
-  const month = DEMO_MONTH;
-  const all = receiptsForSupplier(RECEIPTS, id);
+  const supplier = suppliers.find((s) => s.id === id);
+  if (!supplier) notFound();
+  const all = receiptsForSupplier(receipts, id);
   const inMonth = receiptsInMonth(all, month);
 
-  const totals = supplierTotalsInMonth(RECEIPTS, month).find((s) => s.supplierId === id);
-  const trend = supplierTrends(RECEIPTS, month).find((t) => t.supplierId === id);
-  const series = supplierMonthlySeries(RECEIPTS, id, month, 4);
+  const totals = supplierTotalsInMonth(receipts, month).find((s) => s.supplierId === id);
+  const trend = supplierTrends(receipts, month).find((t) => t.supplierId === id);
+  const series = supplierMonthlySeries(receipts, id, month, 4);
 
   const maxCents = Math.max(...series.map((s) => s.totalCents), 1);
   const monthTotal = inMonth.reduce((s, r) => s + r.totalCents, 0);
@@ -77,8 +69,7 @@ export default async function SupplierDetailPage({
         </div>
       </div>
 
-      <DemoNotice />
-
+      
       <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Kuitteja" value={String(inMonth.length)} hint={formatMonth(month)} />
         <MetricCard label="Yhteensä" value={formatMoney(monthTotal)} />

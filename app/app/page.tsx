@@ -1,28 +1,20 @@
 import Link from "next/link";
-import {
-  CURRENT_USER_ID,
-  DEMO_NOW,
-  DEMO_TODAY,
-  RECEIPTS,
-  userById,
-  eventsFor,
-  shiftsFor,
-} from "@/lib/restoflow/data";
+import { employeeContext } from "@/lib/restoflow/page-context";
+import { weekStart } from "@/lib/restoflow/clock-context";
 import {
   currentState,
+  eventsOnDate,
   formatDuration,
   workedBetween,
   workedOnDate,
 } from "@/lib/restoflow/timeclock";
 import { sortByDateDesc } from "@/lib/restoflow/expenses";
-import { can } from "@/lib/restoflow/permissions";
 import { CLOCK_STATE_LABELS, SHIFT_STATUS_LABELS } from "@/lib/restoflow/types";
+import { formatMoney } from "@/lib/money";
+import { RfIcon } from "@/components/restoflow/icons";
 import {
   Card,
-  DemoNotice,
-  Icon,
-  ICONS,
-  Money,
+  CategoryBubble,
   Pill,
   SectionLabel,
 } from "@/components/restoflow/ui";
@@ -34,60 +26,56 @@ export const metadata = { title: "Koti" };
  *
  * Näyttää vain sen mikä koskee tätä työntekijää: oma työaika, oma seuraava
  * vuoro, oma viikko. Kulujen kokonaisuus ei kuulu tänne — se on managerin
- * näkymä.
+ * näkymä, eikä RLS edes antaisi työntekijälle koko aineistoa.
  */
-export default function EmployeeHome() {
-  const employee = userById(CURRENT_USER_ID)!;
-  const events = eventsFor(employee.id);
+export default async function EmployeeHome() {
+  const { user, restaurant, clockEvents, shifts, receipts, today, now, seesAllReceipts } =
+    await employeeContext("/app");
 
-  const state = currentState(events);
-  const today = workedOnDate(events, DEMO_TODAY, DEMO_NOW);
-  const week = workedBetween(events, "2026-08-17", "2026-08-23", DEMO_NOW);
+  const state = currentState(eventsOnDate(clockEvents, today));
+  const todayWorked = workedOnDate(clockEvents, today, now);
+  const week = workedBetween(clockEvents, weekStart(today), today, now);
 
-  const shifts = shiftsFor(employee.id);
-  const nextShift = shifts.find((s) => s.date >= DEMO_TODAY);
+  const nextShift = shifts.find((s) => s.date >= today);
+  const recent = sortByDateDesc(receipts).slice(0, 3);
 
-  const recentReceipts = can(employee.role, "receipts.view")
-    ? sortByDateDesc(RECEIPTS).slice(0, 3)
-    : [];
-
-  const firstName = employee.name.split(" ")[0];
+  const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
   return (
     <div className="rf-enter space-y-6">
       <header className="px-1 pt-2">
         <h1 className="text-[28px] font-semibold tracking-tight">
-          Hei, {firstName}
+          Hei{firstName ? `, ${firstName}` : ""}
         </h1>
         <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          Hyvä päivä aloittaa.
+          {restaurant.name}
         </p>
       </header>
 
-      <DemoNotice>
-        Demo-aineisto. Työaika ja vuorot ovat esimerkkejä eikä mitään
-        tallenneta pysyvästi.
-      </DemoNotice>
-
-      {/* Tämän päivän työaika */}
       <Card>
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               Tämän päivän työaika
             </p>
-            <p className="rf-tabular mt-1.5 text-[34px] font-semibold leading-none">
-              {formatDuration(today.workedMs)}
+            <p
+              className="rf-tabular mt-1.5 text-[34px] font-semibold leading-none"
+              suppressHydrationWarning
+            >
+              {formatDuration(todayWorked.workedMs)}
             </p>
           </div>
-          <Pill tone={state === "working" ? "ok" : state === "on_break" ? "warn" : "neutral"} dot>
+          <Pill
+            tone={state === "working" ? "ok" : state === "on_break" ? "warn" : "neutral"}
+            dot
+          >
             {CLOCK_STATE_LABELS[state]}
           </Pill>
         </div>
 
-        {today.breakMs > 0 ? (
+        {todayWorked.breakMs > 0 ? (
           <p className="mt-3 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-            Taukoa {formatDuration(today.breakMs)} — ei lasketa työaikaan.
+            Taukoa {formatDuration(todayWorked.breakMs)} — ei lasketa työaikaan.
           </p>
         ) : null}
 
@@ -100,12 +88,11 @@ export default function EmployeeHome() {
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          <Icon path={ICONS.clock} size={18} />
-          Avaa työaika
+          <RfIcon name="clock" size={18} />
+          {state === "off" ? "Leimaa sisään" : "Avaa työaika"}
         </Link>
       </Card>
 
-      {/* Seuraava vuoro */}
       <section>
         <SectionLabel>Seuraava työvuoro</SectionLabel>
         {nextShift ? (
@@ -113,14 +100,16 @@ export default function EmployeeHome() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                  {nextShift.date === DEMO_TODAY ? "Tänään" : formatDayLabel(nextShift.date)}
+                  {nextShift.date === today ? "Tänään" : formatDayLabel(nextShift.date)}
                 </p>
                 <p className="rf-tabular mt-1 text-[22px] font-semibold">
                   {nextShift.startTime}–{nextShift.endTime}
                 </p>
-                <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                  {nextShift.location}
-                </p>
+                {nextShift.location ? (
+                  <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                    {nextShift.location}
+                  </p>
+                ) : null}
               </div>
               <Pill
                 tone={
@@ -128,13 +117,29 @@ export default function EmployeeHome() {
                     ? "ok"
                     : nextShift.status === "changed"
                       ? "info"
-                      : "warn"
+                      : nextShift.status === "declined"
+                        ? "risk"
+                        : "warn"
                 }
                 dot
               >
                 {SHIFT_STATUS_LABELS[nextShift.status]}
               </Pill>
             </div>
+
+            {nextShift.status === "pending" ? (
+              <Link
+                href="/app/vuorot"
+                className="rf-press mt-4 block py-2.5 text-center text-[14px] font-semibold"
+                style={{
+                  background: "var(--rf-blue)",
+                  color: "#fff",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                Vastaa vuoroon
+              </Link>
+            ) : null}
           </Card>
         ) : (
           <Card>
@@ -145,38 +150,61 @@ export default function EmployeeHome() {
         )}
       </section>
 
-      {/* Viikko */}
       <Card>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Työaika tällä viikolla
         </p>
-        <p className="rf-tabular mt-1.5 text-[28px] font-semibold leading-none">
+        <p
+          className="rf-tabular mt-1.5 text-[28px] font-semibold leading-none"
+          suppressHydrationWarning
+        >
           {formatDuration(week.workedMs)}
         </p>
       </Card>
 
-      {/* Kuitit — vain jos oikeus */}
-      {can(employee.role, "receipts.view") ? (
-        <section>
-          <div className="flex items-baseline justify-between">
-            <SectionLabel>Viimeisimmät kuitit</SectionLabel>
+      <section>
+        <div className="flex items-baseline justify-between">
+          <SectionLabel>
+            {seesAllReceipts ? "Viimeisimmät kuitit" : "Omat kuittini"}
+          </SectionLabel>
+          <Link
+            href="/app/kuitit"
+            className="pb-2 text-[13px] font-medium"
+            style={{ color: "var(--rf-blue)" }}
+          >
+            Kaikki
+          </Link>
+        </div>
+
+        {recent.length === 0 ? (
+          <Card>
+            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+              Et ole vielä lisännyt kuitteja.
+            </p>
             <Link
-              href="/app/kuitit"
-              className="pb-2 text-[13px] font-medium"
-              style={{ color: "var(--rf-blue)" }}
+              href="/app/kuitit/uusi"
+              className="rf-press mt-4 flex items-center justify-center gap-2 py-3 text-[15px] font-semibold"
+              style={{
+                background: "var(--rf-blue)",
+                color: "#fff",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
-              Kaikki
+              <RfIcon name="camera" size={18} />
+              Kuvaa ensimmäinen kuitti
             </Link>
-          </div>
+          </Card>
+        ) : (
           <Card padded={false}>
             <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-              {recentReceipts.map((receipt) => (
+              {recent.map((receipt) => (
                 <li key={receipt.id}>
                   <Link
                     href={`/app/kuitit/${receipt.id}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3.5"
+                    className="flex items-center gap-3 px-5 py-3.5"
                   >
-                    <div className="min-w-0">
+                    <CategoryBubble category={receipt.category} size={32} />
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-medium">
                         {receipt.supplierName}
                       </p>
@@ -187,25 +215,28 @@ export default function EmployeeHome() {
                         {formatDate(receipt.date)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Money cents={receipt.totalCents} className="text-[15px] font-semibold" />
-                      <span style={{ color: "var(--rf-text-3)" }}>
-                        <Icon path={ICONS.chevron} size={16} />
-                      </span>
-                    </div>
+                    <span className="rf-tabular text-[15px] font-semibold">
+                      {formatMoney(receipt.totalCents)}
+                    </span>
+                    <span style={{ color: "var(--rf-text-3)" }}>
+                      <RfIcon name="chevron" size={16} />
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
           </Card>
-        </section>
-      ) : null}
+        )}
+      </section>
     </div>
   );
 }
 
 function formatDayLabel(isoDate: string): string {
-  const days = ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"];
+  const days = [
+    "Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko",
+    "Torstai", "Perjantai", "Lauantai",
+  ];
   const d = new Date(`${isoDate}T12:00:00Z`);
   return `${days[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
 }

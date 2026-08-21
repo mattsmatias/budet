@@ -1,23 +1,26 @@
 import Link from "next/link";
-import { CURRENT_USER_ID, MONTHLY_HOURS, userById } from "@/lib/restoflow/data";
-import { POSITION_LABELS } from "@/lib/restoflow/types";
+import { signOut } from "@/app/(auth)/actions";
+import { employeeContext } from "@/lib/restoflow/page-context";
+import { workedBetween } from "@/lib/restoflow/timeclock";
+import { formatDuration, staffCostCents } from "@/lib/restoflow/timeclock";
+import { can } from "@/lib/restoflow/permissions";
+import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
+import { weekStart } from "@/lib/restoflow/clock-context";
 import { formatMoney } from "@/lib/money";
-import { staffCostCents } from "@/lib/restoflow/timeclock";
-import {
-  Avatar,
-  Card,
-  Icon,
-  ICONS,
-  Pill,
-  SectionLabel,
-} from "@/components/restoflow/ui";
+import { RfIcon, type IconName } from "@/components/restoflow/icons";
+import { Avatar, Card, Pill, SectionLabel } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Lisää" };
 
-export default function MorePage() {
-  const employee = userById(CURRENT_USER_ID)!;
-  const hours = MONTHLY_HOURS[employee.id] ?? 0;
-  const earned = staffCostCents(hours * 3600000, employee.hourlyRateCents ?? 0);
+export default async function MorePage() {
+  const { user, restaurant, role, clockEvents, today, now } =
+    await employeeContext("/app/lisaa");
+
+  const week = workedBetween(clockEvents, weekStart(today), today, now);
+  const rate = restaurant.hourlyRateCents ?? 0;
+  const earned = staffCostCents(week.workedMs, rate);
+
+  const name = user.fullName ?? user.email ?? "Käyttäjä";
 
   return (
     <div className="rf-enter space-y-5">
@@ -25,119 +28,130 @@ export default function MorePage() {
         <h1 className="text-[28px] font-semibold tracking-tight">Lisää</h1>
       </header>
 
-      {/* Profiili */}
       <Card>
         <div className="flex items-center gap-3.5">
-          <Avatar initials={employee.initials} size={52} />
+          <Avatar initials={initialsOf(name)} size={52} />
           <div className="min-w-0">
-            <p className="text-[17px] font-semibold">{employee.name}</p>
+            <p className="truncate text-[17px] font-semibold">{name}</p>
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              {employee.position ? POSITION_LABELS[employee.position] : "—"}
+              {ROLE_LABELS[role]}
+              {restaurant.position ? ` · ${POSITION_LABELS[restaurant.position]}` : ""}
+            </p>
+            <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              {restaurant.name}
             </p>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div
-            className="px-3.5 py-3"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
-          >
-            <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              Tunnit tässä kuussa
-            </p>
-            <p className="rf-tabular mt-1 text-[19px] font-semibold">{hours} h</p>
-          </div>
-          <div
-            className="px-3.5 py-3"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
-          >
-            <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              Tuntien perusteella
-            </p>
-            <p className="rf-tabular mt-1 text-[19px] font-semibold">
-              {formatMoney(earned)}
-            </p>
-          </div>
+          <Stat label="Tunnit tällä viikolla" value={formatDuration(week.workedMs)} />
+          <Stat
+            label={rate > 0 ? "Tuntien perusteella" : "Tuntipalkkaa ei asetettu"}
+            value={rate > 0 ? formatMoney(earned) : "—"}
+          />
         </div>
 
-        <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Laskennallinen summa tunneista ja tuntipalkasta. Ei palkkalaskelma
-          eikä sisällä lisiä tai vähennyksiä.
-        </p>
+        {rate > 0 ? (
+          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            Laskennallinen summa tunneista ja tuntipalkasta. Ei palkkalaskelma
+            eikä sisällä lisiä tai vähennyksiä.
+          </p>
+        ) : null}
       </Card>
 
-      {/* Toiminnot */}
       <section>
         <SectionLabel>Toiminnot</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            <Row href="/app/kuitit/uusi" icon={ICONS.camera} label="Lisää kuitti" />
-            <Row href="/app/vuorot" icon={ICONS.calendar} label="Työvuoroni" />
-            <Row href="/app/tyoaika" icon={ICONS.clock} label="Työaikani" />
+            <Row href="/app/kuitit/uusi" icon="camera" label="Lisää kuitti" />
+            <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
+            <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
+            {can(role, "expenses.view") ? (
+              <Row href="/admin" icon="overview" label="Hallintanäkymä" />
+            ) : null}
           </ul>
         </Card>
       </section>
 
-      {/* Ei vielä */}
       <section>
         <SectionLabel>Ei vielä käytössä</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            <Disabled icon={ICONS.bell} label="Ilmoitukset" />
-            <Disabled icon={ICONS.settings} label="Asetukset" />
-            <Disabled icon={ICONS.logout} label="Kirjaudu ulos" />
+            <Disabled icon="bell" label="Ilmoitukset" />
+            <Disabled icon="settings" label="Asetukset" />
           </ul>
         </Card>
-        <p className="px-1 pt-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Nämä vaativat kirjautumisen ja tietokantayhteyden, joita ei ole vielä
-          kytketty. Ne näkyvät tässä harmaina, koska painike joka ei tee mitään
-          on huonompi kuin painike joka kertoo olevansa kesken.
+        <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Nämä näkyvät harmaina, koska painike joka ei tee mitään on huonompi
+          kuin painike joka kertoo olevansa kesken.
         </p>
       </section>
 
-      <div className="pt-2">
-        <Link
-          href="/admin"
-          className="rf-press flex items-center justify-center gap-2 py-3 text-[14px] font-medium"
+      <form action={signOut} className="pt-2">
+        <button
+          type="submit"
+          className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[14px] font-medium"
           style={{
             background: "var(--rf-card)",
-            color: "var(--rf-blue)",
+            color: "var(--rf-red-text)",
             borderRadius: "var(--rf-r-control)",
             boxShadow: "var(--rf-shadow-sm)",
           }}
         >
-          <Icon path={ICONS.chart} size={18} />
-          Avaa managerin näkymä
-        </Link>
-      </div>
+          <RfIcon name="logout" size={17} />
+          Kirjaudu ulos
+        </button>
+      </form>
     </div>
   );
 }
 
-function Row({ href, icon, label }: { href: string; icon: string; label: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="px-3.5 py-3"
+      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+    >
+      <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+        {label}
+      </p>
+      <p className="rf-tabular mt-1 text-[19px] font-semibold" suppressHydrationWarning>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Row({ href, icon, label }: { href: string; icon: IconName; label: string }) {
   return (
     <li>
       <Link href={href} className="flex items-center gap-3 px-5 py-3.5">
         <span style={{ color: "var(--rf-text-2)" }}>
-          <Icon path={icon} size={20} />
+          <RfIcon name={icon} size={20} />
         </span>
         <span className="flex-1 text-[15px] font-medium">{label}</span>
         <span style={{ color: "var(--rf-text-3)" }}>
-          <Icon path={ICONS.chevron} size={16} />
+          <RfIcon name="chevron" size={16} />
         </span>
       </Link>
     </li>
   );
 }
 
-function Disabled({ icon, label }: { icon: string; label: string }) {
+function Disabled({ icon, label }: { icon: IconName; label: string }) {
   return (
     <li className="flex items-center gap-3 px-5 py-3.5 opacity-45">
       <span style={{ color: "var(--rf-text-2)" }}>
-        <Icon path={icon} size={20} />
+        <RfIcon name={icon} size={20} />
       </span>
       <span className="flex-1 text-[15px] font-medium">{label}</span>
       <Pill>ei vielä</Pill>
     </li>
   );
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts.slice(0, 2).map((p) => p[0]!.toUpperCase()).join("");
 }

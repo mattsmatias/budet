@@ -1,5 +1,5 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
-import { BUDGETS, DEMO_MONTH, RECEIPTS } from "@/lib/restoflow/data";
 import {
   budgetProgress,
   budgetSummary,
@@ -30,9 +30,12 @@ export const metadata = { title: "Budjetit" };
  * eivät jakaudu tasaisesti kuukaudelle, ja tasaiseen tahtiin perustuva
  * ennuste hälyttäisi turhaan heti ison tukkulaskun jälkeen.
  */
-export default function BudgetsPage() {
-  const month = DEMO_MONTH;
-  const progress = budgetProgress(RECEIPTS, BUDGETS, month);
+export default async function BudgetsPage() {
+  const {
+    receipts, budgets, month,
+  } = await adminContext("/admin/budjetit");
+
+  const progress = budgetProgress(receipts, budgets, month);
   const summary = budgetSummary(progress);
 
   const budgeted = progress.filter((p) => p.budgetCents !== null);

@@ -1,4 +1,4 @@
-import { STAFF, MONTHLY_HOURS, SHIFTS } from "@/lib/restoflow/data";
+import { adminContext } from "@/lib/restoflow/page-context";
 import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { can } from "@/lib/restoflow/permissions";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
@@ -13,13 +13,22 @@ import {
 
 export const metadata = { title: "Työntekijät" };
 
-export default function StaffPage() {
-  const rows = STAFF.map((employee) => {
-    const hours = MONTHLY_HOURS[employee.id] ?? 0;
-    const shifts = SHIFTS.filter((s) => s.userId === employee.id).length;
-    const cost = staffCostCents(hours * 3600000, employee.hourlyRateCents ?? 0);
-    return { employee, hours, shifts, cost };
-  }).sort((a, b) => b.hours - a.hours);
+export default async function StaffPage() {
+  const {
+    users, shifts, monthlyHours,
+  } = await adminContext("/admin/tyontekijat");
+
+  const rows = users
+    .map((employee) => ({
+      employee,
+      hours: monthlyHours[employee.id] ?? 0,
+      shiftCount: shifts.filter((s) => s.userId === employee.id).length,
+      cost: staffCostCents(
+        (monthlyHours[employee.id] ?? 0) * 3600000,
+        employee.hourlyRateCents ?? 0,
+      ),
+    }))
+    .sort((a, b) => b.hours - a.hours);
 
   const totalHours = rows.reduce((s, r) => s + r.hours, 0);
   const totalCost = rows.reduce((s, r) => s + r.cost, 0);
@@ -29,7 +38,7 @@ export default function StaffPage() {
       <div>
         <h1 className="text-[30px] font-semibold tracking-tight">Työntekijät</h1>
         <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          {STAFF.length} työntekijää · elokuu 2026
+          {users.length} työntekijää · elokuu 2026
         </p>
       </div>
 
@@ -47,7 +56,7 @@ export default function StaffPage() {
         />
         <MetricCard
           label="Keskimäärin"
-          value={`${Math.round(totalHours / STAFF.length)} h`}
+          value={`${Math.round(totalHours / users.length)} h`}
           hint="Työntekijää kohti"
         />
       </section>
@@ -71,7 +80,7 @@ export default function StaffPage() {
               </tr>
             </thead>
             <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-              {rows.map(({ employee, hours, shifts, cost }) => (
+              {rows.map(({ employee, hours, shiftCount, cost }) => (
                 <tr key={employee.id}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -84,7 +93,7 @@ export default function StaffPage() {
                   </td>
                   <td className="rf-tabular px-5 py-3 text-right font-semibold">{hours} h</td>
                   <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
-                    {shifts}
+                    {shiftCount}
                   </td>
                   <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
                     {formatMoney(employee.hourlyRateCents ?? 0)}
@@ -112,7 +121,7 @@ export default function StaffPage() {
                 <td className="px-5 py-3">Yhteensä</td>
                 <td />
                 <td className="rf-tabular px-5 py-3 text-right">{totalHours} h</td>
-                <td className="rf-tabular px-5 py-3 text-right">{SHIFTS.length}</td>
+                <td className="rf-tabular px-5 py-3 text-right">{shifts.length}</td>
                 <td />
                 <td className="rf-tabular px-5 py-3 text-right">{formatMoney(totalCost)}</td>
                 <td />

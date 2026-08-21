@@ -1,5 +1,5 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
-import { DEMO_MONTH, RECEIPTS } from "@/lib/restoflow/data";
 import {
   formatChange,
   formatMonth,
@@ -29,13 +29,16 @@ export const metadata = { title: "Toimittajat" };
  * Kategoriajakauma kertoo mihin rahat menevät, tämä kenelle. Ne ovat eri
  * kysymyksiä — ja neuvotteluvoima syntyy jälkimmäisestä.
  */
-export default function SuppliersPage() {
-  const month = DEMO_MONTH;
-  const totals = supplierTotalsInMonth(RECEIPTS, month);
-  const trends = new Map(supplierTrends(RECEIPTS, month).map((t) => [t.supplierId, t]));
+export default async function SuppliersPage() {
+  const {
+    receipts, month,
+  } = await adminContext("/admin/toimittajat");
+
+  const totals = supplierTotalsInMonth(receipts, month);
+  const trends = new Map(supplierTrends(receipts, month).map((t) => [t.supplierId, t]));
 
   const grandTotal = totals.reduce((s, t) => s + t.totalCents, 0);
-  const inMonth = receiptsInMonth(RECEIPTS, month);
+  const inMonth = receiptsInMonth(receipts, month);
   const biggest = totals[0];
 
   return (

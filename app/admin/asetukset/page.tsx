@@ -1,10 +1,14 @@
+import { adminContext } from "@/lib/restoflow/page-context";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
-import { STAFF } from "@/lib/restoflow/data";
 import { Card, DemoNotice, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Asetukset" };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const {
+    users,
+  } = await adminContext("/admin/asetukset");
+
   return (
     <div className="rf-enter space-y-6">
       <div>
@@ -25,7 +29,7 @@ export default function SettingsPage() {
           <h2 className="text-[16px] font-semibold">Ravintola</h2>
           <dl className="mt-3">
             <Row label="Nimi" value="Ravintola Linnea" />
-            <Row label="Käyttäjiä" value={String(STAFF.length)} />
+            <Row label="Käyttäjiä" value={String(users.length)} />
             <Row label="Valuutta" value="EUR" />
             <Row label="Aikavyöhyke" value="Europe/Helsinki" last />
           </dl>

@@ -1,15 +1,7 @@
-import {
-  BUDGETS,
-  CLOCK_EVENTS,
-  CURRENT_ADMIN_ID,
-  DEMO_MONTH,
-  DEMO_TODAY,
-  RECEIPTS,
-  SHIFTS,
-  STAFF,
-  userById,
-} from "@/lib/restoflow/data";
+import { requireContext } from "@/lib/restoflow/session";
+import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
+import { monthIn, todayIn } from "@/lib/restoflow/clock-context";
 import { Sidebar } from "./sidebar";
 
 /**
@@ -18,22 +10,28 @@ import { Sidebar } from "./sidebar";
  * Sivupalkki kaventuu ikoneiksi kapealla näytöllä mutta ei katoa: hallinta
  * on työpöytänäkymä, ja piilotettu navigaatio tekisi siitä hitaamman.
  */
-export default function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const user = userById(CURRENT_ADMIN_ID)!;
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  const { user, restaurant, role } = await requireContext("/admin");
 
+  const data = await fetchRestaurantData(restaurant.id);
   const alerts = buildAlerts({
-    receipts: RECEIPTS,
-    budgets: BUDGETS,
-    shifts: SHIFTS,
-    users: STAFF,
-    clockEvents: CLOCK_EVENTS,
-    month: DEMO_MONTH,
-    today: DEMO_TODAY,
+    receipts: data.receipts,
+    budgets: data.budgets,
+    shifts: data.shifts,
+    users: data.users,
+    clockEvents: data.clockEvents,
+    month: monthIn(restaurant.timezone),
+    today: todayIn(restaurant.timezone),
   });
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar role={user.role} userName={user.name} alertCount={alerts.length} />
+      <Sidebar
+        role={role}
+        userName={user.fullName ?? user.email ?? "Käyttäjä"}
+        restaurantName={restaurant.name}
+        alertCount={alerts.length}
+      />
       <div className="min-w-0 flex-1">
         <main className="mx-auto max-w-6xl px-6 py-7">{children}</main>
       </div>

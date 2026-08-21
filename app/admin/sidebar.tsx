@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "@/app/(auth)/actions";
 import { adminNavFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -17,10 +18,12 @@ import { Avatar } from "@/components/restoflow/ui";
 export function Sidebar({
   role,
   userName,
+  restaurantName,
   alertCount,
 }: {
   role: Role;
   userName: string;
+  restaurantName: string;
   alertCount: number;
 }) {
   const pathname = usePathname();
@@ -31,11 +34,19 @@ export function Sidebar({
       className="flex shrink-0 flex-col border-r lg:w-[232px]"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <Logo />
-        <span className="hidden text-[17px] font-semibold tracking-tight lg:inline">
-          RestoFlow
-        </span>
+      <div className="px-5 py-5">
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo />
+          <span className="hidden text-[17px] font-semibold tracking-tight lg:inline">
+            RestoFlow
+          </span>
+        </Link>
+        <p
+          className="mt-2 hidden truncate text-[12px] lg:block"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {restaurantName}
+        </p>
       </div>
 
       <nav aria-label="Hallintanavigaatio" className="flex-1 px-2.5">
@@ -95,28 +106,45 @@ export function Sidebar({
       </div>
 
       <div
-        className="m-2.5 flex items-center gap-3 rounded-[12px] px-3 py-3"
+        className="m-2.5 rounded-[12px] p-3"
         style={{ background: "var(--rf-inset)" }}
       >
-        <Avatar initials={initialsOf(userName)} size={34} />
-        <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-[13px] font-semibold">{userName}</p>
-          <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-            {ROLE_LABELS[role]}
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar initials={initialsOf(userName)} size={34} />
+          <div className="hidden min-w-0 lg:block">
+            <p className="truncate text-[13px] font-semibold">{userName}</p>
+            <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+              {ROLE_LABELS[role]}
+            </p>
+          </div>
         </div>
+
+        <form action={signOut} className="mt-2.5">
+          <button
+            type="submit"
+            className="rf-press flex w-full items-center justify-center gap-2 py-2 text-[13px] font-medium"
+            style={{
+              background: "var(--rf-card)",
+              color: "var(--rf-text-2)",
+              borderRadius: "10px",
+            }}
+          >
+            <RfIcon name="logout" size={15} />
+            <span className="hidden lg:inline">Kirjaudu ulos</span>
+          </button>
+        </form>
       </div>
     </aside>
   );
 }
 
 function initialsOf(name: string): string {
-  return name
-    .split(" ")
-    .map((p) => p[0])
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts
     .slice(0, 2)
-    .join("")
-    .toUpperCase();
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
 }
 
 function Logo() {

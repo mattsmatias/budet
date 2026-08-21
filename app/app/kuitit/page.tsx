@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RECEIPTS } from "@/lib/restoflow/data";
+import { employeeContext } from "@/lib/restoflow/page-context";
 import {
   filterReceipts,
   searchReceipts,
@@ -7,12 +7,12 @@ import {
   type ReceiptFilter,
 } from "@/lib/restoflow/expenses";
 import { CATEGORY_LABELS, REVIEW_REASON_LABELS } from "@/lib/restoflow/types";
+import { formatMoney } from "@/lib/money";
+import { RfIcon } from "@/components/restoflow/icons";
 import {
   Card,
+  CategoryBubble,
   EmptyState,
-  Icon,
-  ICONS,
-  Money,
   Pill,
 } from "@/components/restoflow/ui";
 
@@ -22,35 +22,34 @@ const FILTERS: { key: ReceiptFilter; label: string }[] = [
   { key: "all", label: "Kaikki" },
   { key: "needs_review", label: "Tarkistettavat" },
   { key: "food", label: "Ruoka" },
-  { key: "alcohol", label: "Juomat" },
-  { key: "kitchen_supplies", label: "Tarvikkeet" },
+  { key: "alcohol", label: "Alkoholi" },
+  { key: "soft_drinks", label: "Alkoholittomat" },
+  { key: "kitchen_supplies", label: "Keittiö" },
+  { key: "cleaning", label: "Siivous" },
   { key: "other", label: "Muut" },
 ];
 
-export default async function ReceiptsPage({
-  searchParams,
-}: PageProps<"/app/kuitit">) {
+export default async function ReceiptsPage({ searchParams }: PageProps<"/app/kuitit">) {
   const params = await searchParams;
+  const { receipts, seesAllReceipts } = await employeeContext("/app/kuitit");
+
   const query = typeof params.haku === "string" ? params.haku : "";
   const filter = (typeof params.suodatin === "string" ? params.suodatin : "all") as ReceiptFilter;
 
-  const receipts = sortByDateDesc(
-    filterReceipts(searchReceipts(RECEIPTS, query), filter),
-  );
-
-  const reviewCount = RECEIPTS.filter((r) => r.status === "needs_review").length;
+  const visible = sortByDateDesc(filterReceipts(searchReceipts(receipts, query), filter));
+  const reviewCount = receipts.filter((r) => r.status === "needs_review").length;
 
   return (
     <div className="rf-enter space-y-4">
       <header className="px-1 pt-2">
         <h1 className="text-[28px] font-semibold tracking-tight">Kuitit</h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-          {receipts.length} kuittia
+          {visible.length} kuittia
           {reviewCount > 0 && filter === "all" ? ` · ${reviewCount} tarkistettavaa` : ""}
+          {seesAllReceipts ? "" : " · vain omat"}
         </p>
       </header>
 
-      {/* Haku */}
       <form action="/app/kuitit">
         {filter !== "all" ? <input type="hidden" name="suodatin" value={filter} /> : null}
         <div className="relative">
@@ -58,7 +57,7 @@ export default async function ReceiptsPage({
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2"
             style={{ color: "var(--rf-text-3)" }}
           >
-            <Icon path={ICONS.search} size={18} />
+            <RfIcon name="search" size={18} />
           </span>
           <label htmlFor="rf-search" className="sr-only">
             Hae kuitteja
@@ -79,16 +78,19 @@ export default async function ReceiptsPage({
         </div>
       </form>
 
-      {/* Suodattimet */}
       <nav aria-label="Suodattimet" className="-mx-4 overflow-x-auto px-4">
         <ul className="flex gap-2 pb-1">
           {FILTERS.map((f) => {
             const active = filter === f.key;
-            const href = buildHref(f.key, query);
+            const search = new URLSearchParams();
+            if (f.key !== "all") search.set("suodatin", f.key);
+            if (query) search.set("haku", query);
+            const qs = search.toString();
+
             return (
               <li key={f.key}>
                 <Link
-                  href={href}
+                  href={qs ? `/app/kuitit?${qs}` : "/app/kuitit"}
                   aria-current={active ? "page" : undefined}
                   className="rf-press inline-block whitespace-nowrap px-3.5 py-1.5 text-[13px] font-medium"
                   style={{
@@ -106,7 +108,7 @@ export default async function ReceiptsPage({
         </ul>
       </nav>
 
-      {receipts.length === 0 ? (
+      {visible.length === 0 ? (
         <EmptyState
           title={query ? "Ei osumia" : "Ei kuitteja"}
           description={
@@ -118,21 +120,24 @@ export default async function ReceiptsPage({
       ) : (
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            {receipts.map((receipt) => (
+            {visible.map((receipt) => (
               <li key={receipt.id}>
                 <Link
                   href={`/app/kuitit/${receipt.id}`}
                   className="flex items-center gap-3 px-5 py-3.5"
                 >
+                  <CategoryBubble category={receipt.category} size={34} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium">{receipt.supplierName}</p>
+                    <p className="truncate text-[15px] font-medium">
+                      {receipt.supplierName}
+                    </p>
                     <p
                       className="rf-tabular mt-0.5 text-[13px]"
                       style={{ color: "var(--rf-text-3)" }}
                     >
                       {formatDate(receipt.date)} · {CATEGORY_LABELS[receipt.category]}
                     </p>
-                    {receipt.status === "needs_review" ? (
+                    {receipt.status === "needs_review" && receipt.reviewReasons[0] ? (
                       <div className="mt-1.5">
                         <Pill tone="warn" dot>
                           {REVIEW_REASON_LABELS[receipt.reviewReasons[0]]}
@@ -141,9 +146,11 @@ export default async function ReceiptsPage({
                     ) : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Money cents={receipt.totalCents} className="text-[15px] font-semibold" />
+                    <span className="rf-tabular text-[15px] font-semibold">
+                      {formatMoney(receipt.totalCents)}
+                    </span>
                     <span style={{ color: "var(--rf-text-3)" }}>
-                      <Icon path={ICONS.chevron} size={16} />
+                      <RfIcon name="chevron" size={16} />
                     </span>
                   </div>
                 </Link>
@@ -153,7 +160,6 @@ export default async function ReceiptsPage({
         </Card>
       )}
 
-      {/* Kelluva lisäyspainike */}
       <Link
         href="/app/kuitit/uusi"
         aria-label="Lisää uusi kuitti"
@@ -165,18 +171,10 @@ export default async function ReceiptsPage({
           boxShadow: "0 4px 16px rgba(0,113,227,0.4)",
         }}
       >
-        <Icon path={ICONS.plus} size={26} />
+        <RfIcon name="plus" size={26} />
       </Link>
     </div>
   );
-}
-
-function buildHref(filter: ReceiptFilter, query: string): string {
-  const params = new URLSearchParams();
-  if (filter !== "all") params.set("suodatin", filter);
-  if (query) params.set("haku", query);
-  const qs = params.toString();
-  return qs ? `/app/kuitit?${qs}` : "/app/kuitit";
 }
 
 function formatDate(isoDate: string): string {

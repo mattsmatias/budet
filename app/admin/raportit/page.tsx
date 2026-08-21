@@ -1,4 +1,4 @@
-import { DEMO_MONTH, RECEIPTS } from "@/lib/restoflow/data";
+import { adminContext } from "@/lib/restoflow/page-context";
 import { formatMonth, periodTotals } from "@/lib/restoflow/expenses";
 import { formatMoney } from "@/lib/money";
 import {
@@ -42,9 +42,12 @@ const REPORTS = [
   },
 ] as const;
 
-export default function ReportsPage() {
-  const month = DEMO_MONTH;
-  const totals = periodTotals(RECEIPTS, month);
+export default async function ReportsPage() {
+  const {
+    receipts, month,
+  } = await adminContext("/admin/raportit");
+
+  const totals = periodTotals(receipts, month);
 
   return (
     <div className="rf-enter space-y-6">
