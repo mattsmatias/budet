@@ -10,6 +10,7 @@
  * raportit, mutta ei työntekijöiden henkilökohtaisia tietoja.
  */
 
+import type { IconName } from "@/components/restoflow/icons";
 import type { Role } from "./types";
 
 export type Capability =
@@ -110,23 +111,22 @@ export function seesPayRates(role: Role): boolean {
 export interface NavEntry {
   href: string;
   label: string;
-  emoji: string;
-  /** Ikoni-avain components/restoflow/ui.tsx:n ICONS-taulusta. */
-  icon: string;
+  /** Ikoni-avain components/restoflow/icons.tsx:n sarjasta. */
+  icon: IconName;
   requires: Capability;
 }
 
 export const ADMIN_NAV: NavEntry[] = [
-  { href: "/admin", label: "Yleiskuva", emoji: "📊", icon: "home", requires: "expenses.view" },
-  { href: "/admin/kuitit", label: "Kuitit", emoji: "🧾", icon: "receipt", requires: "receipts.view" },
-  { href: "/admin/kulut", label: "Kulut", emoji: "💶", icon: "chart", requires: "expenses.view" },
-  { href: "/admin/toimittajat", label: "Toimittajat", emoji: "🚚", icon: "truck", requires: "suppliers.view" },
-  { href: "/admin/budjetit", label: "Budjetit", emoji: "🎯", icon: "target", requires: "budgets.view" },
-  { href: "/admin/tyovuorot", label: "Työvuorot", emoji: "📅", icon: "calendar", requires: "shifts.view.all" },
-  { href: "/admin/tyontekijat", label: "Työntekijät", emoji: "👥", icon: "users", requires: "staff.view" },
-  { href: "/admin/raportit", label: "Raportit", emoji: "📄", icon: "file", requires: "reports.view" },
-  { href: "/admin/ilmoitukset", label: "Huomiot", emoji: "🔔", icon: "bell", requires: "alerts.view" },
-  { href: "/admin/asetukset", label: "Asetukset", emoji: "⚙️", icon: "settings", requires: "settings.view" },
+  { href: "/admin", label: "Yleiskuva", icon: "overview", requires: "expenses.view" },
+  { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view" },
+  { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view" },
+  { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view" },
+  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
+  { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
+  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
+  { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
+  { href: "/admin/ilmoitukset", label: "Huomiot", icon: "bell", requires: "alerts.view" },
+  { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {

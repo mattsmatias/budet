@@ -6,7 +6,8 @@ import {
   WARNING_THRESHOLD,
 } from "@/lib/restoflow/budgets";
 import { formatMonth } from "@/lib/restoflow/expenses";
-import { CATEGORY_EMOJI, CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
   BudgetBar,
@@ -53,12 +54,12 @@ export default function BudgetsPage() {
 
       <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="🎯 Budjetoitu"
+          label="Budjetoitu"
           value={formatMoney(summary.totalBudgetCents)}
           hint="Kuukausibudjetit yhteensä"
         />
         <MetricCard
-          label="💶 Käytetty"
+          label="Käytetty"
           value={formatMoney(summary.totalSpentCents)}
           hint={
             summary.totalBudgetCents > 0
@@ -67,12 +68,12 @@ export default function BudgetsPage() {
           }
         />
         <MetricCard
-          label="🔴 Ylitetty"
+          label="Ylitetty"
           value={String(summary.exceededCount)}
           hint={summary.exceededCount > 0 ? "Kategoriaa yli budjetin" : "Ei ylityksiä"}
         />
         <MetricCard
-          label="🟡 Lähestyy rajaa"
+          label="Lähestyy rajaa"
           value={String(summary.warningCount)}
           hint={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
         />
@@ -92,7 +93,12 @@ export default function BudgetsPage() {
               <li key={p.category}>
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                   <span className="text-[15px] font-medium">
-                    {CATEGORY_EMOJI[p.category]} {CATEGORY_LABELS[p.category]}
+                    <span className="inline-flex items-center gap-2">
+                      <span style={{ color: "var(--rf-text-2)" }}>
+                        <CategoryIcon category={p.category} size={16} />
+                      </span>
+                      {CATEGORY_LABELS[p.category]}
+                    </span>
                   </span>
                   <span className="flex items-center gap-2.5">
                     {p.status === "exceeded" ? (
@@ -141,7 +147,12 @@ export default function BudgetsPage() {
             {unbudgeted.map((p) => (
               <li key={p.category} className="flex items-baseline justify-between gap-3">
                 <span className="text-[14px]">
-                  {CATEGORY_EMOJI[p.category]} {CATEGORY_LABELS[p.category]}
+                  <span className="inline-flex items-center gap-2">
+                      <span style={{ color: "var(--rf-text-2)" }}>
+                        <CategoryIcon category={p.category} size={16} />
+                      </span>
+                      {CATEGORY_LABELS[p.category]}
+                    </span>
                 </span>
                 <span className="rf-tabular text-[14px] font-semibold">
                   {formatMoney(p.spentCents)}
@@ -163,13 +174,13 @@ export default function BudgetsPage() {
           style={{ color: "var(--rf-text-2)" }}
         >
           <li>
-            🟢 <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} % käytetty
+            <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} % käytetty
           </li>
           <li>
-            🟡 <strong>lähestyy</strong> — {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
+            <strong>lähestyy</strong> — {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
           </li>
           <li>
-            🔴 <strong>ylitetty</strong> — yli 100 %, hälytys nousee yleiskuvaan
+            <strong>ylitetty</strong> — yli 100 %, hälytys nousee yleiskuvaan
           </li>
         </ul>
         <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>

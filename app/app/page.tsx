@@ -57,7 +57,7 @@ export default function EmployeeHome() {
     <div className="rf-enter space-y-6">
       <header className="px-1 pt-2">
         <h1 className="text-[28px] font-semibold tracking-tight">
-          Hei, {firstName} <span aria-hidden="true">👋</span>
+          Hei, {firstName}
         </h1>
         <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           Hyvä päivä aloittaa.

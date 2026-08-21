@@ -173,18 +173,27 @@ export function BarRow({
   valueCents,
   share,
   meta,
+  icon,
 }: {
   label: string;
   valueCents: number;
   share: number;
   meta?: string;
+  icon?: ReactNode;
 }) {
   const pct = Math.round(share * 100);
 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-[14px] font-medium">{label}</span>
+        <span className="flex items-center gap-2 text-[14px] font-medium">
+          {icon ? (
+            <span className="shrink-0" style={{ color: "var(--rf-text-2)" }}>
+              {icon}
+            </span>
+          ) : null}
+          {label}
+        </span>
         <span className="rf-tabular text-[14px] font-semibold">
           {formatMoney(valueCents)}
         </span>
@@ -367,11 +376,8 @@ export const ICONS = {
 // Kategoriat
 // ---------------------------------------------------------------------------
 
-import {
-  CATEGORY_EMOJI,
-  CATEGORY_LABELS,
-  type ExpenseCategory,
-} from "@/lib/restoflow/types";
+import { CategoryIcon } from "./icons";
+import { CATEGORY_LABELS, type ExpenseCategory } from "@/lib/restoflow/types";
 
 /**
  * Kategoriamerkintä.
@@ -390,7 +396,9 @@ export function CategoryTag({
     <span
       className={`inline-flex items-center gap-1.5 ${size === "sm" ? "text-[12px]" : "text-[14px]"}`}
     >
-      <span aria-hidden="true">{CATEGORY_EMOJI[category]}</span>
+      <span style={{ color: "var(--rf-text-2)" }}>
+        <CategoryIcon category={category} size={size === "sm" ? 15 : 17} />
+      </span>
       <span>{CATEGORY_LABELS[category]}</span>
     </span>
   );
@@ -413,10 +421,10 @@ export function CategoryBubble({
         height: size,
         borderRadius: "50%",
         background: "var(--rf-inset)",
-        fontSize: size * 0.46,
+        color: "var(--rf-text-2)",
       }}
     >
-      {CATEGORY_EMOJI[category]}
+      <CategoryIcon category={category} size={Math.round(size * 0.54)} />
     </span>
   );
 }

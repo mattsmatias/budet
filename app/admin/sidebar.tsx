@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { adminNavFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS, type Role } from "@/lib/restoflow/types";
-import { Avatar, Icon, ICONS } from "@/components/restoflow/ui";
+import { RfIcon } from "@/components/restoflow/icons";
+import { Avatar } from "@/components/restoflow/ui";
 
 /**
  * Hallintanavigaatio.
@@ -60,9 +61,9 @@ export function Sidebar({
                 >
                   <span
                     aria-hidden="true"
-                    className="grid h-6 w-6 shrink-0 place-items-center text-[15px]"
+                    className="grid h-6 w-6 shrink-0 place-items-center"
                   >
-                    {item.emoji}
+                    <RfIcon name={item.icon} size={19} />
                   </span>
                   <span className="hidden flex-1 lg:inline">{item.label}</span>
                   {badge > 0 ? (
@@ -87,7 +88,7 @@ export function Sidebar({
           style={{ color: "var(--rf-text-3)" }}
         >
           <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center">
-            <Icon path={ICONS.clock} size={17} />
+            <RfIcon name="clock" size={17} />
           </span>
           <span className="hidden lg:inline">Työntekijänäkymä</span>
         </Link>

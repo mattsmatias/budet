@@ -7,7 +7,8 @@ import {
   receiptsInMonth,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
-import { CATEGORY_EMOJI, CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
@@ -49,14 +50,14 @@ export default function SuppliersPage() {
       <DemoNotice />
 
       <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-3">
-        <MetricCard label="🚚 Toimittajia" value={String(totals.length)} />
+        <MetricCard label="Toimittajia" value={String(totals.length)} />
         <MetricCard
-          label="💶 Kirjatut kulut"
+          label="Kirjatut kulut"
           value={formatMoney(grandTotal)}
           hint={receiptCountLabel(inMonth.length)}
         />
         <MetricCard
-          label="🥇 Suurin toimittaja"
+          label="Suurin toimittaja"
           value={biggest?.name ?? "—"}
           hint={
             biggest
@@ -123,7 +124,10 @@ export default function SuppliersPage() {
                               style={{ color: "var(--rf-text-2)" }}
                               title={CATEGORY_LABELS[c.category]}
                             >
-                              {CATEGORY_EMOJI[c.category]} {CATEGORY_LABELS[c.category]}
+                              <span className="inline-flex items-center gap-1.5">
+                                <CategoryIcon category={c.category} size={14} />
+                                {CATEGORY_LABELS[c.category]}
+                              </span>
                             </span>
                           ))}
                         </span>

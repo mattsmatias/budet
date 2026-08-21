@@ -27,7 +27,8 @@ import {
 import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
 import { staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
 import { formatDuration } from "@/lib/restoflow/timeclock";
-import { CATEGORY_EMOJI, CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
   Avatar,
@@ -126,7 +127,7 @@ export default function AdminDashboard() {
       {/* KPI:t */}
       <section aria-label="Avainluvut" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="💶 Kirjatut kulut"
+          label="Kirjatut kulut"
           value={formatMoney(current.totalCents)}
           trend={
             <TrendBadge
@@ -137,7 +138,7 @@ export default function AdminDashboard() {
           hint="Järjestelmään lisättyjen kuittien summa"
         />
         <MetricCard
-          label="🧾 Kuitit"
+          label="Kuitit"
           value={String(current.receiptCount)}
           trend={
             <TrendBadge
@@ -151,7 +152,7 @@ export default function AdminDashboard() {
           }
         />
         <MetricCard
-          label="⏱️ Työtunnit"
+          label="Työtunnit"
           value={`${totalHours} h`}
           trend={
             <TrendBadge
@@ -161,7 +162,7 @@ export default function AdminDashboard() {
           }
         />
         <MetricCard
-          label="👥 Henkilöstökulut"
+          label="Henkilöstökulut"
           value={formatMoney(staffCost)}
           hint="Tunnit × tuntipalkka, ei palkkalaskelma"
         />
@@ -172,8 +173,8 @@ export default function AdminDashboard() {
         <CardHeader
           title={
             counts.total === 0
-              ? "✅ Ei huomioita"
-              : `⚠️ ${counts.total} asiaa vaatii huomiota`
+              ? "Ei huomioita"
+              : `${counts.total} asiaa vaatii huomiota`
           }
           subtitle={
             counts.total === 0
@@ -243,7 +244,8 @@ export default function AdminDashboard() {
             {categories.slice(0, 6).map((c) => (
               <BarRow
                 key={c.category}
-                label={`${CATEGORY_EMOJI[c.category]} ${CATEGORY_LABELS[c.category]}`}
+                label={CATEGORY_LABELS[c.category]}
+                icon={<CategoryIcon category={c.category} size={16} />}
                 valueCents={c.totalCents}
                 share={c.share}
                 meta={receiptCountLabel(c.receiptCount)}
@@ -283,7 +285,7 @@ export default function AdminDashboard() {
         {/* Budjetit */}
         <Card className="lg:col-span-2">
           <CardHeader
-            title="🎯 Budjetit"
+            title="Budjetit"
             subtitle={`${formatMonth(month)} · ${budgets.length} kategoriaa`}
             action={
               <Link href="/admin/budjetit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
@@ -305,7 +307,12 @@ export default function AdminDashboard() {
                 <li key={b.category}>
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-[13px] font-medium">
-                      {CATEGORY_EMOJI[b.category]} {CATEGORY_LABELS[b.category]}
+                      <span className="inline-flex items-center gap-2">
+                      <span style={{ color: "var(--rf-text-2)" }}>
+                        <CategoryIcon category={b.category} size={16} />
+                      </span>
+                      {CATEGORY_LABELS[b.category]}
+                    </span>
                     </span>
                     <span className="rf-tabular text-[13px] font-semibold" style={{ color }}>
                       {pct} %
@@ -325,7 +332,7 @@ export default function AdminDashboard() {
 
         {/* Työaika tänään */}
         <Card>
-          <CardHeader title="⏱️ Työaika tänään" subtitle={`${todayHours.length} työntekijää`} />
+          <CardHeader title="Työaika tänään" subtitle={`${todayHours.length} työntekijää`} />
           {todayHours.length === 0 ? (
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
               Kukaan ei ole vielä leimannut sisään.
@@ -365,7 +372,7 @@ export default function AdminDashboard() {
         <Card className="lg:col-span-3" padded={false}>
           <div className="px-5 pt-5">
             <CardHeader
-              title="🧾 Viimeisimmät kuitit"
+              title="Viimeisimmät kuitit"
               action={
                 <Link href="/admin/kuitit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
                   Kaikki

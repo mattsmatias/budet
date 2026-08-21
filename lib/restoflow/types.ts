@@ -55,13 +55,6 @@ export const POSITION_LABELS: Record<StaffPosition, string> = {
   cleaning: "Siivous",
 };
 
-export const POSITION_EMOJI: Record<StaffPosition, string> = {
-  waiter: "🍽️",
-  kitchen: "👨‍🍳",
-  manager: "📋",
-  cleaning: "🧽",
-};
-
 export interface User {
   id: string;
   restaurantId: string;
@@ -99,18 +92,6 @@ export const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   staff: "Henkilöstö",
   transport: "Kuljetus",
   other: "Muut",
-};
-
-export const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
-  food: "🥩",
-  alcohol: "🍷",
-  soft_drinks: "🥤",
-  cleaning: "🧼",
-  kitchen_supplies: "🍳",
-  packaging: "📦",
-  staff: "👥",
-  transport: "🚚",
-  other: "📎",
 };
 
 /** Kategoriat esitysjärjestyksessä. */
@@ -157,13 +138,6 @@ export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: "Käteinen",
   invoice: "Lasku",
   unknown: "Ei tiedossa",
-};
-
-export const PAYMENT_EMOJI: Record<PaymentMethod, string> = {
-  card: "💳",
-  cash: "💶",
-  invoice: "🧾",
-  unknown: "❓",
 };
 
 // ---------------------------------------------------------------------------
@@ -300,14 +274,6 @@ export const SHIFT_STATUS_LABELS: Record<ShiftStatus, string> = {
   changed: "Muuttunut",
 };
 
-export const SHIFT_STATUS_EMOJI: Record<ShiftStatus, string> = {
-  draft: "📝",
-  pending: "🟡",
-  accepted: "🟢",
-  declined: "🔴",
-  changed: "🔵",
-};
-
 export interface Shift {
   id: string;
   restaurantId: string;
@@ -382,12 +348,6 @@ export interface Absence {
 // ---------------------------------------------------------------------------
 
 export type AlertSeverity = "info" | "warning" | "critical";
-
-export const SEVERITY_EMOJI: Record<AlertSeverity, string> = {
-  info: "🔵",
-  warning: "🟡",
-  critical: "🔴",
-};
 
 export type AlertKind =
   | "duplicate_receipt"

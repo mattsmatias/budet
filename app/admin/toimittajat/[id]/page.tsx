@@ -13,7 +13,8 @@ import {
   supplierTotalsInMonth,
   supplierTrends,
 } from "@/lib/restoflow/suppliers";
-import { CATEGORY_EMOJI, CATEGORY_LABELS, PAYMENT_LABELS } from "@/lib/restoflow/types";
+import { CATEGORY_LABELS, PAYMENT_LABELS } from "@/lib/restoflow/types";
+import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
@@ -67,8 +68,11 @@ export default async function SupplierDetailPage({
         <div>
           <h1 className="text-[30px] font-semibold tracking-tight">{supplier.name}</h1>
           <p className="mt-0.5 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-            {CATEGORY_EMOJI[supplier.defaultCategory]}{" "}
-            {CATEGORY_LABELS[supplier.defaultCategory]} · {formatMonth(month)}
+            <span className="inline-flex items-center gap-1.5 align-middle">
+              <CategoryIcon category={supplier.defaultCategory} size={15} />
+              {CATEGORY_LABELS[supplier.defaultCategory]}
+            </span>{" "}
+            · {formatMonth(month)}
           </p>
         </div>
       </div>
@@ -76,11 +80,11 @@ export default async function SupplierDetailPage({
       <DemoNotice />
 
       <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="🧾 Kuitteja" value={String(inMonth.length)} hint={formatMonth(month)} />
-        <MetricCard label="💶 Yhteensä" value={formatMoney(monthTotal)} />
-        <MetricCard label="📊 Keskimääräinen kuitti" value={formatMoney(average)} />
+        <MetricCard label="Kuitteja" value={String(inMonth.length)} hint={formatMonth(month)} />
+        <MetricCard label="Yhteensä" value={formatMoney(monthTotal)} />
+        <MetricCard label="Keskimääräinen kuitti" value={formatMoney(average)} />
         <MetricCard
-          label="📈 Muutos"
+          label="Muutos"
           value={trend?.change === null || !trend ? "—" : formatChange(trend.change)}
           hint={
             trend && trend.change !== null
@@ -135,7 +139,12 @@ export default async function SupplierDetailPage({
               {totals.categories.map((c) => (
                 <li key={c.category} className="flex items-baseline justify-between gap-3">
                   <span className="text-[14px]">
-                    {CATEGORY_EMOJI[c.category]} {CATEGORY_LABELS[c.category]}
+                    <span className="inline-flex items-center gap-2">
+                      <span style={{ color: "var(--rf-text-2)" }}>
+                        <CategoryIcon category={c.category} size={16} />
+                      </span>
+                      {CATEGORY_LABELS[c.category]}
+                    </span>
                   </span>
                   <span className="rf-tabular text-[14px] font-semibold">
                     {formatMoney(c.cents)}
