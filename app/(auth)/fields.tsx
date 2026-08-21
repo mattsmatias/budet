@@ -32,7 +32,7 @@ export function Field({
         autoComplete={autoComplete}
         required={required}
         aria-describedby={hint ? `${id}-hint` : undefined}
-        className="mt-1.5 w-full px-3.5 py-2.5 text-[15px] outline-none"
+        className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
         style={{
           background: "var(--rf-inset)",
           borderRadius: "var(--rf-r-control)",

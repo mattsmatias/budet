@@ -53,11 +53,11 @@ export default async function ExpensesPage({
   const canGoForward = nextMonth(viewMonth) <= month;
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[30px] font-semibold tracking-tight">Kulut</h1>
-          <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Kulut</h1>
+          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             Mihin rahat menevät?
           </p>
         </div>
@@ -90,7 +90,7 @@ export default async function ExpensesPage({
 
       <DemoNotice />
 
-      <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         <MetricCard
           label="Kirjatut kulut"
           value={formatMoney(current.totalCents)}

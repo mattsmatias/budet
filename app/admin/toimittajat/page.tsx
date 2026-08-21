@@ -42,17 +42,17 @@ export default async function SuppliersPage() {
   const biggest = totals[0];
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[30px] font-semibold tracking-tight">Toimittajat</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Toimittajat</h1>
+        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           Kenelle rahamme menevät? · {formatMonth(month)}
         </p>
       </div>
 
       <DemoNotice />
 
-      <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-3">
+      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3 md:gap-4">
         <MetricCard label="Toimittajia" value={String(totals.length)} />
         <MetricCard
           label="Kirjatut kulut"
@@ -83,7 +83,79 @@ export default async function SuppliersPage() {
               subtitle="Suurin ensin · muutos edelliseen kuukauteen"
             />
           </div>
-          <div className="overflow-x-auto">
+          <ul className="space-y-3 px-5 pb-5 md:hidden">
+            {totals.map((s) => {
+              const trend = trends.get(s.supplierId);
+              const spike = trend?.change !== null && (trend?.change ?? 0) >= 0.25;
+
+              return (
+                <li key={s.supplierId}>
+                  <Link
+                    href={`/admin/toimittajat/${s.supplierId}`}
+                    className="rf-press flex items-start gap-3 py-1"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-baseline justify-between gap-3">
+                        <span className="truncate text-[15px] font-semibold">{s.name}</span>
+                        <span className="rf-tabular shrink-0 text-[16px] font-semibold">
+                          {formatMoney(s.totalCents)}
+                        </span>
+                      </span>
+
+                      <span
+                        className="rf-tabular mt-0.5 block text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
+                        {receiptCountLabel(s.receiptCount)} · ka.{" "}
+                        {formatMoney(s.averageCents)} · {Math.round(s.share * 100)} %
+                      </span>
+
+                      <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {s.categories.slice(0, 2).map((c) => (
+                          <span
+                            key={c.category}
+                            className="inline-flex items-center gap-1 text-[12px]"
+                            style={{ color: "var(--rf-text-2)" }}
+                          >
+                            <CategoryIcon category={c.category} size={13} />
+                            {CATEGORY_LABELS[c.category]}
+                          </span>
+                        ))}
+
+                        {trend?.change === null || trend === undefined ? (
+                          <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                            uusi
+                          </span>
+                        ) : spike ? (
+                          <Pill tone="warn" dot>
+                            {formatChange(trend.change)}
+                          </Pill>
+                        ) : (
+                          <span className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+                            {formatChange(trend.change)}
+                          </span>
+                        )}
+                      </span>
+                    </span>
+
+                    <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                      <Icon path={ICONS.chevron} size={16} />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+
+            <li
+              className="flex items-baseline justify-between gap-3 border-t pt-3 text-[15px] font-semibold"
+              style={{ borderColor: "var(--rf-line-strong)" }}
+            >
+              <span>Yhteensä</span>
+              <span className="rf-tabular">{formatMoney(grandTotal)}</span>
+            </li>
+          </ul>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[52rem] text-[14px]">
               <caption className="sr-only">Toimittajat ja kulut</caption>
               <thead>

@@ -1,242 +1,260 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { compareShifts, formatVariance, labourSummary } from "@/lib/restoflow/shifts";
+import { formatDuration } from "@/lib/restoflow/timeclock";
+import { seesPayRates } from "@/lib/restoflow/permissions";
 import {
-  POSITION_LABELS, SHIFT_STATUS_LABELS, type Shift, type User } from "@/lib/restoflow/types";
+  POSITION_LABELS,
+  SHIFT_STATUS_LABELS,
+  type Shift,
+  type User,
+} from "@/lib/restoflow/types";
+import { formatMoney } from "@/lib/money";
+import { ShiftStatusIcon } from "@/components/restoflow/icons";
 import {
   Avatar,
   Card,
   CardHeader,
-  DemoNotice,
+  EmptyState,
+  MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
+import { EditShift, NewShiftButton } from "./shift-form";
 
 export const metadata = { title: "Työvuorot" };
 
-const WEEK_START = "2026-08-17";
-const WEEKDAYS = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"];
-
 export default async function AdminShiftsPage() {
-  const {
-    users, shifts, openShifts,
-  } = await adminContext("/admin/tyovuorot");
+  const { users, shifts, openShifts, clockEvents, today, now, role } =
+    await adminContext("/admin/tyovuorot");
 
-  const days = Array.from({ length: 7 }, (_, i) => addDays(WEEK_START, i));
+  const upcoming = shifts.filter((s) => s.date >= today);
+  const past = shifts.filter((s) => s.date < today);
 
-  const pending = shifts.filter((s) => s.status === "pending");
-  const changed = shifts.filter((s) => s.status === "changed");
+  const pending = upcoming.filter((s) => s.status === "pending");
+  const declined = upcoming.filter((s) => s.status === "declined");
+
+  // Suunniteltu vs. toteutunut vain menneistä vuoroista: tulevassa
+  // vuorossa ei ole toteutunutta, ja nolla näyttäisi alitukselta.
+  const comparisons = compareShifts(past, users, clockEvents, now);
+  const labour = labourSummary(comparisons);
+  const showsRates = seesPayRates(role);
 
   return (
-    <div className="rf-enter space-y-6">
-      <div>
-        <h1 className="text-[30px] font-semibold tracking-tight">Työvuorot</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          Viikko 17.–23.8.2026 · {shifts.length} vuoroa · {openShifts.length} avointa
-        </p>
+    <div className="rf-enter space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
+            Työvuorot
+          </h1>
+          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+            {upcoming.length} tulevaa
+            {openShifts.length > 0 ? ` · ${openShifts.length} avointa` : ""}
+            {pending.length > 0 ? ` · ${pending.length} odottaa vastausta` : ""}
+          </p>
+        </div>
+        <NewShiftButton users={users} defaultDate={today} />
       </div>
 
-      <DemoNotice>
-        Demo-aineisto. Vuorojen luonti, muokkaus ja hyväksyntä vaativat
-        tietokantayhteyden, jota ei ole vielä kytketty.
-      </DemoNotice>
+      {declined.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Kieltäytyneet"
+            subtitle="Nämä vuorot ovat auki — merkitse joku muu tai jätä avoimeksi"
+          />
+          <ul className="space-y-3">
+            {declined.map((shift) => (
+              <ShiftRow key={shift.id} shift={shift} users={users} showEdit />
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
-      <section aria-label="Tilanne" className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Hyväksytyt" value={shifts.filter((s) => s.status === "accepted").length} tone="ok" />
-        <StatCard label="Odottaa hyväksyntää" value={pending.length} tone="warn" />
-        <StatCard label="Avoimet vuorot" value={openShifts.length} tone="risk" />
-      </section>
+      {comparisons.length > 0 ? (
+        <section aria-label="Toteutunut työaika" className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <MetricCard
+              label="Suunniteltu"
+              value={formatDuration(labour.plannedMs)}
+              hint={`${labour.shiftCount} mennyttä vuoroa`}
+            />
+            <MetricCard
+              label="Toteutunut"
+              value={formatDuration(labour.actualMs)}
+              hint={`${formatVariance(labour.varianceMs)} suunniteltuun`}
+            />
+            {showsRates ? (
+              <MetricCard
+                label="Työvoimakustannus"
+                value={formatMoney(labour.actualCostCents)}
+                hint={
+                  labour.varianceCostCents === 0
+                    ? "Suunnitelman mukainen"
+                    : `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))} suunniteltuun`
+                }
+              />
+            ) : null}
+          </div>
+          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            Laskennallinen. Ei palkkalaskelma — ei sisällä lisiä,
+            lomakorvauksia eikä sivukuluja.
+          </p>
+        </section>
+      ) : null}
 
-      {/* Viikkonäkymä */}
-      <Card padded={false}>
-        <div className="px-5 pt-5">
-          <CardHeader title="Viikko" subtitle="Vuorot työntekijöittäin" />
-        </div>
-        <div className="overflow-x-auto px-5 pb-5">
-          <div className="grid min-w-[46rem] grid-cols-7 gap-3">
-            {days.map((day, i) => {
-              const dayShifts = shifts.filter((s) => s.date === day);
-              const dayOpen = openShifts.filter((s) => s.date === day);
+      {upcoming.length === 0 && openShifts.length === 0 ? (
+        <EmptyState
+          title="Ei tulevia vuoroja"
+          description="Luo ensimmäinen vuoro yllä olevasta painikkeesta. Tekijä saa sen hyväksyttäväkseen, ja voit myös jättää vuoron avoimeksi."
+        />
+      ) : (
+        <Card>
+          <CardHeader title="Tulevat vuorot" subtitle="Aikajärjestyksessä" />
+          <ul className="space-y-3">
+            {upcoming.map((shift) => (
+              <ShiftRow key={shift.id} shift={shift} users={users} showEdit />
+            ))}
 
-              return (
-                <div key={day}>
-                  <div className="mb-2.5">
-                    <p className="text-[13px] font-semibold">{WEEKDAYS[i]}</p>
+            {openShifts.map((open) => (
+              <li
+                key={open.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 first:border-0"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 items-center justify-center text-[13px] font-semibold"
+                    style={{
+                      background: "var(--rf-red-bg)",
+                      color: "var(--rf-red-text)",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    ?
+                  </span>
+                  <div>
+                    <p className="text-[14px] font-medium">Avoin vuoro</p>
                     <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {formatShortDate(day)}
+                      {formatShortDate(open.date)} · {open.startTime}–{open.endTime} ·{" "}
+                      {POSITION_LABELS[open.position]}
                     </p>
                   </div>
-
-                  <div className="space-y-2">
-                    {dayShifts.map((shift) => (
-                      <ShiftChip key={shift.id} shift={shift} users={users} />
-                    ))}
-
-                    {dayOpen.map((open) => (
-                      <div
-                        key={open.id}
-                        className="px-2.5 py-2"
-                        style={{
-                          background: "var(--rf-red-bg)",
-                          borderRadius: "10px",
-                        }}
-                      >
-                        <p
-                          className="text-[12px] font-semibold"
-                          style={{ color: "var(--rf-red-text)" }}
-                        >
-                          Avoin
-                        </p>
-                        <p className="rf-tabular text-[11px]" style={{ color: "var(--rf-red-text)" }}>
-                          {open.startTime}–{open.endTime}
-                        </p>
-                        <p className="text-[11px]" style={{ color: "var(--rf-red-text)" }}>
-                          {POSITION_LABELS[open.position]}
-                        </p>
-                      </div>
-                    ))}
-
-                    {dayShifts.length === 0 && dayOpen.length === 0 ? (
-                      <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                        —
-                      </p>
-                    ) : null}
-                  </div>
                 </div>
-              );
-            })}
+                <Pill tone="risk" dot>
+                  ei tekijää
+                </Pill>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {comparisons.length > 0 ? (
+        <Card padded={false}>
+          <div className="px-5 pt-5">
+            <CardHeader
+              title="Suunniteltu vs. toteutunut"
+              subtitle="Menneet vuorot · toteutunut luetaan leimauksista"
+            />
           </div>
-        </div>
-      </Card>
-
-      {/* Odottavat */}
-      {pending.length > 0 || changed.length > 0 ? (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {pending.length > 0 ? (
-            <Card>
-              <CardHeader
-                title="Odottaa hyväksyntää"
-                subtitle={`${pending.length} vuoroa`}
-              />
-              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                {pending.map((shift) => (
-                  <ShiftRow key={shift.id} shift={shift} users={users} />
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[38rem] text-[14px]">
+              <caption className="sr-only">Vuorojen toteutuma</caption>
+              <thead>
+                <tr
+                  className="border-b text-left text-[12px] uppercase tracking-[0.04em]"
+                  style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
+                >
+                  <th scope="col" className="px-5 py-3 font-medium">Päivä</th>
+                  <th scope="col" className="px-5 py-3 font-medium">Tekijä</th>
+                  <th scope="col" className="px-5 py-3 text-right font-medium">Suunniteltu</th>
+                  <th scope="col" className="px-5 py-3 text-right font-medium">Toteutunut</th>
+                  <th scope="col" className="px-5 py-3 text-right font-medium">Ero</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                {comparisons.slice(-15).reverse().map((c) => (
+                  <tr key={c.shift.id}>
+                    <td className="rf-tabular px-5 py-3">{formatShortDate(c.shift.date)}</td>
+                    <td className="px-5 py-3">{c.user?.name ?? "—"}</td>
+                    <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
+                      {formatDuration(c.plannedMs)}
+                    </td>
+                    <td className="rf-tabular px-5 py-3 text-right font-semibold">
+                      {c.actualMs === 0 ? "—" : formatDuration(c.actualMs)}
+                    </td>
+                    <td
+                      className="rf-tabular px-5 py-3 text-right"
+                      style={{
+                        color:
+                          c.actualMs === 0
+                            ? "var(--rf-text-3)"
+                            : Math.abs(c.varianceMs) > 15 * 60000
+                              ? "var(--rf-amber-text)"
+                              : "var(--rf-text-2)",
+                      }}
+                    >
+                      {c.actualMs === 0 ? "ei leimauksia" : formatVariance(c.varianceMs)}
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            </Card>
-          ) : null}
-
-          {changed.length > 0 ? (
-            <Card>
-              <CardHeader title="Muuttuneet vuorot" subtitle={`${changed.length} vuoroa`} />
-              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                {changed.map((shift) => {
-                  const employee = users.find((u) => u.id === shift.userId);
-                  return (
-                    <li key={shift.id} className="flex items-center gap-3 py-3">
-                      <Avatar initials={employee?.initials ?? "?"} size={32} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[14px] font-medium">{employee?.name}</p>
-                        <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                          {formatShortDate(shift.date)}
-                        </p>
-                      </div>
-                      <p className="rf-tabular text-right text-[13px]">
-                        <s style={{ color: "var(--rf-text-3)" }}>
-                          {shift.previousStartTime}–{shift.previousEndTime}
-                        </s>
-                        <br />
-                        <strong>
-                          {shift.startTime}–{shift.endTime}
-                        </strong>
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
-          ) : null}
-        </div>
+              </tbody>
+            </table>
+          </div>
+        </Card>
       ) : null}
     </div>
   );
 }
 
-function ShiftChip({ shift, users }: { shift: Shift; users: User[] }) {
-  const employee = users.find((u) => u.id === shift.userId);
-  const bg =
+function ShiftRow({
+  shift,
+  users,
+  showEdit,
+}: {
+  shift: Shift;
+  users: User[];
+  showEdit?: boolean;
+}) {
+  const user = users.find((u) => u.id === shift.userId);
+
+  const tone =
     shift.status === "accepted"
-      ? "var(--rf-green-bg)"
+      ? "ok"
       : shift.status === "changed"
-        ? "var(--rf-blue-bg)"
-        : "var(--rf-amber-bg)";
-  const fg =
-    shift.status === "accepted"
-      ? "var(--rf-green-text)"
-      : shift.status === "changed"
-        ? "var(--rf-blue-text)"
-        : "var(--rf-amber-text)";
+        ? "info"
+        : shift.status === "declined"
+          ? "risk"
+          : "warn";
 
   return (
-    <div className="px-2.5 py-2" style={{ background: bg, borderRadius: "10px" }}>
-      <p className="truncate text-[12px] font-semibold" style={{ color: fg }}>
-        {employee?.name.split(" ")[0] ?? "—"}
-      </p>
-      <p className="rf-tabular text-[11px]" style={{ color: fg }}>
-        {shift.startTime}–{shift.endTime}
-      </p>
-    </div>
-  );
-}
-
-function ShiftRow({ shift, users }: { shift: Shift; users: User[] }) {
-  const employee = users.find((u) => u.id === shift.userId);
-
-  return (
-    <li className="flex items-center gap-3 py-3">
-      <Avatar initials={employee?.initials ?? "?"} size={32} />
-      <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-medium">{employee?.name}</p>
-        <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {formatShortDate(shift.date)} · {shift.startTime}–{shift.endTime}
-        </p>
+    <li
+      className="flex flex-wrap items-start justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+      style={{ borderColor: "var(--rf-line)" }}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar initials={user?.initials ?? "?"} size={36} />
+        <div className="min-w-0">
+          <p className="truncate text-[14px] font-medium">{user?.name ?? "Avoin"}</p>
+          <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            {formatShortDate(shift.date)} · {shift.startTime}–{shift.endTime}
+            {shift.location ? ` · ${shift.location}` : ""}
+          </p>
+          {shift.previousStartTime ? (
+            <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+              oli {shift.previousStartTime}–{shift.previousEndTime}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <Pill tone="warn" dot>
+
+      <Pill tone={tone}>
+        <ShiftStatusIcon status={shift.status} size={13} />
         {SHIFT_STATUS_LABELS[shift.status]}
       </Pill>
+
+      {showEdit ? <EditShift users={users} shift={shift} /> : null}
     </li>
   );
-}
-
-function StatCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "ok" | "warn" | "risk";
-}) {
-  const color =
-    tone === "ok"
-      ? "var(--rf-green-text)"
-      : tone === "warn"
-        ? "var(--rf-amber-text)"
-        : "var(--rf-red-text)";
-
-  return (
-    <Card>
-      <p className="text-[12px] font-medium uppercase tracking-[0.04em]" style={{ color: "var(--rf-text-2)" }}>
-        {label}
-      </p>
-      <p className="rf-tabular mt-2 text-[28px] font-semibold leading-none" style={{ color }}>
-        {value}
-      </p>
-    </Card>
-  );
-}
-
-function addDays(isoDate: string, days: number): string {
-  const d = new Date(`${isoDate}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 function formatShortDate(isoDate: string): string {

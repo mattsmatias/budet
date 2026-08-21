@@ -10,10 +10,10 @@ export default async function SettingsPage() {
   } = await adminContext("/admin/asetukset");
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[30px] font-semibold tracking-tight">Asetukset</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Asetukset</h1>
+        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           Ravintola Linnea
         </p>
       </div>

@@ -42,12 +42,12 @@ export default async function EmployeeHome() {
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <header className="px-1 pt-2">
         <h1 className="text-[28px] font-semibold tracking-tight">
           Hei{firstName ? `, ${firstName}` : ""}
         </h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
         </p>
       </header>

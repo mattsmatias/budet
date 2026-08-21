@@ -50,10 +50,10 @@ export default async function ReportsPage() {
   const totals = periodTotals(receipts, month);
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[30px] font-semibold tracking-tight">Raportit</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Raportit</h1>
+        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           {formatMonth(month)} · {totals.receiptCount} kuittia ·{" "}
           {formatMoney(totals.totalCents)} kirjattuja kuluja
         </p>
@@ -65,7 +65,7 @@ export default async function ReportsPage() {
         joten suomalainen Excel avaa sen suoraan oikein.
       </DemoNotice>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {REPORTS.map((report) => (
           <Card key={report.kind} hover>
             <div className="flex items-start justify-between gap-4">

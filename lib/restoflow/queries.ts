@@ -419,3 +419,46 @@ export async function fetchRestaurantData(
 
   return { receipts, users, suppliers, budgets, shifts, openShifts, clockEvents };
 }
+
+// ---------------------------------------------------------------------------
+// Kutsut
+// ---------------------------------------------------------------------------
+
+export interface Invitation {
+  id: string;
+  /** Koodin neljä viimeistä merkkiä. Koko koodia ei voi hakea. */
+  codeHint: string;
+  role: User["role"];
+  position: User["position"];
+  hourlyRateCents: number | null;
+  label: string | null;
+  expiresAt: string;
+  createdAt: string;
+}
+
+/** Lunastamattomat, voimassa olevat kutsut. */
+export async function fetchInvitations(
+  restaurantId: string,
+): Promise<Invitation[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("restaurant_invitations")
+    .select("id, code_hint, role, position, hourly_rate_cents, label, expires_at, created_at")
+    .eq("restaurant_id", restaurantId)
+    .is("accepted_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    codeHint: row.code_hint as string,
+    role: row.role as User["role"],
+    position: (row.position as User["position"]) ?? null,
+    hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
+    label: (row.label as string | null) ?? null,
+    expiresAt: row.expires_at as string,
+    createdAt: row.created_at as string,
+  }));
+}

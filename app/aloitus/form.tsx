@@ -29,7 +29,7 @@ export function SetupForm() {
           required
           autoComplete="organization"
           placeholder="Ravintola Linnea"
-          className="mt-1.5 w-full px-3.5 py-2.5 text-[15px] outline-none"
+          className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
           style={{
             background: "var(--rf-inset)",
             borderRadius: "var(--rf-r-control)",
@@ -45,7 +45,7 @@ export function SetupForm() {
           id="timezone"
           name="timezone"
           defaultValue="Europe/Helsinki"
-          className="mt-1.5 w-full px-3.5 py-2.5 text-[15px] outline-none"
+          className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
           style={{
             background: "var(--rf-inset)",
             borderRadius: "var(--rf-r-control)",

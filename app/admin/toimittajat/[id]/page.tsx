@@ -47,7 +47,7 @@ export default async function SupplierDetailPage({
   const average = inMonth.length === 0 ? 0 : Math.round(monthTotal / inMonth.length);
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div className="flex items-center gap-2">
         <Link
           href="/admin/toimittajat"
@@ -58,7 +58,7 @@ export default async function SupplierDetailPage({
           <Icon path={ICONS.back} size={22} />
         </Link>
         <div>
-          <h1 className="text-[30px] font-semibold tracking-tight">{supplier.name}</h1>
+          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">{supplier.name}</h1>
           <p className="mt-0.5 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             <span className="inline-flex items-center gap-1.5 align-middle">
               <CategoryIcon category={supplier.defaultCategory} size={15} />
@@ -70,7 +70,7 @@ export default async function SupplierDetailPage({
       </div>
 
       
-      <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         <MetricCard label="Kuitteja" value={String(inMonth.length)} hint={formatMonth(month)} />
         <MetricCard label="Yhteensä" value={formatMoney(monthTotal)} />
         <MetricCard label="Keskimääräinen kuitti" value={formatMoney(average)} />

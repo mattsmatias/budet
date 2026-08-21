@@ -1,22 +1,29 @@
-import { adminContext } from "@/lib/restoflow/page-context";
 import Link from "next/link";
+import { adminContext } from "@/lib/restoflow/page-context";
 import {
   budgetProgress,
   budgetSummary,
+  spendByCategory,
   WARNING_THRESHOLD,
 } from "@/lib/restoflow/budgets";
-import { formatMonth } from "@/lib/restoflow/expenses";
-import { CATEGORY_LABELS } from "@/lib/restoflow/types";
-import { CategoryIcon } from "@/components/restoflow/icons";
+import { formatMonth, receiptsInMonth } from "@/lib/restoflow/expenses";
+import { can } from "@/lib/restoflow/permissions";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  type ExpenseCategory,
+} from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
+import { CategoryIcon } from "@/components/restoflow/icons";
 import {
   BudgetBar,
   Card,
   CardHeader,
-  DemoNotice,
+  EmptyState,
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
+import { AddBudget, BudgetEditor } from "./editor";
 
 export const metadata = { title: "Budjetit" };
 
@@ -26,119 +33,142 @@ export const metadata = { title: "Budjetit" };
  * Budjetti tekee kuluista toimintakelpoisia: "21 430 €" ei kerro onko se
  * paljon, mutta "82 % budjetista" kertoo.
  *
- * Kulutusvauhtia ei ekstrapoloida päiväkohtaisesti — ravintolan ostot
- * eivät jakaudu tasaisesti kuukaudelle, ja tasaiseen tahtiin perustuva
- * ennuste hälyttäisi turhaan heti ison tukkulaskun jälkeen.
+ * Kulutusvauhtia ei ekstrapoloida päiväkohtaisesti — ravintolan ostot eivät
+ * jakaudu tasaisesti kuukaudelle, ja tasaiseen tahtiin perustuva ennuste
+ * hälyttäisi turhaan heti ison tukkulaskun jälkeen.
  */
 export default async function BudgetsPage() {
-  const {
-    receipts, budgets, month,
-  } = await adminContext("/admin/budjetit");
+  const { receipts, budgets, month, role } = await adminContext("/admin/budjetit");
 
   const progress = budgetProgress(receipts, budgets, month);
   const summary = budgetSummary(progress);
+  const canEdit = can(role, "budgets.edit");
 
   const budgeted = progress.filter((p) => p.budgetCents !== null);
   const unbudgeted = progress.filter((p) => p.budgetCents === null);
 
+  const spendMap = spendByCategory(receiptsInMonth(receipts, month));
+  const spend: Record<string, number> = {};
+  for (const [category, cents] of spendMap) spend[category] = cents;
+
+  const available = CATEGORY_ORDER.filter(
+    (c) => !budgeted.some((p) => p.category === c),
+  );
+
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5">
       <div>
-        <h1 className="text-[30px] font-semibold tracking-tight">Budjetit</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
+          Budjetit
+        </h1>
+        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
           {formatMonth(month)} · {budgeted.length} budjetoitua kategoriaa
         </p>
       </div>
 
-      <DemoNotice>
-        Demo-aineisto. Budjettien muokkaus vaatii tietokantayhteyden, jota ei
-        ole vielä kytketty — alla näkyvät arvot ovat kiinteitä.
-      </DemoNotice>
+      {budgeted.length > 0 ? (
+        <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Budjetoitu"
+            value={formatMoney(summary.totalBudgetCents)}
+            hint="Kuukausibudjetit yhteensä"
+          />
+          <MetricCard
+            label="Käytetty"
+            value={formatMoney(summary.totalSpentCents)}
+            hint={
+              summary.totalBudgetCents > 0
+                ? `${Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100)} % kokonaisbudjetista`
+                : undefined
+            }
+          />
+          <MetricCard
+            label="Ylitetty"
+            value={String(summary.exceededCount)}
+            hint={summary.exceededCount > 0 ? "Kategoriaa yli rajan" : "Ei ylityksiä"}
+          />
+          <MetricCard
+            label="Lähestyy rajaa"
+            value={String(summary.warningCount)}
+            hint={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
+          />
+        </section>
+      ) : null}
 
-      <section aria-label="Yhteenveto" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="Budjetoitu"
-          value={formatMoney(summary.totalBudgetCents)}
-          hint="Kuukausibudjetit yhteensä"
-        />
-        <MetricCard
-          label="Käytetty"
-          value={formatMoney(summary.totalSpentCents)}
-          hint={
-            summary.totalBudgetCents > 0
-              ? `${Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100)} % kokonaisbudjetista`
-              : undefined
+      {budgeted.length === 0 ? (
+        <EmptyState
+          title="Ei budjetteja"
+          description={
+            canEdit
+              ? "Aseta kuukausibudjetti kategorialle, niin näet miten kulut suhteutuvat siihen ja saat hälytyksen ennen kuin raja ylittyy."
+              : "Omistaja ei ole vielä asettanut budjetteja."
           }
         />
-        <MetricCard
-          label="Ylitetty"
-          value={String(summary.exceededCount)}
-          hint={summary.exceededCount > 0 ? "Kategoriaa yli budjetin" : "Ei ylityksiä"}
-        />
-        <MetricCard
-          label="Lähestyy rajaa"
-          value={String(summary.warningCount)}
-          hint={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
-        />
-      </section>
+      ) : (
+        <Card>
+          <CardHeader title="Kategoriat" subtitle="Ylitykset ja varoitukset ensin" />
+          <ul className="space-y-5">
+            {budgeted.map((p) => {
+              const pct = Math.round((p.ratio ?? 0) * 100);
+              const over = p.status === "exceeded";
 
-      <Card>
-        <CardHeader
-          title="Kategoriat"
-          subtitle="Ylitykset ja varoitukset ensin"
-        />
-        <ul className="space-y-5">
-          {budgeted.map((p) => {
-            const pct = Math.round((p.ratio ?? 0) * 100);
-            const over = p.status === "exceeded";
-
-            return (
-              <li key={p.category}>
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <span className="text-[15px] font-medium">
-                    <span className="inline-flex items-center gap-2">
+              return (
+                <li key={p.category}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 text-[15px] font-medium">
                       <span style={{ color: "var(--rf-text-2)" }}>
-                        <CategoryIcon category={p.category} size={16} />
+                        <CategoryIcon category={p.category} size={17} />
                       </span>
                       {CATEGORY_LABELS[p.category]}
                     </span>
-                  </span>
-                  <span className="flex items-center gap-2.5">
-                    {p.status === "exceeded" ? (
-                      <Pill tone="risk" dot>ylitetty</Pill>
-                    ) : p.status === "warning" ? (
-                      <Pill tone="warn" dot>lähestyy</Pill>
-                    ) : (
-                      <Pill tone="ok" dot>ok</Pill>
-                    )}
-                    <span className="rf-tabular text-[15px] font-semibold">{pct} %</span>
-                  </span>
-                </div>
+                    <span className="flex items-center gap-2.5">
+                      {p.status === "exceeded" ? (
+                        <Pill tone="risk" dot>ylitetty</Pill>
+                      ) : p.status === "warning" ? (
+                        <Pill tone="warn" dot>lähestyy</Pill>
+                      ) : (
+                        <Pill tone="ok" dot>ok</Pill>
+                      )}
+                      <span className="rf-tabular text-[15px] font-semibold">{pct} %</span>
+                      {canEdit ? (
+                        <BudgetEditor
+                          category={p.category}
+                          currentCents={p.budgetCents}
+                          spentCents={p.spentCents}
+                        />
+                      ) : null}
+                    </span>
+                  </div>
 
-                <div className="mt-2">
-                  <BudgetBar ratio={p.ratio} status={p.status} />
-                </div>
+                  <div className="mt-2">
+                    <BudgetBar ratio={p.ratio} status={p.status} />
+                  </div>
 
-                <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-[13px]">
-                  <span className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
-                    {formatMoney(p.spentCents)} / {formatMoney(p.budgetCents ?? 0)}
-                  </span>
-                  <span
-                    className="rf-tabular"
-                    style={{
-                      color: over ? "var(--rf-red-text)" : "var(--rf-text-3)",
-                    }}
-                  >
-                    {over
-                      ? `${formatMoney(Math.abs(p.remainingCents ?? 0))} yli`
-                      : `${formatMoney(p.remainingCents ?? 0)} jäljellä`}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
+                  <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-[13px]">
+                    <span className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
+                      {formatMoney(p.spentCents)} / {formatMoney(p.budgetCents ?? 0)}
+                    </span>
+                    <span
+                      className="rf-tabular"
+                      style={{ color: over ? "var(--rf-red-text)" : "var(--rf-text-3)" }}
+                    >
+                      {over
+                        ? `${formatMoney(Math.abs(p.remainingCents ?? 0))} yli`
+                        : `${formatMoney(p.remainingCents ?? 0)} jäljellä`}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+
+      {canEdit ? (
+        <Card>
+          <AddBudget categories={available as ExpenseCategory[]} spend={spend} />
+        </Card>
+      ) : null}
 
       {unbudgeted.length > 0 ? (
         <Card>
@@ -148,17 +178,24 @@ export default async function BudgetsPage() {
           />
           <ul className="space-y-2.5">
             {unbudgeted.map((p) => (
-              <li key={p.category} className="flex items-baseline justify-between gap-3">
-                <span className="text-[14px]">
-                  <span className="inline-flex items-center gap-2">
-                      <span style={{ color: "var(--rf-text-2)" }}>
-                        <CategoryIcon category={p.category} size={16} />
-                      </span>
-                      {CATEGORY_LABELS[p.category]}
-                    </span>
+              <li key={p.category} className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-[14px]">
+                  <span style={{ color: "var(--rf-text-2)" }}>
+                    <CategoryIcon category={p.category} size={16} />
+                  </span>
+                  {CATEGORY_LABELS[p.category]}
                 </span>
-                <span className="rf-tabular text-[14px] font-semibold">
-                  {formatMoney(p.spentCents)}
+                <span className="flex items-center gap-2.5">
+                  <span className="rf-tabular text-[14px] font-semibold">
+                    {formatMoney(p.spentCents)}
+                  </span>
+                  {canEdit ? (
+                    <BudgetEditor
+                      category={p.category}
+                      currentCents={null}
+                      spentCents={p.spentCents}
+                    />
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -172,10 +209,7 @@ export default async function BudgetsPage() {
 
       <Card>
         <CardHeader title="Miten budjetit toimivat" />
-        <ul
-          className="space-y-2 text-[13px] leading-relaxed"
-          style={{ color: "var(--rf-text-2)" }}
-        >
+        <ul className="space-y-2 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
           <li>
             <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} % käytetty
           </li>

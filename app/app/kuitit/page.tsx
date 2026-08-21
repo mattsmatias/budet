@@ -68,7 +68,7 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/app/kui
             name="haku"
             defaultValue={query}
             placeholder="Hae kuitteja"
-            className="w-full py-2.5 pl-11 pr-4 text-[15px] outline-none"
+            className="w-full py-2.5 pl-11 pr-4 text-[16px] outline-none"
             style={{
               background: "var(--rf-card)",
               borderRadius: "var(--rf-r-control)",

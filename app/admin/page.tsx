@@ -98,11 +98,11 @@ export default async function AdminDashboard() {
     .sort((a, b) => b.worked.workedMs - a.worked.workedMs);
 
   return (
-    <div className="rf-enter space-y-6">
+    <div className="rf-enter space-y-5 md:space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[30px] font-semibold tracking-tight">Yleiskuva</h1>
-          <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Yleiskuva</h1>
+          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             {restaurant.name} · {formatMonth(month)}
           </p>
         </div>
@@ -118,7 +118,7 @@ export default async function AdminDashboard() {
 
       
       {/* KPI:t */}
-      <section aria-label="Avainluvut" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Avainluvut" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         <MetricCard
           label="Kirjatut kulut"
           value={formatMoney(current.totalCents)}
@@ -286,7 +286,7 @@ export default async function AdminDashboard() {
               </Link>
             }
           />
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <ul className="grid gap-3 sm:grid-cols-2 md:gap-4">
             {budgetRows.slice(0, 6).map((b) => {
               const pct = Math.round((b.ratio ?? 0) * 100);
               const color =
