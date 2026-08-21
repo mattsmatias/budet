@@ -1,451 +1,717 @@
 import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
-import { alertCounts, buildAlerts } from "@/lib/restoflow/alerts";
-import { budgetProgress } from "@/lib/restoflow/budgets";
 import {
-  changeTone,
-  formatChange,
+  attention,
+  budgetLines,
+  compareToPreviousMonth,
+  hasChartHistory,
+  receiptSplit,
+  staffCostShare,
+} from "@/lib/restoflow/dashboard";
+import {
   formatMonth,
+  monthlySeries,
+
   periodTotals,
   previousMonth,
-  receiptCountLabel,
   receiptsInMonth,
-  relativeChange,
   sortByDateDesc,
   totalsByCategory,
 } from "@/lib/restoflow/expenses";
-import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
-import { staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
-import { formatDuration } from "@/lib/restoflow/timeclock";
+import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
+import { can, seesPayRates } from "@/lib/restoflow/permissions";
+import { formatDuration, staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
+import { currentState } from "@/lib/restoflow/timeclock";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
-import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
+import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
+import { Avatar, CategoryBubble, Pill, SeverityDot } from "@/components/restoflow/ui";
 import {
-  Avatar,
-  BarRow,
-  Card,
-  CardHeader,
-  CategoryBubble,
-  Icon,
-  ICONS,
-  MetricCard,
-  SeverityDot,
-  TrendBadge,
-} from "@/components/restoflow/ui";
+  BudgetBarLine,
+  Panel,
+  PanelEmpty,
+  ShareBar,
+  StatCard,
+} from "@/components/restoflow/dashboard-ui";
+import { MonthPicker } from "./month-picker";
 
 export const metadata = { title: "Yleiskuva" };
 
 /**
- * Managerin yleiskuva.
+ * Yleiskuva.
  *
- * Järjestys on tarkoituksellinen: kirjatut kulut, jakauma, huomiot,
- * työaika, viimeisimmät kuitit. Näkymän pitää olla ymmärrettävissä alle
- * viidessä sekunnissa, joten kortteja on rajattu määrä eikä mitään ole
- * lisätty vain siksi että se mahtuisi.
+ * Näkymän tehtävä on vastata viiteen kysymykseen viidessä sekunnissa:
+ * miten menee, mihin rahat menevät, kenelle ne menevät, onko jotain
+ * pielessä, mitä pitää tehdä nyt. Kaikki muu on painolastia.
  *
- * Myyntiä, liikevaihtoa tai kassavirtaa ei näytetä — RestoFlow ei näe niitä.
+ * Sääntö jota ei rikota: jokainen luku esittää myös johtopäätöksen, ja
+ * puuttuva vertailukohta sanotaan ääneen. Keksitty prosentti on pahempi
+ * kuin puuttuva prosentti — se saa tekemään päätöksiä.
+ *
+ * Myyntiä ei näytetä, koska RestoFlow ei näe sitä. Kannattavuutta ei
+ * lasketa ilman myyntiä.
  */
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: PageProps<"/admin">) {
+  const params = await searchParams;
   const {
     receipts, users, budgets, shifts, clockEvents,
-    month, today, now, monthlyHours, restaurant,
+    month, today, now, monthlyHours, restaurant, user, role,
   } = await adminContext("/admin");
 
-  const current = periodTotals(receipts, month);
-  const previous = periodTotals(receipts, previousMonth(month));
-  const expenseChange = relativeChange(current.totalCents, previous.totalCents);
+  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const viewMonth = /^\d{4}-\d{2}$/.test(requested) && requested <= month ? requested : month;
+  const isCurrentMonth = viewMonth === month;
 
-  const categories = totalsByCategory(receiptsInMonth(receipts, month));
-  const suppliers = supplierTotalsInMonth(receipts, month).slice(0, 5);
-  const recent = sortByDateDesc(receipts).slice(0, 5);
+  // Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
+  const selectable: string[] = [];
+  let cursor = month;
+  for (let i = 0; i < 13; i++) {
+    selectable.push(cursor);
+    cursor = previousMonth(cursor);
+  }
 
-  const alerts = buildAlerts({
-    receipts: receipts,
-    budgets: budgets,
-    shifts: shifts,
-    users: users,
-    clockEvents: clockEvents,
-    month,
-    today: today,
+  const totals = periodTotals(receipts, viewMonth);
+  const comparison = compareToPreviousMonth(receipts, viewMonth);
+  const receipts_ = receiptSplit(receipts, viewMonth);
+
+  const categories = totalsByCategory(receiptsInMonth(receipts, viewMonth));
+  const suppliers = supplierTotalsInMonth(receipts, viewMonth).slice(0, 5);
+  const trends = new Map(
+    supplierTrends(receipts, viewMonth).map((trend) => [trend.supplierId, trend]),
+  );
+  const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
+
+  const focus = attention({
+    receipts, budgets, shifts, users, clockEvents,
+    month: viewMonth, today,
   });
-  const counts = alertCounts(alerts);
 
-  const budgetRows = budgetProgress(receipts, budgets, month).filter(
-    (b) => b.budgetCents !== null,
-  );
+  const budgets_ = budgetLines(receipts, budgets, viewMonth);
 
-  const totalHours = Object.values(monthlyHours).reduce((s, h) => s + h, 0);
-  // Edellisen kuukauden vertailu vaatisi oman kyselynsä; se lisätään kun
-  // työaikaraportti rakennetaan.
-  const hoursChange = null;
+  // Tunnit ja henkilöstökulu lasketaan vain kuluvalle kuukaudelle:
+  // monthlyHours tulee kontekstista kuluvana kuukautena, eikä
+  // menneen kuukauden tunteja saa esittää kuluvan lukuina.
+  const totalHours = isCurrentMonth
+    ? Object.values(monthlyHours).reduce((sum, hours) => sum + hours, 0)
+    : null;
 
-  const staffCost = users.reduce(
-    (sum, u) =>
-      sum + staffCostCents((monthlyHours[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
-    0,
-  );
+  const staffCost = isCurrentMonth
+    ? users.reduce(
+        (sum, u) =>
+          sum + staffCostCents((monthlyHours[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
+        0,
+      )
+    : null;
 
-  // Tänään töissä olleet, pisin aika ensin.
-  const todayHours = users.map((user) => ({
-    user,
-    worked: workedOnDate(
-      clockEvents.filter((e) => e.userId === user.id),
-      today,
-      now,
-    ),
-  }))
-    .filter((row) => row.worked.workedMs > 0)
-    .sort((a, b) => b.worked.workedMs - a.worked.workedMs);
+  const costShare =
+    staffCost === null ? null : staffCostShare(staffCost, totals.totalCents);
+
+  const showsRates = seesPayRates(role);
+
+  // Tänään sisällä olevat. Tila luetaan leimauksista, ei tallenneta.
+  const onDuty = users
+    .map((u) => {
+      const events = clockEvents.filter((event) => event.userId === u.id);
+      const worked = workedOnDate(events, today, now);
+      const state = currentState(events.filter((event) => event.at.slice(0, 10) === today));
+      const firstIn = events.find(
+        (event) => event.type === "in" && event.at.slice(0, 10) === today,
+      );
+
+      return { user: u, worked, state, since: firstIn?.at ?? null };
+    })
+    .filter((row) => row.state === "working" || row.state === "on_break")
+    .sort((a, b) => (a.since ?? "").localeCompare(b.since ?? ""));
+
+  const staffCount = users.filter((u) => u.position !== null).length;
+  const series = monthlySeries(receipts, viewMonth, 6);
+  const showChart = hasChartHistory(receipts, viewMonth);
+  const peak = Math.max(...series.map((point) => point.totalCents), 1);
+
+  const firstName = (user.fullName ?? user.email ?? "").split(" ")[0] ?? "";
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Yleiskuva</h1>
-          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-            {restaurant.name} · {formatMonth(month)}
+      {/* 1. Yläosa */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
+            {greeting(now, restaurant.timezone)}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
+          <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+            {restaurant.name} · {formatMonth(viewMonth)}
           </p>
         </div>
-        <Link
-          href="/admin/raportit"
-          className="rf-press flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
-          style={{ background: "var(--rf-text)", color: "#fff", borderRadius: "var(--rf-r-control)" }}
-        >
-          <Icon path={ICONS.download} size={16} />
-          Vie raportti
-        </Link>
-      </div>
 
-      
-      {/* KPI:t */}
-      <section aria-label="Avainluvut" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
-        <MetricCard
+        <div className="flex flex-wrap items-center gap-2">
+          <MonthPicker value={viewMonth} months={selectable} />
+
+          {can(role, "reports.view") ? (
+            <Link
+              href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
+              className="rf-press flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
+              style={{
+                background: "var(--rf-text)",
+                color: "#fff",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <RfIcon name="download" size={16} />
+              Vie raportti
+            </Link>
+          ) : null}
+        </div>
+      </header>
+
+      {/* 2. KPI-kortit */}
+      <section aria-label="Avainluvut" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatCard
           label="Kirjatut kulut"
-          value={formatMoney(current.totalCents)}
-          trend={
-            <TrendBadge
-              text={`${formatChange(expenseChange)} vs. ${formatMonth(previousMonth(month)).split(" ")[0].toLowerCase()}`}
-              direction={changeTone(expenseChange)}
-            />
+          value={formatMoney(totals.totalCents)}
+          tone={
+            comparison.change === null
+              ? "muted"
+              : comparison.change > 0
+                ? "up"
+                : comparison.change < 0
+                  ? "down"
+                  : "neutral"
+          }
+          conclusion={
+            totals.receiptCount === 0
+              ? "Lisää ensimmäinen kuitti aloittaaksesi"
+              : comparison.change === null || comparison.baseMonth === null
+                ? "Ei vertailukohtaa"
+                : `${percent(comparison.change)} vs. ${monthWord(comparison.baseMonth)}`
           }
           hint="Järjestelmään lisättyjen kuittien summa"
+          href="/admin/kulut"
         />
-        <MetricCard
+
+        <StatCard
           label="Kuitit"
-          value={String(current.receiptCount)}
-          trend={
-            <TrendBadge
-              text={
-                current.needsReviewCount > 0
-                  ? `${current.needsReviewCount} tarkistettavaa`
-                  : "kaikki tarkistettu"
-              }
-              direction="none"
-            />
-          }
+          value={String(receipts_.total)}
+          conclusion={receipts_.label}
+          tone={receipts_.pending > 0 ? "up" : "neutral"}
+          href="/admin/kuitit"
         />
-        <MetricCard
+
+        <StatCard
           label="Työtunnit"
-          value={`${totalHours} h`}
-          trend={
-            <TrendBadge
-              text={`${formatChange(hoursChange)} edelliseen`}
-              direction={changeTone(hoursChange)}
-            />
+          value={totalHours === null ? "—" : `${round(totalHours)} h`}
+          conclusion={
+            totalHours === null
+              ? "Vain kuluvalta kuukaudelta"
+              : totalHours === 0
+                ? "Ei leimauksia tässä kuussa"
+                : "Leimauksista laskettu"
           }
+          tone="muted"
+          href="/admin/tyovuorot"
         />
-        <MetricCard
-          label="Henkilöstökulut"
-          value={formatMoney(staffCost)}
-          hint="Tunnit × tuntipalkka, ei palkkalaskelma"
-        />
+
+        {showsRates ? (
+          <StatCard
+            label="Henkilöstökulut"
+            value={staffCost === null ? "—" : formatMoney(staffCost)}
+            conclusion={
+              staffCost === null
+                ? "Vain kuluvalta kuukaudelta"
+                : costShare === null
+                  ? "Osuutta ei voi laskea"
+                  : `${Math.round(costShare * 100)} % kirjatuista kuluista`
+            }
+            tone="muted"
+            hint="Tunnit × tuntipalkka. Ei palkkalaskelma."
+            href="/admin/tyovuorot"
+          />
+        ) : (
+          <StatCard
+            label="Toimittajat"
+            value={String(supplierTotalsInMonth(receipts, viewMonth).length)}
+            conclusion={
+              suppliers.length === 0 ? "Ei vielä toimittajia" : "Kuukauden aikana"
+            }
+            tone="muted"
+            href="/admin/toimittajat"
+          />
+        )}
       </section>
 
-      {/* Huomiot — heti KPI:iden jälkeen, koska ne vaativat toimenpiteitä */}
-      <Card>
-        <CardHeader
-          title={
-            counts.total === 0
-              ? "Ei huomioita"
-              : `${counts.total} asiaa vaatii huomiota`
-          }
-          subtitle={
-            counts.total === 0
-              ? "Kaikki näyttää olevan kunnossa."
-              : [
-                  counts.critical > 0 ? `${counts.critical} kriittistä` : null,
-                  counts.warning > 0 ? `${counts.warning} varoitusta` : null,
-                  counts.info > 0 ? `${counts.info} tiedoksi` : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-          }
-          action={
-            counts.total > 3 ? (
-              <Link
-                href="/admin/ilmoitukset"
-                className="text-[13px] font-medium"
-                style={{ color: "var(--rf-blue)" }}
+      {/* 3. Vaatii huomiota — kolme eri tilaa */}
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <div
+          className="px-5 py-5"
+          style={{
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-card)",
+          }}
+        >
+          {focus.state === "no-data" ? (
+            <>
+              <h2 className="text-[16px] font-semibold">Ei vielä arvioitavaa</h2>
+              <p
+                className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
               >
-                Kaikki
+                Lisää ensimmäinen kuitti tai määritä budjetit, jotta RestoFlow
+                voi tunnistaa poikkeamat. Tyhjä aineisto ei tarkoita että
+                kaikki on kunnossa — se tarkoittaa ettei mitään ole vielä
+                tarkastettavana.
+              </p>
+              <Link
+                href="/admin/kuitit/uusi"
+                className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+                style={{
+                  background: "var(--rf-text)",
+                  color: "#fff",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                <RfIcon name="plus" size={16} />
+                Lisää kuitti
               </Link>
-            ) : undefined
-          }
-        />
+            </>
+          ) : focus.state === "clear" ? (
+            <>
+              <h2 className="flex items-center gap-2 text-[16px] font-semibold">
+                Kaikki kunnossa
+                <span style={{ color: "var(--rf-green-text)" }}>
+                  <RfIcon name="check" size={18} />
+                </span>
+              </h2>
+              <p
+                className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                Ei tarkistettavia kuitteja, budjettiylityksiä eikä poikkeavia
+                kuluja. Tarkastettu {monthWord(viewMonth)}n aineistosta.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-[16px] font-semibold">
+                  Vaatii huomiota · {focus.alerts.length}
+                </h2>
+                <Link
+                  href="/admin/ilmoitukset"
+                  className="shrink-0 text-[13px] font-medium"
+                  style={{ color: "var(--rf-blue)" }}
+                >
+                  Tarkista kaikki →
+                </Link>
+              </div>
 
-        {alerts.length === 0 ? (
-          <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-            Ei kaksoiskappaleita, budjettiylityksiä eikä tarkistettavia kuitteja.
+              <ul className="mt-4 space-y-3">
+                {focus.alerts.slice(0, 4).map((alert) => (
+                  <li key={alert.id}>
+                    <Link
+                      href={alert.href}
+                      className="rf-press flex items-start gap-3 border-t pt-3 first:border-0 first:pt-0"
+                      style={{ borderColor: "var(--rf-line)" }}
+                    >
+                      <span className="mt-1 shrink-0">
+                        <SeverityDot severity={alert.severity} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-medium">
+                          {alert.title}
+                        </span>
+                        <span
+                          className="block text-[12px] leading-relaxed"
+                          style={{ color: "var(--rf-text-2)" }}
+                        >
+                          {alert.detail}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                        <RfIcon name="chevron" size={15} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              {focus.alerts.length > 4 ? (
+                <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  Ja {focus.alerts.length - 4} muuta.
+                </p>
+              ) : null}
+            </>
+          )}
+        </div>
+
+        {/* 4. Myynti — ei keksitä sitä mitä ei nähdä */}
+        <div
+          className="px-5 py-5"
+          style={{
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-card)",
+          }}
+        >
+          <h2 className="text-[16px] font-semibold">Myyntidata ei ole yhdistetty</h2>
+          <p
+            className="mt-1.5 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            RestoFlow ei lue kassajärjestelmää, joten se ei voi näyttää
+            myyntiä, tulosta eikä katetta. Kaikki näkymän luvut tarkoittavat
+            kirjattuja kuluja.
           </p>
-        ) : (
-          <ul className="space-y-2.5">
-            {alerts.slice(0, 4).map((alert) => (
-              <li key={alert.id}>
-                <Link href={alert.href} className="flex items-start gap-3">
-                  <span className="mt-1.5">
-                    <SeverityDot severity={alert.severity} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-medium">{alert.title}</span>
-                    <span className="block text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                      {alert.detail}
+          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            Rajaus on tarkoituksellinen. Kannattavuutta ei lasketa arvaamalla
+            myyntiä — väärä katemarginaali on pahempi kuin puuttuva.
+          </p>
+        </div>
+      </section>
+
+      {/* 5 & 6. Mihin ja kenelle */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Mihin rahat menevät?"
+          subtitle={`${formatMonth(viewMonth)} · kirjattujen kulujen jakauma`}
+          href="/admin/kulut"
+        >
+          {categories.length === 0 ? (
+            <PanelEmpty
+              text="Lisää kuitteja nähdäksesi kulujakauman."
+              cta="Lisää kuitti"
+              href="/admin/kuitit/uusi"
+            />
+          ) : (
+            <ul className="space-y-3.5">
+              {categories.slice(0, 5).map((row) => (
+                <li key={row.category}>
+                  <Link href={`/admin/kuitit?suodatin=${row.category}`} className="block">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium">
+                        <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                          <CategoryIcon category={row.category} size={15} />
+                        </span>
+                        <span className="truncate">{CATEGORY_LABELS[row.category]}</span>
+                      </span>
+                      <span className="rf-tabular shrink-0 text-[14px] font-semibold">
+                        {formatMoney(row.totalCents)}
+                        <span
+                          className="ml-2 font-normal"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {Math.round(row.share * 100)} %
+                        </span>
+                      </span>
+                    </div>
+                    <ShareBar share={row.share} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          title="Kenelle rahat menevät?"
+          subtitle="Suurimmat toimittajat"
+          href="/admin/toimittajat"
+        >
+          {suppliers.length === 0 ? (
+            <PanelEmpty text="Kun kuitteja kertyy, näet suurimmat toimittajat täällä." />
+          ) : (
+            <ul className="space-y-3">
+              {suppliers.map((supplier) => {
+                const trend = trends.get(supplier.supplierId);
+                const hasTrend = trend !== undefined && trend.change !== null;
+
+                return (
+                  <li key={supplier.supplierId}>
+                    <Link
+                      href={`/admin/toimittajat/${supplier.supplierId}`}
+                      className="flex items-baseline justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                      style={{ borderColor: "var(--rf-line)" }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-[14px] font-medium">
+                          {supplier.name}
+                        </span>
+                        <span
+                          className="rf-tabular block text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {hasTrend
+                            ? `${percent(trend.change as number)} vs. edellinen kuukausi`
+                            : "Ei vertailukohtaa"}
+                        </span>
+                      </span>
+                      <span className="rf-tabular shrink-0 text-[14px] font-semibold">
+                        {formatMoney(supplier.totalCents)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
+      </div>
+
+      {/* 7 & 8. Budjetit ja työaika */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Budjetit"
+          subtitle={budgets_.length > 0 ? formatMonth(viewMonth) : undefined}
+          href={budgets_.length > 0 ? "/admin/budjetit" : undefined}
+        >
+          {budgets_.length === 0 ? (
+            <PanelEmpty
+              text="Budjetteja ei ole määritetty. Aseta kategoriakohtaiset rajat, niin RestoFlow voi tunnistaa ylitykset ajoissa."
+              cta="Määritä budjetit"
+              href="/admin/budjetit"
+            />
+          ) : (
+            <ul className="space-y-3.5">
+              {budgets_.slice(0, 5).map((line) => (
+                <li key={line.category}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="truncate text-[14px] font-medium">
+                      {CATEGORY_LABELS[line.category]}
+                    </span>
+                    <span className="rf-tabular shrink-0 text-[13px]">
+                      <span style={{ color: "var(--rf-text-2)" }}>
+                        {formatMoney(line.spentCents)} / {formatMoney(line.budgetCents)}
+                      </span>
+                      <span className="ml-2 font-semibold">{line.percent} %</span>
+                    </span>
+                  </div>
+                  <BudgetBarLine tone={line.tone} ratio={line.ratio} />
+                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    {line.label}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          title="Työaika tänään"
+          subtitle={isCurrentMonth ? undefined : "Aina kuluva päivä"}
+          href="/admin/tyontekijat"
+          linkLabel="Kaikki työntekijät"
+        >
+          <p className="rf-tabular text-[20px] font-semibold">
+            {onDuty.length} / {staffCount} työntekijää työssä
+          </p>
+
+          {onDuty.length === 0 ? (
+            <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+              {staffCount === 0
+                ? "Ravintolaan ei ole vielä lisätty työntekijöitä."
+                : "Kukaan ei ole vielä leimannut sisään."}
+            </p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {onDuty.map((row) => (
+                <li
+                  key={row.user.id}
+                  className="flex items-center justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                  style={{ borderColor: "var(--rf-line)" }}
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{
+                        background:
+                          row.state === "on_break" ? "var(--rf-amber)" : "var(--rf-green)",
+                      }}
+                    />
+                    <Avatar initials={row.user.initials} size={28} />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[14px] font-medium">
+                        {row.user.name}
+                      </span>
+                      <span
+                        className="rf-tabular block text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
+                        {row.since ? `${row.since.slice(11, 16)} → nyt` : "Työssä"}
+                        {row.state === "on_break" ? " · tauolla" : ""}
+                      </span>
                     </span>
                   </span>
-                  <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                    <Icon path={ICONS.chevron} size={15} />
+
+                  <span className="rf-tabular shrink-0 text-[13px] font-medium">
+                    {formatDuration(row.worked.workedMs)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
+
+      {/* 9. Viimeisimmät kuitit */}
+      <Panel
+        title="Viimeisimmät kuitit"
+        subtitle={formatMonth(viewMonth)}
+        href="/admin/kuitit"
+        linkLabel="Näytä kaikki kuitit"
+      >
+        {recent.length === 0 ? (
+          <PanelEmpty
+            text="Ensimmäinen kuittisi näkyy täällä."
+            cta="Lisää kuitti"
+            href="/admin/kuitit/uusi"
+          />
+        ) : (
+          <ul>
+            {recent.map((receipt) => (
+              <li key={receipt.id}>
+                <Link
+                  href={`/admin/kuitit/${receipt.id}`}
+                  className="rf-press flex items-center gap-3 border-t py-3 first:border-0 first:pt-0"
+                  style={{ borderColor: "var(--rf-line)" }}
+                >
+                  <CategoryBubble category={receipt.category} size={34} />
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium">
+                      {receipt.supplierName}
+                    </span>
+                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {CATEGORY_LABELS[receipt.category]} · {formatDate(receipt.date)}
+                    </span>
+                  </span>
+
+                  <span className="shrink-0 text-right">
+                    <span className="rf-tabular block text-[14px] font-semibold">
+                      {formatMoney(receipt.totalCents)}
+                    </span>
+                    <span className="mt-1 block">
+                      {receipt.status === "needs_review" ? (
+                        <Pill tone="warn" dot>
+                          Tarkistettava
+                        </Pill>
+                      ) : (
+                        <Pill tone="ok" dot>
+                          Tarkistettu
+                        </Pill>
+                      )}
+                    </span>
                   </span>
                 </Link>
               </li>
             ))}
           </ul>
         )}
-      </Card>
+      </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        {/* Mihin rahat menevät */}
-        <Card className="lg:col-span-2">
-          <CardHeader
-            title="Mihin rahat menevät?"
-            subtitle="Kirjatut kulut kategorioittain · rivikohtaisesti jaettuna"
-            action={
-              <Link href="/admin/kulut" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-                Kaikki
-              </Link>
-            }
-          />
-          <div className="space-y-4">
-            {categories.slice(0, 6).map((c) => (
-              <BarRow
-                key={c.category}
-                label={CATEGORY_LABELS[c.category]}
-                icon={<CategoryIcon category={c.category} size={16} />}
-                valueCents={c.totalCents}
-                share={c.share}
-                meta={receiptCountLabel(c.receiptCount)}
-              />
-            ))}
-          </div>
-        </Card>
-
-        {/* Kenelle rahat menevät */}
-        <Card>
-          <CardHeader
-            title="Kenelle rahat menevät?"
-            subtitle="Suurimmat toimittajat"
-            action={
-              <Link href="/admin/toimittajat" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-                Kaikki
-              </Link>
-            }
-          />
-          <ul className="space-y-3">
-            {suppliers.map((s) => (
-              <li key={s.supplierId}>
-                <Link href={`/admin/toimittajat/${s.supplierId}`} className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate text-[14px] font-medium">{s.name}</span>
-                  <span className="rf-tabular shrink-0 text-[14px] font-semibold">
-                    {formatMoney(s.totalCents)}
-                  </span>
-                </Link>
-                <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                  {receiptCountLabel(s.receiptCount)} · ka {formatMoney(s.averageCents)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        {/* Budjetit */}
-        <Card className="lg:col-span-2">
-          <CardHeader
-            title="Budjetit"
-            subtitle={`${formatMonth(month)} · ${budgetRows.length} kategoriaa`}
-            action={
-              <Link href="/admin/budjetit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-                Hallinnoi
-              </Link>
-            }
-          />
-          <ul className="grid gap-3 sm:grid-cols-2 md:gap-4">
-            {budgetRows.slice(0, 6).map((b) => {
-              const pct = Math.round((b.ratio ?? 0) * 100);
-              const color =
-                b.status === "exceeded"
-                  ? "var(--rf-red-text)"
-                  : b.status === "warning"
-                    ? "var(--rf-amber-text)"
-                    : "var(--rf-text-2)";
+      {/* 10. Kaavio vain jos historiaa on */}
+      <Panel
+        title="Kulujen kehitys"
+        subtitle={showChart ? "Kuusi kuukautta · kirjatut kulut" : undefined}
+        href={showChart ? "/admin/kulut" : undefined}
+      >
+        {!showChart ? (
+          <PanelEmpty text="Kun dataa kertyy kolmelta kuukaudelta, näet tästä kulujen kehityksen. Yhden kuukauden pylväs ei kerro suunnasta mitään." />
+        ) : (
+          <div className="flex h-40 items-end gap-2 sm:gap-3">
+            {series.map((point) => {
+              const height = Math.max(3, (point.totalCents / peak) * 100);
+              const isView = point.month === viewMonth;
 
               return (
-                <li key={b.category}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-2">
-                      <span style={{ color: "var(--rf-text-2)" }}>
-                        <CategoryIcon category={b.category} size={16} />
-                      </span>
-                      {CATEGORY_LABELS[b.category]}
-                    </span>
-                    </span>
-                    <span className="rf-tabular text-[13px] font-semibold" style={{ color }}>
-                      {pct} %
-                    </span>
-                  </div>
-                  <div className="mt-1.5">
-                    <BudgetLine ratio={b.ratio} status={b.status} />
-                  </div>
-                  <p className="rf-tabular mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                    {formatMoney(b.spentCents)} / {formatMoney(b.budgetCents ?? 0)}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-
-        {/* Työaika tänään */}
-        <Card>
-          <CardHeader title="Työaika tänään" subtitle={`${todayHours.length} työntekijää`} />
-          {todayHours.length === 0 ? (
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Kukaan ei ole vielä leimannut sisään.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {todayHours.map(({ user, worked }) => (
-                <li key={user.id} className="flex items-center gap-3">
-                  <Avatar initials={user.initials} size={32} />
-                  <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
-                    {user.name.split(" ")[0]}
-                  </span>
-                  {worked.runningSince ? (
-                    <span
-                      aria-label="töissä nyt"
-                      className="rf-pulse-dot h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ background: "var(--rf-green)" }}
-                    />
-                  ) : null}
-                  <span className="rf-tabular shrink-0 text-[14px] font-semibold">
-                    {formatDuration(worked.workedMs)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/admin/tyontekijat"
-            className="mt-4 block text-[13px] font-medium"
-            style={{ color: "var(--rf-blue)" }}
-          >
-            Kaikki työntekijät
-          </Link>
-        </Card>
-
-        {/* Viimeisimmät kuitit */}
-        <Card className="lg:col-span-3" padded={false}>
-          <div className="px-5 pt-5">
-            <CardHeader
-              title="Viimeisimmät kuitit"
-              action={
-                <Link href="/admin/kuitit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-                  Kaikki
-                </Link>
-              }
-            />
-          </div>
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            {recent.map((receipt) => (
-              <li key={receipt.id}>
-                <Link
-                  href={`/admin/kuitit?korosta=${receipt.id}`}
-                  className="flex items-center gap-4 px-5 py-3"
-                >
-                  <CategoryBubble category={receipt.category} size={32} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium">{receipt.supplierName}</p>
-                    <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {CATEGORY_LABELS[receipt.category]}
-                      {receipt.items.length > 1 ? ` · ${receipt.items.length} riviä` : ""}
-                    </p>
-                  </div>
-                  {receipt.status === "needs_review" ? (
-                    <span aria-label="tarkistettava" title="tarkistettava">
-                      <SeverityDot severity="warning" />
-                    </span>
-                  ) : null}
-                  <span className="rf-tabular w-28 text-right text-[14px] font-semibold">
-                    {formatMoney(receipt.totalCents)}
-                  </span>
+                <div key={point.month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
                   <span
-                    className="rf-tabular w-12 text-right text-[13px]"
+                    className="rf-tabular text-[11px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    {formatShortDate(receipt.date)}
+                    {point.totalCents === 0 ? "—" : compactMoney(point.totalCents)}
                   </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </div>
+                  <div
+                    className="rf-bar w-full"
+                    role="img"
+                    aria-label={`${formatMonth(point.month)}: ${formatMoney(point.totalCents)}`}
+                    style={{
+                      height: `${height}%`,
+                      background: "var(--rf-text)",
+                      opacity: isView ? 0.85 : 0.22,
+                      borderRadius: "6px 6px 2px 2px",
+                    }}
+                  />
+                  <span
+                    className="truncate text-[11px]"
+                    style={{ color: isView ? "var(--rf-text)" : "var(--rf-text-3)" }}
+                  >
+                    {monthWord(point.month).slice(0, 3)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
+
+      <p className="px-1 pb-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        Kaikki luvut ovat RestoFlow&rsquo;hun kirjattuja kuluja. Sovellus ei näe
+        kassaa eikä pankkitiliä.
+        {isCurrentMonth ? "" : ` Katselet mennyttä kuukautta — työaika ja henkilöstökulu näkyvät vain kuluvalta.`}
+      </p>
     </div>
   );
 }
 
-function BudgetLine({
-  ratio,
-  status,
-}: {
-  ratio: number | null;
-  status: "ok" | "warning" | "exceeded" | "none";
-}) {
-  const color =
-    status === "exceeded"
-      ? "var(--rf-red)"
-      : status === "warning"
-        ? "var(--rf-amber)"
-        : "var(--rf-green)";
+// ---------------------------------------------------------------------------
 
-  return (
-    <div
-      className="h-1.5 w-full overflow-hidden"
-      style={{ background: "var(--rf-inset)", borderRadius: 999 }}
-      role="img"
-      aria-label={`${Math.round((ratio ?? 0) * 100)} prosenttia budjetista`}
-    >
-      <div
-        className="h-full"
-        style={{
-          width: `${Math.min(100, Math.max(2, (ratio ?? 0) * 100))}%`,
-          background: color,
-          borderRadius: 999,
-        }}
-      />
-    </div>
+/**
+ * Tervehdys ravintolan ajassa.
+ *
+ * Palvelin käy UTC:ssä, joten kellonaika on luettava ravintolan
+ * vyöhykkeellä — muuten suomalainen omistaja saa "hyvää iltaa" aamulla.
+ */
+function greeting(nowIso: string, timeZone: string): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("fi-FI", {
+      timeZone,
+      hour: "2-digit",
+      hour12: false,
+    }).format(new Date(nowIso)),
   );
+
+  if (hour < 5) return "Hyvää yötä";
+  if (hour < 11) return "Hyvää huomenta";
+  if (hour < 17) return "Hyvää päivää";
+  return "Hyvää iltaa";
 }
 
-function formatShortDate(isoDate: string): string {
+/** "+5,3 %" tai "−12,0 %". Ei koskaan ilman vertailujaksoa. */
+function percent(change: number): string {
+  const value = (Math.abs(change) * 100).toFixed(1).replace(".", ",");
+  return `${change >= 0 ? "+" : "−"}${value} %`;
+}
+
+/** "heinäkuu" — kuukauden nimi pienellä vertailulausetta varten. */
+function monthWord(month: string): string {
+  return formatMonth(month).split(" ")[0].toLowerCase();
+}
+
+function round(hours: number): string {
+  return String(Math.round(hours));
+}
+
+function formatDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");
   return `${Number(d)}.${Number(m)}.`;
+}
+
+/** "17,3 t€" — pylvään päälle mahtuva muoto. */
+function compactMoney(cents: number): string {
+  const euros = cents / 100;
+  if (euros < 1000) return `${Math.round(euros)} €`;
+  return `${(euros / 1000).toFixed(1).replace(".", ",")} t€`;
 }

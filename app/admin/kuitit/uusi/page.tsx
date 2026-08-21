@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
+import { fetchSuppliers } from "@/lib/restoflow/queries";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CaptureFlow } from "./capture";
@@ -19,6 +20,9 @@ export default async function NewReceiptPage() {
 
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
 
+  // Toimittajien korjaushistoria ohjaa kategoriaehdotusta.
+  const suppliers = await fetchSuppliers(restaurant.id);
+
   return (
     <div className="mx-auto max-w-lg space-y-5">
       <header className="flex items-center gap-2">
@@ -35,7 +39,7 @@ export default async function NewReceiptPage() {
         </h1>
       </header>
 
-      <CaptureFlow restaurantId={restaurant.id} />
+      <CaptureFlow restaurantId={restaurant.id} suppliers={suppliers} />
     </div>
   );
 }

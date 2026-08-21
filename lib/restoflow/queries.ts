@@ -113,6 +113,7 @@ function toReceipt(row: ReceiptRow): Receipt {
     addedByUserId: row.added_by,
     addedAt: row.created_at,
     hasImage: Boolean(row.image_path),
+    imagePath: row.image_path,
     imageQuality: (row.image_quality as "good" | "poor" | null) ?? null,
   };
 }
@@ -149,6 +150,28 @@ export async function fetchReceipt(id: string): Promise<Receipt | null> {
 
   if (error || !data) return null;
   return toReceipt(data as unknown as ReceiptRow);
+}
+
+/**
+ * Lyhytikäinen osoite kuitin kuvalle.
+ *
+ * Bucket on yksityinen, joten suora osoite ei toimi. Allekirjoitus
+ * vanhenee tunnissa: linkki joka päätyy vahingossa eteenpäin ei jää
+ * auki loputtomiin. RLS ratkaisee pääsyn, joten toisen ravintolan
+ * kuvalle ei saa allekirjoitusta.
+ */
+export async function fetchReceiptImageUrl(
+  imagePath: string | null,
+): Promise<string | null> {
+  if (!imagePath) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from("receipts")
+    .createSignedUrl(imagePath, 3600);
+
+  if (error || !data) return null;
+  return data.signedUrl;
 }
 
 // ---------------------------------------------------------------------------

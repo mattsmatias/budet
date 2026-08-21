@@ -47,6 +47,7 @@ function receipt(partial: Partial<Receipt> & { totalCents: number; date: string 
     addedByUserId: "u1",
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
+    imagePath: null,
     imageQuality: "good",
     ...partial,
   };

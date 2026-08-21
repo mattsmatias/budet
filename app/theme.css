@@ -13,18 +13,18 @@
 
 .restoflow {
   /* Pinnat */
-  --rf-bg: #f5f5f7;
+  --rf-bg: #f6f6f7;
   --rf-card: #ffffff;
   --rf-card-hover: #fbfbfd;
   --rf-inset: #f2f2f5;
 
   /* Teksti */
-  --rf-text: #1d1d1f;
-  --rf-text-2: #6e6e73;
+  --rf-text: #171717;
+  --rf-text-2: #737373;
   --rf-text-3: #a1a1a6;
 
   /* Rajat ja varjot */
-  --rf-line: rgba(0, 0, 0, 0.07);
+  --rf-line: #e8e8ea;
   --rf-line-strong: rgba(0, 0, 0, 0.12);
   --rf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --rf-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.045);
@@ -49,6 +49,8 @@
 
   /* Pyöristykset */
   --rf-r-card: 18px;
+  /* Yleiskuvan KPI-kortit ovat pienempiä ja tiiviimpiä kuin muut kortit. */
+  --rf-r-stat: 12px;
   --rf-r-control: 12px;
   --rf-r-pill: 980px;
 
@@ -188,6 +190,64 @@
     transition-duration: 0.001ms !important;
   }
   .rf-press:active {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------- */
+/* Yleiskuvan mikrointeraktiot.                                          */
+/* Hillittyjä: kortin pitää reagoida, ei esiintyä.                        */
+/* --------------------------------------------------------------------- */
+
+.rf-card-lift {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+a:hover > .rf-card-lift,
+.rf-card-lift:hover {
+  border-color: var(--rf-line-strong);
+  box-shadow: var(--rf-shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* Palkki kasvaa paikalleen kerran, ei joka renderillä uudestaan. */
+.rf-bar {
+  animation: rf-bar-grow 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  transition: width 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  transform-origin: left center;
+}
+
+@keyframes rf-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Latausluuranko: pulssi ilman väriä, jottei se lue tilana. */
+.rf-skeleton {
+  background: var(--rf-inset);
+  border-radius: var(--rf-r-stat);
+  animation: rf-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-bar,
+  .rf-skeleton {
+    animation: none;
+  }
+  .rf-card-lift:hover,
+  a:hover > .rf-card-lift {
     transform: none;
   }
 }

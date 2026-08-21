@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { suggestedCategory } from "@/lib/restoflow/suppliers";
 import { saveReceipt, type AdminState } from "../../actions";
 import {
   receiptExtractor,
@@ -17,6 +18,7 @@ import {
   REVIEW_REASON_LABELS,
   type ExpenseCategory,
   type PaymentMethod,
+  type Supplier,
 } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
@@ -37,7 +39,13 @@ const initial: AdminState = {};
  * kulkisi turhaan palvelimen muistin läpi, ja isot kuvat kaatuisivat
  * pyyntökokorajaan.
  */
-export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
+export function CaptureFlow({
+  restaurantId,
+  suppliers,
+}: {
+  restaurantId: string;
+  suppliers: Supplier[];
+}) {
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [fileName, setFileName] = useState("");
@@ -150,6 +158,18 @@ export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
   if (!result) return null;
 
   const uncertain = new Set(uncertainFields(result));
+
+  // Opittu korjaus: kun sama kategoriamuutos on tehty samalle
+  // toimittajalle toistuvasti, ehdotetaan sitä. Ehdotus näytetään, ei
+  // sovelleta automaattisesti — käyttäjän on nähtävä mitä muuttui.
+  const matchedSupplier = suppliers.find(
+    (candidate) =>
+      candidate.name.trim().toLowerCase() === supplier.trim().toLowerCase(),
+  );
+  const suggestion =
+    matchedSupplier && category !== ""
+      ? suggestedCategory(matchedSupplier, category)
+      : null;
   const reasons = reviewReasonsFor(result);
   const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
@@ -240,6 +260,34 @@ export function CaptureFlow({ restaurantId }: { restaurantId: string }) {
           hint={result.category.hint}
           options={[["", "Valitse…"], ...Object.entries(CATEGORY_LABELS)]}
         />
+
+        {suggestion ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5"
+            style={{
+              background: "var(--rf-blue-bg)",
+              color: "var(--rf-blue-text)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <p className="text-[13px] leading-relaxed">
+              Ehdotus: <strong>{CATEGORY_LABELS[suggestion.category]}</strong>.{" "}
+              {suggestion.reason}
+            </p>
+            <button
+              type="button"
+              onClick={() => setCategory(suggestion.category)}
+              className="rf-press px-3 py-1.5 text-[13px] font-semibold"
+              style={{
+                background: "var(--rf-card)",
+                color: "var(--rf-blue-text)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              Käytä
+            </button>
+          </div>
+        ) : null}
         <SelectField
           label="Maksutapa"
           name="payment"

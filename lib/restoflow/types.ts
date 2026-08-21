@@ -197,6 +197,8 @@ export interface Receipt {
   addedByUserId: string;
   addedAt: string;
   hasImage: boolean;
+  /** Polku tallennuksessa. Kuvaa ei voi näyttää ilman tätä. */
+  imagePath: string | null;
   /** Kuvan laatuarvio poiminnasta. Vaikuttaa tarkistustarpeeseen. */
   imageQuality: "good" | "poor" | null;
 }

@@ -225,7 +225,12 @@ export default async function AdminReceiptsPage({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="text-[15px] font-semibold">{receipt.supplierName}</p>
+                        <Link
+                          href={`/admin/kuitit/${receipt.id}`}
+                          className="text-[15px] font-semibold underline-offset-4 hover:underline"
+                        >
+                          {receipt.supplierName}
+                        </Link>
                         <p className="rf-tabular text-[17px] font-semibold">
                           {formatMoney(receipt.totalCents)}
                         </p>
@@ -293,6 +298,27 @@ export default async function AdminReceiptsPage({
                       ))}
                     </ul>
                   ) : null}
+
+                  <div className="mt-3 flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
+                    <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {receipt.hasImage ? (
+                        <>
+                          <RfIcon name="image" size={14} />
+                          Kuva liitetty
+                        </>
+                      ) : (
+                        "Ei kuvaa"
+                      )}
+                    </span>
+                    <Link
+                      href={`/admin/kuitit/${receipt.id}`}
+                      className="rf-press flex items-center gap-1 text-[13px] font-medium"
+                      style={{ color: "var(--rf-blue)" }}
+                    >
+                      Avaa
+                      <RfIcon name="chevron" size={14} />
+                    </Link>
+                  </div>
 
                   {canReview && receipt.status === "needs_review" ? (
                     <ReviewPanel receipt={receipt} />

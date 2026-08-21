@@ -39,6 +39,7 @@ function receipt(
         addedByUserId: "u1",
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
+    imagePath: null,
     ...partial,
   };
 }
