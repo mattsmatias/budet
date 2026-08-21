@@ -1,55 +1,44 @@
-# Verra
+# RestoFlow
 
-> Veropäätöksiä, jotka kone tekee ja tilintarkastaja voi toistaa.
+Ravintolan kuitit, kulut, työvuorot ja työaika yhdessä näkymässä.
 
-AI-avusteinen verotuksen compliance-alusta eurooppalaisille yrityksille.
-Dokumentti sisään, rivikohtainen ALV-kohtelu ulos — jokainen päätös
-perusteltuna, versioituna ja uudelleen ajettavana.
-
-Next.js 16 (App Router, TypeScript, Tailwind) · Supabase/PostgreSQL · Vercel.
+Next.js 16 (App Router, TypeScript, Tailwind) · Vercel.
 
 Live: https://budet-app.vercel.app
 
 ---
 
-## Tilanne
+## Mitä RestoFlow tekee
 
-Rakenteilla oleva tuote. Alla oleva jako kertoo mikä toimii ja mikä on
-arkkitehtuuria odottamassa kytkentää — käyttöliittymässä ei ole painikkeita
-jotka näyttävät toimivilta mutta eivät tee mitään.
+Vastaa kolmeen kysymykseen:
 
-**Toimii**
+1. Mihin ravintolan rahat menevät?
+2. Kuinka paljon työntekijät tekevät työtunteja?
+3. Mitä kuluissa ja työvuoroissa tapahtuu juuri nyt?
 
-- Deterministinen, versioitu verosääntömoottori (`lib/tax/`) — 97 testiä
-- Rivikohtainen ALV: yksi dokumentti, monta käsittelyä
-- Rahalaskenta kokonaislukuina, ei liukulukuja
-- Kirjautuminen, rekisteröityminen, uloskirjautuminen (Supabase Auth)
-- Organisaation perustus ja organisaation vaihto
-- Dokumentin lataus: tiiviste, duplikaattisuoja, tallennus, poiminta,
-  luokittelu, päätösten kirjaus, audit-tapahtumat, käyttörajan valvonta
-- Hyväksyntä, hylkäys ja päätöksen uudelleenajo — uudelleenajo ei koskaan
-  ylikirjoita historiallista päätöstä, vaan luo uuden `supersedes_id`-ketjuun
-- Tarkistusjono, jossa jokainen merkintä kertoo täsmällisen syyn
-- Vientinäkymä ja CSV-lataus, estetyt dokumentit syineen näkyvissä
-- Palvelurajapinnat mock-toteutuksin: OCR, VIES, vienti, käyttöoikeudet
-- Matkat: vapaan tekstin jäsennys ja versioidut kilometri-/päivärahasäännöt
-- Kaikki 13 sivupalkin näkymää: yleiskuva, saapuneet, dokumentit, tapahtumat,
-  ALV, tarkistus, matkat, viennit, asiakkaat, raportit, säännöt, audit trail,
-  asetukset
-- Laskeutumissivu
+## Mitä se ei tee
 
-**Vaatii migraatioiden ajon**
+Ei kassajärjestelmää, ei myynnin seurantaa, ei pankkiyhteyttä, ei
+varastonhallintaa, ei asiakasvarauksia, ei CRM:ää, ei tilauksia.
 
-Skeema, RLS-politiikat ja tallennuskorit ovat tiedostoina hakemistossa
-`supabase/migrations/`. Ennen ajoa sovellus toimii demo-tilassa ja kertoo
-sen käyttäjälle. Ajon jälkeen kirjautuminen ja lataus toimivat oikeaa
-kantaa vasten.
+Rajaus on pakotettu tietomallissa: **myynnille ei ole kenttää missään**.
+Yksikään näkymä ei voi esittää kuluja ravintolan taloudellisena tuloksena.
+Jokainen summa tarkoittaa *kirjattuja kuluja* — järjestelmään lisättyjen
+kuittien summaa.
 
-**Ei vielä toteutettu**
+---
 
-Timo (keskusteleva käyttöliittymä), Stripe-laskutus, sähköpostivastaanotto,
-taustakäsittelyn jono, admin-paneeli, kirjanpitointegraatiot ja asiakkaiden
-kutsuminen. Näille on skeema ja rajapinnat kannassa.
+## Kaksi käyttöliittymää
+
+| Polku | Kenelle | Mitä |
+| --- | --- | --- |
+| `/` | — | Sisääntulo, valitaan näkymä |
+| `/app` | Työntekijä | Mobiilinäkymä: oma työaika, vuorot, kuittien lisäys |
+| `/admin` | Manager | Työpöytänäkymä: kulut, kuitit, työtunnit, raportit |
+
+Ne eivät ole saman näkymän kokovariantteja. Työntekijän ei kuulu nähdä
+ravintolan kulujen kokonaisuutta, eikä managerin leimata itseään töihin
+puhelimen levyisestä sarakkeesta.
 
 ---
 
@@ -60,46 +49,11 @@ npm install
 ```
 
 ```bash
-cp .env.example .env.local
-```
-
-Täytä `.env.local` Supabasen dashboardista (Project Settings → API Keys).
-Käytä **julkaistavaa** avainta (`sb_publishable_...`) — älä koskaan salaista
-avainta, koska `NEXT_PUBLIC_`-muuttujat lähetetään selaimeen.
-
-```bash
 npm run dev
 ```
 
-Sovellus avautuu osoitteeseen http://localhost:3000. Demo-aineisto toimii
-ilman tietokantayhteyttä.
-
-### Migraatiot
-
-**Helpoin tapa:** avaa `supabase/migrations/ALL_IN_ONE.sql`, kopioi koko
-sisältö Supabasen SQL Editoriin ja paina Run. Tiedosto on koottu alla
-olevista ja käärittynä transaktioon, joten se joko menee kokonaan läpi tai
-ei muuta mitään. Aja vain kerran tyhjään projektiin.
-
-Vaihtoehtoisesti CLI:llä:
-
-```bash
-supabase db push
-```
-
-| Tiedosto | Sisältö |
-| --- | --- |
-| `0001_foundation.sql` | Organisaatiot, roolit, jäsenyydet, RLS-apufunktiot |
-| `0002_documents.sql` | Dokumentit, tiedostot, poimitut kentät, rivit |
-| `0003_tax_engine.sql` | Säännöt, versiot, päätökset, VIES, audit trail, vienti |
-| `0004_billing.sql` | Suunnitelmat, rajat, tilaukset, integraatiot, jono |
-| `0005_rls.sql` | Row Level Security -politiikat |
-| `0006_seed_reference.sql` | Jurisdiktiot, ALV-koodit, hinnasto, demo-säännöt |
-| `0007_auth_storage.sql` | Profiilin luonti, organisaation perustus, tallennuskorit |
-
-Migraatioiden jälkeen: Supabase → Authentication → Providers → Email.
-Sähköpostivahvistuksen voi kehityksessä ottaa pois päältä, jolloin
-rekisteröityminen kirjaa suoraan sisään.
+Avaa http://localhost:3000. Sovellus toimii ilman tietokantaa ja ilman
+ympäristömuuttujia — aineisto on demo-aineistoa.
 
 ---
 
@@ -131,65 +85,88 @@ npm run lint
 
 | Polku | Vastuu |
 | --- | --- |
-| `lib/tax/engine.ts` | Sääntömoottori. Ei verkkoa, ei kielimallia, ei kelloa. |
-| `lib/tax/rules/fi.ts` | Suomen säännöt, demo-statuksella |
-| `lib/tax/document.ts` | Dokumenttitason luokittelu, monta käsittelyä |
-| `lib/money.ts` | Rahalaskenta sentteinä |
-| `lib/services/ocr/` | Poiminnan rajapinta + mock |
-| `lib/services/vies/` | VIES-rajapinta + mock |
-| `lib/services/export/` | Vientirivit ja estotarkistukset |
-| `lib/services/entitlements.ts` | Suunnitelmarajat, palvelinpuolen validointi |
-| `lib/demo/data.ts` | Demo-aineisto, luokiteltu oikealla moottorilla |
-| `components/ui.tsx` | Jaetut esityskomponentit |
-| `app/page.tsx` | Laskeutumissivu |
-| `app/(app)/` | Sovellus: yleiskuva, saapuneet, dokumentti |
+| `lib/restoflow/types.ts` | Domain-tyypit. Rahat aina sentteinä. |
+| `lib/restoflow/timeclock.ts` | Työajan laskenta tapahtumista |
+| `lib/restoflow/expenses.ts` | Kulujen koonti, haku, suodatus |
+| `lib/restoflow/receipt-ai.ts` | Kuittipoiminnan rajapinta + mock |
+| `lib/restoflow/data.ts` | Demo-aineisto |
+| `lib/money.ts` | Rahan muotoilu ja laskenta |
+| `components/restoflow/ui.tsx` | Jaetut esityskomponentit |
+| `app/theme.css` | Visuaalinen kieli |
 
 Liiketoimintalogiikka on `lib/`-hakemistossa. React-komponentit eivät laske
-veroa eivätkä kutsu palveluita.
+työaikaa eivätkä summaa kuluja.
 
 ---
 
-## Verosäännöistä
+## Työajan laskenta
 
-**Kaikki mukana olevat säännöt ovat statukseltaan `demo`.** Niitä ei ole
-validoitu virallista lähdettä vasten, eikä niitä saa esittää oikeudellisena
-kannanottona. Moottori merkitsee jokaisen demo-säännöllä tehdyn päätöksen
-tarkistettavaksi — tämä on tarkoituksellista, ei keskeneräisyyttä.
+Tila **johdetaan tapahtumista**, ei tallenneta erikseen. Jos tila
+tallennettaisiin, se voisi ajautua eri linjalle kuin tapahtumaloki — ja
+ristiriidassa työntekijän palkka on väärin.
 
-Kun sääntö validoidaan, sille luodaan **uusi versio** jolla on
-`legal_reference` ja status `validated`. Vanhaa versiota ei muokata eikä
-poisteta: historiallisen päätöksen on pysyttävä toistettavana.
+- Vain sallitut siirtymät tarjotaan painikkeina
+- Tauko ei kerrytä työaikaa
+- Keskeneräinen jakso lasketaan annettuun hetkeen asti
+- Palkka pyöristetään kerran lopussa, ei minuuteittain
+- Nykyhetki annetaan parametrina, ei lueta kellosta — muuten funktiota ei
+  voisi testata
 
-Sääntöstatukset: `demo` → `draft` → `review` → `validated` → `active` →
-`deprecated`.
+---
+
+## Kuittien poiminta
+
+Poiminta palauttaa jokaisesta kentästä **arvon ja luottamuksen**, ei paljasta
+arvoa. Alle korkean luottamuksen kentät merkitään, ovat muokattavissa, eikä
+mitään tallennu ennen kuin käyttäjä vahvistaa. Väärä kulukirjaus on kalliimpi
+kuin ylimääräinen klikkaus.
+
+Nykyinen toteutus on **paikallinen mock**, joka on deterministinen
+tiedostonimen perusteella. Käyttöliittymä sanoo tämän ääneen. Oikea palvelu
+(OpenAI, Anthropic, Google, Azure, erikoistunut OCR) kytketään toteuttamalla
+`ReceiptExtractor`-rajapinta — käyttöliittymä ei muutu.
+
+Kokeile tiedostonimeä joka sisältää `metro`, `kespro`, `wolt` tai `juoma`.
+Muut nimet tuottavat tarkoituksella epävarman tuloksen.
+
+---
+
+## Raportit
+
+Viisi raporttia, kaikki lataavat oikean CSV-tiedoston:
+
+- Kuluraportti
+- Kulut kategorioittain
+- Kuitit
+- Työaikaraportti
+- Henkilöstökulut
+
+CSV käyttää puolipistettä erottimena ja UTF-8-tunnistetta, joten
+suomalainen Excel avaa sen suoraan oikein. PDF- ja Excel-vienti on merkitty
+**ei vielä** eikä esitetä painikkeena joka ei tee mitään.
+
+---
+
+## Mitä ei ole toteutettu
+
+Tietokantayhteyttä ei ole kytketty, joten kuitit ja leimaukset eivät tallennu
+pysyvästi. Jokainen näkymä sanoo sen. Samoin kirjautuminen, ilmoitusten
+kuittaus, asetusten muokkaus, vuorojen luonti ja PDF/Excel-vienti lukevat
+näkymissä **ei vielä**.
 
 ---
 
 ## Julkaisu
 
-Vercel rakentaa `main`-haaran automaattisesti. Ympäristömuuttujat on
-asetettava erikseen Vercelin projektiasetuksissa (Production, Preview ja
-Development) — `.env.local` ei mene repoon eikä buildiin.
-
-Vähintään tarvitaan:
-
-```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-```
-
-Palvelinpuolen ominaisuudet vaativat lisäksi `SUPABASE_SERVICE_ROLE_KEY`:n.
-Framework Preset on oltava **Next.js**.
+Vercel rakentaa `main`-haaran automaattisesti. Ympäristömuuttujia ei tarvita.
 
 ---
 
-## Periaatteet
+## Aiempi tuote
 
-1. **Jäljitettävä** — jokaisella päätöksellä on syy, sääntötunnus ja versio.
-2. **Deterministinen** — sama syöte ja sääntöversio tuottavat saman päätöksen.
-3. **Versioitu** — säännöt muuttuvat, historia säilyy.
-4. **Ihmisen hallinnassa** — hyväksyntä, muokkaus ja hylkäys ovat käyttäjän.
-5. **Vietävissä** — data lähtee ulos milloin vain.
+Tämä repo sisälsi aiemmin Verran, verotuksen compliance-alustan. Se
+poistettiin kun tuote vaihdettiin RestoFlow'ksi. Historia on tallessa:
 
-Verra ei koskaan luo tekaistua varmuutta, ei keksi verosääntöä eikä muuta
-hiljaisesti aiemmin hyväksyttyä kirjanpitopäätöstä.
+```bash
+git checkout c64c4dc -- app lib components utils supabase proxy.ts
+```
