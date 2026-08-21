@@ -1,16 +1,21 @@
 import Link from "next/link";
-import { Card, Icon, ICONS } from "@/components/restoflow/ui";
+import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
+import { RfIcon } from "@/components/restoflow/icons";
+import { Card } from "@/components/restoflow/ui";
 
 /**
  * Sisääntulo.
  *
  * RestoFlow'lla on kaksi erillistä käyttöliittymää eri käyttäjille:
- * työntekijän mobiilinäkymä ja managerin työpöytänäkymä. Ne eivät ole
- * saman näkymän kokovariantteja vaan eri tuotteita — työntekijän ei kuulu
- * nähdä kulujen kokonaisuutta eikä managerin leimata itseään töihin
- * puhelimen kokoisesta näkymästä.
+ * työntekijän mobiilinäkymä ja managerin työpöytänäkymä. Ne eivät ole saman
+ * näkymän kokovariantteja vaan eri tuotteita — työntekijän ei kuulu nähdä
+ * kulujen kokonaisuutta eikä managerin leimata itseään töihin puhelimen
+ * kokoisesta näkymästä.
  */
-export default function RestoFlowEntry() {
+export default async function Entry() {
+  const user = await getUser();
+  const restaurant = user ? await getActiveRestaurant() : null;
+
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-5 py-16">
       <div className="flex items-center gap-2.5">
@@ -33,50 +38,125 @@ export default function RestoFlowEntry() {
         kassajärjestelmä eikä näe pankkitiliä.
       </p>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        <Link href="/app" className="rf-press block">
-          <Card hover className="h-full">
-            <span style={{ color: "var(--rf-blue)" }}>
-              <Icon path={ICONS.clock} size={24} />
-            </span>
-            <h2 className="mt-3 text-[17px] font-semibold">Työntekijä</h2>
-            <p
-              className="mt-1.5 text-[13px] leading-relaxed"
-              style={{ color: "var(--rf-text-2)" }}
+      {user ? (
+        <>
+          <p className="mt-8 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+            Kirjautuneena{user.fullName ? ` — ${user.fullName}` : ""}
+            {restaurant ? ` · ${restaurant.name}` : ""}
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <EntryCard
+              href="/app"
+              icon="clock"
+              title="Työntekijä"
+              body="Mobiilinäkymä. Oma työaika, työvuorot ja kuittien lisääminen kuvaamalla."
+              cta="Avaa mobiilinäkymä"
+            />
+            <EntryCard
+              href="/admin"
+              icon="overview"
+              title="Manager"
+              body="Työpöytänäkymä. Kirjatut kulut, tarkistettavat kuitit, työtunnit ja raportit."
+              cta="Avaa hallintanäkymä"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link
+              href="/rekisteroidy"
+              className="rf-press px-5 py-3 text-[15px] font-semibold"
+              style={{
+                background: "var(--rf-text)",
+                color: "#fff",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
-              Mobiilinäkymä. Oma työaika, työvuorot ja kuittien lisääminen
-              kuvaamalla.
-            </p>
-            <p className="mt-4 text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-              Avaa mobiilinäkymä →
-            </p>
-          </Card>
-        </Link>
+              Luo tunnus
+            </Link>
+            <Link
+              href="/kirjaudu"
+              className="rf-press px-5 py-3 text-[15px] font-semibold"
+              style={{
+                background: "var(--rf-card)",
+                color: "var(--rf-text)",
+                borderRadius: "var(--rf-r-control)",
+                boxShadow: "var(--rf-shadow-sm)",
+              }}
+            >
+              Kirjaudu
+            </Link>
+          </div>
 
-        <Link href="/admin" className="rf-press block">
-          <Card hover className="h-full">
-            <span style={{ color: "var(--rf-blue)" }}>
-              <Icon path={ICONS.chart} size={24} />
-            </span>
-            <h2 className="mt-3 text-[17px] font-semibold">Manager</h2>
-            <p
-              className="mt-1.5 text-[13px] leading-relaxed"
-              style={{ color: "var(--rf-text-2)" }}
-            >
-              Työpöytänäkymä. Kirjatut kulut, tarkistettavat kuitit, työtunnit
-              ja raportit.
-            </p>
-            <p className="mt-4 text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
-              Avaa hallintanäkymä →
-            </p>
-          </Card>
-        </Link>
-      </div>
+          <ul
+            className="mt-10 grid gap-3 text-[14px] sm:grid-cols-2"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            <Feature icon="receipt" text="Kuvaa kuitti — rivit, ALV ja kategoria poimitaan" />
+            <Feature icon="expenses" text="Kulut kategorioittain ja toimittajittain" />
+            <Feature icon="budget" text="Budjetit ja hälytykset ennen kuin raja ylittyy" />
+            <Feature icon="clock" text="Työaika ja työvuorot samassa laskennassa" />
+          </ul>
+        </>
+      )}
 
       <p className="mt-10 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Demo-aineisto. Luvut ovat keksittyjä eikä mitään tallenneta pysyvästi.
+        Kaikki luvut tarkoittavat järjestelmään kirjattuja kuluja. RestoFlow ei
+        näe kassaa eikä pankkitiliä.
       </p>
     </div>
+  );
+}
+
+function EntryCard({
+  href,
+  icon,
+  title,
+  body,
+  cta,
+}: {
+  href: string;
+  icon: "clock" | "overview";
+  title: string;
+  body: string;
+  cta: string;
+}) {
+  return (
+    <Link href={href} className="rf-press block">
+      <Card hover className="h-full">
+        <span style={{ color: "var(--rf-blue)" }}>
+          <RfIcon name={icon} size={24} />
+        </span>
+        <h2 className="mt-3 text-[17px] font-semibold">{title}</h2>
+        <p
+          className="mt-1.5 text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          {body}
+        </p>
+        <p className="mt-4 text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
+          {cta} →
+        </p>
+      </Card>
+    </Link>
+  );
+}
+
+function Feature({
+  icon,
+  text,
+}: {
+  icon: "receipt" | "expenses" | "budget" | "clock";
+  text: string;
+}) {
+  return (
+    <li className="flex items-start gap-2.5">
+      <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+        <RfIcon name={icon} size={18} />
+      </span>
+      {text}
+    </li>
   );
 }
 
