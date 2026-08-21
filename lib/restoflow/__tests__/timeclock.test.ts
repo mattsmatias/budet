@@ -16,7 +16,7 @@ import type { ClockEvent, ClockEventType } from "../types";
 let seq = 0;
 function ev(type: ClockEventType, at: string): ClockEvent {
   seq += 1;
-  return { id: `e${seq}`, employeeId: "u1", type, at };
+  return { id: `e${seq}`, userId: "u1", type, at };
 }
 
 const D = "2026-08-20";

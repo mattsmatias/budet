@@ -2,25 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { adminNavFor } from "@/lib/restoflow/permissions";
+import { ROLE_LABELS, type Role } from "@/lib/restoflow/types";
 import { Avatar, Icon, ICONS } from "@/components/restoflow/ui";
 
-const ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: ICONS.home },
-  { href: "/admin/kuitit", label: "Kuitit", icon: ICONS.receipt },
-  { href: "/admin/kulut", label: "Kulut", icon: ICONS.chart },
-  { href: "/admin/tyovuorot", label: "Työvuorot", icon: ICONS.calendar },
-  { href: "/admin/tyontekijat", label: "Työntekijät", icon: ICONS.users },
-  { href: "/admin/raportit", label: "Raportit", icon: ICONS.file },
-  { href: "/admin/ilmoitukset", label: "Ilmoitukset", icon: ICONS.bell },
-  { href: "/admin/asetukset", label: "Asetukset", icon: ICONS.settings },
-] as const;
-
-export function Sidebar({ badgeCount }: { badgeCount: number }) {
+/**
+ * Hallintanavigaatio.
+ *
+ * Kohdat tulevat roolin oikeuksista, eivät kovakoodatusta listasta. Sama
+ * funktio ohjaa sivujen pääsytarkistusta, joten valikko ei voi ajautua eri
+ * linjalle kuin todellinen oikeus.
+ */
+export function Sidebar({
+  role,
+  userName,
+  alertCount,
+}: {
+  role: Role;
+  userName: string;
+  alertCount: number;
+}) {
   const pathname = usePathname();
+  const items = adminNavFor(role);
 
   return (
     <aside
-      className="flex shrink-0 flex-col border-r lg:w-60"
+      className="flex shrink-0 flex-col border-r lg:w-[232px]"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
       <div className="flex items-center gap-2.5 px-5 py-5">
@@ -32,11 +39,13 @@ export function Sidebar({ badgeCount }: { badgeCount: number }) {
 
       <nav aria-label="Hallintanavigaatio" className="flex-1 px-2.5">
         <ul className="space-y-0.5">
-          {ITEMS.map((item) => {
+          {items.map((item) => {
             const active =
               item.href === "/admin"
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
+
+            const badge = item.href === "/admin/ilmoitukset" ? alertCount : 0;
 
             return (
               <li key={item.href}>
@@ -49,18 +58,19 @@ export function Sidebar({ badgeCount }: { badgeCount: number }) {
                     color: active ? "var(--rf-text)" : "var(--rf-text-2)",
                   }}
                 >
-                  <Icon path={item.icon} size={19} />
+                  <span
+                    aria-hidden="true"
+                    className="grid h-6 w-6 shrink-0 place-items-center text-[15px]"
+                  >
+                    {item.emoji}
+                  </span>
                   <span className="hidden flex-1 lg:inline">{item.label}</span>
-                  {item.href === "/admin/ilmoitukset" && badgeCount > 0 ? (
+                  {badge > 0 ? (
                     <span
                       className="rf-tabular ml-auto hidden min-w-[20px] px-1.5 py-0.5 text-center text-[11px] font-semibold lg:inline"
-                      style={{
-                        background: "var(--rf-red)",
-                        color: "#fff",
-                        borderRadius: 999,
-                      }}
+                      style={{ background: "var(--rf-red)", color: "#fff", borderRadius: 999 }}
                     >
-                      {badgeCount}
+                      {badge}
                     </span>
                   ) : null}
                 </Link>
@@ -70,20 +80,42 @@ export function Sidebar({ badgeCount }: { badgeCount: number }) {
         </ul>
       </nav>
 
+      <div className="px-2.5 pb-2">
+        <Link
+          href="/app"
+          className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          <span aria-hidden="true" className="grid h-6 w-6 shrink-0 place-items-center">
+            <Icon path={ICONS.clock} size={17} />
+          </span>
+          <span className="hidden lg:inline">Työntekijänäkymä</span>
+        </Link>
+      </div>
+
       <div
         className="m-2.5 flex items-center gap-3 rounded-[12px] px-3 py-3"
         style={{ background: "var(--rf-inset)" }}
       >
-        <Avatar initials="MV" size={34} />
+        <Avatar initials={initialsOf(userName)} size={34} />
         <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-[13px] font-semibold">Mika Virtanen</p>
+          <p className="truncate text-[13px] font-semibold">{userName}</p>
           <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-            Manager
+            {ROLE_LABELS[role]}
           </p>
         </div>
       </div>
     </aside>
   );
+}
+
+function initialsOf(name: string): string {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 function Logo() {

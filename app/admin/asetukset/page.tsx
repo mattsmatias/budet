@@ -1,5 +1,5 @@
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
-import { EMPLOYEES } from "@/lib/restoflow/data";
+import { STAFF } from "@/lib/restoflow/data";
 import { Card, DemoNotice, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Asetukset" };
@@ -25,7 +25,7 @@ export default function SettingsPage() {
           <h2 className="text-[16px] font-semibold">Ravintola</h2>
           <dl className="mt-3">
             <Row label="Nimi" value="Ravintola Linnea" />
-            <Row label="Käyttäjiä" value={String(EMPLOYEES.length)} />
+            <Row label="Käyttäjiä" value={String(STAFF.length)} />
             <Row label="Valuutta" value="EUR" />
             <Row label="Aikavyöhyke" value="Europe/Helsinki" last />
           </dl>

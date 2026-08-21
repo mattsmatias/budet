@@ -1,19 +1,21 @@
 import Link from "next/link";
 import {
+  BUDGETS,
+  CLOCK_EVENTS,
   DEMO_MONTH,
-  EMPLOYEES,
+  DEMO_NOW,
+  DEMO_TODAY,
   MONTHLY_HOURS,
-  OPEN_SHIFTS,
   RECEIPTS,
   SHIFTS,
-  employeeById,
+  STAFF,
 } from "@/lib/restoflow/data";
+import { alertCounts, buildAlerts } from "@/lib/restoflow/alerts";
+import { budgetProgress } from "@/lib/restoflow/budgets";
 import {
   changeTone,
   formatChange,
   formatMonth,
-  monthlySeries,
-  needsReview,
   periodTotals,
   previousMonth,
   receiptCountLabel,
@@ -22,102 +24,101 @@ import {
   sortByDateDesc,
   totalsByCategory,
 } from "@/lib/restoflow/expenses";
-import { staffCostCents } from "@/lib/restoflow/timeclock";
-import {
-  CATEGORY_LABELS,
-  REVIEW_REASON_LABELS,
-} from "@/lib/restoflow/types";
+import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
+import { staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
+import { formatDuration } from "@/lib/restoflow/timeclock";
+import { CATEGORY_EMOJI, CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import {
   Avatar,
   BarRow,
   Card,
   CardHeader,
+  CategoryBubble,
   DemoNotice,
   Icon,
   ICONS,
   MetricCard,
-  Pill,
+  SeverityDot,
   TrendBadge,
 } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Yleiskuva" };
 
 /**
  * Managerin yleiskuva.
  *
- * Järjestys on tarkoituksellinen: kirjatut kulut, jakauma, tarkistettavat,
- * työtunnit, tulevat vuorot, viimeisimmät kuitit. Näkymän pitää olla
- * ymmärrettävissä alle viidessä sekunnissa, joten kortteja on rajattu määrä
- * eikä mitään ole lisätty vain siksi että se mahtuisi.
+ * Järjestys on tarkoituksellinen: kirjatut kulut, jakauma, huomiot,
+ * työaika, viimeisimmät kuitit. Näkymän pitää olla ymmärrettävissä alle
+ * viidessä sekunnissa, joten kortteja on rajattu määrä eikä mitään ole
+ * lisätty vain siksi että se mahtuisi.
  *
  * Myyntiä, liikevaihtoa tai kassavirtaa ei näytetä — RestoFlow ei näe niitä.
  */
 export default function AdminDashboard() {
   const month = DEMO_MONTH;
-  const prev = previousMonth(month);
 
   const current = periodTotals(RECEIPTS, month);
-  const previous = periodTotals(RECEIPTS, prev);
-
+  const previous = periodTotals(RECEIPTS, previousMonth(month));
   const expenseChange = relativeChange(current.totalCents, previous.totalCents);
+
   const categories = totalsByCategory(receiptsInMonth(RECEIPTS, month));
-  const series = monthlySeries(RECEIPTS, month, 4);
-  const review = needsReview(RECEIPTS);
+  const suppliers = supplierTotalsInMonth(RECEIPTS, month).slice(0, 5);
   const recent = sortByDateDesc(RECEIPTS).slice(0, 5);
 
+  const alerts = buildAlerts({
+    receipts: RECEIPTS,
+    budgets: BUDGETS,
+    shifts: SHIFTS,
+    users: STAFF,
+    clockEvents: CLOCK_EVENTS,
+    month,
+    today: DEMO_TODAY,
+  });
+  const counts = alertCounts(alerts);
+
+  const budgets = budgetProgress(RECEIPTS, BUDGETS, month).filter(
+    (b) => b.budgetCents !== null,
+  );
+
   const totalHours = Object.values(MONTHLY_HOURS).reduce((s, h) => s + h, 0);
-  const previousHours = 451; // demo-vertailu
-  const hoursChange = relativeChange(totalHours, previousHours);
+  const hoursChange = relativeChange(totalHours, 603);
 
-  const staffCost = EMPLOYEES.reduce((sum, e) => {
-    const hours = MONTHLY_HOURS[e.id] ?? 0;
-    return sum + staffCostCents(hours * 3600000, e.hourlyRateCents);
-  }, 0);
+  const staffCost = STAFF.reduce(
+    (sum, u) =>
+      sum + staffCostCents((MONTHLY_HOURS[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
+    0,
+  );
 
-  const upcomingShifts = SHIFTS.filter((s) => s.date >= "2026-08-20")
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 4);
-
-  const topStaff = [...EMPLOYEES]
-    .map((e) => ({ employee: e, hours: MONTHLY_HOURS[e.id] ?? 0 }))
-    .sort((a, b) => b.hours - a.hours)
-    .slice(0, 3);
+  // Tänään töissä olleet, pisin aika ensin.
+  const todayHours = STAFF.map((user) => ({
+    user,
+    worked: workedOnDate(
+      CLOCK_EVENTS.filter((e) => e.userId === user.id),
+      DEMO_TODAY,
+      DEMO_NOW,
+    ),
+  }))
+    .filter((row) => row.worked.workedMs > 0)
+    .sort((a, b) => b.worked.workedMs - a.worked.workedMs);
 
   return (
     <div className="rf-enter space-y-6">
-      {/* Otsikko */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[30px] font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-[30px] font-semibold tracking-tight">Yleiskuva</h1>
           <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-            Tässä ravintolan kirjatut kulut ja työajat.
+            Ravintola Linnea · {formatMonth(month)}
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
-          <span
-            className="px-3.5 py-2 text-[14px] font-medium"
-            style={{
-              background: "var(--rf-card)",
-              borderRadius: "var(--rf-r-control)",
-              boxShadow: "var(--rf-shadow-sm)",
-            }}
-          >
-            {formatMonth(month)}
-          </span>
-          <Link
-            href="/admin/raportit"
-            className="rf-press flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
-            style={{
-              background: "var(--rf-text)",
-              color: "#fff",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            <Icon path={ICONS.download} size={16} />
-            Vie raportti
-          </Link>
-        </div>
+        <Link
+          href="/admin/raportit"
+          className="rf-press flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
+          style={{ background: "var(--rf-text)", color: "#fff", borderRadius: "var(--rf-r-control)" }}
+        >
+          <Icon path={ICONS.download} size={16} />
+          Vie raportti
+        </Link>
       </div>
 
       <DemoNotice />
@@ -125,64 +126,124 @@ export default function AdminDashboard() {
       {/* KPI:t */}
       <section aria-label="Avainluvut" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="Kirjatut kulut"
+          label="💶 Kirjatut kulut"
           value={formatMoney(current.totalCents)}
           trend={
             <TrendBadge
-              text={`${formatChange(expenseChange)} edelliseen kuukauteen`}
+              text={`${formatChange(expenseChange)} vs. ${formatMonth(previousMonth(month)).split(" ")[0].toLowerCase()}`}
               direction={changeTone(expenseChange)}
             />
           }
           hint="Järjestelmään lisättyjen kuittien summa"
         />
         <MetricCard
-          label="Kuitteja"
+          label="🧾 Kuitit"
           value={String(current.receiptCount)}
           trend={
             <TrendBadge
-              text={`${current.receiptCount - previous.receiptCount >= 0 ? "+" : "−"}${Math.abs(current.receiptCount - previous.receiptCount)} tässä kuussa`}
-              direction={current.receiptCount >= previous.receiptCount ? "up" : "down"}
+              text={
+                current.needsReviewCount > 0
+                  ? `${current.needsReviewCount} tarkistettavaa`
+                  : "kaikki tarkistettu"
+              }
+              direction="none"
             />
           }
         />
         <MetricCard
-          label="Työtunnit"
+          label="⏱️ Työtunnit"
           value={`${totalHours} h`}
           trend={
             <TrendBadge
-              text={`${formatChange(hoursChange)} edelliseen kuukauteen`}
+              text={`${formatChange(hoursChange)} edelliseen`}
               direction={changeTone(hoursChange)}
             />
           }
         />
         <MetricCard
-          label="Henkilöstökulut"
+          label="👥 Henkilöstökulut"
           value={formatMoney(staffCost)}
-          hint="Laskettu työtunneista ja tuntipalkoista"
+          hint="Tunnit × tuntipalkka, ei palkkalaskelma"
         />
       </section>
+
+      {/* Huomiot — heti KPI:iden jälkeen, koska ne vaativat toimenpiteitä */}
+      <Card>
+        <CardHeader
+          title={
+            counts.total === 0
+              ? "✅ Ei huomioita"
+              : `⚠️ ${counts.total} asiaa vaatii huomiota`
+          }
+          subtitle={
+            counts.total === 0
+              ? "Kaikki näyttää olevan kunnossa."
+              : [
+                  counts.critical > 0 ? `${counts.critical} kriittistä` : null,
+                  counts.warning > 0 ? `${counts.warning} varoitusta` : null,
+                  counts.info > 0 ? `${counts.info} tiedoksi` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+          }
+          action={
+            counts.total > 3 ? (
+              <Link
+                href="/admin/ilmoitukset"
+                className="text-[13px] font-medium"
+                style={{ color: "var(--rf-blue)" }}
+              >
+                Kaikki
+              </Link>
+            ) : undefined
+          }
+        />
+
+        {alerts.length === 0 ? (
+          <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+            Ei kaksoiskappaleita, budjettiylityksiä eikä tarkistettavia kuitteja.
+          </p>
+        ) : (
+          <ul className="space-y-2.5">
+            {alerts.slice(0, 4).map((alert) => (
+              <li key={alert.id}>
+                <Link href={alert.href} className="flex items-start gap-3">
+                  <span className="mt-1.5">
+                    <SeverityDot severity={alert.severity} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-medium">{alert.title}</span>
+                    <span className="block text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                      {alert.detail}
+                    </span>
+                  </span>
+                  <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <Icon path={ICONS.chevron} size={15} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Mihin rahat menevät */}
         <Card className="lg:col-span-2">
           <CardHeader
             title="Mihin rahat menevät?"
-            subtitle={`${formatMonth(month)} · kirjatut kulut kategorioittain`}
+            subtitle="Kirjatut kulut kategorioittain · rivikohtaisesti jaettuna"
             action={
-              <Link
-                href="/admin/kulut"
-                className="text-[13px] font-medium"
-                style={{ color: "var(--rf-blue)" }}
-              >
+              <Link href="/admin/kulut" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
                 Kaikki
               </Link>
             }
           />
           <div className="space-y-4">
-            {categories.map((c) => (
+            {categories.slice(0, 6).map((c) => (
               <BarRow
                 key={c.category}
-                label={CATEGORY_LABELS[c.category]}
+                label={`${CATEGORY_EMOJI[c.category]} ${CATEGORY_LABELS[c.category]}`}
                 valueCents={c.totalCents}
                 share={c.share}
                 meta={receiptCountLabel(c.receiptCount)}
@@ -191,137 +252,122 @@ export default function AdminDashboard() {
           </div>
         </Card>
 
-        {/* Tarkistettavat */}
+        {/* Kenelle rahat menevät */}
         <Card>
           <CardHeader
-            title="Tarkistettavat kuitit"
-            subtitle={
-              review.length === 0
-                ? "Ei tarkistettavia"
-                : `${review.length} kuittia odottaa tarkistusta`
+            title="Kenelle rahat menevät?"
+            subtitle="Suurimmat toimittajat"
+            action={
+              <Link href="/admin/toimittajat" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
+                Kaikki
+              </Link>
             }
           />
-          {review.length === 0 ? (
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Kaikki kuitit on tarkistettu.
-            </p>
-          ) : (
-            <>
-              <ol className="space-y-3">
-                {review.slice(0, 3).map((receipt) => (
-                  <li key={receipt.id}>
-                    <Link
-                      href={`/admin/kuitit?korosta=${receipt.id}`}
-                      className="block"
-                    >
-                      <p className="text-[14px] font-medium">{receipt.supplier}</p>
-                      <p className="mt-1">
-                        <Pill tone="warn" dot>
-                          {REVIEW_REASON_LABELS[receipt.reviewReasons[0]]}
-                        </Pill>
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-              <Link
-                href="/admin/kuitit?suodatin=needs_review"
-                className="rf-press mt-5 block py-2.5 text-center text-[14px] font-semibold"
-                style={{
-                  background: "var(--rf-inset)",
-                  color: "var(--rf-text)",
-                  borderRadius: "var(--rf-r-control)",
-                }}
-              >
-                Tarkista kuitit
-              </Link>
-            </>
-          )}
-        </Card>
-
-        {/* Kulujen kehitys */}
-        <Card className="lg:col-span-2">
-          <CardHeader
-            title="Kulujen kehitys"
-            subtitle="Kirjatut kulut kuukausittain — ei myyntiä eikä tulosta"
-          />
-          <TrendChart series={series} />
-        </Card>
-
-        {/* Työtunnit */}
-        <Card>
-          <CardHeader title="Työtunnit tässä kuussa" subtitle={`${totalHours} h yhteensä`} />
           <ul className="space-y-3">
-            {topStaff.map(({ employee, hours }) => (
-              <li key={employee.id} className="flex items-center gap-3">
-                <Avatar initials={employee.initials} size={32} />
-                <span className="flex-1 text-[14px] font-medium">
-                  {employee.name.split(" ")[0]}
-                </span>
-                <span className="rf-tabular text-[14px] font-semibold">{hours} h</span>
+            {suppliers.map((s) => (
+              <li key={s.supplierId}>
+                <Link href={`/admin/toimittajat/${s.supplierId}`} className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-[14px] font-medium">{s.name}</span>
+                  <span className="rf-tabular shrink-0 text-[14px] font-semibold">
+                    {formatMoney(s.totalCents)}
+                  </span>
+                </Link>
+                <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  {receiptCountLabel(s.receiptCount)} · ka {formatMoney(s.averageCents)}
+                </p>
               </li>
             ))}
           </ul>
+        </Card>
+
+        {/* Budjetit */}
+        <Card className="lg:col-span-2">
+          <CardHeader
+            title="🎯 Budjetit"
+            subtitle={`${formatMonth(month)} · ${budgets.length} kategoriaa`}
+            action={
+              <Link href="/admin/budjetit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
+                Hallinnoi
+              </Link>
+            }
+          />
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {budgets.slice(0, 6).map((b) => {
+              const pct = Math.round((b.ratio ?? 0) * 100);
+              const color =
+                b.status === "exceeded"
+                  ? "var(--rf-red-text)"
+                  : b.status === "warning"
+                    ? "var(--rf-amber-text)"
+                    : "var(--rf-text-2)";
+
+              return (
+                <li key={b.category}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[13px] font-medium">
+                      {CATEGORY_EMOJI[b.category]} {CATEGORY_LABELS[b.category]}
+                    </span>
+                    <span className="rf-tabular text-[13px] font-semibold" style={{ color }}>
+                      {pct} %
+                    </span>
+                  </div>
+                  <div className="mt-1.5">
+                    <BudgetLine ratio={b.ratio} status={b.status} />
+                  </div>
+                  <p className="rf-tabular mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    {formatMoney(b.spentCents)} / {formatMoney(b.budgetCents ?? 0)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+
+        {/* Työaika tänään */}
+        <Card>
+          <CardHeader title="⏱️ Työaika tänään" subtitle={`${todayHours.length} työntekijää`} />
+          {todayHours.length === 0 ? (
+            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+              Kukaan ei ole vielä leimannut sisään.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {todayHours.map(({ user, worked }) => (
+                <li key={user.id} className="flex items-center gap-3">
+                  <Avatar initials={user.initials} size={32} />
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
+                    {user.name.split(" ")[0]}
+                  </span>
+                  {worked.runningSince ? (
+                    <span
+                      aria-label="töissä nyt"
+                      className="rf-pulse-dot h-1.5 w-1.5 shrink-0 rounded-full"
+                      style={{ background: "var(--rf-green)" }}
+                    />
+                  ) : null}
+                  <span className="rf-tabular shrink-0 text-[14px] font-semibold">
+                    {formatDuration(worked.workedMs)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
           <Link
             href="/admin/tyontekijat"
             className="mt-4 block text-[13px] font-medium"
             style={{ color: "var(--rf-blue)" }}
           >
-            Näytä kaikki
-          </Link>
-        </Card>
-
-        {/* Tulevat vuorot */}
-        <Card>
-          <CardHeader
-            title="Tulevat työvuorot"
-            subtitle={`${OPEN_SHIFTS.length} avointa vuoroa`}
-          />
-          <ul className="space-y-3">
-            {upcomingShifts.map((shift) => {
-              const employee = employeeById(shift.employeeId);
-              return (
-                <li key={shift.id} className="flex items-center gap-3">
-                  <Avatar initials={employee?.initials ?? "?"} size={30} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium">
-                      {employee?.name.split(" ")[0] ?? "—"}
-                    </p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {formatShortDate(shift.date)}
-                    </p>
-                  </div>
-                  <span className="rf-tabular text-[13px]">
-                    {shift.startTime}–{shift.endTime}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          <Link
-            href="/admin/tyovuorot"
-            className="rf-press mt-4 block py-2.5 text-center text-[14px] font-semibold"
-            style={{
-              background: "var(--rf-inset)",
-              color: "var(--rf-text)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            Hallinnoi työvuoroja
+            Kaikki työntekijät
           </Link>
         </Card>
 
         {/* Viimeisimmät kuitit */}
-        <Card className="lg:col-span-2" padded={false}>
+        <Card className="lg:col-span-3" padded={false}>
           <div className="px-5 pt-5">
             <CardHeader
-              title="Viimeisimmät kuitit"
+              title="🧾 Viimeisimmät kuitit"
               action={
-                <Link
-                  href="/admin/kuitit"
-                  className="text-[13px] font-medium"
-                  style={{ color: "var(--rf-blue)" }}
-                >
+                <Link href="/admin/kuitit" className="text-[13px] font-medium" style={{ color: "var(--rf-blue)" }}>
                   Kaikki
                 </Link>
               }
@@ -334,16 +380,20 @@ export default function AdminDashboard() {
                   href={`/admin/kuitit?korosta=${receipt.id}`}
                   className="flex items-center gap-4 px-5 py-3"
                 >
+                  <CategoryBubble category={receipt.category} size={32} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium">{receipt.supplier}</p>
+                    <p className="truncate text-[14px] font-medium">{receipt.supplierName}</p>
                     <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                       {CATEGORY_LABELS[receipt.category]}
+                      {receipt.items.length > 1 ? ` · ${receipt.items.length} riviä` : ""}
                     </p>
                   </div>
                   {receipt.status === "needs_review" ? (
-                    <Pill tone="warn">tarkista</Pill>
+                    <span aria-label="tarkistettava" title="tarkistettava">
+                      <SeverityDot severity="warning" />
+                    </span>
                   ) : null}
-                  <span className="rf-tabular w-24 text-right text-[14px] font-semibold">
+                  <span className="rf-tabular w-28 text-right text-[14px] font-semibold">
                     {formatMoney(receipt.totalCents)}
                   </span>
                   <span
@@ -362,63 +412,40 @@ export default function AdminDashboard() {
   );
 }
 
-/**
- * Kulukehitys pylväinä.
- *
- * Harmaa, ei värillinen: tämä on kulujen määrä, ei suorituskyvyn mittari.
- * Värillinen graafi houkuttelisi lukemaan sen menestyksenä tai epäonnistumisena.
- */
-function TrendChart({
-  series,
+function BudgetLine({
+  ratio,
+  status,
 }: {
-  series: { month: string; totalCents: number }[];
+  ratio: number | null;
+  status: "ok" | "warning" | "exceeded" | "none";
 }) {
-  const max = Math.max(...series.map((s) => s.totalCents), 1);
+  const color =
+    status === "exceeded"
+      ? "var(--rf-red)"
+      : status === "warning"
+        ? "var(--rf-amber)"
+        : "var(--rf-green)";
 
   return (
-    <div className="flex items-end gap-3" style={{ height: 168 }}>
-      {series.map((point, i) => {
-        const heightPct = (point.totalCents / max) * 100;
-        const isLast = i === series.length - 1;
-
-        return (
-          <div key={point.month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <span className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              {formatCompact(point.totalCents)}
-            </span>
-            <div className="flex w-full flex-1 items-end">
-              <div
-                className="w-full"
-                style={{
-                  height: `${Math.max(4, heightPct)}%`,
-                  background: isLast ? "var(--rf-text)" : "var(--rf-line-strong)",
-                  borderRadius: "6px 6px 2px 2px",
-                }}
-                role="img"
-                aria-label={`${formatMonth(point.month)}: ${formatMoney(point.totalCents)}`}
-              />
-            </div>
-            <span
-              className="truncate text-[12px]"
-              style={{ color: isLast ? "var(--rf-text)" : "var(--rf-text-3)" }}
-            >
-              {formatMonth(point.month).split(" ")[0]}
-            </span>
-          </div>
-        );
-      })}
+    <div
+      className="h-1.5 w-full overflow-hidden"
+      style={{ background: "var(--rf-inset)", borderRadius: 999 }}
+      role="img"
+      aria-label={`${Math.round((ratio ?? 0) * 100)} prosenttia budjetista`}
+    >
+      <div
+        className="h-full"
+        style={{
+          width: `${Math.min(100, Math.max(2, (ratio ?? 0) * 100))}%`,
+          background: color,
+          borderRadius: 999,
+        }}
+      />
     </div>
   );
-}
-
-function formatCompact(cents: number): string {
-  const euros = cents / 100;
-  if (euros >= 1000) return `${(euros / 1000).toFixed(1).replace(".", ",")} k€`;
-  return `${Math.round(euros)} €`;
 }
 
 function formatShortDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");
   return `${Number(d)}.${Number(m)}.`;
 }
-

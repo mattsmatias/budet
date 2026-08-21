@@ -9,10 +9,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   DEMO_MONTH,
-  EMPLOYEES,
+  STAFF,
   MONTHLY_HOURS,
   RECEIPTS,
-  employeeById,
+  userById,
 } from "@/lib/restoflow/data";
 import {
   receiptsInMonth,
@@ -21,10 +21,9 @@ import {
 } from "@/lib/restoflow/expenses";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
 import {
-  CATEGORY_LABELS,
+  POSITION_LABELS,  CATEGORY_LABELS,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
-  ROLE_LABELS,
 } from "@/lib/restoflow/types";
 
 type ReportKind = "kulut" | "kategoriat" | "kuitit" | "tyoaika" | "henkilostokulut";
@@ -70,7 +69,7 @@ function buildRows(kind: ReportKind, month: string): string[][] {
         ["Päivä", "Toimittaja", "Kategoria", "Maksutapa", "Kuittinumero", "Netto", "ALV", "Yhteensä", "Tila", "Syyt", "Lisännyt"],
         ...inMonth.map((r) => [
           r.date,
-          r.supplier,
+          r.supplierName,
           CATEGORY_LABELS[r.category],
           PAYMENT_LABELS[r.paymentMethod],
           r.receiptNumber ?? "",
@@ -79,7 +78,7 @@ function buildRows(kind: ReportKind, month: string): string[][] {
           money(r.totalCents),
           r.status === "needs_review" ? "Tarkistettava" : "Tarkistettu",
           r.reviewReasons.map((x) => REVIEW_REASON_LABELS[x]).join(", "),
-          employeeById(r.addedByUserId)?.name ?? "",
+          userById(r.addedByUserId)?.name ?? "",
         ]),
       ];
 
@@ -125,9 +124,9 @@ function buildRows(kind: ReportKind, month: string): string[][] {
     case "tyoaika":
       return [
         ["Työntekijä", "Rooli", "Tunnit"],
-        ...EMPLOYEES.map((e) => [
+        ...STAFF.map((e) => [
           e.name,
-          ROLE_LABELS[e.role],
+          e.position ? POSITION_LABELS[e.position] : "—",
           String(MONTHLY_HOURS[e.id] ?? 0),
         ]),
         [],
@@ -135,12 +134,12 @@ function buildRows(kind: ReportKind, month: string): string[][] {
       ];
 
     case "henkilostokulut": {
-      const rows = EMPLOYEES.map((e) => {
+      const rows = STAFF.map((e) => {
         const hours = MONTHLY_HOURS[e.id] ?? 0;
         return {
           e,
           hours,
-          cost: staffCostCents(hours * 3600000, e.hourlyRateCents),
+          cost: staffCostCents(hours * 3600000, e.hourlyRateCents ?? 0),
         };
       });
 
@@ -152,9 +151,9 @@ function buildRows(kind: ReportKind, month: string): string[][] {
         ["Työntekijä", "Rooli", "Tunnit", "Tuntipalkka", "Kulu"],
         ...rows.map(({ e, hours, cost }) => [
           e.name,
-          ROLE_LABELS[e.role],
+          e.position ? POSITION_LABELS[e.position] : "—",
           String(hours),
-          money(e.hourlyRateCents),
+          money(e.hourlyRateCents ?? 0),
           money(cost),
         ]),
         [],

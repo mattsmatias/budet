@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RECEIPTS, employeeById } from "@/lib/restoflow/data";
+import { RECEIPTS, userById } from "@/lib/restoflow/data";
 import {
   filterReceipts,
   searchReceipts,
@@ -20,8 +20,8 @@ const FILTERS: { key: ReceiptFilter; label: string }[] = [
   { key: "all", label: "Kaikki" },
   { key: "needs_review", label: "Tarkistettavat" },
   { key: "food", label: "Ruoka" },
-  { key: "drinks", label: "Juomat" },
-  { key: "supplies", label: "Tarvikkeet" },
+  { key: "alcohol", label: "Juomat" },
+  { key: "kitchen_supplies", label: "Tarvikkeet" },
   { key: "cleaning", label: "Siivous" },
   { key: "other", label: "Muut" },
 ];
@@ -134,7 +134,7 @@ export default async function AdminReceiptsPage({
               </thead>
               <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
                 {receipts.map((receipt) => {
-                  const addedBy = employeeById(receipt.addedByUserId);
+                  const addedBy = userById(receipt.addedByUserId);
                   const isHighlighted = receipt.id === highlight;
 
                   return (
@@ -145,7 +145,7 @@ export default async function AdminReceiptsPage({
                       }}
                     >
                       <td className="px-5 py-3">
-                        <p className="font-medium">{receipt.supplier}</p>
+                        <p className="font-medium">{receipt.supplierName}</p>
                         {receipt.status === "needs_review" ? (
                           <p className="mt-1 flex flex-wrap gap-1.5">
                             {receipt.reviewReasons.map((r) => (

@@ -9,13 +9,24 @@
  * sen ennen tallennusta. Tyhjä arvo on parempi kuin keksitty.
  */
 
+import { checkVat } from "./vat";
 import type {
   ExpenseCategory,
   Extracted,
   PaymentMethod,
-  ReceiptLine,
   ReviewReason,
 } from "./types";
+
+/** Poimittu rivi. Ei vielä ReceiptItem — id syntyy vasta tallennuksessa. */
+export interface ExtractedItem {
+  description: string;
+  quantity: number | null;
+  unit: string | null;
+  totalCents: number;
+  category: ExpenseCategory;
+  vatRate: number | null;
+  productGroup: string | null;
+}
 
 export interface ExtractionResult {
   supplier: Extracted<string>;
@@ -25,14 +36,10 @@ export interface ExtractionResult {
   category: Extracted<ExpenseCategory>;
   paymentMethod: Extracted<PaymentMethod>;
   receiptNumber: Extracted<string>;
-  lines: ReceiptLine[];
-  /** Poiminnan kesto millisekunteina — näytetään kehittäjälle, ei käyttäjälle. */
+  items: ExtractedItem[];
+  /** Kuvan laatuarvio. Huono kuva nostaa tarkistustarpeen. */
+  imageQuality: "good" | "poor";
   elapsedMs: number;
-}
-
-export interface ReceiptExtractor {
-  readonly name: string;
-  extract(input: ExtractionInput): Promise<ExtractionResult>;
 }
 
 export interface ExtractionInput {
@@ -43,12 +50,17 @@ export interface ExtractionInput {
   hash?: string;
 }
 
+export interface ReceiptExtractor {
+  readonly name: string;
+  extract(input: ExtractionInput): Promise<ExtractionResult>;
+}
+
 /**
  * Mock-poimija.
  *
- * Tuottaa uskottavan tuloksen tiedostonimen perusteella ja on
- * deterministinen: sama tiedostonimi antaa aina saman tuloksen. Näin demoa
- * voi esitellä ilman että luvut hyppivät, ja testit ovat toistettavia.
+ * Deterministinen tiedostonimen perusteella: sama nimi antaa aina saman
+ * tuloksen. Demoa voi esitellä ilman että luvut hyppivät, ja testit ovat
+ * toistettavia.
  *
  * Tämä EI ole oikea tekoäly, ja se sanotaan käyttöliittymässä ääneen.
  */
@@ -57,22 +69,12 @@ export class MockReceiptExtractor implements ReceiptExtractor {
 
   async extract(input: ExtractionInput): Promise<ExtractionResult> {
     const started = Date.now();
-    const profile = profileFor(input.fileName);
-
-    return {
-      ...profile,
-      elapsedMs: Date.now() - started,
-    };
+    return { ...profileFor(input.fileName), elapsedMs: Date.now() - started };
   }
 }
 
 type Profile = Omit<ExtractionResult, "elapsedMs">;
 
-/**
- * Tiedostonimi ratkaisee profiilin. Tunnistamaton nimi tuottaa
- * tarkoituksella epävarman tuloksen — se on realistisin tapaus ja näyttää
- * miten käyttöliittymä käsittelee epävarmuutta.
- */
 function profileFor(fileName: string): Profile {
   const name = fileName.toLowerCase();
 
@@ -81,31 +83,36 @@ function profileFor(fileName: string): Profile {
       supplier: { value: "Metro Tukku", confidence: "high" },
       date: { value: "2026-08-20", confidence: "high" },
       totalCents: { value: 18690, confidence: "high" },
-      vatCents: { value: 3252, confidence: "high" },
+      vatCents: { value: 2367, confidence: "high" },
       category: { value: "food", confidence: "high" },
       paymentMethod: { value: "card", confidence: "high" },
       receiptNumber: { value: "MT-4471", confidence: "medium" },
-      lines: [
-        { description: "Naudan sisäfilee 4 kg", quantity: 4, totalCents: 8960 },
-        { description: "Perunat 25 kg", quantity: 1, totalCents: 2450 },
-        { description: "Salaattisekoitus", quantity: 6, totalCents: 3480 },
-        { description: "Oliiviöljy 5 l", quantity: 1, totalCents: 3800 },
+      imageQuality: "good",
+      items: [
+        { description: "Naudan sisäfilee", quantity: 4, unit: "kg", totalCents: 8960, category: "food", vatRate: 0.145, productGroup: "Liha" },
+        { description: "Perunat", quantity: 25, unit: "kg", totalCents: 2450, category: "food", vatRate: 0.145, productGroup: "Vihannekset" },
+        { description: "Salaattisekoitus", quantity: 6, unit: "pkt", totalCents: 3480, category: "food", vatRate: 0.145, productGroup: "Vihannekset" },
+        { description: "Oliiviöljy", quantity: 1, unit: "kanisteri", totalCents: 3800, category: "food", vatRate: 0.145, productGroup: "Öljyt" },
       ],
     };
   }
 
   if (name.includes("kespro")) {
+    // Sekakuitti: kolme kategoriaa samalla tositteella, kaksi verokantaa.
     return {
       supplier: { value: "Kespro", confidence: "high" },
       date: { value: "2026-08-19", confidence: "high" },
       totalCents: { value: 31250, confidence: "high" },
-      vatCents: { value: 5438, confidence: "high" },
+      vatCents: { value: 4601, confidence: "high" },
       category: { value: "food", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "medium" },
       receiptNumber: { value: "KP-88214", confidence: "high" },
-      lines: [
-        { description: "Tuoretuotteet", quantity: null, totalCents: 18400 },
-        { description: "Pakasteet", quantity: null, totalCents: 12850 },
+      imageQuality: "good",
+      items: [
+        { description: "Kanafilee", quantity: 10, unit: "kg", totalCents: 14200, category: "food", vatRate: 0.145, productGroup: "Liha" },
+        { description: "Coca-Cola 0,33 l", quantity: 24, unit: "kpl", totalCents: 8650, category: "soft_drinks", vatRate: 0.145, productGroup: "Virvoitusjuomat" },
+        { description: "Astianpesuaine", quantity: 2, unit: "kanisteri", totalCents: 5900, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
+        { description: "Talouspaperi", quantity: 6, unit: "rll", totalCents: 2500, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
       ],
     };
   }
@@ -120,25 +127,46 @@ function profileFor(fileName: string): Profile {
         hint: "Loppusumma oli osittain rypistynyt — tarkista",
       },
       vatCents: { value: null, confidence: "low", hint: "ALV ei erottunut kuitista" },
-      category: { value: "supplies", confidence: "medium" },
-      paymentMethod: { value: "card", confidence: "high" },
+      category: { value: "food", confidence: "medium" },
+      paymentMethod: { value: "unknown", confidence: "low", hint: "Maksutapaa ei tunnistettu" },
       receiptNumber: { value: null, confidence: "low" },
-      lines: [],
+      imageQuality: "poor",
+      items: [],
     };
   }
 
-  if (name.includes("juoma") || name.includes("alko") || name.includes("olut")) {
+  if (name.includes("alko") || name.includes("viini")) {
+    // ALV vastaa 14,5 % vaikka kategoria on alkoholi — ristiriita joka
+    // pitää huomata, ei korjata hiljaa.
+    return {
+      supplier: { value: "Alko Yritysmyynti", confidence: "high" },
+      date: { value: "2026-08-17", confidence: "high" },
+      totalCents: { value: 128400, confidence: "high" },
+      vatCents: { value: 16260, confidence: "medium", hint: "Tarkista verokanta" },
+      category: { value: "alcohol", confidence: "high" },
+      paymentMethod: { value: "invoice", confidence: "high" },
+      receiptNumber: { value: "ALK-7781", confidence: "high" },
+      imageQuality: "good",
+      items: [
+        { description: "Punaviini 0,75 l", quantity: 36, unit: "plo", totalCents: 79200, category: "alcohol", vatRate: 0.255, productGroup: "Viinit" },
+        { description: "Valkoviini 0,75 l", quantity: 24, unit: "plo", totalCents: 49200, category: "alcohol", vatRate: 0.255, productGroup: "Viinit" },
+      ],
+    };
+  }
+
+  if (name.includes("juoma") || name.includes("olut") || name.includes("hartwall")) {
     return {
       supplier: { value: "Hartwall", confidence: "high" },
-      date: { value: "2026-08-17", confidence: "high" },
+      date: { value: "2026-08-16", confidence: "high" },
       totalCents: { value: 68400, confidence: "high" },
-      vatCents: { value: 13205, confidence: "medium", hint: "ALV 25,5 % — tarkista" },
-      category: { value: "drinks", confidence: "high" },
+      vatCents: { value: 8664, confidence: "high" },
+      category: { value: "soft_drinks", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "high" },
       receiptNumber: { value: "HW-2261", confidence: "high" },
-      lines: [
-        { description: "Olut 0,33 l × 240", quantity: 240, totalCents: 43200 },
-        { description: "Virvoitusjuomat", quantity: null, totalCents: 25200 },
+      imageQuality: "good",
+      items: [
+        { description: "Virvoitusjuomat 0,33 l", quantity: 240, unit: "kpl", totalCents: 43200, category: "soft_drinks", vatRate: 0.145, productGroup: "Virvoitusjuomat" },
+        { description: "Kivennäisvesi", quantity: 120, unit: "kpl", totalCents: 25200, category: "soft_drinks", vatRate: 0.145, productGroup: "Vedet" },
       ],
     };
   }
@@ -152,18 +180,20 @@ function profileFor(fileName: string): Profile {
     category: { value: null, confidence: "low", hint: "Valitse kategoria" },
     paymentMethod: { value: "unknown", confidence: "low" },
     receiptNumber: { value: null, confidence: "low" },
-    lines: [],
+    imageQuality: "poor",
+    items: [],
   };
 }
 
 // ---------------------------------------------------------------------------
 
 /**
- * Päättelee mitkä kentät vaativat käyttäjän tarkistuksen.
+ * Päättelee mitkä kentät vaativat tarkistuksen.
  *
- * Sääntö on yksinkertainen ja tarkoituksella tiukka: mikä tahansa muu kuin
- * korkea luottamus rahaan tai puuttuva pakollinen kenttä nostaa kuitin
- * tarkistusjonoon. Väärä kulukirjaus on kalliimpi kuin ylimääräinen klikkaus.
+ * Sääntö on tarkoituksella tiukka: mikä tahansa muu kuin korkea luottamus
+ * rahaan, puuttuva pakollinen kenttä tai kategorian verokantaan sopimaton
+ * ALV nostaa kuitin jonoon. Väärä kulukirjaus on kalliimpi kuin
+ * ylimääräinen klikkaus.
  */
 export function reviewReasonsFor(result: ExtractionResult): ReviewReason[] {
   const reasons: ReviewReason[] = [];
@@ -182,18 +212,36 @@ export function reviewReasonsFor(result: ExtractionResult): ReviewReason[] {
     reasons.push("category_missing");
   }
 
+  // ALV vs. kategorian odotettu verokanta — vain kun molemmat tiedetään.
+  if (
+    result.category.value !== null &&
+    result.vatCents.value !== null &&
+    result.totalCents.value !== null
+  ) {
+    const check = checkVat(
+      result.totalCents.value,
+      result.vatCents.value,
+      result.category.value,
+    );
+    if (!check.matches) reasons.push("vat_mismatch");
+  }
+
   if (result.supplier.value === null || result.supplier.confidence === "low") {
     reasons.push("supplier_uncertain");
   }
 
-  if (result.date.confidence === "low") {
-    reasons.push("date_uncertain");
+  if (result.date.confidence === "low") reasons.push("date_uncertain");
+
+  if (result.paymentMethod.value === null || result.paymentMethod.value === "unknown") {
+    reasons.push("payment_missing");
   }
+
+  if (result.imageQuality === "poor") reasons.push("poor_image");
 
   return reasons;
 }
 
-/** Kenttiä joissa on jotain tarkistettavaa — käytetään korostukseen. */
+/** Kentät joissa on tarkistettavaa — käytetään korostukseen. */
 export function uncertainFields(result: ExtractionResult): string[] {
   const fields: string[] = [];
   const check = (key: string, field: Extracted<unknown>) => {
@@ -205,6 +253,7 @@ export function uncertainFields(result: ExtractionResult): string[] {
   check("totalCents", result.totalCents);
   check("vatCents", result.vatCents);
   check("category", result.category);
+  check("paymentMethod", result.paymentMethod);
 
   return fields;
 }

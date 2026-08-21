@@ -1,5 +1,6 @@
-import { OPEN_SHIFTS, SHIFTS, employeeById } from "@/lib/restoflow/data";
-import { ROLE_LABELS, SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
+import { OPEN_SHIFTS, SHIFTS, userById } from "@/lib/restoflow/data";
+import {
+  POSITION_LABELS, SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import {
   Avatar,
   Card,
@@ -34,7 +35,7 @@ export default function AdminShiftsPage() {
       </DemoNotice>
 
       <section aria-label="Tilanne" className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Hyväksytyt" value={SHIFTS.filter((s) => s.status === "approved").length} tone="ok" />
+        <StatCard label="Hyväksytyt" value={SHIFTS.filter((s) => s.status === "accepted").length} tone="ok" />
         <StatCard label="Odottaa hyväksyntää" value={pending.length} tone="warn" />
         <StatCard label="Avoimet vuorot" value={OPEN_SHIFTS.length} tone="risk" />
       </section>
@@ -83,7 +84,7 @@ export default function AdminShiftsPage() {
                           {open.startTime}–{open.endTime}
                         </p>
                         <p className="text-[11px]" style={{ color: "var(--rf-red-text)" }}>
-                          {ROLE_LABELS[open.role]}
+                          {POSITION_LABELS[open.position]}
                         </p>
                       </div>
                     ))}
@@ -123,7 +124,7 @@ export default function AdminShiftsPage() {
               <CardHeader title="Muuttuneet vuorot" subtitle={`${changed.length} vuoroa`} />
               <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
                 {changed.map((shift) => {
-                  const employee = employeeById(shift.employeeId);
+                  const employee = userById(shift.userId);
                   return (
                     <li key={shift.id} className="flex items-center gap-3 py-3">
                       <Avatar initials={employee?.initials ?? "?"} size={32} />
@@ -155,15 +156,15 @@ export default function AdminShiftsPage() {
 }
 
 function ShiftChip({ shift }: { shift: Shift }) {
-  const employee = employeeById(shift.employeeId);
+  const employee = userById(shift.userId);
   const bg =
-    shift.status === "approved"
+    shift.status === "accepted"
       ? "var(--rf-green-bg)"
       : shift.status === "changed"
         ? "var(--rf-blue-bg)"
         : "var(--rf-amber-bg)";
   const fg =
-    shift.status === "approved"
+    shift.status === "accepted"
       ? "var(--rf-green-text)"
       : shift.status === "changed"
         ? "var(--rf-blue-text)"
@@ -182,7 +183,7 @@ function ShiftChip({ shift }: { shift: Shift }) {
 }
 
 function ShiftRow({ shift }: { shift: Shift }) {
-  const employee = employeeById(shift.employeeId);
+  const employee = userById(shift.userId);
 
   return (
     <li className="flex items-center gap-3 py-3">

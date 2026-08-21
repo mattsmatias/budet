@@ -358,4 +358,137 @@ export const ICONS = {
   logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   check: "m5 13 4 4L19 7",
   alert: "M12 8v5M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
+  truck: "M3 7h10v9H3zM13 10h4l3 3v3h-7zM7.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6ZM17.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z",
+  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
+  trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
 } as const;
+
+// ---------------------------------------------------------------------------
+// Kategoriat
+// ---------------------------------------------------------------------------
+
+import {
+  CATEGORY_EMOJI,
+  CATEGORY_LABELS,
+  type ExpenseCategory,
+} from "@/lib/restoflow/types";
+
+/**
+ * Kategoriamerkintä.
+ *
+ * Emoji tekee kategorian tunnistettavaksi vilkaisulla ilman että
+ * dashboardista tulee värikäs — emoji kantaa tunnisteen, ei väri.
+ */
+export function CategoryTag({
+  category,
+  size = "md",
+}: {
+  category: ExpenseCategory;
+  size?: "sm" | "md";
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 ${size === "sm" ? "text-[12px]" : "text-[14px]"}`}
+    >
+      <span aria-hidden="true">{CATEGORY_EMOJI[category]}</span>
+      <span>{CATEGORY_LABELS[category]}</span>
+    </span>
+  );
+}
+
+/** Pelkkä emoji pyöreällä taustalla — listojen alkuun. */
+export function CategoryBubble({
+  category,
+  size = 34,
+}: {
+  category: ExpenseCategory;
+  size?: number;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-flex shrink-0 items-center justify-center"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: "var(--rf-inset)",
+        fontSize: size * 0.46,
+      }}
+    >
+      {CATEGORY_EMOJI[category]}
+    </span>
+  );
+}
+
+/**
+ * Budjettipalkki.
+ *
+ * Väri on tässä poikkeuksellisesti merkityksellinen: se kertoo tilan
+ * (ok / lähestyy / ylitetty), ei kategoriaa.
+ */
+export function BudgetBar({
+  ratio,
+  status,
+}: {
+  ratio: number | null;
+  status: "ok" | "warning" | "exceeded" | "none";
+}) {
+  if (ratio === null) {
+    return (
+      <div
+        className="h-1.5 w-full"
+        style={{ background: "var(--rf-inset)", borderRadius: 999 }}
+        role="img"
+        aria-label="Ei budjettia asetettu"
+      />
+    );
+  }
+
+  const color =
+    status === "exceeded"
+      ? "var(--rf-red)"
+      : status === "warning"
+        ? "var(--rf-amber)"
+        : "var(--rf-green)";
+
+  return (
+    <div
+      className="relative h-1.5 w-full overflow-hidden"
+      style={{ background: "var(--rf-inset)", borderRadius: 999 }}
+      role="img"
+      aria-label={`${Math.round(ratio * 100)} prosenttia budjetista`}
+    >
+      <div
+        className="h-full"
+        style={{
+          width: `${Math.min(100, Math.max(2, ratio * 100))}%`,
+          background: color,
+          borderRadius: 999,
+        }}
+      />
+    </div>
+  );
+}
+
+/** Vakavuusmerkki hälytyksille. */
+export function SeverityDot({
+  severity,
+}: {
+  severity: "info" | "warning" | "critical";
+}) {
+  const color =
+    severity === "critical"
+      ? "var(--rf-red)"
+      : severity === "warning"
+        ? "var(--rf-amber)"
+        : "var(--rf-blue)";
+
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block shrink-0"
+      style={{ width: 8, height: 8, borderRadius: "50%", background: color }}
+    />
+  );
+}

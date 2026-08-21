@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CURRENT_EMPLOYEE_ID, DEMO_TODAY, shiftsFor } from "@/lib/restoflow/data";
+import { CURRENT_USER_ID, DEMO_TODAY, shiftsFor } from "@/lib/restoflow/data";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { Card, Icon, ICONS, Pill, SectionLabel } from "@/components/restoflow/ui";
 
@@ -14,7 +14,7 @@ export default async function ShiftsPage({
   const params = await searchParams;
   const selected = typeof params.paiva === "string" ? params.paiva : DEMO_TODAY;
 
-  const shifts = shiftsFor(CURRENT_EMPLOYEE_ID);
+  const shifts = shiftsFor(CURRENT_USER_ID);
   const byDate = new Map(shifts.map((s) => [s.date, s]));
 
   const selectedShift = byDate.get(selected);
@@ -104,7 +104,7 @@ export default async function ShiftsPage({
                       style={{
                         background: isSelected
                           ? "#fff"
-                          : shift.status === "approved"
+                          : shift.status === "accepted"
                             ? "var(--rf-green)"
                             : shift.status === "changed"
                               ? "var(--rf-blue)"
@@ -186,7 +186,7 @@ function ShiftCard({ shift }: { shift: Shift }) {
 function StatusPill({ status }: { status: Shift["status"] }) {
   return (
     <Pill
-      tone={status === "approved" ? "ok" : status === "changed" ? "info" : "warn"}
+      tone={status === "accepted" ? "ok" : status === "changed" ? "info" : "warn"}
       dot
     >
       {SHIFT_STATUS_LABELS[status]}

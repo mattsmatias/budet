@@ -24,7 +24,11 @@ function receipt(
   n += 1;
   return {
     id: `r${n}`,
-    supplier: `Toimittaja ${n}`,
+    restaurantId: "rest-1",
+    supplierId: `s-${n}`,
+    supplierName: `Toimittaja ${n}`,
+    items: [],
+    imageQuality: "good" as const,
     vatCents: null,
     category: "food" as ExpenseCategory,
     paymentMethod: "card",
@@ -32,8 +36,7 @@ function receipt(
     note: null,
     status: "confirmed",
     reviewReasons: [],
-    lines: [],
-    addedByUserId: "u1",
+        addedByUserId: "u1",
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
     ...partial,
@@ -44,19 +47,19 @@ describe("totalsByCategory", () => {
   it("summaa kategorioittain ja järjestää suurin ensin", () => {
     const totals = totalsByCategory([
       receipt({ date: "2026-08-01", totalCents: 1000, category: "food" }),
-      receipt({ date: "2026-08-02", totalCents: 3000, category: "drinks" }),
+      receipt({ date: "2026-08-02", totalCents: 3000, category: "alcohol" }),
       receipt({ date: "2026-08-03", totalCents: 2000, category: "food" }),
     ]);
 
     expect(totals[0]).toMatchObject({ category: "food", totalCents: 3000, receiptCount: 2 });
-    expect(totals[1]).toMatchObject({ category: "drinks", totalCents: 3000 });
+    expect(totals[1]).toMatchObject({ category: "alcohol", totalCents: 3000 });
     expect(totals).toHaveLength(2);
   });
 
   it("laskee osuudet jotka summautuvat ykköseen", () => {
     const totals = totalsByCategory([
       receipt({ date: "2026-08-01", totalCents: 2500, category: "food" }),
-      receipt({ date: "2026-08-02", totalCents: 7500, category: "drinks" }),
+      receipt({ date: "2026-08-02", totalCents: 7500, category: "alcohol" }),
     ]);
     expect(totals.reduce((s, t) => s + t.share, 0)).toBeCloseTo(1);
     expect(totals[0].share).toBeCloseTo(0.75);
@@ -169,8 +172,8 @@ describe("tarkistettavat", () => {
 
 describe("searchReceipts", () => {
   const receipts = [
-    receipt({ date: "2026-08-20", totalCents: 18690, supplier: "Metro Tukku", receiptNumber: "A-1234" }),
-    receipt({ date: "2026-08-19", totalCents: 31250, supplier: "Kespro", note: "Viikonlopun tilaus" }),
+    receipt({ date: "2026-08-20", totalCents: 18690, supplierName: "Metro Tukku", receiptNumber: "A-1234" }),
+    receipt({ date: "2026-08-19", totalCents: 31250, supplierName: "Kespro", note: "Viikonlopun tilaus" }),
   ];
 
   it("löytää toimittajan nimellä isoista ja pienistä kirjaimista riippumatta", () => {
@@ -179,8 +182,8 @@ describe("searchReceipts", () => {
   });
 
   it("löytää kuittinumerolla ja muistiinpanolla", () => {
-    expect(searchReceipts(receipts, "A-1234")[0].supplier).toBe("Metro Tukku");
-    expect(searchReceipts(receipts, "viikonlopun")[0].supplier).toBe("Kespro");
+    expect(searchReceipts(receipts, "A-1234")[0].supplierName).toBe("Metro Tukku");
+    expect(searchReceipts(receipts, "viikonlopun")[0].supplierName).toBe("Kespro");
   });
 
   it("löytää summalla pilkulla kirjoitettuna", () => {
@@ -200,7 +203,7 @@ describe("searchReceipts", () => {
 describe("filterReceipts", () => {
   const receipts = [
     receipt({ date: "2026-08-20", totalCents: 100, category: "food" }),
-    receipt({ date: "2026-08-19", totalCents: 200, category: "supplies", status: "needs_review", reviewReasons: ["vat_missing"] }),
+    receipt({ date: "2026-08-19", totalCents: 200, category: "kitchen_supplies", status: "needs_review", reviewReasons: ["vat_missing"] }),
   ];
 
   it("suodattaa kategorialla", () => {

@@ -22,8 +22,8 @@ const FILTERS: { key: ReceiptFilter; label: string }[] = [
   { key: "all", label: "Kaikki" },
   { key: "needs_review", label: "Tarkistettavat" },
   { key: "food", label: "Ruoka" },
-  { key: "drinks", label: "Juomat" },
-  { key: "supplies", label: "Tarvikkeet" },
+  { key: "alcohol", label: "Juomat" },
+  { key: "kitchen_supplies", label: "Tarvikkeet" },
   { key: "other", label: "Muut" },
 ];
 
@@ -125,7 +125,7 @@ export default async function ReceiptsPage({
                   className="flex items-center gap-3 px-5 py-3.5"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-medium">{receipt.supplier}</p>
+                    <p className="truncate text-[15px] font-medium">{receipt.supplierName}</p>
                     <p
                       className="rf-tabular mt-0.5 text-[13px]"
                       style={{ color: "var(--rf-text-3)" }}

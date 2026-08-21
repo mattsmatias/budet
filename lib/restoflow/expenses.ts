@@ -41,17 +41,40 @@ export function receiptsInMonth(receipts: Receipt[], month: string): Receipt[] {
 /**
  * Kulut kategorioittain, suurin ensin.
  *
- * Kategoriat joissa ei ole kuitteja jätetään pois: nollarivi bar chartissa
- * on visuaalista kohinaa, ei tietoa.
+ * Käyttää rivikohtaista kategoriaa kun rivejä on. Sekakuitti — ruokaa,
+ * juomaa ja pesuainetta samalla tositteella — jakautuu näin oikeisiin
+ * kategorioihin sen sijaan että koko summa kirjautuisi yhteen. Juuri tämä
+ * on rivikohtaisen erittelyn koko tarkoitus.
+ *
+ * Kuittimäärä lasketaan tositteista, ei riveistä: kuitti jonka rivit
+ * osuvat kolmeen kategoriaan on yhä yksi kuitti.
+ *
+ * Kategoriat joissa ei ole kuluja jätetään pois: nollarivi bar chartissa on
+ * visuaalista kohinaa, ei tietoa.
  */
 export function totalsByCategory(receipts: Receipt[]): CategoryTotal[] {
   const totals = new Map<ExpenseCategory, { cents: number; count: number }>();
 
   for (const receipt of receipts) {
-    const entry = totals.get(receipt.category) ?? { cents: 0, count: 0 };
-    entry.cents += receipt.totalCents;
-    entry.count += 1;
-    totals.set(receipt.category, entry);
+    const itemsSum = receipt.items.reduce((s, i) => s + i.totalCents, 0);
+
+    if (receipt.items.length > 0 && itemsSum > 0) {
+      const seen = new Set<ExpenseCategory>();
+      for (const item of receipt.items) {
+        const entry = totals.get(item.category) ?? { cents: 0, count: 0 };
+        entry.cents += item.totalCents;
+        if (!seen.has(item.category)) {
+          entry.count += 1;
+          seen.add(item.category);
+        }
+        totals.set(item.category, entry);
+      }
+    } else {
+      const entry = totals.get(receipt.category) ?? { cents: 0, count: 0 };
+      entry.cents += receipt.totalCents;
+      entry.count += 1;
+      totals.set(receipt.category, entry);
+    }
   }
 
   const grand = [...totals.values()].reduce((sum, e) => sum + e.cents, 0);
@@ -208,7 +231,7 @@ export function searchReceipts(receipts: Receipt[], query: string): Receipt[] {
   const cents = Number.isFinite(asNumber) ? Math.round(asNumber * 100) : null;
 
   return receipts.filter((receipt) => {
-    if (receipt.supplier.toLowerCase().includes(q)) return true;
+    if (receipt.supplierName.toLowerCase().includes(q)) return true;
     if (receipt.receiptNumber?.toLowerCase().includes(q)) return true;
     if (receipt.note?.toLowerCase().includes(q)) return true;
     if (receipt.date.includes(q)) return true;

@@ -60,7 +60,7 @@ export function TimeClock({
   function record(type: ClockEventType) {
     setEvents((prev) => [
       ...prev,
-      { id: `local-${prev.length}`, employeeId: "emp-ali", type, at: nowIso },
+      { id: `local-${prev.length}`, userId: "u-ali", type, at: nowIso },
     ]);
   }
 

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import {
-  CURRENT_EMPLOYEE_ID,
+  CURRENT_USER_ID,
   DEMO_NOW,
   DEMO_TODAY,
   RECEIPTS,
-  employeeById,
+  userById,
   eventsFor,
   shiftsFor,
 } from "@/lib/restoflow/data";
@@ -15,6 +15,7 @@ import {
   workedOnDate,
 } from "@/lib/restoflow/timeclock";
 import { sortByDateDesc } from "@/lib/restoflow/expenses";
+import { can } from "@/lib/restoflow/permissions";
 import { CLOCK_STATE_LABELS, SHIFT_STATUS_LABELS } from "@/lib/restoflow/types";
 import {
   Card,
@@ -36,7 +37,7 @@ export const metadata = { title: "Koti" };
  * näkymä.
  */
 export default function EmployeeHome() {
-  const employee = employeeById(CURRENT_EMPLOYEE_ID)!;
+  const employee = userById(CURRENT_USER_ID)!;
   const events = eventsFor(employee.id);
 
   const state = currentState(events);
@@ -46,7 +47,7 @@ export default function EmployeeHome() {
   const shifts = shiftsFor(employee.id);
   const nextShift = shifts.find((s) => s.date >= DEMO_TODAY);
 
-  const recentReceipts = employee.canSeeReceipts
+  const recentReceipts = can(employee.role, "receipts.view")
     ? sortByDateDesc(RECEIPTS).slice(0, 3)
     : [];
 
@@ -123,7 +124,7 @@ export default function EmployeeHome() {
               </div>
               <Pill
                 tone={
-                  nextShift.status === "approved"
+                  nextShift.status === "accepted"
                     ? "ok"
                     : nextShift.status === "changed"
                       ? "info"
@@ -155,7 +156,7 @@ export default function EmployeeHome() {
       </Card>
 
       {/* Kuitit — vain jos oikeus */}
-      {employee.canSeeReceipts ? (
+      {can(employee.role, "receipts.view") ? (
         <section>
           <div className="flex items-baseline justify-between">
             <SectionLabel>Viimeisimmät kuitit</SectionLabel>
@@ -177,7 +178,7 @@ export default function EmployeeHome() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-medium">
-                        {receipt.supplier}
+                        {receipt.supplierName}
                       </p>
                       <p
                         className="rf-tabular mt-0.5 text-[13px]"

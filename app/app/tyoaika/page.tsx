@@ -1,8 +1,8 @@
 import {
-  CURRENT_EMPLOYEE_ID,
+  CURRENT_USER_ID,
   DEMO_NOW,
   DEMO_TODAY,
-  employeeById,
+  userById,
   eventsFor,
 } from "@/lib/restoflow/data";
 import { eventsOnDate, workedBetween } from "@/lib/restoflow/timeclock";
@@ -11,7 +11,7 @@ import { TimeClock } from "./clock";
 export const metadata = { title: "Työaika" };
 
 export default function TimeTrackingPage() {
-  const employee = employeeById(CURRENT_EMPLOYEE_ID)!;
+  const employee = userById(CURRENT_USER_ID)!;
   const allEvents = eventsFor(employee.id);
 
   const todayEvents = eventsOnDate(allEvents, DEMO_TODAY);

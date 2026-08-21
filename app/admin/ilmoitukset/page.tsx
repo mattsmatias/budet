@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { OPEN_SHIFTS, RECEIPTS, SHIFTS, employeeById } from "@/lib/restoflow/data";
+import { OPEN_SHIFTS, RECEIPTS, SHIFTS, userById } from "@/lib/restoflow/data";
 import { needsReview, reviewReasonCounts } from "@/lib/restoflow/expenses";
-import { REVIEW_REASON_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
+import {
+  POSITION_LABELS, REVIEW_REASON_LABELS } from "@/lib/restoflow/types";
 import { Card, DemoNotice, Icon, ICONS, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Ilmoitukset" };
@@ -24,7 +25,7 @@ export default function NotificationsPage() {
       id: `rcp-${r.id}`,
       tone: "warn" as const,
       icon: ICONS.receipt,
-      title: `${r.supplier} odottaa tarkistusta`,
+      title: `${r.supplierName} odottaa tarkistusta`,
       body: r.reviewReasons.map((x) => REVIEW_REASON_LABELS[x]).join(" · "),
       href: `/admin/kuitit?korosta=${r.id}`,
       date: r.date,
@@ -33,7 +34,7 @@ export default function NotificationsPage() {
       id: `shift-${s.id}`,
       tone: "info" as const,
       icon: ICONS.calendar,
-      title: `${employeeById(s.employeeId)?.name ?? "Työntekijä"} — vuoro odottaa hyväksyntää`,
+      title: `${userById(s.userId)?.name ?? "Työntekijä"} — vuoro odottaa hyväksyntää`,
       body: `${formatShortDate(s.date)} · ${s.startTime}–${s.endTime}`,
       href: "/admin/tyovuorot",
       date: s.date,
@@ -42,7 +43,7 @@ export default function NotificationsPage() {
       id: `chg-${s.id}`,
       tone: "info" as const,
       icon: ICONS.calendar,
-      title: `Vuoro muuttui — ${employeeById(s.employeeId)?.name ?? ""}`,
+      title: `Vuoro muuttui — ${userById(s.userId)?.name ?? ""}`,
       body: `${s.previousStartTime}–${s.previousEndTime} → ${s.startTime}–${s.endTime}`,
       href: "/admin/tyovuorot",
       date: s.date,
@@ -52,7 +53,7 @@ export default function NotificationsPage() {
       tone: "risk" as const,
       icon: ICONS.alert,
       title: `Avoin vuoro ${formatShortDate(s.date)}`,
-      body: `${s.startTime}–${s.endTime} · ${ROLE_LABELS[s.role]} — ei tekijää`,
+      body: `${s.startTime}–${s.endTime} · ${POSITION_LABELS[s.position]} — ei tekijää`,
       href: "/admin/tyovuorot",
       date: s.date,
     })),

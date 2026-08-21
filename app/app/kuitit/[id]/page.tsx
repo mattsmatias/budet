@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RECEIPTS, employeeById, receiptById } from "@/lib/restoflow/data";
+import { RECEIPTS, userById, receiptById } from "@/lib/restoflow/data";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -18,7 +18,7 @@ export async function generateMetadata({
 }: PageProps<"/app/kuitit/[id]">) {
   const { id } = await params;
   const receipt = receiptById(id);
-  return { title: receipt ? receipt.supplier : "Kuitti" };
+  return { title: receipt ? receipt.supplierName : "Kuitti" };
 }
 
 export default async function ReceiptDetailPage({
@@ -28,7 +28,7 @@ export default async function ReceiptDetailPage({
   const receipt = receiptById(id);
   if (!receipt) notFound();
 
-  const addedBy = employeeById(receipt.addedByUserId);
+  const addedBy = userById(receipt.addedByUserId);
 
   return (
     <div className="rf-enter space-y-4">
@@ -42,7 +42,7 @@ export default async function ReceiptDetailPage({
           <Icon path={ICONS.back} size={22} />
         </Link>
         <h1 className="truncate text-[22px] font-semibold tracking-tight">
-          {receipt.supplier}
+          {receipt.supplierName}
         </h1>
       </header>
 
@@ -65,7 +65,7 @@ export default async function ReceiptDetailPage({
       <Card>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[15px] font-semibold">{receipt.supplier}</p>
+            <p className="text-[15px] font-semibold">{receipt.supplierName}</p>
             <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               {formatDate(receipt.date)} · {PAYMENT_LABELS[receipt.paymentMethod]}
             </p>
@@ -96,7 +96,7 @@ export default async function ReceiptDetailPage({
       <Card>
         <p className="mb-1 text-[13px] font-semibold">Kuittitiedot</p>
         <dl>
-          <Row label="Toimittaja" value={receipt.supplier} />
+          <Row label="Toimittaja" value={receipt.supplierName} />
           <Row label="Päivämäärä" value={formatDate(receipt.date)} />
           <Row label="Yhteensä" value={formatMoney(receipt.totalCents)} />
           <Row
@@ -112,11 +112,11 @@ export default async function ReceiptDetailPage({
         </dl>
       </Card>
 
-      {receipt.lines.length > 0 ? (
+      {receipt.items.length > 0 ? (
         <Card>
           <p className="mb-3 text-[13px] font-semibold">Rivit</p>
           <ul className="space-y-2.5">
-            {receipt.lines.map((line, i) => (
+            {receipt.items.map((line, i) => (
               <li key={i} className="flex justify-between gap-4 text-[14px]">
                 <span style={{ color: "var(--rf-text-2)" }}>
                   {line.description}

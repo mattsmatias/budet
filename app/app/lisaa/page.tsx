@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { CURRENT_EMPLOYEE_ID, MONTHLY_HOURS, employeeById } from "@/lib/restoflow/data";
-import { ROLE_LABELS } from "@/lib/restoflow/types";
+import { CURRENT_USER_ID, MONTHLY_HOURS, userById } from "@/lib/restoflow/data";
+import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
 import {
@@ -15,9 +15,9 @@ import {
 export const metadata = { title: "Lisää" };
 
 export default function MorePage() {
-  const employee = employeeById(CURRENT_EMPLOYEE_ID)!;
+  const employee = userById(CURRENT_USER_ID)!;
   const hours = MONTHLY_HOURS[employee.id] ?? 0;
-  const earned = staffCostCents(hours * 3600000, employee.hourlyRateCents);
+  const earned = staffCostCents(hours * 3600000, employee.hourlyRateCents ?? 0);
 
   return (
     <div className="rf-enter space-y-5">
@@ -32,7 +32,7 @@ export default function MorePage() {
           <div className="min-w-0">
             <p className="text-[17px] font-semibold">{employee.name}</p>
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[employee.role]}
+              {employee.position ? POSITION_LABELS[employee.position] : "—"}
             </p>
           </div>
         </div>

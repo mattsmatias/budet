@@ -1,5 +1,6 @@
-import { EMPLOYEES, MONTHLY_HOURS, SHIFTS } from "@/lib/restoflow/data";
-import { ROLE_LABELS } from "@/lib/restoflow/types";
+import { STAFF, MONTHLY_HOURS, SHIFTS } from "@/lib/restoflow/data";
+import { POSITION_LABELS } from "@/lib/restoflow/types";
+import { can } from "@/lib/restoflow/permissions";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
 import { formatMoney } from "@/lib/money";
 import {
@@ -13,10 +14,10 @@ import {
 export const metadata = { title: "Työntekijät" };
 
 export default function StaffPage() {
-  const rows = EMPLOYEES.map((employee) => {
+  const rows = STAFF.map((employee) => {
     const hours = MONTHLY_HOURS[employee.id] ?? 0;
-    const shifts = SHIFTS.filter((s) => s.employeeId === employee.id).length;
-    const cost = staffCostCents(hours * 3600000, employee.hourlyRateCents);
+    const shifts = SHIFTS.filter((s) => s.userId === employee.id).length;
+    const cost = staffCostCents(hours * 3600000, employee.hourlyRateCents ?? 0);
     return { employee, hours, shifts, cost };
   }).sort((a, b) => b.hours - a.hours);
 
@@ -28,7 +29,7 @@ export default function StaffPage() {
       <div>
         <h1 className="text-[30px] font-semibold tracking-tight">Työntekijät</h1>
         <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          {EMPLOYEES.length} työntekijää · elokuu 2026
+          {STAFF.length} työntekijää · elokuu 2026
         </p>
       </div>
 
@@ -46,7 +47,7 @@ export default function StaffPage() {
         />
         <MetricCard
           label="Keskimäärin"
-          value={`${Math.round(totalHours / EMPLOYEES.length)} h`}
+          value={`${Math.round(totalHours / STAFF.length)} h`}
           hint="Työntekijää kohti"
         />
       </section>
@@ -79,20 +80,20 @@ export default function StaffPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3" style={{ color: "var(--rf-text-2)" }}>
-                    {ROLE_LABELS[employee.role]}
+                    {employee.position ? POSITION_LABELS[employee.position] : "—"}
                   </td>
                   <td className="rf-tabular px-5 py-3 text-right font-semibold">{hours} h</td>
                   <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
                     {shifts}
                   </td>
                   <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
-                    {formatMoney(employee.hourlyRateCents)}
+                    {formatMoney(employee.hourlyRateCents ?? 0)}
                   </td>
                   <td className="rf-tabular px-5 py-3 text-right font-semibold">
                     {formatMoney(cost)}
                   </td>
                   <td className="px-5 py-3">
-                    {employee.canSeeReceipts ? (
+                    {can(employee.role, "receipts.view") ? (
                       <Pill tone="ok" dot>
                         kyllä
                       </Pill>

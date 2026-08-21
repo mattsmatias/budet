@@ -248,13 +248,13 @@ export function CaptureFlow() {
         <Field label="Muistiinpano" value={note} onChange={setNote} last />
       </Card>
 
-      {result.lines.length > 0 ? (
+      {result.items.length > 0 ? (
         <Card>
           <p className="mb-3 text-[13px] font-semibold">
-            Tunnistetut rivit ({result.lines.length})
+            Tunnistetut rivit ({result.items.length})
           </p>
           <ul className="space-y-2">
-            {result.lines.map((line, i) => (
+            {result.items.map((line, i) => (
               <li key={i} className="flex justify-between gap-4 text-[14px]">
                 <span style={{ color: "var(--rf-text-2)" }}>{line.description}</span>
                 <span className="rf-tabular shrink-0">{formatMoney(line.totalCents)}</span>
