@@ -57,8 +57,15 @@ const MANAGER: Capability[] = [
   "alerts.view", "settings.view",
 ];
 
+/**
+ * Työntekijä: oma työaika ja omat vuorot, ei kuluja.
+ *
+ * Ei `receipts.add`. Kuitti on ravintolan kirjanpitoaineistoa, ei
+ * työntekijän ilmoitus: kuka tahansa vuorossa oleva ei saa synnyttää
+ * kulukirjausta jota kukaan ei ole hyväksynyt. Ravintola lisää kuitit
+ * itse hallintanäkymässä.
+ */
 const EMPLOYEE: Capability[] = [
-  "receipts.add",
   "shifts.view.own",
   "time.track.own",
 ];
@@ -97,6 +104,11 @@ export function capabilitiesOf(role: Role): Capability[] {
 /** Näkeekö rooli toisen työntekijän kuitit, vai vain omansa? */
 export function seesAllReceipts(role: Role): boolean {
   return can(role, "receipts.view");
+}
+
+/** Saako rooli lisätä kuitteja? Ravintolan esihenkilö saa, työntekijä ei. */
+export function canAddReceipts(role: Role): boolean {
+  return can(role, "receipts.add");
 }
 
 /** Näytetäänkö tuntipalkat ja niistä lasketut summat? */

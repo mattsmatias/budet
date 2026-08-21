@@ -4,7 +4,8 @@ import { daysApart, duplicateIds, findDuplicates } from "../duplicates";
 import { supplierTrends, totalsBySupplier, suggestedCategory } from "../suppliers";
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
 import { compareShift, formatVariance, shiftDurationMinutes, timeToMinutes, variancePatterns } from "../shifts";
-import { adminNavFor, can, seesPayRates } from "../permissions";
+import {
+  canAddReceipts, adminNavFor, can, seesPayRates } from "../permissions";
 import { buildAlerts } from "../alerts";
 import type { Budget, ClockEvent, ExpenseCategory, Receipt, ReceiptItem, Shift, Supplier, User } from "../types";
 
@@ -386,10 +387,23 @@ describe("oikeudet", () => {
   });
 
   it("rajaa työntekijän omiin tietoihinsa", () => {
-    expect(can("employee", "receipts.add")).toBe(true);
     expect(can("employee", "receipts.view")).toBe(false);
     expect(can("employee", "expenses.view")).toBe(false);
     expect(can("employee", "time.track.own")).toBe(true);
+    expect(can("employee", "shifts.view.own")).toBe(true);
+  });
+
+  /**
+   * Kuitti on ravintolan kirjanpitoaineistoa, ei työntekijän ilmoitus:
+   * kulukirjauksen saa synnyttää vain se joka vastaa sen oikeellisuudesta.
+   * Kirjanpitäjä lukee kuitit muttei luo niitä.
+   */
+  it("antaa kuitin lisäyksen vain ravintolan esihenkilölle", () => {
+    expect(canAddReceipts("owner")).toBe(true);
+    expect(canAddReceipts("manager")).toBe(true);
+    expect(canAddReceipts("employee")).toBe(false);
+    expect(canAddReceipts("accountant")).toBe(false);
+    expect(can("accountant", "receipts.view")).toBe(true);
   });
 
   it("antaa kirjanpitäjälle talouden muttei tuntipalkkoja", () => {

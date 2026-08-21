@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
+import { can } from "@/lib/restoflow/permissions";
 import { fetchReceipt, fetchUsers } from "@/lib/restoflow/queries";
 import { checkVat, isMixedReceipt } from "@/lib/restoflow/vat";
 import {
@@ -22,7 +23,9 @@ export default async function ReceiptDetailPage({
   params,
 }: PageProps<"/app/kuitit/[id]">) {
   const { id } = await params;
-  const { restaurant } = await requireContext("/app/kuitit");
+  const { restaurant, role } = await requireContext("/app/kuitit");
+
+  if (!can(role, "receipts.view")) redirect("/app");
 
   const receipt = await fetchReceipt(id);
   // RLS palauttaa tyhjän jos oikeutta ei ole — 404 on oikea vastaus

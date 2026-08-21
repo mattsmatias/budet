@@ -1,3 +1,5 @@
+import { requireContext } from "@/lib/restoflow/session";
+import { can } from "@/lib/restoflow/permissions";
 import { BottomNav } from "./nav";
 
 /**
@@ -7,7 +9,9 @@ import { BottomNav } from "./nav";
  * suunniteltu peukalolle, ja venytettynä se näyttäisi keskeneräiseltä
  * työpöytäsovellukselta.
  */
-export default function MobileAppLayout({ children }: LayoutProps<"/app">) {
+export default async function MobileAppLayout({ children }: LayoutProps<"/app">) {
+  const { role } = await requireContext("/app");
+
   return (
     <div className="flex min-h-screen justify-center">
       <div
@@ -15,7 +19,7 @@ export default function MobileAppLayout({ children }: LayoutProps<"/app">) {
         style={{ background: "var(--rf-bg)" }}
       >
         <main className="flex-1 px-4 pb-6 pt-3">{children}</main>
-        <BottomNav />
+        <BottomNav showReceipts={can(role, "receipts.view")} />
       </div>
     </div>
   );

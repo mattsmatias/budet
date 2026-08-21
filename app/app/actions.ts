@@ -13,14 +13,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
-import { reviewReasonsFor, type ExtractionResult } from "@/lib/restoflow/receipt-ai";
-import type { ClockEventType, ExpenseCategory, PaymentMethod } from "@/lib/restoflow/types";
+import type { ClockEventType } from "@/lib/restoflow/types";
 
 export interface ActionState {
   error?: string;
   notice?: string;
-  /** Tallennetun kuitin tunniste — käyttöliittymä voi avata sen. */
-  receiptId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -76,171 +73,6 @@ const LABELS: Record<ClockEventType, string> = {
   break_end: "Takaisin töissä.",
   out: "Uloskirjaus kirjattu.",
 };
-
-// ---------------------------------------------------------------------------
-// Kuitit
-// ---------------------------------------------------------------------------
-
-const receiptSchema = z.object({
-  supplier: z.string().trim().min(1, "Toimittaja puuttuu.").max(160),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tarkista päivämäärä."),
-  totalCents: z.number().int().min(0, "Loppusumma puuttuu."),
-  vatCents: z.number().int().min(0).nullable(),
-  category: z.string().min(1, "Valitse kategoria."),
-  payment: z.string().min(1),
-  receiptNumber: z.string().trim().max(64).nullable(),
-  note: z.string().trim().max(500).nullable(),
-});
-
-/** "186,90" tai "186.90" → 18690. Tyhjä → null. */
-function parseEuros(value: FormDataEntryValue | null): number | null {
-  const raw = String(value ?? "").trim().replace(",", ".").replace(/\s/g, "");
-  if (raw === "") return null;
-  const parsed = Number.parseFloat(raw);
-  if (!Number.isFinite(parsed) || parsed < 0) return null;
-  return Math.round(parsed * 100);
-}
-
-/**
- * Tallentaa kuitin riveineen.
- *
- * Rivit tulevat lomakkeelta JSON-merkkijonona: ne on jo vahvistettu
- * poimintanäkymässä, eikä niitä muokata enää tässä. Kuitti ja rivit
- * kirjoitetaan yhdessä tietokantafunktiossa — puolikas kuitti näyttäisi
- * kulunäkymässä oikealta mutta jakautuisi väärään kategoriaan.
- */
-export async function saveReceipt(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const { restaurant } = await requireContext("/app/kuitit");
-
-  const parsed = receiptSchema.safeParse({
-    supplier: formData.get("supplier"),
-    date: formData.get("date"),
-    totalCents: parseEuros(formData.get("total")) ?? -1,
-    vatCents: parseEuros(formData.get("vat")),
-    category: formData.get("category"),
-    payment: formData.get("payment") || "unknown",
-    receiptNumber: (formData.get("receiptNumber") as string) || null,
-    note: (formData.get("note") as string) || null,
-  });
-
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  const items = parseItems(formData.get("items"));
-  const reasons = deriveReviewReasons(parsed.data, items);
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_receipt", {
-    p_restaurant: restaurant.id,
-    p_supplier_name: parsed.data.supplier,
-    p_date: parsed.data.date,
-    p_total_cents: parsed.data.totalCents,
-    p_vat_cents: parsed.data.vatCents,
-    p_category: parsed.data.category as ExpenseCategory,
-    p_payment: parsed.data.payment as PaymentMethod,
-    p_receipt_number: parsed.data.receiptNumber,
-    p_note: parsed.data.note,
-    p_status: reasons.length > 0 ? "needs_review" : "confirmed",
-    p_review_reasons: reasons,
-    p_image_path: (formData.get("imagePath") as string) || null,
-    p_image_quality: (formData.get("imageQuality") as string) || null,
-    p_file_hash: (formData.get("fileHash") as string) || null,
-    p_items: items,
-  });
-
-  if (error) {
-    if (error.code === "23505" || error.message?.includes("receipts_hash_unique")) {
-      return {
-        error:
-          "Tämä sama tiedosto on jo tallennettu. Jos kyseessä on eri ostos, " +
-          "kuvaa kuitti uudelleen.",
-      };
-    }
-    return { error: explain(error, "Kuitin tallennus epäonnistui") };
-  }
-
-  revalidatePath("/app", "layout");
-  revalidatePath("/admin", "layout");
-
-  return { notice: "Kuitti tallennettu.", receiptId: data as string };
-}
-
-interface ItemInput {
-  description: string;
-  quantity: number | null;
-  unit: string | null;
-  totalCents: number;
-  category: ExpenseCategory;
-  vatRate: number | null;
-  vatCents: number | null;
-  productGroup: string | null;
-}
-
-function parseItems(raw: FormDataEntryValue | null): ItemInput[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(String(raw));
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((i) => typeof i?.totalCents === "number" && i.totalCents >= 0)
-      .map((i) => ({
-        description: String(i.description ?? ""),
-        quantity: typeof i.quantity === "number" ? i.quantity : null,
-        unit: i.unit ? String(i.unit) : null,
-        totalCents: Math.round(i.totalCents),
-        category: (i.category ?? "other") as ExpenseCategory,
-        vatRate: typeof i.vatRate === "number" ? i.vatRate : null,
-        vatCents: typeof i.vatCents === "number" ? Math.round(i.vatCents) : null,
-        productGroup: i.productGroup ? String(i.productGroup) : null,
-      }));
-  } catch {
-    // Vioittunut syöte ei saa kaataa tallennusta — kuitti menee läpi
-    // rivittä ja päätyy tarkistusjonoon.
-    return [];
-  }
-}
-
-/**
- * Tarkistussyyt tallennushetkellä.
- *
- * Lasketaan uudelleen palvelimella eikä luoteta lomakkeen kenttään:
- * muuten kuitin voisi merkitä tarkistetuksi ohittamalla poimintanäkymän.
- */
-function deriveReviewReasons(
-  data: z.infer<typeof receiptSchema>,
-  items: ItemInput[],
-): string[] {
-  const fake: ExtractionResult = {
-    supplier: { value: data.supplier, confidence: "high" },
-    date: { value: data.date, confidence: "high" },
-    totalCents: { value: data.totalCents, confidence: "high" },
-    vatCents: {
-      value: data.vatCents,
-      confidence: data.vatCents === null ? "low" : "high",
-    },
-    category: { value: data.category as ExpenseCategory, confidence: "high" },
-    paymentMethod: {
-      value: data.payment as PaymentMethod,
-      confidence: data.payment === "unknown" ? "low" : "high",
-    },
-    receiptNumber: { value: data.receiptNumber, confidence: "high" },
-    items: [],
-    imageQuality: "good",
-    elapsedMs: 0,
-  };
-
-  const reasons = reviewReasonsFor(fake);
-
-  // Rivien on summauduttava loppusummaan, muuten kulujako on väärä.
-  if (items.length > 0) {
-    const sum = items.reduce((s, i) => s + i.totalCents, 0);
-    if (Math.abs(sum - data.totalCents) > 2) reasons.push("items_dont_sum");
-  }
-
-  return [...new Set(reasons)];
-}
 
 // ---------------------------------------------------------------------------
 // Työvuorot

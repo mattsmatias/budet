@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { employeeContext } from "@/lib/restoflow/page-context";
 import {
   filterReceipts,
@@ -32,6 +33,9 @@ const FILTERS: { key: ReceiptFilter; label: string }[] = [
 export default async function ReceiptsPage({ searchParams }: PageProps<"/app/kuitit">) {
   const params = await searchParams;
   const { receipts, seesAllReceipts } = await employeeContext("/app/kuitit");
+
+  // Piilotettu välilehti ei ole pääsynhallintaa.
+  if (!seesAllReceipts) redirect("/app");
 
   const query = typeof params.haku === "string" ? params.haku : "";
   const filter = (typeof params.suodatin === "string" ? params.suodatin : "all") as ReceiptFilter;
@@ -160,19 +164,6 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/app/kui
         </Card>
       )}
 
-      <Link
-        href="/app/kuitit/uusi"
-        aria-label="Lisää uusi kuitti"
-        className="rf-press fixed bottom-24 right-5 z-30 flex h-14 w-14 items-center justify-center"
-        style={{
-          background: "var(--rf-blue)",
-          color: "#fff",
-          borderRadius: "50%",
-          boxShadow: "0 4px 16px rgba(0,113,227,0.4)",
-        }}
-      >
-        <RfIcon name="plus" size={26} />
-      </Link>
     </div>
   );
 }

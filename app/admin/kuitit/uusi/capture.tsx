@@ -4,7 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-import { saveReceipt, type ActionState } from "../../actions";
+import { saveReceipt, type AdminState } from "../../actions";
 import {
   receiptExtractor,
   reviewReasonsFor,
@@ -24,7 +24,7 @@ import { Card, Pill } from "@/components/restoflow/ui";
 
 type Phase = "choose" | "analyzing" | "review" | "saved";
 
-const initial: ActionState = {};
+const initial: AdminState = {};
 
 /**
  * Kuitin lisäys.
@@ -437,13 +437,13 @@ function Saved({ receiptId }: { receiptId?: string }) {
         className="mt-2 max-w-[18rem] text-center text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Se näkyy nyt kuittilistassa ja managerin kulunäkymässä.
+        Se näkyy nyt kuittilistassa ja kulunäkymässä.
       </p>
 
       <div className="mt-7 flex gap-2.5">
         {receiptId ? (
           <Link
-            href={`/app/kuitit/${receiptId}`}
+            href={`/admin/kuitit?korosta=${receiptId}`}
             className="rf-press px-5 py-3 text-[15px] font-semibold"
             style={{
               background: "var(--rf-text)",
@@ -455,7 +455,7 @@ function Saved({ receiptId }: { receiptId?: string }) {
           </Link>
         ) : null}
         <Link
-          href="/app/kuitit"
+          href="/admin/kuitit"
           className="rf-press px-5 py-3 text-[15px] font-semibold"
           style={{
             background: "var(--rf-inset)",

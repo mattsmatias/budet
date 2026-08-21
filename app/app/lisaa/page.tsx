@@ -63,7 +63,6 @@ export default async function MorePage() {
         <SectionLabel>Toiminnot</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            <Row href="/app/kuitit/uusi" icon="camera" label="Lisää kuitti" />
             <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
             <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
             {can(role, "expenses.view") ? (

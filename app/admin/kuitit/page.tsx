@@ -8,7 +8,7 @@ import {
   type ReceiptFilter,
 } from "@/lib/restoflow/expenses";
 import { duplicateIds, findDuplicates } from "@/lib/restoflow/duplicates";
-import { can } from "@/lib/restoflow/permissions";
+import { can, canAddReceipts } from "@/lib/restoflow/permissions";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -58,6 +58,7 @@ export default async function AdminReceiptsPage({
   const duplicates = duplicateIds(receipts);
   const duplicateGroups = findDuplicates(receipts);
   const canReview = can(role, "receipts.edit");
+  const canAdd = canAddReceipts(role);
 
   return (
     <div className="rf-enter space-y-5">
@@ -72,33 +73,50 @@ export default async function AdminReceiptsPage({
           </p>
         </div>
 
-        <form action="/admin/kuitit" className="w-full md:w-auto">
-          {filter !== "all" ? <input type="hidden" name="suodatin" value={filter} /> : null}
-          <div className="relative">
-            <span
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: "var(--rf-text-3)" }}
-            >
-              <RfIcon name="search" size={17} />
-            </span>
-            <label htmlFor="admin-search" className="sr-only">
-              Hae kuitteja
-            </label>
-            <input
-              id="admin-search"
-              type="search"
-              name="haku"
-              defaultValue={query}
-              placeholder="Toimittaja, numero tai summa"
-              className="w-full py-2.5 pl-10 pr-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
+        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
+          {canAdd ? (
+            <Link
+              href="/admin/kuitit/uusi"
+              className="rf-press flex items-center justify-center gap-2 py-3 text-[15px] font-semibold md:order-2 md:px-5 md:py-2.5 md:text-[14px]"
               style={{
-                background: "var(--rf-card)",
+                background: "var(--rf-text)",
+                color: "#fff",
                 borderRadius: "var(--rf-r-control)",
-                boxShadow: "var(--rf-shadow-sm)",
               }}
-            />
-          </div>
-        </form>
+            >
+              <RfIcon name="plus" size={17} />
+              Uusi kuitti
+            </Link>
+          ) : null}
+
+          <form action="/admin/kuitit" className="w-full md:order-1 md:w-auto">
+            {filter !== "all" ? <input type="hidden" name="suodatin" value={filter} /> : null}
+            <div className="relative">
+              <span
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                <RfIcon name="search" size={17} />
+              </span>
+              <label htmlFor="admin-search" className="sr-only">
+                Hae kuitteja
+              </label>
+              <input
+                id="admin-search"
+                type="search"
+                name="haku"
+                defaultValue={query}
+                placeholder="Toimittaja, numero tai summa"
+                className="w-full py-2.5 pl-10 pr-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
+                style={{
+                  background: "var(--rf-card)",
+                  borderRadius: "var(--rf-r-control)",
+                  boxShadow: "var(--rf-shadow-sm)",
+                }}
+              />
+            </div>
+          </form>
+        </div>
       </div>
 
       {duplicateGroups.length > 0 && canReview ? (
@@ -185,7 +203,7 @@ export default async function AdminReceiptsPage({
           description={
             query
               ? "Kokeile toista hakusanaa."
-              : "Kuitit ilmestyvät tänne kun joku lisää niitä työntekijänäkymässä."
+              : "Lisää ensimmäinen kuitti yllä olevasta painikkeesta."
           }
         />
       ) : (

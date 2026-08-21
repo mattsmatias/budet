@@ -17,9 +17,14 @@ const TABS = [
  *
  * Viisi kohtaa, ei enempää. Kuudes kohta tarkoittaisi että jokin niistä ei
  * ansaitse paikkaansa.
+ *
+ * Kuitit-välilehti näkyy vain niille joilla on oikeus kuitteihin.
+ * Työntekijä ei lisää eikä lue kuitteja, joten hänelle välilehti johtaisi
+ * ikuisesti tyhjään listaan.
  */
-export function BottomNav() {
+export function BottomNav({ showReceipts }: { showReceipts: boolean }) {
   const pathname = usePathname();
+  const tabs = TABS.filter((tab) => tab.href !== "/app/kuitit" || showReceipts);
 
   return (
     <nav
@@ -34,7 +39,7 @@ export function BottomNav() {
       }}
     >
       <ul className="mx-auto flex max-w-md">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active =
             tab.href === "/app"
               ? pathname === tab.href

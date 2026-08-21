@@ -162,72 +162,60 @@ export default async function EmployeeHome() {
         </p>
       </Card>
 
-      <section>
-        <div className="flex items-baseline justify-between">
-          <SectionLabel>
-            {seesAllReceipts ? "Viimeisimmät kuitit" : "Omat kuittini"}
-          </SectionLabel>
-          <Link
-            href="/app/kuitit"
-            className="pb-2 text-[13px] font-medium"
-            style={{ color: "var(--rf-blue)" }}
-          >
-            Kaikki
-          </Link>
-        </div>
-
-        {recent.length === 0 ? (
-          <Card>
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Et ole vielä lisännyt kuitteja.
-            </p>
+      {seesAllReceipts ? (
+        <section>
+          <div className="flex items-baseline justify-between">
+            <SectionLabel>Viimeisimmät kuitit</SectionLabel>
             <Link
-              href="/app/kuitit/uusi"
-              className="rf-press mt-4 flex items-center justify-center gap-2 py-3 text-[15px] font-semibold"
-              style={{
-                background: "var(--rf-blue)",
-                color: "#fff",
-                borderRadius: "var(--rf-r-control)",
-              }}
+              href="/app/kuitit"
+              className="pb-2 text-[13px] font-medium"
+              style={{ color: "var(--rf-blue)" }}
             >
-              <RfIcon name="camera" size={18} />
-              Kuvaa ensimmäinen kuitti
+              Kaikki
             </Link>
-          </Card>
-        ) : (
-          <Card padded={false}>
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-              {recent.map((receipt) => (
-                <li key={receipt.id}>
-                  <Link
-                    href={`/app/kuitit/${receipt.id}`}
-                    className="flex items-center gap-3 px-5 py-3.5"
-                  >
-                    <CategoryBubble category={receipt.category} size={32} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-medium">
-                        {receipt.supplierName}
-                      </p>
-                      <p
-                        className="rf-tabular mt-0.5 text-[13px]"
-                        style={{ color: "var(--rf-text-3)" }}
-                      >
-                        {formatDate(receipt.date)}
-                      </p>
-                    </div>
-                    <span className="rf-tabular text-[15px] font-semibold">
-                      {formatMoney(receipt.totalCents)}
-                    </span>
-                    <span style={{ color: "var(--rf-text-3)" }}>
-                      <RfIcon name="chevron" size={16} />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-      </section>
+          </div>
+
+          {recent.length === 0 ? (
+            <Card>
+              <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                Ei kuitteja.
+              </p>
+            </Card>
+          ) : (
+            <Card padded={false}>
+              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                {recent.map((receipt) => (
+                  <li key={receipt.id}>
+                    <Link
+                      href={`/app/kuitit/${receipt.id}`}
+                      className="flex items-center gap-3 px-5 py-3.5"
+                    >
+                      <CategoryBubble category={receipt.category} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[15px] font-medium">
+                          {receipt.supplierName}
+                        </p>
+                        <p
+                          className="rf-tabular mt-0.5 text-[13px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {formatDate(receipt.date)}
+                        </p>
+                      </div>
+                      <span className="rf-tabular text-[15px] font-semibold">
+                        {formatMoney(receipt.totalCents)}
+                      </span>
+                      <span style={{ color: "var(--rf-text-3)" }}>
+                        <RfIcon name="chevron" size={16} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
