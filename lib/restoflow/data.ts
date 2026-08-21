@@ -108,13 +108,16 @@ export function supplierById(id: string): Supplier | undefined {
  * kertoisi miltä ongelma näyttää.
  */
 export const BUDGETS: Budget[] = [
-  { id: "b-food", restaurantId: RESTAURANT.id, category: "food", month: null, amountCents: 2350000 },
-  { id: "b-alcohol", restaurantId: RESTAURANT.id, category: "alcohol", month: null, amountCents: 900000 },
-  { id: "b-soft", restaurantId: RESTAURANT.id, category: "soft_drinks", month: null, amountCents: 500000 },
+  // Ruoka on mitoitettu niin että elokuu osuu varoitusalueelle (~91 %) ja
+  // siivous ylittyy. Muut ovat väljiä. Ilman kumpaakin ääripäätä
+  // budjettinäkymä olisi pelkkää vihreää eikä kertoisi miltä ongelma näyttää.
+  { id: "b-food", restaurantId: RESTAURANT.id, category: "food", month: null, amountCents: 6210000 },
+  { id: "b-alcohol", restaurantId: RESTAURANT.id, category: "alcohol", month: null, amountCents: 2500000 },
+  { id: "b-soft", restaurantId: RESTAURANT.id, category: "soft_drinks", month: null, amountCents: 1300000 },
   { id: "b-kitchen", restaurantId: RESTAURANT.id, category: "kitchen_supplies", month: null, amountCents: 400000 },
-  { id: "b-packaging", restaurantId: RESTAURANT.id, category: "packaging", month: null, amountCents: 300000 },
+  { id: "b-packaging", restaurantId: RESTAURANT.id, category: "packaging", month: null, amountCents: 320000 },
   { id: "b-cleaning", restaurantId: RESTAURANT.id, category: "cleaning", month: null, amountCents: 260000 },
-  { id: "b-transport", restaurantId: RESTAURANT.id, category: "transport", month: null, amountCents: 150000 },
+  { id: "b-transport", restaurantId: RESTAURANT.id, category: "transport", month: null, amountCents: 200000 },
 ];
 
 // ---------------------------------------------------------------------------
