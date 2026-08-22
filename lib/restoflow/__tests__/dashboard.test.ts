@@ -38,6 +38,7 @@ function receipt(
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
     imagePath: null,
+    categoryId: null,
     imageQuality: "good",
     ...partial,
   };

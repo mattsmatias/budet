@@ -100,32 +100,6 @@ export async function signOut(): Promise<void> {
   redirect("/kirjaudu");
 }
 
-/** Vaihtaa aktiivisen ravintolan. Valinta validoidaan jäsenyyksiä vasten. */
-export async function switchRestaurant(formData: FormData): Promise<void> {
-  const id = String(formData.get("restaurantId") ?? "");
-  if (!id) return;
-
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("my_restaurants")
-    .select("id")
-    .eq("id", id)
-    .maybeSingle();
-
-  // Ilman jäsenyyttä valintaa ei tallenneta — eväste ei anna pääsyä.
-  if (!data) return;
-
-  const cookieStore = await cookies();
-  cookieStore.set(ACTIVE_RESTAURANT_COOKIE, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
-
-  revalidatePath("/", "layout");
-}
 
 function translateSignUpError(message: string): string {
   const m = message.toLowerCase();

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
-import { fetchSuppliers } from "@/lib/restoflow/queries";
+import { fetchExpenseCategories, fetchSuppliers } from "@/lib/restoflow/queries";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CaptureFlow } from "./capture";
@@ -21,7 +21,10 @@ export default async function NewReceiptPage() {
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
 
   // Toimittajien korjaushistoria ohjaa kategoriaehdotusta.
-  const suppliers = await fetchSuppliers(restaurant.id);
+  const [suppliers, categories] = await Promise.all([
+    fetchSuppliers(restaurant.id),
+    fetchExpenseCategories(restaurant.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -39,7 +42,11 @@ export default async function NewReceiptPage() {
         </h1>
       </header>
 
-      <CaptureFlow restaurantId={restaurant.id} suppliers={suppliers} />
+      <CaptureFlow
+        restaurantId={restaurant.id}
+        suppliers={suppliers}
+        categories={categories}
+      />
     </div>
   );
 }

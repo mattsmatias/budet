@@ -169,6 +169,93 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
   revalidatePath("/admin", "layout");
 }
 
+
+// ---------------------------------------------------------------------------
+// Oma profiili
+// ---------------------------------------------------------------------------
+
+const nameSchema = z.object({
+  fullName: z.string().trim().min(1, "Nimi puuttuu.").max(120),
+});
+
+/**
+ * Oman nimen muutos.
+ *
+ * Nimi elää kahdessa paikassa: auth-tunnuksen metadatassa ja
+ * profiles-taulussa, josta sovellus lukee sen. Molemmat päivitetään,
+ * muuten nimi vaihtuisi vain toisessa ja näkymät erkanisivat.
+ */
+export async function updateProfile(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = nameSchema.safeParse({ fullName: formData.get("fullName") });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { user } = await requireContext("/app/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: parsed.data.fullName })
+    .eq("id", user.id);
+
+  if (error) return { error: explain(error, "Nimen tallennus epäonnistui") };
+
+  await supabase.auth.updateUser({ data: { full_name: parsed.data.fullName } });
+
+  revalidatePath("/app", "layout");
+  revalidatePath("/admin", "layout");
+
+  return { notice: "Nimi tallennettu." };
+}
+
+const passwordSchema = z
+  .object({
+    password: z.string().min(8, "Salasanassa on oltava vähintään 8 merkkiä."),
+    confirm: z.string(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Salasanat eivät täsmää.",
+    path: ["confirm"],
+  });
+
+/**
+ * Salasanan vaihto kirjautuneena.
+ *
+ * Supabase vaatii voimassa olevan istunnon, joten vanhaa salasanaa ei
+ * kysytä erikseen. Jos istunto on vanhentunut, vaihto ei onnistu — ja
+ * juuri niin sen kuuluukin mennä.
+ */
+export async function changePassword(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = passwordSchema.safeParse({
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  await requireContext("/app/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      error: error.message.includes("same as the old")
+        ? "Uusi salasana ei voi olla sama kuin vanha."
+        : "Salasanan vaihto ei onnistunut. Kirjaudu ulos ja takaisin sisään, ja yritä uudelleen.",
+    };
+  }
+
+  return { notice: "Salasana vaihdettu." };
+}
+
 // ---------------------------------------------------------------------------
 
 /**

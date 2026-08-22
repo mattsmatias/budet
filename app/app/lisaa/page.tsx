@@ -8,7 +8,7 @@ import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { weekStart } from "@/lib/restoflow/clock-context";
 import { formatMoney } from "@/lib/money";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
-import { Avatar, Card, Pill, SectionLabel } from "@/components/restoflow/ui";
+import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Lisää" };
 
@@ -63,8 +63,10 @@ export default async function MorePage() {
         <SectionLabel>Toiminnot</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <Row href="/app/ilmoitukset" icon="bell" label="Ilmoitukset" />
             <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
             <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
+            <Row href="/app/asetukset" icon="settings" label="Asetukset" />
             {can(role, "expenses.view") ? (
               <Row href="/admin" icon="overview" label="Hallintanäkymä" />
             ) : null}
@@ -72,19 +74,7 @@ export default async function MorePage() {
         </Card>
       </section>
 
-      <section>
-        <SectionLabel>Ei vielä käytössä</SectionLabel>
-        <Card padded={false}>
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            <Disabled icon="bell" label="Ilmoitukset" />
-            <Disabled icon="settings" label="Asetukset" />
-          </ul>
-        </Card>
-        <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Nämä näkyvät harmaina, koska painike joka ei tee mitään on huonompi
-          kuin painike joka kertoo olevansa kesken.
-        </p>
-      </section>
+
 
       <form action={signOut} className="pt-2">
         <button
@@ -137,17 +127,6 @@ function Row({ href, icon, label }: { href: string; icon: IconName; label: strin
   );
 }
 
-function Disabled({ icon, label }: { icon: IconName; label: string }) {
-  return (
-    <li className="flex items-center gap-3 px-5 py-3.5 opacity-45">
-      <span style={{ color: "var(--rf-text-2)" }}>
-        <RfIcon name={icon} size={20} />
-      </span>
-      <span className="flex-1 text-[15px] font-medium">{label}</span>
-      <Pill>ei vielä</Pill>
-    </li>
-  );
-}
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

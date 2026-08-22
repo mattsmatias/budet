@@ -5,11 +5,12 @@ import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { extractorName, isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { Card, Pill, ScopeNotice } from "@/components/restoflow/ui";
 import { MonthClosing, SettingsForm } from "./settings-form";
+import { CategoryManager } from "./categories";
 
 export const metadata = { title: "Asetukset" };
 
 export default async function SettingsPage() {
-  const { restaurant, role, users, receipts, closedMonths, month } =
+  const { restaurant, role, users, receipts, closedMonths, categories, month } =
     await adminContext("/admin/asetukset");
 
   const canEdit = can(role, "settings.edit");
@@ -100,9 +101,18 @@ export default async function SettingsPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            Omien kategorioiden lisääminen ei ole vielä käytössä.
-          </p>
+          <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
+            <h3 className="text-[14px] font-semibold">Omat kategoriat</h3>
+            {canEdit ? (
+              <CategoryManager categories={categories} />
+            ) : (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                {categories.length === 0
+                  ? "Omia kategorioita ei ole määritetty."
+                  : categories.map((c) => c.name).join(", ")}
+              </p>
+            )}
+          </div>
         </Card>
 
         <Card>

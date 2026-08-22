@@ -97,6 +97,19 @@ export default async function ReportsPage() {
                 Lataa CSV
               </a>
 
+              <a
+                href={`/admin/raportit/xlsx?tyyppi=${report.kind}&kuukausi=${month}`}
+                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
+                style={{
+                  background: "var(--rf-inset)",
+                  color: "var(--rf-text)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                <Icon path={ICONS.download} size={16} />
+                Excel
+              </a>
+
               <Link
                 href={`/admin/raportit/tulosta?kuukausi=${month}`}
                 className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
@@ -128,10 +141,22 @@ export default async function ReportsPage() {
           className="mt-2 max-w-2xl text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Erillistä Excel-vientiä ei ole, koska CSV on jo Excel-yhteensopiva.
-          Sama tiedosto kahdessa muodossa tarkoittaisi kaksi paikkaa jossa
-          luvut voivat erota.
+          Excel-tiedostossa summat ovat lukuja, joten niillä voi laskea heti.
+          CSV:ssä kaikki on tekstiä. Molemmat rakennetaan samasta lähteestä,
+          joten luvut eivät voi erota toisistaan.
         </p>
+        <a
+          href={`/admin/raportit/xlsx?kuukausi=${month}`}
+          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-text)",
+            color: "#fff",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <Icon path={ICONS.download} size={16} />
+          Lataa koko kuukausi Excelinä
+        </a>
         <Link
           href="/admin/tyontekijat"
           className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"

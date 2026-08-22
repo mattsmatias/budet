@@ -10,7 +10,13 @@
  * eikä tietomallissa ole kenttää myynnille.
  */
 
-import type { ExpenseCategory, Receipt, ReviewReason } from "./types";
+import { CATEGORY_LABELS } from "./types";
+import type {
+  CustomCategory,
+  ExpenseCategory,
+  Receipt,
+  ReviewReason,
+} from "./types";
 
 export interface CategoryTotal {
   category: ExpenseCategory;
@@ -270,4 +276,64 @@ export function receiptCountLabel(count: number): string {
 /** Sama vuoroille. */
 export function shiftCountLabel(count: number): string {
   return count === 1 ? "1 vuoro" : `${count} vuoroa`;
+}
+
+// ---------------------------------------------------------------------------
+// Omat kategoriat
+// ---------------------------------------------------------------------------
+
+export interface CustomCategoryTotal {
+  /** Oman kategorian tunniste, tai perusluokan avain jos omaa ei ole. */
+  key: string;
+  name: string;
+  baseCategory: ExpenseCategory;
+  totalCents: number;
+  receiptCount: number;
+  share: number;
+  /** Onko tämä ravintolan oma kategoria vai perusluokka? */
+  custom: boolean;
+}
+
+/**
+ * Kulujakauma omilla kategorioilla.
+ *
+ * Kuitti jolla ei ole omaa kategoriaa näkyy perusluokallaan, joten
+ * vanhat kirjaukset eivät katoa listalta kun omia kategorioita otetaan
+ * käyttöön. Poistetun kategorian kuitit palaavat samaa reittiä.
+ */
+export function totalsByCustomCategory(
+  receipts: Receipt[],
+  categories: CustomCategory[],
+): CustomCategoryTotal[] {
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  const buckets = new Map<string, CustomCategoryTotal>();
+
+  for (const receipt of receipts) {
+    const custom = receipt.categoryId ? byId.get(receipt.categoryId) : undefined;
+
+    const key = custom ? custom.id : receipt.category;
+    const existing = buckets.get(key);
+
+    if (existing) {
+      existing.totalCents += receipt.totalCents;
+      existing.receiptCount += 1;
+      continue;
+    }
+
+    buckets.set(key, {
+      key,
+      name: custom ? custom.name : CATEGORY_LABELS[receipt.category],
+      baseCategory: custom ? custom.baseCategory : receipt.category,
+      totalCents: receipt.totalCents,
+      receiptCount: 1,
+      share: 0,
+      custom: custom !== undefined,
+    });
+  }
+
+  const total = [...buckets.values()].reduce((sum, row) => sum + row.totalCents, 0);
+
+  return [...buckets.values()]
+    .map((row) => ({ ...row, share: total === 0 ? 0 : row.totalCents / total }))
+    .sort((a, b) => b.totalCents - a.totalCents);
 }

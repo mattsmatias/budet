@@ -1,9 +1,27 @@
--- RestoFlow — migraatiot.
--- Liitä kokonaisuudessaan Supabasen SQL Editoriin ja paina Run.
--- Turvallinen ajaa uudelleen.
--- Koottu: 2026-08-21 16:23 UTC
+-- ---------------------------------------------------------------------------
+-- RestoFlow — kaikki migraatiot yhtenä tiedostona
+-- ---------------------------------------------------------------------------
+--
+-- GENEROITU TIEDOSTO. Älä muokkaa käsin — muutokset katoavat.
+-- Lähde: supabase/migrations/000*.sql
+-- Luo uudelleen: npm run bundle:sql
+--
+-- Käyttö: liitä kokonaisuudessaan Supabasen SQL-editoriin tuoreelle
+-- kannalle. Migraatiot ovat idempotentteja (create ... if not exists,
+-- create or replace, drop policy if exists), joten ajo olemassa olevaa
+-- kantaa vasten on turvallinen.
+--
+-- Sisältää 8 migraatiota:
+--   0001_schema.sql
+--   0002_rls.sql
+--   0003_functions.sql
+--   0004_management.sql
+--   0005_auth_callback.sql
+--   0006_receipts_manager_only.sql
+--   0007_settings_closing_absences.sql
+--   0008_custom_categories.sql
+-- ---------------------------------------------------------------------------
 
-begin;
 
 -- ===========================================================================
 -- 0001_schema.sql
@@ -306,6 +324,7 @@ begin
     );
   end loop;
 end $$;
+
 
 -- ===========================================================================
 -- 0002_rls.sql
@@ -706,6 +725,7 @@ create trigger guard_shift_response_trigger
   before update on shifts
   for each row execute function guard_shift_response();
 
+
 -- ===========================================================================
 -- 0003_functions.sql
 -- ===========================================================================
@@ -1033,6 +1053,7 @@ create policy receipts_storage_delete on storage.objects
     and is_manager((storage.foldername(name))[1]::uuid)
   );
 
+
 -- ===========================================================================
 -- 0004_management.sql
 -- ===========================================================================
@@ -1058,7 +1079,7 @@ create extension if not exists pgcrypto;
  * Koodista tallennetaan vain tiiviste. Tietokannan lukuoikeus ei siis
  * riitä liittymiseen.
  */
-create table if not exists invitations (
+create table if not exists restaurant_invitations (
   id uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references restaurants (id) on delete cascade,
   code_hash text not null unique,
@@ -1076,18 +1097,18 @@ create table if not exists invitations (
   created_at timestamptz not null default now()
 );
 
-create index if not exists invitations_restaurant_idx
-  on invitations (restaurant_id, created_at desc);
+create index if not exists restaurant_invitations_idx
+  on restaurant_invitations (restaurant_id, created_at desc);
 
-alter table invitations enable row level security;
+alter table restaurant_invitations enable row level security;
 
-drop policy if exists invitations_read on invitations;
-create policy invitations_read on invitations
+drop policy if exists restaurant_invitations_read on restaurant_invitations;
+create policy restaurant_invitations_read on restaurant_invitations
   for select to authenticated
   using (is_manager(restaurant_id));
 
-drop policy if exists invitations_manage on invitations;
-create policy invitations_manage on invitations
+drop policy if exists restaurant_invitations_manage on restaurant_invitations;
+create policy restaurant_invitations_manage on restaurant_invitations
   for all to authenticated
   using (is_owner(restaurant_id))
   with check (is_owner(restaurant_id));
@@ -1127,7 +1148,7 @@ begin
     v_code := v_code || substr(v_alphabet, 1 + floor(random() * length(v_alphabet))::int, 1);
   end loop;
 
-  insert into invitations (
+  insert into restaurant_invitations (
     restaurant_id, code_hash, code_hint, role, position,
     hourly_rate_cents, label, created_by
   )
@@ -1163,13 +1184,13 @@ set search_path = public
 as $$
 declare
   v_user uuid := auth.uid();
-  v_inv invitations;
+  v_inv restaurant_invitations;
 begin
   if v_user is null then
     raise exception 'Kirjautuminen vaaditaan';
   end if;
 
-  select * into v_inv from invitations
+  select * into v_inv from restaurant_invitations
   where code_hash = encode(digest(upper(trim(p_code)), 'sha256'), 'hex');
 
   if v_inv.id is null then
@@ -1186,18 +1207,26 @@ begin
 
   insert into profiles (id) values (v_user) on conflict (id) do nothing;
 
-  insert into memberships (
-    restaurant_id, user_id, role, position, hourly_rate_cents
-  )
-  values (
-    v_inv.restaurant_id, v_user, v_inv.role, v_inv.position, v_inv.hourly_rate_cents
-  )
-  on conflict (restaurant_id, user_id) do update
-    set active = true,
-        role = excluded.role,
-        position = excluded.position;
+  -- Sama kaava kuin budjeteissa: päivitä, lisää jos ei ollut. Jäsenyys voi
+  -- olla olemassa passivoituna, jolloin kutsu herättää sen uudelleen.
+  update memberships
+  set active = true,
+      role = v_inv.role,
+      position = v_inv.position,
+      hourly_rate_cents = coalesce(v_inv.hourly_rate_cents, hourly_rate_cents)
+  where restaurant_id = v_inv.restaurant_id and user_id = v_user;
 
-  update invitations
+  if not found then
+    insert into memberships (
+      restaurant_id, user_id, role, position, hourly_rate_cents
+    )
+    values (
+      v_inv.restaurant_id, v_user, v_inv.role, v_inv.position,
+      v_inv.hourly_rate_cents
+    );
+  end if;
+
+  update restaurant_invitations
   set accepted_at = now(), accepted_by = v_user
   where id = v_inv.id;
 
@@ -1317,10 +1346,17 @@ begin
     return;
   end if;
 
-  insert into budgets (restaurant_id, category, month, amount_cents)
-  values (p_restaurant, p_category, null, p_amount_cents)
-  on conflict (restaurant_id, category) where month is null
-    do update set amount_cents = excluded.amount_cents, updated_at = now();
+  -- Päivitä ensin, lisää vasta jos riviä ei ollut. ON CONFLICT joutuisi
+  -- päättelemään osittaisindeksin (month is null), mikä on herkkä
+  -- kirjoitusasulle; tämä tekee saman ilman päättelyä.
+  update budgets
+  set amount_cents = p_amount_cents, updated_at = now()
+  where restaurant_id = p_restaurant and category = p_category and month is null;
+
+  if not found then
+    insert into budgets (restaurant_id, category, month, amount_cents)
+    values (p_restaurant, p_category, null, p_amount_cents);
+  end if;
 end;
 $$;
 
@@ -1523,6 +1559,7 @@ $$;
 revoke all on function delete_receipt from public;
 grant execute on function delete_receipt to authenticated;
 
+
 -- ===========================================================================
 -- 0005_auth_callback.sql
 -- ===========================================================================
@@ -1547,13 +1584,13 @@ security definer
 set search_path = public
 as $$
 declare
-  v_inv invitations;
+  v_inv restaurant_invitations;
 begin
   if auth.uid() is null then
     raise exception 'Kirjautuminen vaaditaan';
   end if;
 
-  select * into v_inv from invitations
+  select * into v_inv from restaurant_invitations
   where code_hash = encode(digest(upper(trim(p_code)), 'sha256'), 'hex');
 
   -- Sama viesti kaikissa epäonnistumisissa: eri viestit kertoisivat
@@ -1574,4 +1611,655 @@ $$;
 revoke all on function preview_invitation from public;
 grant execute on function preview_invitation to authenticated;
 
-commit;
+
+-- ===========================================================================
+-- 0006_receipts_manager_only.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0006 — Kuitin lisääminen vain ravintolan esihenkilölle
+-- ---------------------------------------------------------------------------
+--
+-- Kuitti on ravintolan kirjanpitoaineistoa, ei työntekijän ilmoitus. Kuka
+-- tahansa vuorossa oleva ei saa synnyttää kulukirjausta jota kukaan ei ole
+-- hyväksynyt, eikä ladata kuvaa ravintolan tallennustilaan.
+--
+-- Sama rajaus kolmella kerroksella, koska yksikään ei yksin riitä:
+--   1. create_receipt on security definer ja ohittaa RLS:n → tarkistus
+--      funktion sisään
+--   2. suora taulukirjoitus PostgREST:n läpi ohittaa funktion → tarkistus
+--      insert-politiikkaan
+--   3. kuva ladataan selaimesta suoraan storageen → tarkistus storage-
+--      politiikkaan
+--
+-- Käyttöliittymän piilotettu painike ei ole tässä listassa, koska se ei ole
+-- pääsynhallintaa.
+--
+-- Funktion runko on 0003:sta sellaisenaan; vain oikeustarkistus on
+-- vaihdettu.
+
+-- ---------------------------------------------------------------------------
+-- 1. Funktio
+-- ---------------------------------------------------------------------------
+
+create or replace function create_receipt(
+  p_restaurant uuid,
+  p_supplier_name text,
+  p_date date,
+  p_total_cents int,
+  p_vat_cents int,
+  p_category expense_category,
+  p_payment payment_method,
+  p_receipt_number text,
+  p_note text,
+  p_status receipt_status,
+  p_review_reasons text[],
+  p_image_path text,
+  p_image_quality text,
+  p_file_hash text,
+  p_items jsonb default '[]'::jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_receipt uuid;
+  v_supplier uuid;
+  v_item jsonb;
+  v_line int := 0;
+begin
+  if v_user is null then
+    raise exception 'Kirjautuminen vaaditaan';
+  end if;
+
+  -- Jäsenyys ei enää riitä: rooli ratkaisee. Kuitti on ravintolan
+  -- kirjanpitoaineistoa, ei työntekijän ilmoitus.
+  if not is_manager(p_restaurant) then
+    raise exception 'Vain esihenkilö voi lisätä kuitteja';
+  end if;
+
+  if p_total_cents is null or p_total_cents < 0 then
+    raise exception 'Loppusumma puuttuu';
+  end if;
+
+  -- Toimittaja luodaan tarvittaessa. Nimi on ravintolan sisällä uniikki,
+  -- joten kilpaileva lisäys ei tuota kaksoiskappaletta.
+  if coalesce(trim(p_supplier_name), '') <> '' then
+    insert into suppliers (restaurant_id, name, default_category)
+    values (p_restaurant, trim(p_supplier_name), p_category)
+    on conflict (restaurant_id, name) do update set name = excluded.name
+    returning id into v_supplier;
+  end if;
+
+  insert into receipts (
+    restaurant_id, supplier_id, supplier_name, receipt_date, total_cents,
+    vat_cents, category, payment_method, receipt_number, note, status,
+    review_reasons, image_path, image_quality, file_hash, added_by
+  )
+  values (
+    p_restaurant, v_supplier, coalesce(nullif(trim(p_supplier_name), ''), 'Tuntematon'),
+    p_date, p_total_cents, p_vat_cents, p_category, p_payment,
+    nullif(trim(p_receipt_number), ''), nullif(trim(p_note), ''), p_status,
+    coalesce(p_review_reasons, '{}'), p_image_path, p_image_quality,
+    nullif(trim(p_file_hash), ''), v_user
+  )
+  returning id into v_receipt;
+
+  for v_item in select * from jsonb_array_elements(coalesce(p_items, '[]'::jsonb))
+  loop
+    v_line := v_line + 1;
+    insert into receipt_items (
+      receipt_id, line_number, description, quantity, unit, total_cents,
+      category, vat_rate, vat_cents, product_group
+    )
+    values (
+      v_receipt,
+      v_line,
+      coalesce(v_item ->> 'description', ''),
+      (v_item ->> 'quantity')::numeric,
+      v_item ->> 'unit',
+      coalesce((v_item ->> 'totalCents')::int, 0),
+      coalesce((v_item ->> 'category')::expense_category, p_category),
+      (v_item ->> 'vatRate')::numeric,
+      (v_item ->> 'vatCents')::int,
+      v_item ->> 'productGroup'
+    );
+  end loop;
+
+  return v_receipt;
+end;
+$$;
+
+revoke all on function create_receipt from public;
+grant execute on function create_receipt to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2. Taulupolitiikka
+-- ---------------------------------------------------------------------------
+
+drop policy if exists receipts_insert on receipts;
+create policy receipts_insert on receipts
+  for insert to authenticated
+  with check (
+    is_manager(restaurant_id)
+    and added_by = auth.uid()
+  );
+
+-- ---------------------------------------------------------------------------
+-- 3. Tallennuspolitiikka
+-- ---------------------------------------------------------------------------
+
+drop policy if exists receipts_storage_write on storage.objects;
+create policy receipts_storage_write on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'receipts'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  );
+
+-- upsert: true päivittää olemassa olevan objektin, ja ilman update-
+-- politiikkaa saman tiedoston lataus uudelleen kaatuu oikeusvirheeseen.
+drop policy if exists receipts_storage_update on storage.objects;
+create policy receipts_storage_update on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'receipts'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  )
+  with check (
+    bucket_id = 'receipts'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  );
+
+
+-- ===========================================================================
+-- 0007_settings_closing_absences.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0007 — Asetukset, kuukauden sulkeminen ja poissaolojen poisto
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- 1. Ravintolan asetukset
+-- ---------------------------------------------------------------------------
+--
+-- Aikavyöhyke tarkistetaan pg_timezone_names-listaa vasten. Kelvoton
+-- vyöhyke ei kaataisi mitään heti, mutta laskisi työajat väärin
+-- huomaamatta — ja virhe löytyisi vasta palkanmaksusta.
+
+create or replace function update_restaurant(
+  p_restaurant uuid,
+  p_name text,
+  p_timezone text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi muuttaa asetuksia';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Nimi ei voi olla tyhjä';
+  end if;
+
+  if not exists (select 1 from pg_timezone_names where name = p_timezone) then
+    raise exception 'Tuntematon aikavyöhyke';
+  end if;
+
+  update restaurants
+  set name = trim(p_name),
+      timezone = p_timezone,
+      updated_at = now()
+  where id = p_restaurant;
+end;
+$$;
+
+revoke all on function update_restaurant from public;
+grant execute on function update_restaurant to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2. Kuukauden sulkeminen
+-- ---------------------------------------------------------------------------
+--
+-- Suljettu kuukausi on kirjanpitoon lähtenyt kuukausi. Sen jälkeen tehty
+-- muutos ei enää täsmää siihen mitä kirjanpitäjälle on annettu, joten
+-- kuittien lisäys, muokkaus ja poisto estetään liipaisimella — ei
+-- sovelluskoodissa, koska sen ohi pääsee.
+
+create table if not exists closed_months (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+  -- Kuukauden ensimmäinen päivä. Date eikä text, jotta vertailu on
+  -- indeksoitavissa eikä nojaa merkkijonon muotoon.
+  month date not null,
+  closed_by uuid not null references profiles (id),
+  closed_at timestamptz not null default now(),
+  note text,
+  unique (restaurant_id, month)
+);
+
+create index if not exists closed_months_restaurant_idx
+  on closed_months (restaurant_id, month);
+
+alter table closed_months enable row level security;
+
+drop policy if exists closed_months_read on closed_months;
+create policy closed_months_read on closed_months
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+drop policy if exists closed_months_write on closed_months;
+create policy closed_months_write on closed_months
+  for all to authenticated
+  using (is_owner(restaurant_id))
+  with check (is_owner(restaurant_id));
+
+create or replace function is_month_closed(p_restaurant uuid, p_date date)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from closed_months
+    where restaurant_id = p_restaurant
+      and month = date_trunc('month', p_date)::date
+  );
+$$;
+
+grant execute on function is_month_closed to authenticated;
+
+/**
+ * Estää muutokset suljettuun kuukauteen.
+ *
+ * Sekä vanha että uusi päivä tarkistetaan: muuten kuitin voisi siirtää
+ * suljettuun kuukauteen tai pois siitä.
+ */
+create or replace function guard_closed_month()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'DELETE' then
+    if is_month_closed(old.restaurant_id, old.receipt_date) then
+      raise exception 'Kuukausi on suljettu';
+    end if;
+    return old;
+  end if;
+
+  if is_month_closed(new.restaurant_id, new.receipt_date) then
+    raise exception 'Kuukausi on suljettu';
+  end if;
+
+  if tg_op = 'UPDATE' and is_month_closed(old.restaurant_id, old.receipt_date) then
+    raise exception 'Kuukausi on suljettu';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists receipts_closed_month on receipts;
+create trigger receipts_closed_month
+  before insert or update or delete on receipts
+  for each row execute function guard_closed_month();
+
+create or replace function close_month(
+  p_restaurant uuid,
+  p_month text,
+  p_note text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_month date;
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi sulkea kuukauden';
+  end if;
+
+  if p_month !~ '^\d{4}-\d{2}$' then
+    raise exception 'Kuukauden muoto on VVVV-KK';
+  end if;
+
+  v_month := (p_month || '-01')::date;
+
+  -- Kuluvaa kuukautta ei suljeta: siihen tulee vielä kuitteja, ja
+  -- sulkeminen estäisi ne kaikki.
+  if v_month >= date_trunc('month', (now() at time zone (
+    select timezone from restaurants where id = p_restaurant
+  ))::date) then
+    raise exception 'Kuluvaa tai tulevaa kuukautta ei voi sulkea';
+  end if;
+
+  insert into closed_months (restaurant_id, month, closed_by, note)
+  values (p_restaurant, v_month, auth.uid(), nullif(trim(p_note), ''))
+  on conflict (restaurant_id, month) do nothing;
+end;
+$$;
+
+revoke all on function close_month from public;
+grant execute on function close_month to authenticated;
+
+create or replace function reopen_month(p_restaurant uuid, p_month text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi avata kuukauden';
+  end if;
+
+  if p_month !~ '^\d{4}-\d{2}$' then
+    raise exception 'Kuukauden muoto on VVVV-KK';
+  end if;
+
+  delete from closed_months
+  where restaurant_id = p_restaurant
+    and month = (p_month || '-01')::date;
+end;
+$$;
+
+revoke all on function reopen_month from public;
+grant execute on function reopen_month to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 3. Poissaolon peruminen
+-- ---------------------------------------------------------------------------
+--
+-- Ilmoituksen voi perua itse, esihenkilö kenen tahansa. Väärästä päivästä
+-- tehty ilmoitus jäisi muuten pysyvästi vuorolistalle.
+
+drop policy if exists absences_delete on absences;
+create policy absences_delete on absences
+  for delete to authenticated
+  using (user_id = auth.uid() or is_manager(restaurant_id));
+
+
+-- ===========================================================================
+-- 0008_custom_categories.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0008 — Ravintolan omat kulukategoriat
+-- ---------------------------------------------------------------------------
+--
+-- SUUNNITTELUPÄÄTÖS: yhdeksän kiinteää kategoriaa säilyy kirjanpidon
+-- runkona, ja omat kategoriat kartoitetaan niihin.
+--
+-- Miksi ei vapaita kategorioita: kiinteä joukko ratkaisee ALV-odotuksen
+-- ("ruoan 14 %"), budjettivertailun ja poikkeamien tunnistuksen. Jos
+-- käyttäjä voisi keksiä kategorian ilman kytköstä, järjestelmä ei enää
+-- tietäisi mitä ALV-kannan pitäisi olla eikä voisi verrata kuukausia
+-- toisiinsa. Kirjanpitoaineistossa se on virhe, ei vapautta.
+--
+-- Näin ravintola saa "Kalatoimitukset" ja "Viinit" omiksi riveikseen,
+-- mutta ne kuuluvat yhä ruokaan ja alkoholiin. Budjetit ja ALV-tarkistus
+-- toimivat perusluokalla — se sanotaan käyttöliittymässä ääneen.
+
+create table if not exists expense_categories (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+  name text not null check (length(trim(name)) > 0),
+  -- Kirjanpidon perusluokka. Tämä ohjaa ALV:tä, budjetteja ja analyysiä.
+  base_category expense_category not null,
+  sort_order int not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Nimi on ravintolan sisällä uniikki riippumatta kirjainkoosta:
+-- "Viinit" ja "viinit" kahtena rivinä olisi vain sekaannus.
+create unique index if not exists expense_categories_name_unique
+  on expense_categories (restaurant_id, lower(name));
+
+create index if not exists expense_categories_restaurant_idx
+  on expense_categories (restaurant_id) where active;
+
+alter table expense_categories enable row level security;
+
+drop policy if exists expense_categories_read on expense_categories;
+create policy expense_categories_read on expense_categories
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+drop policy if exists expense_categories_write on expense_categories;
+create policy expense_categories_write on expense_categories
+  for all to authenticated
+  using (is_owner(restaurant_id))
+  with check (is_owner(restaurant_id));
+
+-- Kuitille valinnainen viittaus. Null tarkoittaa että kuitti käyttää
+-- pelkkää perusluokkaa, kuten kaikki tähän asti kirjatut.
+alter table receipts
+  add column if not exists category_id uuid references expense_categories (id) on delete set null;
+
+create index if not exists receipts_category_id_idx
+  on receipts (category_id) where category_id is not null;
+
+drop trigger if exists expense_categories_touch on expense_categories;
+create trigger expense_categories_touch
+  before update on expense_categories
+  for each row execute function touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Hallinta
+-- ---------------------------------------------------------------------------
+
+create or replace function upsert_expense_category(
+  p_restaurant uuid,
+  p_id uuid,
+  p_name text,
+  p_base expense_category,
+  p_active boolean default true
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi hallita kategorioita';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Nimi ei voi olla tyhjä';
+  end if;
+
+  if p_id is null then
+    insert into expense_categories (restaurant_id, name, base_category, active)
+    values (p_restaurant, trim(p_name), p_base, p_active)
+    returning id into v_id;
+  else
+    update expense_categories
+    set name = trim(p_name),
+        base_category = p_base,
+        active = p_active
+    where id = p_id and restaurant_id = p_restaurant
+    returning id into v_id;
+
+    if v_id is null then
+      raise exception 'Kategoriaa ei löytynyt';
+    end if;
+  end if;
+
+  return v_id;
+end;
+$$;
+
+revoke all on function upsert_expense_category from public;
+grant execute on function upsert_expense_category to authenticated;
+
+/**
+ * Poistaa kategorian.
+ *
+ * Kuitit eivät katoa: viittaus nollautuu ja kuitti palaa perusluokkaan.
+ * Kulukirjauksen poistaminen kategorian mukana olisi tietojen häviämistä
+ * eikä sitä mitä käyttäjä pyysi.
+ */
+create or replace function delete_expense_category(p_category uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  select restaurant_id into v_restaurant
+  from expense_categories where id = p_category;
+
+  if v_restaurant is null then
+    raise exception 'Kategoriaa ei löytynyt';
+  end if;
+
+  if not is_owner(v_restaurant) then
+    raise exception 'Vain omistaja voi hallita kategorioita';
+  end if;
+
+  delete from expense_categories where id = p_category;
+end;
+$$;
+
+revoke all on function delete_expense_category from public;
+grant execute on function delete_expense_category to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- create_receipt: valinnainen oma kategoria
+-- ---------------------------------------------------------------------------
+--
+-- Uusi parametri viimeisenä ja oletusarvolla, jotta vanhat kutsut
+-- toimivat muuttumatta. Kategoria tarkistetaan samaan ravintolaan
+-- kuuluvaksi — toisen ravintolan tunnisteella ei saa merkitä omaa kuittia.
+
+-- Vanha 15-parametrinen versio on pudotettava ensin: uusi parametrilista
+-- tekee "create or replace"-lauseesta uuden funktion vanhan rinnalle, ei
+-- korvaajaa. Kaksi samannimistä funktiota johtaisi virheeseen
+-- "function is not unique" heti ensimmäisellä kutsulla.
+drop function if exists create_receipt(
+  uuid, text, date, int, int, expense_category, payment_method,
+  text, text, receipt_status, text[], text, text, text, jsonb
+);
+
+create or replace function create_receipt(
+  p_restaurant uuid,
+  p_supplier_name text,
+  p_date date,
+  p_total_cents int,
+  p_vat_cents int,
+  p_category expense_category,
+  p_payment payment_method,
+  p_receipt_number text,
+  p_note text,
+  p_status receipt_status,
+  p_review_reasons text[],
+  p_image_path text,
+  p_image_quality text,
+  p_file_hash text,
+  p_items jsonb default '[]'::jsonb,
+  p_category_id uuid default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_receipt uuid;
+  v_supplier uuid;
+  v_item jsonb;
+  v_line int := 0;
+  v_category_id uuid := null;
+begin
+  if v_user is null then
+    raise exception 'Kirjautuminen vaaditaan';
+  end if;
+
+  if not is_manager(p_restaurant) then
+    raise exception 'Vain esihenkilö voi lisätä kuitteja';
+  end if;
+
+  if p_total_cents is null or p_total_cents < 0 then
+    raise exception 'Loppusumma puuttuu';
+  end if;
+
+  if p_category_id is not null then
+    select id into v_category_id
+    from expense_categories
+    where id = p_category_id and restaurant_id = p_restaurant;
+
+    if v_category_id is null then
+      raise exception 'Tuntematon kategoria';
+    end if;
+  end if;
+
+  if coalesce(trim(p_supplier_name), '') <> '' then
+    insert into suppliers (restaurant_id, name, default_category)
+    values (p_restaurant, trim(p_supplier_name), p_category)
+    on conflict (restaurant_id, name) do update set name = excluded.name
+    returning id into v_supplier;
+  end if;
+
+  insert into receipts (
+    restaurant_id, supplier_id, supplier_name, receipt_date, total_cents,
+    vat_cents, category, payment_method, receipt_number, note, status,
+    review_reasons, image_path, image_quality, file_hash, added_by, category_id
+  )
+  values (
+    p_restaurant, v_supplier, coalesce(nullif(trim(p_supplier_name), ''), 'Tuntematon'),
+    p_date, p_total_cents, p_vat_cents, p_category, p_payment,
+    nullif(trim(p_receipt_number), ''), nullif(trim(p_note), ''), p_status,
+    coalesce(p_review_reasons, '{}'), p_image_path, p_image_quality,
+    nullif(trim(p_file_hash), ''), v_user, v_category_id
+  )
+  returning id into v_receipt;
+
+  for v_item in select * from jsonb_array_elements(coalesce(p_items, '[]'::jsonb))
+  loop
+    v_line := v_line + 1;
+    insert into receipt_items (
+      receipt_id, line_number, description, quantity, unit, total_cents,
+      category, vat_rate, vat_cents, product_group
+    )
+    values (
+      v_receipt,
+      v_line,
+      coalesce(v_item ->> 'description', ''),
+      (v_item ->> 'quantity')::numeric,
+      v_item ->> 'unit',
+      coalesce((v_item ->> 'totalCents')::int, 0),
+      coalesce((v_item ->> 'category')::expense_category, p_category),
+      (v_item ->> 'vatRate')::numeric,
+      (v_item ->> 'vatCents')::int,
+      v_item ->> 'productGroup'
+    );
+  end loop;
+
+  return v_receipt;
+end;
+$$;
+
+revoke all on function create_receipt from public;
+grant execute on function create_receipt to authenticated;
+

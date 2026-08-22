@@ -380,6 +380,7 @@ export async function saveReceipt(
     p_image_quality: (formData.get("imageQuality") as string) || null,
     p_file_hash: (formData.get("fileHash") as string) || null,
     p_items: items,
+    p_category_id: (formData.get("categoryId") as string) || null,
   });
 
   if (error) {
@@ -589,6 +590,74 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Omat kulukategoriat
+// ---------------------------------------------------------------------------
+
+const categorySchema = z.object({
+  id: z.string().uuid().nullable(),
+  name: z.string().trim().min(1, "Nimi puuttuu.").max(60),
+  base: z.enum([
+    "food", "alcohol", "soft_drinks", "cleaning", "kitchen_supplies",
+    "packaging", "staff", "transport", "other",
+  ]),
+  active: z.boolean(),
+});
+
+/**
+ * Luo tai muokkaa ravintolan omaa kategoriaa.
+ *
+ * Perusluokka on pakollinen: se ratkaisee ALV-odotuksen ja budjetin.
+ * Ilman kytköstä oma kategoria olisi pelkkä nimilappu jonka kohdalla
+ * järjestelmä ei voisi tunnistaa mitään poikkeamaa.
+ */
+export async function saveCategory(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const parsed = categorySchema.safeParse({
+    id: (formData.get("categoryId") as string) || null,
+    name: formData.get("name"),
+    base: formData.get("base"),
+    active: formData.get("active") !== "off",
+  });
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { restaurant } = await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("upsert_expense_category", {
+    p_restaurant: restaurant.id,
+    p_id: parsed.data.id,
+    p_name: parsed.data.name,
+    p_base: parsed.data.base as ExpenseCategory,
+    p_active: parsed.data.active,
+  });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Samanniminen kategoria on jo olemassa." };
+    }
+    return { error: explain(error, "Kategorian tallennus epäonnistui") };
+  }
+
+  revalidatePath("/admin", "layout");
+  return { notice: "Kategoria tallennettu." };
+}
+
+/** Poistaa kategorian. Kuitit säilyvät ja palaavat perusluokkaan. */
+export async function deleteCategory(formData: FormData): Promise<void> {
+  const id = String(formData.get("categoryId") ?? "");
+  if (!id) return;
+
+  await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+  await supabase.rpc("delete_expense_category", { p_category: id });
+
+  revalidatePath("/admin", "layout");
+}
+
+// ---------------------------------------------------------------------------
 
 function explain(
   error: { code?: string; message?: string } | null,
@@ -620,6 +689,9 @@ function explain(
   }
   if (message.includes("Kuluvaa tai tulevaa")) {
     return "Kuluvaa tai tulevaa kuukautta ei voi sulkea.";
+  }
+  if (message.includes("hallita kategorioita")) {
+    return "Vain omistaja voi hallita kategorioita.";
   }
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;

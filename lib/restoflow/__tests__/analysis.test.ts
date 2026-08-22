@@ -5,7 +5,13 @@ import { supplierTrends, totalsBySupplier, suggestedCategory } from "../supplier
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
 import { compareShift, formatVariance, shiftDurationMinutes, timeToMinutes, variancePatterns } from "../shifts";
 import {
-  canAddReceipts, adminNavFor, can, seesPayRates } from "../permissions";
+  adminNavFor,
+  can,
+  canAddReceipts,
+  capabilityForPath,
+  landingFor,
+  seesPayRates,
+} from "../permissions";
 import { buildAlerts } from "../alerts";
 import type { Budget, ClockEvent, ExpenseCategory, Receipt, ReceiptItem, Shift, Supplier, User } from "../types";
 
@@ -48,6 +54,7 @@ function receipt(partial: Partial<Receipt> & { totalCents: number; date: string 
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
     imagePath: null,
+    categoryId: null,
     imageQuality: "good",
     ...partial,
   };
@@ -420,6 +427,56 @@ describe("oikeudet", () => {
     expect(accountantNav).toContain("/admin/kulut");
     expect(accountantNav).not.toContain("/admin/tyovuorot");
     expect(adminNavFor("owner").length).toBeGreaterThan(accountantNav.length);
+  });
+
+  /**
+   * Piilotettu linkki ei ole pääsynhallintaa: osoitteen voi kirjoittaa
+   * itse. Vaatimus on luettava samasta taulukosta josta valikkokin,
+   * jotta ne eivät voi erota toisistaan.
+   */
+  it("johtaa polusta saman oikeuden kuin navigaatio", () => {
+    expect(capabilityForPath("/admin/kulut")).toBe("expenses.view");
+    expect(capabilityForPath("/admin/tyontekijat")).toBe("staff.view");
+    expect(capabilityForPath("/admin/budjetit")).toBe("budgets.view");
+  });
+
+  it("perii alipolun vaatimuksen pisimmästä osumasta", () => {
+    // Ei saa osua /admin-juureen, jonka vaatimus on löyhempi.
+    expect(capabilityForPath("/admin/toimittajat/abc-123")).toBe("suppliers.view");
+    expect(capabilityForPath("/admin/kuitit/xyz")).toBe("receipts.view");
+  });
+
+  /**
+   * Tuntematon hallintapolku perii juuren vaatimuksen. Se on tahallista:
+   * uusi sivu on suljettu kunnes se lisätään taulukkoon, eikä auki
+   * siihen asti kun joku muistaa.
+   */
+  it("sulkeutuu tuntemattomalla hallintapolulla", () => {
+    expect(capabilityForPath("/admin/tuntematon")).toBe("expenses.view");
+    expect(can("employee", capabilityForPath("/admin/tuntematon")!)).toBe(false);
+  });
+
+  it("ei vaadi mitään hallinnan ulkopuolelta", () => {
+    expect(capabilityForPath("/app/vuorot")).toBeNull();
+    expect(capabilityForPath("/kirjaudu")).toBeNull();
+  });
+
+  it("estää työntekijältä hallintanäkymät ja ohjaa omaan näkymään", () => {
+    const required = capabilityForPath("/admin/tyontekijat");
+    expect(required).not.toBeNull();
+    expect(can("employee", required!)).toBe(false);
+    expect(landingFor("employee")).toBe("/app");
+  });
+
+  it("ohjaa kirjanpitäjän ensimmäiseen näkymään johon oikeus riittää", () => {
+    const landing = landingFor("accountant");
+    const required = capabilityForPath(landing);
+    expect(required).not.toBeNull();
+    expect(can("accountant", required!)).toBe(true);
+  });
+
+  it("estää kirjanpitäjältä työvuorot", () => {
+    expect(can("accountant", capabilityForPath("/admin/tyovuorot")!)).toBe(false);
   });
 });
 

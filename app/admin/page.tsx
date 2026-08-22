@@ -16,7 +16,7 @@ import {
   previousMonth,
   receiptsInMonth,
   sortByDateDesc,
-  totalsByCategory,
+  totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
@@ -57,7 +57,7 @@ export default async function AdminDashboard({
   const params = await searchParams;
   const {
     receipts, users, budgets, shifts, clockEvents,
-    month, today, now, monthlyHours, restaurant, user, role,
+    month, today, now, monthlyHours, restaurant, user, role, categories: customCategories,
   } = await adminContext("/admin");
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
@@ -76,7 +76,10 @@ export default async function AdminDashboard({
   const comparison = compareToPreviousMonth(receipts, viewMonth);
   const receipts_ = receiptSplit(receipts, viewMonth);
 
-  const categories = totalsByCategory(receiptsInMonth(receipts, viewMonth));
+  const categories = totalsByCustomCategory(
+    receiptsInMonth(receipts, viewMonth),
+    customCategories,
+  );
   const suppliers = supplierTotalsInMonth(receipts, viewMonth).slice(0, 5);
   const trends = new Map(
     supplierTrends(receipts, viewMonth).map((trend) => [trend.supplierId, trend]),
@@ -387,14 +390,17 @@ export default async function AdminDashboard({
           ) : (
             <ul className="space-y-3.5">
               {categories.slice(0, 5).map((row) => (
-                <li key={row.category}>
-                  <Link href={`/admin/kuitit?suodatin=${row.category}`} className="block">
+                <li key={row.key}>
+                  <Link
+                    href={`/admin/kuitit?suodatin=${row.baseCategory}`}
+                    className="block"
+                  >
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium">
                         <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                          <CategoryIcon category={row.category} size={15} />
+                          <CategoryIcon category={row.baseCategory} size={15} />
                         </span>
-                        <span className="truncate">{CATEGORY_LABELS[row.category]}</span>
+                        <span className="truncate">{row.name}</span>
                       </span>
                       <span className="rf-tabular shrink-0 text-[14px] font-semibold">
                         {formatMoney(row.totalCents)}

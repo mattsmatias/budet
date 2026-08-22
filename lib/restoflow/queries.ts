@@ -13,6 +13,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import type {
+  CustomCategory,
   Absence,
   Budget,
   OpenShift,
@@ -33,7 +34,7 @@ import type {
 const RECEIPT_COLUMNS = `
   id, restaurant_id, supplier_id, supplier_name, receipt_date, total_cents,
   vat_cents, category, payment_method, receipt_number, note, status,
-  review_reasons, image_path, image_quality, added_by, created_at,
+  review_reasons, image_path, image_quality, added_by, created_at, category_id,
   receipt_items (
     id, line_number, description, quantity, unit, total_cents, category,
     vat_rate, vat_cents, product_group
@@ -55,6 +56,7 @@ interface ReceiptRow {
   status: string;
   review_reasons: string[] | null;
   image_path: string | null;
+  category_id: string | null;
   image_quality: string | null;
   added_by: string;
   created_at: string;
@@ -114,6 +116,7 @@ function toReceipt(row: ReceiptRow): Receipt {
     addedAt: row.created_at,
     hasImage: Boolean(row.image_path),
     imagePath: row.image_path,
+    categoryId: row.category_id,
     imageQuality: (row.image_quality as "good" | "poor" | null) ?? null,
   };
 }
@@ -425,6 +428,35 @@ export async function fetchClosedMonths(restaurantId: string): Promise<string[]>
   return data.map((row) => String(row.month).slice(0, 7));
 }
 
+/**
+ * Ravintolan omat kulukategoriat.
+ *
+ * Myös passiiviset palautetaan: vanha kuitti voi viitata kategoriaan
+ * joka on sittemmin poistettu käytöstä, ja sen nimi on silti näytettävä.
+ */
+export async function fetchExpenseCategories(
+  restaurantId: string,
+): Promise<CustomCategory[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("expense_categories")
+    .select("id, restaurant_id, name, base_category, active, sort_order")
+    .eq("restaurant_id", restaurantId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    restaurantId: row.restaurant_id as string,
+    name: row.name as string,
+    baseCategory: row.base_category as CustomCategory["baseCategory"],
+    active: row.active as boolean,
+    sortOrder: row.sort_order as number,
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Koottu näkymädata
 // ---------------------------------------------------------------------------
@@ -440,6 +472,8 @@ export interface RestaurantData {
   absences: Absence[];
   /** Kuukaudet jotka on lukittu kirjanpitoon, uusin ensin. */
   closedMonths: string[];
+  /** Ravintolan omat kulukategoriat. */
+  categories: CustomCategory[];
 }
 
 /**
@@ -461,6 +495,7 @@ export async function fetchRestaurantData(
     clockEvents,
     absences,
     closedMonths,
+    categories,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
     fetchUsers(restaurantId),
@@ -471,6 +506,7 @@ export async function fetchRestaurantData(
     fetchClockEvents(restaurantId),
     fetchAbsences(restaurantId),
     fetchClosedMonths(restaurantId),
+    fetchExpenseCategories(restaurantId),
   ]);
 
   return {
@@ -483,6 +519,7 @@ export async function fetchRestaurantData(
     clockEvents,
     absences,
     closedMonths,
+    categories,
   };
 }
 

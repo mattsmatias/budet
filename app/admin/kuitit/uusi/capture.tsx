@@ -13,6 +13,7 @@ import {
   type ExtractionResult,
 } from "@/lib/restoflow/receipt-ai";
 import {
+  type CustomCategory,
   CATEGORY_LABELS,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
@@ -42,9 +43,11 @@ const initial: AdminState = {};
 export function CaptureFlow({
   restaurantId,
   suppliers,
+  categories,
 }: {
   restaurantId: string;
   suppliers: Supplier[];
+  categories: CustomCategory[];
 }) {
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
@@ -260,6 +263,34 @@ export function CaptureFlow({
           hint={result.category.hint}
           options={[["", "Valitse…"], ...Object.entries(CATEGORY_LABELS)]}
         />
+
+        {categories.length > 0 ? (
+          <div>
+            <label htmlFor="rf-custom-category" className="block text-[13px] font-medium">
+              Oma kategoria
+            </label>
+            <select
+              id="rf-custom-category"
+              name="categoryId"
+              defaultValue=""
+              className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
+              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+            >
+              <option value="">Ei omaa kategoriaa</option>
+              {categories
+                .filter((c) => c.active)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+            <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              Tarkennus raportteja varten. ALV ja budjetti tulevat yllä
+              valitusta perusluokasta.
+            </p>
+          </div>
+        ) : null}
 
         {suggestion ? (
           <div

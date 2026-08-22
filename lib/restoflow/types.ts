@@ -177,6 +177,23 @@ export interface ReceiptItem {
   productGroup: string | null;
 }
 
+/**
+ * Ravintolan oma kulukategoria.
+ *
+ * Kartoittuu aina yhteen yhdeksästä perusluokasta. Perusluokka ratkaisee
+ * ALV-odotuksen ja budjetin, oma nimi vain sen miltä rivi näyttää
+ * raportissa. Ilman kytköstä järjestelmä ei tietäisi mitä ALV-kannan
+ * pitäisi olla.
+ */
+export interface CustomCategory {
+  id: string;
+  restaurantId: string;
+  name: string;
+  baseCategory: ExpenseCategory;
+  active: boolean;
+  sortOrder: number;
+}
+
 export interface Receipt {
   id: string;
   restaurantId: string;
@@ -188,6 +205,8 @@ export interface Receipt {
   vatCents: number | null;
   /** Dokumenttitason kategoria — johdettu riveiltä kun niitä on. */
   category: ExpenseCategory;
+  /** Ravintolan oma kategoria, jos sellainen on valittu. */
+  categoryId: string | null;
   paymentMethod: PaymentMethod;
   receiptNumber: string | null;
   note: string | null;

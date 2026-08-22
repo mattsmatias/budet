@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { requireContext } from "@/lib/restoflow/session";
-import { adminNavFor } from "@/lib/restoflow/permissions";
+import { adminNavFor, landingFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
@@ -18,6 +19,9 @@ export default async function AdminMorePage() {
   const { user, restaurant, role } = await requireContext("/admin/lisaa");
 
   const items = adminNavFor(role);
+
+  // Ilman yhtäkään hallintanäkymää tämä sivu on tyhjä kuori.
+  if (items.length === 0) redirect(landingFor(role));
   const overflow = items.slice(4);
   const name = user.fullName ?? user.email ?? "Käyttäjä";
 

@@ -8,8 +8,9 @@
  */
 
 import { cache } from "react";
+import { redirect } from "next/navigation";
 import { monthIn, todayIn, weekStart } from "./clock-context";
-import { can } from "./permissions";
+import { can, capabilityForPath, landingFor } from "./permissions";
 import { workedBetween } from "./timeclock";
 import {
   fetchAbsences,
@@ -44,6 +45,14 @@ const loadData = cache(
 
 export async function adminContext(returnTo: string): Promise<AdminContext> {
   const ctx = await requireContext(returnTo);
+
+  // Rooliportti. Navigaation piilottama linkki ei ole pääsynhallintaa:
+  // osoitteen voi kirjoittaa itse. Vaatimus luetaan samasta taulukosta
+  // josta valikkokin, joten ne eivät voi erota toisistaan.
+  const required = capabilityForPath(returnTo);
+  if (required !== null && !can(ctx.role, required)) {
+    redirect(landingFor(ctx.role));
+  }
   const data = await loadData(ctx.restaurant.id);
 
   const month = monthIn(ctx.restaurant.timezone);

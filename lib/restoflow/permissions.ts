@@ -145,3 +145,31 @@ export const ADMIN_NAV: NavEntry[] = [
 export function adminNavFor(role: Role): NavEntry[] {
   return ADMIN_NAV.filter((entry) => can(role, entry.requires));
 }
+
+/**
+ * Mitä oikeutta polku vaatii.
+ *
+ * Sama taulukko kuin navigaatiossa. Jos valikko ja pääsytarkistus
+ * lukisivat eri listaa, ne ajautuisivat ennen pitkää eri linjalle ja
+ * piilotettu linkki näyttäisi turvatoimelta olematta sellainen.
+ *
+ * Pisin osuma voittaa, jotta /admin/toimittajat/xyz perii
+ * /admin/toimittajat-vaatimuksen eikä osu /admin-juureen.
+ */
+export function capabilityForPath(path: string): Capability | null {
+  const matches = ADMIN_NAV.filter(
+    (entry) => path === entry.href || path.startsWith(`${entry.href}/`),
+  ).sort((a, b) => b.href.length - a.href.length);
+
+  return matches[0]?.requires ?? null;
+}
+
+/**
+ * Mihin rooli ohjataan kun sillä ei ole pääsyä pyydettyyn näkymään.
+ *
+ * Ensimmäinen näkymä johon oikeus riittää. Työntekijällä ei ole yhtään,
+ * joten hän päätyy omaan näkymäänsä.
+ */
+export function landingFor(role: Role): string {
+  return adminNavFor(role)[0]?.href ?? "/app";
+}
