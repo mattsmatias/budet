@@ -186,7 +186,7 @@ export function CaptureFlow({
           className="rf-press flex w-full flex-col items-center gap-3 py-10"
           style={{
             background: "var(--rf-blue)",
-            color: "#fff",
+            color: "var(--rf-on-accent)",
             borderRadius: "var(--rf-r-card)",
             boxShadow: "0 4px 20px rgba(0,113,227,0.28)",
           }}
@@ -796,7 +796,7 @@ function Saved({ receiptId }: { receiptId?: string }) {
             className="rf-press px-5 py-3 text-[15px] font-semibold"
             style={{
               background: "var(--rf-text)",
-              color: "#fff",
+              color: "var(--rf-on-accent)",
               borderRadius: "var(--rf-r-control)",
             }}
           >
@@ -829,7 +829,7 @@ function SaveButton({ disabled }: { disabled: boolean }) {
       className="rf-press w-full py-3.5 text-[16px] font-semibold disabled:opacity-40"
       style={{
         background: "var(--rf-text)",
-        color: "#fff",
+        color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}
     >

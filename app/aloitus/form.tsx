@@ -90,7 +90,7 @@ function Submit() {
       className="rf-press w-full py-3 text-[15px] font-semibold disabled:opacity-50"
       style={{
         background: "var(--rf-text)",
-        color: "#fff",
+        color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}
     >

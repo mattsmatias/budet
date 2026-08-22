@@ -133,7 +133,7 @@ export default async function EmployeeHome() {
                 className="rf-press mt-4 block py-2.5 text-center text-[14px] font-semibold"
                 style={{
                   background: "var(--rf-blue)",
-                  color: "#fff",
+                  color: "var(--rf-on-accent)",
                   borderRadius: "var(--rf-r-control)",
                 }}
               >

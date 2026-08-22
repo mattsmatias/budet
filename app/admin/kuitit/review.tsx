@@ -49,7 +49,7 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
         className="rf-press mt-3 flex w-full items-center justify-center gap-2 py-2.5 text-[14px] font-semibold"
         style={{
           background: "var(--rf-text)",
-          color: "#fff",
+          color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
@@ -188,7 +188,7 @@ export function DeleteReceipt({ receiptId }: { receiptId: string }) {
         className="rf-press px-3 py-1.5 text-[13px] font-semibold"
         style={{
           background: "var(--rf-red)",
-          color: "#fff",
+          color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
       >

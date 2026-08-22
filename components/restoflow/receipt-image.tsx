@@ -88,7 +88,7 @@ export function ReceiptImage({ url, alt }: { url: string; alt: string }) {
             onClick={() => setOpen(false)}
             aria-label="Sulje"
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.16)", color: "#fff", borderRadius: "50%" }}
+            style={{ background: "rgba(255,255,255,0.16)", color: "var(--rf-on-accent)", borderRadius: "50%" }}
           >
             <span style={{ transform: "rotate(45deg)", display: "block" }}>
               <RfIcon name="plus" size={20} />

@@ -11,6 +11,7 @@ import {
 import { buildInsights } from "@/lib/restoflow/insights";
 import {
   formatMonth,
+  monthlySeries,
   periodTotals,
   previousMonth,
   receiptsInMonth,
@@ -18,18 +19,26 @@ import {
   totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
-import { can, seesPayRates } from "@/lib/restoflow/permissions";
+import { can, canAddReceipts, seesPayRates } from "@/lib/restoflow/permissions";
 import { formatDuration, staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
 import { currentState } from "@/lib/restoflow/timeclock";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
-import { Avatar, CategoryBubble, Pill, SeverityDot } from "@/components/restoflow/ui";
+import {
+  Avatar,
+  ButtonLink,
+  CategoryBubble,
+  Pill,
+  SeverityDot,
+} from "@/components/restoflow/ui";
 import {
   BudgetBarLine,
+  Donut,
   Panel,
   PanelEmpty,
   ShareBar,
+  Sparkline,
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
@@ -140,6 +149,11 @@ export default async function AdminDashboard({
 
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0] ?? "";
 
+  // Trendiviiva vain jos historiaa on. Kahden pisteen viiva näyttäisi
+  // suunnalta olematta sellainen.
+  const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
+  const hasTrend = trend.filter((value) => value > 0).length >= 3;
+
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       {/* 1. Yläosa */}
@@ -157,25 +171,35 @@ export default async function AdminDashboard({
         <div className="flex flex-wrap items-center gap-2">
           <MonthPicker value={viewMonth} months={selectable} />
 
-          {can(role, "reports.view") ? (
-            <Link
-              href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
-              className="rf-press flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
-              style={{
-                background: "var(--rf-text)",
-                color: "#fff",
-                borderRadius: "var(--rf-r-control)",
-              }}
+          {canAddReceipts(role) ? (
+            <ButtonLink
+              href={`/admin/kuitit/uusi`}
+              tone="primary"
+              icon={<RfIcon name="plus" size={16} />}
             >
-              <RfIcon name="download" size={16} />
-              Vie raportti
-            </Link>
+              Lisää kuitti
+            </ButtonLink>
+          ) : null}
+
+          {can(role, "reports.view") ? (
+            <span className="hidden md:inline-flex">
+              <ButtonLink
+                href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
+                tone="ghost"
+                icon={<RfIcon name="download" size={16} />}
+              >
+                Vie raportti
+              </ButtonLink>
+            </span>
           ) : null}
         </div>
       </header>
 
       {/* 2. KPI-kortit */}
-      <section aria-label="Avainluvut" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <section
+        aria-label="Avainluvut"
+        className="grid auto-rows-fr grid-cols-2 gap-3 xl:grid-cols-4"
+      >
         <StatCard
           label="Kirjatut kulut"
           value={formatMoney(totals.totalCents)}
@@ -197,6 +221,7 @@ export default async function AdminDashboard({
           }
           hint="Järjestelmään lisättyjen kuittien summa"
           href="/admin/kulut"
+          trend={hasTrend ? <Sparkline values={trend} /> : undefined}
         />
 
         <StatCard
@@ -276,7 +301,7 @@ export default async function AdminDashboard({
                 className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
                 style={{
                   background: "var(--rf-text)",
-                  color: "#fff",
+                  color: "var(--rf-on-accent)",
                   borderRadius: "var(--rf-r-control)",
                 }}
               >
@@ -374,7 +399,18 @@ export default async function AdminDashboard({
               href="/admin/kuitit/uusi"
             />
           ) : (
-            <ul className="space-y-3.5">
+            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
+              <Donut
+                slices={categories.slice(0, 5).map((row) => ({
+                  key: row.key,
+                  label: row.name,
+                  valueCents: row.totalCents,
+                  share: row.share,
+                }))}
+                total={formatMoney(totals.totalCents)}
+              />
+
+            <ul className="w-full flex-1 space-y-3.5">
               {categories.slice(0, 5).map((row) => (
                 <li key={row.key}>
                   <Link
@@ -403,6 +439,7 @@ export default async function AdminDashboard({
                 </li>
               ))}
             </ul>
+            </div>
           )}
         </Panel>
 
@@ -416,8 +453,9 @@ export default async function AdminDashboard({
           ) : (
             <ul className="space-y-3">
               {suppliers.map((supplier) => {
-                const trend = trends.get(supplier.supplierId);
-                const hasTrend = trend !== undefined && trend.change !== null;
+                const supplierTrend = trends.get(supplier.supplierId);
+                const hasTrend =
+                  supplierTrend !== undefined && supplierTrend.change !== null;
 
                 return (
                   <li key={supplier.supplierId}>
@@ -426,21 +464,32 @@ export default async function AdminDashboard({
                       className="flex items-baseline justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
                       style={{ borderColor: "var(--rf-line)" }}
                     >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[14px] font-medium">
-                          {supplier.name}
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <Avatar initials={initialsOf(supplier.name)} size={30} />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[14px] font-medium">
+                            {supplier.name}
+                          </span>
+                          <span
+                            className="rf-tabular block text-[12px]"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
+                            {hasTrend
+                              ? `${percent(supplierTrend!.change as number)} vs. edellinen kuukausi`
+                              : "Ei vertailukohtaa"}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="rf-tabular block text-[14px] font-semibold">
+                          {formatMoney(supplier.totalCents)}
                         </span>
                         <span
                           className="rf-tabular block text-[12px]"
                           style={{ color: "var(--rf-text-3)" }}
                         >
-                          {hasTrend
-                            ? `${percent(trend.change as number)} vs. edellinen kuukausi`
-                            : "Ei vertailukohtaa"}
+                          {(supplier.share * 100).toFixed(1).replace(".", ",")} %
                         </span>
-                      </span>
-                      <span className="rf-tabular shrink-0 text-[14px] font-semibold">
-                        {formatMoney(supplier.totalCents)}
                       </span>
                     </Link>
                   </li>
@@ -653,4 +702,11 @@ function round(hours: number): string {
 function formatDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");
   return `${Number(d)}.${Number(m)}.`;
+}
+
+/** Toimittajan nimen alkukirjaimet. Neutraali tunniste ilman logoja. */
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts.slice(0, 2).map((part) => part[0]!.toUpperCase()).join("");
 }

@@ -244,7 +244,7 @@ function Save() {
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
       style={{
         background: "var(--rf-text)",
-        color: "#fff",
+        color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}
     >

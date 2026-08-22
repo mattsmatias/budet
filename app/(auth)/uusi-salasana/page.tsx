@@ -30,7 +30,7 @@ export default async function NewPasswordPage() {
           className="rf-press mt-6 flex w-full items-center justify-center py-3 text-[15px] font-semibold"
           style={{
             background: "var(--rf-text)",
-            color: "#fff",
+            color: "var(--rf-on-accent)",
             borderRadius: "var(--rf-r-control)",
           }}
         >

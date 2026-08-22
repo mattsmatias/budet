@@ -69,7 +69,7 @@ export default async function Entry() {
               className="rf-press px-5 py-3 text-[15px] font-semibold"
               style={{
                 background: "var(--rf-text)",
-                color: "#fff",
+                color: "var(--rf-on-accent)",
                 borderRadius: "var(--rf-r-control)",
               }}
             >

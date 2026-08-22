@@ -87,7 +87,7 @@ export function InviteForm() {
         className="rf-press flex w-full items-center justify-center gap-2 py-3.5 text-[15px] font-semibold"
         style={{
           background: "var(--rf-text)",
-          color: "#fff",
+          color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
@@ -382,7 +382,7 @@ export function Submit({ label, busy }: { label: string; busy: string }) {
       className="rf-press py-3 text-[15px] font-semibold disabled:opacity-50"
       style={{
         background: "var(--rf-text)",
-        color: "#fff",
+        color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}
     >

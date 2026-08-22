@@ -13,44 +13,62 @@
 
 .restoflow {
   /* Pinnat */
-  --rf-bg: #f6f6f7;
+  --rf-bg: #f5f6f8;
   --rf-card: #ffffff;
   --rf-card-hover: #fbfbfd;
-  --rf-inset: #f2f2f5;
+  --rf-inset: #f1f2f5;
 
   /* Teksti */
-  --rf-text: #171717;
-  --rf-text-2: #737373;
-  --rf-text-3: #a1a1a6;
+  --rf-text: #111318;
+  --rf-text-2: #6b7280;
+  --rf-text-3: #9ca3af;
+  /* Teksti värillisellä pohjalla. Oli aiemmin 31 kertaa "#fff". */
+  --rf-on-accent: #ffffff;
 
-  /* Rajat ja varjot */
-  --rf-line: #e8e8ea;
-  --rf-line-strong: rgba(0, 0, 0, 0.12);
-  --rf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --rf-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px rgba(0, 0, 0, 0.045);
-  --rf-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.04), 0 16px 40px rgba(0, 0, 0, 0.08);
+  /* Rajat ja varjot. Varjo luetaan syvyytenä, ei koristeena. */
+  --rf-line: #e7e9ee;
+  --rf-line-strong: #d7dae2;
+  --rf-shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.04);
+  --rf-shadow: 0 1px 2px rgba(17, 19, 24, 0.04), 0 6px 20px rgba(17, 19, 24, 0.05);
+  --rf-shadow-lg: 0 2px 4px rgba(17, 19, 24, 0.04), 0 16px 40px rgba(17, 19, 24, 0.09);
 
-  /* Tilavärit. Vihreä = ok, sininen = info, keltainen = odottaa, punainen = ongelma. */
-  --rf-green: #34c759;
-  --rf-green-text: #1d7a35;
-  --rf-green-bg: #e8f8ec;
+  /* --------------------------------------------------------------- */
+  /* Aksentti: toiminta, ei koriste.                                   */
+  /*                                                                   */
+  /* Sininen tarkoittaa "tästä voi painaa" tai "tämä on valittuna".    */
+  /* Se ei ole brändipinta eikä otsikon väri. Purppura on toissijainen */
+  /* ja käytössä vain siellä missä kaksi eri sarjaa on erotettava      */
+  /* toisistaan samassa kuvassa.                                       */
+  /* --------------------------------------------------------------- */
+  --rf-accent: #315bff;
+  --rf-accent-strong: #2549d6;
+  --rf-accent-bg: #eef2ff;
+  --rf-accent-2: #6c5ce7;
 
-  --rf-blue: #0071e3;
-  --rf-blue-text: #0057b8;
-  --rf-blue-bg: #e8f2fd;
+  /* --------------------------------------------------------------- */
+  /* Tilavärit. Vihreä = kunnossa, oranssi = tarkistettava,            */
+  /* punainen = ongelma. Väri ei koskaan kerro tilaa yksin — vieressä  */
+  /* on aina luku tai sana.                                            */
+  /* --------------------------------------------------------------- */
+  --rf-green: #16a36a;
+  --rf-green-text: #0f7a4f;
+  --rf-green-bg: #e8f7f0;
 
-  --rf-amber: #ff9f0a;
-  --rf-amber-text: #9a5b00;
-  --rf-amber-bg: #fff4e5;
+  --rf-blue: #315bff;
+  --rf-blue-text: #2549d6;
+  --rf-blue-bg: #eef2ff;
 
-  --rf-red: #ff3b30;
-  --rf-red-text: #c1121b;
-  --rf-red-bg: #ffecea;
+  --rf-amber: #f59e0b;
+  --rf-amber-text: #a45c05;
+  --rf-amber-bg: #fef5e7;
+
+  --rf-red: #ef4444;
+  --rf-red-text: #c62828;
+  --rf-red-bg: #fdeded;
 
   /* Pyöristykset */
   --rf-r-card: 18px;
-  /* Yleiskuvan KPI-kortit ovat pienempiä ja tiiviimpiä kuin muut kortit. */
-  --rf-r-stat: 12px;
+  --rf-r-stat: 14px;
   --rf-r-control: 12px;
   --rf-r-pill: 980px;
 

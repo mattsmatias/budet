@@ -193,7 +193,7 @@ export function NewShiftButton({
         className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[15px] font-semibold md:w-auto md:px-5"
         style={{
           background: "var(--rf-text)",
-          color: "#fff",
+          color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
@@ -257,7 +257,7 @@ export function EditShift({
               className="rf-press px-3 py-1.5 text-[13px] font-semibold"
               style={{
                 background: "var(--rf-red)",
-                color: "#fff",
+                color: "var(--rf-on-accent)",
                 borderRadius: "var(--rf-r-control)",
               }}
             >
@@ -335,7 +335,7 @@ function Save({ label }: { label: string }) {
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
       style={{
         background: "var(--rf-text)",
-        color: "#fff",
+        color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}
     >

@@ -5,7 +5,8 @@
  * pyöristys, hienovarainen varjo. Väriä käytetään vain tilaan.
  */
 
-import type { ReactNode } from "react";
+import Link from "next/link";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { formatMoney } from "@/lib/money";
 
 export type Tone = "neutral" | "ok" | "info" | "warn" | "risk";
@@ -104,33 +105,87 @@ export function Pill({
  * `hint` on tarkoitettu kertomaan mitä luku tarkoittaa. Kulukorteissa se
  * sanoo aina "kirjatut kulut", jottei lukua lueta ravintolan tuloksena.
  */
+/**
+ * Avainluku.
+ *
+ * Yksi kortti koko sovellukselle. Aiemmin näitä oli kaksi rinnakkain —
+ * MetricCard vanhoilla sivuilla ja StatCard yleiskuvassa — ja ne
+ * ajautuivat erilleen: eri pyöristys, eri varjo, eri fonttikoot. Sama
+ * luku näytti eri sivuilla eri tuotteelta.
+ *
+ * Kevyt tarkoituksella: ohut raja varjon sijaan ja pieni pyöristys.
+ * Neljä painavaa laatikkoa vierekkäin veisi huomion siltä mitä niissä
+ * lukee.
+ */
 export function MetricCard({
   label,
   value,
   hint,
   trend,
+  conclusion,
+  tone = "neutral",
+  href,
 }: {
   label: string;
   value: string;
   hint?: string;
+  /** Vapaamuotoinen elementti. Käytä mieluummin `conclusion`. */
   trend?: ReactNode;
+  /** Johtopäätös luvusta. Ilman tätä kortti on pelkkä numero. */
+  conclusion?: ReactNode;
+  tone?: "neutral" | "up" | "down" | "muted";
+  href?: string;
 }) {
-  return (
-    <Card hover>
-      <p
-        className="text-[12px] font-medium uppercase tracking-[0.04em]"
-        style={{ color: "var(--rf-text-2)" }}
-      >
+  const toneColor =
+    tone === "muted"
+      ? "var(--rf-text-3)"
+      : tone === "up"
+        ? "var(--rf-amber-text)"
+        : tone === "down"
+          ? "var(--rf-green-text)"
+          : "var(--rf-text-2)";
+
+  const body = (
+    <div
+      className="rf-card-lift h-full px-4 py-4"
+      style={{
+        background: "var(--rf-card)",
+        border: "1px solid var(--rf-line)",
+        borderRadius: "var(--rf-r-stat)",
+      }}
+    >
+      <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
         {label}
       </p>
-      <p className="rf-tabular mt-2 text-[28px] font-semibold leading-none">{value}</p>
-      {trend ? <div className="mt-2.5">{trend}</div> : null}
+
+      <p className="rf-tabular mt-2.5 text-[26px] font-semibold leading-none tracking-[-0.02em]">
+        {value}
+      </p>
+
+      {conclusion ? (
+        <p className="rf-tabular mt-2 text-[13px]" style={{ color: toneColor }}>
+          {tone === "up" ? <span aria-hidden="true">↑ </span> : null}
+          {tone === "down" ? <span aria-hidden="true">↓ </span> : null}
+          {conclusion}
+        </p>
+      ) : null}
+
+      {trend ? <div className="mt-2">{trend}</div> : null}
+
       {hint ? (
-        <p className="mt-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
           {hint}
         </p>
       ) : null}
-    </Card>
+    </div>
+  );
+
+  if (!href) return body;
+
+  return (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
   );
 }
 
@@ -151,16 +206,6 @@ export function TrendBadge({ text, direction }: { text: string; direction: "up" 
   );
 }
 
-/** Rahasumma isolla, tasalevyisin numeroin. */
-export function Money({
-  cents,
-  className = "",
-}: {
-  cents: number;
-  className?: string;
-}) {
-  return <span className={`rf-tabular ${className}`}>{formatMoney(cents)}</span>;
-}
 
 /**
  * Vaakapalkki kulujen jakaumaan.
@@ -301,16 +346,6 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-/** Lista jossa rivit erottuvat ohuella viivalla, iOS-tyyliin. */
-export function List({ children }: { children: ReactNode }) {
-  return (
-    <Card padded={false}>
-      <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-        {children}
-      </ul>
-    </Card>
-  );
-}
 
 export function Avatar({ initials, size = 36 }: { initials: string; size?: number }) {
   return (
@@ -391,34 +426,10 @@ export const ICONS = {
 // ---------------------------------------------------------------------------
 
 import { CategoryIcon } from "./icons";
-import { CATEGORY_LABELS, type ExpenseCategory } from "@/lib/restoflow/types";
+import type { ExpenseCategory } from "@/lib/restoflow/types";
 
-/**
- * Kategoriamerkintä.
- *
- * Emoji tekee kategorian tunnistettavaksi vilkaisulla ilman että
- * dashboardista tulee värikäs — emoji kantaa tunnisteen, ei väri.
- */
-export function CategoryTag({
-  category,
-  size = "md",
-}: {
-  category: ExpenseCategory;
-  size?: "sm" | "md";
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 ${size === "sm" ? "text-[12px]" : "text-[14px]"}`}
-    >
-      <span style={{ color: "var(--rf-text-2)" }}>
-        <CategoryIcon category={category} size={size === "sm" ? 15 : 17} />
-      </span>
-      <span>{CATEGORY_LABELS[category]}</span>
-    </span>
-  );
-}
 
-/** Pelkkä emoji pyöreällä taustalla — listojen alkuun. */
+/** Kategorian ikoni pyöreällä pohjalla — listojen alkuun. */
 export function CategoryBubble({
   category,
   size = 34,
@@ -512,5 +523,108 @@ export function SeverityDot({
       className="inline-block shrink-0"
       style={{ width: 8, height: 8, borderRadius: "50%", background: color }}
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export type ButtonTone = "primary" | "secondary" | "ghost" | "danger";
+
+const BUTTON_TONES: Record<ButtonTone, { background: string; color: string; border?: string }> = {
+  // Ensisijainen toiminto. Sininen tarkoittaa "tästä painetaan" —
+  // se ei ole brändipinta eikä sitä käytetä koristeena.
+  primary: { background: "var(--rf-accent)", color: "var(--rf-on-accent)" },
+  secondary: { background: "var(--rf-inset)", color: "var(--rf-text)" },
+  ghost: {
+    background: "var(--rf-card)",
+    color: "var(--rf-text)",
+    border: "1px solid var(--rf-line)",
+  },
+  danger: { background: "var(--rf-red)", color: "var(--rf-on-accent)" },
+};
+
+/**
+ * Painike.
+ *
+ * Aiemmin jokainen painike oli käsin kirjoitettu style-lohko
+ * kutsupaikassa, ja niitä oli kymmeniä. Sama "tallenna" näytti eri
+ * sivuilla eri kokoiselta. Hierarkia on nyt nimetty: yksi primary per
+ * näkymä, muut secondary tai ghost.
+ *
+ * Kosketuskohde on vähintään 44 px korkea myös pienessä koossa —
+ * pienempi on puhelimella ohi osumisen paikka.
+ */
+export function Button({
+  tone = "secondary",
+  size = "md",
+  full,
+  icon,
+  children,
+  ...rest
+}: {
+  tone?: ButtonTone;
+  size?: "sm" | "md";
+  full?: boolean;
+  icon?: ReactNode;
+  children: ReactNode;
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
+  const palette = BUTTON_TONES[tone];
+
+  return (
+    <button
+      {...rest}
+      className={`rf-press inline-flex items-center justify-center gap-2 font-semibold disabled:opacity-50 ${
+        size === "sm" ? "px-3.5 text-[13px]" : "px-4 text-[14px]"
+      } ${full ? "w-full" : ""} ${rest.className ?? ""}`}
+      style={{
+        minHeight: size === "sm" ? 36 : 44,
+        background: palette.background,
+        color: palette.color,
+        border: palette.border ?? "1px solid transparent",
+        borderRadius: "var(--rf-r-control)",
+        ...rest.style,
+      }}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+/** Linkki joka näyttää painikkeelta. Sama hierarkia, eri elementti. */
+export function ButtonLink({
+  href,
+  tone = "secondary",
+  size = "md",
+  full,
+  icon,
+  children,
+}: {
+  href: string;
+  tone?: ButtonTone;
+  size?: "sm" | "md";
+  full?: boolean;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
+  const palette = BUTTON_TONES[tone];
+
+  return (
+    <Link
+      href={href}
+      className={`rf-press inline-flex items-center justify-center gap-2 font-semibold ${
+        size === "sm" ? "px-3.5 text-[13px]" : "px-4 text-[14px]"
+      } ${full ? "w-full" : ""}`}
+      style={{
+        minHeight: size === "sm" ? 36 : 44,
+        background: palette.background,
+        color: palette.color,
+        border: palette.border ?? "1px solid transparent",
+        borderRadius: "var(--rf-r-control)",
+      }}
+    >
+      {icon}
+      {children}
+    </Link>
   );
 }

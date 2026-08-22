@@ -207,7 +207,7 @@ function ReopenButton({ month }: { month: string }) {
         className="rf-press px-3 py-1.5 text-[13px] font-semibold"
         style={{
           background: "var(--rf-amber)",
-          color: "#fff",
+          color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
@@ -269,7 +269,7 @@ function Submit({ label }: { label: string }) {
       type="submit"
       disabled={pending}
       className="rf-press w-full py-2.5 text-[14px] font-semibold disabled:opacity-50 md:w-auto md:px-5"
-      style={{ background: "var(--rf-text)", color: "#fff", borderRadius: "var(--rf-r-control)" }}
+      style={{ background: "var(--rf-text)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
     >
       {pending ? "Tallennetaan…" : label}
     </button>

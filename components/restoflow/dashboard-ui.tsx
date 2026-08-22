@@ -15,79 +15,11 @@ import { RfIcon } from "./icons";
 /**
  * Yleiskuvan KPI-kortti.
  *
- * Kevyempi kuin MetricCard: ohut raja varjon sijaan ja pienempi
- * pyöristys. Neljä korttia vierekkäin painavina laatikoina veisi
- * huomion siltä mikä niissä lukee.
+ * Sama komponentti kuin muualla sovelluksessa. Erillinen "dashboardin
+ * oma" kortti oli virhe: se ajautui erilleen ja sama luku näytti eri
+ * sivuilla eri tuotteelta.
  */
-export function StatCard({
-  label,
-  value,
-  conclusion,
-  tone = "neutral",
-  hint,
-  href,
-}: {
-  label: string;
-  value: string;
-  /** Johtopäätös luvusta. Ilman tätä kortti on pelkkä numero. */
-  conclusion?: ReactNode;
-  tone?: "neutral" | "up" | "down" | "muted";
-  hint?: string;
-  href?: string;
-}) {
-  const body = (
-    <div
-      className="rf-card-lift h-full px-4 py-4"
-      style={{
-        background: "var(--rf-card)",
-        border: "1px solid var(--rf-line)",
-        borderRadius: "var(--rf-r-stat)",
-      }}
-    >
-      <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-        {label}
-      </p>
-
-      <p className="rf-tabular mt-2.5 text-[26px] font-semibold leading-none">
-        {value}
-      </p>
-
-      {conclusion ? (
-        <p
-          className="rf-tabular mt-2 text-[13px]"
-          style={{
-            color:
-              tone === "muted"
-                ? "var(--rf-text-3)"
-                : tone === "up"
-                  ? "var(--rf-amber-text)"
-                  : tone === "down"
-                    ? "var(--rf-green-text)"
-                    : "var(--rf-text-2)",
-          }}
-        >
-          {tone === "up" ? <span aria-hidden="true">↑ </span> : null}
-          {tone === "down" ? <span aria-hidden="true">↓ </span> : null}
-          {conclusion}
-        </p>
-      ) : null}
-
-      {hint ? (
-        <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          {hint}
-        </p>
-      ) : null}
-    </div>
-  );
-
-  if (!href) return body;
-
-  return (
-    <Link href={href} className="block h-full">
-      {body}
-    </Link>
-  );
-}
+export { MetricCard as StatCard } from "./ui";
 
 // ---------------------------------------------------------------------------
 
@@ -240,6 +172,159 @@ export function BudgetBarLine({
           borderRadius: 999,
         }}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Pieni trendiviiva KPI-kortin sisään.
+ *
+ * Tarkoituksella vaatimaton: ei akseleita, ei ruudukkoa, ei lukuja.
+ * Se kertoo suunnan yhdellä silmäyksellä eikä yritä olla kaavio —
+ * tarkat luvut ovat kulunäkymässä. Viiva piirretään vain jos pisteitä
+ * on vähintään kolme; kahdesta ei näe suuntaa.
+ */
+export function Sparkline({
+  values,
+  width = 88,
+  height = 26,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+}) {
+  if (values.length < 3) return null;
+
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const span = max - min || 1;
+  const step = width / (values.length - 1);
+
+  const points = values.map((value, index) => {
+    const x = index * step;
+    // Marginaali ylä- ja alareunaan, jottei viiva leikkaudu.
+    const y = height - 3 - ((value - min) / span) * (height - 6);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  const last = values[values.length - 1];
+  const previous = values[values.length - 2];
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      fill="none"
+      aria-hidden="true"
+      className="overflow-visible"
+    >
+      <polyline
+        points={points.join(" ")}
+        stroke="var(--rf-text-3)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx={points[points.length - 1].split(",")[0]}
+        cy={points[points.length - 1].split(",")[1]}
+        r="2.5"
+        fill={last >= previous ? "var(--rf-amber)" : "var(--rf-green)"}
+      />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export interface DonutSlice {
+  key: string;
+  label: string;
+  valueCents: number;
+  share: number;
+}
+
+/**
+ * Kulujakauman donitsi.
+ *
+ * Harmaasävyinen tarkoituksella. Värillinen piirakka näyttäisi
+ * raportilta ja rikkoisi säännön jonka mukaan väri merkitsee tilaa —
+ * "ruoka on suurin kategoria" ei ole tila josta pitäisi hälyttää.
+ * Sävyero riittää erottamaan siivut, ja nimet lukevat vieressä.
+ *
+ * Keskellä on kokonaissumma: se on ainoa luku jonka donitsi kertoo
+ * paremmin kuin lista.
+ */
+export function Donut({
+  slices,
+  total,
+  size = 148,
+}: {
+  slices: DonutSlice[];
+  total: string;
+  size?: number;
+}) {
+  const stroke = 18;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  // Siirtymät lasketaan valmiiksi: muuttujan kasvattaminen renderin
+  // aikana tuottaa eri tuloksen eri renderöinneillä.
+  const arcs = slices.reduce<{ slice: DonutSlice; length: number; offset: number }[]>(
+    (all, slice) => {
+      const previous = all[all.length - 1];
+      const offset = previous ? previous.offset + previous.length : 0;
+      return [...all, { slice, length: slice.share * circumference, offset }];
+    },
+    [],
+  );
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="var(--rf-inset)"
+            strokeWidth={stroke}
+          />
+
+          {arcs.map(({ slice, length, offset }, index) => {
+            const dash = `${Math.max(0, length - 2)} ${circumference}`;
+
+            return (
+              <circle
+                key={slice.key}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke="var(--rf-text)"
+                strokeWidth={stroke}
+                strokeDasharray={dash}
+                strokeDashoffset={-offset}
+                // Sävyt tummasta vaaleaan suuruusjärjestyksessä.
+                opacity={Math.max(0.18, 0.9 - index * 0.16)}
+              />
+            );
+          })}
+        </g>
+      </svg>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="rf-tabular text-[17px] font-semibold tracking-[-0.02em]">
+          {total}
+        </span>
+        <span className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+          yhteensä
+        </span>
+      </div>
     </div>
   );
 }

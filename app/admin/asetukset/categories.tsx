@@ -98,7 +98,7 @@ function CategoryRow({ category }: { category: CustomCategory }) {
               <button
                 type="submit"
                 className="rf-press px-3 py-1.5 text-[13px] font-semibold"
-                style={{ background: "var(--rf-red)", color: "#fff", borderRadius: "var(--rf-r-control)" }}
+                style={{ background: "var(--rf-red)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
               >
                 Poista kategoria
               </button>
@@ -284,7 +284,7 @@ function Save() {
       type="submit"
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-text)", color: "#fff", borderRadius: "var(--rf-r-control)" }}
+      style={{ background: "var(--rf-text)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
     >
       {pending ? "Tallennetaan…" : "Tallenna"}
     </button>

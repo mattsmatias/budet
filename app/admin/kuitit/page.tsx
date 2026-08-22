@@ -80,7 +80,7 @@ export default async function AdminReceiptsPage({
               className="rf-press flex items-center justify-center gap-2 py-3 text-[15px] font-semibold md:order-2 md:px-5 md:py-2.5 md:text-[14px]"
               style={{
                 background: "var(--rf-text)",
-                color: "#fff",
+                color: "var(--rf-on-accent)",
                 borderRadius: "var(--rf-r-control)",
               }}
             >

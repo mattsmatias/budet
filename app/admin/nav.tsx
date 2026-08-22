@@ -98,8 +98,9 @@ function DesktopSidebar({
                   aria-current={active ? "page" : undefined}
                   className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
                   style={{
-                    background: active ? "var(--rf-inset)" : "transparent",
-                    color: active ? "var(--rf-text)" : "var(--rf-text-2)",
+                    background: active ? "var(--rf-accent-bg)" : "transparent",
+                    color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+                    fontWeight: active ? 600 : 500,
                   }}
                 >
                   <RfIcon name={item.icon} size={19} />
@@ -244,7 +245,7 @@ function Badge({ count }: { count: number }) {
   return (
     <span
       className="rf-tabular ml-auto min-w-[20px] px-1.5 py-0.5 text-center text-[11px] font-semibold"
-      style={{ background: "var(--rf-red)", color: "#fff", borderRadius: 999 }}
+      style={{ background: "var(--rf-red)", color: "var(--rf-on-accent)", borderRadius: 999 }}
     >
       {count}
     </span>
