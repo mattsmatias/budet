@@ -253,12 +253,32 @@ export const REVIEW_REASON_LABELS: Record<ReviewReason, string> = {
 // Toimittajat
 // ---------------------------------------------------------------------------
 
+/** Kaupan toimiala. Nimet luetaan kannasta, ei koodista. */
+export interface MerchantCategory {
+  id: string;
+  label: string;
+  sortOrder: number;
+}
+
 export interface Supplier {
   id: string;
   restaurantId: string;
   name: string;
   /** Kategoria jota tämä toimittaja tyypillisesti edustaa. */
   defaultCategory: ExpenseCategory;
+  /**
+   * Tunnistettu brändi, tai null.
+   *
+   * Toimipiste on ravintolan oma rivi ("K-Market Malmi"); brändi on
+   * yhteinen ("K-Market"). Linkki on toimipisteessä eikä kuitissa,
+   * jotta yhden kaupan tunnistuksen korjaus koskee kaikkia sen
+   * kuitteja kerralla.
+   */
+  merchantId: string | null;
+  /** Millä varmuudella tunnistus tehtiin, 0-1. */
+  merchantConfidence: number | null;
+  /** Onko ihminen vahvistanut tunnistuksen. Kone ei ylikirjoita tätä. */
+  merchantConfirmed: boolean;
   /**
    * Managerin tekemät kategoriakorjaukset. Kun sama korjaus toistuu,
    * sitä ehdotetaan jatkossa — tämä on "oppiminen", ei mallin koulutus.

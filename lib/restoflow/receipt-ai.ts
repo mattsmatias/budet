@@ -31,6 +31,8 @@ export interface ExtractedItem {
 
 export interface ExtractionResult {
   supplier: Extracted<string>;
+  /** Myyjän Y-tunnus, tarkisteen läpäissyt. Vahvin kaupan tunniste. */
+  businessId: Extracted<string>;
   date: Extracted<string>;
   totalCents: Extracted<number>;
   vatCents: Extracted<number>;
@@ -90,6 +92,7 @@ function profileFor(fileName: string): Profile {
       category: { value: "food", confidence: "high" },
       paymentMethod: { value: "card", confidence: "high" },
       receiptNumber: { value: "MT-4471", confidence: "medium" },
+      businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
         { description: "Naudan sisäfilee", quantity: 4, unit: "kg", totalCents: 8960, category: "food", vatRate: 0.14, productGroup: "Liha" },
@@ -110,6 +113,7 @@ function profileFor(fileName: string): Profile {
       category: { value: "food", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "medium" },
       receiptNumber: { value: "KP-88214", confidence: "high" },
+      businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
         { description: "Kanafilee", quantity: 10, unit: "kg", totalCents: 14200, category: "food", vatRate: 0.14, productGroup: "Liha" },
@@ -133,6 +137,7 @@ function profileFor(fileName: string): Profile {
       category: { value: "food", confidence: "medium" },
       paymentMethod: { value: "unknown", confidence: "low", hint: "Maksutapaa ei tunnistettu" },
       receiptNumber: { value: null, confidence: "low" },
+      businessId: { value: null, confidence: "low" },
       imageQuality: "poor",
       items: [],
     };
@@ -149,6 +154,7 @@ function profileFor(fileName: string): Profile {
       category: { value: "alcohol", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "high" },
       receiptNumber: { value: "ALK-7781", confidence: "high" },
+      businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
         { description: "Punaviini 0,75 l", quantity: 36, unit: "plo", totalCents: 79200, category: "alcohol", vatRate: 0.255, productGroup: "Viinit" },
@@ -166,6 +172,7 @@ function profileFor(fileName: string): Profile {
       category: { value: "soft_drinks", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "high" },
       receiptNumber: { value: "HW-2261", confidence: "high" },
+      businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
         { description: "Virvoitusjuomat 0,33 l", quantity: 240, unit: "kpl", totalCents: 43200, category: "soft_drinks", vatRate: 0.14, productGroup: "Virvoitusjuomat" },
@@ -188,6 +195,7 @@ function profileFor(fileName: string): Profile {
     category: { value: null, confidence: "low" },
     paymentMethod: { value: "unknown", confidence: "low" },
     receiptNumber: { value: null, confidence: "low" },
+    businessId: { value: null, confidence: "low" },
     imageQuality: "good",
     items: [],
   };
@@ -342,6 +350,7 @@ export function emptyResult(): ExtractionResult {
     category: unknown<ExpenseCategory>(),
     paymentMethod: unknown<PaymentMethod>(),
     receiptNumber: unknown<string>(),
+    businessId: unknown<string>(),
     items: [],
     imageQuality: "good",
     elapsedMs: 0,
@@ -387,6 +396,7 @@ export function reviewReasonsForSave(input: {
       confidence: input.payment === "unknown" ? "low" : "high",
     },
     receiptNumber: { value: input.receiptNumber, confidence: "high" },
+    businessId: { value: null, confidence: "low" },
     items: input.items,
     imageQuality: "good",
     elapsedMs: 0,

@@ -14,6 +14,12 @@ import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { reviewReasonsForSave } from "@/lib/restoflow/receipt-ai";
+import {
+  isAutoMatch,
+  matchMerchant,
+  parseBusinessId,
+} from "@/lib/restoflow/merchants";
+import { fetchMerchants } from "@/lib/restoflow/queries";
 import type {
   ExpenseCategory,
   PaymentMethod,
@@ -403,6 +409,16 @@ export async function saveReceipt(
     return { error: explain(error, "Kuitin tallennus epäonnistui") };
   }
 
+  // Kaupan tunnistus tehdään tallennuksen jälkeen omana askeleenaan.
+  // Se ei saa kaataa kuittia: jos brändi jää tunnistamatta tai koko
+  // luettelo on tavoittamattomissa, kuitti on silti kirjattu.
+  await linkSupplierToMerchant(
+    supabase,
+    restaurant.id,
+    parsed.data.supplier,
+    (formData.get("businessId") as string) || null,
+  );
+
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
@@ -450,6 +466,95 @@ function parseItems(raw: FormDataEntryValue | null): ItemInput[] {
  * Lasketaan uudelleen palvelimella eikä luoteta lomakkeen kenttään:
  * muuten kuitin voisi merkitä tarkistetuksi ohittamalla poimintanäkymän.
  */
+
+/**
+ * Liittää juuri tallennetun toimipisteen tunnettuun brändiin.
+ *
+ * Linkki on toimipisteessä eikä kuitissa. Näin yhden kaupan tunnistus
+ * — tai sen korjaus — koskee kaikkia sen kuitteja kerralla, myös jo
+ * tallennettuja.
+ *
+ * Vain riittävän varma osuma liitetään. Heikompi jää tekemättä eikä
+ * sitä yritetä uudelleen joka kuitilla: väärä kauppa kirjanpidossa on
+ * pahempi kuin tuntematon kauppa, koska väärää ei kukaan tarkista.
+ *
+ * Virheitä ei nosteta. Tämä on koriste ja hakutieto, ei osa kuittia.
+ */
+async function linkSupplierToMerchant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  restaurantId: string,
+  supplierName: string,
+  rawBusinessId: string | null,
+): Promise<void> {
+  const { data: supplier } = await supabase
+    .from("suppliers")
+    .select("id, merchant_id, merchant_confirmed")
+    .eq("restaurant_id", restaurantId)
+    .eq("name", supplierName.trim())
+    .maybeSingle();
+
+  if (!supplier) return;
+
+  // Ihmisen vahvistamaa ei kosketa. Tietokanta torjuu tämän joka
+  // tapauksessa; tässä säästetään turha kysely.
+  if (supplier.merchant_confirmed) return;
+
+  const merchants = await fetchMerchants();
+  if (merchants.length === 0) return;
+
+  const match = matchMerchant(
+    supplierName,
+    parseBusinessId(rawBusinessId),
+    merchants,
+  );
+
+  if (!isAutoMatch(match)) return;
+
+  await supabase.rpc("set_supplier_merchant", {
+    p_supplier: supplier.id,
+    p_merchant: match!.merchantId,
+    p_confidence: match!.confidence,
+    p_confirmed: false,
+  });
+}
+
+/**
+ * Käyttäjän valitsema kauppa toimipisteelle.
+ *
+ * Merkitään vahvistetuksi, jolloin automaattinen tunnistus ei enää
+ * koske siihen. Ilman sitä seuraava kuitti samasta kaupasta kumoaisi
+ * korjauksen ja käyttäjä tekisi saman työn uudelleen.
+ *
+ * Tyhjä valinta poistaa liitoksen. Se on eri asia kuin väärä liitos:
+ * "ei mikään näistä" on tieto, ei puuttuva vastaus.
+ */
+export async function setMerchant(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const supplierId = String(formData.get("supplierId") ?? "");
+  const merchantId = String(formData.get("merchantId") ?? "");
+
+  if (!supplierId) return { error: "Toimittajaa ei löytynyt." };
+
+  await requireContext("/admin/kuitit");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("set_supplier_merchant", {
+    p_supplier: supplierId,
+    p_merchant: merchantId === "" ? null : merchantId,
+    p_confidence: merchantId === "" ? null : 1,
+    p_confirmed: true,
+  });
+
+  if (error) return { error: explain(error, "Kaupan tallennus epäonnistui") };
+
+  revalidatePath("/admin", "layout");
+
+  return {
+    notice: merchantId === "" ? "Kaupan tieto poistettu." : "Kauppa tallennettu.",
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Asetukset

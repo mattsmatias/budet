@@ -251,6 +251,10 @@ export function CaptureFlow({
       <input type="hidden" name="imageQuality" value={result.imageQuality} />
       <input type="hidden" name="fileHash" value={fileHash ?? ""} />
       <input type="hidden" name="items" value={JSON.stringify(result.items)} />
+      {/* Kaupan tunnistukseen. Ei näytetä lomakkeella: käyttäjä ei
+          korjaa Y-tunnusta, ja jos poiminta luki sen väärin, tarkiste
+          on jo pudottanut sen pois. */}
+      <input type="hidden" name="businessId" value={result.businessId.value ?? ""} />
 
       <div
         className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"

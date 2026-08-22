@@ -11,8 +11,10 @@
  * tietokannan pitäisi skannata kaikki rivit joihin käyttäjällä on oikeus.
  */
 
+import type { Merchant } from "./merchants";
 import { createClient } from "@/utils/supabase/server";
 import type {
+  MerchantCategory,
   CustomCategory,
   Absence,
   Budget,
@@ -227,7 +229,7 @@ export async function fetchSuppliers(restaurantId: string): Promise<Supplier[]> 
   const { data, error } = await supabase
     .from("suppliers")
     .select(
-      "id, name, default_category, supplier_category_overrides ( from_category, to_category, count )",
+      "id, name, default_category, merchant_id, merchant_confidence, merchant_confirmed, supplier_category_overrides ( from_category, to_category, count )",
     )
     .eq("restaurant_id", restaurantId)
     .order("name");
@@ -239,6 +241,11 @@ export async function fetchSuppliers(restaurantId: string): Promise<Supplier[]> 
     restaurantId,
     name: row.name as string,
     defaultCategory: row.default_category as ExpenseCategory,
+    merchantId: (row.merchant_id as string | null) ?? null,
+    merchantConfidence: row.merchant_confidence === null
+      ? null
+      : Number(row.merchant_confidence),
+    merchantConfirmed: Boolean(row.merchant_confirmed),
     categoryOverrides: (
       (row.supplier_category_overrides as unknown as {
         from_category: string;
@@ -467,6 +474,60 @@ export async function fetchExpenseCategories(
 // Koottu näkymädata
 // ---------------------------------------------------------------------------
 
+/**
+ * Brändiluettelo.
+ *
+ * Yhteinen kaikille eikä ravintolakohtainen, joten hakua ei rajata
+ * millään. Luettelo on pieni ja muuttuu vain migraatioilla, joten se
+ * haetaan kokonaan kerralla — osittainen haku tarkoittaisi että
+ * tunnistus näkisi eri joukon kuin käyttöliittymä.
+ */
+export async function fetchMerchants(): Promise<Merchant[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("merchants")
+    .select(
+      "id, name, legal_name, business_id, category, subcategory, brand_color, brand_background, logo_url, merchant_aliases ( alias )",
+    )
+    .order("name");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    legalName: (row.legal_name as string | null) ?? null,
+    businessId: (row.business_id as string | null) ?? null,
+    category: row.category as string,
+    subcategory: (row.subcategory as string | null) ?? null,
+    brandColor: row.brand_color as string,
+    brandBackground: row.brand_background as string,
+    logoUrl: (row.logo_url as string | null) ?? null,
+    aliases: ((row.merchant_aliases as unknown as { alias: string }[]) ?? []).map(
+      (a) => a.alias,
+    ),
+  }));
+}
+
+/** Brändikategorioiden nimet. Luetaan kannasta, ei kovakoodattu. */
+export async function fetchMerchantCategories(): Promise<MerchantCategory[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("merchant_categories")
+    .select("id, label, sort_order")
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    label: row.label as string,
+    sortOrder: row.sort_order as number,
+  }));
+}
+
 export interface RestaurantData {
   receipts: Receipt[];
   openShifts: OpenShift[];
@@ -480,6 +541,9 @@ export interface RestaurantData {
   closedMonths: string[];
   /** Ravintolan omat kulukategoriat. */
   categories: CustomCategory[];
+  /** Tunnetut kaupat. Yhteinen luettelo, ei ravintolakohtainen. */
+  merchants: Merchant[];
+  merchantCategories: MerchantCategory[];
 }
 
 /**
@@ -502,6 +566,8 @@ export async function fetchRestaurantData(
     absences,
     closedMonths,
     categories,
+    merchants,
+    merchantCategories,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
     fetchUsers(restaurantId),
@@ -513,6 +579,8 @@ export async function fetchRestaurantData(
     fetchAbsences(restaurantId),
     fetchClosedMonths(restaurantId),
     fetchExpenseCategories(restaurantId),
+    fetchMerchants(),
+    fetchMerchantCategories(),
   ]);
 
   return {
@@ -526,6 +594,8 @@ export async function fetchRestaurantData(
     absences,
     closedMonths,
     categories,
+    merchants,
+    merchantCategories,
   };
 }
 

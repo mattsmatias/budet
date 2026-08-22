@@ -409,6 +409,7 @@ describe("toimittajat", () => {
     const supplier: Supplier = {
       id: "s-1", restaurantId: "rest-1", name: "Lyreco", defaultCategory: "packaging",
       categoryOverrides: [{ from: "other", to: "kitchen_supplies", count: 4 }],
+      merchantId: null, merchantConfidence: null, merchantConfirmed: false,
     };
     expect(suggestedCategory(supplier, "other")?.category).toBe("kitchen_supplies");
     expect(suggestedCategory(supplier, "food")).toBeNull();

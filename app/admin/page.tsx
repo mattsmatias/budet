@@ -26,6 +26,7 @@ import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
 import {
   Avatar,
   ButtonLink,
@@ -65,7 +66,8 @@ export default async function AdminDashboard({
 }: PageProps<"/admin">) {
   const params = await searchParams;
   const {
-    receipts, users, budgets, shifts, clockEvents, absences,
+    receipts, users, budgets, shifts, clockEvents, absences, merchants,
+    suppliers: supplierRows,
     month, today, now, monthlyHours, restaurant, user, role, categories: customCategories,
   } = await adminContext("/admin");
 
@@ -133,6 +135,21 @@ export default async function AdminDashboard({
   // katsomatta.
   const insights = buildInsights({ ...dashboardInput, now });
   const items = focusItems(dashboardInput, insights);
+
+  /*
+   * Kaupan tunnus toimittajalistaan.
+   *
+   * Sama kahden askeleen haku kuin kuittilistassa: toimittaja tietää
+   * brändinsä, brändi tietää värinsä. Kartat rakennetaan kerran, koska
+   * viisi riviä tekisi kymmenen hakua listan piirtämisen aikana.
+   */
+  const merchantById = new Map(merchants.map((m) => [m.id, m]));
+  const merchantBySupplier = new Map(
+    supplierRows
+      .filter((row) => row.merchantId !== null)
+      .map((row) => [row.id, merchantById.get(row.merchantId!) ?? null]),
+  );
+  const merchantOfSupplier = (id: string) => merchantBySupplier.get(id) ?? null;
 
   const budgets_ = budgetLines(receipts, budgets, viewMonth);
 
@@ -458,10 +475,15 @@ export default async function AdminDashboard({
                       style={{ borderColor: "var(--rf-line)" }}
                     >
                       <span className="flex min-w-0 items-center gap-2.5">
-                        <Avatar initials={initialsOf(supplier.name)} size={30} />
+                        <MerchantBadge
+                          merchant={merchantOfSupplier(supplier.supplierId)}
+                          fallbackName={supplier.name}
+                          size={30}
+                        />
                         <span className="min-w-0">
                           <span className="block truncate text-[14px] font-medium">
-                            {supplier.name}
+                            {merchantOfSupplier(supplier.supplierId)?.name ??
+                              supplier.name}
                           </span>
                           <span
                             className="rf-tabular block text-[12px]"
@@ -793,7 +815,6 @@ function monthWord(month: string): string {
   return formatMonth(month).split(" ")[0].toLowerCase();
 }
 
-
 /**
  * Päivä vuosiluvun kanssa.
  *
@@ -811,9 +832,3 @@ function formatDate(isoDate: string): string {
   return `${Number(d)}.${Number(m)}.`;
 }
 
-/** Toimittajan nimen alkukirjaimet. Neutraali tunniste ilman logoja. */
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  return parts.slice(0, 2).map((part) => part[0]!.toUpperCase()).join("");
-}

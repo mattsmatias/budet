@@ -13,10 +13,11 @@ import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
-  type ExpenseCategory,
 } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
-import { ProductIcon, RfIcon, SupplierIcon } from "@/components/restoflow/icons";
+import { ProductIcon, RfIcon } from "@/components/restoflow/icons";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { normalizeMerchantName } from "@/lib/restoflow/merchants";
 import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "./review";
 import { ReceiptSearch } from "./search";
@@ -40,14 +41,82 @@ export default async function AdminReceiptsPage({
   searchParams,
 }: PageProps<"/admin/kuitit">) {
   const params = await searchParams;
-  const { receipts, users, role } = await adminContext("/admin/kuitit");
+  const { receipts, users, role, suppliers, merchants, merchantCategories } =
+    await adminContext("/admin/kuitit");
+
+  /*
+   * Kaupan tiedot kuitille.
+   *
+   * Kuitti osoittaa toimipisteeseen ja toimipiste brändiin, joten haku
+   * on kaksivaiheinen. Se tehdään kerran tässä eikä joka kortissa:
+   * kymmenen kuittia tekisi kaksikymmentä hakua listan piirtämisen
+   * aikana.
+   */
+  const merchantById = new Map(merchants.map((m) => [m.id, m]));
+  const merchantBySupplier = new Map(
+    suppliers
+      .filter((supplier) => supplier.merchantId !== null)
+      .map((supplier) => [supplier.id, merchantById.get(supplier.merchantId!)]),
+  );
+  const categoryLabels = new Map(
+    merchantCategories.map((c) => [c.id, c.label]),
+  );
+
+  const merchantOf = (receipt: (typeof receipts)[number]) =>
+    merchantBySupplier.get(receipt.supplierId ?? "") ?? null;
 
   const query = typeof params.haku === "string" ? params.haku : "";
   const filter = (typeof params.suodatin === "string" ? params.suodatin : "all") as ReceiptFilter;
   const highlight = typeof params.korosta === "string" ? params.korosta : null;
 
-  const visible = sortByDateDesc(
-    filterReceipts(searchReceipts(receipts, query), filter),
+  /*
+   * Haku osuu myös brändiin.
+   *
+   * Kuitissa lukee "K-MARKET MALMI 4045" mutta käyttäjä kirjoittaa
+   * "K-Market". searchReceipts ei voi tietää siitä mitään — se ei näe
+   * brändiluetteloa — joten osumat yhdistetään tässä.
+   */
+  const q = query.trim().toLowerCase();
+
+  const searched =
+    q === ""
+      ? receipts
+      : (() => {
+          const hits = new Map(
+            searchReceipts(receipts, query).map((r) => [r.id, r]),
+          );
+          const normalized = normalizeMerchantName(query);
+
+          for (const receipt of receipts) {
+            const merchant = merchantOf(receipt);
+            if (!merchant) continue;
+
+            const nameHit = merchant.name.toLowerCase().includes(q);
+            const aliasHit =
+              normalized !== "" &&
+              merchant.aliases.some((alias) => alias.includes(normalized));
+
+            if (nameHit || aliasHit) hits.set(receipt.id, receipt);
+          }
+
+          return [...hits.values()];
+        })();
+
+  // Toimialasuodatin on eri asia kuin kulukategoria: toinen kertoo
+  // missä on käyty, toinen mihin raha meni. Ruokakaupasta ostetaan
+  // myös siivousainetta.
+  const trade = typeof params.kauppa === "string" ? params.kauppa : null;
+
+  const byTrade = trade
+    ? searched.filter((r) => merchantOf(r)?.category === trade)
+    : searched;
+
+  const visible = sortByDateDesc(filterReceipts(byTrade, filter));
+
+  // Vain ne toimialat joita aineistossa oikeasti on. Tyhjä suodatin
+  // lupaa tuloksia joita ei ole.
+  const presentTrades = merchantCategories.filter((category) =>
+    receipts.some((r) => merchantOf(r)?.category === category.id),
   );
 
   const total = visible.reduce((s, r) => s + r.totalCents, 0);
@@ -140,12 +209,49 @@ export default async function AdminReceiptsPage({
         </Card>
       ) : null}
 
+      {presentTrades.length > 1 ? (
+        <nav
+          aria-label="Toimialat"
+          className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
+        >
+          <ul className="flex gap-2 pb-1 md:flex-wrap">
+            {[{ id: "", label: "Kaikki kaupat" }, ...presentTrades].map((category) => {
+              const active = (trade ?? "") === category.id;
+              const search = new URLSearchParams();
+              if (category.id !== "") search.set("kauppa", category.id);
+              if (filter !== "all") search.set("suodatin", filter);
+              if (query) search.set("haku", query);
+              const qs = search.toString();
+
+              return (
+                <li key={category.id || "kaikki"}>
+                  <Link
+                    href={qs ? `/admin/kuitit?${qs}` : "/admin/kuitit"}
+                    aria-current={active ? "page" : undefined}
+                    className="rf-press inline-block whitespace-nowrap px-3.5 py-1.5 text-[13px] font-medium"
+                    style={{
+                      background: active ? "var(--rf-text)" : "var(--rf-card)",
+                      color: active ? "#fff" : "var(--rf-text-2)",
+                      borderRadius: "var(--rf-r-pill)",
+                      boxShadow: active ? "none" : "var(--rf-shadow-sm)",
+                    }}
+                  >
+                    {category.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      ) : null}
+
       <nav aria-label="Suodattimet" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {FILTERS.map((f) => {
             const active = filter === f.key;
             const search = new URLSearchParams();
             if (f.key !== "all") search.set("suodatin", f.key);
+            if (trade) search.set("kauppa", trade);
             if (query) search.set("haku", query);
             const qs = search.toString();
 
@@ -194,9 +300,9 @@ export default async function AdminReceiptsPage({
                     : {})}
                 >
                   <div className="flex items-start gap-3">
-                    <SupplierBubble
-                      name={receipt.supplierName}
-                      category={receipt.category}
+                    <MerchantBadge
+                      merchant={merchantOf(receipt) ?? null}
+                      fallbackName={receipt.supplierName}
                     />
 
                     <div className="min-w-0 flex-1">
@@ -205,7 +311,10 @@ export default async function AdminReceiptsPage({
                           href={`/admin/kuitit/${receipt.id}`}
                           className="text-[15px] font-semibold underline-offset-4 hover:underline"
                         >
-                          {receipt.supplierName}
+                          {/* Brändinimi kun se tunnetaan, muuten kuitin
+                              oma teksti. "K-Market" on luettavampi kuin
+                              "K-MARKET MALMI 4045". */}
+                          {merchantOf(receipt)?.name ?? receipt.supplierName}
                         </Link>
                         <p className="rf-tabular text-[17px] font-semibold">
                           {formatMoney(receipt.totalCents)}
@@ -219,6 +328,21 @@ export default async function AdminReceiptsPage({
                         {formatDate(receipt.date)} · {CATEGORY_LABELS[receipt.category]} ·{" "}
                         {PAYMENT_LABELS[receipt.paymentMethod]}
                       </p>
+
+                      {merchantOf(receipt) ? (
+                        <p className="text-[12px]">
+                          <span
+                            style={{ color: merchantOf(receipt)!.brandColor }}
+                          >
+                            {categoryLabels.get(merchantOf(receipt)!.category) ??
+                              merchantOf(receipt)!.category}
+                          </span>
+                          <span style={{ color: "var(--rf-text-3)" }}>
+                            {" · "}
+                            {receipt.supplierName}
+                          </span>
+                        </p>
+                      ) : null}
 
                       <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                         ALV{" "}
@@ -326,34 +450,6 @@ export default async function AdminReceiptsPage({
         </ul>
       )}
     </div>
-  );
-}
-
-/**
- * Toimittajan tunnus listassa.
- *
- * Sama pyöreä kupla kuin ennen, mutta sisällä toimittajan oma ikoni
- * kategorian sijaan. S-Market ja Alko näyttävät nyt eri asioilta, mikä
- * on koko listan silmäiltävyyden kannalta se olennainen ero.
- */
-function SupplierBubble({
-  name,
-  category,
-}: {
-  name: string;
-  category: ExpenseCategory;
-}) {
-  return (
-    <span
-      className="flex h-10 w-10 shrink-0 items-center justify-center"
-      style={{
-        background: "var(--rf-inset)",
-        color: "var(--rf-text-2)",
-        borderRadius: "50%",
-      }}
-    >
-      <SupplierIcon name={name} category={category} size={20} />
-    </span>
   );
 }
 

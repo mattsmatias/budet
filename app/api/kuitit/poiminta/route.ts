@@ -16,6 +16,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireContext } from "@/lib/restoflow/session";
+import { parseBusinessId } from "@/lib/restoflow/merchants";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import {
   DEFAULT_MODEL,
@@ -69,6 +70,7 @@ const extraction = z.object({
   category: z.object({ value: z.enum(CATEGORY_KEYS).nullable(), confidence }),
   paymentMethod: z.object({ value: z.enum(PAYMENT_KEYS).nullable(), confidence }),
   receiptNumber: z.object({ value: z.string().nullable(), confidence }),
+  businessId: z.object({ value: z.string().nullable(), confidence }),
   items: z.array(
     z.object({
       description: z.string(),
@@ -202,6 +204,9 @@ Säännöt, joista ei poiketa:
 - Rivin vatRate on MURTOLUKU, ei prosenttiluku: 14 % on 0.14 ja
   25,5 % on 0.255. Jos kantaa ei näy rivillä, palauta null.
 - Päivämäärä on ostopäivä muodossa VVVV-KK-PP, ei tulostuspäivä.
+- businessId on myyjän Y-tunnus muodossa 1234567-8. Se löytyy yleensä
+  kuitin alalaidasta. Älä sekoita sitä ALV-numeroon (FI12345678) tai
+  kuittinumeroon. Jos sitä ei näy, palauta null.
 - imageQuality on "poor" vain jos kuva on oikeasti epäselvä, vinossa tai
   osittain rajautunut. Älä merkitse hyvää kuvaa huonoksi.
 - items saa olla tyhjä lista jos rivejä ei erotu. Älä keksi rivejä
@@ -239,6 +244,9 @@ function sanitize(parsed: Parsed): ExtractionResult {
     category: narrow<ExpenseCategory>(parsed.category),
     paymentMethod: narrow<PaymentMethod>(parsed.paymentMethod),
     receiptNumber: field(parsed.receiptNumber, text),
+    // Tarkiste lasketaan tässä: väärin luettu Y-tunnus on pahempi kuin
+    // puuttuva, koska tunnistus luottaa siihen kaiken muun ohi.
+    businessId: field(parsed.businessId, (raw) => parseBusinessId(raw)),
     items: parsed.items
       .slice(0, 100)
       .map((item): ExtractedItem | null => {

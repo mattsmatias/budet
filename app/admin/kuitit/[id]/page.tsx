@@ -3,10 +3,16 @@ import { notFound, redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import {
+  fetchMerchantCategories,
+  fetchMerchants,
   fetchReceipt,
   fetchReceiptImageUrl,
+  fetchReceipts,
+  fetchSuppliers,
   fetchUsers,
 } from "@/lib/restoflow/queries";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { MerchantPicker } from "./merchant-picker";
 import { checkVat, formatRate, isMixedReceipt } from "@/lib/restoflow/vat";
 import {
   CATEGORY_LABELS,
@@ -45,10 +51,47 @@ export default async function AdminReceiptDetailPage({
   // kuitti olemassa toisessa ravintolassa.
   if (!receipt) notFound();
 
-  const [users, imageUrl] = await Promise.all([
-    fetchUsers(restaurant.id),
-    fetchReceiptImageUrl(receipt.imagePath),
-  ]);
+  const [users, imageUrl, suppliers, merchants, merchantCategories, allReceipts] =
+    await Promise.all([
+      fetchUsers(restaurant.id),
+      fetchReceiptImageUrl(receipt.imagePath),
+      fetchSuppliers(restaurant.id),
+      fetchMerchants(),
+      fetchMerchantCategories(),
+      fetchReceipts(restaurant.id),
+    ]);
+
+  const supplier = suppliers.find((row) => row.id === receipt.supplierId) ?? null;
+  const merchant =
+    merchants.find((row) => row.id === supplier?.merchantId) ?? null;
+  const tradeLabel =
+    merchantCategories.find((c) => c.id === merchant?.category)?.label ?? null;
+
+  /*
+   * Saman kaupan historia.
+   *
+   * Lasketaan brändin eikä toimipisteen mukaan: "K-Market Malmi" ja
+   * "K-Market Pihlajisto" ovat sama kauppa kun kysytään paljonko
+   * K-Marketiin on mennyt rahaa. Jos brändiä ei tunnisteta, jäljelle
+   * jää toimipiste, mikä on sekin oikea vastaus.
+   */
+  const sameMerchantSupplierIds = new Set(
+    merchant
+      ? suppliers.filter((row) => row.merchantId === merchant.id).map((r) => r.id)
+      : [receipt.supplierId],
+  );
+
+  const merchantReceipts = allReceipts.filter((r) =>
+    sameMerchantSupplierIds.has(r.supplierId ?? ""),
+  );
+
+  const month = receipt.date.slice(0, 7);
+  const monthReceipts = merchantReceipts.filter((r) => r.date.startsWith(month));
+  const monthTotal = monthReceipts.reduce((sum, r) => sum + r.totalCents, 0);
+  const latestVisit = merchantReceipts
+    .map((r) => r.date)
+    .sort()
+    .at(-1);
 
   const addedBy = users.find((u) => u.id === receipt.addedByUserId);
   const vat = checkVat(
@@ -147,6 +190,71 @@ export default async function AdminReceiptDetailPage({
               summautuvat kuittiin merkittyyn ALV:hen.
             </p>
           ) : null}
+
+          <Card>
+            <div className="flex items-start gap-3.5">
+              <MerchantBadge
+                merchant={merchant}
+                fallbackName={receipt.supplierName}
+                size={48}
+              />
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[17px] font-semibold">
+                  {merchant?.name ?? receipt.supplierName}
+                </p>
+
+                {/* Toimipiste erikseen kun brändi tunnetaan. Molempien
+                    näyttäminen samalla rivillä toistaisi nimen. */}
+                {merchant ? (
+                  <p className="truncate text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                    {receipt.supplierName}
+                  </p>
+                ) : null}
+
+                {tradeLabel ? (
+                  <p
+                    className="mt-1 text-[12px] font-medium"
+                    style={{ color: merchant!.brandColor }}
+                  >
+                    {tradeLabel}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    Kauppaa ei tunnistettu
+                  </p>
+                )}
+
+                {/* Korjaus on esihenkilön oikeus: tunnistus ohjaa
+                    raportointia, joten sen muuttaminen on kirjanpidon
+                    tietoa eikä mielipide. */}
+                {canReview && supplier ? (
+                  <MerchantPicker
+                    supplierId={supplier.id}
+                    supplierName={receipt.supplierName}
+                    current={supplier.merchantId}
+                    merchants={merchants.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      category: m.category,
+                    }))}
+                  />
+                ) : null}
+              </div>
+            </div>
+
+            <dl className="mt-4 grid grid-cols-3 gap-3">
+              <Stat
+                label={`Ostoksia ${monthWord(month)}`}
+                value={formatMoney(monthTotal)}
+              />
+              <Stat label="Kuitteja" value={String(merchantReceipts.length)} />
+              <Stat
+                label="Viimeisin"
+                value={latestVisit ? formatDate(latestVisit) : "—"}
+              />
+            </dl>
+          </Card>
 
           <Card>
             <p className="mb-1 text-[13px] font-semibold">Kuittitiedot</p>
@@ -277,6 +385,31 @@ function Row({
       </dd>
     </div>
   );
+}
+
+/** Pieni luku otsikoineen. Käytetään kaupan yhteenvedossa. */
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="px-3 py-2.5"
+      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+    >
+      <dt className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+        {label}
+      </dt>
+      <dd className="rf-tabular mt-0.5 text-[15px] font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+const MONTH_WORDS = [
+  "tammikuussa", "helmikuussa", "maaliskuussa", "huhtikuussa",
+  "toukokuussa", "kesäkuussa", "heinäkuussa", "elokuussa",
+  "syyskuussa", "lokakuussa", "marraskuussa", "joulukuussa",
+];
+
+function monthWord(month: string): string {
+  return MONTH_WORDS[Number(month.slice(5, 7)) - 1] ?? "kuussa";
 }
 
 function formatDate(isoDate: string): string {
