@@ -28,6 +28,9 @@ export function AbsenceReporter({
   const [state, action] = useActionState(reportAbsence, initial);
   const [open, setOpen] = useState(false);
 
+  // Alkupäivä on tilassa vain siksi, että loppupäivän min seuraa sitä.
+  const [start, setStart] = useState(defaultDate);
+
   return (
     <section>
       {absences.length > 0 ? (
@@ -40,10 +43,14 @@ export function AbsenceReporter({
               >
                 <div className="min-w-0">
                   <p className="text-[14px] font-medium">
-                    {formatShortDate(absence.date)}
+                    {formatPeriod(absence.date, absence.endDate)}
                   </p>
                   <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                    {absence.note || "Ei lisätietoa"}
+                    {absence.kind === "sick"
+                      ? absence.certificateSeenAt
+                        ? "Todistus merkitty nähdyksi"
+                        : "Todistusta ei ole vielä merkitty nähdyksi"
+                      : absence.note || "Ei lisätietoa"}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -75,20 +82,43 @@ export function AbsenceReporter({
           <p className="text-[15px] font-semibold">Ilmoita poissaolo</p>
 
           <form action={action} className="mt-3 space-y-3">
-            <div>
-              <label htmlFor="ab-date" className="block text-[13px] font-medium">
-                Päivä
-              </label>
-              <input
-                id="ab-date"
-                name="date"
-                type="date"
-                defaultValue={defaultDate}
-                required
-                className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-                style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
-              />
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label htmlFor="ab-date" className="block text-[13px] font-medium">
+                  Alkaa
+                </label>
+                <input
+                  id="ab-date"
+                  name="date"
+                  type="date"
+                  value={start}
+                  onChange={(event) => setStart(event.target.value)}
+                  required
+                  className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
+                  style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="ab-end" className="block text-[13px] font-medium">
+                  Päättyy
+                </label>
+                {/* min estää jakson joka päättyy ennen alkuaan jo
+                    selaimessa. Sama tarkistus on palvelimella. */}
+                <input
+                  id="ab-end"
+                  name="endDate"
+                  type="date"
+                  min={start}
+                  className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
+                  style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                />
+              </div>
             </div>
+
+            <p className="-mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              Jätä päättymispäivä tyhjäksi jos olet poissa vain yhden päivän.
+            </p>
 
             <div>
               <label htmlFor="ab-kind" className="block text-[13px] font-medium">
@@ -125,6 +155,23 @@ export function AbsenceReporter({
                 Älä kirjoita tähän terveystietoja. Esihenkilö tarvitsee vain
                 tiedon siitä ettet pääse.
               </p>
+            </div>
+
+            {/* Todistusta ei pyydetä eikä liitetä tähän. Ilmoitus on
+                tehtävä heti, ja todistus on olemassa vasta lääkärikäynnin
+                jälkeen — usein päiviä myöhemmin. */}
+            <div
+              className="px-3.5 py-3 text-[12px] leading-relaxed"
+              style={{
+                background: "var(--rf-inset)",
+                color: "var(--rf-text-2)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <strong className="font-semibold">Sairauslomatodistus</strong>{" "}
+              toimitetaan esihenkilölle erikseen silloin kun se on olemassa —
+              ilmoita poissaolosta jo nyt. Todistusta ei liitetä Budetiin,
+              vaan esihenkilö merkitsee tähän ilmoitukseen nähneensä sen.
             </div>
 
             {state.error ? (
@@ -233,6 +280,17 @@ function Submit() {
       {pending ? "Lähetetään…" : "Ilmoita"}
     </button>
   );
+}
+
+/**
+ * Jakso sanoina.
+ *
+ * Yhden päivän poissaolossa väliviiva olisi harhaanjohtava: "26.8.–26.8."
+ * näyttää kahdelta päivältä.
+ */
+function formatPeriod(start: string, end: string): string {
+  if (start === end) return formatShortDate(start);
+  return `${formatShortDate(start)}–${formatShortDate(end)}`;
 }
 
 function formatShortDate(isoDate: string): string {

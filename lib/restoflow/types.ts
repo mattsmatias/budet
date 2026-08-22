@@ -358,10 +358,21 @@ export const ABSENCE_LABELS: Record<AbsenceKind, string> = {
 export interface Absence {
   id: string;
   userId: string;
+  /** Jakson ensimmäinen päivä. */
   date: string;
+  /** Jakson viimeinen päivä. Yhden päivän poissaolossa sama kuin date. */
+  endDate: string;
   kind: AbsenceKind;
   note: string | null;
   reportedAt: string;
+  /**
+   * Milloin esihenkilö kuittasi nähneensä todistuksen, tai null.
+   *
+   * Todistusta itseään ei tallenneta. Lääkärintodistus on terveystieto
+   * ja siinä lukee usein diagnoosi; työnantajalle kuuluu tieto
+   * poissaolosta ja sen kestosta, ei sen syystä.
+   */
+  certificateSeenAt: string | null;
 }
 
 // ---------------------------------------------------------------------------

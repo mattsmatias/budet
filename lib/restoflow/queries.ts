@@ -390,11 +390,15 @@ export async function fetchAbsences(
   const supabase = await createClient();
   let query = supabase
     .from("absences")
-    .select("id, user_id, absence_date, kind, note, created_at")
+    .select(
+      "id, user_id, absence_date, end_date, kind, note, created_at, certificate_seen_at",
+    )
     .eq("restaurant_id", restaurantId)
     .order("absence_date", { ascending: false });
 
-  if (fromDate) query = query.gte("absence_date", fromDate);
+  // Rajaus loppupäivään eikä alkuun: eilen alkanut sairausloma on yhä
+  // voimassa tänään, ja alkupäivään rajaus pudottaisi sen listalta.
+  if (fromDate) query = query.gte("end_date", fromDate);
 
   const { data, error } = await query;
   if (error || !data) return [];
@@ -403,9 +407,11 @@ export async function fetchAbsences(
     id: row.id as string,
     userId: row.user_id as string,
     date: row.absence_date as string,
+    endDate: (row.end_date as string) ?? (row.absence_date as string),
     kind: row.kind as Absence["kind"],
     note: (row.note as string | null) ?? null,
     reportedAt: row.created_at as string,
+    certificateSeenAt: (row.certificate_seen_at as string | null) ?? null,
   }));
 }
 

@@ -78,11 +78,25 @@ const LABELS: Record<ClockEventType, string> = {
 // Poissaolot
 // ---------------------------------------------------------------------------
 
-const absenceSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tarkista päivämäärä."),
-  kind: z.enum(["sick", "other", "cannot_attend"]),
-  note: z.string().trim().max(300).nullable(),
-});
+const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Loppupäivä on vapaaehtoinen ja tarkoittaa tyhjänä samaa päivää.
+ *
+ * Sairausloma kestää usein useamman päivän, mutta yhden päivän ilmoitus
+ * on silti tavallisin. Pakollinen loppupäivä lisäisi kentän joka
+ * täytettäisiin joka kerta samalla arvolla kuin alku.
+ */
+const absenceSchema = z
+  .object({
+    date: z.string().regex(isoDate, "Tarkista päivämäärä."),
+    endDate: z.string().regex(isoDate, "Tarkista loppupäivä.").nullable(),
+    kind: z.enum(["sick", "other", "cannot_attend"]),
+    note: z.string().trim().max(300).nullable(),
+  })
+  .refine((value) => value.endDate === null || value.endDate >= value.date, {
+    message: "Poissaolo ei voi päättyä ennen kuin se alkaa.",
+  });
 
 export async function reportAbsence(
   _prev: ActionState,
@@ -90,6 +104,7 @@ export async function reportAbsence(
 ): Promise<ActionState> {
   const parsed = absenceSchema.safeParse({
     date: formData.get("date"),
+    endDate: (formData.get("endDate") as string) || null,
     kind: formData.get("kind"),
     note: (formData.get("note") as string) || null,
   });
@@ -103,6 +118,7 @@ export async function reportAbsence(
     restaurant_id: restaurant.id,
     user_id: user.id,
     absence_date: parsed.data.date,
+    end_date: parsed.data.endDate ?? parsed.data.date,
     kind: parsed.data.kind,
     note: parsed.data.note,
   });

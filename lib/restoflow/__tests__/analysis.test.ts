@@ -593,6 +593,55 @@ describe("poikkeamat", () => {
     expect(alerts[0].severity).toBe("critical");
   });
 
+  it("nostaa poissaoloilmoituksen kriittiseksi", () => {
+    const alerts = buildAlerts({
+      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      absences: [
+        {
+          id: "a1", userId: "u1", date: "2026-08-22", endDate: "2026-08-22",
+          kind: "sick", note: null, reportedAt: "2026-08-22T06:00:00.000Z",
+          certificateSeenAt: null,
+        },
+      ],
+      month: "2026-08", today: "2026-08-20",
+    });
+    const absence = alerts.find((a) => a.kind === "absence_reported");
+    expect(absence?.severity).toBe("critical");
+  });
+
+  // Sairausloma kestää yli päivän. Jos suodatus osuisi alkupäivään, kesken
+  // oleva jakso katoaisi huomioista heti seuraavana aamuna — juuri silloin
+  // kun tekijää vielä etsitään.
+  it("pitää kesken olevan jakson näkyvissä", () => {
+    const alerts = buildAlerts({
+      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      absences: [
+        {
+          id: "a1", userId: "u1", date: "2026-08-18", endDate: "2026-08-24",
+          kind: "sick", note: null, reportedAt: "2026-08-18T06:00:00.000Z",
+          certificateSeenAt: null,
+        },
+      ],
+      month: "2026-08", today: "2026-08-20",
+    });
+    expect(alerts.some((a) => a.kind === "absence_reported")).toBe(true);
+  });
+
+  it("unohtaa päättyneen jakson", () => {
+    const alerts = buildAlerts({
+      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      absences: [
+        {
+          id: "a1", userId: "u1", date: "2026-08-10", endDate: "2026-08-14",
+          kind: "sick", note: null, reportedAt: "2026-08-10T06:00:00.000Z",
+          certificateSeenAt: null,
+        },
+      ],
+      month: "2026-08", today: "2026-08-20",
+    });
+    expect(alerts.some((a) => a.kind === "absence_reported")).toBe(false);
+  });
+
   it("ei tuota hälytyksiä puhtaasta aineistosta", () => {
     const alerts = buildAlerts({
       receipts: [receipt({ date: "2026-08-01", totalCents: 11450, vatCents: 1450, category: "food" })],

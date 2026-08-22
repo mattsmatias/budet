@@ -589,6 +589,34 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
   revalidatePath("/app", "layout");
 }
 
+/**
+ * Merkitsee sairauslomatodistuksen nähdyksi, tai poistaa merkinnän.
+ *
+ * Todistusta itseään ei tallenneta. Lääkärintodistus on terveystieto ja
+ * siinä lukee usein diagnoosi; työnantajalle kuuluu tieto poissaolosta ja
+ * sen kestosta, ei sen syystä. Budetiin jää merkintä siitä että todistus
+ * on nähty ja mille ajalle poissaolo on ilmoitettu — se mitä
+ * palkanmaksuun tarvitaan.
+ */
+export async function markAbsenceCertificate(formData: FormData): Promise<void> {
+  const id = String(formData.get("absenceId") ?? "");
+  if (!id) return;
+
+  // Merkinnän voi myös purkaa: väärään ilmoitukseen osunut kuittaus
+  // jäisi muuten pysyväksi väitteeksi.
+  const seen = formData.get("seen") === "true";
+
+  await requireContext("/admin/tyovuorot");
+  const supabase = await createClient();
+  await supabase.rpc("mark_absence_certificate", {
+    p_absence: id,
+    p_seen: seen,
+  });
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+}
+
 // ---------------------------------------------------------------------------
 // Omat kulukategoriat
 // ---------------------------------------------------------------------------

@@ -223,13 +223,23 @@ function shiftAlerts(ctx: AlertContext): Alert[] {
   // Tämä oli aiemmin sidottu vuoron declined-tilaan. Kun vuoroa ei enää
   // kuitata, tila ei voi syntyä — mutta itse asia ei kadonnut mihinkään,
   // joten ilmoitus luetaan nyt suoraan poissaoloista.
-  const upcoming = ctx.absences.filter((absence) => absence.date >= ctx.today);
+  // Loppupäivä ratkaisee: kesken oleva sairausloma on yhä voimassa,
+  // vaikka se olisi alkanut viime viikolla.
+  const upcoming = ctx.absences.filter((absence) => absence.endDate >= ctx.today);
 
   for (const absence of upcoming) {
     const user = ctx.users.find((u) => u.id === absence.userId);
     const shift = ctx.shifts.find(
-      (s) => s.userId === absence.userId && s.date === absence.date,
+      (s) =>
+        s.userId === absence.userId &&
+        s.date >= absence.date &&
+        s.date <= absence.endDate,
     );
+
+    const period =
+      absence.date === absence.endDate
+        ? formatDate(absence.date)
+        : `${formatDate(absence.date)}–${formatDate(absence.endDate)}`;
 
     alerts.push({
       id: `absence-${absence.id}`,
@@ -237,8 +247,8 @@ function shiftAlerts(ctx: AlertContext): Alert[] {
       severity: "critical",
       title: `${user?.name ?? "Työntekijä"} ei pääse`,
       detail: shift
-        ? `${formatDate(absence.date)} · ${shift.startTime}–${shift.endTime} — vuoro on yhä hänellä`
-        : `${formatDate(absence.date)} — ei vuoroa tuona päivänä`,
+        ? `${period} · ${shift.startTime}–${shift.endTime} — vuoro on yhä hänellä`
+        : `${period} — ei vuoroa jaksolle`,
       href: "/admin/tyovuorot",
       entityId: absence.id,
     });

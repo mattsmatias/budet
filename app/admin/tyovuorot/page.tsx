@@ -21,10 +21,12 @@ import {
   Card,
   CardHeader,
   EmptyState,
+  Icon,
+  ICONS,
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
-import { cancelAbsence } from "../actions";
+import { cancelAbsence, markAbsenceCertificate } from "../actions";
 import { EditShift, NewShiftButton } from "./shift-form";
 
 export const metadata = { title: "Työvuorot" };
@@ -50,7 +52,9 @@ export default async function AdminShiftsPage() {
     (pattern) => Math.abs(pattern.averageVarianceMs) > 10 * 60000,
   );
 
-  const upcomingAbsences = absences.filter((absence) => absence.date >= today);
+  // Loppupäivä ratkaisee: eilen alkanut sairausloma on yhä voimassa,
+  // eikä sen pidä kadota listalta kesken jakson.
+  const upcomingAbsences = absences.filter((absence) => absence.endDate >= today);
 
   return (
     <div className="rf-enter space-y-5">
@@ -76,8 +80,13 @@ export default async function AdminShiftsPage() {
           <ul className="space-y-3">
             {upcomingAbsences.map((absence) => {
               const user = users.find((u) => u.id === absence.userId);
+              // Vuoro haetaan jakson ajalta: monipäiväisessä
+              // sairauslomassa vuoro voi olla millä tahansa päivällä.
               const shift = shifts.find(
-                (s) => s.userId === absence.userId && s.date === absence.date,
+                (s) =>
+                  s.userId === absence.userId &&
+                  s.date >= absence.date &&
+                  s.date <= absence.endDate,
               );
 
               return (
@@ -93,7 +102,9 @@ export default async function AdminShiftsPage() {
                         {user?.name ?? "Tuntematon"}
                       </p>
                       <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                        {formatShortDate(absence.date)}
+                        {absence.date === absence.endDate
+                          ? formatShortDate(absence.date)
+                          : `${formatShortDate(absence.date)}–${formatShortDate(absence.endDate)}`}
                         {shift ? ` · vuoro ${shift.startTime}–${shift.endTime}` : " · ei vuoroa"}
                         {absence.note ? ` · ${absence.note}` : ""}
                       </p>
@@ -104,6 +115,45 @@ export default async function AdminShiftsPage() {
                     <Pill tone="warn" dot>
                       {ABSENCE_LABELS[absence.kind]}
                     </Pill>
+
+                    {/* Vain sairaudessa. Todistusta ei tallenneta
+                        Budetiin — tämä on merkintä siitä että se on
+                        nähty, ja se on se mitä palkanmaksuun tarvitaan. */}
+                    {absence.kind === "sick" ? (
+                      <form action={markAbsenceCertificate}>
+                        <input type="hidden" name="absenceId" value={absence.id} />
+                        <input
+                          type="hidden"
+                          name="seen"
+                          value={absence.certificateSeenAt ? "false" : "true"}
+                        />
+                        <button
+                          type="submit"
+                          className="rf-press flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium"
+                          style={
+                            absence.certificateSeenAt
+                              ? {
+                                  background: "var(--rf-green-bg)",
+                                  color: "var(--rf-green-text)",
+                                  borderRadius: "var(--rf-r-control)",
+                                }
+                              : {
+                                  background: "var(--rf-inset)",
+                                  color: "var(--rf-text-2)",
+                                  borderRadius: "var(--rf-r-control)",
+                                }
+                          }
+                        >
+                          {absence.certificateSeenAt ? (
+                            <Icon path={ICONS.check} size={14} />
+                          ) : null}
+                          {absence.certificateSeenAt
+                            ? "Todistus nähty"
+                            : "Merkitse todistus nähdyksi"}
+                        </button>
+                      </form>
+                    ) : null}
+
                     <form action={cancelAbsence}>
                       <input type="hidden" name="absenceId" value={absence.id} />
                       <button

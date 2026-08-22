@@ -115,7 +115,7 @@ function openClock(ctx: EmployeeAlertContext): EmployeeAlert[] {
 
 /** Oma poissaoloilmoitus näkyy kuittauksena, ei toimenpiteenä. */
 function reportedAbsences(ctx: EmployeeAlertContext): EmployeeAlert[] {
-  const upcoming = ctx.absences.filter((absence) => absence.date >= ctx.today);
+  const upcoming = ctx.absences.filter((absence) => absence.endDate >= ctx.today);
   if (upcoming.length === 0) return [];
 
   return [
