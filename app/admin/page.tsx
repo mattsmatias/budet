@@ -200,12 +200,16 @@ export default async function AdminDashboard({
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
       {/* 1. Yläosa */}
-      {/* relative z-40: kuukausivalitsimen paneeli avautuu KPI-korttien
-          päälle. Ilman tätä otsikkorivi maalautuu DOM-järjestyksessä
+      {/* rf-z-page: kuukausivalitsimen paneeli avautuu KPI-korttien
+          päälle. Ilman kerrosta otsikkorivi maalautuu DOM-järjestyksessä
           ennen kortteja, ja paneelin oma z-index jää sen sisään —
           porrastusanimaatio tekee jokaisesta lapsesta oman
-          pinoamiskontekstin. */}
-      <header className="relative z-40 flex flex-wrap items-end justify-between gap-4">
+          pinoamiskontekstin.
+
+          Kerros on page eikä chrome: sivun otsikko nousee korttien yli
+          mutta jää tunnusvalikon alle. Aiemmin molemmat olivat 40, ja
+          tasapelissä myöhempi DOM-solmu voitti. */}
+      <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
             {greeting(now, restaurant.timezone)}

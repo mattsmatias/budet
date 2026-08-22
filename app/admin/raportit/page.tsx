@@ -75,7 +75,7 @@ export default async function ReportsPage({
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      <div className="relative z-40 flex flex-wrap items-end justify-between gap-4">
+      <div className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
             Raportointi

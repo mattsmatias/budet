@@ -72,7 +72,7 @@ export function ReceiptImage({ url, alt }: { url: string; alt: string }) {
           aria-modal="true"
           aria-label="Kuitin kuva"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 rf-z-modal flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.82)" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}

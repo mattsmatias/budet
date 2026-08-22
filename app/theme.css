@@ -420,3 +420,31 @@ a:hover > .rf-card-lift,
 details[open] .rf-summary-chevron {
   transform: rotate(-90deg);
 }
+
+/* ---------------------------------------------------------------------------
+   Kerrokset
+
+   z-index oli kuudessa tiedostossa käsin valittuna lukuna, ja kolme
+   niistä oli sattumalta sama 40. Kaksi elementtiä samalla luvulla ei
+   ole järjestyksessä lainkaan: silloin DOM-järjestys ratkaisee, ja
+   myöhempi voittaa. Niin kävi tässä — sivun otsikko piirtyi
+   tunnusvalikon päälle, koska main tulee layoutin yläpalkin jälkeen.
+
+   Nimetyt kerrokset tekevät järjestyksestä väitteen jonka voi lukea.
+   Uutta lukua ei keksitä kutsupaikassa, vaan valitaan kerros.
+
+   Järjestys alhaalta ylös:
+
+     page     Sivun oma otsikkopalkki ja sen valikot. Nousee korttien
+              yli mutta ei sovelluksen kehyksen yli.
+     chrome   Sovelluksen kehys: yläpalkki tunnus- ja ilmoitusvalikkoineen.
+              Kehys on aina sivun sisällön päällä.
+     panel    Matti. Peittää kehyksen, koska se on käytössä kehyksen
+              sijaan eikä sen rinnalla.
+     modal    Dialogit ja kuvan katselu. Peittää kaiken.
+--------------------------------------------------------------------------- */
+.rf-z-page { z-index: 20; }
+.rf-z-chrome { z-index: 40; }
+.rf-z-panel-backdrop { z-index: 60; }
+.rf-z-panel { z-index: 61; }
+.rf-z-modal { z-index: 80; }

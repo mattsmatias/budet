@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFormStatus } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -113,30 +114,59 @@ export function MattiPanel({ enabled }: { enabled: boolean }) {
         </kbd>
       </button>
 
-      {open ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="fixed inset-0 z-40"
-            style={{ background: "rgba(17, 19, 24, 0.35)" }}
-          />
-
-          <div
-            ref={container}
-            role="dialog"
-            aria-label="Matti, BUDet AI -työkaveri"
-            className="rf-enter fixed inset-0 z-50 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
-            style={{
-              background: "var(--rf-card)",
-              borderColor: "var(--rf-line)",
-              boxShadow: "var(--rf-shadow-lg)",
-            }}
-          >
-            <Conversation currentPage={pathname} onClose={close} />
-          </div>
-        </>
-      ) : null}
+      {open ? <Overlay container={container} pathname={pathname} close={close} /> : null}
     </>
+  );
+}
+
+/**
+ * Paneeli piirretään bodyyn, ei sivupalkin sisään.
+ *
+ * Painike on sivupalkissa, joten ilman portaalia paneelikin olisi
+ * siellä. position: fixed ei silloin riitä: mikä tahansa esivanhemman
+ * transform, filter tai will-change tekee siitä uuden sijoituskehyksen
+ * ja vangitsee paneelin sivupalkin pinoamiskontekstiin. Nyt yksikään
+ * tuleva tyylimuutos sivupalkissa ei voi rikkoa tätä.
+ *
+ * Liitostilaa ei tarvita. Overlay renderöidään vain kun open on tosi,
+ * ja open voi muuttua vain käyttäjän painalluksesta — palvelimella
+ * renderöitäessä se on aina epätosi, joten tänne ei päädytä ilman
+ * documenttia. Varmistus on silti tallessa alla.
+ */
+function Overlay({
+  container,
+  pathname,
+  close,
+}: {
+  container: React.RefObject<HTMLDivElement | null>;
+  pathname: string;
+  close: () => void;
+}) {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <>
+      <div
+        aria-hidden="true"
+        className="rf-z-panel-backdrop fixed inset-0"
+        style={{ background: "rgba(17, 19, 24, 0.35)" }}
+      />
+
+      <div
+        ref={container}
+        role="dialog"
+        aria-label="Matti, BUDet AI -työkaveri"
+        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
+        style={{
+          background: "var(--rf-card)",
+          borderColor: "var(--rf-line)",
+          boxShadow: "var(--rf-shadow-lg)",
+        }}
+      >
+        <Conversation currentPage={pathname} onClose={close} />
+      </div>
+    </>,
+    document.body,
   );
 }
 
