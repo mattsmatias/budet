@@ -493,6 +493,8 @@ describe("oikeudet", () => {
       "/admin/budjetit",
       "/admin/havainnot",
       "/admin/ilmoitukset",
+      // Asetukset löytyy tunnusvalikosta, ei navigaatiosta.
+      "/admin/asetukset",
     ];
 
     const navHrefs = adminNavFor("owner").map((entry) => entry.href);
@@ -506,8 +508,8 @@ describe("oikeudet", () => {
     }
   });
 
-  it("pitää päävalikon seitsemässä kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(7);
+  it("pitää päävalikon kuudessa kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(6);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 

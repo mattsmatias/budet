@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "@/app/(auth)/actions";
 import { adminNavFor, primaryNavFor } from "@/lib/restoflow/permissions";
-import { ROLE_LABELS, type Role } from "@/lib/restoflow/types";
+import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Avatar } from "@/components/restoflow/ui";
 
 /**
  * Hallintanavigaatio.
@@ -20,12 +18,10 @@ import { Avatar } from "@/components/restoflow/ui";
  */
 export function AdminNav({
   role,
-  userName,
   restaurantName,
   alertCount,
 }: {
   role: Role;
-  userName: string;
   restaurantName: string;
   alertCount: number;
 }) {
@@ -36,8 +32,6 @@ export function AdminNav({
     <>
       <DesktopSidebar
         items={items}
-        role={role}
-        userName={userName}
         restaurantName={restaurantName}
         alertCount={alertCount}
       />
@@ -58,14 +52,10 @@ function useActive() {
 
 function DesktopSidebar({
   items,
-  role,
-  userName,
   restaurantName,
   alertCount,
 }: {
   items: NavItems;
-  role: Role;
-  userName: string;
   restaurantName: string;
   alertCount: number;
 }) {
@@ -88,9 +78,7 @@ function DesktopSidebar({
 
       <nav aria-label="Hallintanavigaatio" className="flex-1 px-2.5">
         <ul className="space-y-0.5">
-          {items
-            .filter((item) => item.href !== "/admin/asetukset")
-            .map((item) => {
+          {items.map((item) => {
             const active = isActive(item.href);
 
             return (
@@ -115,26 +103,6 @@ function DesktopSidebar({
       </nav>
 
       <div className="space-y-0.5 px-2.5 pb-2">
-        {items.some((item) => item.href === "/admin/asetukset") ? (
-          <Link
-            href="/admin/asetukset"
-            aria-current={isActive("/admin/asetukset") ? "page" : undefined}
-            className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px]"
-            style={{
-              background: isActive("/admin/asetukset")
-                ? "var(--rf-accent-bg)"
-                : "transparent",
-              color: isActive("/admin/asetukset")
-                ? "var(--rf-accent-strong)"
-                : "var(--rf-text-2)",
-              fontWeight: isActive("/admin/asetukset") ? 600 : 500,
-            }}
-          >
-            <RfIcon name="settings" size={19} />
-            Asetukset
-          </Link>
-        ) : null}
-
         {alertCount > 0 ? (
           <Link
             href="/admin/ilmoitukset"
@@ -160,32 +128,6 @@ function DesktopSidebar({
         </Link>
       </div>
 
-      <div className="m-2.5 rounded-[12px] p-3" style={{ background: "var(--rf-inset)" }}>
-        <div className="flex items-center gap-3">
-          <Avatar initials={initialsOf(userName)} size={34} />
-          <div className="min-w-0">
-            <p className="truncate text-[13px] font-semibold">{userName}</p>
-            <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]}
-            </p>
-          </div>
-        </div>
-
-        <form action={signOut} className="mt-2.5">
-          <button
-            type="submit"
-            className="rf-press flex w-full items-center justify-center gap-2 py-2 text-[13px] font-medium"
-            style={{
-              background: "var(--rf-card)",
-              color: "var(--rf-text-2)",
-              borderRadius: "10px",
-            }}
-          >
-            <RfIcon name="logout" size={15} />
-            Kirjaudu ulos
-          </button>
-        </form>
-      </div>
     </aside>
   );
 }
@@ -274,11 +216,6 @@ function Badge({ count }: { count: number }) {
   );
 }
 
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  return parts.slice(0, 2).map((p) => p[0]!.toUpperCase()).join("");
-}
 
 function Logo() {
   return (

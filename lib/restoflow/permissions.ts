@@ -165,7 +165,7 @@ export interface NavEntry {
 }
 
 /**
- * Päänavigaatio: seitsemän kohtaa, ei enempää.
+ * Päänavigaatio: kuusi kohtaa, ei enempää.
  *
  * Toimittajat, Budjetit, Havainnot ja Ilmoitukset ovat pudonneet pois.
  * Ne eivät ole vähemmän tärkeitä vaan väärässä paikassa: ne ovat
@@ -173,9 +173,12 @@ export interface NavEntry {
  * Käyttäjä ei avaa sovellusta katsoakseen "havaintoja" — hän avaa sen
  * nähdäkseen mitä pitää tehdä. Yhdentoista kohdan valikossa se hukkuu.
  *
+ * Asetukset on tilin hallintaa eikä päivittäinen tehtävä, joten se
+ * löytyy tunnuksen takaa oikeasta yläkulmasta.
+ *
  * Reitit ovat yhä olemassa ja niihin päästään sieltä missä ne ovat
- * merkityksellisiä: yleiskuvan osioista, hälytysten linkeistä ja
- * kellokuvakkeesta.
+ * merkityksellisiä: yleiskuvan osioista, hälytysten linkeistä,
+ * kellokuvakkeesta ja tunnusvalikosta.
  */
 export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin", label: "Yleiskuva", icon: "overview", requires: "expenses.view" },
@@ -184,7 +187,6 @@ export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
   { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
-  { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },
 ];
 
 /**
@@ -196,7 +198,6 @@ export const MORE_NAV: NavEntry[] = [
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
   { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
   { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
-  { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {

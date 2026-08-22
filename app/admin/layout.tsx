@@ -4,7 +4,9 @@ import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, todayIn } from "@/lib/restoflow/clock-context";
 import { RfIcon } from "@/components/restoflow/icons";
+import { can } from "@/lib/restoflow/permissions";
 import { AdminNav } from "./nav";
+import { UserMenu } from "./user-menu";
 
 /**
  * Managerin kuori.
@@ -33,7 +35,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className="flex min-h-screen">
       <AdminNav
         role={role}
-        userName={userName}
         restaurantName={restaurant.name}
         alertCount={alerts.length}
       />
@@ -55,23 +56,32 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               {userName}
             </p>
           </Link>
-          <Link
-            href="/admin/ilmoitukset"
-            aria-label={
-              alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
-            }
-            className="rf-press relative p-2"
-            style={{ color: "var(--rf-text-2)" }}
-          >
-            <RfIcon name="bell" size={20} />
-            {alerts.length > 0 ? (
-              <span
-                aria-hidden="true"
-                className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full"
-                style={{ background: "var(--rf-red)" }}
-              />
-            ) : null}
-          </Link>
+          <div className="flex shrink-0 items-center gap-1">
+            <Link
+              href="/admin/ilmoitukset"
+              aria-label={
+                alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
+              }
+              className="rf-press relative p-2"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              <RfIcon name="bell" size={20} />
+              {alerts.length > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full"
+                  style={{ background: "var(--rf-red)" }}
+                />
+              ) : null}
+            </Link>
+
+            <UserMenu
+              userName={userName}
+              restaurantName={restaurant.name}
+              role={role}
+              canOpenSettings={can(role, "settings.view")}
+            />
+          </div>
         </header>
 
         {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
@@ -103,18 +113,12 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             ) : null}
           </Link>
 
-          <span
-            aria-hidden="true"
-            title={userName}
-            className="flex h-9 w-9 items-center justify-center text-[13px] font-semibold"
-            style={{
-              background: "var(--rf-inset)",
-              color: "var(--rf-text-2)",
-              borderRadius: "50%",
-            }}
-          >
-            {userName.trim().charAt(0).toUpperCase() || "?"}
-          </span>
+          <UserMenu
+            userName={userName}
+            restaurantName={restaurant.name}
+            role={role}
+            canOpenSettings={can(role, "settings.view")}
+          />
         </div>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-24 md:px-6 md:pb-7 md:pt-4">
