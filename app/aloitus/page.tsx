@@ -86,7 +86,7 @@ function Tab({
       className="rf-press py-2 text-center text-[14px] font-medium"
       style={{
         background: active ? "var(--rf-card)" : "transparent",
-        color: active ? "var(--rf-text)" : "var(--rf-text-2)",
+        color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
         borderRadius: "10px",
         boxShadow: active ? "var(--rf-shadow-sm)" : "none",
       }}

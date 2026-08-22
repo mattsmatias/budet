@@ -89,7 +89,7 @@ function Submit() {
       disabled={pending}
       className="rf-press w-full py-3 text-[15px] font-semibold disabled:opacity-50"
       style={{
-        background: "var(--rf-text)",
+        background: "var(--rf-accent)",
         color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}

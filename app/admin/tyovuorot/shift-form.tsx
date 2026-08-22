@@ -192,7 +192,7 @@ export function NewShiftButton({
         onClick={() => setOpen(true)}
         className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[15px] font-semibold md:w-auto md:px-5"
         style={{
-          background: "var(--rf-text)",
+          background: "var(--rf-accent)",
           color: "var(--rf-on-accent)",
           borderRadius: "var(--rf-r-control)",
         }}
@@ -334,7 +334,7 @@ function Save({ label }: { label: string }) {
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
       style={{
-        background: "var(--rf-text)",
+        background: "var(--rf-accent)",
         color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}

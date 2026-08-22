@@ -98,7 +98,7 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/app/kui
                   aria-current={active ? "page" : undefined}
                   className="rf-press inline-block whitespace-nowrap px-3.5 py-1.5 text-[13px] font-medium"
                   style={{
-                    background: active ? "var(--rf-text)" : "var(--rf-card)",
+                    background: active ? "var(--rf-accent)" : "var(--rf-card)",
                     color: active ? "#fff" : "var(--rf-text-2)",
                     borderRadius: "var(--rf-r-pill)",
                     boxShadow: active ? "none" : "var(--rf-shadow-sm)",

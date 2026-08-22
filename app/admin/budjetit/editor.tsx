@@ -243,7 +243,7 @@ function Save() {
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
       style={{
-        background: "var(--rf-text)",
+        background: "var(--rf-accent)",
         color: "var(--rf-on-accent)",
         borderRadius: "var(--rf-r-control)",
       }}

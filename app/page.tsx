@@ -68,7 +68,7 @@ export default async function Entry() {
               href="/rekisteroidy"
               className="rf-press px-5 py-3 text-[15px] font-semibold"
               style={{
-                background: "var(--rf-text)",
+                background: "var(--rf-accent)",
                 color: "var(--rf-on-accent)",
                 borderRadius: "var(--rf-r-control)",
               }}

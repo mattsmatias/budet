@@ -353,16 +353,26 @@ Apple- ja Linear-henkinen: erittäin vaalea tausta, valkoiset kortit,
 hienovaraiset rajat, paljon tyhjää tilaa.
 
 ```
---rf-bg          #f6f6f7    tausta
+--rf-bg          #f5f6f8    tausta
 --rf-card        #ffffff    kortit
---rf-text        #171717    ensisijainen teksti
---rf-text-2      #737373    toissijainen
---rf-line        #e8e8ea    rajat
---rf-green/amber/red/blue   vain tilan merkitsemiseen
+--rf-text        #111318    ensisijainen teksti
+--rf-text-2      #6b7280    toissijainen
+--rf-text-3      #9ca3af    vaimennettu
+--rf-line        #e7e9ee    rajat
+--rf-accent      #315bff    toiminta: CTA, valinta, aktiivinen kohta
+--rf-accent-2    #6c5ce7    toissijainen aksentti
+--rf-green/amber/red        vain tilan merkitsemiseen
 ```
 
-**Väriä käytetään vain tilan merkitsemiseen** — ei pintana, ei
-brändinä. Värillinen piste tarkoittaa aina jotain.
+**Sininen tarkoittaa toimintaa**: ensisijainen painike, valittu
+suodatin, aktiivinen navigointikohta. Se ei ole brändipinta eikä
+otsikon väri.
+
+**Vihreä, oranssi ja punainen merkitsevät tilaa** — eivät koskaan
+yksin: vieressä on aina luku tai sana.
+
+Painikkeilla on nimetty hierarkia (`Button`-komponentti): yksi
+`primary` per näkymä, muut `secondary` tai `ghost`.
 
 Ikonit ovat omia, 24×24, 1.6px viiva, ei täyttöjä. **Ei emojeita.**
 

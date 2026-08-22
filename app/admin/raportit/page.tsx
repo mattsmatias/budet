@@ -88,7 +88,7 @@ export default async function ReportsPage() {
                 href={`/admin/raportit/csv?tyyppi=${report.kind}&kuukausi=${month}`}
                 className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
                 style={{
-                  background: "var(--rf-text)",
+                  background: "var(--rf-accent)",
                   color: "var(--rf-on-accent)",
                   borderRadius: "var(--rf-r-control)",
                 }}
@@ -149,7 +149,7 @@ export default async function ReportsPage() {
           href={`/admin/raportit/xlsx?kuukausi=${month}`}
           className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
           style={{
-            background: "var(--rf-text)",
+            background: "var(--rf-accent)",
             color: "var(--rf-on-accent)",
             borderRadius: "var(--rf-r-control)",
           }}

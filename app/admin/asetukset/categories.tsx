@@ -284,7 +284,7 @@ function Save() {
       type="submit"
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-text)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
     >
       {pending ? "Tallennetaan…" : "Tallenna"}
     </button>

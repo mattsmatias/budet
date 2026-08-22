@@ -153,7 +153,7 @@ function Submit({ idle, busy }: { idle: string; busy: string }) {
       type="submit"
       disabled={pending}
       className="rf-press w-full py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-text)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
     >
       {pending ? busy : idle}
     </button>

@@ -79,7 +79,7 @@ export default async function AdminReceiptsPage({
               href="/admin/kuitit/uusi"
               className="rf-press flex items-center justify-center gap-2 py-3 text-[15px] font-semibold md:order-2 md:px-5 md:py-2.5 md:text-[14px]"
               style={{
-                background: "var(--rf-text)",
+                background: "var(--rf-accent)",
                 color: "var(--rf-on-accent)",
                 borderRadius: "var(--rf-r-control)",
               }}
@@ -183,7 +183,7 @@ export default async function AdminReceiptsPage({
                   aria-current={active ? "page" : undefined}
                   className="rf-press inline-block whitespace-nowrap px-3.5 py-1.5 text-[13px] font-medium"
                   style={{
-                    background: active ? "var(--rf-text)" : "var(--rf-card)",
+                    background: active ? "var(--rf-accent)" : "var(--rf-card)",
                     color: active ? "#fff" : "var(--rf-text-2)",
                     borderRadius: "var(--rf-r-pill)",
                     boxShadow: active ? "none" : "var(--rf-shadow-sm)",
