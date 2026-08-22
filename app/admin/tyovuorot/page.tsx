@@ -36,7 +36,6 @@ export default async function AdminShiftsPage() {
   const upcoming = shifts.filter((s) => s.date >= today);
   const past = shifts.filter((s) => s.date < today);
 
-  const pending = upcoming.filter((s) => s.status === "pending");
   const declined = upcoming.filter((s) => s.status === "declined");
 
   // Suunniteltu vs. toteutunut vain menneistä vuoroista: tulevassa
@@ -63,7 +62,6 @@ export default async function AdminShiftsPage() {
           <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             {upcoming.length} tulevaa
             {openShifts.length > 0 ? ` · ${openShifts.length} avointa` : ""}
-            {pending.length > 0 ? ` · ${pending.length} odottaa vastausta` : ""}
           </p>
         </div>
         <NewShiftButton users={users} defaultDate={today} />

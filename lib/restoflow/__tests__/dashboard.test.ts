@@ -57,6 +57,7 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
     shifts: [],
     users: [],
     clockEvents: [],
+    absences: [],
     month: "2026-08",
     today: "2026-08-15",
     ...partial,

@@ -3,7 +3,6 @@ import { employeeContext } from "@/lib/restoflow/page-context";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { RfIcon, ShiftStatusIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState, Pill, SectionLabel } from "@/components/restoflow/ui";
-import { ShiftResponse } from "./respond";
 import { AbsenceReporter } from "./absence";
 
 export const metadata = { title: "Työvuorot" };
@@ -25,7 +24,6 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
   const selectedShift = byDate.get(selected);
   const upcoming = shifts.filter((s) => s.date > today).slice(0, 5);
   const changed = shifts.filter((s) => s.status === "changed" && s.date >= today);
-  const pending = shifts.filter((s) => s.status === "pending" && s.date >= today);
 
   return (
     <div className="rf-enter space-y-5">
@@ -34,7 +32,7 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {shifts.length === 0
             ? "Ei vuoroja"
-            : `${shifts.length} vuoroa · ${pending.length} odottaa vastausta`}
+            : `${shifts.length} vuoroa`}
         </p>
       </header>
 
@@ -142,10 +140,6 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
                   </div>
                   <StatusPill status={selectedShift.status} />
                 </div>
-
-                {selectedShift.status === "pending" ? (
-                  <ShiftResponse shiftId={selectedShift.id} />
-                ) : null}
               </Card>
             ) : (
               <Card>

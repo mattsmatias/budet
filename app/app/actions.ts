@@ -75,47 +75,6 @@ const LABELS: Record<ClockEventType, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Työvuorot
-// ---------------------------------------------------------------------------
-
-/**
- * Hyväksyy tai kieltäytyy vuorosta.
- *
- * RLS sallii vain oman vuoron ja vain tilan vaihdon; liipaisin estää aikojen
- * muuttamisen. Tämä funktio ei siis voi tehdä enempää kuin mihin
- * työntekijällä on oikeus, vaikka sitä kutsuttaisiin väärillä arvoilla.
- */
-export async function respondToShift(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const shiftId = String(formData.get("shiftId") ?? "");
-  const answer = String(formData.get("answer") ?? "");
-
-  if (!shiftId) return { error: "Vuoroa ei löytynyt." };
-  if (answer !== "accepted" && answer !== "declined") {
-    return { error: "Tuntematon vastaus." };
-  }
-
-  await requireContext("/app/vuorot");
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("shifts")
-    .update({ status: answer })
-    .eq("id", shiftId);
-
-  if (error) return { error: explain(error, "Vastauksen tallennus epäonnistui") };
-
-  revalidatePath("/app", "layout");
-  revalidatePath("/admin", "layout");
-
-  return {
-    notice: answer === "accepted" ? "Vuoro hyväksytty." : "Ilmoitettu esihenkilölle.",
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Poissaolot
 // ---------------------------------------------------------------------------
 

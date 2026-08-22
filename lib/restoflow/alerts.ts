@@ -19,6 +19,7 @@ import { checkVat } from "./vat";
 import {
   CATEGORY_LABELS,
   REVIEW_REASON_LABELS,
+  type Absence,
   type Alert,
   type Budget,
   type ClockEvent,
@@ -40,6 +41,7 @@ export interface AlertContext {
   shifts: Shift[];
   users: User[];
   clockEvents: ClockEvent[];
+  absences: Absence[];
   month: string;
   today: string;
 }
@@ -214,35 +216,31 @@ function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
 function shiftAlerts(ctx: AlertContext): Alert[] {
   const alerts: Alert[] = [];
 
-  const pending = ctx.shifts.filter(
-    (s) => s.status === "pending" && s.date >= ctx.today,
-  );
+  // Poissaoloilmoitus on kriittinen: vuoro on yhä tekijällä, mutta
+  // tekijä on kertonut ettei tule. Jos tämä ei nouse esiin, asia
+  // huomataan vasta kun vuoro alkaa eikä kukaan ole paikalla.
+  //
+  // Tämä oli aiemmin sidottu vuoron declined-tilaan. Kun vuoroa ei enää
+  // kuitata, tila ei voi syntyä — mutta itse asia ei kadonnut mihinkään,
+  // joten ilmoitus luetaan nyt suoraan poissaoloista.
+  const upcoming = ctx.absences.filter((absence) => absence.date >= ctx.today);
 
-  if (pending.length > 0) {
+  for (const absence of upcoming) {
+    const user = ctx.users.find((u) => u.id === absence.userId);
+    const shift = ctx.shifts.find(
+      (s) => s.userId === absence.userId && s.date === absence.date,
+    );
+
     alerts.push({
-      id: "shift-pending",
-      kind: "shift_pending",
-      severity: "info",
-      title: `${pending.length} työvuoroa odottaa vastausta`,
-      detail: "Työntekijä ei ole vielä hyväksynyt tai kieltäytynyt",
-      href: "/admin/tyovuorot",
-    });
-  }
-
-  const declined = ctx.shifts.filter(
-    (s) => s.status === "declined" && s.date >= ctx.today,
-  );
-
-  for (const shift of declined) {
-    const user = ctx.users.find((u) => u.id === shift.userId);
-    alerts.push({
-      id: `declined-${shift.id}`,
-      kind: "shift_pending",
+      id: `absence-${absence.id}`,
+      kind: "absence_reported",
       severity: "critical",
-      title: `${user?.name ?? "Työntekijä"} ei pääse vuoroon`,
-      detail: `${formatDate(shift.date)} · ${shift.startTime}–${shift.endTime} — vuoro on auki`,
+      title: `${user?.name ?? "Työntekijä"} ei pääse`,
+      detail: shift
+        ? `${formatDate(absence.date)} · ${shift.startTime}–${shift.endTime} — vuoro on yhä hänellä`
+        : `${formatDate(absence.date)} — ei vuoroa tuona päivänä`,
       href: "/admin/tyovuorot",
-      entityId: shift.id,
+      entityId: absence.id,
     });
   }
 

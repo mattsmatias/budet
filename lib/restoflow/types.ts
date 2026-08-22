@@ -290,7 +290,7 @@ export type ShiftStatus = "draft" | "pending" | "accepted" | "declined" | "chang
 export const SHIFT_STATUS_LABELS: Record<ShiftStatus, string> = {
   draft: "Luonnos",
   pending: "Odottaa vastausta",
-  accepted: "Hyväksytty",
+  accepted: "Vahvistettu",
   declined: "Ei pääse",
   changed: "Muuttunut",
 };
@@ -379,7 +379,7 @@ export type AlertKind =
   | "missing_payment_method"
   | "vat_mismatch"
   | "unclosed_shift"
-  | "shift_pending"
+  | "absence_reported"
   | "open_shift"
   | "shift_variance";
 

@@ -540,6 +540,7 @@ describe("poikkeamat", () => {
     const alerts = buildAlerts({
       receipts: [receipt(dup), receipt(dup)],
       budgets: [], shifts: [], users, clockEvents: [],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     const d = alerts.find((a) => a.kind === "duplicate_receipt");
@@ -553,6 +554,7 @@ describe("poikkeamat", () => {
     const alerts = buildAlerts({
       receipts: [receipt({ date: "2026-08-01", totalCents: 12000, category: "cleaning" })],
       budgets, shifts: [], users, clockEvents: [],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "budget_exceeded")).toBe(true);
@@ -562,6 +564,7 @@ describe("poikkeamat", () => {
     const alerts = buildAlerts({
       receipts: [], budgets: [], shifts: [], users,
       clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-18T16:00:00.000Z" }],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(true);
@@ -571,6 +574,7 @@ describe("poikkeamat", () => {
     const alerts = buildAlerts({
       receipts: [], budgets: [], shifts: [], users,
       clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-20T09:00:00.000Z" }],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(false);
@@ -583,6 +587,7 @@ describe("poikkeamat", () => {
       budgets: [],
       shifts: [{ id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-25", startTime: "14:00", endTime: "22:00", location: "Sali", status: "pending" }],
       users, clockEvents: [],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts[0].severity).toBe("critical");
@@ -592,6 +597,7 @@ describe("poikkeamat", () => {
     const alerts = buildAlerts({
       receipts: [receipt({ date: "2026-08-01", totalCents: 11450, vatCents: 1450, category: "food" })],
       budgets: [], shifts: [], users, clockEvents: [],
+      absences: [],
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts).toHaveLength(0);

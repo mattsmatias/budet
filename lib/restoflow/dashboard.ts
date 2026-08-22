@@ -23,6 +23,7 @@ import {
   relativeChange,
 } from "./expenses";
 import type {
+  Absence,
   Alert,
   Budget,
   ClockEvent,
@@ -37,6 +38,7 @@ export interface DashboardInput {
   shifts: Shift[];
   users: User[];
   clockEvents: ClockEvent[];
+  absences: Absence[];
   month: string;
   today: string;
 }
@@ -96,6 +98,7 @@ export function attention(input: DashboardInput): Attention {
     shifts: input.shifts,
     users: input.users,
     clockEvents: input.clockEvents,
+    absences: input.absences,
     month: input.month,
     today: input.today,
   });

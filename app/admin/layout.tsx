@@ -24,6 +24,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     shifts: data.shifts,
     users: data.users,
     clockEvents: data.clockEvents,
+    absences: data.absences,
     month: monthIn(restaurant.timezone),
     today: todayIn(restaurant.timezone),
   });

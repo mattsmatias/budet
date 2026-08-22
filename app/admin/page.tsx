@@ -65,7 +65,7 @@ export default async function AdminDashboard({
 }: PageProps<"/admin">) {
   const params = await searchParams;
   const {
-    receipts, users, budgets, shifts, clockEvents,
+    receipts, users, budgets, shifts, clockEvents, absences,
     month, today, now, monthlyHours, restaurant, user, role, categories: customCategories,
   } = await adminContext("/admin");
 
@@ -96,7 +96,7 @@ export default async function AdminDashboard({
   const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
 
   const dashboardInput = {
-    receipts, budgets, shifts, users, clockEvents,
+    receipts, budgets, shifts, users, clockEvents, absences,
     month: viewMonth, today,
   };
 

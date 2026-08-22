@@ -14,7 +14,6 @@ import { currentState, eventsOnDate } from "./timeclock";
 import { SHIFT_STATUS_LABELS, type Absence, type ClockEvent, type Shift } from "./types";
 
 export type EmployeeAlertKind =
-  | "shift_pending"
   | "shift_changed"
   | "clock_open"
   | "absence_reported";
@@ -47,7 +46,6 @@ export interface EmployeeAlertContext {
 export function buildEmployeeAlerts(ctx: EmployeeAlertContext): EmployeeAlert[] {
   return [
     ...changedShifts(ctx),
-    ...pendingShifts(ctx),
     ...openClock(ctx),
     ...reportedAbsences(ctx),
   ];
@@ -56,8 +54,8 @@ export function buildEmployeeAlerts(ctx: EmployeeAlertContext): EmployeeAlert[] 
 // ---------------------------------------------------------------------------
 
 /**
- * Muutettu vuoro on ensin, koska se vaatii uuden hyväksynnän ja
- * työntekijä on voinut jo suunnitella vanhojen aikojen mukaan.
+ * Muutettu vuoro on ensin: työntekijä on voinut suunnitella päivänsä
+ * vanhojen aikojen mukaan, eikä muutos saa hukkua listaan.
  */
 function changedShifts(ctx: EmployeeAlertContext): EmployeeAlert[] {
   return ctx.shifts
@@ -72,44 +70,9 @@ function changedShifts(ctx: EmployeeAlertContext): EmployeeAlert[] {
         (shift.previousStartTime
           ? `oli ${shift.previousStartTime}–${shift.previousEndTime}, nyt ${shift.startTime}–${shift.endTime}`
           : `${shift.startTime}–${shift.endTime}`) +
-        ". Hyväksy tai ilmoita ettet pääse.",
+        ".",
       href: `/app/vuorot?paiva=${shift.date}`,
     }));
-}
-
-function pendingShifts(ctx: EmployeeAlertContext): EmployeeAlert[] {
-  const pending = ctx.shifts.filter(
-    (shift) => shift.status === "pending" && shift.date >= ctx.today,
-  );
-
-  if (pending.length === 0) return [];
-
-  // Yksi ilmoitus kaikista: viisi erillistä riviä samasta asiasta on
-  // lista jota ei lueta.
-  if (pending.length === 1) {
-    const shift = pending[0];
-    return [
-      {
-        id: `shift-pending-${shift.id}`,
-        kind: "shift_pending",
-        severity: "action",
-        title: "Vuoro odottaa vastaustasi",
-        detail: `${formatDate(shift.date)} · ${shift.startTime}–${shift.endTime}`,
-        href: `/app/vuorot?paiva=${shift.date}`,
-      },
-    ];
-  }
-
-  return [
-    {
-      id: "shift-pending-many",
-      kind: "shift_pending",
-      severity: "action",
-      title: `${pending.length} vuoroa odottaa vastaustasi`,
-      detail: `Ensimmäinen ${formatDate(pending[0].date)}. Esihenkilö ei voi täydentää listaa ennen vastauksia.`,
-      href: "/app/vuorot",
-    },
-  ];
 }
 
 /**
