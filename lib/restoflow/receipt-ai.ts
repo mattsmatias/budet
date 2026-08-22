@@ -92,10 +92,10 @@ function profileFor(fileName: string): Profile {
       receiptNumber: { value: "MT-4471", confidence: "medium" },
       imageQuality: "good",
       items: [
-        { description: "Naudan sisäfilee", quantity: 4, unit: "kg", totalCents: 8960, category: "food", vatRate: 0.145, productGroup: "Liha" },
-        { description: "Perunat", quantity: 25, unit: "kg", totalCents: 2450, category: "food", vatRate: 0.145, productGroup: "Vihannekset" },
-        { description: "Salaattisekoitus", quantity: 6, unit: "pkt", totalCents: 3480, category: "food", vatRate: 0.145, productGroup: "Vihannekset" },
-        { description: "Oliiviöljy", quantity: 1, unit: "kanisteri", totalCents: 3800, category: "food", vatRate: 0.145, productGroup: "Öljyt" },
+        { description: "Naudan sisäfilee", quantity: 4, unit: "kg", totalCents: 8960, category: "food", vatRate: 0.14, productGroup: "Liha" },
+        { description: "Perunat", quantity: 25, unit: "kg", totalCents: 2450, category: "food", vatRate: 0.14, productGroup: "Vihannekset" },
+        { description: "Salaattisekoitus", quantity: 6, unit: "pkt", totalCents: 3480, category: "food", vatRate: 0.14, productGroup: "Vihannekset" },
+        { description: "Oliiviöljy", quantity: 1, unit: "kanisteri", totalCents: 3800, category: "food", vatRate: 0.14, productGroup: "Öljyt" },
       ],
     };
   }
@@ -112,8 +112,8 @@ function profileFor(fileName: string): Profile {
       receiptNumber: { value: "KP-88214", confidence: "high" },
       imageQuality: "good",
       items: [
-        { description: "Kanafilee", quantity: 10, unit: "kg", totalCents: 14200, category: "food", vatRate: 0.145, productGroup: "Liha" },
-        { description: "Coca-Cola 0,33 l", quantity: 24, unit: "kpl", totalCents: 8650, category: "soft_drinks", vatRate: 0.145, productGroup: "Virvoitusjuomat" },
+        { description: "Kanafilee", quantity: 10, unit: "kg", totalCents: 14200, category: "food", vatRate: 0.14, productGroup: "Liha" },
+        { description: "Coca-Cola 0,33 l", quantity: 24, unit: "kpl", totalCents: 8650, category: "soft_drinks", vatRate: 0.14, productGroup: "Virvoitusjuomat" },
         { description: "Astianpesuaine", quantity: 2, unit: "kanisteri", totalCents: 5900, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
         { description: "Talouspaperi", quantity: 6, unit: "rll", totalCents: 2500, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
       ],
@@ -139,7 +139,7 @@ function profileFor(fileName: string): Profile {
   }
 
   if (name.includes("alko") || name.includes("viini")) {
-    // ALV vastaa 14,5 % vaikka kategoria on alkoholi — ristiriita joka
+    // ALV vastaa 14,5 %:a vaikka kategoria on alkoholi — ristiriita joka
     // pitää huomata, ei korjata hiljaa.
     return {
       supplier: { value: "Alko Yritysmyynti", confidence: "high" },
@@ -168,8 +168,8 @@ function profileFor(fileName: string): Profile {
       receiptNumber: { value: "HW-2261", confidence: "high" },
       imageQuality: "good",
       items: [
-        { description: "Virvoitusjuomat 0,33 l", quantity: 240, unit: "kpl", totalCents: 43200, category: "soft_drinks", vatRate: 0.145, productGroup: "Virvoitusjuomat" },
-        { description: "Kivennäisvesi", quantity: 120, unit: "kpl", totalCents: 25200, category: "soft_drinks", vatRate: 0.145, productGroup: "Vedet" },
+        { description: "Virvoitusjuomat 0,33 l", quantity: 240, unit: "kpl", totalCents: 43200, category: "soft_drinks", vatRate: 0.14, productGroup: "Virvoitusjuomat" },
+        { description: "Kivennäisvesi", quantity: 120, unit: "kpl", totalCents: 25200, category: "soft_drinks", vatRate: 0.14, productGroup: "Vedet" },
       ],
     };
   }

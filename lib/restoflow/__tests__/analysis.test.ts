@@ -71,8 +71,8 @@ function receipt(partial: Partial<Receipt> & { totalCents: number; date: string 
 
 describe("ALV-tarkistus", () => {
   it("päättelee kannan summista", () => {
-    // 100,00 netto + 14,50 ALV = 114,50
-    expect(inferVatRate(11450, 1450)).toBeCloseTo(0.145);
+    // 100,00 netto + 14,00 ALV = 114,00
+    expect(inferVatRate(11400, 1400)).toBeCloseTo(0.14);
   });
 
   it("ei jaa nollalla kun ALV on koko summa", () => {
@@ -81,15 +81,15 @@ describe("ALV-tarkistus", () => {
   });
 
   it("hyväksyy kannan pienellä pyöristysheitolla", () => {
-    expect(rateMatchesCategory(0.1452, "food")).toBe(true);
+    expect(rateMatchesCategory(0.1402, "food")).toBe(true);
     expect(rateMatchesCategory(0.2, "food")).toBe(false);
   });
 
   it("merkitsee ristiriidan kun kanta ei vastaa kategoriaa", () => {
-    // Alkoholi 14,5 %:n kannalla — pitäisi olla 25,5 %
-    const check = checkVat(11450, 1450, "alcohol");
+    // Alkoholi 14 %:n kannalla — pitäisi olla 25,5 %
+    const check = checkVat(11400, 1400, "alcohol");
     expect(check.matches).toBe(false);
-    expect(check.explanation).toContain("14,5 %");
+    expect(check.explanation).toContain("14,0 %");
   });
 
   it("hyväksyy oikean kannan", () => {
@@ -105,7 +105,7 @@ describe("ALV-tarkistus", () => {
   it("ei koskaan palauta korjattua arvoa", () => {
     // Tarkistus kertoo ristiriidasta mutta ei ehdota uutta summaa —
     // hiljainen korjaus tuottaisi väärän kirjauksen.
-    const check = checkVat(11450, 1450, "alcohol");
+    const check = checkVat(11400, 1400, "alcohol");
     expect(Object.keys(check)).not.toContain("correctedVatCents");
   });
 });
@@ -644,7 +644,7 @@ describe("poikkeamat", () => {
 
   it("ei tuota hälytyksiä puhtaasta aineistosta", () => {
     const alerts = buildAlerts({
-      receipts: [receipt({ date: "2026-08-01", totalCents: 11450, vatCents: 1450, category: "food" })],
+      receipts: [receipt({ date: "2026-08-01", totalCents: 11400, vatCents: 1400, category: "food" })],
       budgets: [], shifts: [], users, clockEvents: [],
       absences: [],
       month: "2026-08", today: "2026-08-20",

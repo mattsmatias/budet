@@ -16,12 +16,18 @@ import {
 import {
   type CustomCategory,
   CATEGORY_LABELS,
+  EXPECTED_VAT_RATES,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
   type ExpenseCategory,
   type PaymentMethod,
   type Supplier,
 } from "@/lib/restoflow/types";
+import {
+  formatRate,
+  inferVatRate,
+  rateMatchesCategory,
+} from "@/lib/restoflow/vat";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
@@ -441,13 +447,11 @@ export function CaptureFlow({
           uncertain={uncertain.has("totalCents")}
           hint={result.totalCents.hint}
         />
-        <TextField
-          label="ALV"
-          name="vat"
+        <VatField
+          totalEuros={totalEuros}
           value={vatEuros}
           onChange={setVatEuros}
-          suffix="€"
-          inputMode="decimal"
+          category={category}
           uncertain={uncertain.has("vatCents")}
           hint={result.vatCents.hint}
         />
@@ -890,6 +894,154 @@ function TextField({
       ) : null}
     </div>
   );
+}
+
+/**
+ * ALV-kenttä.
+ *
+ * Kannassa on euromäärä, ei prosentti — se on se luku jonka kirjanpitäjä
+ * vähentää, ja se lukee kuitissa sellaisenaan. Prosentti on silti se
+ * muoto jossa ALV:tä ajatellaan, joten se on tässä kahdesti:
+ *
+ *   Painikkeet laskevat euromäärän kannasta silloin kun kuitissa lukee
+ *   vain prosentti. Laskettu luku on arvio, joten se merkitään
+ *   sellaiseksi — kuitissa oleva senttimäärä voi pyöristyä toisin.
+ *
+ *   Rivin alla kerrotaan mitä kantaa syötetty euromäärä vastaa. Se
+ *   paljastaa näppäilyvirheen heti: 14,0 % ruokakuitissa on oikein,
+ *   1,4 % ei.
+ *
+ * Euromäärää ei koskaan muuteta itsestään. Jos kuitissa lukee summa,
+ * se voittaa lasketun — laskettu arvo on apu, ei totuus.
+ */
+function VatField({
+  totalEuros,
+  value,
+  onChange,
+  category,
+  uncertain,
+  hint,
+}: {
+  totalEuros: string;
+  value: string;
+  onChange: (v: string) => void;
+  category: ExpenseCategory | "";
+  uncertain?: boolean;
+  hint?: string;
+}) {
+  const [computed, setComputed] = useState(false);
+
+  const totalCents = parseEurosLoose(totalEuros);
+  const vatCents = parseEurosLoose(value);
+
+  const inferred =
+    totalCents !== null && vatCents !== null
+      ? inferVatRate(totalCents, vatCents)
+      : null;
+
+  const expected = category === "" ? [] : EXPECTED_VAT_RATES[category];
+  const mismatch =
+    inferred !== null &&
+    category !== "" &&
+    !rateMatchesCategory(inferred, category);
+
+  function applyRate(rate: number) {
+    if (totalCents === null) return;
+    // Bruttosummasta veron osuus: brutto × kanta / (1 + kanta).
+    onChange(toEuros(Math.round((totalCents * rate) / (1 + rate))));
+    setComputed(true);
+  }
+
+  return (
+    <div className="border-b py-3" style={{ borderColor: "var(--rf-line)" }}>
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor="f-vat" className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          ALV
+        </label>
+        {uncertain ? <Pill tone="warn">tarkista</Pill> : null}
+      </div>
+
+      <div className="mt-1 flex items-baseline gap-1.5">
+        <input
+          id="f-vat"
+          name="vat"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setComputed(false);
+          }}
+          className="w-full bg-transparent text-[17px] font-medium outline-none"
+        />
+        <span className="text-[17px] font-medium">€</span>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          Laske kannasta:
+        </span>
+        {RATE_CHOICES.map((rate) => (
+          <button
+            key={rate}
+            type="button"
+            onClick={() => applyRate(rate)}
+            disabled={totalCents === null}
+            className="rf-press px-2.5 py-1 text-[12px] font-medium disabled:opacity-40"
+            style={{
+              background: expected.includes(rate)
+                ? "var(--rf-accent-bg)"
+                : "var(--rf-inset)",
+              color: expected.includes(rate)
+                ? "var(--rf-accent-strong)"
+                : "var(--rf-text-2)",
+              borderRadius: 999,
+            }}
+          >
+            {formatRate(rate)}
+          </button>
+        ))}
+      </div>
+
+      {totalCents === null ? (
+        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          Täytä ensin loppusumma, niin ALV voidaan laskea kannasta.
+        </p>
+      ) : inferred !== null ? (
+        <p
+          className="mt-1.5 text-[12px]"
+          style={{ color: mismatch ? "var(--rf-amber-text)" : "var(--rf-text-3)" }}
+        >
+          {computed ? "Laskettu — tarkista kuitista. " : ""}
+          Vastaa {formatRate(inferred)} kantaa
+          {mismatch
+            ? `, odotettu ${expected.map(formatRate).join(" tai ")}`
+            : ""}
+          .
+        </p>
+      ) : null}
+
+      {hint ? (
+        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Samat kannat kuin odotustaulukossa, plus nolla. Yksi lähde, ei kopiota. */
+const RATE_CHOICES: number[] = [
+  0,
+  ...Array.from(new Set(Object.values(EXPECTED_VAT_RATES).flat())),
+].sort((a, b) => a - b);
+
+/** "14,50" tai "14.50" → 1450. Sama sääntö kuin palvelimen parseEuros. */
+function parseEurosLoose(value: string): number | null {
+  const raw = value.trim().replace(",", ".").replace(/\s/g, "");
+  if (raw === "") return null;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed * 100);
 }
 
 function SelectField({

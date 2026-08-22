@@ -88,8 +88,8 @@ describe("arvioitavuus", () => {
   it("sanoo kaiken olevan kunnossa vasta kun jotain on tarkastettu", () => {
     const ctx = input({
       // ALV on oltava odotetun mukainen, muuten kuitti nostaa itse
-      // hälytyksen eikä testi mittaa sitä mitä pitäisi. 5725 sis. 14,5 % = 725.
-      receipts: [receipt({ totalCents: 5725, vatCents: 725, date: "2026-08-04" })],
+      // hälytyksen eikä testi mittaa sitä mitä pitäisi. 5700 sis. 14 % = 700.
+      receipts: [receipt({ totalCents: 5700, vatCents: 700, date: "2026-08-04" })],
     });
 
     expect(evaluability(ctx).canJudge).toBe(true);

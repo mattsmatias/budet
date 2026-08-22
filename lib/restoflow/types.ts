@@ -120,15 +120,15 @@ export const CATEGORY_ORDER: ExpenseCategory[] = [
  * kuitti merkitään tarkistettavaksi eikä arvoa muuteta.
  */
 export const EXPECTED_VAT_RATES: Record<ExpenseCategory, number[]> = {
-  food: [0.145],
+  food: [0.14],
   alcohol: [0.255],
-  soft_drinks: [0.145, 0.255],
+  soft_drinks: [0.14, 0.255],
   cleaning: [0.255],
   kitchen_supplies: [0.255],
   packaging: [0.255],
   staff: [0.255],
   transport: [0.255],
-  other: [0.145, 0.255],
+  other: [0.14, 0.255],
 };
 
 export type PaymentMethod = "card" | "cash" | "invoice" | "unknown";
