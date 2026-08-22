@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { SeverityDot } from "@/components/restoflow/ui";
+import { useDismiss } from "@/components/restoflow/use-dismiss";
 
 /**
  * Yläpalkin valikot.
@@ -27,9 +28,8 @@ import { SeverityDot } from "@/components/restoflow/ui";
 /**
  * Pudotusvalikon kuori.
  *
- * Sulkeutuu ulkopuolisesta napautuksesta ja Esc-näppäimestä. Kumpikin
- * on tapa jolla valikot suljetaan, ja jos vain toinen toimii, käyttäjä
- * ehtii kokeilla väärää.
+ * Sulkeminen tulee jaetusta useDismiss-hookista, jota myös
+ * kuukausivalitsin käyttää.
  */
 function Dropdown({
   label,
@@ -50,29 +50,7 @@ function Dropdown({
   trigger: (open: boolean) => ReactNode;
   children: (close: () => void) => ReactNode;
 }) {
-  const container = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onPointerDown(event: MouseEvent | TouchEvent) {
-      if (!container.current?.contains(event.target as Node)) onClose();
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("touchstart", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("touchstart", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, onClose]);
+  const container = useDismiss<HTMLDivElement>(open, onClose);
 
   return (
     <div ref={container} className="relative">
