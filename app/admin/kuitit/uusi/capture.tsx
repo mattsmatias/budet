@@ -59,6 +59,7 @@ export function CaptureFlow({
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [fileHash, setFileHash] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
 
   const [state, action] = useActionState(saveReceipt, initial);
 
@@ -100,21 +101,38 @@ export function CaptureFlow({
       return;
     }
 
-    const [extraction] = await Promise.all([
-      receiptExtractor.extract({
+    // Lataus käynnistyy heti eikä odota poimintaa: kuva on arvokas
+    // silloinkin kun luku epäonnistuu.
+    const upload = uploadImage(file, restaurantId, hash)
+      .then(setImagePath)
+      .catch((e: Error) => setUploadError(e.message));
+
+    let extraction: ExtractionResult;
+
+    try {
+      extraction = await receiptExtractor.extract({
         fileName: file.name,
         mimeType: file.type || "image/jpeg",
         sizeBytes: file.size,
         hash,
         file,
-      }),
-      uploadImage(file, restaurantId, hash)
-        .then(setImagePath)
-        .catch((e: Error) => setUploadError(e.message)),
-      // Näkyvä vaihe: ilman sitä käyttäjä ei ymmärrä mitä tapahtui eikä
-      // ehdi lukea että tiedot pitää tarkistaa.
-      new Promise((resolve) => setTimeout(resolve, 1600)),
-    ]);
+      });
+    } catch (error) {
+      // Luku epäonnistui. Lomake avataan silti, mutta syy kerrotaan —
+      // muuten käyttäjä luulee ettei kuitissa ollut mitään luettavaa ja
+      // kuvaa sen turhaan uudelleen.
+      await upload;
+
+      setExtractionError(
+        error instanceof Error ? error.message : "Kuvan luku epäonnistui.",
+      );
+      setResult(emptyResult());
+      setDate(new Date().toISOString().slice(0, 10));
+      setPhase("review");
+      return;
+    }
+
+    await upload;
 
     setResult(extraction);
     setSupplier(extraction.supplier.value ?? "");
@@ -183,7 +201,7 @@ export function CaptureFlow({
   // Kun poimintaa ei ole, mikään kenttä ei ole "epävarma" — se on vain
   // täyttämättä. Punainen korostus tyhjässä lomakkeessa on hälytys
   // asiasta joka ei ole vielä tapahtunut.
-  const uncertain = extractionEnabled
+  const uncertain = extractionEnabled && extractionError === null
     ? new Set(uncertainFields(result))
     : new Set<string>();
 
@@ -198,7 +216,8 @@ export function CaptureFlow({
     matchedSupplier && category !== ""
       ? suggestedCategory(matchedSupplier, category)
       : null;
-  const reasons = extractionEnabled ? reviewReasonsFor(result) : [];
+  const reasons =
+    extractionEnabled && extractionError === null ? reviewReasonsFor(result) : [];
   const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
   return (
@@ -233,13 +252,30 @@ export function CaptureFlow({
           />
         </span>
         <p>
-          {!extractionEnabled
+          {extractionError
+            ? "Täytä tiedot kuitista itse."
+            : !extractionEnabled
             ? "Kuvan luku ei ole käytössä, joten täytä tiedot kuitista itse. Kuva tallentuu ja näkyy kuitin sivulla."
             : reasons.length > 0
               ? "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta."
               : "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin."}
         </p>
       </div>
+
+      {extractionError ? (
+        <p
+          role="alert"
+          className="px-4 py-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-amber-bg)",
+            color: "var(--rf-amber-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {extractionError} Kuva on tallennettu, joten voit täyttää tiedot
+          käsin tai poistaa kuitin ja yrittää uudelleen.
+        </p>
+      ) : null}
 
       {uploadError ? (
         <p

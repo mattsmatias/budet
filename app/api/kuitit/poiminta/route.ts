@@ -5,12 +5,16 @@
  * muuttuja päätyy sivun lähdekoodiin ja on siten julkinen.
  *
  * KESKEINEN SÄÄNTÖ säilyy: malli palauttaa arvon ja luottamuksen, ei
- * pelkkää arvoa. Kaikki mitä se palauttaa tarkistetaan tässä, ja mikä
- * tahansa outo arvo pudotetaan tyhjäksi. Tyhjä kenttä on parempi kuin
- * keksitty — käyttäjä täyttää sen itse ja tietää tehneensä niin.
+ * pelkkää arvoa. Rakenteinen ulostulo (output_config.format) takaa
+ * muodon, ja arvot tarkistetaan vielä tässä — tuntematon kategoria tai
+ * mahdoton summa pudotetaan tyhjäksi. Tyhjä kenttä on parempi kuin
+ * keksitty: käyttäjä täyttää sen itse ja tietää tehneensä niin.
  */
 
+import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireContext } from "@/lib/restoflow/session";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import {
@@ -27,228 +31,264 @@ import {
   type PaymentMethod,
 } from "@/lib/restoflow/types";
 
+/** Poiminta voi kestää: iso kuva ja tarkka luku vievät aikaa. */
+export const maxDuration = 60;
+
 const MAX_BYTES = 20 * 1024 * 1024;
 
-const ALLOWED = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-  "application/pdf",
-]);
+/**
+ * Mallin näkemät kuvamuodot.
+ *
+ * HEIC ei ole listalla, koska rajapinta ei tue sitä — ja juuri sitä
+ * iPhone tuottaa oletuksena. Selain muuntaa kuvan JPEG:ksi ennen
+ * lähetystä, joten tänne ei pitäisi päätyä HEIC:iä; jos päätyy, siitä
+ * kerrotaan suoraan eikä anneta mallin hylätä sitä puolestamme.
+ */
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const PDF_TYPE = "application/pdf";
+
+const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS) as [string, ...string[]];
+const PAYMENT_KEYS = Object.keys(PAYMENT_LABELS) as [string, ...string[]];
+
+const confidence = z.enum(["high", "medium", "low"]);
+
+/**
+ * Poiminnan muoto.
+ *
+ * Rakenteinen ulostulo takaa että vastaus on tätä skeemaa — mallin ei
+ * tarvitse muistaa palauttaa JSONia, eikä meidän tarvitse siivota
+ * koodiaitoja tai varautua jäsennysvirheeseen.
+ */
+const extraction = z.object({
+  supplier: z.object({ value: z.string().nullable(), confidence }),
+  date: z.object({ value: z.string().nullable(), confidence }),
+  totalCents: z.object({ value: z.number().int().nullable(), confidence }),
+  vatCents: z.object({ value: z.number().int().nullable(), confidence }),
+  category: z.object({ value: z.enum(CATEGORY_KEYS).nullable(), confidence }),
+  paymentMethod: z.object({ value: z.enum(PAYMENT_KEYS).nullable(), confidence }),
+  receiptNumber: z.object({ value: z.string().nullable(), confidence }),
+  items: z.array(
+    z.object({
+      description: z.string(),
+      quantity: z.number().nullable(),
+      unit: z.string().nullable(),
+      totalCents: z.number().int(),
+      category: z.enum(CATEGORY_KEYS),
+      vatRate: z.number().nullable(),
+      productGroup: z.string().nullable(),
+    }),
+  ),
+  imageQuality: z.enum(["good", "poor"]),
+});
 
 export async function POST(request: Request) {
-  // Poiminta maksaa rahaa jokaisesta kutsusta, joten reitti ei ole auki
+  // Poiminta maksaa jokaisesta kutsusta, joten reitti ei ole auki
   // kenellekään kirjautuneelle vaan niille jotka saavat lisätä kuitteja.
   const { role } = await requireContext("/admin/kuitit/uusi");
   if (!canAddReceipts(role)) {
-    return NextResponse.json({ error: "Ei oikeutta" }, { status: 403 });
+    return NextResponse.json({ error: "Ei oikeutta." }, { status: 403 });
   }
 
   if (!isRealExtractor()) {
-    // 501 on sovittu merkki selaimelle: palaa jäljitelmään äläkä näytä
+    // 501 on sovittu merkki selaimelle: avaa käsintäyttö äläkä näytä
     // virhettä. Kuitin lisäyksen on toimittava ilman poimintaa.
-    return NextResponse.json({ error: "Poimintaa ei ole kytketty" }, { status: 501 });
+    return NextResponse.json({ error: "Poimintaa ei ole kytketty." }, { status: 501 });
   }
 
   const form = await request.formData();
   const file = form.get("file");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Tiedosto puuttuu" }, { status: 400 });
+    return NextResponse.json({ error: "Tiedosto puuttuu." }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Tiedosto on liian suuri" }, { status: 413 });
+    return NextResponse.json(
+      { error: "Tiedosto on liian suuri. Kuvaa kuitti uudelleen." },
+      { status: 413 },
+    );
   }
-  if (!ALLOWED.has(file.type)) {
-    return NextResponse.json({ error: "Tiedostomuotoa ei tueta" }, { status: 415 });
+
+  const isPdf = file.type === PDF_TYPE;
+
+  if (!isPdf && !IMAGE_TYPES.has(file.type)) {
+    return NextResponse.json(
+      {
+        error:
+          file.type === "image/heic" || file.type === "image/heif"
+            ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
+            : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
+      },
+      { status: 415 },
+    );
   }
 
   const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-  const isPdf = file.type === "application/pdf";
 
   const source = isPdf
-    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-    : { type: "image", source: { type: "base64", media_type: file.type, data: base64 } };
+    ? ({
+        type: "document" as const,
+        source: { type: "base64" as const, media_type: "application/pdf" as const, data: base64 },
+      })
+    : ({
+        type: "image" as const,
+        source: {
+          type: "base64" as const,
+          media_type: file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+          data: base64,
+        },
+      });
 
-  let response: Response;
+  const client = new Anthropic();
+
   try {
-    response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY as string,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: process.env.RECEIPT_MODEL ?? DEFAULT_MODEL,
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content: [source, { type: "text", text: "Poimi tämän kuitin tiedot." }],
-          },
-        ],
-      }),
+    const response = await client.messages.parse({
+      model: process.env.RECEIPT_MODEL ?? DEFAULT_MODEL,
+      max_tokens: 16000,
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: [source, { type: "text", text: "Poimi tämän kuitin tiedot." }],
+        },
+      ],
+      output_config: { format: zodOutputFormat(extraction) },
     });
-  } catch {
-    return NextResponse.json({ error: "Poimintapalvelu ei vastaa" }, { status: 502 });
+
+    // Turvaluokittelija voi kieltäytyä. Se ei ole poikkeus vaan
+    // normaali vastaus, joten se on tarkistettava ennen sisältöä.
+    if (response.stop_reason === "refusal") {
+      return NextResponse.json(
+        { error: "Kuvaa ei voitu lukea. Täytä tiedot käsin." },
+        { status: 422 },
+      );
+    }
+
+    const parsed = response.parsed_output;
+    if (!parsed) return NextResponse.json(emptyResult());
+
+    return NextResponse.json(sanitize(parsed));
+  } catch (error) {
+    // Verkkovirhe, väärä avain tai kiintiö täynnä. Kerrotaan mitä
+    // tapahtui — hiljainen paluu tyhjään lomakkeeseen näyttäisi siltä
+    // ettei kuitissa ollut mitään luettavaa.
+    const status =
+      error instanceof Anthropic.APIError && typeof error.status === "number"
+        ? error.status
+        : 502;
+
+    const message =
+      status === 401
+        ? "Poimintapalvelun avain ei kelpaa. Tarkista ANTHROPIC_API_KEY."
+        : status === 429
+          ? "Poimintapalvelu on ruuhkautunut. Yritä hetken päästä uudelleen."
+          : "Poimintapalvelu ei vastannut. Täytä tiedot käsin tai yritä uudelleen.";
+
+    return NextResponse.json({ error: message }, { status: 502 });
   }
-
-  if (!response.ok) {
-    return NextResponse.json({ error: "Poiminta epäonnistui" }, { status: 502 });
-  }
-
-  const payload = (await response.json()) as {
-    content?: { type: string; text?: string }[];
-  };
-
-  const text = payload.content?.find((c) => c.type === "text")?.text ?? "";
-
-  let raw: unknown;
-  try {
-    raw = JSON.parse(stripFence(text));
-  } catch {
-    // Malli palautti jotain muuta kuin JSONia. Tyhjä tulos on oikea
-    // vastaus: käyttäjä täyttää kentät eikä mitään keksitä.
-    return NextResponse.json(emptyResult());
-  }
-
-  return NextResponse.json(sanitize(raw));
 }
 
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT = `Olet kuittien lukija ravintolan kulunseurantaan.
-
-Palauta VAIN JSON, ilman selityksiä ja ilman koodiaitaa. Muoto:
-
-{
-  "supplier": { "value": string|null, "confidence": "high"|"medium"|"low" },
-  "date": { "value": "VVVV-KK-PP"|null, "confidence": ... },
-  "totalCents": { "value": kokonaisluku|null, "confidence": ... },
-  "vatCents": { "value": kokonaisluku|null, "confidence": ... },
-  "category": { "value": kategoria|null, "confidence": ... },
-  "paymentMethod": { "value": maksutapa|null, "confidence": ... },
-  "receiptNumber": { "value": string|null, "confidence": ... },
-  "items": [
-    { "description": string, "quantity": number|null, "unit": string|null,
-      "totalCents": kokonaisluku, "category": kategoria,
-      "vatRate": number|null, "productGroup": string|null }
-  ],
-  "imageQuality": "good"|"poor"
-}
-
-Kategoriat: ${Object.keys(CATEGORY_LABELS).join(", ")}.
-Maksutavat: ${Object.keys(PAYMENT_LABELS).join(", ")}.
+const SYSTEM_PROMPT = `Luet ravintolan ostokuitteja kulunseurantaa varten.
 
 Säännöt, joista ei poiketa:
 - Rahasummat ovat SENTTEJÄ kokonaislukuina. 186,90 € on 18690.
 - Jos et näe kenttää selvästi, palauta value: null ja confidence: "low".
-  Älä koskaan arvaa. Väärä luku kirjanpidossa on pahempi kuin puuttuva.
-- Älä laske ALV:tä itse, jos sitä ei ole kuitissa. Palauta null.
-- Päivämäärä on ostopäivä, ei tulostuspäivä.
-- Jos kuva on epäselvä tai vinossa, imageQuality on "poor".
-- items saa olla tyhjä lista, jos rivejä ei erotu.`;
+  Älä koskaan arvaa. Väärä luku kirjanpidossa on pahempi kuin puuttuva,
+  koska väärää lukua ei kukaan tarkista.
+- Älä laske ALV:tä itse jos sitä ei ole kuitissa. Palauta null.
+- Päivämäärä on ostopäivä muodossa VVVV-KK-PP, ei tulostuspäivä.
+- imageQuality on "poor" vain jos kuva on oikeasti epäselvä, vinossa tai
+  osittain rajautunut. Älä merkitse hyvää kuvaa huonoksi.
+- items saa olla tyhjä lista jos rivejä ei erotu. Älä keksi rivejä
+  saadaksesi summan täsmäämään.
+- Rivien summan pitäisi täsmätä loppusummaan. Jos ei täsmää, jätä rivit
+  pois ennemmin kuin muokkaa niitä.
 
-function stripFence(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed.startsWith("```")) return trimmed;
-  return trimmed.replace(/^```(?:json)?/, "").replace(/```$/, "").trim();
-}
+Kategoriat: ${CATEGORY_KEYS.join(", ")}.
+Maksutavat: ${PAYMENT_KEYS.join(", ")}.`;
 
+type Parsed = z.infer<typeof extraction>;
 type Confidence = "high" | "medium" | "low";
 
-function confidenceOf(input: unknown): Confidence {
-  return input === "high" || input === "medium" ? input : "low";
-}
+/**
+ * Tarkistaa mallin vastauksen.
+ *
+ * Skeema takaa muodon, tämä järkevyyden: negatiivinen summa,
+ * mahdoton päivä tai miljoonan euron kuitti ovat lukuvirheitä eivätkä
+ * ostoksia. Luottamus ei voi olla korkea arvolle jota ei ole.
+ */
+function sanitize(parsed: Parsed): ExtractionResult {
+  const field = <T>(
+    raw: { value: T | null; confidence: Confidence },
+    check: (value: T) => T | null,
+  ) => {
+    const value = raw.value === null ? null : check(raw.value);
+    return { value, confidence: value === null ? ("low" as const) : raw.confidence };
+  };
 
-function field<T>(input: unknown, parse: (value: unknown) => T | null) {
-  const record = (input ?? {}) as { value?: unknown; confidence?: unknown };
-  const value = parse(record.value);
-
-  // Luottamus ei voi olla korkea arvolle jota ei ole.
   return {
-    value,
-    confidence: value === null ? ("low" as const) : confidenceOf(record.confidence),
+    supplier: field(parsed.supplier, text),
+    date: field(parsed.date, date),
+    totalCents: field(parsed.totalCents, cents),
+    vatCents: field(parsed.vatCents, cents),
+    category: narrow<ExpenseCategory>(parsed.category),
+    paymentMethod: narrow<PaymentMethod>(parsed.paymentMethod),
+    receiptNumber: field(parsed.receiptNumber, text),
+    items: parsed.items
+      .slice(0, 100)
+      .map((item): ExtractedItem | null => {
+        const totalCents = cents(item.totalCents);
+        if (totalCents === null) return null;
+
+        return {
+          description: text(item.description) ?? "",
+          quantity: item.quantity,
+          unit: text(item.unit ?? ""),
+          totalCents,
+          category: item.category as ExpenseCategory,
+          vatRate: item.vatRate,
+          productGroup: text(item.productGroup ?? ""),
+        };
+      })
+      .filter((item): item is ExtractedItem => item !== null),
+    imageQuality: parsed.imageQuality,
+    elapsedMs: 0,
   };
 }
 
-function asText(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+/**
+ * Kaventaa skeeman sallimasta merkkijonosta sovelluksen liittotyypiksi.
+ *
+ * Skeema rajaa arvot samaan luetteloon josta liittotyyppi on johdettu,
+ * joten kavennus on turvallinen — mutta se tehdään yhdessä paikassa
+ * eikä hajautettuna castina joka kentässä.
+ */
+function narrow<T extends string>(raw: {
+  value: string | null;
+  confidence: Confidence;
+}): { value: T | null; confidence: Confidence } {
+  return {
+    value: raw.value === null ? null : (raw.value as T),
+    confidence: raw.value === null ? "low" : raw.confidence,
+  };
+}
+
+function text(value: string): string | null {
   const trimmed = value.trim();
   return trimmed === "" ? null : trimmed.slice(0, 160);
 }
 
-function asDate(value: unknown): string | null {
-  const text = asText(value);
-  if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
-  return Number.isNaN(Date.parse(`${text}T12:00:00Z`)) ? null : text;
+function date(value: string): string | null {
+  const trimmed = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  return Number.isNaN(Date.parse(`${trimmed}T12:00:00Z`)) ? null : trimmed;
 }
 
-function asCents(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
-  const cents = Math.round(value);
+function cents(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value);
   // Yli miljoona euroa yhdessä kuitissa on lukuvirhe, ei ostos.
-  if (cents < 0 || cents > 100_000_000) return null;
-  return cents;
-}
-
-function asCategory(value: unknown): ExpenseCategory | null {
-  const text = asText(value);
-  return text && text in CATEGORY_LABELS ? (text as ExpenseCategory) : null;
-}
-
-function asPayment(value: unknown): PaymentMethod | null {
-  const text = asText(value);
-  return text && text in PAYMENT_LABELS ? (text as PaymentMethod) : null;
-}
-
-function asItems(value: unknown): ExtractedItem[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .slice(0, 100)
-    .map((entry) => {
-      const row = (entry ?? {}) as Record<string, unknown>;
-      const totalCents = asCents(row.totalCents);
-      if (totalCents === null) return null;
-
-      return {
-        description: asText(row.description) ?? "",
-        quantity: typeof row.quantity === "number" ? row.quantity : null,
-        unit: asText(row.unit),
-        totalCents,
-        category: asCategory(row.category) ?? "other",
-        vatRate: typeof row.vatRate === "number" ? row.vatRate : null,
-        productGroup: asText(row.productGroup),
-      } satisfies ExtractedItem;
-    })
-    .filter((item): item is ExtractedItem => item !== null);
-}
-
-/**
- * Puhdistaa mallin vastauksen.
- *
- * Mallin ulostuloon ei luoteta sen enempää kuin mihinkään muuhunkaan
- * ulkopuoliseen syötteeseen: tuntematon kategoria, negatiivinen summa tai
- * väärän muotoinen päivä pudotetaan tyhjäksi.
- */
-function sanitize(raw: unknown): ExtractionResult {
-  const record = (raw ?? {}) as Record<string, unknown>;
-
-  return {
-    supplier: field(record.supplier, asText),
-    date: field(record.date, asDate),
-    totalCents: field(record.totalCents, asCents),
-    vatCents: field(record.vatCents, asCents),
-    category: field(record.category, asCategory),
-    paymentMethod: field(record.paymentMethod, asPayment),
-    receiptNumber: field(record.receiptNumber, asText),
-    items: asItems(record.items),
-    imageQuality: record.imageQuality === "poor" ? "poor" : "good",
-    elapsedMs: 0,
-  };
+  if (rounded < 0 || rounded > 100_000_000) return null;
+  return rounded;
 }

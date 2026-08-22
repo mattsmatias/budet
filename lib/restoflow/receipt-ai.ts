@@ -9,6 +9,7 @@
  * sen ennen tallennusta. Tyhjä arvo on parempi kuin keksitty.
  */
 
+import { prepareForExtraction } from "./image-prep";
 import { checkVat } from "./vat";
 import type {
   ExpenseCategory,
@@ -286,26 +287,46 @@ export class RemoteReceiptExtractor implements ReceiptExtractor {
 
     const started = Date.now();
 
+    // Kuva valmistellaan ennen lähetystä: HEIC muuntuu JPEG:ksi ja
+    // kahdeksan megapikselin kuva pienenee luettavaan kokoon.
+    const { file } = await prepareForExtraction(input.file);
+
+    const body = new FormData();
+    body.set("file", file);
+
+    let response: Response;
     try {
-      const body = new FormData();
-      body.set("file", input.file);
-
-      const response = await fetch("/api/kuitit/poiminta", {
-        method: "POST",
-        body,
-      });
-
-      if (response.status === 501) return this.fallback.extract(input);
-      if (!response.ok) throw new Error(String(response.status));
-
-      const parsed = (await response.json()) as Partial<ExtractionResult>;
-      return { ...emptyResult(), ...parsed, elapsedMs: Date.now() - started };
+      response = await fetch("/api/kuitit/poiminta", { method: "POST", body });
     } catch {
-      // Verkkovirhe ei saa estää kuitin kirjaamista: kentät jäävät
-      // tyhjiksi ja käyttäjä täyttää ne itse.
-      return this.fallback.extract(input);
+      throw new ExtractionError(
+        "Yhteys poimintapalveluun katkesi. Täytä tiedot käsin tai yritä uudelleen.",
+      );
     }
+
+    // 501 on ainoa tilanne jossa palataan hiljaa jäljitelmään: palvelua
+    // ei ole kytketty, eikä siitä kannata varoittaa joka kerta.
+    if (response.status === 501) return this.fallback.extract(input);
+
+    if (!response.ok) {
+      // Muu virhe kerrotaan. Hiljainen paluu tyhjään lomakkeeseen
+      // näyttäisi siltä ettei kuitissa ollut mitään luettavaa, ja
+      // käyttäjä kuvaisi sen turhaan uudelleen.
+      const detail = await response
+        .json()
+        .then((body: { error?: string }) => body.error)
+        .catch(() => undefined);
+
+      throw new ExtractionError(detail ?? "Kuvan luku epäonnistui.");
+    }
+
+    const parsed = (await response.json()) as Partial<ExtractionResult>;
+    return { ...emptyResult(), ...parsed, elapsedMs: Date.now() - started };
   }
+}
+
+/** Poiminnan virhe joka on tarkoitettu käyttäjälle näytettäväksi. */
+export class ExtractionError extends Error {
+  readonly name = "ExtractionError";
 }
 
 /** Tyhjä tulos. Tyhjä arvo on parempi kuin keksitty. */
@@ -339,7 +360,7 @@ export function extractorName(): string {
 }
 
 /** Malli jota poimintareitti käyttää ellei toisin määrätä. */
-export const DEFAULT_MODEL = "claude-sonnet-5";
+export const DEFAULT_MODEL = "claude-opus-5";
 
 /**
  * Oletuspoimija.
