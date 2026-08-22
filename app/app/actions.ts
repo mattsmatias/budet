@@ -10,6 +10,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -78,7 +79,6 @@ const LABELS: Record<ClockEventType, string> = {
 // Poissaolot
 // ---------------------------------------------------------------------------
 
-const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Loppupäivä on vapaaehtoinen ja tarkoittaa tyhjänä samaa päivää.
@@ -89,8 +89,8 @@ const isoDate = /^\d{4}-\d{2}-\d{2}$/;
  */
 const absenceSchema = z
   .object({
-    date: z.string().regex(isoDate, "Tarkista päivämäärä."),
-    endDate: z.string().regex(isoDate, "Tarkista loppupäivä.").nullable(),
+    date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
+    endDate: z.string().regex(ISO_DATE, "Tarkista loppupäivä.").nullable(),
     kind: z.enum(["sick", "other", "cannot_attend"]),
     note: z.string().trim().max(300).nullable(),
   })

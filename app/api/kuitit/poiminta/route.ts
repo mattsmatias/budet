@@ -12,6 +12,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -293,7 +294,7 @@ function text(value: string): string | null {
 
 function date(value: string): string | null {
   const trimmed = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  if (!ISO_DATE.test(trimmed)) return null;
   return Number.isNaN(Date.parse(`${trimmed}T12:00:00Z`)) ? null : trimmed;
 }
 

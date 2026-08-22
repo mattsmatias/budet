@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import QRCode from "qrcode";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
@@ -55,7 +56,7 @@ export default async function LunchPage({
 
   const requested = typeof params.viikko === "string" ? params.viikko : today;
   const weekStart = weekStartOf(
-    /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : today,
+    ISO_DATE.test(requested) ? requested : today,
   );
 
   const [week, previous, diets, allergens, history] = await Promise.all([

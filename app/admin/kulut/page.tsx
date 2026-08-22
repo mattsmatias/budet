@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { ISO_MONTH } from "@/lib/restoflow/dates";
 import Link from "next/link";
 import {
   changeTone,
@@ -37,7 +38,7 @@ export default async function ExpensesPage({
 
   const params = await searchParams;
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
-  const viewMonth = /^\d{4}-\d{2}$/.test(requested) ? requested : month;
+  const viewMonth = ISO_MONTH.test(requested) ? requested : month;
 
   const current = periodTotals(receipts, viewMonth);
   const previous = periodTotals(receipts, previousMonth(viewMonth));

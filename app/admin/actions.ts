@@ -9,6 +9,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -216,7 +217,7 @@ export async function reviewReceipt(
     p_receipt: receiptId,
     p_approve: formData.get("action") !== "reject",
     p_supplier_name: (formData.get("supplier") as string) || null,
-    p_date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+    p_date: ISO_DATE.test(date) ? date : null,
     p_total_cents: parseEuros(formData.get("total")),
     p_vat_cents: parseEuros(formData.get("vat")),
     p_category: (formData.get("category") as ExpenseCategory) || null,
@@ -251,7 +252,7 @@ export async function deleteReceipt(formData: FormData): Promise<void> {
 // ---------------------------------------------------------------------------
 
 const shiftSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tarkista päivämäärä."),
+  date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
   start: z.string().regex(/^\d{2}:\d{2}$/, "Tarkista alkuaika."),
   end: z.string().regex(/^\d{2}:\d{2}$/, "Tarkista loppuaika."),
   location: z.string().trim().max(80),
@@ -324,7 +325,7 @@ export async function deleteShift(formData: FormData): Promise<void> {
 
 const receiptSchema = z.object({
   supplier: z.string().trim().min(1, "Toimittaja puuttuu.").max(160),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tarkista päivämäärä."),
+  date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
   totalCents: z.number().int().min(0, "Loppusumma puuttuu."),
   vatCents: z.number().int().min(0).nullable(),
   category: z.string().min(1, "Valitse kategoria."),

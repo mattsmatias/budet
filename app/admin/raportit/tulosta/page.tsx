@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { can } from "@/lib/restoflow/permissions";
 import { redirect } from "next/navigation";
 import {
@@ -40,7 +41,7 @@ export default async function PrintableReportPage({
   if (!can(role, "reports.export")) redirect("/admin");
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
-  const viewMonth = /^\d{4}-\d{2}$/.test(requested) ? requested : month;
+  const viewMonth = ISO_MONTH.test(requested) ? requested : month;
 
   const inMonth = sortByDateDesc(receiptsInMonth(receipts, viewMonth));
   const totals = periodTotals(receipts, viewMonth);

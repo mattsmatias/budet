@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import {
   formatDayShort,
@@ -87,7 +88,7 @@ export default async function PublicLunchPage({
 
   const requested = typeof query.viikko === "string" ? query.viikko : null;
   const weekStart =
-    requested && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? weekStartOf(requested) : null;
+    requested && ISO_DATE.test(requested) ? weekStartOf(requested) : null;
 
   const week = await loadWeek(slug, weekStart);
 

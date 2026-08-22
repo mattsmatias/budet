@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { employeeContext } from "@/lib/restoflow/page-context";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { RfIcon, ShiftStatusIcon } from "@/components/restoflow/icons";
@@ -14,7 +15,7 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
   const { shifts, absences, today, month } = await employeeContext("/app/vuorot");
 
   const selected =
-    typeof params.paiva === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.paiva)
+    typeof params.paiva === "string" && ISO_DATE.test(params.paiva)
       ? params.paiva
       : today;
 

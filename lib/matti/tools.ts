@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
 import type { Role } from "@/lib/restoflow/types";
 import { can } from "@/lib/restoflow/permissions";
 import { formatMoney } from "@/lib/money";
@@ -123,11 +124,11 @@ function defineTool<S extends z.ZodType>(def: {
 /** Kuukausi muodossa 2026-08. */
 const monthSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}$/, "Kuukausi muodossa VVVV-KK");
+  .regex(ISO_MONTH, "Kuukausi muodossa VVVV-KK");
 
 const dateSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Päivä muodossa VVVV-KK-PP");
+  .regex(ISO_DATE, "Päivä muodossa VVVV-KK-PP");
 
 // ---------------------------------------------------------------------------
 // Lukevat työkalut

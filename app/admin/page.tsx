@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   attention,
@@ -72,7 +73,7 @@ export default async function AdminDashboard({
   } = await adminContext("/admin");
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
-  const viewMonth = /^\d{4}-\d{2}$/.test(requested) && requested <= month ? requested : month;
+  const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
   const isCurrentMonth = viewMonth === month;
 
   // Valittavat kuukaudet: kuluvasta taaksepäin vuosi.

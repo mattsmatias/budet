@@ -91,8 +91,35 @@ export async function confirmMattiAction(
     return { error: "Sinulla ei ole oikeutta tähän toimintoon." };
   }
 
+  /*
+   * Argumentit validoidaan TYÖKALUN omalla skeemalla.
+   *
+   * Aiemmin tässä oli käsin kirjoitettu kopio jokaisesta skeemasta.
+   * Kopio ehti vioittua: päivämääräkuviosta katosivat kenoviivat,
+   * jolloin ehdotus meni läpi mutta hyväksyntä kaatui. Kaksi
+   * totuutta samasta muodosta on aina yksi liikaa.
+   */
+  const args = tool.schema.safeParse(action.arguments);
+
+  if (!args.success) {
+    await log(
+      supabase,
+      action,
+      restaurant.id,
+      null,
+      null,
+      false,
+      args.error.issues[0]?.message ?? "Virheelliset argumentit",
+    );
+    return { error: "Ehdotuksen tiedot eivät kelpaa. Mitään ei tallennettu." };
+  }
+
   try {
-    const result = await execute(supabase, action);
+    const result = await execute(
+      supabase,
+      action,
+      args.data as Record<string, unknown>,
+    );
 
     await log(
       supabase,
@@ -163,34 +190,23 @@ interface ExecutionResult {
 async function execute(
   supabase: Awaited<ReturnType<typeof createClient>>,
   action: PendingRow,
+  args: Record<string, unknown>,
 ): Promise<ExecutionResult> {
   switch (action.tool) {
     case "propose_lunch_items": {
-      const args = z
-        .object({
-          days: z
-            .array(
-              z.object({
-                date: z.string().regex(/^d{4}-d{2}-d{2}$/),
-                priceEuros: z.number().min(0).max(1000).optional(),
-                items: z
-                  .array(
-                    z.object({
-                      name: z.string().min(1).max(120),
-                      description: z.string().max(400).optional(),
-                      diets: z.array(z.string()).optional(),
-                      allergens: z.array(z.string()).optional(),
-                    }),
-                  )
-                  .min(1)
-                  .max(20),
-              }),
-            )
-            .min(1)
-            .max(7),
-          replace: z.boolean().optional(),
-        })
-        .parse(action.arguments);
+      const { days, replace } = args as {
+        days: {
+          date: string;
+          priceEuros?: number;
+          items: {
+            name: string;
+            description?: string;
+            diets?: string[];
+            allergens?: string[];
+          }[];
+        }[];
+        replace?: boolean;
+      };
 
       const { restaurant } = await requireContext("/admin");
 
@@ -202,7 +218,7 @@ async function execute(
        * siihen ettei päivää löydy — ja käyttäjän pitäisi tietää käydä
        * luomassa viikko itse ensin.
        */
-      const weeks = new Set(args.days.map((d) => weekStartOf(d.date)));
+      const weeks = new Set(days.map((d) => weekStartOf(d.date)));
 
       for (const week of weeks) {
         const { error } = await supabase.rpc("open_lunch_week", {
@@ -215,13 +231,13 @@ async function execute(
       let added = 0;
       const touched: string[] = [];
 
-      for (const day of args.days) {
+      for (const day of days) {
         const row = await lunchDay(supabase, day.date);
         if (!row) throw new Error(`Päivää ${day.date} ei löytynyt`);
 
         touched.push(row.id);
 
-        if (args.replace) {
+        if (replace) {
           const { error } = await supabase.rpc("clear_lunch_day_items", {
             p_day: row.id,
           });
@@ -254,27 +270,25 @@ async function execute(
 
       return {
         message:
-          `Valmis. Lisäsin ${added} ruokaa ${args.days.length} päivälle. ` +
+          `Valmis. Lisäsin ${added} ruokaa ${days.length} päivälle. ` +
           "Lista on luonnos — julkaise se kun se on valmis.",
         target: touched.join(","),
         before: null,
-        after: { days: args.days.length, items: added },
+        after: { days: days.length, items: added },
       };
     }
 
     case "propose_lunch_price": {
-      const args = z
-        .object({
-          date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-          euros: z.number().min(0).max(1000),
-          priceName: z.string().max(40).optional(),
-        })
-        .parse(action.arguments);
+      const { date, euros, priceName } = args as {
+        date: string;
+        euros: number;
+        priceName?: string;
+      };
 
-      const name = args.priceName ?? "Lounas";
-      const cents = Math.round(args.euros * 100);
+      const name = priceName ?? "Lounas";
+      const cents = Math.round(euros * 100);
 
-      const day = await lunchDay(supabase, args.date);
+      const day = await lunchDay(supabase, date);
       if (!day) throw new Error("Päivää ei löytynyt");
 
       const before = day.prices.find((p) => p.name === name)?.cents ?? null;
@@ -287,7 +301,7 @@ async function execute(
       if (error) throw new Error(error.message);
 
       return {
-        message: `Valmis. ${name} ${args.date} on nyt ${formatMoney(cents)}.`,
+        message: `Valmis. ${name} ${date} on nyt ${formatMoney(cents)}.`,
         target: day.id,
         before: { cents: before },
         after: { cents },
@@ -295,36 +309,32 @@ async function execute(
     }
 
     case "propose_copy_lunch_week": {
-      const args = z
-        .object({
-          fromWeekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-          toWeekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        })
-        .parse(action.arguments);
+      const { fromWeekStart, toWeekStart } = args as {
+        fromWeekStart: string;
+        toWeekStart: string;
+      };
 
       const { restaurant } = await requireContext("/admin");
 
       const { error } = await supabase.rpc("copy_lunch_week", {
         p_restaurant: restaurant.id,
-        p_from_week: weekStartOf(args.fromWeekStart),
-        p_to_week: weekStartOf(args.toWeekStart),
+        p_from_week: weekStartOf(fromWeekStart),
+        p_to_week: weekStartOf(toWeekStart),
       });
       if (error) throw new Error(error.message);
 
       return {
         message: "Valmis. Lounaslista kopioitiin luonnokseksi.",
-        target: weekStartOf(args.toWeekStart),
+        target: weekStartOf(toWeekStart),
         before: null,
-        after: { weekStart: weekStartOf(args.toWeekStart), status: "draft" },
+        after: { weekStart: weekStartOf(toWeekStart), status: "draft" },
       };
     }
 
     case "propose_publish_lunch_week": {
-      const args = z
-        .object({ weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
-        .parse(action.arguments);
+      const { weekStart } = args as { weekStart: string };
 
-      const week = weekStartOf(args.weekStart);
+      const week = weekStartOf(weekStart);
       const menu = await lunchMenu(supabase, week);
       if (!menu) throw new Error("Viikkoa ei löytynyt");
 

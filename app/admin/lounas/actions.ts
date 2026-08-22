@@ -10,6 +10,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -44,7 +45,6 @@ function revalidate(): void {
   revalidatePath("/lounas", "layout");
 }
 
-const isoDate = /^\d{4}-\d{2}-\d{2}$/;
 
 // ---------------------------------------------------------------------------
 // Viikko
@@ -59,7 +59,7 @@ const isoDate = /^\d{4}-\d{2}-\d{2}$/;
  */
 export async function openLunchWeek(formData: FormData): Promise<void> {
   const raw = String(formData.get("weekStart") ?? "");
-  if (!isoDate.test(raw)) return;
+  if (!ISO_DATE.test(raw)) return;
 
   const { restaurant } = await requireContext("/admin/lounas");
   const supabase = await createClient();
@@ -127,7 +127,7 @@ export async function copyLunchWeek(
   const from = String(formData.get("fromWeek") ?? "");
   const to = String(formData.get("toWeek") ?? "");
 
-  if (!isoDate.test(from) || !isoDate.test(to)) {
+  if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) {
     return { error: "Tarkista viikot." };
   }
   if (from === to) return { error: "Viikkoa ei voi kopioida itseensä." };

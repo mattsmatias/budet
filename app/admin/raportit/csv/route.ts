@@ -10,6 +10,7 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import { monthIn } from "@/lib/restoflow/clock-context";
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   const kind = searchParams.get("tyyppi") as ReportKind | null;
   const requested = searchParams.get("kuukausi");
   const month =
-    requested && /^\d{4}-\d{2}$/.test(requested)
+    requested && ISO_MONTH.test(requested)
       ? requested
       : monthIn(restaurant.timezone);
 
