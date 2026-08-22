@@ -12,6 +12,7 @@
  */
 
 import type { Merchant } from "./merchants";
+import type { AllergenType, DietType, LunchWeek } from "./lunch";
 import { createClient } from "@/utils/supabase/server";
 import type {
   MerchantCategory,
@@ -526,6 +527,154 @@ export async function fetchMerchantCategories(): Promise<MerchantCategory[]> {
     label: row.label as string,
     sortOrder: row.sort_order as number,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Lounas
+// ---------------------------------------------------------------------------
+//
+// Nämä eivät ole fetchRestaurantDatassa. Se paketti ladataan jokaisella
+// hallintasivulla, ja lounasviikko kiinnostaa vain yhtä sivua — mukaan
+// otettuna se hidastaisi kaikkia muita.
+
+/** Yhden viikon lounaslista päivineen, hintoineen ja ruokineen. */
+export async function fetchLunchWeek(
+  restaurantId: string,
+  weekStart: string,
+): Promise<LunchWeek | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("lunch_menus")
+    .select(
+      "id, week_start, week_end, status, published_at, content_updated_at, lunch_days ( id, date, lunch_prices ( id, name, price_cents, sort_order ), lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
+    )
+    .eq("restaurant_id", restaurantId)
+    .eq("week_start", weekStart)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const days = ((data.lunch_days as unknown as LunchDayRow[]) ?? [])
+    .map((day) => ({
+      id: day.id,
+      date: day.date,
+      prices: (day.lunch_prices ?? [])
+        .map((price) => ({
+          id: price.id,
+          name: price.name,
+          cents: price.price_cents,
+          sortOrder: price.sort_order,
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+      items: (day.lunch_items ?? [])
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description ?? null,
+          sortOrder: item.sort_order,
+          diets: (item.lunch_item_diets ?? []).map((d) => d.diet_type),
+          allergens: (item.lunch_item_allergens ?? []).map((a) => a.allergen_type),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    id: data.id as string,
+    weekStart: data.week_start as string,
+    weekEnd: data.week_end as string,
+    status: data.status as LunchWeek["status"],
+    publishedAt: (data.published_at as string | null) ?? null,
+    contentUpdatedAt: data.content_updated_at as string,
+    days,
+  };
+}
+
+interface LunchDayRow {
+  id: string;
+  date: string;
+  lunch_prices: { id: string; name: string; price_cents: number; sort_order: number }[] | null;
+  lunch_items:
+    | {
+        id: string;
+        name: string;
+        description: string | null;
+        sort_order: number;
+        lunch_item_diets: { diet_type: string }[] | null;
+        lunch_item_allergens: { allergen_type: string }[] | null;
+      }[]
+    | null;
+}
+
+export interface LunchWeekSummary {
+  id: string;
+  weekStart: string;
+  weekEnd: string;
+  status: LunchWeek["status"];
+  publishedAt: string | null;
+  itemCount: number;
+}
+
+/** Aiemmat viikot historialistaa varten, uusin ensin. */
+export async function fetchLunchHistory(
+  restaurantId: string,
+  limit = 12,
+): Promise<LunchWeekSummary[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("lunch_menus")
+    .select(
+      "id, week_start, week_end, status, published_at, lunch_days ( lunch_items ( id ) )",
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("week_start", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    weekStart: row.week_start as string,
+    weekEnd: row.week_end as string,
+    status: row.status as LunchWeek["status"],
+    publishedAt: (row.published_at as string | null) ?? null,
+    itemCount: (
+      (row.lunch_days as unknown as { lunch_items: unknown[] | null }[]) ?? []
+    ).reduce((sum, day) => sum + (day.lunch_items?.length ?? 0), 0),
+  }));
+}
+
+/** Ruokavaliot ja allergeenit. Sanastot kannassa, ei koodissa. */
+export async function fetchDietTypes(): Promise<DietType[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("diet_types")
+    .select("id, label, short_label")
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    label: row.label as string,
+    shortLabel: row.short_label as string,
+  }));
+}
+
+export async function fetchAllergenTypes(): Promise<AllergenType[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("allergen_types")
+    .select("id, label")
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({ id: row.id as string, label: row.label as string }));
 }
 
 export interface RestaurantData {

@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 15 migraatiota:
+-- Sisältää 19 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -27,6 +27,10 @@
 --   0013_merchants.sql
 --   0014_merchant_seed.sql
 --   0015_merchant_backfill.sql
+--   0016_lunch.sql
+--   0017_lunch_functions.sql
+--   0018_lunch_copy_publish_public.sql
+--   0019_my_restaurants_slug.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -3202,4 +3206,1055 @@ where id = '7de0ec49-3922-4abb-ab8b-034bb76ebcdb' and merchant_id is null;
 
 update suppliers set merchant_id = 's-market', merchant_confidence = 0.92
 where id = '931c9048-c457-4fbd-a270-cd2384723add' and merchant_id is null;
+
+
+-- ===========================================================================
+-- 0016_lunch.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0015 — Lounas
+-- ---------------------------------------------------------------------------
+--
+-- Viikon lounaslista: suunnittele, muokkaa, esikatsele, julkaise, jaa.
+--
+-- Kolme ratkaisua ohjaa koko tiedostoa.
+--
+-- 1. HINTA EI OLE RUOASSA.
+--    Lounas on yksi kokonaisuus jonka hintaan kaikki päivän ruoat
+--    sisältyvät. Hintakenttä ruoassa houkuttelisi myymään yksittäisiä
+--    annoksia, ja koko listan hinta olisi silloin laskettava jostain.
+--    Hinta on päivässä, ja päivällä voi olla useampi nimetty hinta
+--    (Lounas, Eläkeläinen, Lapset).
+--
+-- 2. JULKINEN SIVU EI LUE TAULUJA.
+--    Asiakas ei ole kirjautunut. Sen sijaan että antaisimme anon-roolille
+--    lukuoikeuden näihin tauluihin ja luottaisimme siihen että jokainen
+--    käytäntö on kirjoitettu oikein, julkinen sivu kutsuu yhtä
+--    security definer -funktiota joka palauttaa vain julkaistun viikon.
+--    Yksi tarkistus yhdessä paikassa on tarkistettavissa; kymmenen
+--    käytäntöä eri tauluissa ei.
+--
+-- 3. MUUTOS EI JULKAISE ITSEÄÄN.
+--    Julkaistun listan muokkaaminen ei muuta sitä mitä asiakas näkee.
+--    Sisällön muutosaika kirjataan liipaisimella, ja sitä verrataan
+--    julkaisuaikaan. Ilman tätä ravintoloitsija voisi vahingossa
+--    näyttää keskeneräisen listan ovessa olevassa QR-koodissa.
+
+-- ---------------------------------------------------------------------------
+-- 1. Ravintolan julkinen tunniste
+-- ---------------------------------------------------------------------------
+--
+-- Osoitteessa ei käytetä uuid:ta. /lounas/cafe-monami on luettava,
+-- jaettava ja muistettava; /lounas/36418756-fedd-... ei ole mitään
+-- näistä. Tunnus ei myöskään paljasta sisäistä tunnistetta.
+
+alter table restaurants add column if not exists slug text;
+
+-- Täytetään nimestä. Ei ainutlaatuisuutta vielä: se lisätään vasta kun
+-- mahdolliset törmäykset on ratkaistu numeroliitteellä.
+update restaurants
+set slug = regexp_replace(
+  regexp_replace(
+    lower(translate(name, 'äöåÄÖÅ', 'aoaAOA')),
+    '[^a-z0-9]+', '-', 'g'
+  ),
+  '^-+|-+$', '', 'g'
+)
+where slug is null;
+
+-- Törmäykset: sama nimi kahdella ravintolalla. Vanhin saa nimen,
+-- muut saavat juoksevan numeron.
+with numbered as (
+  select id, slug,
+         row_number() over (partition by slug order by created_at, id) as n
+  from restaurants
+)
+update restaurants r
+set slug = n.slug || '-' || n.n
+from numbered n
+where r.id = n.id and n.n > 1;
+
+alter table restaurants alter column slug set not null;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'restaurants_slug_key') then
+    alter table restaurants add constraint restaurants_slug_key unique (slug);
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'restaurants_slug_format') then
+    alter table restaurants add constraint restaurants_slug_format
+      check (slug ~ '^[a-z0-9][a-z0-9-]*$');
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 2. Sanastot
+-- ---------------------------------------------------------------------------
+--
+-- Omina tauluina eikä enumeina: uuden ruokavalion tai allergeenin
+-- lisääminen on rivi, ei skeemamuutos eikä koodimuutos.
+
+create table if not exists diet_types (
+  id text primary key check (id ~ '^[a-z][a-z0-9_]*$'),
+  label text not null,
+  /** Lyhenne merkkiin. Tyhjä kun lyhennettä ei ole. */
+  short_label text not null default '',
+  sort_order int not null default 100
+);
+
+insert into diet_types (id, label, short_label, sort_order) values
+  ('vegetarian',  'Kasvis',        'K',  10),
+  ('vegan',       'Vegaaninen',    'VE', 20),
+  ('gluten_free', 'Gluteeniton',   'G',  30),
+  ('lactose_free','Laktoositon',   'L',  40),
+  ('milk_free',   'Maidoton',      'M',  50)
+on conflict (id) do update set
+  label = excluded.label,
+  short_label = excluded.short_label,
+  sort_order = excluded.sort_order;
+
+create table if not exists allergen_types (
+  id text primary key check (id ~ '^[a-z][a-z0-9_]*$'),
+  label text not null,
+  sort_order int not null default 100
+);
+
+insert into allergen_types (id, label, sort_order) values
+  ('gluten',    'Gluteeni',   10),
+  ('milk',      'Maito',      20),
+  ('egg',       'Kananmuna',  30),
+  ('fish',      'Kala',       40),
+  ('shellfish', 'Äyriäiset',  50),
+  ('soy',       'Soija',      60),
+  ('nuts',      'Pähkinät',   70),
+  ('celery',    'Selleri',    80),
+  ('mustard',   'Sinappi',    90),
+  ('sesame',    'Seesami',   100)
+on conflict (id) do update set
+  label = excluded.label,
+  sort_order = excluded.sort_order;
+
+-- ---------------------------------------------------------------------------
+-- 3. Viikko
+-- ---------------------------------------------------------------------------
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'lunch_status') then
+    create type lunch_status as enum ('draft', 'published', 'archived');
+  end if;
+end;
+$$;
+
+create table if not exists lunch_menus (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  /** Viikon maanantai. Tarkistus estää muun viikonpäivän. */
+  week_start date not null check (extract(isodow from week_start) = 1),
+
+  /**
+   * Loppupäivä johdetaan alusta.
+   *
+   * Generoituna sarakkeena viikko ei voi olla ristiriitainen: alku ja
+   * loppu eivät voi ajautua eri viikoille, koska loppua ei voi
+   * kirjoittaa.
+   */
+  week_end date generated always as (week_start + 6) stored,
+
+  status lunch_status not null default 'draft',
+  published_at timestamptz,
+
+  /**
+   * Milloin sisältöä viimeksi muutettiin.
+   *
+   * Liipaisin päivittää tämän kun päivä, hinta tai ruoka muuttuu.
+   * Vertaamalla julkaisuaikaan tiedetään onko julkaistussa listassa
+   * julkaisemattomia muutoksia.
+   */
+  content_updated_at timestamptz not null default now(),
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  unique (restaurant_id, week_start)
+);
+
+create index if not exists lunch_menus_restaurant_week_idx
+  on lunch_menus (restaurant_id, week_start desc);
+
+create table if not exists lunch_days (
+  id uuid primary key default gen_random_uuid(),
+  menu_id uuid not null references lunch_menus (id) on delete cascade,
+  date date not null,
+
+  /** 1 = maanantai. Johdettu, jotta se ei voi olla ristiriidassa. */
+  day_of_week int generated always as (extract(isodow from date)::int) stored,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  unique (menu_id, date)
+);
+
+create index if not exists lunch_days_menu_idx on lunch_days (menu_id, date);
+
+-- ---------------------------------------------------------------------------
+-- 4. Hinnat
+-- ---------------------------------------------------------------------------
+--
+-- Sentteinä kokonaislukuna, kuten kaikki muukin raha tässä
+-- sovelluksessa. Liukuluku olisi eri sääntö samalle asialle.
+
+create table if not exists lunch_prices (
+  id uuid primary key default gen_random_uuid(),
+  lunch_day_id uuid not null references lunch_days (id) on delete cascade,
+
+  /** "Lounas", "Eläkeläinen", "Lapset". */
+  name text not null check (length(trim(name)) > 0 and length(name) <= 40),
+
+  price_cents int not null check (price_cents >= 0),
+  sort_order int not null default 0,
+
+  created_at timestamptz not null default now(),
+
+  unique (lunch_day_id, name)
+);
+
+create index if not exists lunch_prices_day_idx
+  on lunch_prices (lunch_day_id, sort_order);
+
+-- ---------------------------------------------------------------------------
+-- 5. Ruoat
+-- ---------------------------------------------------------------------------
+--
+-- EI hintasaraketta. Se on tämän moduulin tärkein rakenteellinen
+-- valinta: lounas on kokonaisuus, ei annosvalikoima.
+
+create table if not exists lunch_items (
+  id uuid primary key default gen_random_uuid(),
+  lunch_day_id uuid not null references lunch_days (id) on delete cascade,
+
+  name text not null check (length(trim(name)) > 0 and length(name) <= 120),
+  description text check (description is null or length(description) <= 400),
+
+  /** Polku storagessa, ei URL. Sama tapa kuin kuiteissa. */
+  image_path text,
+
+  sort_order int not null default 0,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists lunch_items_day_idx
+  on lunch_items (lunch_day_id, sort_order);
+
+create table if not exists lunch_item_diets (
+  lunch_item_id uuid not null references lunch_items (id) on delete cascade,
+  diet_type text not null references diet_types (id),
+  primary key (lunch_item_id, diet_type)
+);
+
+create table if not exists lunch_item_allergens (
+  lunch_item_id uuid not null references lunch_items (id) on delete cascade,
+  allergen_type text not null references allergen_types (id),
+  primary key (lunch_item_id, allergen_type)
+);
+
+-- ---------------------------------------------------------------------------
+-- 6. Sisällön muutosaika
+-- ---------------------------------------------------------------------------
+--
+-- Ilman tätä "julkaistussa listassa on muutoksia" pitäisi päätellä
+-- vertaamalla rivejä, tai jokaisen toiminnon pitäisi muistaa päivittää
+-- viikko itse. Toinen unohtuisi ennemmin tai myöhemmin.
+
+create or replace function touch_lunch_menu_from_day()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update lunch_menus set content_updated_at = now(), updated_at = now()
+  where id = coalesce(new.menu_id, old.menu_id);
+  return null;
+end;
+$$;
+
+create or replace function touch_lunch_menu_from_child()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update lunch_menus m set content_updated_at = now(), updated_at = now()
+  from lunch_days d
+  where d.id = coalesce(new.lunch_day_id, old.lunch_day_id)
+    and m.id = d.menu_id;
+  return null;
+end;
+$$;
+
+create or replace function touch_lunch_menu_from_item_child()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update lunch_menus m set content_updated_at = now(), updated_at = now()
+  from lunch_days d, lunch_items i
+  where i.id = coalesce(new.lunch_item_id, old.lunch_item_id)
+    and d.id = i.lunch_day_id
+    and m.id = d.menu_id;
+  return null;
+end;
+$$;
+
+drop trigger if exists lunch_days_touch on lunch_days;
+create trigger lunch_days_touch
+  after insert or update or delete on lunch_days
+  for each row execute function touch_lunch_menu_from_day();
+
+drop trigger if exists lunch_prices_touch on lunch_prices;
+create trigger lunch_prices_touch
+  after insert or update or delete on lunch_prices
+  for each row execute function touch_lunch_menu_from_child();
+
+drop trigger if exists lunch_items_touch on lunch_items;
+create trigger lunch_items_touch
+  after insert or update or delete on lunch_items
+  for each row execute function touch_lunch_menu_from_child();
+
+drop trigger if exists lunch_item_diets_touch on lunch_item_diets;
+create trigger lunch_item_diets_touch
+  after insert or update or delete on lunch_item_diets
+  for each row execute function touch_lunch_menu_from_item_child();
+
+drop trigger if exists lunch_item_allergens_touch on lunch_item_allergens;
+create trigger lunch_item_allergens_touch
+  after insert or update or delete on lunch_item_allergens
+  for each row execute function touch_lunch_menu_from_item_child();
+
+-- ---------------------------------------------------------------------------
+-- 7. Pääsy
+-- ---------------------------------------------------------------------------
+--
+-- Luku: ravintolan jäsenet. Kirjoitus: vain esihenkilö — lounaslista on
+-- se mitä ovessa lukee, eikä työntekijä muuta sitä ohimennen.
+--
+-- Anon-roolille EI anneta mitään. Julkinen sivu kulkee funktion kautta.
+
+alter table lunch_menus enable row level security;
+alter table lunch_days enable row level security;
+alter table lunch_prices enable row level security;
+alter table lunch_items enable row level security;
+alter table lunch_item_diets enable row level security;
+alter table lunch_item_allergens enable row level security;
+alter table diet_types enable row level security;
+alter table allergen_types enable row level security;
+
+drop policy if exists diet_types_read on diet_types;
+create policy diet_types_read on diet_types
+  for select to authenticated using (true);
+
+drop policy if exists allergen_types_read on allergen_types;
+create policy allergen_types_read on allergen_types
+  for select to authenticated using (true);
+
+drop policy if exists lunch_menus_read on lunch_menus;
+create policy lunch_menus_read on lunch_menus
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+drop policy if exists lunch_days_read on lunch_days;
+create policy lunch_days_read on lunch_days
+  for select to authenticated
+  using (
+    menu_id in (
+      select id from lunch_menus
+      where restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+drop policy if exists lunch_prices_read on lunch_prices;
+create policy lunch_prices_read on lunch_prices
+  for select to authenticated
+  using (
+    lunch_day_id in (
+      select d.id from lunch_days d
+      join lunch_menus m on m.id = d.menu_id
+      where m.restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+drop policy if exists lunch_items_read on lunch_items;
+create policy lunch_items_read on lunch_items
+  for select to authenticated
+  using (
+    lunch_day_id in (
+      select d.id from lunch_days d
+      join lunch_menus m on m.id = d.menu_id
+      where m.restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+drop policy if exists lunch_item_diets_read on lunch_item_diets;
+create policy lunch_item_diets_read on lunch_item_diets
+  for select to authenticated
+  using (
+    lunch_item_id in (
+      select i.id from lunch_items i
+      join lunch_days d on d.id = i.lunch_day_id
+      join lunch_menus m on m.id = d.menu_id
+      where m.restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+drop policy if exists lunch_item_allergens_read on lunch_item_allergens;
+create policy lunch_item_allergens_read on lunch_item_allergens
+  for select to authenticated
+  using (
+    lunch_item_id in (
+      select i.id from lunch_items i
+      join lunch_days d on d.id = i.lunch_day_id
+      join lunch_menus m on m.id = d.menu_id
+      where m.restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+
+-- ===========================================================================
+-- 0017_lunch_functions.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0017 — Lounaslistan muokkaustoiminnot
+-- ---------------------------------------------------------------------------
+--
+-- Kaikki security definer ja esihenkilörajauksella. Sama kuvio kuin
+-- muualla: pääsysääntö on tietokannassa yhdessä paikassa, eikä se voi
+-- ajautua eri linjalle sovelluskoodin kanssa.
+
+/** Avaa viikon: luo viikon ja sen seitsemän päivää jos niitä ei ole. */
+create or replace function open_lunch_week(p_restaurant uuid, p_week_start date)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_menu uuid;
+  i int;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  if extract(isodow from p_week_start) <> 1 then
+    raise exception 'Viikon on alettava maanantaista';
+  end if;
+
+  insert into lunch_menus (restaurant_id, week_start)
+  values (p_restaurant, p_week_start)
+  on conflict (restaurant_id, week_start) do update set updated_at = now()
+  returning id into v_menu;
+
+  -- Kaikki seitsemän päivää kerralla. Puolikas viikko näyttäisi siltä
+  -- että ravintola on kiinni loppuviikon.
+  for i in 0..6 loop
+    insert into lunch_days (menu_id, date)
+    values (v_menu, p_week_start + i)
+    on conflict (menu_id, date) do nothing;
+  end loop;
+
+  return v_menu;
+end;
+$$;
+
+revoke all on function open_lunch_week from public;
+grant execute on function open_lunch_week to authenticated;
+
+/** Päivän ravintola. Käytetään oikeustarkistuksissa. */
+create or replace function lunch_day_restaurant(p_day uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select m.restaurant_id
+  from lunch_days d join lunch_menus m on m.id = d.menu_id
+  where d.id = p_day;
+$$;
+
+create or replace function lunch_item_restaurant(p_item uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select m.restaurant_id
+  from lunch_items i
+  join lunch_days d on d.id = i.lunch_day_id
+  join lunch_menus m on m.id = d.menu_id
+  where i.id = p_item;
+$$;
+
+/**
+ * Ruoan tallennus.
+ *
+ * Yksi funktio luo ja päivittää. Kaksi erillistä ajautuisi erilleen
+ * juuri ruokavalioiden käsittelyssä, joka on tämän ainoa hankala osa:
+ * lapsirivit korvataan kokonaan, koska osittainen päivitys jättäisi
+ * poistetut valinnat henkiin.
+ */
+create or replace function save_lunch_item(
+  p_day uuid,
+  p_item uuid,
+  p_name text,
+  p_description text,
+  p_diets text[],
+  p_allergens text[]
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_id uuid;
+  v_next int;
+begin
+  v_restaurant := lunch_day_restaurant(p_day);
+  if v_restaurant is null then
+    raise exception 'Päivää ei löytynyt';
+  end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Ruoan nimi puuttuu';
+  end if;
+
+  if p_item is null then
+    select coalesce(max(sort_order), -1) + 1 into v_next
+    from lunch_items where lunch_day_id = p_day;
+
+    insert into lunch_items (lunch_day_id, name, description, sort_order)
+    values (p_day, trim(p_name), nullif(trim(coalesce(p_description, '')), ''), v_next)
+    returning id into v_id;
+  else
+    -- Ruoka on siirrettävä vain oman ravintolan sisällä.
+    if lunch_item_restaurant(p_item) is distinct from v_restaurant then
+      raise exception 'Ruokaa ei löytynyt';
+    end if;
+
+    update lunch_items
+    set name = trim(p_name),
+        description = nullif(trim(coalesce(p_description, '')), ''),
+        updated_at = now()
+    where id = p_item
+    returning id into v_id;
+  end if;
+
+  delete from lunch_item_diets where lunch_item_id = v_id;
+  delete from lunch_item_allergens where lunch_item_id = v_id;
+
+  -- Tuntematon tunnus pudotetaan hiljaa: sanasto on kannassa, ja
+  -- vanhentunut lomake ei saa kaataa tallennusta.
+  if p_diets is not null then
+    insert into lunch_item_diets (lunch_item_id, diet_type)
+    select v_id, d from unnest(p_diets) d
+    where d in (select id from diet_types)
+    on conflict do nothing;
+  end if;
+
+  if p_allergens is not null then
+    insert into lunch_item_allergens (lunch_item_id, allergen_type)
+    select v_id, a from unnest(p_allergens) a
+    where a in (select id from allergen_types)
+    on conflict do nothing;
+  end if;
+
+  return v_id;
+end;
+$$;
+
+revoke all on function save_lunch_item from public;
+grant execute on function save_lunch_item to authenticated;
+
+create or replace function delete_lunch_item(p_item uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  v_restaurant := lunch_item_restaurant(p_item);
+  if v_restaurant is null then return; end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  delete from lunch_items where id = p_item;
+end;
+$$;
+
+revoke all on function delete_lunch_item from public;
+grant execute on function delete_lunch_item to authenticated;
+
+/**
+ * Järjestyksen muutos.
+ *
+ * Vaihtaa paikkaa naapurin kanssa, jolloin järjestysluvut pysyvät
+ * tiiviinä eikä koko listaa tarvitse numeroida uudelleen.
+ */
+create or replace function move_lunch_item(p_item uuid, p_up boolean)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_day uuid;
+  v_order int;
+  v_other uuid;
+  v_other_order int;
+begin
+  v_restaurant := lunch_item_restaurant(p_item);
+  if v_restaurant is null then return; end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  select lunch_day_id, sort_order into v_day, v_order
+  from lunch_items where id = p_item;
+
+  if p_up then
+    select id, sort_order into v_other, v_other_order
+    from lunch_items
+    where lunch_day_id = v_day and sort_order < v_order
+    order by sort_order desc limit 1;
+  else
+    select id, sort_order into v_other, v_other_order
+    from lunch_items
+    where lunch_day_id = v_day and sort_order > v_order
+    order by sort_order asc limit 1;
+  end if;
+
+  if v_other is null then return; end if;
+
+  update lunch_items set sort_order = v_other_order, updated_at = now()
+  where id = p_item;
+  update lunch_items set sort_order = v_order, updated_at = now()
+  where id = v_other;
+end;
+$$;
+
+revoke all on function move_lunch_item from public;
+grant execute on function move_lunch_item to authenticated;
+
+/** Päivän hinta. Null poistaa hinnan. */
+create or replace function set_lunch_price(
+  p_day uuid,
+  p_name text,
+  p_cents int
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  v_restaurant := lunch_day_restaurant(p_day);
+  if v_restaurant is null then
+    raise exception 'Päivää ei löytynyt';
+  end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Hinnan nimi puuttuu';
+  end if;
+
+  if p_cents is null then
+    delete from lunch_prices
+    where lunch_day_id = p_day and name = trim(p_name);
+    return;
+  end if;
+
+  if p_cents < 0 then
+    raise exception 'Hinta ei voi olla negatiivinen';
+  end if;
+
+  insert into lunch_prices (lunch_day_id, name, price_cents)
+  values (p_day, trim(p_name), p_cents)
+  on conflict (lunch_day_id, name)
+  do update set price_cents = excluded.price_cents;
+end;
+$$;
+
+revoke all on function set_lunch_price from public;
+grant execute on function set_lunch_price to authenticated;
+
+
+-- ===========================================================================
+-- 0018_lunch_copy_publish_public.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0018 — Kopiointi, julkaisu ja julkinen haku
+-- ---------------------------------------------------------------------------
+
+/**
+ * Päivän kopiointi.
+ *
+ * Korvaa kohteen sisällön kokonaan. Osittainen yhdistäminen tuottaisi
+ * kaksoiskappaleita joita kukaan ei pyytänyt — sama ruoka kahdesti
+ * listalla on pahempi kuin ylikirjoitettu päivä, koska sitä ei huomaa.
+ */
+create or replace function copy_lunch_day(p_from uuid, p_to uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  r record;
+  v_new uuid;
+begin
+  v_restaurant := lunch_day_restaurant(p_from);
+
+  -- Molempien on kuuluttava samaan ravintolaan. Ilman tätä toisen
+  -- ravintolan päivän tunnisteella voisi kopioida sen sisällön itselleen.
+  if v_restaurant is null or lunch_day_restaurant(p_to) is distinct from v_restaurant then
+    raise exception 'Päivää ei löytynyt';
+  end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+  if p_from = p_to then return; end if;
+
+  delete from lunch_items where lunch_day_id = p_to;
+  delete from lunch_prices where lunch_day_id = p_to;
+
+  insert into lunch_prices (lunch_day_id, name, price_cents, sort_order)
+  select p_to, name, price_cents, sort_order
+  from lunch_prices where lunch_day_id = p_from;
+
+  for r in
+    select * from lunch_items where lunch_day_id = p_from order by sort_order
+  loop
+    insert into lunch_items (lunch_day_id, name, description, image_path, sort_order)
+    values (p_to, r.name, r.description, r.image_path, r.sort_order)
+    returning id into v_new;
+
+    insert into lunch_item_diets (lunch_item_id, diet_type)
+    select v_new, diet_type from lunch_item_diets where lunch_item_id = r.id;
+
+    insert into lunch_item_allergens (lunch_item_id, allergen_type)
+    select v_new, allergen_type from lunch_item_allergens where lunch_item_id = r.id;
+  end loop;
+end;
+$$;
+
+revoke all on function copy_lunch_day from public;
+grant execute on function copy_lunch_day to authenticated;
+
+/**
+ * Viikon kopiointi.
+ *
+ * Julkaisutila ei kopioidu. Uusi viikko alkaa aina luonnoksena, muuten
+ * kopiointi julkaisisi keskeneräisen listan ovessa olevaan QR-koodiin.
+ */
+create or replace function copy_lunch_week(
+  p_restaurant uuid,
+  p_from_week date,
+  p_to_week date
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_to_menu uuid;
+  v_from_menu uuid;
+  d record;
+  v_to_day uuid;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  select id into v_from_menu from lunch_menus
+  where restaurant_id = p_restaurant and week_start = p_from_week;
+
+  if v_from_menu is null then
+    raise exception 'Kopioitavaa viikkoa ei löytynyt';
+  end if;
+
+  v_to_menu := open_lunch_week(p_restaurant, p_to_week);
+
+  -- Päivät kohdistetaan siirtymän mukaan eikä viikonpäivän nimellä:
+  -- näin maanantai menee maanantaiksi myös silloin kun viikkoja on
+  -- välissä useampi.
+  for d in
+    select id, date from lunch_days where menu_id = v_from_menu order by date
+  loop
+    select id into v_to_day from lunch_days
+    where menu_id = v_to_menu
+      and date = p_to_week + (d.date - p_from_week);
+
+    if v_to_day is not null then
+      perform copy_lunch_day(d.id, v_to_day);
+    end if;
+  end loop;
+
+  update lunch_menus
+  set status = 'draft', published_at = null, updated_at = now()
+  where id = v_to_menu;
+
+  return v_to_menu;
+end;
+$$;
+
+revoke all on function copy_lunch_week from public;
+grant execute on function copy_lunch_week to authenticated;
+
+/**
+ * Julkaisu.
+ *
+ * Tyhjää viikkoa ei julkaista: ovessa oleva QR-koodi johtaisi tyhjälle
+ * sivulle, ja asiakas päättelisi siitä että lounasta ei ole.
+ */
+create or replace function publish_lunch_week(p_menu uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_items int;
+begin
+  select restaurant_id into v_restaurant from lunch_menus where id = p_menu;
+  if v_restaurant is null then
+    raise exception 'Viikkoa ei löytynyt';
+  end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi julkaista lounaslistan';
+  end if;
+
+  select count(*) into v_items
+  from lunch_items i join lunch_days d on d.id = i.lunch_day_id
+  where d.menu_id = p_menu;
+
+  if v_items = 0 then
+    raise exception 'Tyhjää lounaslistaa ei voi julkaista';
+  end if;
+
+  update lunch_menus
+  set status = 'published', published_at = now(), updated_at = now()
+  where id = p_menu;
+end;
+$$;
+
+revoke all on function publish_lunch_week from public;
+grant execute on function publish_lunch_week to authenticated;
+
+/** Luonnos ja arkisto. Julkaisu kulkee vain publish_lunch_week-funktion kautta. */
+create or replace function set_lunch_week_status(p_menu uuid, p_status lunch_status)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  select restaurant_id into v_restaurant from lunch_menus where id = p_menu;
+  if v_restaurant is null then
+    raise exception 'Viikkoa ei löytynyt';
+  end if;
+  if not is_manager(v_restaurant) then
+    raise exception 'Vain esihenkilö voi hallita lounaslistaa';
+  end if;
+
+  -- Julkaisu tarkistaa sisällön. Tämän kautta se ohittaisi tarkistuksen.
+  if p_status = 'published' then
+    raise exception 'Julkaisu tehdään publish_lunch_week-funktiolla';
+  end if;
+
+  update lunch_menus
+  set status = p_status,
+      published_at = case when p_status = 'draft' then null else published_at end,
+      updated_at = now()
+  where id = p_menu;
+end;
+$$;
+
+revoke all on function set_lunch_week_status from public;
+grant execute on function set_lunch_week_status to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Julkinen haku
+-- ---------------------------------------------------------------------------
+
+/**
+ * Julkisen lounassivun ainoa tietolähde.
+ *
+ * Anon-roolille ei ole annettu lukuoikeutta yhteenkään lounastauluun,
+ * eikä ravintolatauluun. Kaikki RLS-käytännöt on kirjoitettu vain
+ * authenticated-roolille, joten kirjautumaton osuu joka taulussa
+ * oletuskieltoon.
+ *
+ * Tämä funktio on siis ainoa reitti ulos, ja se palauttaa vain
+ * julkaistun viikon ja vain ne kentät jotka kuuluvat asiakkaalle.
+ * Yksi tarkistus yhdessä paikassa on tarkistettavissa; kymmenen
+ * käytäntöä eri tauluissa ei.
+ */
+create or replace function public_lunch_week(p_slug text, p_week_start date default null)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant record;
+  v_menu record;
+  v_week date;
+begin
+  select id, name, timezone into v_restaurant
+  from restaurants where slug = p_slug;
+
+  if v_restaurant.id is null then
+    return null;
+  end if;
+
+  -- Kuluva viikko ravintolan omalla aikavyöhykkeellä, ei palvelimen.
+  v_week := coalesce(
+    p_week_start,
+    (date_trunc('week', (now() at time zone v_restaurant.timezone)))::date
+  );
+
+  select * into v_menu
+  from lunch_menus
+  where restaurant_id = v_restaurant.id
+    and week_start = v_week
+    and status = 'published';
+
+  -- Julkaisematon viikko palauttaa ravintolan nimen mutta ei sisältöä.
+  -- Näin sivu voi kertoa "ei julkaistu" eikä näytä rikkinäiseltä.
+  if v_menu.id is null then
+    return json_build_object(
+      'restaurantName', v_restaurant.name,
+      'weekStart', v_week,
+      'published', false,
+      'days', '[]'::json
+    );
+  end if;
+
+  return json_build_object(
+    'restaurantName', v_restaurant.name,
+    'weekStart', v_menu.week_start,
+    'weekEnd', v_menu.week_end,
+    'published', true,
+    'publishedAt', v_menu.published_at,
+    'days', coalesce((
+      select json_agg(day order by day_date)
+      from (
+        select
+          d.date as day_date,
+          json_build_object(
+            'date', d.date,
+            'prices', coalesce((
+              select json_agg(json_build_object('name', p.name, 'cents', p.price_cents)
+                              order by p.sort_order, p.name)
+              from lunch_prices p where p.lunch_day_id = d.id
+            ), '[]'::json),
+            'items', coalesce((
+              select json_agg(json_build_object(
+                       'name', i.name,
+                       'description', i.description,
+                       'diets', coalesce((
+                         select json_agg(t.label order by t.sort_order)
+                         from lunch_item_diets x
+                         join diet_types t on t.id = x.diet_type
+                         where x.lunch_item_id = i.id
+                       ), '[]'::json),
+                       'allergens', coalesce((
+                         select json_agg(a.label order by a.sort_order)
+                         from lunch_item_allergens y
+                         join allergen_types a on a.id = y.allergen_type
+                         where y.lunch_item_id = i.id
+                       ), '[]'::json)
+                     ) order by i.sort_order)
+              from lunch_items i where i.lunch_day_id = d.id
+            ), '[]'::json)
+          ) as day
+        from lunch_days d
+        where d.menu_id = v_menu.id
+      ) rows
+    ), '[]'::json)
+  );
+end;
+$$;
+
+revoke all on function public_lunch_week from public;
+grant execute on function public_lunch_week to anon, authenticated;
+
+
+-- ===========================================================================
+-- 0019_my_restaurants_slug.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0019 — Slug jäsenyysnäkymään
+-- ---------------------------------------------------------------------------
+--
+-- Julkisen lounassivun osoite rakennetaan slugista. Ilman tätä se
+-- vaatisi oman kyselyn joka sivunlatauksella, vaikka jäsenyys haetaan
+-- joka tapauksessa.
+--
+-- Sarake lisätään loppuun. create or replace view ei salli sarakkeiden
+-- järjestyksen muuttamista, ja näkymän pudottaminen veisi mukanaan
+-- oikeudet.
+--
+-- security_invoker = true säilyy: näkymä ei saa ohittaa RLS:ää.
+
+create or replace view my_restaurants
+with (security_invoker = true)
+as
+select
+  r.id,
+  r.name,
+  r.timezone,
+  r.currency,
+  m.role,
+  m.position,
+  m.hourly_rate_cents,
+  r.slug
+from restaurants r
+join memberships m on m.restaurant_id = r.id
+where m.user_id = auth.uid() and m.active;
+
+grant select on my_restaurants to authenticated;
 

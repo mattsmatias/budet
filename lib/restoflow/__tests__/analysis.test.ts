@@ -665,8 +665,8 @@ describe("oikeudet", () => {
     }
   });
 
-  it("pitää päävalikon seitsemässä kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(7);
+  it("pitää päävalikon kahdeksassa kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(8);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 
@@ -702,6 +702,7 @@ describe("oikeudet", () => {
       "main",
       "finance",
       "staff",
+      "restaurant",
       "reporting",
     ]);
 
@@ -727,6 +728,7 @@ describe("oikeudet", () => {
 
     const accountant = adminNavSectionsFor("accountant").map((s) => s.id);
     expect(accountant).not.toContain("staff");
+    expect(accountant).not.toContain("restaurant");
   });
 
   it("pitää asetukset osastojen ulkopuolella", () => {

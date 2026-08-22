@@ -32,6 +32,8 @@ export type Capability =
   | "reports.view"
   | "reports.export"
   | "alerts.view"
+  | "lunch.view"
+  | "lunch.manage"
   | "settings.view"
   | "settings.edit";
 
@@ -43,6 +45,7 @@ const OWNER: Capability[] = [
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view", "staff.manage",
   "reports.view", "reports.export",
+  "lunch.view", "lunch.manage",
   "alerts.view", "settings.view", "settings.edit",
 ];
 
@@ -54,6 +57,7 @@ const MANAGER: Capability[] = [
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view",
   "reports.view", "reports.export",
+  "lunch.view", "lunch.manage",
   "alerts.view", "settings.view",
 ];
 
@@ -151,6 +155,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/tyovuorot", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", requires: "staff.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
+  { href: "/admin/lounas", requires: "lunch.view" },
   { href: "/admin/raportit", requires: "reports.view" },
   { href: "/admin/ilmoitukset", requires: "alerts.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
@@ -168,6 +173,7 @@ export const NAV_SECTIONS = [
   { id: "main", label: "Päävalikko" },
   { id: "finance", label: "Talous" },
   { id: "staff", label: "Henkilöstö" },
+  { id: "restaurant", label: "Ravintola" },
   { id: "reporting", label: "Raportointi" },
 ] as const;
 
@@ -207,6 +213,8 @@ export const ADMIN_NAV: NavEntry[] = [
 
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
+
+  { href: "/admin/lounas", label: "Lounas", icon: "lunch", requires: "lunch.view", section: "restaurant" },
 
   { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
 ];

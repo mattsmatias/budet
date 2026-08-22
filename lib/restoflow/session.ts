@@ -24,6 +24,8 @@ export interface SessionUser {
 export interface RestaurantMembership {
   id: string;
   name: string;
+  /** Julkisen osoitteen tunnus, esim. "cafe-monami". */
+  slug: string;
   timezone: string;
   currency: string;
   role: Role;
@@ -65,7 +67,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("my_restaurants")
-      .select("id, name, timezone, currency, role, position, hourly_rate_cents")
+      .select("id, name, slug, timezone, currency, role, position, hourly_rate_cents")
       .order("name");
 
     if (error || !data) return [];
@@ -73,6 +75,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
     return data.map((row) => ({
       id: row.id as string,
       name: row.name as string,
+      slug: row.slug as string,
       timezone: row.timezone as string,
       currency: row.currency as string,
       role: row.role as Role,

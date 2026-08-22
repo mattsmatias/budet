@@ -23,6 +23,7 @@ export type IconName =
   | "receipt"
   | "expenses"
   | "suppliers"
+  | "lunch"
   | "budget"
   | "calendar"
   | "staff"
@@ -62,6 +63,9 @@ const PATHS: Record<IconName, string> = {
 
   // Pylväät, nouseva järjestys — kulut ajassa.
   expenses: "M4 20.5V13M9.3 20.5V7.5M14.7 20.5v-4.5M20 20.5V10",
+
+  // Tarjoilukupu — lounas on tarjoiltava annos, ei ostos.
+  lunch: "M3 18.5h18M4.8 18.5a7.2 7.2 0 0 1 14.4 0M12 8.3V6.2M10.6 6.2h2.8",
 
   // Myymälä/varasto — toimittaja on paikka, ei kuljetusväline.
   suppliers: "M3.5 20.5V10L12 4.5l8.5 5.5v10.5zM9.5 20.5v-6h5v6M3.5 20.5h17",
