@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkVat, dominantCategory, inferVatRate, isMixedReceipt, itemsSumMatches, rateMatchesCategory } from "../vat";
+import { quantityOf, vatRateOf } from "../receipt-ai";
 import { daysApart, duplicateIds, findDuplicates } from "../duplicates";
 import { supplierTrends, totalsBySupplier, suggestedCategory } from "../suppliers";
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
@@ -107,6 +108,37 @@ describe("ALV-tarkistus", () => {
     // hiljainen korjaus tuottaisi väärän kirjauksen.
     const check = checkVat(11400, 1400, "alcohol");
     expect(Object.keys(check)).not.toContain("correctedVatCents");
+  });
+});
+
+describe("poiminnan lukujen rajaus", () => {
+  it("hyväksyy kannan murtolukuna", () => {
+    expect(vatRateOf(0.14)).toBe(0.14);
+    expect(vatRateOf(0.255)).toBe(0.255);
+    expect(vatRateOf(0)).toBe(0);
+  });
+
+  // Malli lukee kuitista "ALV 14 %" ja palauttaa 14. Sarakkeeseen
+  // numeric(5,4) mahtuu 9,9999, joten se kaatoi tallennuksen.
+  it("tulkitsee prosenttiluvun murtoluvuksi", () => {
+    expect(vatRateOf(14)).toBe(0.14);
+    expect(vatRateOf(25.5)).toBe(0.255);
+  });
+
+  it("pudottaa mahdottoman kannan tyhjäksi", () => {
+    expect(vatRateOf(101)).toBeNull();
+    expect(vatRateOf(1)).toBeNull();
+    expect(vatRateOf(-1)).toBeNull();
+    expect(vatRateOf(Number.NaN)).toBeNull();
+    expect(vatRateOf(null)).toBeNull();
+  });
+
+  it("rajaa määrän sarakkeen mittoihin", () => {
+    expect(quantityOf(4)).toBe(4);
+    expect(quantityOf(2.5678)).toBe(2.568);
+    expect(quantityOf(-1)).toBeNull();
+    expect(quantityOf(1e12)).toBeNull();
+    expect(quantityOf(null)).toBeNull();
   });
 });
 

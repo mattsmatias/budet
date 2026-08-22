@@ -347,6 +347,45 @@ export function emptyResult(): ExtractionResult {
   };
 }
 
+/**
+ * Rivin ALV-kanta murtolukuna.
+ *
+ * Malli lukee kuitista "ALV 14 %" ja palauttaa herkästi luvun 14, koska
+ * niin kuitissa lukee. Kanta tallennetaan murtolukuna sarakkeeseen
+ * numeric(5,4), johon mahtuu enintään 9,9999 — luku 14 kaatoi
+ * tallennuksen virheeseen "numeric field overflow", eikä käyttäjälle
+ * kerrottu mistä oli kyse.
+ *
+ * Yli yhden oleva arvo tulkitaan prosenttiluvuksi. Se ei ole arvaus:
+ * yli 100 %:n arvonlisäveroa ei ole olemassa, joten 14 voi tarkoittaa
+ * vain yhtä asiaa. Kaikki muu mahdoton pudotetaan tyhjäksi — tyhjä
+ * kenttä on parempi kuin keksitty.
+ */
+export function vatRateOf(value: number | null): number | null {
+  if (value === null || !Number.isFinite(value)) return null;
+
+  const fraction = value > 1 && value <= 100 ? value / 100 : value;
+
+  // Sarakkeen tarkkuus on neljä desimaalia; pyöristys tehdään täällä
+  // eikä jätetä kannan tehtäväksi.
+  const rounded = Math.round(fraction * 10000) / 10000;
+
+  if (rounded < 0 || rounded >= 1) return null;
+  return rounded;
+}
+
+/**
+ * Rivin määrä.
+ *
+ * Sarake on numeric(12,3). Ilman rajaa mallin lukuvirhe päätyisi
+ * kantaan asti ja kaataisi tallennuksen samalla tavalla kuin kanta.
+ */
+export function quantityOf(value: number | null): number | null {
+  if (value === null || !Number.isFinite(value)) return null;
+  if (value < 0 || value > 1_000_000) return null;
+  return Math.round(value * 1000) / 1000;
+}
+
 /** Onko oikea poimintapalvelu kytketty? Palvelinpuolen tarkistus. */
 export function isRealExtractor(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);

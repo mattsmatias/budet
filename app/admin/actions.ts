@@ -709,6 +709,15 @@ function explain(
   if (message.includes("Mennyttä vuoroa")) {
     return "Mennyttä vuoroa ei voi poistaa.";
   }
+  // Postgresin oma teksti "numeric field overflow" ei kerro käyttäjälle
+  // mitään. Se tarkoittaa että jokin luku ei mahdu sarakkeeseensa, ja
+  // käytännössä se on aina poimitussa rivissä.
+  if (code === "22003" || message.includes("numeric field overflow")) {
+    return (
+      "Jokin poimittu luku ei kelpaa — todennäköisesti rivin ALV-kanta " +
+      "tai määrä. Poista kuittirivit tai korjaa luvut ja tallenna uudelleen."
+    );
+  }
   if (message.includes("Kuukausi on suljettu")) {
     return "Kuukausi on suljettu kirjanpitoon. Avaa se asetuksista jos muutos on välttämätön.";
   }

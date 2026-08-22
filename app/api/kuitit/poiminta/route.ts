@@ -21,6 +21,8 @@ import {
   DEFAULT_MODEL,
   emptyResult,
   isRealExtractor,
+  quantityOf,
+  vatRateOf,
   type ExtractedItem,
   type ExtractionResult,
 } from "@/lib/restoflow/receipt-ai";
@@ -197,6 +199,8 @@ Säännöt, joista ei poiketa:
   Älä koskaan arvaa. Väärä luku kirjanpidossa on pahempi kuin puuttuva,
   koska väärää lukua ei kukaan tarkista.
 - Älä laske ALV:tä itse jos sitä ei ole kuitissa. Palauta null.
+- Rivin vatRate on MURTOLUKU, ei prosenttiluku: 14 % on 0.14 ja
+  25,5 % on 0.255. Jos kantaa ei näy rivillä, palauta null.
 - Päivämäärä on ostopäivä muodossa VVVV-KK-PP, ei tulostuspäivä.
 - imageQuality on "poor" vain jos kuva on oikeasti epäselvä, vinossa tai
   osittain rajautunut. Älä merkitse hyvää kuvaa huonoksi.
@@ -243,11 +247,11 @@ function sanitize(parsed: Parsed): ExtractionResult {
 
         return {
           description: text(item.description) ?? "",
-          quantity: item.quantity,
+          quantity: quantityOf(item.quantity),
           unit: text(item.unit ?? ""),
           totalCents,
           category: item.category as ExpenseCategory,
-          vatRate: item.vatRate,
+          vatRate: vatRateOf(item.vatRate),
           productGroup: text(item.productGroup ?? ""),
         };
       })
