@@ -102,22 +102,7 @@ export default async function AdminReceiptsPage({
           return [...hits.values()];
         })();
 
-  // Toimialasuodatin on eri asia kuin kulukategoria: toinen kertoo
-  // missä on käyty, toinen mihin raha meni. Ruokakaupasta ostetaan
-  // myös siivousainetta.
-  const trade = typeof params.kauppa === "string" ? params.kauppa : null;
-
-  const byTrade = trade
-    ? searched.filter((r) => merchantOf(r)?.category === trade)
-    : searched;
-
-  const visible = sortByDateDesc(filterReceipts(byTrade, filter));
-
-  // Vain ne toimialat joita aineistossa oikeasti on. Tyhjä suodatin
-  // lupaa tuloksia joita ei ole.
-  const presentTrades = merchantCategories.filter((category) =>
-    receipts.some((r) => merchantOf(r)?.category === category.id),
-  );
+  const visible = sortByDateDesc(filterReceipts(searched, filter));
 
   const total = visible.reduce((s, r) => s + r.totalCents, 0);
   const reviewCount = needsReview(receipts).length;
@@ -209,49 +194,12 @@ export default async function AdminReceiptsPage({
         </Card>
       ) : null}
 
-      {presentTrades.length > 1 ? (
-        <nav
-          aria-label="Toimialat"
-          className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
-        >
-          <ul className="flex gap-2 pb-1 md:flex-wrap">
-            {[{ id: "", label: "Kaikki kaupat" }, ...presentTrades].map((category) => {
-              const active = (trade ?? "") === category.id;
-              const search = new URLSearchParams();
-              if (category.id !== "") search.set("kauppa", category.id);
-              if (filter !== "all") search.set("suodatin", filter);
-              if (query) search.set("haku", query);
-              const qs = search.toString();
-
-              return (
-                <li key={category.id || "kaikki"}>
-                  <Link
-                    href={qs ? `/admin/kuitit?${qs}` : "/admin/kuitit"}
-                    aria-current={active ? "page" : undefined}
-                    className="rf-press inline-block whitespace-nowrap px-3.5 py-1.5 text-[13px] font-medium"
-                    style={{
-                      background: active ? "var(--rf-text)" : "var(--rf-card)",
-                      color: active ? "#fff" : "var(--rf-text-2)",
-                      borderRadius: "var(--rf-r-pill)",
-                      boxShadow: active ? "none" : "var(--rf-shadow-sm)",
-                    }}
-                  >
-                    {category.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      ) : null}
-
       <nav aria-label="Suodattimet" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {FILTERS.map((f) => {
             const active = filter === f.key;
             const search = new URLSearchParams();
             if (f.key !== "all") search.set("suodatin", f.key);
-            if (trade) search.set("kauppa", trade);
             if (query) search.set("haku", query);
             const qs = search.toString();
 
