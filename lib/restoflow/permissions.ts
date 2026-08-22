@@ -34,6 +34,7 @@ export type Capability =
   | "alerts.view"
   | "lunch.view"
   | "lunch.manage"
+  | "matti.use"
   | "settings.view"
   | "settings.edit";
 
@@ -46,6 +47,7 @@ const OWNER: Capability[] = [
   "staff.view", "staff.rates.view", "staff.manage",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
+  "matti.use",
   "alerts.view", "settings.view", "settings.edit",
 ];
 
@@ -58,6 +60,7 @@ const MANAGER: Capability[] = [
   "staff.view", "staff.rates.view",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
+  "matti.use",
   "alerts.view", "settings.view",
 ];
 

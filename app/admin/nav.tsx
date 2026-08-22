@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  can,
   adminNavFor,
   adminNavSectionsFor,
   primaryNavFor,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
+import { MattiPanel } from "./matti/panel";
 
 /**
  * Hallintanavigaatio.
@@ -32,6 +34,7 @@ export function AdminNav({
   const sections = adminNavSectionsFor(role);
   const settings = settingsNavFor(role);
   const primary = primaryNavFor(role);
+  const matti = can(role, "matti.use");
 
   return (
     <>
@@ -39,6 +42,7 @@ export function AdminNav({
         sections={sections}
         settings={settings}
         restaurantName={restaurantName}
+        matti={matti}
       />
       <MobileBar items={primary} />
     </>
@@ -59,10 +63,12 @@ function DesktopSidebar({
   sections,
   settings,
   restaurantName,
+  matti,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
   settings: NavEntry | null;
   restaurantName: string;
+  matti: boolean;
 }) {
   return (
     <aside
@@ -111,6 +117,13 @@ function DesktopSidebar({
        * Asetukset erotettuna pohjalle. Se ei kuulu mihinkään osastoon,
        * ja pohja on paikka johon sitä tullaan etsimään.
        */}
+      <div
+        className="border-t px-2.5 py-2"
+        style={{ borderColor: "var(--rf-line)" }}
+      >
+        <MattiPanel enabled={matti} />
+      </div>
+
       {settings ? (
         <div
           className="border-t px-2.5 py-3"

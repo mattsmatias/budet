@@ -24,6 +24,7 @@ export type IconName =
   | "expenses"
   | "suppliers"
   | "lunch"
+  | "sparkle"
   | "budget"
   | "calendar"
   | "staff"
@@ -63,6 +64,12 @@ const PATHS: Record<IconName, string> = {
 
   // Pylväät, nouseva järjestys — kulut ajassa.
   expenses: "M4 20.5V13M9.3 20.5V7.5M14.7 20.5v-4.5M20 20.5V10",
+
+  // Nelisakarainen tähti — vakiintunut merkki tekoälylle. Hienovarainen
+  // ja piirretty samalla viivalla kuin muut: Matti on työkalu muiden
+  // joukossa, ei sovelluksen sisällä oleva erillinen tuote.
+  sparkle:
+    "M12 3.5 13.6 9 19 10.6 13.6 12.2 12 17.7 10.4 12.2 5 10.6 10.4 9zM18.5 16.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z",
 
   // Tarjoilukupu — lounas on tarjoiltava annos, ei ostos.
   lunch: "M3 18.5h18M4.8 18.5a7.2 7.2 0 0 1 14.4 0M12 8.3V6.2M10.6 6.2h2.8",
