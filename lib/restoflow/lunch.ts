@@ -230,6 +230,32 @@ export function includedExtras(week: {
   return extras;
 }
 
+export interface LunchIncludes {
+  includesDessert: boolean;
+  includesCoffee: boolean;
+}
+
+/**
+ * Mitä uusi viikko perii edelliseltä.
+ *
+ * Jälkiruoka ja kahvi eivät muutu viikoittain. Uusi viikko perii ne
+ * edelliseltä, jottei samaa asetusta tarvitse kertoa joka kerta.
+ *
+ * Tämä on koodissa eikä mallin harkinnassa. Periminen on datan
+ * kopioimista, ja malli joka joskus muistaa ja joskus ei on huonompi
+ * kuin sääntö joka pätee aina. Nimenomainen valinta voittaa perinnön:
+ * kun käyttäjä sanoo "ei kahvia", sitä ei kumota edellisellä viikolla.
+ */
+export function inheritedIncludes(
+  explicit: Partial<LunchIncludes>,
+  previous: LunchIncludes | null,
+): LunchIncludes {
+  return {
+    includesDessert: explicit.includesDessert ?? previous?.includesDessert ?? false,
+    includesCoffee: explicit.includesCoffee ?? previous?.includesCoffee ?? false,
+  };
+}
+
 /** "Hintaan sisältyy jälkiruoka ja kahvi." tai null. */
 export function includedSentence(week: {
   includesDessert: boolean;

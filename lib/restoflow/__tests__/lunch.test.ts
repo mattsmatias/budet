@@ -7,6 +7,7 @@ import {
   hasUnpublishedChanges,
   includedExtras,
   includedSentence,
+  inheritedIncludes,
   isWeekend,
   isoWeekNumber,
   nextWeek,
@@ -214,5 +215,63 @@ describe("mitä hintaan sisältyy", () => {
     expect(
       includedExtras({ includesDessert: false, includesCoffee: false }),
     ).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Periytyminen.
+ *
+ * Tämä oli aluksi mallin vastuulla: kehote pyysi sitä perimään
+ * asetuksen edelliseltä viikolta. Elävä testi paljasti että se
+ * muisti sen joskus ja joskus ei.
+ *
+ * Periminen on datan kopioimista, ei harkintaa. Sääntö joka pätee
+ * aina on parempi kuin malli joka useimmiten muistaa.
+ */
+describe("jälkiruoan ja kahvin periytyminen", () => {
+  it("perii edelliseltä viikolta kun mitään ei ole sanottu", () => {
+    expect(
+      inheritedIncludes(
+        {},
+        { includesDessert: false, includesCoffee: true },
+      ),
+    ).toEqual({ includesDessert: false, includesCoffee: true });
+  });
+
+  // Nimenomainen valinta voittaa perinnön. Kun käyttäjä sanoo "ei
+  // kahvia", sitä ei kumota edellisellä viikolla.
+  it("antaa nimenomaisen valinnan voittaa", () => {
+    expect(
+      inheritedIncludes(
+        { includesCoffee: false },
+        { includesDessert: true, includesCoffee: true },
+      ),
+    ).toEqual({ includesDessert: true, includesCoffee: false });
+  });
+
+  it("perii vain sen mitä ei ole sanottu", () => {
+    expect(
+      inheritedIncludes(
+        { includesDessert: true },
+        { includesDessert: false, includesCoffee: true },
+      ),
+    ).toEqual({ includesDessert: true, includesCoffee: true });
+  });
+
+  // Ensimmäinen viikko: ei perittävää eikä keksittävää.
+  it("jättää molemmat pois kun edellistä viikkoa ei ole", () => {
+    expect(inheritedIncludes({}, null)).toEqual({
+      includesDessert: false,
+      includesCoffee: false,
+    });
+  });
+
+  it("toimii ilman edellistä viikkoa kun valinta on annettu", () => {
+    expect(inheritedIncludes({ includesCoffee: true }, null)).toEqual({
+      includesDessert: false,
+      includesCoffee: true,
+    });
   });
 });

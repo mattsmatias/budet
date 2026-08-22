@@ -57,10 +57,20 @@ const DEFAULT_MODEL = "claude-opus-5";
 /**
  * Vastauksen enimmäispituus.
  *
- * Matti vastaa lyhyesti — se on ohje mutta myös raja. Pitkä essee
- * maksaa enemmän eikä auta ravintoloitsijaa keskellä työpäivää.
+ * Ei mitoitettu tekstin vaan työkalukutsun mukaan. Viikon
+ * lounaslistaehdotus on 25 ruokaa nimineen, kuvauksineen,
+ * ruokavalioineen ja allergeeneineen, ja se mitattiin 1347–1433
+ * tokeniksi. Raja oli 1400: ehdotus katkesi kesken jäsentämättömään
+ * JSONiin sen mukaan kuinka pitkiä ruokien nimet sattuivat olemaan.
+ *
+ * Katkeaminen ei näy virheenä. Malli vain jättää työkalun kutsumatta
+ * ja kertoo tekstissä mitä olisi tehnyt — eli väittää tehneensä työn
+ * jota ei tehty.
+ *
+ * Neljä tuhatta antaa kaksinkertaisen varan mitattuun huippuun.
+ * Vastausten lyhyys hoidetaan kehotteella, ei tällä rajalla.
  */
-const MAX_TOKENS = 1400;
+const MAX_TOKENS = 4000;
 
 class AnthropicProvider implements AiProvider {
   readonly name = "anthropic";

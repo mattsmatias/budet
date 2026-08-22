@@ -29,7 +29,11 @@ import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import { findTool } from "@/lib/matti/tools";
 import { formatMoney } from "@/lib/money";
-import { weekStartOf } from "@/lib/restoflow/lunch";
+import {
+  inheritedIncludes,
+  previousWeek,
+  weekStartOf,
+} from "@/lib/restoflow/lunch";
 
 export interface MattiActionState {
   ok?: boolean;
@@ -211,8 +215,11 @@ async function execute(
 ): Promise<ExecutionResult> {
   switch (action.tool) {
     case "propose_lunch_items": {
-      const { days, replace, priceEuros } = args as {
+      const { days, replace, priceEuros, includesDessert, includesCoffee } =
+        args as {
         priceEuros?: number;
+        includesDessert?: boolean;
+        includesCoffee?: boolean;
         days: {
           date: string;
           items: {
@@ -238,17 +245,31 @@ async function execute(
       const weeks = new Set(days.map((d) => weekStartOf(d.date)));
       const menuIds: string[] = [];
 
+      // Mitkä viikot olivat olemassa jo ennen tätä. Vain uusi viikko
+      // perii asetukset edelliseltä; olemassa olevalla on omansa.
+      const existingWeeks = new Set<string>();
+
       for (const week of weeks) {
+        const { data: before } = await supabase
+          .from("lunch_menus")
+          .select("id")
+          .eq("week_start", week)
+          .maybeSingle();
+
         const { data, error } = await supabase.rpc("open_lunch_week", {
           p_restaurant: restaurant.id,
           p_week_start: week,
         });
         if (error) throw new Error(error.message);
-        if (data) menuIds.push(data as string);
+
+        if (data) {
+          menuIds.push(data as string);
+          if (before) existingWeeks.add(data as string);
+        }
       }
 
-      // Hinta on viikon ominaisuus, joten se asetetaan kerran viikkoa
-      // kohti eikä päivien silmukassa.
+      // Hinta ja sisältyvät ovat viikon ominaisuuksia, joten ne
+      // asetetaan kerran viikkoa kohti eikä päivien silmukassa.
       if (priceEuros !== undefined) {
         for (const menuId of menuIds) {
           const { error } = await supabase.rpc("set_lunch_price", {
@@ -258,6 +279,53 @@ async function execute(
           });
           if (error) throw new Error(error.message);
         }
+      }
+
+      /*
+       * Jälkiruoka ja kahvi: nimenomainen valinta, muuten perintö.
+       *
+       * Sama sääntö kuin esikatselussa ja samasta funktiosta. Jos
+       * suoritus päättelisi toisin kuin esikatselu, käyttäjä hyväksyisi
+       * yhden asian ja saisi toisen.
+       */
+      for (const menuId of menuIds) {
+        const { data: current } = await supabase
+          .from("lunch_menus")
+          .select("week_start, includes_dessert, includes_coffee")
+          .eq("id", menuId)
+          .maybeSingle();
+
+        const { data: earlier } = await supabase
+          .from("lunch_menus")
+          .select("includes_dessert, includes_coffee")
+          .eq("week_start", previousWeek(String(current?.week_start ?? "")))
+          .maybeSingle();
+
+        // Viikolla joka oli jo olemassa on oma asetuksensa; se voittaa
+        // perinnön. Vasta luodulla ei ole, joten se perii.
+        const base = existingWeeks.has(menuId)
+          ? {
+              includesDessert: Boolean(current?.includes_dessert),
+              includesCoffee: Boolean(current?.includes_coffee),
+            }
+          : earlier
+            ? {
+                includesDessert: Boolean(earlier.includes_dessert),
+                includesCoffee: Boolean(earlier.includes_coffee),
+              }
+            : null;
+
+        const includes = inheritedIncludes(
+          { includesDessert, includesCoffee },
+          base,
+        );
+
+        const { error } = await supabase.rpc("set_lunch_includes", {
+          p_menu: menuId,
+          p_dessert: includes.includesDessert,
+          p_coffee: includes.includesCoffee,
+        });
+        if (error) throw new Error(error.message);
       }
 
       let added = 0;

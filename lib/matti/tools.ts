@@ -18,6 +18,9 @@ import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import {
   LUNCH_STATUS_LABELS,
   formatWeekRange,
+  includedExtras,
+  inheritedIncludes,
+  previousWeek,
   hasContent,
   hasUnpublishedChanges,
   isoWeekNumber,
@@ -443,6 +446,9 @@ const getLunchWeek = defineTool({
           `${days.length} päivää`,
           `${menu.days.reduce((n, d) => n + d.items.length, 0)} ruokaa`,
           ...(priceRange ? [`Lounas ${priceRange}`] : []),
+          ...(includedExtras(menu).length > 0
+            ? [`sis. ${includedExtras(menu).join(" ja ")}`]
+            : []),
         ],
         href: `/admin/lounas?viikko=${week}`,
         linkLabel: "Avaa lounaslista",
@@ -457,6 +463,8 @@ const getLunchWeek = defineTool({
         status: menu.status,
         hasUnpublishedChanges: hasUnpublishedChanges(menu),
         prices: menu.prices.map((p) => ({ name: p.name, cents: p.cents })),
+        includesDessert: menu.includesDessert,
+        includesCoffee: menu.includesCoffee,
         days,
       },
     };
@@ -582,6 +590,20 @@ const proposeLunchItems = defineTool({
         "Koko viikon lounashinta. Sama kaikille päiville. Jätä pois jos " +
           "käyttäjä ei kertonut hintaa tai se on jo oikein.",
       ),
+    includesDessert: z
+      .boolean()
+      .optional()
+      .describe(
+        "Sisältyykö jälkiruoka hintaan. Anna vain jos käyttäjä sanoo sen. " +
+          "Muuten jätä pois — edellisen viikon asetus peritään itsestään.",
+      ),
+    includesCoffee: z
+      .boolean()
+      .optional()
+      .describe(
+        "Sisältyykö kahvi hintaan. Anna vain jos käyttäjä sanoo sen. " +
+          "Muuten jätä pois — edellisen viikon asetus peritään itsestään.",
+      ),
     replace: z
       .boolean()
       .optional()
@@ -599,9 +621,11 @@ const proposeLunchItems = defineTool({
 
     const changes: ActionPreview["changes"] = [];
 
-    // Hinta on viikon ominaisuus, joten se on esikatselussa kerran.
+    // Hinta ja sisältyvät ovat viikon ominaisuuksia, joten ne ovat
+    // esikatselussa kerran eivätkä joka päivän kohdalla.
+    const menu = await ctx.lunchWeek(weekStartOf(input.days[0].date));
+
     if (input.priceEuros !== undefined) {
-      const menu = await ctx.lunchWeek(weekStartOf(input.days[0].date));
       const current = menu?.prices.find((p) => p.name === "Lounas");
 
       changes.push({
@@ -610,6 +634,42 @@ const proposeLunchItems = defineTool({
         to: formatMoney(Math.round(input.priceEuros * 100)),
       });
     }
+
+    /*
+     * Sisältyvät näytetään aina, myös kun ne peritään.
+     *
+     * Perintö on hiljainen sääntö, ja hiljainen sääntö on vaarallinen
+     * juuri hinnan yhteydessä. Esikatselussa se on näkyvä rivi jonka
+     * käyttäjä joko hyväksyy tai korjaa.
+     */
+    const week = weekStartOf(input.days[0].date);
+    const previous = menu ?? (await ctx.lunchWeek(previousWeek(week)));
+
+    const includes = inheritedIncludes(
+      {
+        includesDessert: input.includesDessert,
+        includesCoffee: input.includesCoffee,
+      },
+      previous
+        ? {
+            includesDessert: previous.includesDessert,
+            includesCoffee: previous.includesCoffee,
+          }
+        : null,
+    );
+
+    const after = includedExtras(includes);
+    const before = menu ? includedExtras(menu) : [];
+
+    changes.push({
+      label: "Hintaan sisältyy",
+      from: menu && before.join() !== after.join()
+        ? before.length > 0
+          ? before.join(" ja ")
+          : "ei mitään"
+        : undefined,
+      to: after.length > 0 ? after.join(" ja ") : "ei jälkiruokaa eikä kahvia",
+    });
 
     for (const day of [...input.days].sort((a, b) => a.date.localeCompare(b.date))) {
       const existing = (await ctx.lunchWeek(weekStartOf(day.date)))?.days.find(
