@@ -3,10 +3,9 @@ import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, todayIn } from "@/lib/restoflow/clock-context";
-import { RfIcon } from "@/components/restoflow/icons";
 import { can } from "@/lib/restoflow/permissions";
 import { AdminNav } from "./nav";
-import { UserMenu } from "./user-menu";
+import { HeaderMenus } from "./header-menus";
 
 /**
  * Managerin kuori.
@@ -56,64 +55,20 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               {userName}
             </p>
           </Link>
-          <div className="flex shrink-0 items-center gap-1">
-            <Link
-              href="/admin/ilmoitukset"
-              aria-label={
-                alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
-              }
-              className="rf-press relative p-2"
-              style={{ color: "var(--rf-text-2)" }}
-            >
-              <RfIcon name="bell" size={20} />
-              {alerts.length > 0 ? (
-                <span
-                  aria-hidden="true"
-                  className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full"
-                  style={{ background: "var(--rf-red)" }}
-                />
-              ) : null}
-            </Link>
-
-            <UserMenu
-              userName={userName}
-              restaurantName={restaurant.name}
-              role={role}
-              canOpenSettings={can(role, "settings.view")}
-            />
-          </div>
+          <HeaderMenus
+            alerts={alerts}
+            userName={userName}
+            restaurantName={restaurant.name}
+            role={role}
+            canOpenSettings={can(role, "settings.view")}
+          />
         </header>
 
         {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
             puhelimessa, jotta ilmoitukset löytyvät samasta paikasta. */}
         <div className="hidden justify-end gap-2 px-6 pt-5 md:flex">
-          <Link
-            href="/admin/ilmoitukset"
-            aria-label={
-              alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
-            }
-            className="rf-press relative flex h-9 w-9 items-center justify-center"
-            style={{
-              background: "var(--rf-card)",
-              border: "1px solid var(--rf-line)",
-              color: "var(--rf-text-2)",
-              borderRadius: "50%",
-            }}
-          >
-            <RfIcon name="bell" size={17} />
-            {alerts.length > 0 ? (
-              <span
-                aria-hidden="true"
-                className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"
-                style={{
-                  background: "var(--rf-red)",
-                  border: "2px solid var(--rf-bg)",
-                }}
-              />
-            ) : null}
-          </Link>
-
-          <UserMenu
+          <HeaderMenus
+            alerts={alerts}
             userName={userName}
             restaurantName={restaurant.name}
             role={role}

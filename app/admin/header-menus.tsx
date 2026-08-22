@@ -1,0 +1,388 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { signOut } from "@/app/(auth)/actions";
+import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
+import { RfIcon } from "@/components/restoflow/icons";
+import { SeverityDot } from "@/components/restoflow/ui";
+
+/**
+ * Yläpalkin valikot.
+ *
+ * Kello ja tunnus ovat vierekkäin ja käyttäytyvät samoin, joten ne
+ * jakavat saman pudotusmekaniikan. Kaksi kopiota sulkemislogiikasta
+ * ajautuisi erilleen: toinen sulkeutuisi Esc-näppäimestä ja toinen ei,
+ * eikä kukaan huomaisi ennen kuin käyttäjä kokeilee.
+ *
+ * Avoin valikko on yhteistä tilaa eikä kummankaan omaa. Ensin kokeilin
+ * kahta itsenäistä valikkoa, jotka sulkisivat toisensa ulkoklikkauksen
+ * kautta — mutta näppäimistöllä avattu valikko ei saa
+ * mousedown-tapahtumaa, ja molemmat jäivät auki. Tila ratkaisee sen
+ * rakenteella: kun vain yksi tunniste voi olla auki, kahta ei voi olla.
+ */
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Pudotusvalikon kuori.
+ *
+ * Sulkeutuu ulkopuolisesta napautuksesta ja Esc-näppäimestä. Kumpikin
+ * on tapa jolla valikot suljetaan, ja jos vain toinen toimii, käyttäjä
+ * ehtii kokeilla väärää.
+ */
+function Dropdown({
+  label,
+  badge,
+  width,
+  open,
+  onToggle,
+  onClose,
+  trigger,
+  children,
+}: {
+  label: string;
+  badge?: boolean;
+  width: number;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  trigger: (open: boolean) => ReactNode;
+  children: (close: () => void) => ReactNode;
+}) {
+  const container = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function onPointerDown(event: MouseEvent | TouchEvent) {
+      if (!container.current?.contains(event.target as Node)) onClose();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, onClose]);
+
+  return (
+    <div ref={container} className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+        className="rf-press relative flex h-9 w-9 items-center justify-center"
+        style={{
+          background: open ? "var(--rf-accent-bg)" : "var(--rf-inset)",
+          color: open ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+          borderRadius: "50%",
+        }}
+      >
+        {trigger(open)}
+
+        {badge ? (
+          <span
+            aria-hidden="true"
+            className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"
+            style={{
+              background: "var(--rf-red)",
+              border: "2px solid var(--rf-bg)",
+            }}
+          />
+        ) : null}
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          aria-label={label}
+          className="rf-enter absolute right-0 z-40 mt-2 overflow-hidden"
+          style={{
+            width,
+            maxWidth: "calc(100vw - 2rem)",
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-control)",
+            boxShadow: "var(--rf-shadow-lg)",
+          }}
+        >
+          {children(onClose)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Ilmoitukset.
+ *
+ * Näyttää viisi kiireellisintä. Koko lista on omalla sivullaan, koska
+ * pudotusvalikko jota pitää vierittää on huonompi kuin sivu joka on
+ * tehty listaa varten.
+ *
+ * Ilmoituksia ei merkitä luetuiksi eikä voidakaan: ne johdetaan
+ * aineiston tilasta joka latauksella eikä niitä tallenneta. Hoidettu
+ * asia katoaa listalta itsestään — lukukuittaus antaisi vaikutelman
+ * että jokin on tehty, vaikka kuitti olisi yhä tarkistamatta.
+ */
+function NotificationMenu({
+  alerts,
+  open,
+  onToggle,
+  onClose,
+}: {
+  alerts: Alert[];
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const shown = alerts.slice(0, 5);
+
+  return (
+    <Dropdown
+      label={alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"}
+      badge={alerts.length > 0}
+      width={340}
+      open={open}
+      onToggle={onToggle}
+      onClose={onClose}
+      trigger={() => <RfIcon name="bell" size={17} />}
+    >
+      {(close) => (
+        <>
+          <div
+            className="flex items-baseline justify-between gap-3 border-b px-4 py-3"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
+            <p className="text-[14px] font-semibold">
+              Huomiot{alerts.length > 0 ? ` · ${alerts.length}` : ""}
+            </p>
+
+            {alerts.length > 0 ? (
+              <Link
+                href="/admin/ilmoitukset"
+                onClick={close}
+                className="shrink-0 text-[12px] font-medium"
+                style={{ color: "var(--rf-accent)" }}
+              >
+                Näytä kaikki
+              </Link>
+            ) : null}
+          </div>
+
+          {alerts.length === 0 ? (
+            <p
+              className="px-4 py-5 text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              Ei huomioita juuri nyt. Ne ilmestyvät tänne itsestään kun
+              aineistossa on jotain tarkistettavaa.
+            </p>
+          ) : (
+            <ul className="max-h-[22rem] overflow-y-auto p-1.5">
+              {shown.map((alert) => (
+                <li key={alert.id}>
+                  <Link
+                    href={alert.href}
+                    role="menuitem"
+                    onClick={close}
+                    className="rf-press flex items-start gap-2.5 rounded-[9px] px-2.5 py-2.5"
+                  >
+                    <span className="mt-1 shrink-0">
+                      <SeverityDot severity={alert.severity} />
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-medium leading-snug">
+                        {alert.title}
+                      </span>
+                      <span
+                        className="mt-0.5 block text-[12px] leading-snug"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
+                        {alert.detail}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {alerts.length > shown.length ? (
+            <Link
+              href="/admin/ilmoitukset"
+              onClick={close}
+              className="block border-t px-4 py-2.5 text-center text-[12px]"
+              style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-2)" }}
+            >
+              Ja {alerts.length - shown.length} muuta →
+            </Link>
+          ) : null}
+        </>
+      )}
+    </Dropdown>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Tunnusvalikko.
+ *
+ * Asetukset ja uloskirjautuminen eivät ole päivittäisiä tehtäviä eivätkä
+ * kuulu samaan listaan kuin Kuitit ja Työvuorot — ne ovat tilin
+ * hallintaa, ja tilin hallinta löytyy tunnuksen takaa.
+ */
+function UserMenu({
+  userName,
+  restaurantName,
+  role,
+  canOpenSettings,
+  open,
+  onToggle,
+  onClose,
+}: {
+  userName: string;
+  restaurantName: string;
+  role: Role;
+  canOpenSettings: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <Dropdown
+      label={`Tunnus: ${userName}`}
+      width={240}
+      open={open}
+      onToggle={onToggle}
+      onClose={onClose}
+      trigger={() => (
+        <span className="text-[13px] font-semibold">{initialOf(userName)}</span>
+      )}
+    >
+      {(close) => (
+        <>
+          <div className="border-b px-4 py-3" style={{ borderColor: "var(--rf-line)" }}>
+            <p className="truncate text-[14px] font-semibold">{userName}</p>
+            <p className="truncate text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+              {ROLE_LABELS[role]} · {restaurantName}
+            </p>
+          </div>
+
+          <div className="p-1.5">
+            {canOpenSettings ? (
+              <Link
+                href="/admin/asetukset"
+                role="menuitem"
+                onClick={close}
+                className="rf-press flex items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-[14px]"
+                style={{ color: "var(--rf-text)" }}
+              >
+                <span style={{ color: "var(--rf-text-3)" }}>
+                  <RfIcon name="settings" size={17} />
+                </span>
+                Asetukset
+              </Link>
+            ) : null}
+
+            <Link
+              href="/app"
+              role="menuitem"
+              onClick={close}
+              className="rf-press flex items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-[14px]"
+              style={{ color: "var(--rf-text)" }}
+            >
+              <span style={{ color: "var(--rf-text-3)" }}>
+                <RfIcon name="clock" size={17} />
+              </span>
+              Työntekijänäkymä
+            </Link>
+
+            <form action={signOut}>
+              <button
+                type="submit"
+                role="menuitem"
+                className="rf-press flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-left text-[14px]"
+                style={{ color: "var(--rf-red-text)" }}
+              >
+                <RfIcon name="logout" size={17} />
+                Kirjaudu ulos
+              </button>
+            </form>
+          </div>
+        </>
+      )}
+    </Dropdown>
+  );
+}
+
+function initialOf(name: string): string {
+  return name.trim().charAt(0).toUpperCase() || "?";
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Yläpalkin valikot yhtenä ryhmänä.
+ *
+ * Avoin valikko on yhteistä tilaa: kun vain yksi tunniste voi olla
+ * auki kerrallaan, kahta ei voi olla auki yhtä aikaa millään
+ * syöttötavalla.
+ */
+export function HeaderMenus({
+  alerts,
+  userName,
+  restaurantName,
+  role,
+  canOpenSettings,
+}: {
+  alerts: Alert[];
+  userName: string;
+  restaurantName: string;
+  role: Role;
+  canOpenSettings: boolean;
+}) {
+  const [openMenu, setOpenMenu] = useState<"alerts" | "user" | null>(null);
+
+  const close = useCallback(() => setOpenMenu(null), []);
+
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <NotificationMenu
+        alerts={alerts}
+        open={openMenu === "alerts"}
+        onToggle={() =>
+          setOpenMenu((current) => (current === "alerts" ? null : "alerts"))
+        }
+        onClose={close}
+      />
+
+      <UserMenu
+        userName={userName}
+        restaurantName={restaurantName}
+        role={role}
+        canOpenSettings={canOpenSettings}
+        open={openMenu === "user"}
+        onToggle={() =>
+          setOpenMenu((current) => (current === "user" ? null : "user"))
+        }
+        onClose={close}
+      />
+    </div>
+  );
+}
