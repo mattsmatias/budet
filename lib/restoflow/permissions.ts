@@ -156,12 +156,30 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/asetukset", requires: "settings.view" },
 ];
 
+/**
+ * Valikon osastot.
+ *
+ * Ryhmittely tekee seitsemästä kohdasta luettavan: silmä etsii ensin
+ * osaston ja vasta sitten rivin. Järjestys on tässä eikä
+ * käyttöliittymässä, jotta uuden kohdan lisääjä joutuu päättämään
+ * mihin se kuuluu.
+ */
+export const NAV_SECTIONS = [
+  { id: "main", label: "Päävalikko" },
+  { id: "finance", label: "Talous" },
+  { id: "staff", label: "Henkilöstö" },
+  { id: "reporting", label: "Raportointi" },
+] as const;
+
+export type NavSection = (typeof NAV_SECTIONS)[number]["id"];
+
 export interface NavEntry {
   href: string;
   label: string;
   /** Ikoni-avain components/restoflow/icons.tsx:n sarjasta. */
   icon: IconName;
   requires: Capability;
+  section: NavSection;
 }
 
 /**
@@ -181,14 +199,31 @@ export interface NavEntry {
  * kellokuvakkeesta ja tunnusvalikosta.
  */
 export const ADMIN_NAV: NavEntry[] = [
-  { href: "/admin", label: "Yleiskuva", icon: "overview", requires: "expenses.view" },
-  { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view" },
-  { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view" },
-  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
-  { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
-  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
-  { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
+  { href: "/admin", label: "Yleiskatsaus", icon: "overview", requires: "expenses.view", section: "main" },
+
+  { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view", section: "finance" },
+  { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view", section: "finance" },
+  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
+
+  { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
+  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
+
+  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
 ];
+
+/**
+ * Asetukset erillään osastoista.
+ *
+ * Se ei ole talouden, henkilöstön eikä raportoinnin kohta vaan
+ * sovelluksen oma, joten se erotetaan viivalla valikon pohjalle.
+ */
+export const SETTINGS_NAV: NavEntry = {
+  href: "/admin/asetukset",
+  label: "Asetukset",
+  icon: "settings",
+  requires: "settings.view",
+  section: "main",
+};
 
 /**
  * Puhelimen ylivuotovalikko.
@@ -196,13 +231,37 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
-  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
-  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
-  { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
+  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
+  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
+  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {
   return ADMIN_NAV.filter((entry) => can(role, entry.requires));
+}
+
+/**
+ * Valikko osastoittain, tyhjät osastot pois.
+ *
+ * Kirjanpitäjä ei näe henkilöstöä lainkaan, joten HENKILÖSTÖ-otsikko
+ * olisi hänelle tyhjä väliotsikko — otsikko ilman sisältöä lupaa
+ * kohtia joita ei ole.
+ */
+export function adminNavSectionsFor(
+  role: Role,
+): { id: NavSection; label: string; items: NavEntry[] }[] {
+  const items = adminNavFor(role);
+
+  return NAV_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.label,
+    items: items.filter((item) => item.section === section.id),
+  })).filter((section) => section.items.length > 0);
+}
+
+/** Näkeekö rooli asetukset? */
+export function settingsNavFor(role: Role): NavEntry | null {
+  return can(role, SETTINGS_NAV.requires) ? SETTINGS_NAV : null;
 }
 
 /**

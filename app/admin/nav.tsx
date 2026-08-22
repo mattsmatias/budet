@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { adminNavFor, primaryNavFor } from "@/lib/restoflow/permissions";
+import {
+  adminNavFor,
+  adminNavSectionsFor,
+  primaryNavFor,
+  settingsNavFor,
+  type NavEntry,
+} from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 
@@ -23,12 +29,17 @@ export function AdminNav({
   role: Role;
   restaurantName: string;
 }) {
-  const items = adminNavFor(role);
+  const sections = adminNavSectionsFor(role);
+  const settings = settingsNavFor(role);
   const primary = primaryNavFor(role);
 
   return (
     <>
-      <DesktopSidebar items={items} restaurantName={restaurantName} />
+      <DesktopSidebar
+        sections={sections}
+        settings={settings}
+        restaurantName={restaurantName}
+      />
       <MobileBar items={primary} />
     </>
   );
@@ -45,14 +56,14 @@ function useActive() {
 // ---------------------------------------------------------------------------
 
 function DesktopSidebar({
-  items,
+  sections,
+  settings,
   restaurantName,
 }: {
-  items: NavItems;
+  sections: ReturnType<typeof adminNavSectionsFor>;
+  settings: NavEntry | null;
   restaurantName: string;
 }) {
-  const isActive = useActive();
-
   return (
     <aside
       className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
@@ -72,32 +83,68 @@ function DesktopSidebar({
         aria-label="Hallintanavigaatio"
         className="flex-1 overflow-y-auto px-2.5 pb-4"
       >
-        <ul className="space-y-0.5">
-          {items.map((item) => {
-            const active = isActive(item.href);
+        {sections.map((section) => (
+          <div key={section.id} className="mb-4 last:mb-0">
+            {/*
+             * Otsikko on ryhmän nimi eikä koriste, joten se merkitään
+             * myös rakenteeseen: ruudunlukija kuulee listan nimen eikä
+             * vain seitsemää irrallista linkkiä.
+             */}
+            <p
+              id={`nav-${section.id}`}
+              className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
+              style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+            >
+              {section.label}
+            </p>
 
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
-                  style={{
-                    background: active ? "var(--rf-accent-bg)" : "transparent",
-                    color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
-                    fontWeight: active ? 600 : 500,
-                  }}
-                >
-                  <RfIcon name={item.icon} size={19} />
-                  <span className="flex-1">{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+            <ul aria-labelledby={`nav-${section.id}`} className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavLink key={item.href} item={item} />
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
+      {/*
+       * Asetukset erotettuna pohjalle. Se ei kuulu mihinkään osastoon,
+       * ja pohja on paikka johon sitä tullaan etsimään.
+       */}
+      {settings ? (
+        <div
+          className="border-t px-2.5 py-3"
+          style={{ borderColor: "var(--rf-line)" }}
+        >
+          <ul>
+            <NavLink item={settings} />
+          </ul>
+        </div>
+      ) : null}
     </aside>
+  );
+}
+
+function NavLink({ item }: { item: NavEntry }) {
+  const isActive = useActive();
+  const active = isActive(item.href);
+
+  return (
+    <li>
+      <Link
+        href={item.href}
+        aria-current={active ? "page" : undefined}
+        className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
+        style={{
+          background: active ? "var(--rf-accent-bg)" : "transparent",
+          color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+          fontWeight: active ? 600 : 500,
+        }}
+      >
+        <RfIcon name={item.icon} size={19} />
+        <span className="flex-1">{item.label}</span>
+      </Link>
+    </li>
   );
 }
 

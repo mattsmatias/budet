@@ -145,7 +145,7 @@ export default async function SettingsPage() {
             <li>Ei asiakasvarauksia, kanta-asiakkuuksia eikä CRM:ää</li>
           </ul>
           <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Rajaus on tarkoituksellinen. Yleiskuvan luvut tarkoittavat aina
+            Rajaus on tarkoituksellinen. Yleiskatsauksen luvut tarkoittavat aina
             järjestelmään kirjattuja kuluja, eivät ravintolan taloudellista
             tulosta.
           </p>

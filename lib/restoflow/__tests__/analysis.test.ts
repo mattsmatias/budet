@@ -9,6 +9,8 @@ import {
   moreNavFor,
   primaryNavFor,
   adminNavFor,
+  adminNavSectionsFor,
+  settingsNavFor,
   can,
   canAddReceipts,
   capabilityForPath,
@@ -648,7 +650,7 @@ describe("oikeudet", () => {
       "/admin/toimittajat",
       "/admin/havainnot",
       "/admin/ilmoitukset",
-      // Asetukset löytyy tunnusvalikosta, ei navigaatiosta.
+      // Asetukset on omana kohtanaan valikon pohjalla, ei osastoissa.
       "/admin/asetukset",
     ];
 
@@ -691,6 +693,50 @@ describe("oikeudet", () => {
 
     expect(sidebar).toContain("/admin/budjetit");
     expect(overflow).toContain("/admin/budjetit");
+  });
+
+  it("ryhmittelee valikon osastoihin", () => {
+    const sections = adminNavSectionsFor("owner");
+
+    expect(sections.map((s) => s.id)).toEqual([
+      "main",
+      "finance",
+      "staff",
+      "reporting",
+    ]);
+
+    const finance = sections.find((s) => s.id === "finance")!;
+    expect(finance.items.map((i) => i.href)).toEqual([
+      "/admin/kuitit",
+      "/admin/kulut",
+      "/admin/budjetit",
+    ]);
+  });
+
+  /*
+   * Tyhjä osastootsikko lupaa kohtia joita ei ole. Kirjanpitäjä ei näe
+   * henkilöstöä lainkaan, joten hänelle ei saa jäädä HENKILÖSTÖ-otsikkoa
+   * ilman yhtään riviä sen alla.
+   */
+  it("ei jätä tyhjää osastoa", () => {
+    for (const role of ["owner", "manager", "accountant"] as const) {
+      for (const section of adminNavSectionsFor(role)) {
+        expect(section.items.length).toBeGreaterThan(0);
+      }
+    }
+
+    const accountant = adminNavSectionsFor("accountant").map((s) => s.id);
+    expect(accountant).not.toContain("staff");
+  });
+
+  it("pitää asetukset osastojen ulkopuolella", () => {
+    const inSections = adminNavSectionsFor("owner").flatMap((s) =>
+      s.items.map((i) => i.href),
+    );
+
+    expect(inSections).not.toContain("/admin/asetukset");
+    expect(settingsNavFor("owner")?.href).toBe("/admin/asetukset");
+    expect(settingsNavFor("employee")).toBeNull();
   });
 
   /** Ylivuotovalikkoon ei saa jäädä kahdesti samaa kohtaa. */

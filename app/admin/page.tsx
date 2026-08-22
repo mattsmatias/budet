@@ -45,7 +45,7 @@ import {
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
 
-export const metadata = { title: "Yleiskuva" };
+export const metadata = { title: "Yleiskatsaus" };
 
 /**
  * Yleiskuva.

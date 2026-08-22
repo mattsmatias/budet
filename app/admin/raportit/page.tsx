@@ -15,7 +15,7 @@ import {
 } from "@/components/restoflow/ui";
 import { SendToAccountant } from "./send-to-accountant";
 
-export const metadata = { title: "Raportit" };
+export const metadata = { title: "Raportointi" };
 
 const REPORTS = [
   {
@@ -78,7 +78,7 @@ export default async function ReportsPage({
       <div className="relative z-40 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-            Raportit
+            Raportointi
           </h1>
           <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
