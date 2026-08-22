@@ -24,6 +24,7 @@ import { formatDuration, staffCostCents, workedOnDate } from "@/lib/restoflow/ti
 import { currentState } from "@/lib/restoflow/timeclock";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
+import { CountUp } from "@/components/restoflow/count-up";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import {
   Avatar,
@@ -203,7 +204,7 @@ export default async function AdminDashboard({
       >
         <StatCard
           label="Kirjatut kulut"
-          value={formatMoney(totals.totalCents)}
+          value={<CountUp to={totals.totalCents} format="money" />}
           tone={
             comparison.change === null
               ? "muted"
@@ -228,7 +229,7 @@ export default async function AdminDashboard({
 
         <StatCard
           label="Kuitit"
-          value={String(receipts_.total)}
+          value={<CountUp to={receipts_.total} format="integer" />}
           conclusion={receipts_.label}
           tone={receipts_.pending > 0 ? "warn" : "neutral"}
           icon={<RfIcon name="receipt" size={14} />}
@@ -237,7 +238,9 @@ export default async function AdminDashboard({
 
         <StatCard
           label="Työtunnit"
-          value={totalHours === null ? "—" : `${round(totalHours)} h`}
+          value={
+            totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />
+          }
           conclusion={
             totalHours === null
               ? "Vain kuluvalta kuukaudelta"
@@ -253,7 +256,9 @@ export default async function AdminDashboard({
         {showsRates ? (
           <StatCard
             label="Henkilöstökulut"
-            value={staffCost === null ? "—" : formatMoney(staffCost)}
+            value={
+              staffCost === null ? "—" : <CountUp to={staffCost} format="money" />
+            }
             conclusion={
               staffCost === null
                 ? "Vain kuluvalta kuukaudelta"
@@ -752,9 +757,6 @@ function monthWord(month: string): string {
   return formatMonth(month).split(" ")[0].toLowerCase();
 }
 
-function round(hours: number): string {
-  return String(Math.round(hours));
-}
 
 function formatDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");

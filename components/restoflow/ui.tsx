@@ -128,7 +128,8 @@ export function MetricCard({
   highlight,
 }: {
   label: string;
-  value: string;
+  /** Merkkijono tai elementti — esimerkiksi kasvava luku. */
+  value: ReactNode;
   hint?: string;
   /** Pieni trendiviiva oikeaan yläkulmaan. */
   trend?: ReactNode;
