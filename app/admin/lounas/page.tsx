@@ -489,7 +489,7 @@ function WeekDays({
        * ruudulla ne pinotaan; kutistettu viiden sarakkeen taulukko olisi
        * puhelimessa lukukelvoton.
        */}
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {weekdays.map((day) => (
           <DayCard
             key={day.id}
@@ -515,7 +515,7 @@ function WeekDays({
           Viikonloppu
         </summary>
 
-        <div className="mt-2 grid gap-3 md:grid-cols-2">
+        <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {weekend.map((day) => (
             <DayCard
               key={day.id}
@@ -560,58 +560,72 @@ function DayCard({
       </div>
 
       {/* Ruoat. Hinta on viikossa, ei päivässä. */}
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-3 space-y-2.5">
         {day.items.map((item, index) => (
-          <li key={item.id} className="flex items-start gap-2">
-            {canManage ? (
-              <MoveLunchItem
-                item={item}
-                first={index === 0}
-                last={index === day.items.length - 1}
-              />
+          <li
+            key={item.id}
+            className="border-b pb-2 last:border-0 last:pb-0"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
+            {/*
+             * Nimi saa koko leveyden. Painikkeet olivat aiemmin rivin
+             * molemmilla laidoilla ja veivät 88 pikseliä kapeasta
+             * kortista, jolloin pitkä sana leikkautui kesken.
+             *
+             * break-words: yhdyssana on suomessa tavallinen eikä
+             * "Kasvispyörykät" katkea välilyönnistä.
+             */}
+            <p className="text-[14px] font-medium leading-snug break-words">
+              {item.name}
+            </p>
+
+            {item.description ? (
+              <p
+                className="mt-0.5 text-[12px] leading-relaxed break-words"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {item.description}
+              </p>
             ) : null}
 
-            <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-medium leading-snug">{item.name}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              {item.diets.map((id) => (
+                <span
+                  key={id}
+                  className="px-1.5 py-0.5 text-[10px] font-semibold"
+                  style={{
+                    background: "var(--rf-inset)",
+                    color: "var(--rf-text-2)",
+                    borderRadius: 5,
+                  }}
+                >
+                  {dietLabels.get(id)?.label ?? id}
+                </span>
+              ))}
 
-              {item.description ? (
-                <p className="mt-0.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-                  {item.description}
-                </p>
-              ) : null}
+              {canManage ? (
+                <span className="ml-auto flex items-center gap-0.5">
+                  {/* Järjestysnuolet vain kun järjestettävää on. */}
+                  {day.items.length > 1 ? (
+                    <MoveLunchItem
+                      item={item}
+                      first={index === 0}
+                      last={index === day.items.length - 1}
+                    />
+                  ) : null}
 
-              {item.diets.length > 0 ? (
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {item.diets.map((id) => (
-                    <span
-                      key={id}
-                      className="px-1.5 py-0.5 text-[10px] font-semibold"
-                      style={{
-                        background: "var(--rf-inset)",
-                        color: "var(--rf-text-2)",
-                        borderRadius: 5,
-                      }}
-                    >
-                      {dietLabels.get(id)?.label ?? id}
-                    </span>
-                  ))}
-                </div>
+                  <LunchItemDialog
+                    dayId={day.id}
+                    dayLabel={dayLabel}
+                    item={item}
+                    diets={diets}
+                    allergens={allergens}
+                    trigger="edit"
+                  />
+                  <DeleteLunchItem item={item} />
+                </span>
               ) : null}
             </div>
-
-            {canManage ? (
-              <span className="flex shrink-0 items-center">
-                <LunchItemDialog
-                  dayId={day.id}
-                  dayLabel={dayLabel}
-                  item={item}
-                  diets={diets}
-                  allergens={allergens}
-                  trigger="edit"
-                />
-                <DeleteLunchItem item={item} />
-              </span>
-            ) : null}
           </li>
         ))}
       </ul>

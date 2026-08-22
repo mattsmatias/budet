@@ -84,10 +84,10 @@ export function LunchItemDialog({
           type="button"
           onClick={show}
           aria-label={`Muokkaa: ${item?.name ?? ""}`}
-          className="rf-press rf-icon-btn flex h-8 w-8 items-center justify-center rounded-[8px]"
+          className="rf-press rf-icon-btn flex h-7 w-7 items-center justify-center rounded-[7px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          <RfIcon name="settings" size={15} />
+          <RfIcon name="settings" size={14} />
         </button>
       )}
 
@@ -318,10 +318,10 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
         type="button"
         onClick={() => setAsking(true)}
         aria-label={`Poista: ${item.name}`}
-        className="rf-press rf-icon-btn flex h-8 w-8 items-center justify-center rounded-[8px]"
+        className="rf-press rf-icon-btn flex h-7 w-7 items-center justify-center rounded-[7px]"
         style={{ color: "var(--rf-text-3)" }}
       >
-        <RfIcon name="alert" size={15} />
+        <RfIcon name="trash" size={14} />
       </button>
     );
   }
@@ -369,6 +369,10 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
  * näppäimistöllä ilman erillistä toteutusta, ja puhelimessa se
  * kilpailee sivun vierityksen kanssa. Kaksi painiketta toimii
  * kaikkialla ja on ruudunlukijalle ymmärrettävä.
+ *
+ * Vierekkäin eikä päällekkäin: pystysuunnassa ne veivät kaksi riviä
+ * korkeutta jokaiselta ruoalta, ja kapeassa kortissa korkeus on
+ * niukempaa kuin leveys.
  */
 export function MoveLunchItem({
   item,
@@ -380,10 +384,10 @@ export function MoveLunchItem({
   last: boolean;
 }) {
   return (
-    <span className="flex flex-col">
+    <>
       <MoveButton item={item} direction="up" disabled={first} />
       <MoveButton item={item} direction="down" disabled={last} />
-    </span>
+    </>
   );
 }
 
@@ -409,7 +413,7 @@ function MoveButton({
             ? `Siirrä ylemmäs: ${item.name}`
             : `Siirrä alemmas: ${item.name}`
         }
-        className="rf-press flex h-4 w-6 items-center justify-center disabled:opacity-25"
+        className="rf-press flex h-7 w-6 items-center justify-center rounded-[7px] disabled:opacity-20"
         style={{ color: "var(--rf-text-3)" }}
       >
         <span

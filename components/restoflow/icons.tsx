@@ -25,6 +25,7 @@ export type IconName =
   | "suppliers"
   | "lunch"
   | "sparkle"
+  | "trash"
   | "budget"
   | "calendar"
   | "staff"
@@ -64,6 +65,11 @@ const PATHS: Record<IconName, string> = {
 
   // Pylväät, nouseva järjestys — kulut ajassa.
   expenses: "M4 20.5V13M9.3 20.5V7.5M14.7 20.5v-4.5M20 20.5V10",
+
+  // Roskakori. Poistolle oli aiemmin varoituskolmio, joka tarkoittaa
+  // huomiota eikä poistoa — sama merkki kahdelle eri asialle opettaa
+  // ohittamaan molemmat.
+  trash: "M4 7h16M9.5 7V4.5h5V7M6.5 7l.8 12.5h9.4L17.5 7M10 11v5M14 11v5",
 
   // Nelisakarainen tähti — vakiintunut merkki tekoälylle. Hienovarainen
   // ja piirretty samalla viivalla kuin muut: Matti on työkalu muiden
