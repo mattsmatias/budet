@@ -155,7 +155,7 @@ export default async function AdminDashboard({
   const hasTrend = trend.filter((value) => value > 0).length >= 3;
 
   return (
-    <div className="rf-enter space-y-5 md:space-y-6">
+    <div className="rf-stagger space-y-5 md:space-y-6">
       {/* 1. Yläosa */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">

@@ -212,6 +212,14 @@ export function Sparkline({
   const last = values[values.length - 1];
   const previous = values[values.length - 2];
 
+  // Murtoviivan pituus pisteestä pisteeseen.
+  const length = points.reduce((sum, point, index) => {
+    if (index === 0) return sum;
+    const [x1, y1] = points[index - 1].split(",").map(Number);
+    const [x2, y2] = point.split(",").map(Number);
+    return sum + Math.hypot(x2 - x1, y2 - y1);
+  }, 0);
+
   return (
     <svg
       width={width}
@@ -221,18 +229,24 @@ export function Sparkline({
       aria-hidden="true"
       className="overflow-visible"
     >
+      {/* Vedon pituus tulee murtoviivan mitasta: tarkka arvo vaatisi
+          DOM-mittauksen, eikä se ole tämän arvoista. */}
       <polyline
+        className="rf-draw-line"
         points={points.join(" ")}
         stroke="var(--rf-text-3)"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        style={{ ["--rf-line-length" as string]: `${length}` }}
       />
       <circle
+        className="rf-enter"
         cx={points[points.length - 1].split(",")[0]}
         cy={points[points.length - 1].split(",")[1]}
         r="2.5"
         fill={last >= previous ? "var(--rf-amber)" : "var(--rf-green)"}
+        style={{ animationDelay: "760ms" }}
       />
     </svg>
   );
@@ -327,6 +341,7 @@ export function Donut({
             return (
               <circle
                 key={slice.key}
+                className="rf-arc"
                 cx={size / 2}
                 cy={size / 2}
                 r={radius}
@@ -336,6 +351,10 @@ export function Donut({
                 strokeDasharray={dash}
                 strokeDashoffset={-offset}
                 strokeLinecap="butt"
+                style={{
+                  ["--rf-arc-circumference" as string]: `${circumference}`,
+                  animationDelay: `${index * 70}ms`,
+                }}
               />
             );
           })}
@@ -423,7 +442,7 @@ export function AttentionPanel({
         </Link>
       </div>
 
-      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="rf-stagger grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {items.slice(0, 6).map((item) => (
           <li key={item.id}>
             <Link

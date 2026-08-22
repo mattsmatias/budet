@@ -320,3 +320,81 @@ a:hover > .rf-card-lift,
 .rf-icon-btn[aria-expanded="true"] .rf-initial {
   color: var(--rf-accent-strong);
 }
+
+/* --------------------------------------------------------------------- */
+/* Yleiskuvan liike.                                                      */
+/*                                                                        */
+/* Sääntö: liike selittää rakennetta, ei koristele. Jokainen animaatio    */
+/* tässä vastaa kysymykseen "mistä tämä tuli" tai "mitä tämä esittää".    */
+/* Yksikään ei toistu, koska toistuva liike vie huomion luvuilta joita    */
+/* sen pitäisi auttaa lukemaan.                                           */
+/*                                                                        */
+/* prefers-reduced-motion kytkee kaikki pois yllä olevalla säännöllä.     */
+/* --------------------------------------------------------------------- */
+
+/*
+ * Porrastettu ilmestyminen.
+ *
+ * Osiot tulevat näkyviin ylhäältä alas muutaman kymmenen millisekunnin
+ * välein. Silmä seuraa järjestystä ja oppii sivun rakenteen kerralla;
+ * yhtä aikaa ilmestyvä sivu on vain välähdys.
+ *
+ * Viive katkeaa kahdeksanteen lapseen: pidempi ketju alkaisi tuntua
+ * odottamiselta eikä rytmiltä.
+ */
+.rf-stagger > * {
+  animation: rf-fade-up 340ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.rf-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.rf-stagger > *:nth-child(2) { animation-delay: 45ms; }
+.rf-stagger > *:nth-child(3) { animation-delay: 90ms; }
+.rf-stagger > *:nth-child(4) { animation-delay: 135ms; }
+.rf-stagger > *:nth-child(5) { animation-delay: 180ms; }
+.rf-stagger > *:nth-child(6) { animation-delay: 215ms; }
+.rf-stagger > *:nth-child(n + 7) { animation-delay: 240ms; }
+
+/*
+ * Trendiviivan piirtyminen.
+ *
+ * Viiva vedetään vasemmalta oikealle eli ajan suuntaan. Se kertoo
+ * yhdellä eleellä että kyse on aikasarjasta eikä koristeesta.
+ */
+@keyframes rf-draw-line {
+  from {
+    stroke-dashoffset: var(--rf-line-length);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.rf-draw-line {
+  stroke-dasharray: var(--rf-line-length);
+  animation: rf-draw-line 700ms cubic-bezier(0.32, 0.72, 0, 1) 120ms both;
+}
+
+/*
+ * Donitsin siivut kasvavat paikalleen.
+ *
+ * Sama ele kuin palkeissa: osuus kasvaa nollasta, joten kokoluokan näkee
+ * liikkeestä eikä vasta luvusta.
+ */
+@keyframes rf-arc {
+  from {
+    stroke-dasharray: 0 var(--rf-arc-circumference);
+  }
+}
+.rf-arc {
+  animation: rf-arc 620ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/*
+ * Luuranko.
+ *
+ * Vaimeneva pulssi, ei liukuva kiilto: kiilto näyttää siltä että jotain
+ * tapahtuu, pulssi siltä että jotain odotetaan. Jälkimmäinen on totta.
+ */
+.rf-skeleton-block {
+  background: var(--rf-inset);
+  border-radius: var(--rf-r-stat);
+  animation: rf-pulse 1.4s ease-in-out infinite;
+}
