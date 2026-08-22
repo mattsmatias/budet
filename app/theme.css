@@ -277,3 +277,46 @@ a:hover > .rf-card-lift,
 .rf-row:hover {
   background: var(--rf-card-hover);
 }
+
+/* --------------------------------------------------------------------- */
+/* Yläpalkin pyöreät painikkeet.                                          */
+/*                                                                        */
+/* Harmaa ympyrä (#f1f2f5) harmaalla taustalla (#f5f6f8) oli 1,04:1 —    */
+/* käytännössä näkymätön. Valkoinen pinta nostaa sen 1,08:1:een, mikä ei  */
+/* yksin riitä: mikään rajaväri tässä paletissa ei yllä 3:1:een ilman     */
+/* että siitä tulee raskas viiva.                                         */
+/*                                                                        */
+/* Siksi painikkeen tunnistaa ensisijaisesti IKONISTA, joka on täydellä   */
+/* tekstivärillä 18,6:1. Raja on line-strong ja antaa reunalle muodon;    */
+/* se ei kanna tunnistusta yksin.                                         */
+/* --------------------------------------------------------------------- */
+
+.rf-icon-btn {
+  background: var(--rf-card);
+  border: 1px solid var(--rf-line-strong);
+  color: var(--rf-text);
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.rf-icon-btn:hover {
+  background: var(--rf-inset);
+  border-color: var(--rf-text-3);
+}
+
+.rf-icon-btn[aria-expanded="true"] {
+  background: var(--rf-accent-bg);
+  border-color: var(--rf-accent);
+  color: var(--rf-accent-strong);
+}
+
+/* Tunnuksen alkukirjain on tunniste, ei ikoni: tummempi kuin kellon
+   viiva, jotta ne erottuvat toisistaan vierekkäin. */
+.rf-icon-btn .rf-initial {
+  color: var(--rf-text);
+}
+.rf-icon-btn[aria-expanded="true"] .rf-initial {
+  color: var(--rf-accent-strong);
+}

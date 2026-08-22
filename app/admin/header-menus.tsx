@@ -60,12 +60,8 @@ function Dropdown({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        className="rf-press relative flex h-9 w-9 items-center justify-center"
-        style={{
-          background: open ? "var(--rf-accent-bg)" : "var(--rf-inset)",
-          color: open ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
-          borderRadius: "50%",
-        }}
+        className="rf-press rf-icon-btn relative flex h-10 w-10 items-center justify-center"
+        style={{ borderRadius: "50%" }}
       >
         {trigger(open)}
 
@@ -75,7 +71,7 @@ function Dropdown({
             className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"
             style={{
               background: "var(--rf-red)",
-              border: "2px solid var(--rf-bg)",
+              border: "2px solid var(--rf-card)",
             }}
           />
         ) : null}
@@ -250,7 +246,9 @@ function UserMenu({
       onToggle={onToggle}
       onClose={onClose}
       trigger={() => (
-        <span className="text-[13px] font-semibold">{initialOf(userName)}</span>
+        <span className="rf-initial text-[14px] font-semibold">
+          {initialOf(userName)}
+        </span>
       )}
     >
       {(close) => (
