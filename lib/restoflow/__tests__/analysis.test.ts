@@ -13,6 +13,11 @@ import {
   seesPayRates,
 } from "../permissions";
 import { buildAlerts } from "../alerts";
+import {
+  MockReceiptExtractor,
+  emptyResult,
+  reviewReasonsFor,
+} from "../receipt-ai";
 import type { Budget, ClockEvent, ExpenseCategory, Receipt, ReceiptItem, Shift, Supplier, User } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -545,5 +550,45 @@ describe("poikkeamat", () => {
       month: "2026-08", today: "2026-08-20",
     });
     expect(alerts).toHaveLength(0);
+  });
+});
+
+describe("kuittien poiminta", () => {
+  /**
+   * Jäljitelmä ei ole nähnyt kuvaa. Väite "kuittikuva epäselvä" saisi
+   * käyttäjän kuvaamaan kuitin uudelleen ratkaistakseen ongelman jota
+   * ei ole — se on sama virhe kuin keksitty summa.
+   */
+  it("ei arvioi kuvan laatua tuntemattomasta tiedostosta", async () => {
+    const result = await new MockReceiptExtractor().extract({
+      fileName: "IMG_4821.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 120000,
+    });
+
+    expect(result.imageQuality).toBe("good");
+    expect(reviewReasonsFor(result)).not.toContain("poor_image");
+  });
+
+  it("jättää tuntemattomat kentät tyhjiksi eikä arvaa", async () => {
+    const result = await new MockReceiptExtractor().extract({
+      fileName: "IMG_4821.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 120000,
+    });
+
+    expect(result.supplier.value).toBeNull();
+    expect(result.totalCents.value).toBeNull();
+    expect(result.category.value).toBeNull();
+  });
+
+  /** Tyhjä tulos on lähtökohta käsin täytettävälle lomakkeelle. */
+  it("antaa tyhjän tuloksen jossa mitään ei ole keksitty", () => {
+    const empty = emptyResult();
+
+    expect(empty.supplier.value).toBeNull();
+    expect(empty.totalCents.value).toBeNull();
+    expect(empty.items).toEqual([]);
+    expect(empty.imageQuality).toBe("good");
   });
 });

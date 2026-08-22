@@ -11,7 +11,6 @@ import {
 import {
   formatMonth,
   monthlySeries,
-
   periodTotals,
   previousMonth,
   receiptsInMonth,

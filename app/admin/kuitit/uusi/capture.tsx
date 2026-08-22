@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { suggestedCategory } from "@/lib/restoflow/suppliers";
 import { saveReceipt, type AdminState } from "../../actions";
 import {
+  emptyResult,
   receiptExtractor,
   reviewReasonsFor,
   uncertainFields,
@@ -44,10 +45,13 @@ export function CaptureFlow({
   restaurantId,
   suppliers,
   categories,
+  extractionEnabled,
 }: {
   restaurantId: string;
   suppliers: Supplier[];
   categories: CustomCategory[];
+  /** Onko oikea poimintapalvelu kytketty? Ratkaisee koko kulun sävyn. */
+  extractionEnabled: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
@@ -80,6 +84,21 @@ export function CaptureFlow({
     // se on nimetty uudelleen.
     const hash = await sha256(file);
     setFileHash(hash);
+
+    // Ilman oikeaa poimintaa ei esitetä analyysiä. Pyörivä kehä ja sen
+    // jälkeen "ei tunnistettu" joka kentässä antaa ymmärtää että kuvaa
+    // yritettiin lukea ja se epäonnistui — käyttäjä kuvaa kuitin
+    // uudelleen turhaan. Rehellisempää on avata tyhjä lomake heti.
+    if (!extractionEnabled) {
+      uploadImage(file, restaurantId, hash)
+        .then(setImagePath)
+        .catch((e: Error) => setUploadError(e.message));
+
+      setResult(emptyResult());
+      setDate(new Date().toISOString().slice(0, 10));
+      setPhase("review");
+      return;
+    }
 
     const [extraction] = await Promise.all([
       receiptExtractor.extract({
@@ -140,17 +159,18 @@ export function CaptureFlow({
           }}
         >
           <RfIcon name="camera" size={38} />
-          <span className="text-[17px] font-semibold">Kuvaa kuitti</span>
+          <span className="text-[17px] font-semibold">
+            {extractionEnabled ? "Kuvaa kuitti" : "Kuvaa ja täytä tiedot"}
+          </span>
         </button>
 
         <ChooseButton icon="image" label="Valitse kuva" onClick={() => fileRef.current?.click()} />
         <ChooseButton icon="file" label="Lataa tiedosto" onClick={() => fileRef.current?.click()} />
 
         <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat
-          muokattavissa ennen tallennusta ja epävarmat on merkitty. Jos
-          poimintapalvelua ei ole kytketty, kentät tulevat paikallisesta
-          jäljitelmästä — silloin ne on syytä kirjoittaa itse.
+          {extractionEnabled
+            ? "Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat muokattavissa ennen tallennusta ja epävarmat on merkitty."
+            : "Kuvan luku ei ole käytössä tässä ympäristössä. Kuva tallentuu, mutta tiedot täytetään käsin — sovellus ei arvaa niitä puolestasi."}
         </p>
       </div>
     );
@@ -160,7 +180,12 @@ export function CaptureFlow({
   if (phase === "saved") return <Saved receiptId={state.receiptId} />;
   if (!result) return null;
 
-  const uncertain = new Set(uncertainFields(result));
+  // Kun poimintaa ei ole, mikään kenttä ei ole "epävarma" — se on vain
+  // täyttämättä. Punainen korostus tyhjässä lomakkeessa on hälytys
+  // asiasta joka ei ole vielä tapahtunut.
+  const uncertain = extractionEnabled
+    ? new Set(uncertainFields(result))
+    : new Set<string>();
 
   // Opittu korjaus: kun sama kategoriamuutos on tehty samalle
   // toimittajalle toistuvasti, ehdotetaan sitä. Ehdotus näytetään, ei
@@ -173,7 +198,7 @@ export function CaptureFlow({
     matchedSupplier && category !== ""
       ? suggestedCategory(matchedSupplier, category)
       : null;
-  const reasons = reviewReasonsFor(result);
+  const reasons = extractionEnabled ? reviewReasonsFor(result) : [];
   const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
   return (
@@ -186,18 +211,33 @@ export function CaptureFlow({
       <div
         className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
         style={{
-          background: reasons.length > 0 ? "var(--rf-amber-bg)" : "var(--rf-green-bg)",
-          color: reasons.length > 0 ? "var(--rf-amber-text)" : "var(--rf-green-text)",
+          background: !extractionEnabled
+            ? "var(--rf-blue-bg)"
+            : reasons.length > 0
+              ? "var(--rf-amber-bg)"
+              : "var(--rf-green-bg)",
+          color: !extractionEnabled
+            ? "var(--rf-blue-text)"
+            : reasons.length > 0
+              ? "var(--rf-amber-text)"
+              : "var(--rf-green-text)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
         <span aria-hidden="true" className="mt-0.5 shrink-0">
-          <RfIcon name={reasons.length > 0 ? "alert" : "check"} size={16} />
+          <RfIcon
+            name={
+              !extractionEnabled ? "info" : reasons.length > 0 ? "alert" : "check"
+            }
+            size={16}
+          />
         </span>
         <p>
-          {reasons.length > 0
-            ? "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta."
-            : "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin."}
+          {!extractionEnabled
+            ? "Kuvan luku ei ole käytössä, joten täytä tiedot kuitista itse. Kuva tallentuu ja näkyy kuitin sivulla."
+            : reasons.length > 0
+              ? "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta."
+              : "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin."}
         </p>
       </div>
 

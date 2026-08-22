@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchExpenseCategories, fetchSuppliers } from "@/lib/restoflow/queries";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
+import { isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CaptureFlow } from "./capture";
 
@@ -46,6 +47,7 @@ export default async function NewReceiptPage() {
         restaurantId={restaurant.id}
         suppliers={suppliers}
         categories={categories}
+        extractionEnabled={isRealExtractor()}
       />
     </div>
   );

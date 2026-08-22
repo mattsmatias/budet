@@ -173,16 +173,21 @@ function profileFor(fileName: string): Profile {
     };
   }
 
-  // Tuntematon kuitti: tunnistetaan se mikä irtoaa, loput jää käyttäjälle.
+  // Tuntematon tiedostonimi: jäljitelmällä ei ole mitään sanottavaa.
+  //
+  // imageQuality on "good" eikä "poor": jäljitelmä ei ole nähnyt kuvaa,
+  // joten se ei voi arvioida sen laatua. "Kuittikuva epäselvä" olisi
+  // keksitty väite kuvasta jota ei katsottu — sama virhe kuin keksitty
+  // summa, ja se saisi käyttäjän kuvaamaan kuitin turhaan uudelleen.
   return {
-    supplier: { value: null, confidence: "low", hint: "Toimittajan nimeä ei tunnistettu" },
+    supplier: { value: null, confidence: "low" },
     date: { value: new Date().toISOString().slice(0, 10), confidence: "low", hint: "Oletus: tänään" },
-    totalCents: { value: null, confidence: "low", hint: "Loppusummaa ei tunnistettu" },
+    totalCents: { value: null, confidence: "low" },
     vatCents: { value: null, confidence: "low" },
-    category: { value: null, confidence: "low", hint: "Valitse kategoria" },
+    category: { value: null, confidence: "low" },
     paymentMethod: { value: "unknown", confidence: "low" },
     receiptNumber: { value: null, confidence: "low" },
-    imageQuality: "poor",
+    imageQuality: "good",
     items: [],
   };
 }
