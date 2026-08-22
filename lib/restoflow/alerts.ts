@@ -139,7 +139,10 @@ function supplierSpikeAlerts(ctx: AlertContext): Alert[] {
 function vatMismatchAlerts(ctx: AlertContext): Alert[] {
   return receiptsInMonth(ctx.receipts, ctx.month)
     .filter((r) => r.vatCents !== null)
-    .map((r) => ({ receipt: r, check: checkVat(r.totalCents, r.vatCents, r.category) }))
+    .map((r) => ({
+      receipt: r,
+      check: checkVat(r.totalCents, r.vatCents, r.category, r.items),
+    }))
     .filter(({ check }) => !check.matches && check.explanation)
     .map(({ receipt, check }) => ({
       id: `vat-${receipt.id}`,

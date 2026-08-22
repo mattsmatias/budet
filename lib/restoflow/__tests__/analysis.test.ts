@@ -142,6 +142,55 @@ describe("poiminnan lukujen rajaus", () => {
   });
 });
 
+describe("sekakuitin ALV", () => {
+  // Oikea Gigantin kuitti: laite 209,00 e kannalla 25,5 % ja lahjakortti
+  // 50,00 e kannalla 0 %. Yhteensä 259,00 e, ALV 42,47 e.
+  //
+  // Koko kuitin keskiarvokanta on 19,6 %, joka ei ole mikään verokanta.
+  // Sitä verrattiin kategorian odotukseen, joten tasan oikein luettu
+  // kuitti merkittiin virheelliseksi.
+  const gigantti = [
+    { totalCents: 20900, vatRate: 0.255 },
+    { totalCents: 5000, vatRate: 0 },
+  ];
+
+  it("hyväksyy kahden verokannan kuitin", () => {
+    const check = checkVat(25900, 4247, "other", gigantti);
+    expect(check.matches).toBe(true);
+    expect(check.explanation).toBeNull();
+    expect(check.rates).toEqual([0.255, 0]);
+  });
+
+  it("merkitsee kun rivit eivät tue merkittyä ALV:tä", () => {
+    const check = checkVat(25900, 5300, "other", gigantti);
+    expect(check.matches).toBe(false);
+    expect(check.explanation).toContain("42.47");
+  });
+
+  // Rivit jotka eivät summaudu loppusummaan eivät kuvaa koko kuittia,
+  // joten ne eivät voi todistaa siitä mitään suuntaan tai toiseen.
+  it("ei luota rivehin jotka eivät summaudu", () => {
+    const check = checkVat(25900, 4247, "other", [
+      { totalCents: 20900, vatRate: 0.255 },
+    ]);
+    expect(check.rates).toEqual([]);
+  });
+
+  it("ei luota riveihin joilta puuttuu kanta", () => {
+    const check = checkVat(25900, 4247, "other", [
+      { totalCents: 20900, vatRate: 0.255 },
+      { totalCents: 5000, vatRate: null },
+    ]);
+    expect(check.rates).toEqual([]);
+  });
+
+  // Ilman rivejä vanha tarkistus on yhä voimassa.
+  it("vertaa yhä kategoriaan kun rivejä ei ole", () => {
+    expect(checkVat(11400, 1400, "food").matches).toBe(true);
+    expect(checkVat(11400, 1400, "alcohol").matches).toBe(false);
+  });
+});
+
 describe("rivien summautuminen", () => {
   it("hyväksyy täsmäävät rivit", () => {
     const r = receipt({

@@ -230,6 +230,7 @@ export function reviewReasonsFor(result: ExtractionResult): ReviewReason[] {
       result.totalCents.value,
       result.vatCents.value,
       result.category.value,
+      result.items,
     );
     if (!check.matches) reasons.push("vat_mismatch");
   }

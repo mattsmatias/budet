@@ -53,12 +53,57 @@ export interface VatCheck {
   matches: boolean;
   /** Ihmisluettava selitys kun ei täsmää. */
   explanation: string | null;
+  /**
+   * Riveillä esiintyvät verokannat, suurin ensin.
+   *
+   * Tyhjä kun rivejä ei ole tai niissä ei ole kantoja. Useampi kuin yksi
+   * tarkoittaa että kuitti on sekakuitti eikä sillä ole yhtä kantaa.
+   */
+  rates: number[];
+}
+
+/** Rivi sellaisena kuin ALV-tarkistus sen tarvitsee. */
+interface RatedLine {
+  totalCents: number;
+  vatRate: number | null;
+}
+
+/**
+ * Riveiltä laskettu ALV, tai null jos rivit eivät kelpaa tarkistukseen.
+ *
+ * Kaksi ehtoa. Jokaisella rivillä on oltava kanta — muuten osa verosta
+ * jäisi laskematta ja tulos näyttäisi virheeltä. Rivien on myös
+ * summauduttava loppusummaan, sillä muuten ne eivät kuvaa koko kuittia
+ * eivätkä voi todistaa siitä mitään.
+ *
+ * Rivihinnat ovat verollisia, joten vero irrotetaan brutosta:
+ * brutto × kanta / (1 + kanta).
+ */
+function vatFromLines(
+  lines: RatedLine[],
+  totalCents: number,
+): { cents: number; rates: number[] } | null {
+  if (lines.length === 0) return null;
+  if (lines.some((line) => line.vatRate === null)) return null;
+
+  const sum = lines.reduce((s, line) => s + line.totalCents, 0);
+  if (Math.abs(sum - totalCents) > SUM_TOLERANCE_CENTS) return null;
+
+  const cents = lines.reduce(
+    (s, line) => s + Math.round((line.totalCents * line.vatRate!) / (1 + line.vatRate!)),
+    0,
+  );
+
+  const rates = [...new Set(lines.map((line) => line.vatRate!))].sort((a, b) => b - a);
+
+  return { cents, rates };
 }
 
 export function checkVat(
   totalCents: number,
   vatCents: number | null,
   category: ExpenseCategory,
+  lines: RatedLine[] = [],
 ): VatCheck {
   const expectedRates = EXPECTED_VAT_RATES[category];
 
@@ -68,10 +113,21 @@ export function checkVat(
       expectedRates,
       matches: false,
       explanation: "ALV-tietoa ei tunnistettu kuitista.",
+      rates: [],
     };
   }
 
   const inferredRate = inferVatRate(totalCents, vatCents);
+
+  if (inferredRate !== null && inferredRate < 0) {
+    return {
+      inferredRate,
+      expectedRates,
+      matches: false,
+      explanation: "ALV on negatiivinen.",
+      rates: [],
+    };
+  }
 
   if (inferredRate === null) {
     return {
@@ -79,6 +135,39 @@ export function checkVat(
       expectedRates,
       matches: false,
       explanation: "ALV on suurempi tai yhtä suuri kuin loppusumma.",
+      rates: [],
+    };
+  }
+
+  /*
+   * Rivit voittavat kategorian odotuksen.
+   *
+   * Kuitilla voi olla monta verokantaa: Gigantin kuitilla laite 25,5 %
+   * ja lahjakortti 0 %. Näiden keskiarvo on 19,6 %, joka ei ole mikään
+   * verokanta — ja juuri sitä tämä tarkistus vertasi kategorian
+   * odotukseen. Oikea kuitti merkittiin virheelliseksi ikuisesti.
+   *
+   * Kun rivit kertovat kantansa ja summautuvat loppusummaan, ne ovat
+   * parempi todiste kuin kategoriasta arvattu odotus. Silloin
+   * kysytään vain: täsmääkö riveiltä laskettu vero kuitin veroon.
+   */
+  const fromLines = vatFromLines(lines, totalCents);
+
+  if (fromLines !== null) {
+    // Senttien pyöristys tapahtuu riveittäin, joten heitto kasvaa
+    // rivimäärän mukana. Todellinen lukuvirhe on euroja, ei senttejä.
+    const tolerance = SUM_TOLERANCE_CENTS + lines.length;
+    const matches = Math.abs(fromLines.cents - vatCents) <= tolerance;
+
+    return {
+      inferredRate,
+      expectedRates,
+      matches,
+      explanation: matches
+        ? null
+        : `Riveiltä laskettu ALV on ${(fromLines.cents / 100).toFixed(2)} € ` +
+          `mutta kuittiin on merkitty ${(vatCents / 100).toFixed(2)} €.`,
+      rates: fromLines.rates,
     };
   }
 
@@ -92,6 +181,7 @@ export function checkVat(
       ? null
       : `Tunnistettu ${formatRate(inferredRate)} ei vastaa odotettua ` +
         `${expectedRates.map(formatRate).join(" tai ")}.`,
+    rates: [],
   };
 }
 

@@ -7,7 +7,7 @@ import {
   fetchReceiptImageUrl,
   fetchUsers,
 } from "@/lib/restoflow/queries";
-import { checkVat, isMixedReceipt } from "@/lib/restoflow/vat";
+import { checkVat, formatRate, isMixedReceipt } from "@/lib/restoflow/vat";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -51,7 +51,12 @@ export default async function AdminReceiptDetailPage({
   ]);
 
   const addedBy = users.find((u) => u.id === receipt.addedByUserId);
-  const vat = checkVat(receipt.totalCents, receipt.vatCents, receipt.category);
+  const vat = checkVat(
+    receipt.totalCents,
+    receipt.vatCents,
+    receipt.category,
+    receipt.items,
+  );
   const mixed = isMixedReceipt(receipt.items);
   const canReview = can(role, "receipts.edit");
 
@@ -126,6 +131,21 @@ export default async function AdminReceiptDetailPage({
               </span>
               <p>{vat.explanation}</p>
             </div>
+          ) : vat.rates.length > 1 ? (
+            /*
+             * Monta verokantaa ei ole virhe vaan tosiasia kuitista.
+             * Se kerrotaan neutraalisti, koska koko kuitin
+             * keskiarvokanta ei tässä tapauksessa tarkoita mitään —
+             * ja koska kirjanpitäjä haluaa tietää jaon.
+             */
+            <p
+              className="px-4 text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              Kuitilla on {vat.rates.length} verokantaa:{" "}
+              {vat.rates.map(formatRate).join(" ja ")}. Rivien verot
+              summautuvat kuittiin merkittyyn ALV:hen.
+            </p>
           ) : null}
 
           <Card>
