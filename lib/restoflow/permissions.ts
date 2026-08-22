@@ -184,6 +184,7 @@ export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin", label: "Yleiskuva", icon: "overview", requires: "expenses.view" },
   { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view" },
   { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view" },
+  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
   { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
@@ -204,9 +205,29 @@ export function adminNavFor(role: Role): NavEntry[] {
   return ADMIN_NAV.filter((entry) => can(role, entry.requires));
 }
 
-/** Puhelimen alapalkin neljä ensimmäistä kohtaa. */
+/**
+ * Puhelimen alapalkin kohdat.
+ *
+ * Lueteltu nimeltä eikä otettu sivupalkin neljää ensimmäistä. Muuten
+ * sivupalkkiin lisätty kohta työntäisi viimeisen ylivuotovalikkoon
+ * hiljaa — niin kävi kun Budjetit lisättiin Kulut-kohdan perään ja
+ * Työvuorot olisi tipahtanut pois. Puhelimessa vuorot ovat tärkeämmät
+ * kuin budjetit, eikä sitä valintaa saa tehdä järjestysluku.
+ *
+ * Neljä kohtaa, ei enempää: viides tekee kosketuskohteista liian
+ * kapeita. Loput ovat Lisää-välilehdellä.
+ */
+const PRIMARY_HREFS = [
+  "/admin",
+  "/admin/kuitit",
+  "/admin/kulut",
+  "/admin/tyovuorot",
+];
+
 export function primaryNavFor(role: Role): NavEntry[] {
-  return adminNavFor(role).slice(0, 4);
+  return adminNavFor(role)
+    .filter((entry) => PRIMARY_HREFS.includes(entry.href))
+    .slice(0, 4);
 }
 
 /** Ylivuotovalikon kohdat: mitä ei mahtunut alapalkkiin. */

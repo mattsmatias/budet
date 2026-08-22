@@ -522,7 +522,6 @@ describe("oikeudet", () => {
   it("säilyttää pääsytarkistuksen valikosta piilotetuilla reiteillä", () => {
     const hidden = [
       "/admin/toimittajat",
-      "/admin/budjetit",
       "/admin/havainnot",
       "/admin/ilmoitukset",
       // Asetukset löytyy tunnusvalikosta, ei navigaatiosta.
@@ -540,9 +539,34 @@ describe("oikeudet", () => {
     }
   });
 
-  it("pitää päävalikon kuudessa kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(6);
+  it("pitää päävalikon seitsemässä kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(7);
     expect(primaryNavFor("owner")).toHaveLength(4);
+  });
+
+  /**
+   * Sivupalkin kasvu ei saa muuttaa alapalkkia.
+   *
+   * Alapalkki otti aiemmin sivupalkin neljä ensimmäistä kohtaa. Kun
+   * Budjetit lisättiin Kulut-kohdan perään, Työvuorot olisi tipahtanut
+   * ylivuotovalikkoon ilman että kukaan päätti niin.
+   */
+  it("pitää työvuorot puhelimen alapalkissa", () => {
+    const bar = primaryNavFor("owner").map((entry) => entry.href);
+    expect(bar).toEqual([
+      "/admin",
+      "/admin/kuitit",
+      "/admin/kulut",
+      "/admin/tyovuorot",
+    ]);
+  });
+
+  it("pitää budjetit tavoitettavana molemmissa", () => {
+    const sidebar = adminNavFor("owner").map((entry) => entry.href);
+    const overflow = moreNavFor("owner").map((entry) => entry.href);
+
+    expect(sidebar).toContain("/admin/budjetit");
+    expect(overflow).toContain("/admin/budjetit");
   });
 
   /** Ylivuotovalikkoon ei saa jäädä kahdesti samaa kohtaa. */
