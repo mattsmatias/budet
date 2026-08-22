@@ -22,7 +22,7 @@ import {
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { ReceiptImage } from "@/components/restoflow/receipt-image";
-import { Card, CategoryBubble, Pill } from "@/components/restoflow/ui";
+import { Card, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "../review";
 
 export async function generateMetadata({ params }: PageProps<"/admin/kuitit/[id]">) {
@@ -121,45 +121,6 @@ export default async function AdminReceiptDetailPage({
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-4">
-          <Card>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <CategoryBubble category={receipt.category} size={40} />
-                <div>
-                  <p className="text-[15px] font-semibold">{receipt.supplierName}</p>
-                  <p
-                    className="rf-tabular mt-0.5 text-[13px]"
-                    style={{ color: "var(--rf-text-2)" }}
-                  >
-                    {formatDate(receipt.date)} · {PAYMENT_LABELS[receipt.paymentMethod]}
-                  </p>
-                </div>
-              </div>
-              <p className="rf-tabular text-[24px] font-semibold">
-                {formatMoney(receipt.totalCents)}
-              </p>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {receipt.status === "needs_review" ? (
-                receipt.reviewReasons.map((r) => (
-                  <Pill key={r} tone="warn" dot>
-                    {REVIEW_REASON_LABELS[r]}
-                  </Pill>
-                ))
-              ) : (
-                <Pill tone="ok" dot>
-                  Tarkistettu
-                </Pill>
-              )}
-              {mixed ? <Pill tone="info">Sekakuitti</Pill> : null}
-            </div>
-
-            {canReview && receipt.status === "needs_review" ? (
-              <ReviewPanel receipt={receipt} />
-            ) : null}
-          </Card>
-
           {vat.explanation ? (
             <div
               className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
@@ -200,9 +161,18 @@ export default async function AdminReceiptDetailPage({
               />
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[17px] font-semibold">
-                  {merchant?.name ?? receipt.supplierName}
-                </p>
+                <div className="flex items-start justify-between gap-4">
+                  <p className="truncate text-[17px] font-semibold">
+                    {merchant?.name ?? receipt.supplierName}
+                  </p>
+
+                  {/* Summa tähän, koska tästä tuli sivun otsikkokortti.
+                      Kuitin tärkein luku ei saa löytyä vasta alempaa
+                      taulukosta. */}
+                  <p className="rf-tabular shrink-0 text-[22px] font-semibold leading-tight">
+                    {formatMoney(receipt.totalCents)}
+                  </p>
+                </div>
 
                 {/* Toimipiste erikseen kun brändi tunnetaan. Molempien
                     näyttäminen samalla rivillä toistaisi nimen. */}
@@ -242,6 +212,28 @@ export default async function AdminReceiptDetailPage({
                 ) : null}
               </div>
             </div>
+
+            {/* Tila ja Tarkista-painike. Nämä olivat poistetussa
+                kortissa, eivätkä ne toistu missään muualla — tila ei ole
+                Kuittitiedoissa, ja tarkistaminen on toiminto eikä tieto. */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {receipt.status === "needs_review" ? (
+                receipt.reviewReasons.map((r) => (
+                  <Pill key={r} tone="warn" dot>
+                    {REVIEW_REASON_LABELS[r]}
+                  </Pill>
+                ))
+              ) : (
+                <Pill tone="ok" dot>
+                  Tarkistettu
+                </Pill>
+              )}
+              {mixed ? <Pill tone="info">Sekakuitti</Pill> : null}
+            </div>
+
+            {canReview && receipt.status === "needs_review" ? (
+              <ReviewPanel receipt={receipt} />
+            ) : null}
 
             <dl className="mt-4 grid grid-cols-3 gap-3">
               <Stat
