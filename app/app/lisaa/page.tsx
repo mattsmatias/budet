@@ -28,69 +28,73 @@ export default async function MorePage() {
         <h1 className="text-[28px] font-semibold tracking-tight">Lisää</h1>
       </header>
 
-      <Card>
-        <div className="flex items-center gap-3.5">
-          <Avatar initials={initialsOf(name)} size={52} />
-          <div className="min-w-0">
-            <p className="truncate text-[17px] font-semibold">{name}</p>
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]}
-              {restaurant.position ? ` · ${POSITION_LABELS[restaurant.position]}` : ""}
-            </p>
-            <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-              {restaurant.name}
-            </p>
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+        <Card>
+          <div className="flex items-center gap-3.5">
+            <Avatar initials={initialsOf(name)} size={52} />
+            <div className="min-w-0">
+              <p className="truncate text-[17px] font-semibold">{name}</p>
+              <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                {ROLE_LABELS[role]}
+                {restaurant.position ? ` · ${POSITION_LABELS[restaurant.position]}` : ""}
+              </p>
+              <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                {restaurant.name}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <Stat label="Tunnit tällä viikolla" value={formatDuration(week.workedMs)} />
-          <Stat
-            label={rate > 0 ? "Tuntien perusteella" : "Tuntipalkkaa ei asetettu"}
-            value={rate > 0 ? formatMoney(earned) : "—"}
-          />
-        </div>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Stat label="Tunnit tällä viikolla" value={formatDuration(week.workedMs)} />
+            <Stat
+              label={rate > 0 ? "Tuntien perusteella" : "Tuntipalkkaa ei asetettu"}
+              value={rate > 0 ? formatMoney(earned) : "—"}
+            />
+          </div>
 
-        {rate > 0 ? (
-          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Laskennallinen summa tunneista ja tuntipalkasta. Ei palkkalaskelma
-            eikä sisällä lisiä tai vähennyksiä.
-          </p>
-        ) : null}
-      </Card>
-
-      <section>
-        <SectionLabel>Toiminnot</SectionLabel>
-        <Card padded={false}>
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            <Row href="/app/ilmoitukset" icon="bell" label="Ilmoitukset" />
-            <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
-            <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
-            <Row href="/app/asetukset" icon="settings" label="Asetukset" />
-            {can(role, "expenses.view") ? (
-              <Row href="/admin" icon="overview" label="Hallintanäkymä" />
-            ) : null}
-          </ul>
+          {rate > 0 ? (
+            <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              Laskennallinen summa tunneista ja tuntipalkasta. Ei palkkalaskelma
+              eikä sisällä lisiä tai vähennyksiä.
+            </p>
+          ) : null}
         </Card>
-      </section>
+
+        <div className="space-y-5">
+          <section>
+            <SectionLabel>Toiminnot</SectionLabel>
+            <Card padded={false}>
+              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                <Row href="/app/ilmoitukset" icon="bell" label="Ilmoitukset" />
+                <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
+                <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
+                <Row href="/app/asetukset" icon="settings" label="Asetukset" />
+                {can(role, "expenses.view") ? (
+                  <Row href="/admin" icon="overview" label="Hallintanäkymä" />
+                ) : null}
+              </ul>
+            </Card>
+          </section>
 
 
 
-      <form action={signOut} className="pt-2">
-        <button
-          type="submit"
-          className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[14px] font-medium"
-          style={{
-            background: "var(--rf-card)",
-            color: "var(--rf-red-text)",
-            borderRadius: "var(--rf-r-control)",
-            boxShadow: "var(--rf-shadow-sm)",
-          }}
-        >
-          <RfIcon name="logout" size={17} />
-          Kirjaudu ulos
-        </button>
-      </form>
+          <form action={signOut} className="pt-2">
+            <button
+              type="submit"
+              className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[14px] font-medium"
+              style={{
+                background: "var(--rf-card)",
+                color: "var(--rf-red-text)",
+                borderRadius: "var(--rf-r-control)",
+                boxShadow: "var(--rf-shadow-sm)",
+              }}
+            >
+              <RfIcon name="logout" size={17} />
+              Kirjaudu ulos
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

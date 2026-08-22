@@ -70,7 +70,7 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
           description="Esihenkilö lisää vuorot hallintanäkymässä. Saat ilmoituksen kun sinulle merkitään vuoro."
         />
       ) : (
-        <>
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
           <Card>
             <div
               className="mb-3 grid grid-cols-7 text-center text-[11px] font-medium uppercase"
@@ -123,62 +123,64 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuoro
             </div>
           </Card>
 
-          <section>
-            <SectionLabel>{formatLongDate(selected)}</SectionLabel>
-            {selectedShift ? (
-              <Card>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="rf-tabular text-[26px] font-semibold leading-none">
-                      {selectedShift.startTime}–{selectedShift.endTime}
-                    </p>
-                    {selectedShift.location ? (
-                      <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                        {selectedShift.location}
-                      </p>
-                    ) : null}
-                  </div>
-                  <StatusPill status={selectedShift.status} />
-                </div>
-              </Card>
-            ) : (
-              <Card>
-                <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                  Ei työvuoroa tänä päivänä.
-                </p>
-              </Card>
-            )}
-          </section>
-
-          {upcoming.length > 0 ? (
+          <div className="space-y-5">
             <section>
-              <SectionLabel>Tulevat työvuorot</SectionLabel>
-              <Card padded={false}>
-                <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                  {upcoming.map((shift) => (
-                    <li key={shift.id}>
-                      <Link
-                        href={`/app/vuorot?paiva=${shift.date}`}
-                        className="flex items-center justify-between gap-3 px-5 py-3.5"
-                      >
-                        <div>
-                          <p className="rf-tabular text-[15px] font-medium">
-                            {shift.startTime}–{shift.endTime}
-                          </p>
-                          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                            {formatShortDate(shift.date)}
-                            {shift.location ? ` · ${shift.location}` : ""}
-                          </p>
-                        </div>
-                        <StatusPill status={shift.status} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+              <SectionLabel>{formatLongDate(selected)}</SectionLabel>
+              {selectedShift ? (
+                <Card>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="rf-tabular text-[26px] font-semibold leading-none">
+                        {selectedShift.startTime}–{selectedShift.endTime}
+                      </p>
+                      {selectedShift.location ? (
+                        <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                          {selectedShift.location}
+                        </p>
+                      ) : null}
+                    </div>
+                    <StatusPill status={selectedShift.status} />
+                  </div>
+                </Card>
+              ) : (
+                <Card>
+                  <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+                    Ei työvuoroa tänä päivänä.
+                  </p>
+                </Card>
+              )}
             </section>
-          ) : null}
-        </>
+
+            {upcoming.length > 0 ? (
+              <section>
+                <SectionLabel>Tulevat työvuorot</SectionLabel>
+                <Card padded={false}>
+                  <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                    {upcoming.map((shift) => (
+                      <li key={shift.id}>
+                        <Link
+                          href={`/app/vuorot?paiva=${shift.date}`}
+                          className="flex items-center justify-between gap-3 px-5 py-3.5"
+                        >
+                          <div>
+                            <p className="rf-tabular text-[15px] font-medium">
+                              {shift.startTime}–{shift.endTime}
+                            </p>
+                            <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                              {formatShortDate(shift.date)}
+                              {shift.location ? ` · ${shift.location}` : ""}
+                            </p>
+                          </div>
+                          <StatusPill status={shift.status} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              </section>
+            ) : null}
+          </div>
+        </div>
       )}
 
       <section>

@@ -1,25 +1,42 @@
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
-import { BottomNav } from "./nav";
+import { AppBottomNav, AppSidebar } from "./nav";
 
 /**
- * Työntekijän mobiilikuori.
+ * Työntekijän kuori.
  *
- * Leveys on rajattu puhelimen mittoihin myös työpöydällä: näkymä on
- * suunniteltu peukalolle, ja venytettynä se näyttäisi keskeneräiseltä
- * työpöytäsovellukselta.
+ * Puhelimessa yksi kapea palsta ja alapalkki: näkymä on suunniteltu
+ * peukalolle. Työpöydällä sama sovellus saa sivupalkin ja leveämmän
+ * palstan.
+ *
+ * Aiemmin leveys oli rajattu puhelimen mittoihin myös työpöydällä. Se oli
+ * tarkoituksellinen valinta — venytetty mobiilinäkymä näyttää
+ * keskeneräiseltä — mutta lopputulos oli kapea nauha keskellä tyhjää
+ * ruutua, eikä näkymää voinut kunnolla edes kokeilla koneella. Leveys
+ * kasvaa nyt vain sen verran kuin sisältö tarvitsee: teksti ei veny
+ * lukukelvottoman pitkäksi riviksi.
  */
-export default async function MobileAppLayout({ children }: LayoutProps<"/app">) {
-  const { role } = await requireContext("/app");
+export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
+  const { role, user, restaurant } = await requireContext("/app");
+  const showReceipts = can(role, "receipts.view");
 
   return (
-    <div className="flex min-h-screen justify-center">
+    <div className="flex min-h-screen justify-center lg:justify-start">
+      <AppSidebar
+        showReceipts={showReceipts}
+        userName={user.fullName ?? user.email ?? "Käyttäjä"}
+        restaurantName={restaurant.name}
+      />
+
       <div
-        className="flex min-h-screen w-full max-w-md flex-col"
+        className="flex min-h-screen w-full max-w-md flex-col lg:max-w-none"
         style={{ background: "var(--rf-bg)" }}
       >
-        <main className="flex-1 px-4 pb-6 pt-3">{children}</main>
-        <BottomNav showReceipts={can(role, "receipts.view")} />
+        <main className="flex-1 px-4 pb-6 pt-3 lg:mx-auto lg:w-full lg:max-w-3xl lg:px-8 lg:pb-12 lg:pt-8">
+          {children}
+        </main>
+
+        <AppBottomNav showReceipts={showReceipts} />
       </div>
     </div>
   );

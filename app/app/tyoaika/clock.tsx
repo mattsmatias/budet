@@ -62,7 +62,7 @@ export function TimeClock({
         : "var(--rf-text-3)";
 
   return (
-    <div className="space-y-5">
+    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
       <Card>
         <div className="flex items-center justify-center gap-2.5">
           <span
@@ -118,71 +118,73 @@ export function TimeClock({
         ) : null}
       </Card>
 
-      <section>
-        <SectionLabel>Päivän tapahtumat</SectionLabel>
-        <Card padded={false}>
-          {todayEvents.length === 0 ? (
-            <p
-              className="px-5 py-6 text-center text-[14px]"
-              style={{ color: "var(--rf-text-2)" }}
-            >
-              Ei tapahtumia tänään.
+      <div className="space-y-5">
+        <section>
+          <SectionLabel>Päivän tapahtumat</SectionLabel>
+          <Card padded={false}>
+            {todayEvents.length === 0 ? (
+              <p
+                className="px-5 py-6 text-center text-[14px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                Ei tapahtumia tänään.
+              </p>
+            ) : (
+              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                {[...todayEvents].reverse().map((event) => (
+                  <li key={event.id} className="flex items-center gap-3 px-5 py-3">
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: "50%",
+                        background: EVENT_COLORS[event.type],
+                      }}
+                    />
+                    <span className="rf-tabular text-[15px] font-medium">
+                      {formatTimeOfDay(event.at)}
+                    </span>
+                    <span className="text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+                      {CLOCK_EVENT_LABELS[event.type]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </section>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              Päivän työaika
             </p>
-          ) : (
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-              {[...todayEvents].reverse().map((event) => (
-                <li key={event.id} className="flex items-center gap-3 px-5 py-3">
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: "50%",
-                      background: EVENT_COLORS[event.type],
-                    }}
-                  />
-                  <span className="rf-tabular text-[15px] font-medium">
-                    {formatTimeOfDay(event.at)}
-                  </span>
-                  <span className="text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-                    {CLOCK_EVENT_LABELS[event.type]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </section>
+            <p className="rf-tabular mt-1.5 text-[20px] font-semibold" suppressHydrationWarning>
+              {formatDuration(worked.workedMs)}
+            </p>
+          </Card>
+          <Card>
+            <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              Viikon työaika
+            </p>
+            <p className="rf-tabular mt-1.5 text-[20px] font-semibold">
+              {formatDuration(weekWorkedMs + worked.workedMs)}
+            </p>
+          </Card>
+        </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Päivän työaika
+        {worked.breakMs > 0 ? (
+          <p
+            className="flex items-center justify-center gap-1.5 px-1 text-center text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+            suppressHydrationWarning
+          >
+            <RfIcon name="clock" size={13} />
+            Taukoa {formatDuration(worked.breakMs)} — ei lasketa työaikaan.
           </p>
-          <p className="rf-tabular mt-1.5 text-[20px] font-semibold" suppressHydrationWarning>
-            {formatDuration(worked.workedMs)}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Viikon työaika
-          </p>
-          <p className="rf-tabular mt-1.5 text-[20px] font-semibold">
-            {formatDuration(weekWorkedMs + worked.workedMs)}
-          </p>
-        </Card>
+        ) : null}
       </div>
-
-      {worked.breakMs > 0 ? (
-        <p
-          className="flex items-center justify-center gap-1.5 px-1 text-center text-[12px]"
-          style={{ color: "var(--rf-text-3)" }}
-          suppressHydrationWarning
-        >
-          <RfIcon name="clock" size={13} />
-          Taukoa {formatDuration(worked.breakMs)} — ei lasketa työaikaan.
-        </p>
-      ) : null}
     </div>
   );
 }
