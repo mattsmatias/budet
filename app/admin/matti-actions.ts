@@ -35,6 +35,9 @@ export interface MattiActionState {
   ok?: boolean;
   message?: string;
   error?: string;
+  /** Linkki tulokseen. Näytetään onnistumisen jälkeen. */
+  href?: string;
+  linkLabel?: string;
 }
 
 const idSchema = z.string().uuid();
@@ -135,7 +138,12 @@ export async function confirmMattiAction(
     revalidatePath("/admin", "layout");
     revalidatePath("/lounas", "layout");
 
-    return { ok: true, message: result.message };
+    return {
+      ok: true,
+      message: result.message,
+      href: result.href,
+      linkLabel: result.linkLabel,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
@@ -177,6 +185,15 @@ interface ExecutionResult {
   target: string | null;
   before: unknown;
   after: unknown;
+  /**
+   * Linkki tulokseen.
+   *
+   * Ilman tätä Matti sanoi "Valmis, lisäsin 25 ruokaa" eikä kertonut
+   * mihin. Lista meni ensi viikolle, käyttäjä katsoi kuluvaa viikkoa,
+   * ja joutui etsimään sen lounashistoriasta.
+   */
+  href?: string;
+  linkLabel?: string;
 }
 
 /**
@@ -194,10 +211,10 @@ async function execute(
 ): Promise<ExecutionResult> {
   switch (action.tool) {
     case "propose_lunch_items": {
-      const { days, replace } = args as {
+      const { days, replace, priceEuros } = args as {
+        priceEuros?: number;
         days: {
           date: string;
-          priceEuros?: number;
           items: {
             name: string;
             description?: string;
@@ -219,13 +236,28 @@ async function execute(
        * luomassa viikko itse ensin.
        */
       const weeks = new Set(days.map((d) => weekStartOf(d.date)));
+      const menuIds: string[] = [];
 
       for (const week of weeks) {
-        const { error } = await supabase.rpc("open_lunch_week", {
+        const { data, error } = await supabase.rpc("open_lunch_week", {
           p_restaurant: restaurant.id,
           p_week_start: week,
         });
         if (error) throw new Error(error.message);
+        if (data) menuIds.push(data as string);
+      }
+
+      // Hinta on viikon ominaisuus, joten se asetetaan kerran viikkoa
+      // kohti eikä päivien silmukassa.
+      if (priceEuros !== undefined) {
+        for (const menuId of menuIds) {
+          const { error } = await supabase.rpc("set_lunch_price", {
+            p_menu: menuId,
+            p_name: "Lounas",
+            p_cents: Math.round(priceEuros * 100),
+          });
+          if (error) throw new Error(error.message);
+        }
       }
 
       let added = 0;
@@ -240,15 +272,6 @@ async function execute(
         if (replace) {
           const { error } = await supabase.rpc("clear_lunch_day_items", {
             p_day: row.id,
-          });
-          if (error) throw new Error(error.message);
-        }
-
-        if (day.priceEuros !== undefined) {
-          const { error } = await supabase.rpc("set_lunch_price", {
-            p_day: row.id,
-            p_name: "Lounas",
-            p_cents: Math.round(day.priceEuros * 100),
           });
           if (error) throw new Error(error.message);
         }
@@ -268,43 +291,48 @@ async function execute(
         }
       }
 
+      const week = weekStartOf(days[0].date);
+
       return {
         message:
           `Valmis. Lisäsin ${added} ruokaa ${days.length} päivälle. ` +
           "Lista on luonnos — julkaise se kun se on valmis.",
         target: touched.join(","),
         before: null,
-        after: { days: days.length, items: added },
+        after: { days: days.length, items: added, weekStart: week },
+        href: `/admin/lounas?viikko=${week}`,
+        linkLabel: "Avaa lounaslista",
       };
     }
 
     case "propose_lunch_price": {
-      const { date, euros, priceName } = args as {
-        date: string;
+      const { weekStart: rawWeek, euros, priceName } = args as {
+        weekStart: string;
         euros: number;
         priceName?: string;
       };
 
+      const week = weekStartOf(rawWeek);
       const name = priceName ?? "Lounas";
       const cents = Math.round(euros * 100);
 
-      const day = await lunchDay(supabase, date);
-      if (!day) throw new Error("Päivää ei löytynyt");
-
-      const before = day.prices.find((p) => p.name === name)?.cents ?? null;
+      const menu = await lunchMenu(supabase, week);
+      if (!menu) throw new Error("Viikkoa ei löytynyt");
 
       const { error } = await supabase.rpc("set_lunch_price", {
-        p_day: day.id,
+        p_menu: menu.id,
         p_name: name,
         p_cents: cents,
       });
       if (error) throw new Error(error.message);
 
       return {
-        message: `Valmis. ${name} ${date} on nyt ${formatMoney(cents)}.`,
-        target: day.id,
-        before: { cents: before },
+        message: `Valmis. ${name} on nyt ${formatMoney(cents)} koko viikolle.`,
+        target: menu.id,
+        before: { cents: menu.priceCents },
         after: { cents },
+        href: `/admin/lounas?viikko=${week}`,
+        linkLabel: "Avaa lounaslista",
       };
     }
 
@@ -328,6 +356,8 @@ async function execute(
         target: weekStartOf(toWeekStart),
         before: null,
         after: { weekStart: weekStartOf(toWeekStart), status: "draft" },
+        href: `/admin/lounas?viikko=${weekStartOf(toWeekStart)}`,
+        linkLabel: "Avaa luonnos",
       };
     }
 
@@ -348,6 +378,8 @@ async function execute(
         target: menu.id,
         before: { status: menu.status },
         after: { status: "published" },
+        href: `/admin/lounas?viikko=${week}`,
+        linkLabel: "Avaa lounaslista",
       };
     }
 
@@ -379,15 +411,23 @@ async function lunchDay(
 async function lunchMenu(
   supabase: Awaited<ReturnType<typeof createClient>>,
   weekStart: string,
-): Promise<{ id: string; status: string } | null> {
+): Promise<{ id: string; status: string; priceCents: number | null } | null> {
   const { data } = await supabase
     .from("lunch_menus")
-    .select("id, status")
+    .select("id, status, lunch_prices ( name, price_cents )")
     .eq("week_start", weekStart)
     .maybeSingle();
 
   if (!data) return null;
-  return { id: data.id as string, status: data.status as string };
+
+  const prices =
+    (data.lunch_prices as unknown as { name: string; price_cents: number }[]) ?? [];
+
+  return {
+    id: data.id as string,
+    status: data.status as string,
+    priceCents: prices.find((p) => p.name === "Lounas")?.price_cents ?? null,
+  };
 }
 
 async function log(

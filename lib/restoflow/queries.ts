@@ -547,7 +547,7 @@ export async function fetchLunchWeek(
   const { data, error } = await supabase
     .from("lunch_menus")
     .select(
-      "id, week_start, week_end, status, published_at, content_updated_at, lunch_days ( id, date, lunch_prices ( id, name, price_cents, sort_order ), lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
+      "id, week_start, week_end, status, published_at, content_updated_at, lunch_prices ( id, name, price_cents, sort_order ), lunch_days ( id, date, lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
     )
     .eq("restaurant_id", restaurantId)
     .eq("week_start", weekStart)
@@ -559,14 +559,6 @@ export async function fetchLunchWeek(
     .map((day) => ({
       id: day.id,
       date: day.date,
-      prices: (day.lunch_prices ?? [])
-        .map((price) => ({
-          id: price.id,
-          name: price.name,
-          cents: price.price_cents,
-          sortOrder: price.sort_order,
-        }))
-        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
       items: (day.lunch_items ?? [])
         .map((item) => ({
           id: item.id,
@@ -580,10 +572,27 @@ export async function fetchLunchWeek(
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  const prices = (
+    (data.lunch_prices as unknown as {
+      id: string;
+      name: string;
+      price_cents: number;
+      sort_order: number;
+    }[]) ?? []
+  )
+    .map((price) => ({
+      id: price.id,
+      name: price.name,
+      cents: price.price_cents,
+      sortOrder: price.sort_order,
+    }))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
+
   return {
     id: data.id as string,
     weekStart: data.week_start as string,
     weekEnd: data.week_end as string,
+    prices,
     status: data.status as LunchWeek["status"],
     publishedAt: (data.published_at as string | null) ?? null,
     contentUpdatedAt: data.content_updated_at as string,
@@ -594,7 +603,6 @@ export async function fetchLunchWeek(
 interface LunchDayRow {
   id: string;
   date: string;
-  lunch_prices: { id: string; name: string; price_cents: number; sort_order: number }[] | null;
   lunch_items:
     | {
         id: string;

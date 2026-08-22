@@ -430,22 +430,22 @@ function MoveButton({
 // ---------------------------------------------------------------------------
 
 /**
- * Päivän lounashinta.
+ * Viikon lounashinta.
  *
- * Hinta on päivässä eikä ruoassa. Lounas on yksi kokonaisuus jonka
- * hintaan kaikki päivän ruoat sisältyvät, eikä yksittäisillä annoksilla
- * ole omaa hintaa.
+ * Hinta on viikossa eikä päivässä eikä ruoassa. Lounas maksaa saman
+ * verran maanantaina ja perjantaina, ja päiväkohtainen hinta tarkoitti
+ * viittä kenttää joihin kirjoitetaan viisi kertaa sama luku.
  *
  * Tallennus tapahtuu kentästä poistuttaessa. Erillinen tallennuspainike
- * jokaisen päivän kohdalla olisi viisi painiketta joita kukaan ei muista
- * painaa — ja muistamatta jäänyt hinta on pahempi kuin näkyvä virhe.
+ * olisi painike jota kukaan ei muista painaa — ja muistamatta jäänyt
+ * hinta on pahempi kuin näkyvä virhe.
  */
 export function LunchPriceField({
-  dayId,
+  menuId,
   name,
   cents,
 }: {
-  dayId: string;
+  menuId: string;
   name: string;
   cents: number | null;
 }) {
@@ -463,15 +463,15 @@ export function LunchPriceField({
 
   return (
     <form ref={form} action={action} className="flex items-baseline gap-1.5">
-      <input type="hidden" name="dayId" value={dayId} />
+      <input type="hidden" name="menuId" value={menuId} />
       <input type="hidden" name="priceName" value={name} />
 
-      <label htmlFor={`price-${dayId}`} className="sr-only">
-        {`${name}, hinta euroina`}
+      <label htmlFor={`price-${menuId}`} className="sr-only">
+        {`${name}, hinta euroina koko viikolle`}
       </label>
 
       <input
-        id={`price-${dayId}`}
+        id={`price-${menuId}`}
         name="price"
         inputMode="decimal"
         value={value}
@@ -480,7 +480,7 @@ export function LunchPriceField({
           if (value !== saved) form.current?.requestSubmit();
         }}
         placeholder="0,00"
-        className="w-[5.5rem] bg-transparent text-[22px] font-semibold outline-none"
+        className="w-[6rem] bg-transparent text-[24px] font-semibold outline-none"
         style={{ color: "var(--rf-text)" }}
       />
 

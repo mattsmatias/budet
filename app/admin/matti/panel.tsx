@@ -696,16 +696,40 @@ function ActionCard({ action }: { action: PendingAction }) {
       </div>
 
       {done ? (
-        <p
-          role="status"
-          className="border-t px-4 py-3 text-[13px] font-medium"
-          style={{
-            borderColor: "var(--rf-line)",
-            color: confirmState.error ? "var(--rf-red-text)" : "var(--rf-green-text)",
-          }}
+        <div
+          className="border-t px-4 py-3"
+          style={{ borderColor: "var(--rf-line)" }}
         >
-          {confirmState.error ?? confirmState.message ?? cancelState.message}
-        </p>
+          <p
+            role="status"
+            className="text-[13px] font-medium"
+            style={{
+              color: confirmState.error
+                ? "var(--rf-red-text)"
+                : "var(--rf-green-text)",
+            }}
+          >
+            {confirmState.error ?? confirmState.message ?? cancelState.message}
+          </p>
+
+          {/*
+           * Linkki tulokseen.
+           *
+           * Ilman tätä Matti sanoi "Valmis, lisäsin 25 ruokaa" eikä
+           * kertonut mihin. Lista meni ensi viikolle, käyttäjä katsoi
+           * kuluvaa viikkoa, ja joutui etsimään sen historiasta.
+           */}
+          {confirmState.ok && confirmState.href && confirmState.linkLabel ? (
+            <Link
+              href={confirmState.href}
+              className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold"
+              style={{ color: "var(--rf-accent)" }}
+            >
+              {confirmState.linkLabel}
+              <RfIcon name="chevron" size={13} />
+            </Link>
+          ) : null}
+        </div>
       ) : (
         <div
           className="flex gap-2 border-t px-4 py-3"

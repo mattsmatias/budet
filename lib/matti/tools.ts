@@ -424,25 +424,16 @@ const getLunchWeek = defineTool({
     }
 
     const days = menu.days
-      .filter((d) => d.items.length > 0 || d.prices.length > 0)
+      .filter((d) => d.items.length > 0)
       .map((d) => ({
         date: d.date,
         weekday: weekdayName(d.date),
-        prices: d.prices.map((p) => ({ name: p.name, cents: p.cents })),
         items: d.items.map((i) => i.name),
       }));
 
-    const prices = menu.days
-      .flatMap((d) => d.prices)
-      .filter((p) => p.name === "Lounas");
-
-    const priceRange =
-      prices.length === 0
-        ? null
-        : prices.every((p) => p.cents === prices[0].cents)
-          ? formatMoney(prices[0].cents)
-          : `${formatMoney(Math.min(...prices.map((p) => p.cents)))}–` +
-            formatMoney(Math.max(...prices.map((p) => p.cents)));
+    // Hinta on viikossa, ei päivässä.
+    const lunchPrice = menu.prices.find((p) => p.name === "Lounas") ?? null;
+    const priceRange = lunchPrice ? formatMoney(lunchPrice.cents) : null;
 
     return {
       card: {
@@ -465,6 +456,7 @@ const getLunchWeek = defineTool({
         exists: true,
         status: menu.status,
         hasUnpublishedChanges: hasUnpublishedChanges(menu),
+        prices: menu.prices.map((p) => ({ name: p.name, cents: p.cents })),
         days,
       },
     };
@@ -562,12 +554,6 @@ const proposeLunchItems = defineTool({
       .array(
         z.object({
           date: dateSchema,
-          priceEuros: z
-            .number()
-            .min(0)
-            .max(1000)
-            .optional()
-            .describe("Päivän lounashinta. Jätä pois jos hinta on jo oikein."),
           items: z
             .array(
               z.object({
@@ -587,11 +573,20 @@ const proposeLunchItems = defineTool({
       )
       .min(1)
       .max(7),
+    priceEuros: z
+      .number()
+      .min(0)
+      .max(1000)
+      .optional()
+      .describe(
+        "Koko viikon lounashinta. Sama kaikille päiville. Jätä pois jos " +
+          "käyttäjä ei kertonut hintaa tai se on jo oikein.",
+      ),
     replace: z
       .boolean()
       .optional()
       .describe(
-        "true korvaa päivän nykyiset ruoat, false lisää perään. Oletus false.",
+        "true korvaa päivien nykyiset ruoat, false lisää perään. Oletus false.",
       ),
   }),
   async run(ctx, input) {
@@ -604,21 +599,24 @@ const proposeLunchItems = defineTool({
 
     const changes: ActionPreview["changes"] = [];
 
+    // Hinta on viikon ominaisuus, joten se on esikatselussa kerran.
+    if (input.priceEuros !== undefined) {
+      const menu = await ctx.lunchWeek(weekStartOf(input.days[0].date));
+      const current = menu?.prices.find((p) => p.name === "Lounas");
+
+      changes.push({
+        label: "Lounas · koko viikko",
+        from: current ? formatMoney(current.cents) : undefined,
+        to: formatMoney(Math.round(input.priceEuros * 100)),
+      });
+    }
+
     for (const day of [...input.days].sort((a, b) => a.date.localeCompare(b.date))) {
       const existing = (await ctx.lunchWeek(weekStartOf(day.date)))?.days.find(
         (d) => d.date === day.date,
       );
 
       const label = `${weekdayName(day.date)} ${day.date}`;
-
-      if (day.priceEuros !== undefined) {
-        const current = existing?.prices.find((p) => p.name === "Lounas");
-        changes.push({
-          label: `${label} · Lounas`,
-          from: current ? formatMoney(current.cents) : undefined,
-          to: formatMoney(Math.round(day.priceEuros * 100)),
-        });
-      }
 
       changes.push({
         label,
@@ -651,30 +649,32 @@ const proposeLunchItems = defineTool({
 const proposeLunchPrice = defineTool({
   name: "propose_lunch_price",
   description:
-    "Ehdottaa päivän lounashinnan muuttamista. EI muuta hintaa — käyttäjä " +
-    "vahvistaa muutoksen itse. Hinta koskee koko päivän lounasta, ei " +
-    "yksittäistä ruokaa.",
+    "Ehdottaa viikon lounashinnan muuttamista. EI muuta hintaa — käyttäjä " +
+    "vahvistaa muutoksen itse. Hinta koskee koko viikkoa ja kaikkia sen " +
+    "ruokia; päiväkohtaista tai ruokakohtaista hintaa ei ole.",
   level: "write",
   requires: "lunch.manage",
   schema: z.object({
-    date: dateSchema.describe("Päivä jonka hintaa muutetaan"),
+    weekStart: dateSchema.describe(
+      "Viikon maanantai. Anna mikä tahansa viikon päivä, se pyöristetään.",
+    ),
     euros: z.number().min(0).max(1000).describe("Uusi hinta euroina, esim. 16.5"),
     priceName: z.string().max(40).optional().describe("Oletus: Lounas"),
   }),
   async run(ctx, input) {
-    const week = weekStartOf(input.date);
+    const week = weekStartOf(input.weekStart);
     const menu = await ctx.lunchWeek(week);
-    const day = menu?.days.find((d) => d.date === input.date);
 
-    if (!day) {
+    if (!menu) {
       return {
         summary:
-          `Päivälle ${input.date} ei ole lounaslistaa. Viikko pitää avata ensin.`,
+          `Viikolle ${formatWeekRange(week)} ei ole lounaslistaa. ` +
+          "Viikko pitää avata ensin.",
       };
     }
 
     const name = input.priceName ?? "Lounas";
-    const current = day.prices.find((p) => p.name === name);
+    const current = menu.prices.find((p) => p.name === name);
     const cents = Math.round(input.euros * 100);
 
     if (current?.cents === cents) {
@@ -682,18 +682,18 @@ const proposeLunchPrice = defineTool({
     }
 
     return {
-      summary: `Valmis ehdotus: ${weekdayName(input.date)} ${name} ${formatMoney(cents)}.`,
+      summary: `Valmis ehdotus: ${name} ${formatMoney(cents)} viikolle ${formatWeekRange(week)}.`,
       preview: {
         title: "Lounashinnan muutos",
         changes: [
           {
-            label: `${weekdayName(input.date)} ${input.date} · ${name}`,
+            label: `${name} · ${formatWeekRange(week)}`,
             from: current ? formatMoney(current.cents) : "ei hintaa",
             to: formatMoney(cents),
           },
         ],
       },
-      data: { dayId: day.id, priceName: name, cents },
+      data: { menuId: menu.id, priceName: name, cents },
     };
   },
 });

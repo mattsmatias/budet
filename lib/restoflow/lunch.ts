@@ -34,13 +34,20 @@ export interface LunchItem {
 export interface LunchDay {
   id: string;
   date: string;
-  prices: LunchPrice[];
   items: LunchItem[];
 }
 
 export interface LunchWeek {
   id: string;
   weekStart: string;
+  /**
+   * Viikon hinnat.
+   *
+   * Hinta oli aiemmin päivässä. Se oli liikaa: lounas maksaa saman
+   * verran maanantaina ja perjantaina, ja viisi kenttää samalle
+   * luvulle on viisi paikkaa jossa se voi jäädä päivittämättä.
+   */
+  prices: LunchPrice[];
   weekEnd: string;
   status: LunchStatus;
   publishedAt: string | null;

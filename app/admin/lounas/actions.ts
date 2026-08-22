@@ -275,11 +275,11 @@ export async function setLunchPrice(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
-  const dayId = String(formData.get("dayId") ?? "");
+  const menuId = String(formData.get("menuId") ?? "");
   const name = String(formData.get("priceName") ?? "").trim();
   const raw = String(formData.get("price") ?? "").trim();
 
-  if (!dayId) return { error: "Päivää ei löytynyt." };
+  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
   if (name === "") return { error: "Hinnan nimi puuttuu." };
 
   const cents = parseEuros(raw);
@@ -294,7 +294,7 @@ export async function setLunchPrice(
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("set_lunch_price", {
-    p_day: dayId,
+    p_menu: menuId,
     p_name: name,
     p_cents: cents,
   });

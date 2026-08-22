@@ -109,8 +109,12 @@ describe("syötteen validointi", () => {
 
   it("hylkää kelvottoman päivän", () => {
     const tool = findTool("propose_lunch_price")!;
-    expect(tool.schema.safeParse({ date: "24.8.2026", euros: 16 }).success).toBe(false);
-    expect(tool.schema.safeParse({ date: "2026-08-24", euros: 16 }).success).toBe(true);
+    expect(tool.schema.safeParse({ weekStart: "24.8.2026", euros: 16 }).success).toBe(
+      false,
+    );
+    expect(tool.schema.safeParse({ weekStart: "2026-08-24", euros: 16 }).success).toBe(
+      true,
+    );
   });
 
   // Negatiivinen hinta ei ole kirjoitusvirhe vaan mahdoton arvo.
@@ -118,11 +122,35 @@ describe("syötteen validointi", () => {
   // ennen kuin käyttäjälle näytetään esikatselu jota ei voi hyväksyä.
   it("hylkää negatiivisen hinnan", () => {
     const tool = findTool("propose_lunch_price")!;
-    expect(tool.schema.safeParse({ date: "2026-08-24", euros: -5 }).success).toBe(false);
+    expect(tool.schema.safeParse({ weekStart: "2026-08-24", euros: -5 }).success).toBe(
+      false,
+    );
   });
 
   it("rajaa hinnan järkevään ylärajaan", () => {
     const tool = findTool("propose_lunch_price")!;
-    expect(tool.schema.safeParse({ date: "2026-08-24", euros: 99999 }).success).toBe(false);
+    expect(
+      tool.schema.safeParse({ weekStart: "2026-08-24", euros: 99999 }).success,
+    ).toBe(false);
+  });
+
+  /*
+   * Hinta on viikon ominaisuus, ei päivän. Jos päiväkohtainen kenttä
+   * palaisi, se tuottaisi hiljaa vanhan mallin mukaisia rivejä.
+   */
+  it("ei ota hintaa päiväkohtaisena", () => {
+    const items = findTool("propose_lunch_items")!;
+    const parsed = items.schema.safeParse({
+      days: [
+        { date: "2026-08-24", priceEuros: 15.5, items: [{ name: "Lohikeitto" }] },
+      ],
+    });
+
+    // Ylimääräinen kenttä ei kelpaa hinnaksi: se putoaa pois.
+    const data = parsed.success
+      ? (parsed.data as { days: { priceEuros?: number }[] })
+      : null;
+
+    expect(data?.days[0].priceEuros).toBeUndefined();
   });
 });

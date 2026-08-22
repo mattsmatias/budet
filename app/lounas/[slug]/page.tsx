@@ -36,7 +36,6 @@ interface PublicItem {
 
 interface PublicDay {
   date: string;
-  prices: PublicPrice[];
   items: PublicItem[];
 }
 
@@ -45,6 +44,8 @@ interface PublicWeek {
   weekStart: string;
   published: boolean;
   publishedAt?: string | null;
+  /** Hinta koskee koko viikkoa, ei yksittäistä päivää. */
+  prices: PublicPrice[];
   days: PublicDay[];
 }
 
@@ -115,6 +116,37 @@ export default async function PublicLunchPage({
           <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
             Viikko {isoWeekNumber(week.weekStart)} · {formatWeekRange(week.weekStart)}
           </p>
+
+          {/*
+           * Hinta kerran, ei joka päivän kohdalla. Sama luku viisi
+           * kertaa allekkain on kohinaa, ja asiakas etsii sitä
+           * ensimmäisenä.
+           */}
+          {week.prices.length > 0 ? (
+            <p className="rf-tabular mt-4 text-[22px] font-semibold">
+              {week.prices.map((price, i) => (
+                <span key={price.name}>
+                  {i > 0 ? (
+                    <span
+                      className="mx-2 text-[14px] font-normal"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      ·
+                    </span>
+                  ) : null}
+                  {week.prices.length > 1 ? (
+                    <span
+                      className="mr-1.5 text-[13px] font-medium"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
+                      {price.name}
+                    </span>
+                  ) : null}
+                  {formatMoney(price.cents)}
+                </span>
+              ))}
+            </p>
+          ) : null}
         </header>
 
         {!week.published || days.length === 0 ? (
@@ -144,44 +176,15 @@ export default async function PublicLunchPage({
                   boxShadow: "var(--rf-shadow-sm)",
                 }}
               >
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <h2 className="text-[15px] font-semibold uppercase" style={{ letterSpacing: "0.04em" }}>
-                    {weekdayName(day.date)}
-                    <span
-                      className="rf-tabular ml-2 font-medium normal-case"
-                      style={{ color: "var(--rf-text-3)" }}
-                    >
-                      {formatDayShort(day.date)}
-                    </span>
-                  </h2>
-
-                  {/* Hinta koskee koko päivän lounasta. */}
-                  {day.prices.length > 0 ? (
-                    <p className="rf-tabular text-[18px] font-semibold">
-                      {day.prices.map((price, i) => (
-                        <span key={price.name}>
-                          {i > 0 ? (
-                            <span
-                              className="mx-1.5 text-[13px] font-normal"
-                              style={{ color: "var(--rf-text-3)" }}
-                            >
-                              ·
-                            </span>
-                          ) : null}
-                          {day.prices.length > 1 ? (
-                            <span
-                              className="mr-1 text-[12px] font-medium"
-                              style={{ color: "var(--rf-text-2)" }}
-                            >
-                              {price.name}
-                            </span>
-                          ) : null}
-                          {formatMoney(price.cents)}
-                        </span>
-                      ))}
-                    </p>
-                  ) : null}
-                </div>
+                <h2 className="text-[15px] font-semibold uppercase" style={{ letterSpacing: "0.04em" }}>
+                  {weekdayName(day.date)}
+                  <span
+                    className="rf-tabular ml-2 font-medium normal-case"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    {formatDayShort(day.date)}
+                  </span>
+                </h2>
 
                 <ul className="mt-3.5 space-y-2.5">
                   {day.items.map((item, index) => (

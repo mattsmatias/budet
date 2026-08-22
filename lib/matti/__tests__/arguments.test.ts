@@ -100,7 +100,7 @@ describe("lounaslistan argumentit", () => {
 describe("kirjoittavien työkalujen skeemat", () => {
   const NAYTTEET: Record<string, unknown> = {
     propose_lunch_items: VIIKKO,
-    propose_lunch_price: { date: "2026-08-24", euros: 16.5 },
+    propose_lunch_price: { weekStart: "2026-08-24", euros: 16.5 },
     propose_copy_lunch_week: {
       fromWeekStart: "2026-08-17",
       toWeekStart: "2026-08-24",

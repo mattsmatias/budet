@@ -124,7 +124,56 @@ export default async function LunchPage({
         </div>
       </header>
 
-      {/* --- Tila --- */}
+      {/* --- Hinta ja tila --- */}
+      {week ? (
+        <Card>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p
+                className="text-[11px] font-medium uppercase"
+                style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+              >
+                {DEFAULT_PRICE_NAME} · koko viikko
+              </p>
+
+              {canManage ? (
+                <LunchPriceField
+                  menuId={week.id}
+                  name={DEFAULT_PRICE_NAME}
+                  cents={
+                    week.prices.find((p) => p.name === DEFAULT_PRICE_NAME)?.cents ??
+                    null
+                  }
+                />
+              ) : (
+                <p className="rf-tabular text-[24px] font-semibold">
+                  {week.prices.length > 0
+                    ? formatMoney(week.prices[0].cents)
+                    : "—"}
+                </p>
+              )}
+            </div>
+
+            {week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME).length > 0 ? (
+              <dl className="flex flex-wrap gap-x-5 gap-y-1">
+                {week.prices
+                  .filter((p) => p.name !== DEFAULT_PRICE_NAME)
+                  .map((price) => (
+                    <div key={price.id}>
+                      <dt className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+                        {price.name}
+                      </dt>
+                      <dd className="rf-tabular text-[15px] font-medium">
+                        {formatMoney(price.cents)}
+                      </dd>
+                    </div>
+                  ))}
+              </dl>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       {week ? (
         <div className="flex flex-wrap items-center gap-2">
           <Pill tone={week.status === "published" ? "ok" : "neutral"} dot>
@@ -478,9 +527,6 @@ function DayCard({
   canManage: boolean;
 }) {
   const dayLabel = `${weekdayName(day.date)} ${formatDayShort(day.date)}`;
-  const mainPrice = day.prices.find((p) => p.name === DEFAULT_PRICE_NAME) ?? null;
-  const extraPrices = day.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME);
-
   const dietLabels = new Map(diets.map((d) => [d.id, d]));
 
   return (
@@ -494,32 +540,7 @@ function DayCard({
         </span>
       </div>
 
-      {/* Hinta koskee koko päivän lounasta, ei yksittäistä ruokaa. */}
-      <div className="mt-3">
-        <p className="text-[11px] font-medium uppercase" style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}>
-          {DEFAULT_PRICE_NAME}
-        </p>
-
-        {canManage ? (
-          <LunchPriceField
-            dayId={day.id}
-            name={DEFAULT_PRICE_NAME}
-            cents={mainPrice?.cents ?? null}
-          />
-        ) : (
-          <p className="rf-tabular text-[22px] font-semibold">
-            {mainPrice ? formatMoney(mainPrice.cents) : "—"}
-          </p>
-        )}
-
-        {extraPrices.map((price) => (
-          <p key={price.id} className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-            {price.name} {formatMoney(price.cents)}
-          </p>
-        ))}
-      </div>
-
-      {/* Ruoat */}
+      {/* Ruoat. Hinta on viikossa, ei päivässä. */}
       <ul className="mt-3 space-y-2">
         {day.items.map((item, index) => (
           <li key={item.id} className="flex items-start gap-2">

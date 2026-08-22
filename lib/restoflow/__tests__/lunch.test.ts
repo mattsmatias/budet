@@ -20,6 +20,7 @@ function week(partial: Partial<LunchWeek> = {}): LunchWeek {
   return {
     id: "m1",
     weekStart: "2026-08-24",
+    prices: [],
     weekEnd: "2026-08-30",
     status: "draft",
     publishedAt: null,
@@ -153,16 +154,16 @@ describe("julkaisemattomat muutokset", () => {
 describe("sisältö", () => {
   const withItems = week({
     days: [
-      { id: "d1", date: "2026-08-24", prices: [], items: [
+      { id: "d1", date: "2026-08-24", items: [
         { id: "i1", name: "Lohikeitto", description: null, sortOrder: 0, diets: [], allergens: [] },
       ] },
-      { id: "d2", date: "2026-08-25", prices: [], items: [] },
+      { id: "d2", date: "2026-08-25", items: [] },
     ],
   });
 
   it("tietää onko viikossa ruokia", () => {
     expect(hasContent(withItems)).toBe(true);
-    expect(hasContent(week({ days: [{ id: "d", date: "2026-08-24", prices: [], items: [] }] }))).toBe(false);
+    expect(hasContent(week({ days: [{ id: "d", date: "2026-08-24", items: [] }] }))).toBe(false);
   });
 
   // Tyhjä päivä julkisella sivulla näyttäisi siltä että ravintola on
