@@ -94,7 +94,19 @@ export function LunchItemDialog({
         ref={dialog}
         onClose={() => setOpen(false)}
         aria-label={item ? "Muokkaa lounasruokaa" : "Lisää lounasruoka"}
-        className="w-full max-w-lg rounded-[16px] p-0 backdrop:bg-black/40"
+        /*
+         * m-auto keskittää dialogin.
+         *
+         * Selain keskittää modaalidialogin itse säännöllä margin: auto,
+         * mutta Tailwindin preflight nollaa marginin kaikilta
+         * elementeiltä. Ilman tätä dialogi liimautuu vasempaan
+         * yläkulmaan.
+         *
+         * max-h ja sisäinen vieritys: lomake on pitkä, ja matalalla
+         * ruudulla Lisää-painike jäisi muuten näkymän ulkopuolelle
+         * ilman mitään tapaa päästä siihen.
+         */
+        className="m-auto max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-[16px] p-0 backdrop:bg-black/40"
         style={{ background: "var(--rf-card)", color: "var(--rf-text)" }}
       >
         {/* Lomake renderöidään vasta auki: muuten jokainen päivä pitäisi
