@@ -95,6 +95,31 @@ export default async function AdminDashboard({
   );
   const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
 
+  /**
+   * Viimeisin kuitti tarkasteltavan kuukauden ulkopuolelta.
+   *
+   * Yleiskuva näyttää yhtä kuukautta. Jos kuitit ovat toisessa
+   * kuukaudessa, tyhjät paneelit väittivät ettei kuitteja ole
+   * ollenkaan — "Ensimmäinen kuittisi näkyy täällä" juuri lisätyn
+   * kuitin jälkeen näyttää siltä että tallennus epäonnistui.
+   *
+   * Nyt kerrotaan missä ne ovat. Se on myös vihje siitä että kuitin
+   * päivämäärä voi olla väärin luettu.
+   */
+  const elsewhere = sortByDateDesc(
+    receipts.filter((r) => !r.date.startsWith(viewMonth)),
+  )[0];
+
+  const emptyForMonth = elsewhere
+    ? {
+        text:
+          `${formatMonth(viewMonth)} ei sisällä yhtään kuittia. ` +
+          `Viimeisin kirjattu kuitti on ${formatFullDate(elsewhere.date)}.`,
+        cta: `Avaa ${formatMonth(elsewhere.date.slice(0, 7)).toLowerCase()}`,
+        href: `/admin?kuukausi=${elsewhere.date.slice(0, 7)}`,
+      }
+    : null;
+
   const dashboardInput = {
     receipts, budgets, shifts, users, clockEvents, absences,
     month: viewMonth, today,
@@ -354,9 +379,11 @@ export default async function AdminDashboard({
         >
           {categories.length === 0 ? (
             <PanelEmpty
-              text="Lisää kuitteja nähdäksesi kulujakauman."
-              cta="Lisää kuitti"
-              href="/admin/kuitit/uusi"
+              {...(emptyForMonth ?? {
+                text: "Lisää kuitteja nähdäksesi kulujakauman.",
+                cta: "Lisää kuitti",
+                href: "/admin/kuitit/uusi",
+              })}
             />
           ) : (
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
@@ -411,7 +438,11 @@ export default async function AdminDashboard({
           href="/admin/toimittajat"
         >
           {suppliers.length === 0 ? (
-            <PanelEmpty text="Kun kuitteja kertyy, näet suurimmat toimittajat täällä." />
+            <PanelEmpty
+              {...(emptyForMonth ?? {
+                text: "Kun kuitteja kertyy, näet suurimmat toimittajat täällä.",
+              })}
+            />
           ) : (
             <ul className="space-y-3">
               {suppliers.map((supplier) => {
@@ -592,9 +623,11 @@ export default async function AdminDashboard({
       >
         {recent.length === 0 ? (
           <PanelEmpty
-            text="Ensimmäinen kuittisi näkyy täällä."
-            cta="Lisää kuitti"
-            href="/admin/kuitit/uusi"
+            {...(emptyForMonth ?? {
+              text: "Ensimmäinen kuittisi näkyy täällä.",
+              cta: "Lisää kuitti",
+              href: "/admin/kuitit/uusi",
+            })}
           />
         ) : (
           <>
@@ -760,6 +793,18 @@ function monthWord(month: string): string {
   return formatMonth(month).split(" ")[0].toLowerCase();
 }
 
+
+/**
+ * Päivä vuosiluvun kanssa.
+ *
+ * formatDate jättää vuoden pois, koska listoissa kaikki on samaa
+ * kuukautta. Toiseen kuukauteen viitattaessa vuosi on olennainen —
+ * 1.1. voi olla eri vuodelta kuin näkymä.
+ */
+function formatFullDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  return `${Number(d)}.${Number(m)}.${y}`;
+}
 
 function formatDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");
