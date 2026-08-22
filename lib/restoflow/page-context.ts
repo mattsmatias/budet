@@ -15,13 +15,12 @@ import { workedBetween } from "./timeclock";
 import {
   fetchAbsences,
   fetchClockEvents,
-  fetchReceipts,
   fetchRestaurantData,
   fetchShifts,
   type RestaurantData,
 } from "./queries";
 import { requireContext, type Context } from "./session";
-import type { Absence, ClockEvent, Receipt, Shift } from "./types";
+import type { Absence, ClockEvent, Shift } from "./types";
 
 export interface AdminContext extends Context, RestaurantData {
   /** Kuluva kuukausi "2026-08" ravintolan aikavyöhykkeellä. */
@@ -107,9 +106,6 @@ export interface EmployeeContext extends Context {
   /** Vain tämän käyttäjän vuorot. */
   shifts: Shift[];
   /** Kuitit joihin käyttäjällä on oikeus — RLS rajaa työntekijän omiin. */
-  receipts: Receipt[];
-  /** Näkeekö käyttäjä muidenkin kuitit? */
-  seesAllReceipts: boolean;
   /** Vain tämän käyttäjän poissaoloilmoitukset. */
   absences: Absence[];
 }
@@ -130,10 +126,9 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
 
   // Leimaukset kuluvan viikon alusta: päivä- ja viikkonäkymä tarvitsevat ne,
   // vanhemmat eivät kuulu tähän näkymään.
-  const [allEvents, allShifts, receipts, allAbsences] = await Promise.all([
+  const [allEvents, allShifts, allAbsences] = await Promise.all([
     fetchClockEvents(ctx.restaurant.id, `${weekStart(today)}T00:00:00.000Z`),
     fetchShifts(ctx.restaurant.id),
-    fetchReceipts(ctx.restaurant.id, 50),
     fetchAbsences(ctx.restaurant.id, today),
   ]);
 
@@ -144,8 +139,6 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
     now,
     clockEvents: allEvents.filter((e) => e.userId === ctx.user.id),
     shifts: allShifts.filter((s) => s.userId === ctx.user.id),
-    receipts,
-    seesAllReceipts: can(ctx.role, "receipts.view"),
     absences: allAbsences.filter((a) => a.userId === ctx.user.id),
   };
 }

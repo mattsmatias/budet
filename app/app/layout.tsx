@@ -1,5 +1,4 @@
 import { requireContext } from "@/lib/restoflow/session";
-import { can } from "@/lib/restoflow/permissions";
 import { AppBottomNav, AppSidebar } from "./nav";
 
 /**
@@ -17,13 +16,11 @@ import { AppBottomNav, AppSidebar } from "./nav";
  * lukukelvottoman pitkäksi riviksi.
  */
 export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
-  const { role, user, restaurant } = await requireContext("/app");
-  const showReceipts = can(role, "receipts.view");
+  const { user, restaurant } = await requireContext("/app");
 
   return (
     <div className="flex min-h-screen justify-center lg:justify-start">
       <AppSidebar
-        showReceipts={showReceipts}
         userName={user.fullName ?? user.email ?? "Käyttäjä"}
         restaurantName={restaurant.name}
       />
@@ -36,7 +33,7 @@ export default async function EmployeeAppLayout({ children }: LayoutProps<"/app"
           {children}
         </main>
 
-        <AppBottomNav showReceipts={showReceipts} />
+        <AppBottomNav />
       </div>
     </div>
   );

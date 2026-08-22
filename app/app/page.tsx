@@ -8,13 +8,10 @@ import {
   workedBetween,
   workedOnDate,
 } from "@/lib/restoflow/timeclock";
-import { sortByDateDesc } from "@/lib/restoflow/expenses";
 import { CLOCK_STATE_LABELS, SHIFT_STATUS_LABELS } from "@/lib/restoflow/types";
-import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import {
   Card,
-  CategoryBubble,
   Pill,
   SectionLabel,
 } from "@/components/restoflow/ui";
@@ -29,7 +26,7 @@ export const metadata = { title: "Koti" };
  * näkymä, eikä RLS edes antaisi työntekijälle koko aineistoa.
  */
 export default async function EmployeeHome() {
-  const { user, restaurant, clockEvents, shifts, receipts, today, now, seesAllReceipts } =
+  const { user, restaurant, clockEvents, shifts, today, now } =
     await employeeContext("/app");
 
   const state = currentState(eventsOnDate(clockEvents, today));
@@ -37,7 +34,6 @@ export default async function EmployeeHome() {
   const week = workedBetween(clockEvents, weekStart(today), today, now);
 
   const nextShift = shifts.find((s) => s.date >= today);
-  const recent = sortByDateDesc(receipts).slice(0, 3);
 
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
@@ -151,61 +147,6 @@ export default async function EmployeeHome() {
               </Card>
             )}
           </section>
-
-          {seesAllReceipts ? (
-            <section>
-              <div className="flex items-baseline justify-between">
-                <SectionLabel>Viimeisimmät kuitit</SectionLabel>
-                <Link
-                  href="/app/kuitit"
-                  className="pb-2 text-[13px] font-medium"
-                  style={{ color: "var(--rf-blue)" }}
-                >
-                  Kaikki
-                </Link>
-              </div>
-
-              {recent.length === 0 ? (
-                <Card>
-                  <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                    Ei kuitteja.
-                  </p>
-                </Card>
-              ) : (
-                <Card padded={false}>
-                  <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                    {recent.map((receipt) => (
-                      <li key={receipt.id}>
-                        <Link
-                          href={`/app/kuitit/${receipt.id}`}
-                          className="flex items-center gap-3 px-5 py-3.5"
-                        >
-                          <CategoryBubble category={receipt.category} size={32} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[15px] font-medium">
-                              {receipt.supplierName}
-                            </p>
-                            <p
-                              className="rf-tabular mt-0.5 text-[13px]"
-                              style={{ color: "var(--rf-text-3)" }}
-                            >
-                              {formatDate(receipt.date)}
-                            </p>
-                          </div>
-                          <span className="rf-tabular text-[15px] font-semibold">
-                            {formatMoney(receipt.totalCents)}
-                          </span>
-                          <span style={{ color: "var(--rf-text-3)" }}>
-                            <RfIcon name="chevron" size={16} />
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-            </section>
-          ) : null}
         </div>
       </div>
     </div>
@@ -219,9 +160,4 @@ function formatDayLabel(isoDate: string): string {
   ];
   const d = new Date(`${isoDate}T12:00:00Z`);
   return `${days[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
-}
-
-function formatDate(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-");
-  return `${d}.${m}.${y}`;
 }

@@ -6,7 +6,6 @@ import { RfIcon, type IconName } from "@/components/restoflow/icons";
 
 const TABS = [
   { href: "/app", label: "Koti", icon: "overview" },
-  { href: "/app/kuitit", label: "Kuitit", icon: "receipt" },
   { href: "/app/vuorot", label: "Vuorot", icon: "calendar" },
   { href: "/app/tyoaika", label: "Työaika", icon: "clock" },
   { href: "/app/lisaa", label: "Lisää", icon: "more" },
@@ -18,17 +17,14 @@ type Tab = (typeof TABS)[number];
  * Työntekijän navigaatio.
  *
  * Kaksi muotoa samasta listasta, kuten hallintapuolella: sivupalkki
- * työpöydällä, alapalkki puhelimessa. Sama viisi kohtaa molemmissa —
+ * työpöydällä, alapalkki puhelimessa. Samat kohdat molemmissa —
  * työpöytäversio ei ole eri sovellus vaan sama sovellus isolla ruudulla,
  * eikä mikään saa olla tavoitettavissa vain toisessa.
  *
- * Kuitit-välilehti näkyy vain niille joilla on oikeus kuitteihin.
- * Työntekijä ei lisää eikä lue kuitteja, joten hänelle välilehti johtaisi
- * ikuisesti tyhjään listaan.
+ * Kuitteja ei ole tässä näkymässä. Työntekijä ei lisää eikä lue niitä,
+ * ja esihenkilölle sama lista on hallintanäkymässä — kahdessa paikassa
+ * ylläpidetty sama sivu ajautuu ennen pitkää erilleen.
  */
-function visibleTabs(showReceipts: boolean): Tab[] {
-  return TABS.filter((tab) => tab.href !== "/app/kuitit" || showReceipts);
-}
 
 /**
  * Sivupalkki työpöydälle.
@@ -39,17 +35,15 @@ function visibleTabs(showReceipts: boolean): Tab[] {
  * mihinkään.
  */
 export function AppSidebar({
-  showReceipts,
   userName,
   restaurantName,
 }: {
-  showReceipts: boolean;
   userName: string;
   restaurantName: string;
 }) {
   return (
     <DesktopSidebar
-      tabs={visibleTabs(showReceipts)}
+      tabs={TABS}
       userName={userName}
       restaurantName={restaurantName}
     />
@@ -57,8 +51,8 @@ export function AppSidebar({
 }
 
 /** Alapalkki puhelimeen. Sijoitetaan sisältöpalstan pohjalle. */
-export function AppBottomNav({ showReceipts }: { showReceipts: boolean }) {
-  return <MobileBar tabs={visibleTabs(showReceipts)} />;
+export function AppBottomNav() {
+  return <MobileBar tabs={TABS} />;
 }
 
 function useActive() {
@@ -74,7 +68,7 @@ function DesktopSidebar({
   userName,
   restaurantName,
 }: {
-  tabs: Tab[];
+  tabs: readonly Tab[];
   userName: string;
   restaurantName: string;
 }) {
@@ -139,7 +133,7 @@ function DesktopSidebar({
  * Viisi kohtaa, ei enempää. Kuudes kohta tarkoittaisi että jokin niistä ei
  * ansaitse paikkaansa, ja kosketuskohteista tulisi liian kapeita.
  */
-function MobileBar({ tabs }: { tabs: Tab[] }) {
+function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
   const isActive = useActive();
 
   return (
