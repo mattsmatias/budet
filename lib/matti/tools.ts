@@ -8,12 +8,14 @@ import {
   previousMonth,
   receiptsInMonth,
   sortByDateDesc,
+  formatMonth,
   totalsByCategory,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
 import { budgetLines } from "@/lib/restoflow/dashboard";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import {
+  LUNCH_STATUS_LABELS,
   formatWeekRange,
   hasContent,
   hasUnpublishedChanges,
@@ -52,6 +54,29 @@ export interface ToolResult {
   data?: unknown;
   /** Kirjoittavan työkalun esikatselu käyttäjälle. */
   preview?: ActionPreview;
+  /** Kortti käyttöliittymään. Katso ToolCard. */
+  card?: ToolCard;
+}
+
+/**
+ * Työkalun tuottama kortti.
+ *
+ * Luvut muotoillaan tässä, ei mallissa. Malli voi kirjoittaa "noin
+ * 31 euroa" tai pyöristää väärin; kortin arvo tulee samasta
+ * laskennasta kuin käyttöliittymän luvut.
+ *
+ * Kortti on myös se mikä korvaa pitkän luettelon vastauksessa. Kun
+ * summa näkyy kortissa, Matin ei tarvitse toistaa sitä tekstissä.
+ */
+export interface ToolCard {
+  title: string;
+  value: string;
+  /** Enintään kolme lisätietoa. Neljäs tekee kortista taulukon. */
+  meta?: string[];
+  /** Pienet palkit: kategoriat, budjetit, toimittajat. */
+  bars?: { label: string; value: string; percent: number }[];
+  href?: string;
+  linkLabel?: string;
 }
 
 export interface ActionPreview {
@@ -137,6 +162,19 @@ const getDashboard = defineTool({
         needsReviewCount: totals.needsReviewCount,
         previousMonthTotalCents: previous.totalCents,
       },
+      card: {
+        title: formatMonth(month),
+        value: formatMoney(totals.totalCents),
+        meta: [
+          `${totals.receiptCount} kuittia`,
+          `ALV ${formatMoney(totals.vatCents)}`,
+          ...(totals.needsReviewCount > 0
+            ? [`${totals.needsReviewCount} tarkistettavaa`]
+            : []),
+        ],
+        href: `/admin/kulut?kuukausi=${month}`,
+        linkLabel: "Näytä kulut",
+      },
     };
   },
 });
@@ -170,6 +208,17 @@ const getExpensesByCategory = defineTool({
           label: CATEGORY_LABELS[t.category],
           totalCents: t.totalCents,
         })),
+      },
+      card: {
+        title: `${formatMonth(month)} kategorioittain`,
+        value: formatMoney(totals.reduce((sum, t) => sum + t.totalCents, 0)),
+        bars: totals.slice(0, 5).map((t) => ({
+          label: CATEGORY_LABELS[t.category],
+          value: formatMoney(t.totalCents),
+          percent: Math.round(t.share * 100),
+        })),
+        href: `/admin/kulut?kuukausi=${month}`,
+        linkLabel: "Näytä kulut",
       },
     };
   },
@@ -211,6 +260,17 @@ const getSuppliers = defineTool({
           receiptCount: s.receiptCount,
         })),
       },
+      card: {
+        title: `Suurimmat toimittajat · ${formatMonth(month)}`,
+        value: formatMoney(suppliers.reduce((sum, x) => sum + x.totalCents, 0)),
+        bars: suppliers.map((x) => ({
+          label: x.name,
+          value: formatMoney(x.totalCents),
+          percent: Math.round(x.share * 100),
+        })),
+        href: "/admin/toimittajat",
+        linkLabel: "Kaikki toimittajat",
+      },
     };
   },
 });
@@ -250,6 +310,20 @@ const searchReceipts = defineTool({
     const total = found.reduce((s, r) => s + r.totalCents, 0);
 
     return {
+      card:
+        found.length === 0
+          ? undefined
+          : {
+              title: "Hakutulos",
+              value: formatMoney(total),
+              meta: [
+                `${found.length} kuittia`,
+                ...(input.supplier ? [input.supplier] : []),
+                ...(input.month ? [input.month] : []),
+              ],
+              href: "/admin/kuitit",
+              linkLabel: "Avaa kuitit",
+            },
       summary:
         found.length === 0
           ? "Ei osumia."
@@ -311,6 +385,20 @@ const getBudgets = defineTool({
           usedPercent: l.percent,
         })),
       },
+      card: {
+        title: `Budjetit · ${formatMonth(month)}`,
+        value: formatMoney(lines.reduce((sum, l) => sum + l.spentCents, 0)),
+        meta: [
+          `${formatMoney(lines.reduce((sum, l) => sum + l.budgetCents, 0))} budjetoitu`,
+        ],
+        bars: lines.slice(0, 5).map((l) => ({
+          label: CATEGORY_LABELS[l.category],
+          value: `${l.percent} %`,
+          percent: Math.min(100, l.percent),
+        })),
+        href: `/admin/budjetit?kuukausi=${month}`,
+        linkLabel: "Näytä budjetit",
+      },
     };
   },
 });
@@ -343,7 +431,30 @@ const getLunchWeek = defineTool({
         items: d.items.map((i) => i.name),
       }));
 
+    const prices = menu.days
+      .flatMap((d) => d.prices)
+      .filter((p) => p.name === "Lounas");
+
+    const priceRange =
+      prices.length === 0
+        ? null
+        : prices.every((p) => p.cents === prices[0].cents)
+          ? formatMoney(prices[0].cents)
+          : `${formatMoney(Math.min(...prices.map((p) => p.cents)))}–` +
+            formatMoney(Math.max(...prices.map((p) => p.cents)));
+
     return {
+      card: {
+        title: `Viikko ${isoWeekNumber(week)} · ${formatWeekRange(week)}`,
+        value: LUNCH_STATUS_LABELS[menu.status],
+        meta: [
+          `${days.length} päivää`,
+          `${menu.days.reduce((n, d) => n + d.items.length, 0)} ruokaa`,
+          ...(priceRange ? [`Lounas ${priceRange}`] : []),
+        ],
+        href: `/admin/lounas?viikko=${week}`,
+        linkLabel: "Avaa lounaslista",
+      },
       summary:
         `Viikko ${isoWeekNumber(week)} (${formatWeekRange(week)}): tila ${menu.status}` +
         (hasUnpublishedChanges(menu) ? ", julkaisemattomia muutoksia" : "") +

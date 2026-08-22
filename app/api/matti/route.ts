@@ -7,7 +7,12 @@ import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { mattiContext } from "@/lib/matti/context";
 import { systemPrompt } from "@/lib/matti/prompt";
 import { aiProvider, type AiMessage } from "@/lib/matti/provider";
-import { findTool, toolsFor, type ActionPreview } from "@/lib/matti/tools";
+import {
+  findTool,
+  toolsFor,
+  type ActionPreview,
+  type ToolCard,
+} from "@/lib/matti/tools";
 
 /**
  * Matin keskustelureitti.
@@ -131,6 +136,7 @@ export async function POST(request: Request) {
 
   const steps: { tool: string; summary: string }[] = [];
   const actions: PendingAction[] = [];
+  const cards: ToolCard[] = [];
 
   let text = "";
   let usedInput = 0;
@@ -164,6 +170,7 @@ export async function POST(request: Request) {
           conversationId: conversationId as string,
           call,
           actions,
+          cards,
         });
 
         steps.push({ tool: call.name, summary: result.slice(0, 200) });
@@ -208,6 +215,15 @@ export async function POST(request: Request) {
     text,
     steps,
     actions,
+    /*
+     * Enintään kaksi korttia.
+     *
+     * Malli kutsuu usein kolmea työkalua yhteen kysymykseen. Kolme
+     * korttia vastauksen alla on kojelauta, ei vastaus. Viimeiset
+     * kaksi ovat ne joita malli haki tarkentaakseen — yleensä siis
+     * ne jotka vastaavat kysymykseen.
+     */
+    cards: cards.slice(-2),
   });
 }
 
@@ -232,12 +248,14 @@ async function runTool({
   conversationId,
   call,
   actions,
+  cards,
 }: {
   supabase: Awaited<ReturnType<typeof createClient>>;
   ctx: Awaited<ReturnType<typeof mattiContext>>;
   conversationId: string;
   call: { id: string; name: string; input: unknown };
   actions: PendingAction[];
+  cards: ToolCard[];
 }): Promise<string> {
   const tool = findTool(call.name);
 
@@ -257,6 +275,8 @@ async function runTool({
 
   try {
     const result = await tool.run(ctx, input.data);
+
+    if (result.card) cards.push(result.card);
 
     // Kirjoittava työkalu: esikatselu talteen, ei suoritusta.
     if (tool.level === "write" && result.preview) {

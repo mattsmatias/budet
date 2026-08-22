@@ -59,7 +59,10 @@ const CTX = {
  * listaa, jolloin pohjakysymys on suljettu pois ja jäljelle jää vain
  * laajuus.
  */
-async function converse(question: string) {
+async function converse(
+  question: string,
+  stub: (tool: string) => string = stubResult,
+) {
   const { systemPrompt } = await import("../prompt");
   const api = await client();
 
@@ -106,7 +109,7 @@ async function converse(question: string) {
         return {
           type: "tool_result" as const,
           tool_use_id: call.id,
-          content: stubResult(call.name),
+          content: stub(call.name),
         };
       }),
     });
@@ -237,5 +240,37 @@ describe.skipIf(!key)("Matti mallia vasten", () => {
 
     console.log("vastaus:", text);
     expect(text.toLowerCase()).toMatch(/päiväl|viikol/);
+  }, 90_000);
+
+  /*
+   * Vastauksen pituus.
+   *
+   * Kortti näyttää luvut, joten Matin ei pidä toistaa niitä listana.
+   * Raja on karkea mutta ei mielivaltainen: neljä lukua allekkain
+   * ylittää sen aina, kaksi lausetta ei koskaan.
+   */
+  it("vastaa lyhyesti kun kortti kertoo luvut", async () => {
+    const { text } = await converse(
+      "Mihin rahat menivät tässä kuussa?",
+      (tool) =>
+        tool === "get_dashboard_summary"
+          ? JSON.stringify({
+              month: "2026-08",
+              totalCents: 0,
+              receiptCount: 0,
+              vatCents: 0,
+              needsReviewCount: 0,
+              previousMonthTotalCents: 3144,
+            })
+          : JSON.stringify({ month: "2026-08", categories: [] }),
+    );
+
+    console.log("pituus:", text.length, "|", text);
+
+    expect(text.length).toBeLessThan(320);
+
+    // Edellisen kuukauden luku on työkalussa, joten se pitää mainita:
+    // tyhjä vastaus tyhjään kuukauteen on tosi mutta hyödytön.
+    expect(text).toMatch(/31,44|31.44/);
   }, 90_000);
 });

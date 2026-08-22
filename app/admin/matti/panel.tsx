@@ -2,6 +2,7 @@
 
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -43,19 +44,23 @@ interface PendingAction {
   preview: ActionPreview;
 }
 
+/** Sama muoto kuin työkalun palauttama kortti. */
+interface ToolCard {
+  title: string;
+  value: string;
+  meta?: string[];
+  bars?: { label: string; value: string; percent: number }[];
+  href?: string;
+  linkLabel?: string;
+}
+
 interface Turn {
   role: "user" | "matti";
   text: string;
   steps?: Step[];
   actions?: PendingAction[];
+  cards?: ToolCard[];
 }
-
-const QUICK_ACTIONS = [
-  { label: "Miten tämä kuukausi menee?", prompt: "Miten tämä kuukausi menee?" },
-  { label: "Mihin rahat menivät?", prompt: "Mihin rahat menivät tässä kuussa?" },
-  { label: "Tarkista budjetit", prompt: "Tarkista budjettien tilanne." },
-  { label: "Ensi viikon lounas", prompt: "Onko ensi viikon lounaslista tehty?" },
-];
 
 export function MattiPanel({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false);
@@ -172,6 +177,14 @@ function Overlay({
 
 // ---------------------------------------------------------------------------
 
+/**
+ * Keskustelu.
+ *
+ * Matin vastaus ei ole kupla. Kupla tekee jokaisesta vastauksesta
+ * viestin, ja Matti ei lähetä viestejä vaan tekee työtä ja kertoo
+ * tuloksen. Käyttäjän oma viesti on kupla, koska se erottaa hänen
+ * sanansa Matin työstä.
+ */
 function Conversation({
   currentPage,
   onClose,
@@ -183,12 +196,29 @@ function Conversation({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAsked, setLastAsked] = useState<string | null>(null);
 
+  const scroller = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
+  /*
+   * Vieritetään alas vain jos käyttäjä oli jo siellä.
+   *
+   * Pakotettu vieritys keskeyttäisi vanhojen viestien selaamisen
+   * kesken lukemisen — ja juuri silloin kun uusi vastaus saapuu,
+   * eli silloin kun se on kaikkein ärsyttävintä.
+   */
   useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const box = scroller.current;
+    if (!box) return;
+
+    const nearBottom =
+      box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+
+    if (nearBottom) {
+      bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   }, [turns, busy]);
 
   useEffect(() => {
@@ -200,6 +230,7 @@ function Conversation({
       const text = message.trim();
       if (text === "" || busy) return;
 
+      setLastAsked(text);
       setTurns((current) => [...current, { role: "user", text }]);
       setBusy(true);
       setError(null);
@@ -214,7 +245,7 @@ function Conversation({
         const payload = await response.json();
 
         if (!response.ok) {
-          setError(payload.error ?? "Matti ei vastannut.");
+          setError(payload.error ?? "En saanut tällä kertaa vastausta.");
           return;
         }
 
@@ -226,10 +257,11 @@ function Conversation({
             text: payload.text,
             steps: payload.steps,
             actions: payload.actions,
+            cards: payload.cards,
           },
         ]);
       } catch {
-        setError("En saanut yhteyttä Mattiin. Yritä hetken päästä uudelleen.");
+        setError("En saanut tällä kertaa vastausta.");
       } finally {
         setBusy(false);
       }
@@ -240,19 +272,14 @@ function Conversation({
   return (
     <>
       <header
-        className="flex shrink-0 items-start justify-between gap-3 border-b px-4 py-3.5"
+        className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3"
         style={{ borderColor: "var(--rf-line)" }}
       >
         <div className="flex items-center gap-2.5">
           <span style={{ color: "var(--rf-accent)" }}>
-            <RfIcon name="sparkle" size={20} />
+            <RfIcon name="sparkle" size={18} />
           </span>
-          <div>
-            <p className="text-[15px] font-semibold">Matti</p>
-            <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              BUDet AI -työkaveri
-            </p>
-          </div>
+          <p className="text-[15px] font-semibold">Matti</p>
         </div>
 
         <button
@@ -266,41 +293,37 @@ function Conversation({
         </button>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         {turns.length === 0 ? (
-          <Welcome onPick={send} />
+          <Welcome currentPage={currentPage} onPick={send} />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {turns.map((turn, index) => (
               <TurnView key={index} turn={turn} />
             ))}
           </div>
         )}
 
-        {busy ? (
-          <p
-            className="mt-4 flex items-center gap-2 text-[13px]"
-            style={{ color: "var(--rf-text-3)" }}
-          >
-            <span style={{ color: "var(--rf-accent)" }}>
-              <RfIcon name="sparkle" size={14} />
-            </span>
-            Matti selvittää…
-          </p>
-        ) : null}
+        {busy ? <Working /> : null}
 
         {error ? (
-          <p
-            role="alert"
-            className="mt-4 px-3.5 py-2.5 text-[13px] leading-relaxed"
-            style={{
-              background: "var(--rf-red-bg)",
-              color: "var(--rf-red-text)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            {error}
-          </p>
+          <div className="mt-5">
+            <p className="text-[14px] leading-relaxed">{error}</p>
+            {lastAsked ? (
+              <Button
+                type="button"
+                tone="ghost"
+                size="sm"
+                onClick={() => {
+                  // Toistettu kysymys ei saa jäädä listaan kahdesti.
+                  setTurns((current) => current.slice(0, -1));
+                  void send(lastAsked);
+                }}
+              >
+                Yritä uudelleen
+              </Button>
+            ) : null}
+          </div>
         ) : null}
 
         <div ref={bottom} />
@@ -311,36 +334,112 @@ function Conversation({
   );
 }
 
-function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
+/**
+ * Työn tila.
+ *
+ * Yksi rivi, ei luetteloa työkaluista. Käyttäjä ei tilaa
+ * tietokantakyselyitä vaan vastauksen; tieto siitä että
+ * get_top_suppliers ajettiin on kehittäjän tieto.
+ */
+function Working() {
   return (
-    <div>
-      <p className="text-[15px] font-medium">Moi!</p>
-      <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-        Voin hakea BUDetista lukuja ja valmistella muutoksia. Muutokset
-        näytän sinulle ennen kuin mitään tapahtuu.
+    <p
+      className="mt-5 flex items-center gap-2 text-[13px]"
+      style={{ color: "var(--rf-text-3)" }}
+    >
+      <span className="rf-thinking" style={{ color: "var(--rf-accent)" }}>
+        <RfIcon name="sparkle" size={14} />
+      </span>
+      Matti selvittää…
+    </p>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Pikatoiminnot sen mukaan missä käyttäjä on.
+ *
+ * Lounassivulla lounas on ensimmäisenä. Se ei ole älykkyyttä vaan
+ * kohteliaisuutta: jos ihminen katsoo lounaslistaa, hän ei ensimmäisenä
+ * halua tarkistaa budjettia.
+ */
+function quickActions(currentPage: string): { label: string; prompt: string }[] {
+  const lunch = {
+    label: "Tee ensi viikon lounaslista",
+    prompt: "Tee ensi viikon lounaslista.",
+  };
+  const expenses = {
+    label: "Analysoi tämän kuun kulut",
+    prompt: "Analysoi tämän kuun kulut.",
+  };
+  const budgets = { label: "Tarkista budjetit", prompt: "Tarkista budjettien tilanne." };
+  const receipts = {
+    label: "Käsittele kuitit",
+    prompt: "Onko käsittelemättömiä kuitteja?",
+  };
+  const report = {
+    label: "Tee kuukausiraportti",
+    prompt: "Tiivistä tämän kuukauden talous.",
+  };
+
+  if (currentPage.startsWith("/admin/lounas")) {
+    return [lunch, expenses, budgets, receipts];
+  }
+  if (currentPage.startsWith("/admin/kuitit")) {
+    return [receipts, expenses, budgets, lunch];
+  }
+  if (currentPage.startsWith("/admin/budjetit")) {
+    return [budgets, expenses, report, lunch];
+  }
+  if (currentPage.startsWith("/admin/raportit")) {
+    return [report, expenses, budgets, lunch];
+  }
+
+  return [expenses, budgets, lunch, receipts, report];
+}
+
+function Welcome({
+  currentPage,
+  onPick,
+}: {
+  currentPage: string;
+  onPick: (prompt: string) => void;
+}) {
+  return (
+    <div className="pt-6">
+      <span style={{ color: "var(--rf-accent)" }}>
+        <RfIcon name="sparkle" size={26} />
+      </span>
+
+      <h2 className="mt-3 text-[19px] font-semibold tracking-tight">Matti</h2>
+      <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+        BUDet AI -työkaveri
       </p>
 
-      <p
-        className="mt-5 text-[11px] font-semibold uppercase"
-        style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
-      >
-        Tee nopeasti
+      <p className="mt-3 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        Voin auttaa sinua hoitamaan BUDetissa asioita. Muutokset näytän
+        sinulle ennen kuin mitään tapahtuu.
       </p>
 
-      <div className="mt-2 space-y-1.5">
-        {QUICK_ACTIONS.map((action) => (
+      <div className="mt-6 space-y-1.5">
+        {quickActions(currentPage).map((action) => (
           <button
             key={action.prompt}
             type="button"
             onClick={() => onPick(action.prompt)}
-            className="rf-press block w-full px-3.5 py-2.5 text-left text-[13px] font-medium"
+            className="rf-press flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-medium"
             style={{
-              background: "var(--rf-inset)",
+              background: "var(--rf-card)",
+              border: "1px solid var(--rf-line)",
               color: "var(--rf-text)",
               borderRadius: "var(--rf-r-control)",
             }}
           >
             {action.label}
+            <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+              <RfIcon name="chevron" size={14} />
+            </span>
           </button>
         ))}
       </div>
@@ -348,16 +447,18 @@ function Welcome({ onPick }: { onPick: (prompt: string) => void }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+
 function TurnView({ turn }: { turn: Turn }) {
   if (turn.role === "user") {
     return (
       <div className="flex justify-end">
         <p
-          className="max-w-[85%] px-3.5 py-2.5 text-[14px] leading-relaxed"
+          className="max-w-[75%] px-3.5 py-2 text-[14px] leading-relaxed"
           style={{
-            background: "var(--rf-accent-bg)",
-            color: "var(--rf-accent-strong)",
-            borderRadius: "var(--rf-r-control)",
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: 14,
           }}
         >
           {turn.text}
@@ -368,31 +469,50 @@ function TurnView({ turn }: { turn: Turn }) {
 
   return (
     <div>
-      {/*
-       * Työkalut näkyviin. Käyttäjän on voitava nähdä mihin vastaus
-       * perustuu — "8 240 €" ilman lähdettä on väite, ei tieto.
-       */}
-      {turn.steps && turn.steps.length > 0 ? (
-        <ul className="mb-2 space-y-0.5">
-          {turn.steps.map((step, index) => (
-            <li
-              key={index}
-              className="flex items-center gap-1.5 text-[11px]"
-              style={{ color: "var(--rf-text-3)" }}
-            >
-              <RfIcon name="check" size={11} />
-              {TOOL_LABELS[step.tool] ?? step.tool}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
+      {/* Ei kuplaa. Matin vastaus on sisältöä, ei viesti. */}
       <p className="whitespace-pre-wrap text-[14px] leading-relaxed">{turn.text}</p>
+
+      {turn.cards?.map((card, index) => (
+        <DataCard key={index} card={card} />
+      ))}
 
       {turn.actions?.map((action) => (
         <ActionCard key={action.id} action={action} />
       ))}
+
+      {turn.steps && turn.steps.length > 0 ? <Steps steps={turn.steps} /> : null}
     </div>
+  );
+}
+
+/**
+ * Työvaiheet piiloon, mutta ei pois.
+ *
+ * Luku on tarkistettavissa vain jos sen lähteen voi nähdä. Avaaminen
+ * on kuitenkin harvinaista, joten se on yhden rivin takana eikä
+ * vastauksen päällä.
+ */
+function Steps({ steps }: { steps: Step[] }) {
+  return (
+    <details className="mt-3">
+      <summary
+        className="cursor-pointer list-none text-[12px]"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        Katso miten Matti selvitti tämän
+      </summary>
+
+      <ul className="mt-2 space-y-1">
+        {steps.map((step, index) => (
+          <li key={index} className="flex items-start gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <span className="mt-0.5 shrink-0">
+              <RfIcon name="check" size={11} />
+            </span>
+            {TOOL_LABELS[step.tool] ?? step.tool}
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -405,10 +525,91 @@ const TOOL_LABELS: Record<string, string> = {
   get_lunch_week: "Haki lounasviikon",
   get_staff: "Haki työntekijät",
   get_shifts: "Haki työvuorot",
+  propose_lunch_items: "Valmisteli lounaslistan",
   propose_lunch_price: "Valmisteli hinnanmuutoksen",
   propose_copy_lunch_week: "Valmisteli kopioinnin",
   propose_publish_lunch_week: "Valmisteli julkaisun",
 };
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Datakortti.
+ *
+ * Luvut tulevat työkalulta valmiiksi muotoiltuina. Matin ei tarvitse
+ * toistaa niitä tekstissä, eikä käyttöliittymä jäsennä niitä
+ * vastauksesta — kumpikin tapa tuottaisi ennen pitkää luvun joka ei
+ * vastaa kantaa.
+ */
+function DataCard({ card }: { card: ToolCard }) {
+  return (
+    <div
+      className="mt-3 px-4 py-3.5"
+      style={{
+        background: "var(--rf-card)",
+        border: "1px solid var(--rf-line)",
+        borderRadius: "var(--rf-r-card)",
+      }}
+    >
+      <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        {card.title}
+      </p>
+
+      <p className="rf-tabular mt-0.5 text-[24px] font-semibold leading-tight">
+        {card.value}
+      </p>
+
+      {card.meta && card.meta.length > 0 ? (
+        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+          {card.meta.join(" · ")}
+        </p>
+      ) : null}
+
+      {card.bars && card.bars.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {card.bars.map((bar, index) => (
+            <li key={index}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="truncate text-[12px]">{bar.label}</span>
+                <span
+                  className="rf-tabular shrink-0 text-[12px] font-medium"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {bar.value}
+                </span>
+              </div>
+
+              <div
+                className="mt-1 h-1 overflow-hidden"
+                style={{ background: "var(--rf-inset)", borderRadius: 999 }}
+              >
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${Math.max(2, Math.min(100, bar.percent))}%`,
+                    background: "var(--rf-line-strong)",
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {card.href && card.linkLabel ? (
+        <Link
+          href={card.href}
+          className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold"
+          style={{ color: "var(--rf-accent)" }}
+        >
+          {card.linkLabel}
+          <RfIcon name="chevron" size={13} />
+        </Link>
+      ) : null}
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 
@@ -434,63 +635,74 @@ function ActionCard({ action }: { action: PendingAction }) {
 
   return (
     <div
-      className="mt-3 px-4 py-3.5"
+      className="mt-3 overflow-hidden"
       style={{
         background: "var(--rf-card)",
         border: "1px solid var(--rf-line-strong)",
         borderRadius: "var(--rf-r-card)",
       }}
     >
-      <p className="text-[13px] font-semibold">{action.preview.title}</p>
+      <div className="px-4 py-3.5">
+        <p className="text-[13px] font-semibold">{action.preview.title}</p>
 
-      <dl className="mt-2.5 space-y-1.5">
-        {action.preview.changes.map((change, index) => (
-          <div key={index} className="flex flex-wrap items-baseline justify-between gap-2">
-            <dt className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              {change.label}
-            </dt>
-            <dd className="rf-tabular text-[13px] font-medium">
-              {change.from ? (
-                <>
-                  <span style={{ color: "var(--rf-text-3)", textDecoration: "line-through" }}>
-                    {change.from}
-                  </span>
-                  <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
-                    {" → "}
-                  </span>
-                </>
-              ) : null}
-              {change.to}
-            </dd>
-          </div>
-        ))}
-      </dl>
+        <dl className="mt-2.5 space-y-2">
+          {action.preview.changes.map((change, index) => (
+            <div key={index}>
+              <dt className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                {change.label}
+              </dt>
+              <dd className="rf-tabular text-[14px] font-medium">
+                {change.from ? (
+                  <>
+                    <span
+                      style={{
+                        color: "var(--rf-text-3)",
+                        textDecoration: "line-through",
+                      }}
+                    >
+                      {change.from}
+                    </span>
+                    <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
+                      {" → "}
+                    </span>
+                  </>
+                ) : null}
+                {change.to}
+              </dd>
+            </div>
+          ))}
+        </dl>
 
-      {action.preview.warning ? (
-        <p
-          className="mt-2.5 px-3 py-2 text-[12px] leading-relaxed"
-          style={{
-            background: "var(--rf-amber-bg)",
-            color: "var(--rf-amber-text)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          {action.preview.warning}
-        </p>
-      ) : null}
+        {action.preview.warning ? (
+          <p
+            className="mt-3 px-3 py-2 text-[12px] leading-relaxed"
+            style={{
+              background: "var(--rf-amber-bg)",
+              color: "var(--rf-amber-text)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            {action.preview.warning}
+          </p>
+        ) : null}
+      </div>
 
       {done ? (
         <p
           role="status"
-          className="mt-3 text-[13px] font-medium"
+          className="border-t px-4 py-3 text-[13px] font-medium"
           style={{
+            borderColor: "var(--rf-line)",
             color: confirmState.error ? "var(--rf-red-text)" : "var(--rf-green-text)",
           }}
         >
           {confirmState.error ?? confirmState.message ?? cancelState.message}
         </p>
       ) : (
-        <div className="mt-3 flex gap-2">
+        <div
+          className="flex gap-2 border-t px-4 py-3"
+          style={{ borderColor: "var(--rf-line)" }}
+        >
           <form action={confirm}>
             <input type="hidden" name="actionId" value={action.id} />
             <ConfirmButton />
@@ -537,20 +749,27 @@ function Composer({
     setValue("");
   }
 
+  const ready = value.trim() !== "" && !busy;
+
   return (
     <div
       className="shrink-0 border-t px-4 py-3"
       style={{
         borderColor: "var(--rf-line)",
+        background: "var(--rf-card)",
         paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
       }}
     >
       <div
         className="flex items-end gap-2 px-3 py-2"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: 14,
+          minHeight: 48,
+        }}
       >
         <label htmlFor="matti-input" className="sr-only">
-          Kirjoita Matille
+          Kysy Matilta tai pyydä tekemään jotain
         </label>
 
         <textarea
@@ -567,17 +786,21 @@ function Composer({
               submit();
             }
           }}
-          placeholder="Kirjoita Matille…"
-          className="max-h-32 min-h-[1.5rem] w-full resize-none bg-transparent text-[15px] outline-none"
+          placeholder="Kysy Matilta tai pyydä tekemään jotain…"
+          className="max-h-32 min-h-[2rem] w-full resize-none bg-transparent py-1 text-[15px] outline-none"
         />
 
         <button
           type="button"
           onClick={submit}
-          disabled={busy || value.trim() === ""}
+          disabled={!ready}
           aria-label="Lähetä"
-          className="rf-press flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] disabled:opacity-30"
-          style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)" }}
+          className="rf-press flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] disabled:opacity-25"
+          style={{
+            background: ready ? "var(--rf-accent)" : "var(--rf-line-strong)",
+            color: "var(--rf-on-accent)",
+            transition: "background 160ms ease",
+          }}
         >
           <span aria-hidden="true" style={{ transform: "rotate(-90deg)" }}>
             <RfIcon name="chevron" size={15} />

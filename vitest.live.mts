@@ -20,5 +20,8 @@ export default defineConfig({
     include: ["**/*.manual.test.ts"],
     exclude: ["node_modules/**", ".next/**", ".agents/**"],
     testTimeout: 120_000,
+    // Konsoli lapi sellaisenaan: naiden testien arvo on siina mita
+    // malli oikeasti vastasi, ei siina etta ne menivat lapi.
+    disableConsoleIntercept: true,
   },
 });

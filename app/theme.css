@@ -448,3 +448,21 @@ details[open] .rf-summary-chevron {
 .rf-z-panel-backdrop { z-index: 60; }
 .rf-z-panel { z-index: 61; }
 .rf-z-modal { z-index: 80; }
+
+/* ---------------------------------------------------------------------------
+   Matti selvittää
+
+   Hidas hengitys, ei pyörivää kehää. Spinneri lupaa latausta;
+   tässä odotetaan ajattelua, ja ero näkyy siinä miltä odottaminen
+   tuntuu. Liike on niin pientä ettei se vedä katsetta pois
+   vastauksesta joka on ilmestymässä.
+--------------------------------------------------------------------------- */
+@keyframes rf-breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.rf-thinking {
+  display: inline-block;
+  animation: rf-breathe 1.6s ease-in-out infinite;
+}
