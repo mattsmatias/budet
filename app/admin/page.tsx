@@ -189,15 +189,13 @@ export default async function AdminDashboard({
           ) : null}
 
           {can(role, "reports.view") ? (
-            <span className="hidden md:inline-flex">
-              <ButtonLink
-                href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
-                tone="ghost"
-                icon={<RfIcon name="download" size={16} />}
-              >
-                Vie raportti
-              </ButtonLink>
-            </span>
+            <ButtonLink
+              href={`/admin/raportit?kuukausi=${viewMonth}`}
+              tone="ghost"
+              icon={<RfIcon name="download" size={16} />}
+            >
+              Vie raportti
+            </ButtonLink>
           ) : null}
         </div>
       </header>

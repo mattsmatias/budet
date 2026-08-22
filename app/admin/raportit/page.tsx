@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
-import { formatMonth, periodTotals } from "@/lib/restoflow/expenses";
+import {
+  formatMonth,
+  periodTotals,
+  previousMonth,
+} from "@/lib/restoflow/expenses";
+import { MonthPicker } from "../month-picker";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
   ScopeNotice,
   Icon,
   ICONS,
+  Avatar,
 } from "@/components/restoflow/ui";
+import { SendToAccountant } from "./send-to-accountant";
 
 export const metadata = { title: "Raportit" };
 
@@ -42,21 +49,45 @@ const REPORTS = [
   },
 ] as const;
 
-export default async function ReportsPage() {
-  const {
-    receipts, month,
-  } = await adminContext("/admin/raportit");
+export default async function ReportsPage({
+  searchParams,
+}: PageProps<"/admin/raportit">) {
+  const params = await searchParams;
+  const { receipts, users, month, restaurant } = await adminContext(
+    "/admin/raportit",
+  );
 
-  const totals = periodTotals(receipts, month);
+  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const viewMonth =
+    /^d{4}-d{2}$/.test(requested) && requested <= month ? requested : month;
+
+  const totals = periodTotals(receipts, viewMonth);
+
+  // Kutsuttu kirjanpitäjä näkee raportit itse eikä tarvitse tiedostoja.
+  const accountants = users.filter((user) => user.role === "accountant");
+
+  // Kaksitoista kuukautta taaksepäin, kuten yleiskuvassa.
+  const selectable: string[] = [];
+  let cursor = month;
+  for (let i = 0; i < 13; i++) {
+    selectable.push(cursor);
+    cursor = previousMonth(cursor);
+  }
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Raportit</h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonth(month)} · {totals.receiptCount} kuittia ·{" "}
-          {formatMoney(totals.totalCents)} kirjattuja kuluja
-        </p>
+      <div className="relative z-40 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
+            Raportit
+          </h1>
+          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+            {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
+            {formatMoney(totals.totalCents)} kirjattuja kuluja
+          </p>
+        </div>
+
+        <MonthPicker value={viewMonth} months={selectable} />
       </div>
 
       <ScopeNotice>
@@ -85,7 +116,7 @@ export default async function ReportsPage() {
 
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <a
-                href={`/admin/raportit/csv?tyyppi=${report.kind}&kuukausi=${month}`}
+                href={`/admin/raportit/csv?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
                 className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
                 style={{
                   background: "var(--rf-accent)",
@@ -98,7 +129,7 @@ export default async function ReportsPage() {
               </a>
 
               <a
-                href={`/admin/raportit/xlsx?tyyppi=${report.kind}&kuukausi=${month}`}
+                href={`/admin/raportit/xlsx?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
                 className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
                 style={{
                   background: "var(--rf-inset)",
@@ -111,7 +142,7 @@ export default async function ReportsPage() {
               </a>
 
               <Link
-                href={`/admin/raportit/tulosta?kuukausi=${month}`}
+                href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
                 className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
                 style={{
                   background: "var(--rf-inset)",
@@ -129,14 +160,45 @@ export default async function ReportsPage() {
 
       <Card>
         <h2 className="text-[16px] font-semibold">Toimitus kirjanpitäjälle</h2>
-        <p
-          className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
-          style={{ color: "var(--rf-text-2)" }}
-        >
-          Kutsu kirjanpitäjä käyttäjäksi roolilla <strong>Kirjanpitäjä</strong>,
-          niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse
-          lähettää. Hän ei näe tuntipalkkoja eikä henkilöstön yksityiskohtia.
-        </p>
+
+        {accountants.length > 0 ? (
+          <>
+            <p
+              className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              {accountants.length === 1
+                ? "Kirjanpitäjä on jo mukana."
+                : `${accountants.length} kirjanpitäjää on jo mukana.`}{" "}
+              He näkevät nämä samat luvut itse ja aina ajantasaisina, joten
+              tiedostoja ei tarvitse lähettää lainkaan. Tuntipalkat ja
+              henkilöstön yksityiskohdat eivät näy heille.
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {accountants.map((accountant) => (
+                <span
+                  key={accountant.id}
+                  className="inline-flex items-center gap-2 py-1.5 pl-1.5 pr-3 text-[13px]"
+                  style={{ background: "var(--rf-inset)", borderRadius: 999 }}
+                >
+                  <Avatar initials={accountant.initials} size={24} />
+                  {accountant.name}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p
+            className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            Kutsu kirjanpitäjä käyttäjäksi roolilla <strong>Kirjanpitäjä</strong>,
+            niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse
+            lähettää. Hän ei näe tuntipalkkoja eikä henkilöstön yksityiskohtia.
+          </p>
+        )}
+
         <p
           className="mt-2 max-w-2xl text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
@@ -145,29 +207,42 @@ export default async function ReportsPage() {
           CSV:ssä kaikki on tekstiä. Molemmat rakennetaan samasta lähteestä,
           joten luvut eivät voi erota toisistaan.
         </p>
-        <a
-          href={`/admin/raportit/xlsx?kuukausi=${month}`}
-          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
-          style={{
-            background: "var(--rf-accent)",
-            color: "var(--rf-on-accent)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          <Icon path={ICONS.download} size={16} />
-          Lataa koko kuukausi Excelinä
-        </a>
-        <Link
-          href="/admin/tyontekijat"
-          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
-          style={{
-            background: "var(--rf-inset)",
-            color: "var(--rf-text)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          Kutsu kirjanpitäjä
-        </Link>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a
+            href={`/admin/raportit/xlsx?kuukausi=${viewMonth}`}
+            className="rf-press inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+            style={{
+              background: "var(--rf-accent)",
+              color: "var(--rf-on-accent)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <Icon path={ICONS.download} size={16} />
+            Lataa koko kuukausi Excelinä
+          </a>
+
+          {accountants.length === 0 ? (
+            <Link
+              href="/admin/tyontekijat"
+              className="rf-press inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+              style={{
+                background: "var(--rf-inset)",
+                color: "var(--rf-text)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              Kutsu kirjanpitäjä
+            </Link>
+          ) : null}
+        </div>
+
+        <SendToAccountant
+          restaurantName={restaurant.name}
+          monthLabel={formatMonth(viewMonth)}
+          receiptCount={totals.receiptCount}
+          totalLabel={formatMoney(totals.totalCents)}
+        />
       </Card>
     </div>
   );
