@@ -19,23 +19,17 @@ import { RfIcon } from "@/components/restoflow/icons";
 export function AdminNav({
   role,
   restaurantName,
-  alertCount,
 }: {
   role: Role;
   restaurantName: string;
-  alertCount: number;
 }) {
   const items = adminNavFor(role);
   const primary = primaryNavFor(role);
 
   return (
     <>
-      <DesktopSidebar
-        items={items}
-        restaurantName={restaurantName}
-        alertCount={alertCount}
-      />
-      <MobileBar items={primary} alertCount={alertCount} />
+      <DesktopSidebar items={items} restaurantName={restaurantName} />
+      <MobileBar items={primary} />
     </>
   );
 }
@@ -53,11 +47,9 @@ function useActive() {
 function DesktopSidebar({
   items,
   restaurantName,
-  alertCount,
 }: {
   items: NavItems;
   restaurantName: string;
-  alertCount: number;
 }) {
   const isActive = useActive();
 
@@ -102,32 +94,6 @@ function DesktopSidebar({
         </ul>
       </nav>
 
-      <div className="space-y-0.5 px-2.5 pb-2">
-        {alertCount > 0 ? (
-          <Link
-            href="/admin/ilmoitukset"
-            className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium"
-            style={{
-              background: isActive("/admin/ilmoitukset") ? "var(--rf-inset)" : "transparent",
-              color: "var(--rf-text-2)",
-            }}
-          >
-            <RfIcon name="bell" size={17} />
-            <span className="flex-1">Huomiot</span>
-            <Badge count={alertCount} />
-          </Link>
-        ) : null}
-
-        <Link
-          href="/app"
-          className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium"
-          style={{ color: "var(--rf-text-3)" }}
-        >
-          <RfIcon name="clock" size={17} />
-          Työntekijänäkymä
-        </Link>
-      </div>
-
     </aside>
   );
 }
@@ -140,7 +106,7 @@ function DesktopSidebar({
  * Viisi tärkeintä kohtaa; loput löytyvät "Lisää"-välilehdeltä. Kuusi
  * kohtaa alapalkissa tekee kosketuskohteista liian kapeita.
  */
-function MobileBar({ items, alertCount }: { items: NavItems; alertCount: number }) {
+function MobileBar({ items }: { items: NavItems }) {
   const isActive = useActive();
   const primary = items;
   // Lisää on aina mukana: sen takana ovat asetukset ja uloskirjautuminen.
@@ -161,7 +127,6 @@ function MobileBar({ items, alertCount }: { items: NavItems; alertCount: number 
       <ul className="mx-auto flex max-w-md">
         {primary.map((item) => {
           const active = isActive(item.href);
-          const badge = item.href === "/admin/ilmoitukset" ? alertCount : 0;
 
           return (
             <li key={item.href} className="flex-1">
@@ -173,13 +138,6 @@ function MobileBar({ items, alertCount }: { items: NavItems; alertCount: number 
               >
                 <RfIcon name={item.icon} size={22} />
                 <span className="text-[10px] font-medium">{item.label}</span>
-                {badge > 0 ? (
-                  <span
-                    aria-hidden="true"
-                    className="absolute right-[22%] top-1 h-2 w-2 rounded-full"
-                    style={{ background: "var(--rf-red)" }}
-                  />
-                ) : null}
               </Link>
             </li>
           );
@@ -205,16 +163,6 @@ function MobileBar({ items, alertCount }: { items: NavItems; alertCount: number 
   );
 }
 
-function Badge({ count }: { count: number }) {
-  return (
-    <span
-      className="rf-tabular ml-auto min-w-[20px] px-1.5 py-0.5 text-center text-[11px] font-semibold"
-      style={{ background: "var(--rf-red)", color: "var(--rf-on-accent)", borderRadius: 999 }}
-    >
-      {count}
-    </span>
-  );
-}
 
 
 function Logo() {

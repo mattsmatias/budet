@@ -32,11 +32,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="flex min-h-screen">
-      <AdminNav
-        role={role}
-        restaurantName={restaurant.name}
-        alertCount={alerts.length}
-      />
+      <AdminNav role={role} restaurantName={restaurant.name} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
