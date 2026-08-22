@@ -12,6 +12,11 @@
  */
 
 import type { ExpenseCategory } from "@/lib/restoflow/types";
+import {
+  productGlyph,
+  supplierGlyph,
+  type GlyphName,
+} from "@/lib/restoflow/glyphs";
 
 export type IconName =
   | "overview"
@@ -248,5 +253,151 @@ export function ShiftStatusIcon({
     >
       <path d={paths[status]} />
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tuote- ja toimittajaikonit
+// ---------------------------------------------------------------------------
+
+/**
+ * Sama geometria kuin muualla: 24×24, 1,6 px viiva, ei täyttöjä.
+ *
+ * Nämä ovat tarkempia kuin kategoriaikonit — maito eikä "ruoka" — ja
+ * niitä käytetään vain silloin kun tuotteen nimestä tunnistetaan mikä
+ * se on. Tunnistamaton rivi saa kategoriansa ikonin, joten sarake ei
+ * jää koskaan tyhjäksi.
+ */
+const GLYPH_PATHS: Record<GlyphName, string> = {
+  // Maitopurkki harjakatolla.
+  milk: "M7.8 8.6 12 3.5l4.2 5.1v11.9H7.8zM7.8 8.6h8.4M10.2 12.4h3.6",
+
+  // Kananmuna: soikio joka on alaosastaan leveämpi.
+  egg: "M12 3.6c2.9 0 5 4.4 5 8a5 5 0 0 1-10 0c0-3.6 2.1-8 5-8Z",
+
+  // Lehti ja varsi — tuoretuote, ei yksittäinen kasvis.
+  vegetable:
+    "M20.4 4.6c0 8.1-5.1 12-9.6 12a5.6 5.6 0 1 1 0-11.2c4 0 6.6-.8 9.6-.8ZM4.4 20.4C7 15.9 10 13.4 14.1 11.4",
+
+  // Omena varsineen.
+  fruit:
+    "M12 20.5a6.6 6.6 0 1 0 0-13.2 6.6 6.6 0 0 0 0 13.2ZM12 7.3V4.2M12 5c2.4 0 3.8-1.1 3.8-1.1",
+
+  // Pihvi.
+  meat: "M4.6 12.9c0-4.4 3.6-7.2 8-7.2s6.9 2.7 6.9 6.2-2.7 7.6-7.1 7.6-7.8-2.2-7.8-6.6ZM8.4 12.9a3.1 3.1 0 0 1 3.1-3.1",
+
+  // Kala: runko ja pyrstö.
+  fish: "M14.6 12c0 3.6-3.3 6.4-6.9 6.4-2.2 0-3.9-1.1-3.9-1.1s1.2-2 1.2-5.3-1.2-5.3-1.2-5.3S5.5 5.6 7.7 5.6c3.6 0 6.9 2.8 6.9 6.4ZM14.6 12l5.9-4.3v8.6zM7.4 10.4h.01",
+
+  // Limppu.
+  bread: "M4.6 11.6c0-3.2 3.3-4.9 7.4-4.9s7.4 1.7 7.4 4.9c0 1.4-1.1 2.5-2.5 2.5v6.2H7.1v-6.2c-1.4 0-2.5-1.1-2.5-2.5Z",
+
+  // Viljan tähkä.
+  grain:
+    "M12 20.8v-11M12 9.8c-2.4 0-3.9-1.9-3.9-4.3 2.4 0 3.9 1.9 3.9 4.3ZM12 9.8c2.4 0 3.9-1.9 3.9-4.3-2.4 0-3.9 1.9-3.9 4.3ZM12 15.3c-2.4 0-3.9-1.9-3.9-4.3 2.4 0 3.9 1.9 3.9 4.3ZM12 15.3c2.4 0 3.9-1.9 3.9-4.3-2.4 0-3.9 1.9-3.9 4.3Z",
+
+  // Purkki kannella.
+  jar: "M8.4 3.5h7.2v2.6H8.4zM7.2 6.1h9.6v12.9a1.5 1.5 0 0 1-1.5 1.5H8.7a1.5 1.5 0 0 1-1.5-1.5zM7.2 10.2h9.6",
+
+  // Pullo kaulalla ja etiketillä.
+  bottle:
+    "M10.2 3.5h3.6v3.2l1.8 3a3 3 0 0 1 .44 1.57v7.23a2 2 0 0 1-2 2H9.96a2 2 0 0 1-2-2v-7.23a3 3 0 0 1 .44-1.57l1.8-3zM8 13.8h8",
+
+  // Tölkki: soikea kansi tekee sen tunnistettavaksi pienenäkin.
+  can: "M12 3.6c2.5 0 4.4.9 4.4 2v12.8c0 1.1-1.9 2-4.4 2s-4.4-.9-4.4-2V5.6c0-1.1 1.9-2 4.4-2ZM7.6 5.6c0 1.1 1.9 2 4.4 2s4.4-.9 4.4-2",
+
+  // Kuppi ja korva.
+  coffee:
+    "M4.6 8.4h11.8v6.2a5 5 0 0 1-5 5H9.6a5 5 0 0 1-5-5zM16.4 9.9h1.5a2.5 2.5 0 0 1 0 5h-1.5M8.2 5.4V3.6M12 5.4V3.6",
+
+  // Kassi kahvoilla.
+  bag: "M6.4 8.2h11.2l1 12.3H5.4zM9.2 8.2V6a2.8 2.8 0 0 1 5.6 0v2.2",
+
+  // Palautuva kierros — pantti.
+  deposit: "M20 12a8 8 0 1 1-2.6-5.9M20 4.2v4.4h-4.4",
+
+  // Viinilasi. Sama muoto kuin alkoholikategorialla, koska kyse on
+  // samasta asiasta — toimittajasta joka myy alkoholia.
+  wine: "M7.8 3.5h8.4l-.8 6.4a3.7 3.7 0 0 1-6.8 0zM12 14.3v6.2M8.6 20.5h6.8",
+
+  // Myymälä markiisilla.
+  shop: "M3.6 9.6h16.8v10.9H3.6zM3.6 9.6 5.6 4h12.8l2 5.6M9.6 20.5v-5.9h4.8v5.9M3.6 9.6a2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.6 0 2.8 2.8 0 0 0 5.6 0",
+
+  // Varasto — tukku on rakennus, ei myymälä.
+  wholesale: "M3.6 10.4 12 5l8.4 5.4v10.1H3.6zM8.6 20.5v-6.1h6.8v6.1",
+};
+
+export function Glyph({
+  name,
+  size = 16,
+  strokeWidth = 1.6,
+}: {
+  name: GlyphName;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={GLYPH_PATHS[name]} />
+    </svg>
+  );
+}
+
+/**
+ * Kuittirivin ikoni.
+ *
+ * Tuotteen oma ikoni jos nimestä tunnistetaan mikä se on, muuten rivin
+ * kategoria. Näin sarake on aina täynnä eikä tunnistamaton tuote näytä
+ * virheeltä.
+ */
+export function ProductIcon({
+  description,
+  category,
+  size = 15,
+}: {
+  description: string;
+  category: ExpenseCategory;
+  size?: number;
+}) {
+  const glyph = productGlyph(description);
+
+  return glyph ? (
+    <Glyph name={glyph} size={size} />
+  ) : (
+    <CategoryIcon category={category} size={size} />
+  );
+}
+
+/**
+ * Toimittajan ikoni.
+ *
+ * Kauppa, tukku ja Alko erottuvat toisistaan. Tunnistamaton toimittaja
+ * saa kuitin kategorian ikonin.
+ */
+export function SupplierIcon({
+  name,
+  category,
+  size = 20,
+}: {
+  name: string;
+  category: ExpenseCategory;
+  size?: number;
+}) {
+  const glyph = supplierGlyph(name);
+
+  return glyph ? (
+    <Glyph name={glyph} size={size} />
+  ) : (
+    <CategoryIcon category={category} size={size} />
   );
 }

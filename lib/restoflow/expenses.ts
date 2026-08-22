@@ -242,6 +242,13 @@ export function searchReceipts(receipts: Receipt[], query: string): Receipt[] {
     if (receipt.note?.toLowerCase().includes(q)) return true;
     if (receipt.date.includes(q)) return true;
     if (cents !== null && Math.abs(receipt.totalCents - cents) <= 1) return true;
+
+    // Myös tuoterivit. Kuitin nimi on "S-Market", mutta se mitä
+    // etsitään on usein "maito" — ja se lukee vain riveillä.
+    if (receipt.items.some((item) => item.description.toLowerCase().includes(q))) {
+      return true;
+    }
+
     return false;
   });
 }
@@ -256,7 +263,15 @@ export function filterReceipts(
   if (filter === "needs_review") {
     return receipts.filter((r) => r.status === "needs_review");
   }
-  return receipts.filter((r) => r.category === filter);
+
+  // Myös rivien kategoriat. Ruokakuitilla on usein yksi muovikassi, ja
+  // Pakkaus-suodatin ei löytänyt sitä koska kuitin oma kategoria on
+  // Ruoka. Sekakuitti kuuluu jokaiseen kategoriaan jota se sisältää —
+  // muuten suodatin piilottaa juuri sen rivin jota etsitään.
+  return receipts.filter(
+    (r) =>
+      r.category === filter || r.items.some((item) => item.category === filter),
+  );
 }
 
 export function sortByDateDesc(receipts: Receipt[]): Receipt[] {

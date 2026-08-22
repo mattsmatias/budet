@@ -13,16 +13,13 @@ import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
   REVIEW_REASON_LABELS,
+  type ExpenseCategory,
 } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
-import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
-import {
-  Card,
-  CategoryBubble,
-  EmptyState,
-  Pill,
-} from "@/components/restoflow/ui";
+import { ProductIcon, RfIcon, SupplierIcon } from "@/components/restoflow/icons";
+import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "./review";
+import { ReceiptSearch } from "./search";
 
 export const metadata = { title: "Kuitit" };
 
@@ -89,33 +86,9 @@ export default async function AdminReceiptsPage({
             </Link>
           ) : null}
 
-          <form action="/admin/kuitit" className="w-full md:order-1 md:w-auto">
-            {filter !== "all" ? <input type="hidden" name="suodatin" value={filter} /> : null}
-            <div className="relative">
-              <span
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "var(--rf-text-3)" }}
-              >
-                <RfIcon name="search" size={17} />
-              </span>
-              <label htmlFor="admin-search" className="sr-only">
-                Hae kuitteja
-              </label>
-              <input
-                id="admin-search"
-                type="search"
-                name="haku"
-                defaultValue={query}
-                placeholder="Toimittaja, numero tai summa"
-                className="w-full py-2.5 pl-10 pr-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
-                style={{
-                  background: "var(--rf-card)",
-                  borderRadius: "var(--rf-r-control)",
-                  boxShadow: "var(--rf-shadow-sm)",
-                }}
-              />
-            </div>
-          </form>
+          <div className="w-full md:order-1 md:w-auto">
+            <ReceiptSearch initial={query} />
+          </div>
         </div>
       </div>
 
@@ -221,7 +194,10 @@ export default async function AdminReceiptsPage({
                     : {})}
                 >
                   <div className="flex items-start gap-3">
-                    <CategoryBubble category={receipt.category} size={40} />
+                    <SupplierBubble
+                      name={receipt.supplierName}
+                      category={receipt.category}
+                    />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -275,28 +251,48 @@ export default async function AdminReceiptsPage({
                     </div>
                   </div>
 
-                  {receipt.items.length > 1 ? (
-                    <ul
-                      className="mt-3 space-y-1.5 border-t pt-3"
+                  {receipt.items.length > 0 ? (
+                    <details
+                      className="mt-3 border-t pt-3"
                       style={{ borderColor: "var(--rf-line)" }}
                     >
-                      {receipt.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="flex items-center justify-between gap-3 text-[13px]"
+                      <summary className="rf-press flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium [&::-webkit-details-marker]:hidden">
+                        <span
+                          className="rf-summary-chevron"
+                          style={{ color: "var(--rf-text-3)" }}
                         >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                              <CategoryIcon category={item.category} size={14} />
+                          <RfIcon name="chevron" size={14} />
+                        </span>
+                        <span style={{ color: "var(--rf-blue)" }}>
+                          {receipt.items.length === 1
+                            ? "Näytä 1 rivi"
+                            : `Näytä ${receipt.items.length} riviä`}
+                        </span>
+                      </summary>
+
+                      <ul className="mt-3 space-y-1.5">
+                        {receipt.items.map((item) => (
+                          <li
+                            key={item.id}
+                            className="flex items-center justify-between gap-3 text-[13px]"
+                          >
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                                <ProductIcon
+                                  description={item.description}
+                                  category={item.category}
+                                  size={15}
+                                />
+                              </span>
+                              <span className="truncate">{item.description}</span>
                             </span>
-                            <span className="truncate">{item.description}</span>
-                          </span>
-                          <span className="rf-tabular shrink-0" style={{ color: "var(--rf-text-2)" }}>
-                            {formatMoney(item.totalCents)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                            <span className="rf-tabular shrink-0" style={{ color: "var(--rf-text-2)" }}>
+                              {formatMoney(item.totalCents)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   ) : null}
 
                   <div className="mt-3 flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
@@ -330,6 +326,34 @@ export default async function AdminReceiptsPage({
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * Toimittajan tunnus listassa.
+ *
+ * Sama pyöreä kupla kuin ennen, mutta sisällä toimittajan oma ikoni
+ * kategorian sijaan. S-Market ja Alko näyttävät nyt eri asioilta, mikä
+ * on koko listan silmäiltävyyden kannalta se olennainen ero.
+ */
+function SupplierBubble({
+  name,
+  category,
+}: {
+  name: string;
+  category: ExpenseCategory;
+}) {
+  return (
+    <span
+      className="flex h-10 w-10 shrink-0 items-center justify-center"
+      style={{
+        background: "var(--rf-inset)",
+        color: "var(--rf-text-2)",
+        borderRadius: "50%",
+      }}
+    >
+      <SupplierIcon name={name} category={category} size={20} />
+    </span>
   );
 }
 

@@ -15,7 +15,8 @@ import {
   sortByDateDesc,
   totalsByCategory,
 } from "../expenses";
-import type { ExpenseCategory, Receipt, ReviewReason } from "../types";
+import type { ExpenseCategory, Receipt, ReceiptItem, ReviewReason } from "../types";
+import { productGlyph, supplierGlyph } from "../glyphs";
 
 let n = 0;
 function receipt(
@@ -169,6 +170,83 @@ describe("tarkistettavat", () => {
     const counts = reviewReasonCounts(receipts);
     expect(counts[0]).toEqual({ reason: "vat_missing" as ReviewReason, count: 2 });
     expect(counts[1]).toEqual({ reason: "category_missing" as ReviewReason, count: 1 });
+  });
+});
+
+function item(
+  description: string,
+  category: ExpenseCategory,
+  totalCents = 100,
+): ReceiptItem {
+  return {
+    id: `i-${description}`,
+    lineNumber: 1,
+    description,
+    quantity: 1,
+    unit: null,
+    totalCents,
+    category,
+    vatRate: null,
+    vatCents: null,
+    productGroup: null,
+  };
+}
+
+describe("tuote- ja toimittajaikonit", () => {
+  it("tunnistaa tavalliset tuotteet nimestä", () => {
+    expect(productGlyph("Täysmaito")).toBe("milk");
+    expect(productGlyph("Vapaan kanan munat M10")).toBe("egg");
+    expect(productGlyph("Punasipuli 500g")).toBe("vegetable");
+    expect(productGlyph("Nauta-kana jauheliha 10% 400g")).toBe("meat");
+    expect(productGlyph("Pizzatortilla (kampanja -2,70)")).toBe("bread");
+    expect(productGlyph("Muovikassi SM harmaa")).toBe("bag");
+    expect(productGlyph("Pantti KMP 0,351-0,99L")).toBe("deposit");
+  });
+
+  // Yhdyssanan on osuttava ennen perussanaa: maustekurkku on purkki,
+  // ei tuore kurkku.
+  it("antaa yhdyssanalle etusijan", () => {
+    expect(productGlyph("Maustekurkku")).toBe("jar");
+    expect(productGlyph("Mutti arom pizzakastike 210g")).toBe("jar");
+    expect(productGlyph("Pehmeä maitorahka")).toBe("milk");
+  });
+
+  // Tunnistamaton tuote ei saa arvausta. Kutsupaikka piirtää kategorian.
+  it("palauttaa null kun ei tunnisteta", () => {
+    expect(productGlyph("ED Blue Raspberry 0,5L")).toBeNull();
+    expect(productGlyph("Dippimix ranch")).toBeNull();
+  });
+
+  it("tunnistaa toimittajan lajin", () => {
+    expect(supplierGlyph("S-Market Kajaani")).toBe("shop");
+    expect(supplierGlyph("Alko Yritysmyynti")).toBe("wine");
+    expect(supplierGlyph("Metro Tukku")).toBe("wholesale");
+    expect(supplierGlyph("Matin ja Maijan puoti")).toBeNull();
+  });
+});
+
+describe("haku ja suodatus riveiltä", () => {
+  const mixed = receipt({
+    date: "2026-08-20",
+    totalCents: 3144,
+    supplierName: "S-Market Kajaani",
+    category: "food",
+    items: [item("Täysmaito", "food", 149), item("Muovikassi SM harmaa", "packaging", 59)],
+  });
+
+  // Kuitin nimi on "S-Market", mutta se mitä etsitään on "maito".
+  it("löytää tuotteen nimellä", () => {
+    expect(searchReceipts([mixed], "maito")).toHaveLength(1);
+    expect(searchReceipts([mixed], "MUOVIKASSI")).toHaveLength(1);
+    expect(searchReceipts([mixed], "moottoriöljy")).toHaveLength(0);
+  });
+
+  // Ruokakuitilla on yksi muovikassi. Pakkaus-suodatin ei löytänyt sitä,
+  // koska kuitin oma kategoria on Ruoka.
+  it("löytää sekakuitin rivin kategorialla", () => {
+    expect(filterReceipts([mixed], "packaging")).toHaveLength(1);
+    expect(filterReceipts([mixed], "food")).toHaveLength(1);
+    expect(filterReceipts([mixed], "alcohol")).toHaveLength(0);
   });
 });
 
