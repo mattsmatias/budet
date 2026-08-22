@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkVat, dominantCategory, inferVatRate, isMixedReceipt, itemsSumMatches, rateMatchesCategory } from "../vat";
-import { quantityOf, vatRateOf } from "../receipt-ai";
+import { quantityOf, reviewReasonsForSave, vatRateOf } from "../receipt-ai";
 import { daysApart, duplicateIds, findDuplicates } from "../duplicates";
 import { supplierTrends, totalsBySupplier, suggestedCategory } from "../suppliers";
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
@@ -139,6 +139,80 @@ describe("poiminnan lukujen rajaus", () => {
     expect(quantityOf(-1)).toBeNull();
     expect(quantityOf(1e12)).toBeNull();
     expect(quantityOf(null)).toBeNull();
+  });
+});
+
+describe("tallennettavan kuitin tarkistussyyt", () => {
+  const gigantti = {
+    supplier: "Gigantti Oy",
+    date: "2025-06-02",
+    totalCents: 25900,
+    vatCents: 4247,
+    category: "other" as const,
+    payment: "card" as const,
+    receiptNumber: "9236564502",
+  };
+
+  const rivit = [
+    {
+      description: "Ecoflow River 2",
+      quantity: 1,
+      unit: null,
+      totalCents: 20900,
+      category: "other" as const,
+      vatRate: 0.255,
+      productGroup: null,
+    },
+    {
+      description: "SONY PSN (FIN) 50 EUR",
+      quantity: 1,
+      unit: null,
+      totalCents: 5000,
+      category: "other" as const,
+      vatRate: 0,
+      productGroup: null,
+    },
+  ];
+
+  /*
+   * Tämä on se testi jota ei ollut.
+   *
+   * ALV-tarkistus osasi lukea rivien kannat, mutta tallennuspolku
+   * rakensi tarkistukselle syötteen jossa rivit olivat tyhjä lista.
+   * Oikea sekakuitti merkittiin virheelliseksi joka kerta, eikä
+   * yksikään testi huomannut sitä — koska päättely asui
+   * palvelintoiminnossa jota testi ei voinut kutsua.
+   */
+  it("ei merkitse sekakuittia virheelliseksi", () => {
+    const reasons = reviewReasonsForSave({ ...gigantti, items: rivit });
+    expect(reasons).not.toContain("vat_mismatch");
+    expect(reasons).toEqual([]);
+  });
+
+  it("merkitsee yhä kun ALV ei täsmää riveihin", () => {
+    const reasons = reviewReasonsForSave({
+      ...gigantti,
+      vatCents: 5300,
+      items: rivit,
+    });
+    expect(reasons).toContain("vat_mismatch");
+  });
+
+  it("merkitsee kun rivit eivät summaudu", () => {
+    const reasons = reviewReasonsForSave({
+      ...gigantti,
+      items: [rivit[0]],
+    });
+    expect(reasons).toContain("items_dont_sum");
+  });
+
+  it("merkitsee puuttuvan ALV:n", () => {
+    const reasons = reviewReasonsForSave({
+      ...gigantti,
+      vatCents: null,
+      items: [],
+    });
+    expect(reasons).toContain("vat_missing");
   });
 });
 

@@ -349,6 +349,61 @@ export function emptyResult(): ExtractionResult {
 }
 
 /**
+ * Tarkistussyyt tallennettavalle kuitille.
+ *
+ * Sama päättely kuin poiminnalle, mutta lähtötietona ovat lomakkeen
+ * vahvistetut arvot eikä mallin vastaus. Käyttäjä on nähnyt jokaisen
+ * kentän, joten luottamus on korkea — epävarmuus ei ole enää mallin
+ * vaan sisällön.
+ *
+ * Tämä asui aiemmin palvelintoiminnossa, jossa sitä ei voinut testata.
+ * Siellä rivit jäivät kytkemättä ALV-tarkistukseen: sekakuitti jolla on
+ * 25,5 %:n laite ja 0 %:n lahjakortti merkittiin virheelliseksi joka
+ * kerta, koska tarkistus näki vain koko kuitin keskiarvon 19,6 %.
+ * Virhe ei näkynyt yhdessäkään testissä, koska funktiota ei voinut
+ * kutsua testistä.
+ */
+export function reviewReasonsForSave(input: {
+  supplier: string;
+  date: string;
+  totalCents: number;
+  vatCents: number | null;
+  category: ExpenseCategory;
+  payment: PaymentMethod;
+  receiptNumber: string | null;
+  items: ExtractedItem[];
+}): ReviewReason[] {
+  const confirmed: ExtractionResult = {
+    supplier: { value: input.supplier, confidence: "high" },
+    date: { value: input.date, confidence: "high" },
+    totalCents: { value: input.totalCents, confidence: "high" },
+    vatCents: {
+      value: input.vatCents,
+      confidence: input.vatCents === null ? "low" : "high",
+    },
+    category: { value: input.category, confidence: "high" },
+    paymentMethod: {
+      value: input.payment,
+      confidence: input.payment === "unknown" ? "low" : "high",
+    },
+    receiptNumber: { value: input.receiptNumber, confidence: "high" },
+    items: input.items,
+    imageQuality: "good",
+    elapsedMs: 0,
+  };
+
+  const reasons = reviewReasonsFor(confirmed);
+
+  // Rivien on summauduttava loppusummaan, muuten kulujako on väärä.
+  if (input.items.length > 0) {
+    const sum = input.items.reduce((s, item) => s + item.totalCents, 0);
+    if (Math.abs(sum - input.totalCents) > 2) reasons.push("items_dont_sum");
+  }
+
+  return [...new Set(reasons)];
+}
+
+/**
  * Rivin ALV-kanta murtolukuna.
  *
  * Malli lukee kuitista "ALV 14 %" ja palauttaa herkästi luvun 14, koska

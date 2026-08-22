@@ -13,7 +13,7 @@ import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
-import { reviewReasonsFor, type ExtractionResult } from "@/lib/restoflow/receipt-ai";
+import { reviewReasonsForSave } from "@/lib/restoflow/receipt-ai";
 import type {
   ExpenseCategory,
   PaymentMethod,
@@ -361,7 +361,16 @@ export async function saveReceipt(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const items = parseItems(formData.get("items"));
-  const reasons = deriveReviewReasons(parsed.data, items);
+  const reasons = reviewReasonsForSave({
+    supplier: parsed.data.supplier,
+    date: parsed.data.date,
+    totalCents: parsed.data.totalCents,
+    vatCents: parsed.data.vatCents,
+    category: parsed.data.category as ExpenseCategory,
+    payment: parsed.data.payment as PaymentMethod,
+    receiptNumber: parsed.data.receiptNumber,
+    items,
+  });
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_receipt", {
@@ -441,39 +450,6 @@ function parseItems(raw: FormDataEntryValue | null): ItemInput[] {
  * Lasketaan uudelleen palvelimella eikä luoteta lomakkeen kenttään:
  * muuten kuitin voisi merkitä tarkistetuksi ohittamalla poimintanäkymän.
  */
-function deriveReviewReasons(
-  data: z.infer<typeof receiptSchema>,
-  items: ItemInput[],
-): string[] {
-  const fake: ExtractionResult = {
-    supplier: { value: data.supplier, confidence: "high" },
-    date: { value: data.date, confidence: "high" },
-    totalCents: { value: data.totalCents, confidence: "high" },
-    vatCents: {
-      value: data.vatCents,
-      confidence: data.vatCents === null ? "low" : "high",
-    },
-    category: { value: data.category as ExpenseCategory, confidence: "high" },
-    paymentMethod: {
-      value: data.payment as PaymentMethod,
-      confidence: data.payment === "unknown" ? "low" : "high",
-    },
-    receiptNumber: { value: data.receiptNumber, confidence: "high" },
-    items: [],
-    imageQuality: "good",
-    elapsedMs: 0,
-  };
-
-  const reasons = reviewReasonsFor(fake);
-
-  // Rivien on summauduttava loppusummaan, muuten kulujako on väärä.
-  if (items.length > 0) {
-    const sum = items.reduce((s, i) => s + i.totalCents, 0);
-    if (Math.abs(sum - data.totalCents) > 2) reasons.push("items_dont_sum");
-  }
-
-  return [...new Set(reasons)];
-}
 
 // ---------------------------------------------------------------------------
 // Asetukset
