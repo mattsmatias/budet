@@ -55,7 +55,7 @@ function DesktopSidebar({
 
   return (
     <aside
-      className="hidden w-[232px] shrink-0 flex-col border-r md:flex"
+      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
       <div className="px-5 py-5">
@@ -68,7 +68,10 @@ function DesktopSidebar({
         </p>
       </div>
 
-      <nav aria-label="Hallintanavigaatio" className="flex-1 px-2.5">
+      <nav
+        aria-label="Hallintanavigaatio"
+        className="flex-1 overflow-y-auto px-2.5 pb-4"
+      >
         <ul className="space-y-0.5">
           {items.map((item) => {
             const active = isActive(item.href);
