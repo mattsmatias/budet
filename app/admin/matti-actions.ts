@@ -165,6 +165,103 @@ async function execute(
   action: PendingRow,
 ): Promise<ExecutionResult> {
   switch (action.tool) {
+    case "propose_lunch_items": {
+      const args = z
+        .object({
+          days: z
+            .array(
+              z.object({
+                date: z.string().regex(/^d{4}-d{2}-d{2}$/),
+                priceEuros: z.number().min(0).max(1000).optional(),
+                items: z
+                  .array(
+                    z.object({
+                      name: z.string().min(1).max(120),
+                      description: z.string().max(400).optional(),
+                      diets: z.array(z.string()).optional(),
+                      allergens: z.array(z.string()).optional(),
+                    }),
+                  )
+                  .min(1)
+                  .max(20),
+              }),
+            )
+            .min(1)
+            .max(7),
+          replace: z.boolean().optional(),
+        })
+        .parse(action.arguments);
+
+      const { restaurant } = await requireContext("/admin");
+
+      /*
+       * Viikko avataan ensin.
+       *
+       * "Tee ensi viikon lounaslista" osuu yleensä viikkoon jota ei ole
+       * vielä olemassa. Ilman tätä ehdotuksen hyväksyminen kaatuisi
+       * siihen ettei päivää löydy — ja käyttäjän pitäisi tietää käydä
+       * luomassa viikko itse ensin.
+       */
+      const weeks = new Set(args.days.map((d) => weekStartOf(d.date)));
+
+      for (const week of weeks) {
+        const { error } = await supabase.rpc("open_lunch_week", {
+          p_restaurant: restaurant.id,
+          p_week_start: week,
+        });
+        if (error) throw new Error(error.message);
+      }
+
+      let added = 0;
+      const touched: string[] = [];
+
+      for (const day of args.days) {
+        const row = await lunchDay(supabase, day.date);
+        if (!row) throw new Error(`Päivää ${day.date} ei löytynyt`);
+
+        touched.push(row.id);
+
+        if (args.replace) {
+          const { error } = await supabase.rpc("clear_lunch_day_items", {
+            p_day: row.id,
+          });
+          if (error) throw new Error(error.message);
+        }
+
+        if (day.priceEuros !== undefined) {
+          const { error } = await supabase.rpc("set_lunch_price", {
+            p_day: row.id,
+            p_name: "Lounas",
+            p_cents: Math.round(day.priceEuros * 100),
+          });
+          if (error) throw new Error(error.message);
+        }
+
+        for (const item of day.items) {
+          const { error } = await supabase.rpc("save_lunch_item", {
+            p_day: row.id,
+            p_item: null,
+            p_name: item.name,
+            p_description: item.description ?? null,
+            p_diets: item.diets ?? [],
+            p_allergens: item.allergens ?? [],
+          });
+          if (error) throw new Error(error.message);
+
+          added += 1;
+        }
+      }
+
+      return {
+        message:
+          `Valmis. Lisäsin ${added} ruokaa ${args.days.length} päivälle. ` +
+          "Lista on luonnos — julkaise se kun se on valmis.",
+        target: touched.join(","),
+        before: null,
+        after: { days: args.days.length, items: added },
+      };
+    }
+
     case "propose_lunch_price": {
       const args = z
         .object({

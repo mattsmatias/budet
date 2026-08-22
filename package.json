@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "bundle:sql": "node scripts/bundle-migrations.mjs"
+    "bundle:sql": "node scripts/bundle-migrations.mjs",
+    "test:live": "vitest run --config vitest.live.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

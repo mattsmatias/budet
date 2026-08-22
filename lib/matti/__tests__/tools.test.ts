@@ -54,7 +54,7 @@ describe("työkalujen rakenne", () => {
    */
   it("kertoo kirjoittavan työkalun kuvauksessa ettei se muuta mitään", () => {
     for (const tool of TOOLS.filter((t) => t.level === "write")) {
-      expect(tool.description).toMatch(/EI (muuta|kopioi|julkaise)/);
+      expect(tool.description).toMatch(/EI (muuta|kopioi|julkaise|tallenna)/);
     }
   });
 });

@@ -423,6 +423,119 @@ const getShifts = defineTool({
 // tapahtuu vasta erillisessä palvelintoiminnossa jonka ihminen
 // laukaisee, ja se lukee argumentit kannasta eikä selaimesta.
 
+/**
+ * Lounaslistan laatiminen.
+ *
+ * Yksi työkalu sekä yhdelle päivälle että koko viikolle: malli antaa
+ * yhden päivän tai viisi. Erilliset työkalut ajautuisivat erilleen
+ * juuri siinä mikä on hankalaa — hinnan ja ruokien yhteispelissä.
+ *
+ * Ruokien nimet ovat mallin ehdotus, eivät haettua dataa. Se on
+ * hyväksyttävää tässä ja vain tässä: käyttäjä on pyytänyt ehdotusta ja
+ * näkee jokaisen rivin ennen kuin mitään tallentuu. Sama vapaus ei
+ * koske lukuja — euro on aina haettu, ei keksitty.
+ */
+const proposeLunchItems = defineTool({
+  name: "propose_lunch_items",
+  description:
+    "Ehdottaa lounaslistan ruokia yhdelle tai useammalle päivälle. EI tallenna " +
+    "mitään — käyttäjä hyväksyy ehdotuksen itse. Anna yksi päivä kun kyse on " +
+    "yhdestä päivästä ja viisi päivää kun kyse on koko työviikosta. Voit antaa " +
+    "päivälle myös hinnan. Jos viikkoa ei ole vielä olemassa, se luodaan " +
+    "hyväksynnän yhteydessä.",
+  level: "write",
+  requires: "lunch.manage",
+  schema: z.object({
+    days: z
+      .array(
+        z.object({
+          date: dateSchema,
+          priceEuros: z
+            .number()
+            .min(0)
+            .max(1000)
+            .optional()
+            .describe("Päivän lounashinta. Jätä pois jos hinta on jo oikein."),
+          items: z
+            .array(
+              z.object({
+                name: z.string().min(1).max(120),
+                description: z.string().max(400).optional(),
+                diets: z.array(z.string()).optional().describe(
+                  "vegetarian, vegan, gluten_free, lactose_free, milk_free",
+                ),
+                allergens: z.array(z.string()).optional().describe(
+                  "gluten, milk, egg, fish, shellfish, soy, nuts, celery, mustard, sesame",
+                ),
+              }),
+            )
+            .min(1)
+            .max(20),
+        }),
+      )
+      .min(1)
+      .max(7),
+    replace: z
+      .boolean()
+      .optional()
+      .describe(
+        "true korvaa päivän nykyiset ruoat, false lisää perään. Oletus false.",
+      ),
+  }),
+  async run(ctx, input) {
+    // Sama päivä kahdesti olisi kaksi ristiriitaista ohjetta samalle
+    // riville, eikä kumpikaan olisi selvästi oikea.
+    const dates = input.days.map((d) => d.date);
+    if (new Set(dates).size !== dates.length) {
+      return { summary: "Sama päivä on listassa kahdesti. Anna jokainen päivä kerran." };
+    }
+
+    const changes: ActionPreview["changes"] = [];
+
+    for (const day of [...input.days].sort((a, b) => a.date.localeCompare(b.date))) {
+      const existing = (await ctx.lunchWeek(weekStartOf(day.date)))?.days.find(
+        (d) => d.date === day.date,
+      );
+
+      const label = `${weekdayName(day.date)} ${day.date}`;
+
+      if (day.priceEuros !== undefined) {
+        const current = existing?.prices.find((p) => p.name === "Lounas");
+        changes.push({
+          label: `${label} · Lounas`,
+          from: current ? formatMoney(current.cents) : undefined,
+          to: formatMoney(Math.round(day.priceEuros * 100)),
+        });
+      }
+
+      changes.push({
+        label,
+        from:
+          input.replace && existing && existing.items.length > 0
+            ? `${existing.items.length} ruokaa`
+            : undefined,
+        to: day.items.map((i) => i.name).join(", "),
+      });
+    }
+
+    const total = input.days.reduce((sum, d) => sum + d.items.length, 0);
+
+    return {
+      summary:
+        `Valmis ehdotus: ${total} ruokaa ${input.days.length} päivälle. ` +
+        "Käyttäjä hyväksyy sen itse.",
+      preview: {
+        title:
+          input.days.length === 1 ? "Päivän lounaslista" : "Viikon lounaslista",
+        changes,
+        warning: input.replace
+          ? "Näiden päivien nykyiset ruoat korvataan."
+          : undefined,
+      },
+    };
+  },
+});
+
 const proposeLunchPrice = defineTool({
   name: "propose_lunch_price",
   description:
@@ -564,6 +677,7 @@ export const TOOLS: ToolDefinition[] = [
   getLunchWeek,
   getStaff,
   getShifts,
+  proposeLunchItems,
   proposeLunchPrice,
   proposeCopyLunchWeek,
   proposePublishLunch,
