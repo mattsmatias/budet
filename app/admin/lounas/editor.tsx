@@ -6,6 +6,7 @@ import {
   deleteLunchItem,
   moveLunchItem,
   saveLunchItem,
+  setLunchIncludes,
   setLunchPrice,
   type LunchState,
 } from "./actions";
@@ -492,5 +493,120 @@ export function LunchPriceField({
         </span>
       ) : null}
     </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mitä hintaan sisältyy
+// ---------------------------------------------------------------------------
+
+/**
+ * Jälkiruoka ja kahvi.
+ *
+ * Asiakas kysyy tämän tiskillä joka päivä, eikä sitä voi päätellä
+ * ruokalistasta: "Salaattipöytä ja leipä" ei kerro sisältyykö kahvi.
+ *
+ * Viikon ominaisuuksia kuten hinta. Molemmat lähetetään aina yhdessä,
+ * koska rastimaton valintaruutu ei lähetä mitään — yksi kerrallaan
+ * lähetettynä toinen nollautuisi joka kerta.
+ */
+export function LunchIncludes({
+  menuId,
+  dessert,
+  coffee,
+}: {
+  menuId: string;
+  dessert: boolean;
+  coffee: boolean;
+}) {
+  const [state, action] = useActionState(setLunchIncludes, initial);
+  const form = useRef<HTMLFormElement>(null);
+
+  return (
+    <form ref={form} action={action}>
+      <input type="hidden" name="menuId" value={menuId} />
+
+      <fieldset>
+        <legend
+          className="text-[11px] font-medium uppercase"
+          style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+        >
+          Hintaan sisältyy
+        </legend>
+
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <IncludeToggle
+            name="dessert"
+            label="Jälkiruoka"
+            checked={dessert}
+            onToggle={() => form.current?.requestSubmit()}
+          />
+          <IncludeToggle
+            name="coffee"
+            label="Kahvi"
+            checked={coffee}
+            onToggle={() => form.current?.requestSubmit()}
+          />
+        </div>
+      </fieldset>
+
+      {state.error ? (
+        <p role="alert" className="mt-1 text-[12px]" style={{ color: "var(--rf-red-text)" }}>
+          {state.error}
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
+/**
+ * Valinta joka tallentuu heti.
+ *
+ * Ei erillistä tallennuspainiketta. Kaksi valintaa ja painike olisi
+ * kolme napautusta sille että kahvi kuuluu hintaan.
+ */
+function IncludeToggle({
+  name,
+  label,
+  checked,
+  onToggle,
+}: {
+  name: string;
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  const [on, setOn] = useState(checked);
+  const [saved, setSaved] = useState(checked);
+
+  // Palvelin voi muuttaa arvoa (kopiointi, toinen käyttäjä). Sovitus
+  // renderöinnin aikana, jottei kenttä välähdä vanhalla arvolla.
+  if (checked !== saved) {
+    setSaved(checked);
+    setOn(checked);
+  }
+
+  return (
+    <label
+      className="rf-press inline-flex cursor-pointer items-center gap-2 px-3 py-2 text-[13px] font-medium"
+      style={{
+        background: on ? "var(--rf-accent-bg)" : "var(--rf-inset)",
+        color: on ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+        borderRadius: "var(--rf-r-control)",
+        transition: "background 160ms ease, color 160ms ease",
+      }}
+    >
+      <input
+        type="checkbox"
+        name={name}
+        checked={on}
+        onChange={(event) => {
+          setOn(event.target.checked);
+          onToggle();
+        }}
+        className="h-4 w-4"
+      />
+      {label}
+    </label>
   );
 }

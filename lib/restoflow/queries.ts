@@ -547,7 +547,7 @@ export async function fetchLunchWeek(
   const { data, error } = await supabase
     .from("lunch_menus")
     .select(
-      "id, week_start, week_end, status, published_at, content_updated_at, lunch_prices ( id, name, price_cents, sort_order ), lunch_days ( id, date, lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
+      "id, week_start, week_end, status, published_at, content_updated_at, includes_dessert, includes_coffee, lunch_prices ( id, name, price_cents, sort_order ), lunch_days ( id, date, lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
     )
     .eq("restaurant_id", restaurantId)
     .eq("week_start", weekStart)
@@ -593,6 +593,8 @@ export async function fetchLunchWeek(
     weekStart: data.week_start as string,
     weekEnd: data.week_end as string,
     prices,
+    includesDessert: Boolean(data.includes_dessert),
+    includesCoffee: Boolean(data.includes_coffee),
     status: data.status as LunchWeek["status"],
     publishedAt: (data.published_at as string | null) ?? null,
     contentUpdatedAt: data.content_updated_at as string,

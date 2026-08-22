@@ -252,6 +252,40 @@ export async function moveLunchItem(formData: FormData): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Mitä hintaan sisältyy
+// ---------------------------------------------------------------------------
+
+/**
+ * Jälkiruoka ja kahvi.
+ *
+ * Molemmat kerralla, koska lomake lähettää molempien tilan. Yksi
+ * kenttä kerrallaan lähettäminen tarkoittaisi että puuttuva kenttä
+ * tulkitaan epätodeksi — ja valintaruutu jota ei rastita ei lähetä
+ * mitään.
+ */
+export async function setLunchIncludes(
+  _prev: LunchState,
+  formData: FormData,
+): Promise<LunchState> {
+  const menuId = String(formData.get("menuId") ?? "");
+  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
+
+  await requireContext("/admin/lounas");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("set_lunch_includes", {
+    p_menu: menuId,
+    p_dessert: formData.get("dessert") === "on",
+    p_coffee: formData.get("coffee") === "on",
+  });
+
+  if (error) return { error: explain(error, "Tallennus epäonnistui.") };
+
+  revalidate();
+  return { notice: "Tallennettu." };
+}
+
+// ---------------------------------------------------------------------------
 // Hinnat
 // ---------------------------------------------------------------------------
 

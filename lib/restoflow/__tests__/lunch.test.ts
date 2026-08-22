@@ -5,6 +5,8 @@ import {
   formatWeekRange,
   hasContent,
   hasUnpublishedChanges,
+  includedExtras,
+  includedSentence,
   isWeekend,
   isoWeekNumber,
   nextWeek,
@@ -21,6 +23,8 @@ function week(partial: Partial<LunchWeek> = {}): LunchWeek {
     id: "m1",
     weekStart: "2026-08-24",
     prices: [],
+    includesDessert: false,
+    includesCoffee: false,
     weekEnd: "2026-08-30",
     status: "draft",
     publishedAt: null,
@@ -170,5 +174,45 @@ describe("sisältö", () => {
   // kiinni, vaikka lista on vain kesken.
   it("jättää tyhjät päivät pois", () => {
     expect(daysWithContent(withItems).map((d) => d.date)).toEqual(["2026-08-24"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe("mitä hintaan sisältyy", () => {
+  it("luettelee molemmat", () => {
+    expect(
+      includedSentence({ includesDessert: true, includesCoffee: true }),
+    ).toBe("Hintaan sisältyy jälkiruoka ja kahvi.");
+  });
+
+  it("luettelee vain sen mikä sisältyy", () => {
+    expect(
+      includedSentence({ includesDessert: false, includesCoffee: true }),
+    ).toBe("Hintaan sisältyy kahvi.");
+
+    expect(
+      includedSentence({ includesDessert: true, includesCoffee: false }),
+    ).toBe("Hintaan sisältyy jälkiruoka.");
+  });
+
+  /*
+   * Tyhjä lause olisi "Hintaan sisältyy." — kielioppivirhe joka näyttää
+   * puuttuvalta tiedolta. Null tarkoittaa ettei riviä näytetä.
+   */
+  it("ei tuota tyhjää lausetta", () => {
+    expect(
+      includedSentence({ includesDessert: false, includesCoffee: false }),
+    ).toBeNull();
+  });
+
+  it("antaa myös pelkän listan", () => {
+    expect(
+      includedExtras({ includesDessert: true, includesCoffee: false }),
+    ).toEqual(["jälkiruoka"]);
+
+    expect(
+      includedExtras({ includesDessert: false, includesCoffee: false }),
+    ).toEqual([]);
   });
 });

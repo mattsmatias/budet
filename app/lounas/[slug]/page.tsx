@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import {
   formatDayShort,
   formatWeekRange,
+  includedSentence,
   isoWeekNumber,
   weekStartOf,
   weekdayName,
@@ -46,6 +47,8 @@ interface PublicWeek {
   publishedAt?: string | null;
   /** Hinta koskee koko viikkoa, ei yksittäistä päivää. */
   prices: PublicPrice[];
+  includesDessert: boolean;
+  includesCoffee: boolean;
   days: PublicDay[];
 }
 
@@ -145,6 +148,18 @@ export default async function PublicLunchPage({
                   {formatMoney(price.cents)}
                 </span>
               ))}
+            </p>
+          ) : null}
+
+          {/*
+           * Sisältyykö jälkiruoka ja kahvi.
+           *
+           * Tämä on hinnan jälkeen se mitä asiakas haluaa tietää, eikä
+           * sitä voi päätellä ruokalistasta.
+           */}
+          {includedSentence(week) ? (
+            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              {includedSentence(week)}
             </p>
           ) : null}
         </header>

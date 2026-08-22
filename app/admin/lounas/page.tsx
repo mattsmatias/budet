@@ -15,6 +15,7 @@ import {
   formatWeekRange,
   hasContent,
   hasUnpublishedChanges,
+  includedSentence,
   isWeekend,
   isoWeekNumber,
   nextWeek,
@@ -30,7 +31,13 @@ import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Button, Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
 import { openLunchWeek } from "./actions";
-import { DeleteLunchItem, LunchItemDialog, LunchPriceField, MoveLunchItem } from "./editor";
+import {
+  DeleteLunchItem,
+  LunchIncludes,
+  LunchItemDialog,
+  LunchPriceField,
+  MoveLunchItem,
+} from "./editor";
 import {
   CopyDay,
   CopyPreviousWeek,
@@ -153,6 +160,18 @@ export default async function LunchPage({
                 </p>
               )}
             </div>
+
+            {canManage ? (
+              <LunchIncludes
+                menuId={week.id}
+                dessert={week.includesDessert}
+                coffee={week.includesCoffee}
+              />
+            ) : includedSentence(week) ? (
+              <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                {includedSentence(week)}
+              </p>
+            ) : null}
 
             {week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME).length > 0 ? (
               <dl className="flex flex-wrap gap-x-5 gap-y-1">

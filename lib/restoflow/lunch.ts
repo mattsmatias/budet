@@ -48,6 +48,10 @@ export interface LunchWeek {
    * luvulle on viisi paikkaa jossa se voi jäädä päivittämättä.
    */
   prices: LunchPrice[];
+  /** Sisältyykö jälkiruoka hintaan? */
+  includesDessert: boolean;
+  /** Sisältyykö kahvi hintaan? */
+  includesCoffee: boolean;
   weekEnd: string;
   status: LunchStatus;
   publishedAt: string | null;
@@ -208,3 +212,31 @@ export const LUNCH_STATUS_LABELS: Record<LunchStatus, string> = {
 
 /** Oletushinnan nimi. Yhden hinnan tapauksessa tätä ei näytetä erikseen. */
 export const DEFAULT_PRICE_NAME = "Lounas";
+
+/**
+ * Mitä hintaan sisältyy, luettavana listana.
+ *
+ * Asiakas kysyy tämän tiskillä joka päivä, eikä sitä voi päätellä
+ * ruokalistasta. Tyhjä lista tarkoittaa ettei kumpaakaan ole merkitty
+ * sisältyväksi — ei sitä että tietoa ei ole.
+ */
+export function includedExtras(week: {
+  includesDessert: boolean;
+  includesCoffee: boolean;
+}): string[] {
+  const extras: string[] = [];
+  if (week.includesDessert) extras.push("jälkiruoka");
+  if (week.includesCoffee) extras.push("kahvi");
+  return extras;
+}
+
+/** "Hintaan sisältyy jälkiruoka ja kahvi." tai null. */
+export function includedSentence(week: {
+  includesDessert: boolean;
+  includesCoffee: boolean;
+}): string | null {
+  const extras = includedExtras(week);
+  if (extras.length === 0) return null;
+
+  return `Hintaan sisältyy ${extras.join(" ja ")}.`;
+}
