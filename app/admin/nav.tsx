@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
-import { adminNavFor } from "@/lib/restoflow/permissions";
+import { adminNavFor, primaryNavFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar } from "@/components/restoflow/ui";
@@ -30,6 +30,7 @@ export function AdminNav({
   alertCount: number;
 }) {
   const items = adminNavFor(role);
+  const primary = primaryNavFor(role);
 
   return (
     <>
@@ -40,7 +41,7 @@ export function AdminNav({
         restaurantName={restaurantName}
         alertCount={alertCount}
       />
-      <MobileBar items={items} alertCount={alertCount} />
+      <MobileBar items={primary} alertCount={alertCount} />
     </>
   );
 }
@@ -89,7 +90,6 @@ function DesktopSidebar({
         <ul className="space-y-0.5">
           {items.map((item) => {
             const active = isActive(item.href);
-            const badge = item.href === "/admin/ilmoitukset" ? alertCount : 0;
 
             return (
               <li key={item.href}>
@@ -104,7 +104,6 @@ function DesktopSidebar({
                 >
                   <RfIcon name={item.icon} size={19} />
                   <span className="flex-1">{item.label}</span>
-                  {badge > 0 ? <Badge count={badge} /> : null}
                 </Link>
               </li>
             );
@@ -112,7 +111,22 @@ function DesktopSidebar({
         </ul>
       </nav>
 
-      <div className="px-2.5 pb-2">
+      <div className="space-y-0.5 px-2.5 pb-2">
+        {alertCount > 0 ? (
+          <Link
+            href="/admin/ilmoitukset"
+            className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium"
+            style={{
+              background: isActive("/admin/ilmoitukset") ? "var(--rf-inset)" : "transparent",
+              color: "var(--rf-text-2)",
+            }}
+          >
+            <RfIcon name="bell" size={17} />
+            <span className="flex-1">Huomiot</span>
+            <Badge count={alertCount} />
+          </Link>
+        ) : null}
+
         <Link
           href="/app"
           className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13px] font-medium"
@@ -163,8 +177,9 @@ function DesktopSidebar({
  */
 function MobileBar({ items, alertCount }: { items: NavItems; alertCount: number }) {
   const isActive = useActive();
-  const primary = items.slice(0, 4);
-  const hasMore = items.length > 4;
+  const primary = items;
+  // Lisää on aina mukana: sen takana ovat asetukset ja uloskirjautuminen.
+  const hasMore = true;
 
   return (
     <nav

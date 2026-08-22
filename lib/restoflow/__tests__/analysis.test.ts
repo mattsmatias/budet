@@ -5,6 +5,8 @@ import { supplierTrends, totalsBySupplier, suggestedCategory } from "../supplier
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
 import { compareShift, formatVariance, shiftDurationMinutes, timeToMinutes, variancePatterns } from "../shifts";
 import {
+  moreNavFor,
+  primaryNavFor,
   adminNavFor,
   can,
   canAddReceipts,
@@ -478,6 +480,47 @@ describe("oikeudet", () => {
     const required = capabilityForPath(landing);
     expect(required).not.toBeNull();
     expect(can("accountant", required!)).toBe(true);
+  });
+
+  /**
+   * Tämä on koko ROUTE_ACCESS-jaon syy. Valikosta piilotettu reitti on
+   * yhä olemassa ja osoitteen voi kirjoittaa itse — jos vaatimus
+   * luettaisiin valikosta, piilottaminen avaisi reitin kaikille.
+   */
+  it("säilyttää pääsytarkistuksen valikosta piilotetuilla reiteillä", () => {
+    const hidden = [
+      "/admin/toimittajat",
+      "/admin/budjetit",
+      "/admin/havainnot",
+      "/admin/ilmoitukset",
+    ];
+
+    const navHrefs = adminNavFor("owner").map((entry) => entry.href);
+
+    for (const path of hidden) {
+      expect(navHrefs).not.toContain(path);
+
+      const required = capabilityForPath(path);
+      expect(required).not.toBeNull();
+      expect(can("employee", required!)).toBe(false);
+    }
+  });
+
+  it("pitää päävalikon seitsemässä kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(7);
+    expect(primaryNavFor("owner")).toHaveLength(4);
+  });
+
+  /** Ylivuotovalikkoon ei saa jäädä kahdesti samaa kohtaa. */
+  it("ei toista kohtaa ylivuotovalikossa", () => {
+    const hrefs = moreNavFor("owner").map((entry) => entry.href);
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+  });
+
+  it("suodattaa ylivuotovalikon rooleittain", () => {
+    const accountant = moreNavFor("accountant").map((entry) => entry.href);
+    expect(accountant).toContain("/admin/budjetit");
+    expect(accountant).not.toContain("/admin/tyontekijat");
   });
 
   it("estää kirjanpitäjältä työvuorot", () => {

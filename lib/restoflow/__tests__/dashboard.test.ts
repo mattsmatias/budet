@@ -6,6 +6,7 @@ import {
   compareHours,
   compareToPreviousMonth,
   evaluability,
+  focusItems,
   hasChartHistory,
   receiptSplit,
   staffCostShare,
@@ -257,5 +258,49 @@ describe("kaavion historia", () => {
     ];
 
     expect(hasChartHistory(withFuture, "2026-08")).toBe(false);
+  });
+});
+
+describe("yhdistetty huomiolista", () => {
+  /** Hyvä uutinen ei kuulu listaan jonka otsikko on "vaatii huomiota". */
+  it("ottaa mukaan vain seurattavat havainnot", () => {
+    const items = focusItems(input(), [
+      { id: "hyva", tone: "good", title: "Hienoa", detail: "x", href: "/admin" },
+      { id: "seuraa", tone: "watch", title: "Kulut nousivat", detail: "y", href: "/admin/kulut" },
+      { id: "neutraali", tone: "neutral", title: "Tasan", detail: "z", href: "/admin" },
+    ]);
+
+    expect(items.map((i) => i.id)).toEqual(["seuraa"]);
+  });
+
+  /** Todettu puute on kiireellisempi kuin suunta. */
+  it("järjestää hälytykset havaintojen edelle", () => {
+    const ctx = input({
+      receipts: [
+        receipt({
+          totalCents: 5000,
+          date: "2026-08-04",
+          status: "needs_review",
+          reviewReasons: ["vat_missing"],
+          vatCents: null,
+        }),
+      ],
+    });
+
+    const items = focusItems(ctx, [
+      { id: "havainto", tone: "watch", title: "Suunta", detail: "x", href: "/admin/kulut" },
+    ]);
+
+    expect(items.length).toBeGreaterThan(1);
+    expect(items[items.length - 1].id).toBe("havainto");
+    expect(items[0].severity).not.toBe("info");
+  });
+
+  it("antaa jokaiselle kohteelle polun", () => {
+    const items = focusItems(input(), [
+      { id: "ilman", tone: "watch", title: "Ei polkua", detail: "x" },
+    ]);
+
+    expect(items[0].href).toBe("/admin/kulut");
   });
 });

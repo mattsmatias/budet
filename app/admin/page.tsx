@@ -4,13 +4,13 @@ import {
   attention,
   budgetLines,
   compareToPreviousMonth,
-  hasChartHistory,
+  focusItems,
   receiptSplit,
   staffCostShare,
 } from "@/lib/restoflow/dashboard";
+import { buildInsights } from "@/lib/restoflow/insights";
 import {
   formatMonth,
-  monthlySeries,
   periodTotals,
   previousMonth,
   receiptsInMonth,
@@ -85,10 +85,19 @@ export default async function AdminDashboard({
   );
   const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
 
-  const focus = attention({
+  const dashboardInput = {
     receipts, budgets, shifts, users, clockEvents,
     month: viewMonth, today,
-  });
+  };
+
+  const focus = attention(dashboardInput);
+
+  // Havainnot syötetään samaan listaan. Käyttäjän kannalta ero
+  // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
+  // asioita joihin pitää reagoida, ja kahdesta listasta toinen jäisi
+  // katsomatta.
+  const insights = buildInsights({ ...dashboardInput, now });
+  const items = focusItems(dashboardInput, insights);
 
   const budgets_ = budgetLines(receipts, budgets, viewMonth);
 
@@ -128,9 +137,6 @@ export default async function AdminDashboard({
     .sort((a, b) => (a.since ?? "").localeCompare(b.since ?? ""));
 
   const staffCount = users.filter((u) => u.position !== null).length;
-  const series = monthlySeries(receipts, viewMonth, 6);
-  const showChart = hasChartHistory(receipts, viewMonth);
-  const peak = Math.max(...series.map((point) => point.totalCents), 1);
 
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0] ?? "";
 
@@ -244,7 +250,7 @@ export default async function AdminDashboard({
       </section>
 
       {/* 3. Vaatii huomiota — kolme eri tilaa */}
-      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <section>
         <div
           className="px-5 py-5"
           style={{
@@ -298,7 +304,7 @@ export default async function AdminDashboard({
             <>
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="text-[16px] font-semibold">
-                  Vaatii huomiota · {focus.alerts.length}
+                  Vaatii huomiota · {items.length}
                 </h2>
                 <Link
                   href="/admin/ilmoitukset"
@@ -310,7 +316,7 @@ export default async function AdminDashboard({
               </div>
 
               <ul className="mt-4 space-y-3">
-                {focus.alerts.slice(0, 4).map((alert) => (
+                {items.slice(0, 5).map((alert) => (
                   <li key={alert.id}>
                     <Link
                       href={alert.href}
@@ -339,38 +345,19 @@ export default async function AdminDashboard({
                 ))}
               </ul>
 
-              {focus.alerts.length > 4 ? (
-                <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                  Ja {focus.alerts.length - 4} muuta.
-                </p>
+              {items.length > 5 ? (
+                <Link
+                  href="/admin/ilmoitukset"
+                  className="mt-3 block text-[12px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  Ja {items.length - 5} muuta →
+                </Link>
               ) : null}
             </>
           )}
         </div>
 
-        {/* 4. Myynti — ei keksitä sitä mitä ei nähdä */}
-        <div
-          className="px-5 py-5"
-          style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: "var(--rf-r-card)",
-          }}
-        >
-          <h2 className="text-[16px] font-semibold">Myyntidata ei ole yhdistetty</h2>
-          <p
-            className="mt-1.5 text-[13px] leading-relaxed"
-            style={{ color: "var(--rf-text-2)" }}
-          >
-            RestoFlow ei lue kassajärjestelmää, joten se ei voi näyttää
-            myyntiä, tulosta eikä katetta. Kaikki näkymän luvut tarkoittavat
-            kirjattuja kuluja.
-          </p>
-          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Rajaus on tarkoituksellinen. Kannattavuutta ei lasketa arvaamalla
-            myyntiä — väärä katemarginaali on pahempi kuin puuttuva.
-          </p>
-        </div>
       </section>
 
       {/* 5 & 6. Mihin ja kenelle */}
@@ -616,55 +603,9 @@ export default async function AdminDashboard({
         )}
       </Panel>
 
-      {/* 10. Kaavio vain jos historiaa on */}
-      <Panel
-        title="Kulujen kehitys"
-        subtitle={showChart ? "Kuusi kuukautta · kirjatut kulut" : undefined}
-        href={showChart ? "/admin/kulut" : undefined}
-      >
-        {!showChart ? (
-          <PanelEmpty text="Kun dataa kertyy kolmelta kuukaudelta, näet tästä kulujen kehityksen. Yhden kuukauden pylväs ei kerro suunnasta mitään." />
-        ) : (
-          <div className="flex h-40 items-end gap-2 sm:gap-3">
-            {series.map((point) => {
-              const height = Math.max(3, (point.totalCents / peak) * 100);
-              const isView = point.month === viewMonth;
-
-              return (
-                <div key={point.month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <span
-                    className="rf-tabular text-[11px]"
-                    style={{ color: "var(--rf-text-3)" }}
-                  >
-                    {point.totalCents === 0 ? "—" : compactMoney(point.totalCents)}
-                  </span>
-                  <div
-                    className="rf-bar w-full"
-                    role="img"
-                    aria-label={`${formatMonth(point.month)}: ${formatMoney(point.totalCents)}`}
-                    style={{
-                      height: `${height}%`,
-                      background: "var(--rf-text)",
-                      opacity: isView ? 0.85 : 0.22,
-                      borderRadius: "6px 6px 2px 2px",
-                    }}
-                  />
-                  <span
-                    className="truncate text-[11px]"
-                    style={{ color: isView ? "var(--rf-text)" : "var(--rf-text-3)" }}
-                  >
-                    {monthWord(point.month).slice(0, 3)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Panel>
-
       <p className="px-1 pb-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Kaikki luvut ovat RestoFlow&rsquo;hun kirjattuja kuluja. Sovellus ei näe
-        kassaa eikä pankkitiliä.
+        Budet seuraa kirjattuja kuluja. Myyntidata ei ole yhdistetty, joten
+        tulosta ja katetta ei lasketa.
         {isCurrentMonth ? "" : ` Katselet mennyttä kuukautta — työaika ja henkilöstökulu näkyvät vain kuluvalta.`}
       </p>
     </div>
@@ -712,11 +653,4 @@ function round(hours: number): string {
 function formatDate(isoDate: string): string {
   const [, m, d] = isoDate.split("-");
   return `${Number(d)}.${Number(m)}.`;
-}
-
-/** "17,3 t€" — pylvään päälle mahtuva muoto. */
-function compactMoney(cents: number): string {
-  const euros = cents / 100;
-  if (euros < 1000) return `${Math.round(euros)} €`;
-  return `${(euros / 1000).toFixed(1).replace(".", ",")} t€`;
 }

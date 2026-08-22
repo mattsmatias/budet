@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { requireContext } from "@/lib/restoflow/session";
-import { adminNavFor, landingFor } from "@/lib/restoflow/permissions";
+import { landingFor, moreNavFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
@@ -18,11 +18,11 @@ export const metadata = { title: "Lisää" };
 export default async function AdminMorePage() {
   const { user, restaurant, role } = await requireContext("/admin/lisaa");
 
-  const items = adminNavFor(role);
+  const items = moreNavFor(role);
 
   // Ilman yhtäkään hallintanäkymää tämä sivu on tyhjä kuori.
   if (items.length === 0) redirect(landingFor(role));
-  const overflow = items.slice(4);
+  const overflow = items;
   const name = user.fullName ?? user.email ?? "Käyttäjä";
 
   return (
@@ -73,6 +73,20 @@ export default async function AdminMorePage() {
         <SectionLabel>Muuta</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <li>
+              <Link
+                href="/admin/ilmoitukset"
+                className="flex items-center gap-3 px-5 py-3.5"
+              >
+                <span style={{ color: "var(--rf-text-2)" }}>
+                  <RfIcon name="bell" size={20} />
+                </span>
+                <span className="flex-1 text-[15px] font-medium">Huomiot</span>
+                <span style={{ color: "var(--rf-text-3)" }}>
+                  <RfIcon name="chevron" size={16} />
+                </span>
+              </Link>
+            </li>
             <li>
               <Link href="/app" className="flex items-center gap-3 px-5 py-3.5">
                 <span style={{ color: "var(--rf-text-2)" }}>

@@ -117,8 +117,44 @@ export function seesPayRates(role: Role): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Navigaatio
+// Reitit ja navigaatio
 // ---------------------------------------------------------------------------
+//
+// Kaksi eri asiaa, jotka on pidettävä erillään:
+//
+//   ROUTE_ACCESS  — mitä oikeutta polku vaatii. Kattaa KAIKKI reitit,
+//                   myös ne joita ei näytetä valikossa.
+//   ADMIN_NAV     — mitä valikossa näkyy. Osajoukko edellisestä.
+//
+// Aiemmin nämä olivat sama lista, mikä tuntui siistiltä mutta oli ansa:
+// reitin poistaminen valikosta olisi poistanut siltä myös
+// pääsytarkistuksen. Valikon sisältö on tuotepäätös, pääsy ei.
+
+export interface RouteAccess {
+  href: string;
+  requires: Capability;
+}
+
+/**
+ * Jokainen hallintareitti ja sen vaatimus.
+ *
+ * Uusi sivu on lisättävä tänne. Jos se puuttuu, se perii lähimmän
+ * ylemmän polun vaatimuksen — /admin-juuren — eli sulkeutuu eikä jää
+ * auki. Fail closed on tässä oikea oletus.
+ */
+export const ROUTE_ACCESS: RouteAccess[] = [
+  { href: "/admin", requires: "expenses.view" },
+  { href: "/admin/kuitit", requires: "receipts.view" },
+  { href: "/admin/kulut", requires: "expenses.view" },
+  { href: "/admin/toimittajat", requires: "suppliers.view" },
+  { href: "/admin/budjetit", requires: "budgets.view" },
+  { href: "/admin/tyovuorot", requires: "shifts.view.all" },
+  { href: "/admin/tyontekijat", requires: "staff.view" },
+  { href: "/admin/havainnot", requires: "expenses.view" },
+  { href: "/admin/raportit", requires: "reports.view" },
+  { href: "/admin/ilmoitukset", requires: "alerts.view" },
+  { href: "/admin/asetukset", requires: "settings.view" },
+];
 
 export interface NavEntry {
   href: string;
@@ -128,17 +164,38 @@ export interface NavEntry {
   requires: Capability;
 }
 
+/**
+ * Päänavigaatio: seitsemän kohtaa, ei enempää.
+ *
+ * Toimittajat, Budjetit, Havainnot ja Ilmoitukset ovat pudonneet pois.
+ * Ne eivät ole vähemmän tärkeitä vaan väärässä paikassa: ne ovat
+ * kulujen ja poikkeamien *analyysiä*, eivät erillisiä tehtäviä.
+ * Käyttäjä ei avaa sovellusta katsoakseen "havaintoja" — hän avaa sen
+ * nähdäkseen mitä pitää tehdä. Yhdentoista kohdan valikossa se hukkuu.
+ *
+ * Reitit ovat yhä olemassa ja niihin päästään sieltä missä ne ovat
+ * merkityksellisiä: yleiskuvan osioista, hälytysten linkeistä ja
+ * kellokuvakkeesta.
+ */
 export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin", label: "Yleiskuva", icon: "overview", requires: "expenses.view" },
   { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view" },
   { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view" },
-  { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view" },
-  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
-  { href: "/admin/havainnot", label: "Havainnot", icon: "trend", requires: "expenses.view" },
   { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
-  { href: "/admin/ilmoitukset", label: "Huomiot", icon: "bell", requires: "alerts.view" },
+  { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },
+];
+
+/**
+ * Puhelimen ylivuotovalikko.
+ *
+ * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
+ */
+export const MORE_NAV: NavEntry[] = [
+  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view" },
+  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view" },
+  { href: "/admin/raportit", label: "Raportit", icon: "report", requires: "reports.view" },
   { href: "/admin/asetukset", label: "Asetukset", icon: "settings", requires: "settings.view" },
 ];
 
@@ -146,18 +203,33 @@ export function adminNavFor(role: Role): NavEntry[] {
   return ADMIN_NAV.filter((entry) => can(role, entry.requires));
 }
 
+/** Puhelimen alapalkin neljä ensimmäistä kohtaa. */
+export function primaryNavFor(role: Role): NavEntry[] {
+  return adminNavFor(role).slice(0, 4);
+}
+
+/** Ylivuotovalikon kohdat: mitä ei mahtunut alapalkkiin. */
+export function moreNavFor(role: Role): NavEntry[] {
+  const primary = new Set(primaryNavFor(role).map((entry) => entry.href));
+
+  return [
+    ...adminNavFor(role).filter((entry) => !primary.has(entry.href)),
+    ...MORE_NAV.filter((entry) => can(role, entry.requires)),
+  ].filter(
+    (entry, index, all) => all.findIndex((e) => e.href === entry.href) === index,
+  );
+}
+
 /**
  * Mitä oikeutta polku vaatii.
  *
- * Sama taulukko kuin navigaatiossa. Jos valikko ja pääsytarkistus
- * lukisivat eri listaa, ne ajautuisivat ennen pitkää eri linjalle ja
- * piilotettu linkki näyttäisi turvatoimelta olematta sellainen.
- *
- * Pisin osuma voittaa, jotta /admin/toimittajat/xyz perii
- * /admin/toimittajat-vaatimuksen eikä osu /admin-juureen.
+ * Luetaan ROUTE_ACCESS:sta eikä valikosta, jotta valikosta piilotettu
+ * reitti ei menetä pääsytarkistustaan. Pisin osuma voittaa, jotta
+ * /admin/toimittajat/xyz perii /admin/toimittajat-vaatimuksen eikä osu
+ * /admin-juureen.
  */
 export function capabilityForPath(path: string): Capability | null {
-  const matches = ADMIN_NAV.filter(
+  const matches = ROUTE_ACCESS.filter(
     (entry) => path === entry.href || path.startsWith(`${entry.href}/`),
   ).sort((a, b) => b.href.length - a.href.length);
 

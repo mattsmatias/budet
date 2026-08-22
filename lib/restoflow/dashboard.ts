@@ -14,6 +14,7 @@
 import { alertCounts, buildAlerts } from "./alerts";
 import { budgetProgress } from "./budgets";
 import { findDuplicates } from "./duplicates";
+import type { Insight } from "./insights";
 import {
   needsReview,
   periodTotals,
@@ -277,4 +278,64 @@ export function hasChartHistory(receipts: Receipt[], month: string): boolean {
 /** Kaksoiskappaleiden määrä yhteenvetoon. */
 export function duplicateCount(receipts: Receipt[]): number {
   return findDuplicates(receipts).length;
+}
+
+// ---------------------------------------------------------------------------
+// Yhdistetty huomiolista
+// ---------------------------------------------------------------------------
+
+export type FocusSeverity = "critical" | "warning" | "info";
+
+export interface FocusItem {
+  id: string;
+  severity: FocusSeverity;
+  title: string;
+  detail: string;
+  href: string;
+}
+
+/**
+ * Hälytykset ja havainnot yhtenä listana.
+ *
+ * Käyttäjän kannalta ero on keinotekoinen: "kuitti odottaa tarkistusta"
+ * ja "ruokakulut nousivat 18 %" ovat molemmat asioita joihin pitää
+ * reagoida. Kaksi erillistä näkymää pakottaisi katsomaan kahdesta
+ * paikasta, ja toinen niistä jäisi katsomatta.
+ *
+ * Hälytykset ensin: ne ovat todettuja puutteita. Havainnot ovat
+ * suuntia, ja suunta on harvoin yhtä kiireellinen kuin puuttuva ALV.
+ */
+export function focusItems(
+  input: DashboardInput,
+  insights: Insight[],
+): FocusItem[] {
+  const alerts = attention(input).alerts.map((alert) => ({
+    id: alert.id,
+    severity: alert.severity as FocusSeverity,
+    title: alert.title,
+    detail: alert.detail,
+    href: alert.href,
+  }));
+
+  // Vain seurattavat havainnot: "budjetit pysyvät tahdissa" on hyvä
+  // uutinen eikä kuulu listaan jonka otsikko on "vaatii huomiota".
+  const watch = insights
+    .filter((insight) => insight.tone === "watch")
+    .map((insight) => ({
+      id: insight.id,
+      severity: "info" as const,
+      title: insight.title,
+      detail: insight.detail,
+      href: insight.href ?? "/admin/kulut",
+    }));
+
+  const order: Record<FocusSeverity, number> = {
+    critical: 0,
+    warning: 1,
+    info: 2,
+  };
+
+  return [...alerts, ...watch].sort(
+    (a, b) => order[a.severity] - order[b.severity],
+  );
 }

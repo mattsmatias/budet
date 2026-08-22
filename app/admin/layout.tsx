@@ -56,12 +56,21 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </p>
           </Link>
           <Link
-            href="/admin/lisaa"
-            aria-label="Lisää"
-            className="rf-press p-2"
+            href="/admin/ilmoitukset"
+            aria-label={
+              alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
+            }
+            className="rf-press relative p-2"
             style={{ color: "var(--rf-text-2)" }}
           >
-            <RfIcon name="settings" size={20} />
+            <RfIcon name="bell" size={20} />
+            {alerts.length > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full"
+                style={{ background: "var(--rf-red)" }}
+              />
+            ) : null}
           </Link>
         </header>
 
