@@ -9,7 +9,6 @@ import { MonthPicker } from "../month-picker";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
-  ScopeNotice,
   Icon,
   ICONS,
   Avatar,
@@ -89,12 +88,6 @@ export default async function ReportsPage({
 
         <MonthPicker value={viewMonth} months={selectable} />
       </div>
-
-      <ScopeNotice>
-        CSV käyttää puolipistettä erottimena ja UTF-8-tunnistetta, joten
-        suomalainen Excel avaa sen suoraan oikein. Luvut ovat kuittiaineistosta,
-        eivät kassasta — raportti kertoo mitä on kirjattu, ei mitä on myyty.
-      </ScopeNotice>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
         {REPORTS.map((report) => (
@@ -204,8 +197,10 @@ export default async function ReportsPage({
           style={{ color: "var(--rf-text-2)" }}
         >
           Excel-tiedostossa summat ovat lukuja, joten niillä voi laskea heti.
-          CSV:ssä kaikki on tekstiä. Molemmat rakennetaan samasta lähteestä,
-          joten luvut eivät voi erota toisistaan.
+          CSV:ssä kaikki on tekstiä, ja se käyttää puolipistettä erottimena
+          sekä UTF-8-tunnistetta — suomalainen Excel avaa sen suoraan oikein.
+          Molemmat rakennetaan samasta lähteestä, joten luvut eivät voi erota
+          toisistaan.
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
