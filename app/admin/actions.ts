@@ -518,44 +518,6 @@ async function linkSupplierToMerchant(
   });
 }
 
-/**
- * Käyttäjän valitsema kauppa toimipisteelle.
- *
- * Merkitään vahvistetuksi, jolloin automaattinen tunnistus ei enää
- * koske siihen. Ilman sitä seuraava kuitti samasta kaupasta kumoaisi
- * korjauksen ja käyttäjä tekisi saman työn uudelleen.
- *
- * Tyhjä valinta poistaa liitoksen. Se on eri asia kuin väärä liitos:
- * "ei mikään näistä" on tieto, ei puuttuva vastaus.
- */
-export async function setMerchant(
-  _prev: AdminState,
-  formData: FormData,
-): Promise<AdminState> {
-  const supplierId = String(formData.get("supplierId") ?? "");
-  const merchantId = String(formData.get("merchantId") ?? "");
-
-  if (!supplierId) return { error: "Toimittajaa ei löytynyt." };
-
-  await requireContext("/admin/kuitit");
-  const supabase = await createClient();
-
-  const { error } = await supabase.rpc("set_supplier_merchant", {
-    p_supplier: supplierId,
-    p_merchant: merchantId === "" ? null : merchantId,
-    p_confidence: merchantId === "" ? null : 1,
-    p_confirmed: true,
-  });
-
-  if (error) return { error: explain(error, "Kaupan tallennus epäonnistui") };
-
-  revalidatePath("/admin", "layout");
-
-  return {
-    notice: merchantId === "" ? "Kaupan tieto poistettu." : "Kauppa tallennettu.",
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Asetukset
 // ---------------------------------------------------------------------------

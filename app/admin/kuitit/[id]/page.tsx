@@ -12,7 +12,6 @@ import {
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
-import { MerchantPicker } from "./merchant-picker";
 import { checkVat, formatRate, isMixedReceipt } from "@/lib/restoflow/vat";
 import {
   CATEGORY_LABELS,
@@ -194,22 +193,6 @@ export default async function AdminReceiptDetailPage({
                     Kauppaa ei tunnistettu
                   </p>
                 )}
-
-                {/* Korjaus on esihenkilön oikeus: tunnistus ohjaa
-                    raportointia, joten sen muuttaminen on kirjanpidon
-                    tietoa eikä mielipide. */}
-                {canReview && supplier ? (
-                  <MerchantPicker
-                    supplierId={supplier.id}
-                    supplierName={receipt.supplierName}
-                    current={supplier.merchantId}
-                    merchants={merchants.map((m) => ({
-                      id: m.id,
-                      name: m.name,
-                      category: m.category,
-                    }))}
-                  />
-                ) : null}
               </div>
             </div>
 
@@ -228,7 +211,6 @@ export default async function AdminReceiptDetailPage({
                   Tarkistettu
                 </Pill>
               )}
-              {mixed ? <Pill tone="info">Sekakuitti</Pill> : null}
             </div>
 
             {canReview && receipt.status === "needs_review" ? (
