@@ -96,13 +96,13 @@ export async function buildReportRows(
 
     if (!showsRates) {
       return [
-        ["RestoFlow — henkilöstökuluraportti"],
+        ["Budet — henkilöstökuluraportti"],
         ["Huom", "Roolisi ei salli tuntipalkkojen tarkastelua"],
       ];
     }
 
     return [
-      ["RestoFlow — henkilöstökuluraportti"],
+      ["Budet — henkilöstökuluraportti"],
       ["Kuukausi", month],
       ["Huom", "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja"],
       [],
@@ -201,7 +201,7 @@ export async function buildReportRows(
       const vat = inMonth.reduce((s, r) => s + (r.vatCents ?? 0), 0);
 
       return [
-        ["RestoFlow — kuluraportti"],
+        ["Budet — kuluraportti"],
         ["Kuukausi", month],
         ["Huom", "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia"],
         [],

@@ -6,7 +6,7 @@ import { Card } from "@/components/restoflow/ui";
 /**
  * Sisääntulo.
  *
- * RestoFlow'lla on kaksi erillistä käyttöliittymää eri käyttäjille:
+ * Budet'lla on kaksi erillistä käyttöliittymää eri käyttäjille:
  * työntekijän mobiilinäkymä ja managerin työpöytänäkymä. Ne eivät ole saman
  * näkymän kokovariantteja vaan eri tuotteita — työntekijän ei kuulu nähdä
  * kulujen kokonaisuutta eikä managerin leimata itseään töihin puhelimen
@@ -20,7 +20,7 @@ export default async function Entry() {
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-5 py-16">
       <div className="flex items-center gap-2.5">
         <Logo />
-        <span className="text-[22px] font-semibold tracking-tight">RestoFlow</span>
+        <span className="text-[22px] font-semibold tracking-tight">Budet</span>
       </div>
 
       <h1 className="mt-8 text-[32px] font-semibold leading-tight tracking-tight">
@@ -33,7 +33,7 @@ export default async function Entry() {
         className="mt-4 max-w-xl text-[15px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        RestoFlow vastaa kolmeen kysymykseen: mihin ravintolan rahat menevät,
+        Budet vastaa kolmeen kysymykseen: mihin ravintolan rahat menevät,
         kuinka paljon työtunteja tehdään ja mitä juuri nyt tapahtuu. Se ei ole
         kassajärjestelmä eikä näe pankkitiliä.
       </p>
@@ -102,7 +102,7 @@ export default async function Entry() {
       )}
 
       <p className="mt-10 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Kaikki luvut tarkoittavat järjestelmään kirjattuja kuluja. RestoFlow ei
+        Kaikki luvut tarkoittavat järjestelmään kirjattuja kuluja. Budet ei
         näe kassaa eikä pankkitiliä.
       </p>
     </div>

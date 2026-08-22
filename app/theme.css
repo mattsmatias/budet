@@ -269,3 +269,11 @@ a:hover > .rf-card-lift,
     transform: none;
   }
 }
+
+/* Taulukon rivi reagoi osoittimeen ilman että se näyttää painikkeelta. */
+.rf-row {
+  transition: background-color 140ms ease;
+}
+.rf-row:hover {
+  background: var(--rf-card-hover);
+}

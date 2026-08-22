@@ -30,14 +30,14 @@ import {
   ButtonLink,
   CategoryBubble,
   Pill,
-  SeverityDot,
 } from "@/components/restoflow/ui";
 import {
+  AttentionPanel,
   BudgetBarLine,
   Donut,
   Panel,
   PanelEmpty,
-  ShareBar,
+  seriesColor,
   Sparkline,
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
@@ -56,7 +56,7 @@ export const metadata = { title: "Yleiskuva" };
  * puuttuva vertailukohta sanotaan ääneen. Keksitty prosentti on pahempi
  * kuin puuttuva prosentti — se saa tekemään päätöksiä.
  *
- * Myyntiä ei näytetä, koska RestoFlow ei näe sitä. Kannattavuutta ei
+ * Myyntiä ei näytetä, koska Budet ei näe sitä. Kannattavuutta ei
  * lasketa ilman myyntiä.
  */
 export default async function AdminDashboard({
@@ -161,7 +161,8 @@ export default async function AdminDashboard({
         <div className="min-w-0">
           <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
             {greeting(now, restaurant.timezone)}
-            {firstName ? `, ${firstName}` : ""}
+            {firstName ? `, ${firstName}` : ""}{" "}
+            <span aria-hidden="true">👋</span>
           </h1>
           <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
             {restaurant.name} · {formatMonth(viewMonth)}
@@ -221,6 +222,7 @@ export default async function AdminDashboard({
           }
           hint="Järjestelmään lisättyjen kuittien summa"
           href="/admin/kulut"
+          icon={<RfIcon name="expenses" size={14} />}
           trend={hasTrend ? <Sparkline values={trend} /> : undefined}
         />
 
@@ -228,7 +230,8 @@ export default async function AdminDashboard({
           label="Kuitit"
           value={String(receipts_.total)}
           conclusion={receipts_.label}
-          tone={receipts_.pending > 0 ? "up" : "neutral"}
+          tone={receipts_.pending > 0 ? "warn" : "neutral"}
+          icon={<RfIcon name="receipt" size={14} />}
           href="/admin/kuitit"
         />
 
@@ -243,6 +246,7 @@ export default async function AdminDashboard({
                 : "Leimauksista laskettu"
           }
           tone="muted"
+          icon={<RfIcon name="clock" size={14} />}
           href="/admin/tyovuorot"
         />
 
@@ -258,6 +262,7 @@ export default async function AdminDashboard({
                   : `${Math.round(costShare * 100)} % kirjatuista kuluista`
             }
             tone="muted"
+            icon={<RfIcon name="staff" size={14} />}
             hint="Tunnit × tuntipalkka. Ei palkkalaskelma."
             href="/admin/tyovuorot"
           />
@@ -269,13 +274,14 @@ export default async function AdminDashboard({
               suppliers.length === 0 ? "Ei vielä toimittajia" : "Kuukauden aikana"
             }
             tone="muted"
+            icon={<RfIcon name="suppliers" size={14} />}
             href="/admin/toimittajat"
           />
         )}
       </section>
 
       {/* 3. Vaatii huomiota — kolme eri tilaa */}
-      <section>
+      {focus.state !== "attention" ? (
         <div
           className="px-5 py-5"
           style={{
@@ -291,7 +297,7 @@ export default async function AdminDashboard({
                 className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                Lisää ensimmäinen kuitti tai määritä budjetit, jotta RestoFlow
+                Lisää ensimmäinen kuitti tai määritä budjetit, jotta Budet
                 voi tunnistaa poikkeamat. Tyhjä aineisto ei tarkoita että
                 kaikki on kunnossa — se tarkoittaa ettei mitään ole vielä
                 tarkastettavana.
@@ -325,65 +331,11 @@ export default async function AdminDashboard({
                 kuluja. Tarkastettu {monthWord(viewMonth)}n aineistosta.
               </p>
             </>
-          ) : (
-            <>
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-[16px] font-semibold">
-                  Vaatii huomiota · {items.length}
-                </h2>
-                <Link
-                  href="/admin/ilmoitukset"
-                  className="shrink-0 text-[13px] font-medium"
-                  style={{ color: "var(--rf-blue)" }}
-                >
-                  Tarkista kaikki →
-                </Link>
-              </div>
-
-              <ul className="mt-4 space-y-3">
-                {items.slice(0, 5).map((alert) => (
-                  <li key={alert.id}>
-                    <Link
-                      href={alert.href}
-                      className="rf-press flex items-start gap-3 border-t pt-3 first:border-0 first:pt-0"
-                      style={{ borderColor: "var(--rf-line)" }}
-                    >
-                      <span className="mt-1 shrink-0">
-                        <SeverityDot severity={alert.severity} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[14px] font-medium">
-                          {alert.title}
-                        </span>
-                        <span
-                          className="block text-[12px] leading-relaxed"
-                          style={{ color: "var(--rf-text-2)" }}
-                        >
-                          {alert.detail}
-                        </span>
-                      </span>
-                      <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                        <RfIcon name="chevron" size={15} />
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              {items.length > 5 ? (
-                <Link
-                  href="/admin/ilmoitukset"
-                  className="mt-3 block text-[12px]"
-                  style={{ color: "var(--rf-text-3)" }}
-                >
-                  Ja {items.length - 5} muuta →
-                </Link>
-              ) : null}
-            </>
-          )}
+          ) : null}
         </div>
-
-      </section>
+      ) : (
+        <AttentionPanel items={items} />
+      )}
 
       {/* 5 & 6. Mihin ja kenelle */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -410,31 +362,33 @@ export default async function AdminDashboard({
                 total={formatMoney(totals.totalCents)}
               />
 
-            <ul className="w-full flex-1 space-y-3.5">
-              {categories.slice(0, 5).map((row) => (
+            <ul className="w-full flex-1 space-y-1">
+              {categories.slice(0, 5).map((row, index) => (
                 <li key={row.key}>
                   <Link
                     href={`/admin/kuitit?suodatin=${row.baseCategory}`}
-                    className="block"
+                    className="rf-press flex items-center justify-between gap-3 rounded-[10px] px-2 py-2"
                   >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="flex min-w-0 items-center gap-2 text-[14px] font-medium">
-                        <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                          <CategoryIcon category={row.baseCategory} size={15} />
-                        </span>
-                        <span className="truncate">{row.name}</span>
-                      </span>
-                      <span className="rf-tabular shrink-0 text-[14px] font-semibold">
+                    <span className="flex min-w-0 items-center gap-2.5 text-[14px]">
+                      <span
+                        aria-hidden="true"
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ background: seriesColor(index) }}
+                      />
+                      <span className="truncate">{row.name}</span>
+                    </span>
+
+                    <span className="flex shrink-0 items-baseline gap-3">
+                      <span className="rf-tabular text-[14px] font-semibold">
                         {formatMoney(row.totalCents)}
-                        <span
-                          className="ml-2 font-normal"
-                          style={{ color: "var(--rf-text-3)" }}
-                        >
-                          {Math.round(row.share * 100)} %
-                        </span>
                       </span>
-                    </div>
-                    <ShareBar share={row.share} />
+                      <span
+                        className="rf-tabular w-10 text-right text-[13px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
+                        {Math.round(row.share * 100)} %
+                      </span>
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -509,29 +463,54 @@ export default async function AdminDashboard({
         >
           {budgets_.length === 0 ? (
             <PanelEmpty
-              text="Budjetteja ei ole määritetty. Aseta kategoriakohtaiset rajat, niin RestoFlow voi tunnistaa ylitykset ajoissa."
+              text="Budjetteja ei ole määritetty. Aseta kategoriakohtaiset rajat, niin Budet voi tunnistaa ylitykset ajoissa."
               cta="Määritä budjetit"
               href="/admin/budjetit"
             />
           ) : (
-            <ul className="space-y-3.5">
+            <ul className="space-y-4">
               {budgets_.slice(0, 5).map((line) => (
-                <li key={line.category}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="truncate text-[14px] font-medium">
-                      {CATEGORY_LABELS[line.category]}
-                    </span>
-                    <span className="rf-tabular shrink-0 text-[13px]">
-                      <span style={{ color: "var(--rf-text-2)" }}>
+                <li key={line.category} className="flex items-start gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    <CategoryIcon category={line.category} size={18} />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="text-[14px] font-medium">
+                        {CATEGORY_LABELS[line.category]}
+                      </span>
+                      <span
+                        className="rf-tabular text-[13px]"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
                         {formatMoney(line.spentCents)} / {formatMoney(line.budgetCents)}
                       </span>
-                      <span className="ml-2 font-semibold">{line.percent} %</span>
                     </span>
-                  </div>
-                  <BudgetBarLine tone={line.tone} ratio={line.ratio} />
-                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                    {line.label}
-                  </p>
+
+                    <BudgetBarLine tone={line.tone} ratio={line.ratio} />
+
+                    <span className="mt-1.5 flex items-center justify-between gap-3">
+                      <span className="rf-tabular text-[13px] font-semibold">
+                        {line.percent} %
+                      </span>
+                      <Pill
+                        tone={
+                          line.tone === "over" || line.tone === "critical"
+                            ? "risk"
+                            : line.tone === "warning"
+                              ? "warn"
+                              : "ok"
+                        }
+                      >
+                        {line.label}
+                      </Pill>
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -610,45 +589,123 @@ export default async function AdminDashboard({
             href="/admin/kuitit/uusi"
           />
         ) : (
-          <ul>
-            {recent.map((receipt) => (
-              <li key={receipt.id}>
-                <Link
-                  href={`/admin/kuitit/${receipt.id}`}
-                  className="rf-press flex items-center gap-3 border-t py-3 first:border-0 first:pt-0"
-                  style={{ borderColor: "var(--rf-line)" }}
-                >
-                  <CategoryBubble category={receipt.category} size={34} />
+          <>
+            {/* Työpöydällä taulukko: viisi saraketta rinnakkain on
+                nopeampi silmäillä kuin viisi korttia allekkain.
+                Puhelimessa sama tieto ei mahdu riville, joten siellä
+                kortit. */}
+            <div className="hidden md:block">
+              <table className="w-full text-[14px]">
+                <caption className="sr-only">Viimeisimmät kuitit</caption>
+                <thead>
+                  <tr
+                    className="border-b text-left text-[12px]"
+                    style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
+                  >
+                    <th scope="col" className="pb-2 font-medium">Toimittaja</th>
+                    <th scope="col" className="pb-2 text-right font-medium">Summa</th>
+                    <th scope="col" className="pb-2 pl-6 font-medium">Kategoria</th>
+                    <th scope="col" className="pb-2 pl-6 font-medium">Päivämäärä</th>
+                    <th scope="col" className="pb-2 pl-6 font-medium">Tila</th>
+                    <th scope="col" className="pb-2" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                  {recent.map((receipt) => (
+                    <tr key={receipt.id} className="rf-row">
+                      <td className="py-3">
+                        <Link
+                          href={`/admin/kuitit/${receipt.id}`}
+                          className="font-medium underline-offset-4 hover:underline"
+                        >
+                          {receipt.supplierName}
+                        </Link>
+                      </td>
+                      <td className="rf-tabular py-3 text-right font-semibold">
+                        {formatMoney(receipt.totalCents)}
+                      </td>
+                      <td className="py-3 pl-6" style={{ color: "var(--rf-text-2)" }}>
+                        {CATEGORY_LABELS[receipt.category]}
+                      </td>
+                      <td
+                        className="rf-tabular py-3 pl-6"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
+                        {formatDate(receipt.date)}
+                      </td>
+                      <td className="py-3 pl-6">
+                        {receipt.status === "needs_review" ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-[13px]"
+                            style={{ color: "var(--rf-amber-text)" }}
+                          >
+                            <RfIcon name="alert" size={14} />
+                            Tarkistettava
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-[13px]"
+                            style={{ color: "var(--rf-green-text)" }}
+                          >
+                            <RfIcon name="check" size={14} />
+                            Tarkistettu
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right" style={{ color: "var(--rf-text-3)" }}>
+                        <Link
+                          href={`/admin/kuitit/${receipt.id}`}
+                          aria-label={`Avaa ${receipt.supplierName}`}
+                        >
+                          <RfIcon name="chevron" size={15} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">
-                      {receipt.supplierName}
-                    </span>
-                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {CATEGORY_LABELS[receipt.category]} · {formatDate(receipt.date)}
-                    </span>
-                  </span>
+            <ul className="md:hidden">
+              {recent.map((receipt) => (
+                <li key={receipt.id}>
+                  <Link
+                    href={`/admin/kuitit/${receipt.id}`}
+                    className="rf-press flex items-center gap-3 border-t py-3 first:border-0 first:pt-0"
+                    style={{ borderColor: "var(--rf-line)" }}
+                  >
+                    <CategoryBubble category={receipt.category} size={34} />
 
-                  <span className="shrink-0 text-right">
-                    <span className="rf-tabular block text-[14px] font-semibold">
-                      {formatMoney(receipt.totalCents)}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium">
+                        {receipt.supplierName}
+                      </span>
+                      <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                        {CATEGORY_LABELS[receipt.category]} · {formatDate(receipt.date)}
+                      </span>
                     </span>
-                    <span className="mt-1 block">
-                      {receipt.status === "needs_review" ? (
-                        <Pill tone="warn" dot>
-                          Tarkistettava
-                        </Pill>
-                      ) : (
-                        <Pill tone="ok" dot>
-                          Tarkistettu
-                        </Pill>
-                      )}
+
+                    <span className="shrink-0 text-right">
+                      <span className="rf-tabular block text-[14px] font-semibold">
+                        {formatMoney(receipt.totalCents)}
+                      </span>
+                      <span className="mt-1 block">
+                        {receipt.status === "needs_review" ? (
+                          <Pill tone="warn" dot>
+                            Tarkistettava
+                          </Pill>
+                        ) : (
+                          <Pill tone="ok" dot>
+                            Tarkistettu
+                          </Pill>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </Panel>
 

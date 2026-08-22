@@ -1,5 +1,5 @@
 /**
- * RestoFlow'n domain-tyypit.
+ * Budet'n domain-tyypit.
  *
  * Rakenne:
  *   Restaurant → Membership → User (rooli)

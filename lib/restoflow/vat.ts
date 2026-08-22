@@ -1,7 +1,7 @@
 /**
  * ALV:n tarkistus.
  *
- * RestoFlow EI aseta verokantaa käyttäjän puolesta eikä korjaa poimittua
+ * Budet EI aseta verokantaa käyttäjän puolesta eikä korjaa poimittua
  * arvoa. Se vertaa poimittua ALV:tä kategorian odotettuun kantaan ja
  * merkitsee ristiriidan tarkistettavaksi. Ero on olennainen: automaattinen
  * "korjaus" tuottaisi hiljaa väärän kirjauksen, kun taas merkintä pyytää

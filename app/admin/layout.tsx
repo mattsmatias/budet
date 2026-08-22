@@ -74,7 +74,50 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </Link>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-24 md:px-6 md:py-7 md:pb-7">
+        {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
+            puhelimessa, jotta ilmoitukset löytyvät samasta paikasta. */}
+        <div className="hidden justify-end gap-2 px-6 pt-5 md:flex">
+          <Link
+            href="/admin/ilmoitukset"
+            aria-label={
+              alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"
+            }
+            className="rf-press relative flex h-9 w-9 items-center justify-center"
+            style={{
+              background: "var(--rf-card)",
+              border: "1px solid var(--rf-line)",
+              color: "var(--rf-text-2)",
+              borderRadius: "50%",
+            }}
+          >
+            <RfIcon name="bell" size={17} />
+            {alerts.length > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"
+                style={{
+                  background: "var(--rf-red)",
+                  border: "2px solid var(--rf-bg)",
+                }}
+              />
+            ) : null}
+          </Link>
+
+          <span
+            aria-hidden="true"
+            title={userName}
+            className="flex h-9 w-9 items-center justify-center text-[13px] font-semibold"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text-2)",
+              borderRadius: "50%",
+            }}
+          >
+            {userName.trim().charAt(0).toUpperCase() || "?"}
+          </span>
+        </div>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-24 md:px-6 md:pb-7 md:pt-4">
           {children}
         </main>
       </div>

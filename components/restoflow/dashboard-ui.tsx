@@ -240,6 +240,30 @@ export function Sparkline({
 
 // ---------------------------------------------------------------------------
 
+
+/**
+ * Jakauman värit.
+ *
+ * Erillinen sarja tilaväreistä. Jos kategoriat käyttäisivät samaa
+ * vihreää joka muualla tarkoittaa "kunnossa", lukija oppisi
+ * lukemaan siitä merkityksen jota siinä ei ole. Nämä erottavat
+ * siivut toisistaan, eivät kerro mitään tilasta.
+ *
+ * Viisi riittää: kuudes kategoria menee "Muut"-harmaaseen, koska
+ * silmä ei erota kymmentä sävyä piirakasta.
+ */
+export const SERIES_COLORS = [
+  "#315bff",
+  "#6c5ce7",
+  "#16a36a",
+  "#f59e0b",
+  "#94a3b8",
+] as const;
+
+export function seriesColor(index: number): string {
+  return SERIES_COLORS[Math.min(index, SERIES_COLORS.length - 1)];
+}
+
 export interface DonutSlice {
   key: string;
   label: string;
@@ -250,13 +274,15 @@ export interface DonutSlice {
 /**
  * Kulujakauman donitsi.
  *
- * Harmaasävyinen tarkoituksella. Värillinen piirakka näyttäisi
- * raportilta ja rikkoisi säännön jonka mukaan väri merkitsee tilaa —
- * "ruoka on suurin kategoria" ei ole tila josta pitäisi hälyttää.
- * Sävyero riittää erottamaan siivut, ja nimet lukevat vieressä.
+ * Viisi siivua, ei enempää. Kuudes menisi harmaaseen "Muut"-siivuun,
+ * koska silmä ei erota kymmentä sävyä piirakasta — ja jos erottaisi,
+ * se ei silti muistaisi mikä on mikä.
  *
- * Keskellä on kokonaissumma: se on ainoa luku jonka donitsi kertoo
- * paremmin kuin lista.
+ * Värit ovat sarjan erottimia eivätkä tilavärejä. Nimet ja summat
+ * lukevat vieressä listassa, joten väri ei kanna tietoa yksin.
+ *
+ * Keskellä on kokonaissumma: ainoa luku jonka donitsi kertoo listaa
+ * paremmin.
  */
 export function Donut({
   slices,
@@ -305,12 +331,11 @@ export function Donut({
                 cy={size / 2}
                 r={radius}
                 fill="none"
-                stroke="var(--rf-text)"
+                stroke={seriesColor(index)}
                 strokeWidth={stroke}
                 strokeDasharray={dash}
                 strokeDashoffset={-offset}
-                // Sävyt tummasta vaaleaan suuruusjärjestyksessä.
-                opacity={Math.max(0.18, 0.9 - index * 0.16)}
+                strokeLinecap="butt"
               />
             );
           })}
@@ -326,5 +351,114 @@ export function Donut({
         </span>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export interface AttentionEntry {
+  id: string;
+  severity: "critical" | "warning" | "info";
+  title: string;
+  detail: string;
+  href: string;
+}
+
+/**
+ * "Vaatii huomiota" -paneeli.
+ *
+ * Lämmin pohja erottaa sen muusta sivusta ilman että se huutaa.
+ * Punainen paneeli tekisi jokaisesta tarkistamattomasta kuitista
+ * hälytyksen, ja käyttäjä oppisi ohittamaan sen viikossa.
+ *
+ * Kohteet ovat rinnakkain omina kortteinaan: pystylista näyttää
+ * jonolta jota pitää käydä läpi järjestyksessä, kortit näyttävät
+ * asioilta joista voi valita.
+ */
+export function AttentionPanel({
+  items,
+  href = "/admin/ilmoitukset",
+}: {
+  items: AttentionEntry[];
+  href?: string;
+}) {
+  const dot = (severity: AttentionEntry["severity"]) =>
+    severity === "critical"
+      ? "var(--rf-red)"
+      : severity === "warning"
+        ? "var(--rf-amber)"
+        : "var(--rf-accent)";
+
+  return (
+    <section
+      className="px-5 py-5"
+      style={{
+        background: "var(--rf-amber-bg)",
+        border: "1px solid rgba(245, 158, 11, 0.22)",
+        borderRadius: "var(--rf-r-card)",
+      }}
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2.5 text-[16px] font-semibold">
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 items-center justify-center"
+            style={{
+              background: "var(--rf-amber)",
+              color: "var(--rf-on-accent)",
+              borderRadius: "50%",
+            }}
+          >
+            <RfIcon name="alert" size={16} strokeWidth={2} />
+          </span>
+          Vaatii huomiota · {items.length}
+        </h2>
+
+        <Link
+          href={href}
+          className="shrink-0 whitespace-nowrap text-[13px] font-medium"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          Näytä kaikki →
+        </Link>
+      </div>
+
+      <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.slice(0, 6).map((item) => (
+          <li key={item.id}>
+            <Link
+              href={item.href}
+              className="rf-press flex h-full items-start gap-2.5 px-3.5 py-3"
+              style={{
+                background: "var(--rf-card)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <span
+                aria-hidden="true"
+                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                style={{ background: dot(item.severity) }}
+              />
+
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-medium leading-snug">
+                  {item.title}
+                </span>
+                <span
+                  className="mt-0.5 block text-[12px] leading-snug"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {item.detail}
+                </span>
+              </span>
+
+              <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                <RfIcon name="chevron" size={14} />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

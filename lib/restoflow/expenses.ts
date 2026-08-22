@@ -1,7 +1,7 @@
 /**
  * Kulujen koonti.
  *
- * TÄRKEÄ RAJAUS: RestoFlow ei näe pankkitiliä eikä kassaa. Kaikki luvut
+ * TÄRKEÄ RAJAUS: Budet ei näe pankkitiliä eikä kassaa. Kaikki luvut
  * tarkoittavat *kirjattuja kuluja* — järjestelmään lisättyjen kuittien
  * summaa. Käyttöliittymän on sanottava tämä ääneen, jottei kukaan lue
  * lukua ravintolan taloudellisena tuloksena.

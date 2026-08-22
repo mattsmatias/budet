@@ -79,7 +79,7 @@ function DesktopSidebar({
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">RestoFlow</span>
+          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
         </Link>
         <p className="mt-2 truncate text-[12px]" style={{ color: "var(--rf-text-3)" }}>
           {restaurantName}
@@ -88,7 +88,9 @@ function DesktopSidebar({
 
       <nav aria-label="Hallintanavigaatio" className="flex-1 px-2.5">
         <ul className="space-y-0.5">
-          {items.map((item) => {
+          {items
+            .filter((item) => item.href !== "/admin/asetukset")
+            .map((item) => {
             const active = isActive(item.href);
 
             return (
@@ -113,6 +115,26 @@ function DesktopSidebar({
       </nav>
 
       <div className="space-y-0.5 px-2.5 pb-2">
+        {items.some((item) => item.href === "/admin/asetukset") ? (
+          <Link
+            href="/admin/asetukset"
+            aria-current={isActive("/admin/asetukset") ? "page" : undefined}
+            className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px]"
+            style={{
+              background: isActive("/admin/asetukset")
+                ? "var(--rf-accent-bg)"
+                : "transparent",
+              color: isActive("/admin/asetukset")
+                ? "var(--rf-accent-strong)"
+                : "var(--rf-text-2)",
+              fontWeight: isActive("/admin/asetukset") ? 600 : 500,
+            }}
+          >
+            <RfIcon name="settings" size={19} />
+            Asetukset
+          </Link>
+        ) : null}
+
         {alertCount > 0 ? (
           <Link
             href="/admin/ilmoitukset"

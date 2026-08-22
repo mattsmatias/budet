@@ -134,7 +134,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Mitä RestoFlow ei tee</h2>
+          <h2 className="text-[16px] font-semibold">Mitä Budet ei tee</h2>
           <ul
             className="mt-3 space-y-1.5 text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}

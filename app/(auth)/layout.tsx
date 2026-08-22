@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
       <header className="px-5 py-5">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">RestoFlow</span>
+          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
         </Link>
       </header>
 

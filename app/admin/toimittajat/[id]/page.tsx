@@ -161,7 +161,7 @@ export default async function SupplierDetailPage({
               Olet korjannut tämän toimittajan kategorian{" "}
               {supplier.categoryOverrides[0].count} kertaa muotoon{" "}
               <strong>{CATEGORY_LABELS[supplier.categoryOverrides[0].to]}</strong>.
-              RestoFlow ehdottaa sitä jatkossa automaattisesti.
+              Budet ehdottaa sitä jatkossa automaattisesti.
             </div>
           ) : null}
         </Card>

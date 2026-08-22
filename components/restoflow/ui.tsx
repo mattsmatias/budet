@@ -1,5 +1,5 @@
 /**
- * RestoFlow'n jaetut esityskomponentit.
+ * Budet'n jaetut esityskomponentit.
  *
  * Apple-henkinen pintakieli yhdessä paikassa: valkoinen kortti, suuri
  * pyöristys, hienovarainen varjo. Väriä käytetään vain tilaan.
@@ -108,14 +108,13 @@ export function Pill({
 /**
  * Avainluku.
  *
- * Yksi kortti koko sovellukselle. Aiemmin näitä oli kaksi rinnakkain —
- * MetricCard vanhoilla sivuilla ja StatCard yleiskuvassa — ja ne
- * ajautuivat erilleen: eri pyöristys, eri varjo, eri fonttikoot. Sama
- * luku näytti eri sivuilla eri tuotteelta.
+ * Yksi kortti koko sovellukselle. Aiemmin näitä oli kaksi rinnakkain,
+ * ja sama luku näytti eri sivuilla eri tuotteelta.
  *
- * Kevyt tarkoituksella: ohut raja varjon sijaan ja pieni pyöristys.
- * Neljä painavaa laatikkoa vierekkäin veisi huomion siltä mitä niissä
- * lukee.
+ * Järjestys on tarkoituksellinen: ikoni ja otsikko pieninä ylhäällä,
+ * luku suurena, johtopäätös sen alla. Silmä osuu ensin lukuun, ja
+ * otsikko kertoo vasta sitten mistä on kyse — juuri niin päin kuin
+ * numeroita luetaan.
  */
 export function MetricCard({
   label,
@@ -124,17 +123,22 @@ export function MetricCard({
   trend,
   conclusion,
   tone = "neutral",
+  icon,
   href,
+  highlight,
 }: {
   label: string;
   value: string;
   hint?: string;
-  /** Vapaamuotoinen elementti. Käytä mieluummin `conclusion`. */
+  /** Pieni trendiviiva oikeaan yläkulmaan. */
   trend?: ReactNode;
   /** Johtopäätös luvusta. Ilman tätä kortti on pelkkä numero. */
   conclusion?: ReactNode;
-  tone?: "neutral" | "up" | "down" | "muted";
+  tone?: "neutral" | "up" | "down" | "muted" | "warn";
+  icon?: ReactNode;
   href?: string;
+  /** Korostettu kortti: puhelimessa tärkein luku nostetaan esiin. */
+  highlight?: boolean;
 }) {
   const toneColor =
     tone === "muted"
@@ -143,22 +147,46 @@ export function MetricCard({
         ? "var(--rf-amber-text)"
         : tone === "down"
           ? "var(--rf-green-text)"
-          : "var(--rf-text-2)";
+          : tone === "warn"
+            ? "var(--rf-amber-text)"
+            : "var(--rf-text-2)";
 
   const body = (
     <div
-      className="rf-card-lift h-full px-4 py-4"
+      className="rf-card-lift flex h-full flex-col px-4 py-4"
       style={{
-        background: "var(--rf-card)",
-        border: "1px solid var(--rf-line)",
+        background: highlight ? "var(--rf-accent-bg)" : "var(--rf-card)",
+        border: `1px solid ${highlight ? "transparent" : "var(--rf-line)"}`,
         borderRadius: "var(--rf-r-stat)",
       }}
     >
-      <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-        {label}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {icon ? (
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 shrink-0 items-center justify-center"
+              style={{
+                background: highlight ? "var(--rf-card)" : "var(--rf-inset)",
+                color: "var(--rf-text-2)",
+                borderRadius: 8,
+              }}
+            >
+              {icon}
+            </span>
+          ) : null}
+          <p
+            className="truncate text-[12px] font-medium"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {label}
+          </p>
+        </div>
 
-      <p className="rf-tabular mt-2.5 text-[26px] font-semibold leading-none tracking-[-0.02em]">
+        {trend ? <div className="shrink-0">{trend}</div> : null}
+      </div>
+
+      <p className="rf-tabular mt-2.5 text-[24px] font-semibold leading-none tracking-[-0.02em]">
         {value}
       </p>
 
@@ -170,10 +198,11 @@ export function MetricCard({
         </p>
       ) : null}
 
-      {trend ? <div className="mt-2">{trend}</div> : null}
-
       {hint ? (
-        <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-auto pt-2 text-[11px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {hint}
         </p>
       ) : null}
@@ -326,7 +355,7 @@ export function ScopeNotice({ children }: { children?: ReactNode }) {
         {children ?? (
           <>
             Luvut tarkoittavat{" "}
-            <strong>RestoFlow&rsquo;hun kirjattuja kuluja</strong> — sovellus ei
+            <strong>Budetiin kirjattuja kuluja</strong> — sovellus ei
             näe kassaa eikä pankkitiliä.
           </>
         )}

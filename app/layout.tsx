@@ -16,8 +16,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "RestoFlow — ravintolan kulut, kuitit ja työaika",
-    template: "%s · RestoFlow",
+    default: "Budet — ravintolan kulut, kuitit ja työaika",
+    template: "%s · Budet",
   },
   description:
     "Ravintolan kuitit, kulut, työvuorot ja työaika yhdessä näkymässä. " +
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "fi_FI",
-    siteName: "RestoFlow",
+    siteName: "Budet",
   },
   robots: { index: true, follow: true },
 };
