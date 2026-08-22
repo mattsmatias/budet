@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -61,6 +61,16 @@ export function CaptureFlow({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
 
+  // Paikallinen esikatselu. Näytetään heti kuvauksen jälkeen, jotta
+  // käyttäjä näkee mitä otti — ja tarkistusvaiheessa, jotta lukuja voi
+  // verrata paperiin ilman että kuittia tarvitsee pitää kädessä.
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Yhteenveto ensin, kentät pyynnöstä. Kymmenen kenttää putkeen on
+  // lomake; kolme lukua ja "Muokkaa" on tarkistus.
+  const [editing, setEditing] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
+
   const [state, action] = useActionState(saveReceipt, initial);
 
   const [supplier, setSupplier] = useState("");
@@ -79,6 +89,11 @@ export function CaptureFlow({
 
     setFileName(file.name);
     setUploadError(null);
+    setExtractionError(null);
+
+    if (file.type !== "application/pdf") {
+      setPreview(URL.createObjectURL(file));
+    }
     setPhase("analyzing");
 
     // Tiiviste ennen latausta: sama tiedosto tunnistetaan silloinkin kun
@@ -194,7 +209,7 @@ export function CaptureFlow({
     );
   }
 
-  if (phase === "analyzing") return <Analyzing fileName={fileName} />;
+  if (phase === "analyzing") return <Analyzing fileName={fileName} preview={preview} />;
   if (phase === "saved") return <Saved receiptId={state.receiptId} />;
   if (!result) return null;
 
@@ -219,6 +234,10 @@ export function CaptureFlow({
   const reasons =
     extractionEnabled && extractionError === null ? reviewReasonsFor(result) : [];
   const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
+
+  // Puuttuva pakollinen tieto avaa kentät heti: muuten tallennus on
+  // estetty eikä käyttäjä näe mistä se johtuu.
+  const showFields = editing || !ready;
 
   return (
     <form action={action} className="rf-enter space-y-4">
@@ -291,6 +310,109 @@ export function CaptureFlow({
         </p>
       ) : null}
 
+      {/* Yhteenveto: kolme lukua jotka ratkaisevat, ei kymmentä kenttää. */}
+      <Card>
+        <div className="flex items-start gap-3.5">
+          {preview ? (
+            <button
+              type="button"
+              onClick={() => setZoomed(true)}
+              className="rf-press shrink-0 overflow-hidden"
+              style={{ borderRadius: "var(--rf-r-control)" }}
+              aria-label="Suurenna kuitin kuva"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={preview}
+                alt="Kuitti"
+                className="h-20 w-16 object-cover"
+                style={{ background: "var(--rf-inset)" }}
+              />
+            </button>
+          ) : null}
+
+          <div className="min-w-0 flex-1">
+            <p className="rf-tabular text-[26px] font-semibold leading-none">
+              {totalEuros.trim() === "" ? "— €" : `${totalEuros} €`}
+            </p>
+
+            <p className="mt-2 truncate text-[15px] font-medium">
+              {supplier.trim() === "" ? "Toimittaja puuttuu" : supplier}
+            </p>
+
+            <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              {date ? formatDate(date) : "Päivämäärä puuttuu"}
+              {category === "" ? "" : ` · ${CATEGORY_LABELS[category]}`}
+            </p>
+
+            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              {vatEuros.trim() === ""
+                ? "ALV ei näy kuitissa"
+                : `ALV ${vatEuros} €`}
+            </p>
+          </div>
+        </div>
+
+        {uncertain.size > 0 ? (
+          <p
+            className="mt-3.5 flex items-start gap-2 px-3 py-2.5 text-[12px] leading-relaxed"
+            style={{
+              background: "var(--rf-amber-bg)",
+              color: "var(--rf-amber-text)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <span aria-hidden="true" className="mt-0.5 shrink-0">
+              <RfIcon name="alert" size={14} />
+            </span>
+            Poiminta ei ole varma kaikista kentistä. Avaa tiedot ja
+            tarkista korostetut.
+          </p>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setEditing((open) => !open)}
+          aria-expanded={showFields}
+          className="rf-press mt-3.5 flex w-full items-center justify-center gap-2 py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {showFields ? "Piilota tiedot" : "Muokkaa tietoja"}
+          <span
+            aria-hidden="true"
+            style={{
+              display: "block",
+              transform: showFields ? "rotate(-90deg)" : "rotate(90deg)",
+              transition: "transform 160ms ease",
+            }}
+          >
+            <RfIcon name="chevron" size={14} />
+          </span>
+        </button>
+      </Card>
+
+      {zoomed && preview ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Kuitin kuva"
+          onClick={() => setZoomed(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.82)" }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Kuitti" className="max-h-full max-w-full object-contain" />
+        </div>
+      ) : null}
+
+      {/* Kentät ovat aina DOM:ssa: piilotettu kenttä ei lähtisi lomakkeen
+          mukana, ja tallennus menettäisi juuri ne tiedot jotka poiminta
+          luki oikein. Piilotus on visuaalinen, ei rakenteellinen. */}
+      <div hidden={!showFields}>
       <Card>
         <TextField
           label="Toimittaja"
@@ -405,6 +527,7 @@ export function CaptureFlow({
         />
         <TextField label="Muistiinpano" name="note" value={note} onChange={setNote} last />
       </Card>
+      </div>
 
       {result.items.length > 0 ? (
         <Card>
@@ -535,36 +658,105 @@ function ChooseButton({
   );
 }
 
-function Analyzing({ fileName }: { fileName: string }) {
-  return (
-    <div className="rf-enter flex flex-col items-center justify-center py-20">
-      <div
-        className="rf-breathe flex h-20 w-20 items-center justify-center"
-        style={{
-          background: "var(--rf-blue-bg)",
-          color: "var(--rf-blue)",
-          borderRadius: "24px",
-        }}
-      >
-        <RfIcon name="receipt" size={34} />
-      </div>
+const STEPS = [
+  "Tallennetaan kuva",
+  "Luetaan toimittaja ja päivämäärä",
+  "Etsitään loppusumma ja ALV",
+  "Tarkistetaan verotiedot",
+];
 
-      <p className="mt-6 text-[17px] font-semibold">Analysoidaan kuittia…</p>
-      <p className="mt-1 max-w-[16rem] break-all text-center text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+/**
+ * Analyysivaihe.
+ *
+ * Vaiheet etenevät ajastimella eivätkä seuraa todellista edistymistä:
+ * rajapinta ei kerro missä kohtaa se on. Ne on silti tarkoituksella
+ * tässä — käyttäjä näkee mitä ollaan tekemässä eikä pelkkää kehää, ja
+ * kuvan näkeminen kertoo että oikea kuitti lähti matkaan.
+ */
+function Analyzing({
+  fileName,
+  preview,
+}: {
+  fileName: string;
+  preview: string | null;
+}) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    // Viimeiseen vaiheeseen jäädään odottamaan, ei kierretä ympäri:
+    // täyttyvä palkki joka alkaa alusta näyttäisi jumittumiselta.
+    const timer = setInterval(() => {
+      setStep((current) => Math.min(current + 1, STEPS.length - 1));
+    }, 1400);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="rf-enter flex flex-col items-center py-10">
+      {preview ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={preview}
+          alt="Kuvattu kuitti"
+          className="max-h-52 w-auto"
+          style={{
+            borderRadius: "var(--rf-r-control)",
+            boxShadow: "var(--rf-shadow)",
+          }}
+        />
+      ) : (
+        <div
+          className="rf-breathe flex h-20 w-20 items-center justify-center"
+          style={{
+            background: "var(--rf-blue-bg)",
+            color: "var(--rf-blue)",
+            borderRadius: "24px",
+          }}
+        >
+          <RfIcon name="file" size={34} />
+        </div>
+      )}
+
+      <p className="mt-6 text-[17px] font-semibold">Luetaan kuittia…</p>
+      <p
+        className="mt-1 max-w-[16rem] break-all text-center text-[13px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {fileName}
       </p>
 
-      <div
-        className="rf-sweep relative mt-6 h-1 w-40 overflow-hidden"
-        style={{ background: "var(--rf-inset)", borderRadius: 999 }}
-        role="progressbar"
-        aria-label="Kuittia analysoidaan"
-      />
+      <ul className="mt-7 w-full max-w-[18rem] space-y-2.5">
+        {STEPS.map((label, index) => {
+          const done = index < step;
+          const active = index === step;
 
-      <ul className="mt-8 space-y-2 text-center text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-        <li>Tallennetaan kuva</li>
-        <li>Luetaan toimittaja ja päivämäärä</li>
-        <li>Etsitään loppusumma ja ALV</li>
+          return (
+            <li key={label} className="flex items-center gap-2.5 text-[13px]">
+              <span
+                aria-hidden="true"
+                className={active ? "rf-breathe" : ""}
+                style={{
+                  color: done
+                    ? "var(--rf-green-text)"
+                    : active
+                      ? "var(--rf-blue)"
+                      : "var(--rf-text-3)",
+                }}
+              >
+                <RfIcon name={done ? "check" : "clock"} size={15} />
+              </span>
+              <span
+                style={{
+                  color: done || active ? "var(--rf-text)" : "var(--rf-text-3)",
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -747,4 +939,9 @@ function SelectField({
       ) : null}
     </div>
   );
+}
+
+function formatDate(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-");
+  return `${d}.${m}.${y}`;
 }
