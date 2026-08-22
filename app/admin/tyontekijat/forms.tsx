@@ -38,45 +38,7 @@ export function InviteForm() {
   const [role, setRole] = useState<Role>("employee");
 
   if (state.code) {
-    return (
-      <Card>
-        <p className="text-[15px] font-semibold">Kutsukoodi luotu</p>
-        <p
-          className="mt-1.5 text-[13px] leading-relaxed"
-          style={{ color: "var(--rf-text-2)" }}
-        >
-          Anna tämä koodi työntekijälle. Hän luo tunnuksen ja syöttää koodin
-          liittyäkseen. Koodi näytetään vain nyt.
-        </p>
-
-        <p
-          className="rf-tabular mt-4 select-all py-4 text-center text-[28px] font-semibold tracking-[0.14em]"
-          style={{
-            background: "var(--rf-inset)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          {state.code}
-        </p>
-
-        <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Voimassa 14 päivää · yksi käyttökerta
-        </p>
-
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="rf-press mt-4 w-full py-3 text-[15px] font-semibold"
-          style={{
-            background: "var(--rf-inset)",
-            color: "var(--rf-text)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          Valmis
-        </button>
-      </Card>
-    );
+    return <InviteCode code={state.code} role={role} />;
   }
 
   if (!open) {
@@ -396,5 +358,168 @@ export function StatusPill({ role }: { role: Role }) {
     <Pill tone={role === "owner" ? "info" : role === "accountant" ? "neutral" : "neutral"}>
       {ROLE_LABELS[role]}
     </Pill>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Luotu kutsukoodi ja ohje sen käyttöön.
+ *
+ * Pelkkä koodi ei riitä. Kutsuttu ei tiedä mihin osoitteeseen mennä
+ * eikä että hänen pitää ensin luoda oma tunnus — omistaja joutuisi
+ * selittämään sen joka kerta itse, ja selittäisi eri tavalla joka
+ * kerta. Ohje on siksi valmiina ja kopioitavissa yhtenä viestinä.
+ *
+ * Osoite luetaan selaimesta eikä asetuksista: se on aina se osoite
+ * jossa omistaja oikeasti on, myös testiympäristössä.
+ */
+function InviteCode({ code, role }: { code: string; role: Role }) {
+  const [copied, setCopied] = useState<"code" | "message" | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
+  const message =
+    `Sinut on kutsuttu Budetiin (${ROLE_LABELS[role].toLowerCase()}).
+
+` +
+    `1. Mene osoitteeseen ${origin}/rekisteroidy?tila=liity
+` +
+    `2. Luo tunnus omalla sähköpostillasi
+` +
+    `3. Valitse "Liity koodilla"
+` +
+    `4. Syötä koodi: ${code}
+
+` +
+    `Koodi on voimassa 14 päivää ja toimii kerran.`;
+
+  async function copy(text: string, what: "code" | "message") {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(what);
+      setFailed(false);
+      window.setTimeout(() => setCopied(null), 2000);
+    } catch {
+      // Leikepöytä ei ole käytettävissä esimerkiksi ilman HTTPS:ää.
+      // Kerrotaan se, koska hiljaa epäonnistuva kopiointi saa
+      // käyttäjän liittämään vanhaa sisältöä huomaamatta.
+      setFailed(true);
+    }
+  }
+
+  return (
+    <Card>
+      <p className="text-[15px] font-semibold">Kutsukoodi luotu</p>
+      <p
+        className="mt-1.5 text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        Koodi näytetään vain nyt. Kannassa on siitä vain tiiviste, joten
+        sitä ei voi hakea myöhemmin.
+      </p>
+
+      <p
+        className="rf-tabular mt-4 select-all py-4 text-center text-[28px] font-semibold tracking-[0.14em]"
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
+      >
+        {code}
+      </p>
+
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => copy(code, "code")}
+          className="rf-press py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {copied === "code" ? "Kopioitu" : "Kopioi koodi"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => copy(message, "message")}
+          className="rf-press py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-accent)",
+            color: "var(--rf-on-accent)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {copied === "message" ? "Kopioitu" : "Kopioi ohje"}
+        </button>
+      </div>
+
+      {failed ? (
+        <p className="mt-2 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+          Kopiointi ei onnistunut tässä selaimessa. Valitse teksti ja kopioi
+          käsin.
+        </p>
+      ) : null}
+
+      <div
+        className="mt-4 border-t pt-4"
+        style={{ borderColor: "var(--rf-line)" }}
+      >
+        <p className="text-[13px] font-semibold">Näin kutsuttu pääsee sisään</p>
+
+        <ol className="mt-2 space-y-2">
+          {[
+            <>
+              Menee osoitteeseen{" "}
+              <span className="rf-tabular font-medium">
+                {origin}/rekisteroidy?tila=liity
+              </span>
+            </>,
+            <>Luo tunnuksen omalla sähköpostillaan</>,
+            <>
+              Valitsee <strong>Liity koodilla</strong>
+            </>,
+            <>Syöttää koodin ja hyväksyy kutsun</>,
+          ].map((step, index) => (
+            <li key={index} className="flex gap-2.5 text-[13px] leading-relaxed">
+              <span
+                aria-hidden="true"
+                className="rf-tabular flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-semibold"
+                style={{
+                  background: "var(--rf-accent-bg)",
+                  color: "var(--rf-accent-strong)",
+                  borderRadius: "50%",
+                }}
+              >
+                {index + 1}
+              </span>
+              <span style={{ color: "var(--rf-text-2)" }}>{step}</span>
+            </li>
+          ))}
+        </ol>
+
+        <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Budet ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa
+          14 päivää, yksi käyttökerta.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="rf-press mt-4 w-full py-3 text-[15px] font-semibold"
+        style={{
+          background: "var(--rf-inset)",
+          color: "var(--rf-text)",
+          borderRadius: "var(--rf-r-control)",
+        }}
+      >
+        Valmis
+      </button>
+    </Card>
   );
 }

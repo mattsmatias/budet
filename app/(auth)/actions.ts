@@ -77,6 +77,11 @@ export async function signUp(
 
   if (error) return { error: translateSignUpError(error.message) };
 
+  // Kutsulinkistä tullut ohjataan suoraan liittymisvälilehdelle, jottei
+  // hän perusta vahingossa omaa ravintolaa.
+  const next =
+    formData.get("tila") === "liity" ? "/aloitus?tila=liity" : "/aloitus";
+
   // Sähköpostivahvistuksen ollessa päällä istuntoa ei synny heti.
   if (!data.session) {
     return {
@@ -86,7 +91,7 @@ export async function signUp(
   }
 
   revalidatePath("/", "layout");
-  redirect("/aloitus");
+  redirect(next);
 }
 
 export async function signOut(): Promise<void> {
