@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
         <header
-          className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
+          className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
           style={{
             borderColor: "var(--rf-line)",
             background: "rgba(255,255,255,0.86)",
@@ -62,7 +62,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
         {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
             puhelimessa, jotta ilmoitukset löytyvät samasta paikasta. */}
-        <div className="hidden justify-end gap-2 px-6 pt-5 md:flex">
+        <div className="relative z-40 hidden justify-end gap-2 px-6 pt-5 md:flex">
           <HeaderMenus
             alerts={alerts}
             userName={userName}

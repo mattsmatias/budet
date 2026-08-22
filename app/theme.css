@@ -341,6 +341,11 @@ a:hover > .rf-card-lift,
  *
  * Viive katkeaa kahdeksanteen lapseen: pidempi ketju alkaisi tuntua
  * odottamiselta eikä rytmiltä.
+ *
+ * VAROITUS: animoitu lapsi muodostaa oman pinoamiskontekstinsa, joten
+ * sen sisällä avautuva paneeli ei pääse myöhempien sisarusten päälle
+ * omalla z-indeksillään. Jos porrastettuun lapseen tulee pudotusvalikko,
+ * lapselle on annettava z-index — ks. yleiskuvan otsikkorivi.
  */
 .rf-stagger > * {
   animation: rf-fade-up 340ms cubic-bezier(0.32, 0.72, 0, 1) both;
