@@ -7,6 +7,7 @@ import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { mattiContext } from "@/lib/matti/context";
 import { systemPrompt } from "@/lib/matti/prompt";
 import { aiProvider, type AiMessage } from "@/lib/matti/provider";
+import { explainAiError } from "@/lib/matti/errors";
 import {
   findTool,
   toolsFor,
@@ -178,17 +179,17 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
+    const failure = explainAiError(error);
+
     console.error("matti: mallikutsu epäonnistui", {
       restaurantId: ctx.restaurantId,
+      reason: failure.reason,
       error: error instanceof Error ? error.message : String(error),
     });
 
     return NextResponse.json(
-      {
-        error:
-          "En saanut tällä hetkellä yhteyttä Mattiin. Yritä hetken päästä uudelleen.",
-      },
-      { status: 502 },
+      { error: failure.message, retryable: failure.retryable },
+      { status: failure.status },
     );
   }
 

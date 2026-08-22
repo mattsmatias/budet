@@ -195,7 +195,9 @@ function Conversation({
   const [turns, setTurns] = useState<Turn[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; retryable: boolean } | null>(
+    null,
+  );
   const [lastAsked, setLastAsked] = useState<string | null>(null);
 
   const scroller = useRef<HTMLDivElement>(null);
@@ -245,7 +247,12 @@ function Conversation({
         const payload = await response.json();
 
         if (!response.ok) {
-          setError(payload.error ?? "En saanut tällä kertaa vastausta.");
+          setError({
+            text: payload.error ?? "En saanut tällä kertaa vastausta.",
+            // Palvelin kertoo auttaako uudelleen yrittäminen. Saldon
+            // loppuessa ei auta, eikä painiketta silloin näytetä.
+            retryable: payload.retryable !== false,
+          });
           return;
         }
 
@@ -261,7 +268,8 @@ function Conversation({
           },
         ]);
       } catch {
-        setError("En saanut tällä kertaa vastausta.");
+        // Verkkokatkos selaimessa. Tämä menee ohi itsestään.
+        setError({ text: "En saanut tällä kertaa vastausta.", retryable: true });
       } finally {
         setBusy(false);
       }
@@ -308,8 +316,8 @@ function Conversation({
 
         {error ? (
           <div className="mt-5">
-            <p className="text-[14px] leading-relaxed">{error}</p>
-            {lastAsked ? (
+            <p className="text-[14px] leading-relaxed">{error.text}</p>
+            {error.retryable && lastAsked ? (
               <Button
                 type="button"
                 tone="ghost"

@@ -18,6 +18,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireContext } from "@/lib/restoflow/session";
 import { parseBusinessId } from "@/lib/restoflow/merchants";
+import { explainAiError } from "@/lib/matti/errors";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import {
   DEFAULT_MODEL,
@@ -173,22 +174,28 @@ export async function POST(request: Request) {
 
     return NextResponse.json(sanitize(parsed));
   } catch (error) {
-    // Verkkovirhe, väärä avain tai kiintiö täynnä. Kerrotaan mitä
-    // tapahtui — hiljainen paluu tyhjään lomakkeeseen näyttäisi siltä
-    // ettei kuitissa ollut mitään luettavaa.
-    const status =
-      error instanceof Anthropic.APIError && typeof error.status === "number"
-        ? error.status
-        : 502;
+    /*
+     * Kerrotaan mitä tapahtui. Hiljainen paluu tyhjään lomakkeeseen
+     * näyttäisi siltä ettei kuitissa ollut mitään luettavaa.
+     *
+     * Sama selitys kuin Matilla: saldon loppuminen ja ruuhka vaativat
+     * eri toimenpiteet, ja "yritä uudelleen" on toisessa väärä neuvo.
+     */
+    const failure = explainAiError(error);
 
-    const message =
-      status === 401
-        ? "Poimintapalvelun avain ei kelpaa. Tarkista ANTHROPIC_API_KEY."
-        : status === 429
-          ? "Poimintapalvelu on ruuhkautunut. Yritä hetken päästä uudelleen."
-          : "Poimintapalvelu ei vastannut. Täytä tiedot käsin tai yritä uudelleen.";
+    console.error("poiminta: mallikutsu epäonnistui", {
+      reason: failure.reason,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
-    return NextResponse.json({ error: message }, { status: 502 });
+    const message = failure.retryable
+      ? `${failure.message} Voit myös täyttää tiedot käsin.`
+      : `${failure.message} Täytä tiedot käsin siihen asti.`;
+
+    return NextResponse.json(
+      { error: message, retryable: failure.retryable },
+      { status: failure.status },
+    );
   }
 }
 
