@@ -466,3 +466,70 @@ details[open] .rf-summary-chevron {
   display: inline-block;
   animation: rf-breathe 1.6s ease-in-out infinite;
 }
+
+/* ---------------------------------------------------------------------------
+   Lounaslista A4-arkkina
+
+   Lounaslista päätyy ravintolan oveen paperina. Esikatselun on siis
+   näytettävä paperi eikä verkkosivu: oikeat mitat, oikea suhde, ja
+   tulostettuna sama asettelu kuin ruudulla.
+
+   210 × 297 mm on A4. Mitat on annettu millimetreinä eikä pikseleinä,
+   jotta ne ovat oikeat myös tulostettaessa — pikseli ei ole pituus
+   paperilla.
+--------------------------------------------------------------------------- */
+.rf-a4-stage {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.rf-a4 {
+  width: 210mm;
+  min-height: 297mm;
+  /* Kutistuu kapealla ruudulla mutta säilyttää suhteen. Puhelimessa
+     A4 ei mahdu, eikä vaakavieritys ole vaihtoehto. */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media print {
+  @page {
+    size: A4;
+    /* Marginaali on arkissa itsessään, jotta ruutu ja paperi näyttävät
+       samalta. Kaksi eri marginaalia tuottaisi eri asettelun. */
+    margin: 0;
+  }
+
+  /* Selain jättää taustavärit pois tulostaessa säästääkseen mustetta.
+     Tässä väri on koko idea: teema on ravintolan valinta. */
+  .rf-a4-stage,
+  .rf-a4,
+  .rf-a4 * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .rf-a4-stage {
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .rf-a4 {
+    width: 210mm;
+    min-height: 297mm;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Kaikki mikä ei ole arkkia. Esikatselun ohjerivi ei kuulu paperille. */
+  .rf-no-print {
+    display: none !important;
+  }
+
+  /* Päivä ei saa katketa kahdelle sivulle kesken ruokalistan. */
+  .rf-a4 dl > div {
+    break-inside: avoid;
+  }
+}

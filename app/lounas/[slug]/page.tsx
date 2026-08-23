@@ -118,6 +118,18 @@ export default async function PublicLunchPage({
   const weekStart =
     requested && ISO_DATE.test(requested) ? weekStartOf(requested) : null;
 
+  /*
+   * Esikatselu näyttää paperin, ei verkkosivua.
+   *
+   * Lounaslista päätyy ravintolan oveen tulostettuna, joten
+   * esikatselun on oltava A4: oikeat mitat ja oikea suhde. Verkkosivun
+   * levyinen esikatselu näyttäisi hyvältä ja tulostuisi toisin.
+   *
+   * Asiakkaan näkemä sivu on edelleen tavallinen sivu — hän lukee sen
+   * puhelimesta eikä paperilta.
+   */
+  const preview = query.esikatselu === "1";
+
   const week = await loadWeek(slug, weekStart);
 
   // Tuntematon ravintola on 404, ei tyhjä sivu. Tyhjä sivu antaisi
@@ -148,10 +160,12 @@ export default async function PublicLunchPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-8 sm:px-6 sm:py-12"
+      className={
+        preview ? "rf-a4-stage min-h-screen" : "min-h-screen px-4 py-8 sm:px-6 sm:py-12"
+      }
       style={
         {
-          background: t.bg,
+          background: preview ? "#e9eaee" : t.bg,
           color: t.text,
           "--rf-bg": t.bg,
           "--rf-card": t.card,
@@ -163,12 +177,20 @@ export default async function PublicLunchPage({
       }
     >
       <div
-        className="mx-auto w-full max-w-2xl px-5 py-8 sm:px-9 sm:py-10"
+        className={
+          preview
+            ? "rf-a4 px-[18mm] py-[16mm]"
+            : "mx-auto w-full max-w-2xl px-5 py-8 sm:px-9 sm:py-10"
+        }
         style={{
-          background: t.card,
-          border: `1px solid ${t.cardBorder}`,
-          boxShadow: t.cardShadow,
-          borderRadius: "var(--rf-r-card)",
+          // Esikatselussa arkin tausta on teeman sivutausta: paperi on
+          // koko sivu, ei kortti sivun päällä.
+          background: preview ? t.bg : t.card,
+          border: preview ? "0" : `1px solid ${t.cardBorder}`,
+          boxShadow: preview
+            ? "0 2px 18px rgba(17, 19, 24, 0.16)"
+            : t.cardShadow,
+          borderRadius: preview ? 0 : "var(--rf-r-card)",
         }}
       >
         <header className="text-center">
@@ -248,11 +270,15 @@ export default async function PublicLunchPage({
              * vieressä. Silmä etsii ensin päivän ja liikkuu sitten
              * oikealle — sama liike kuin paperilla ovessa.
              */}
-            <dl className="mt-9">
+            <dl className={preview ? "mt-7" : "mt-9"}>
               {days.map((day, index) => (
                 <div
                   key={day.date}
-                  className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[3.5rem_1fr] sm:gap-x-6"
+                  className={
+                    preview
+                      ? "grid grid-cols-[3rem_1fr] gap-x-5 py-2.5"
+                      : "grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[3.5rem_1fr] sm:gap-x-6"
+                  }
                   style={index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined}
                 >
                   <dt
@@ -263,6 +289,41 @@ export default async function PublicLunchPage({
                   </dt>
 
                   <dd className="min-w-0">
+                    {preview ? (
+                      /*
+                       * Arkilla ruoat samalla rivillä, kuten painetussa
+                       * listassa.
+                       *
+                       * Rivi per ruoka ei mahtunut A4:lle: mitattuna
+                       * 458 mm eli kaksi sivua. Ovessa oleva lista ei
+                       * voi olla kaksi paperia, ja toiselle sivulle
+                       * jäävä perjantai on sama kuin ei perjantaita.
+                       *
+                       * Kuvaukset ja allergeenit jäävät pois arkilta.
+                       * Ne ovat verkkosivulla, jonka asiakas avaa
+                       * QR-koodista — paperi on tiivistelmä, puhelin
+                       * täysi lista.
+                       */
+                      <p className="text-[13.5px] leading-relaxed">
+                        {day.items.map((item, i) => (
+                          <span key={i}>
+                            {i > 0 ? (
+                              <span style={{ color: t.text3 }}> · </span>
+                            ) : null}
+                            {item.name}
+                            {shortDiets(item.diets).length > 0 ? (
+                              <span
+                                className="text-[11px] font-semibold"
+                                style={{ color: t.text2 }}
+                              >
+                                {" "}
+                                {shortDiets(item.diets).join(" ")}
+                              </span>
+                            ) : null}
+                          </span>
+                        ))}
+                      </p>
+                    ) : (
                     <ul className="space-y-2">
                       {day.items.map((item, i) => (
                         <li key={i}>
@@ -308,6 +369,7 @@ export default async function PublicLunchPage({
                         </li>
                       ))}
                     </ul>
+                    )}
                   </dd>
                 </div>
               ))}
@@ -333,9 +395,26 @@ export default async function PublicLunchPage({
           className="mt-6 text-center text-[12px] leading-relaxed"
           style={{ color: t.text3 }}
         >
-          Kysy henkilökunnalta jos tarvitset tarkempia tietoja raaka-aineista.
+          {preview
+            ? "Kerrothan henkilökunnalle ruoka-aineallergiat. Tarkat " +
+              "allergeenitiedot löytyvät verkkosivulta."
+            : "Kysy henkilökunnalta jos tarvitset tarkempia tietoja raaka-aineista."}
         </p>
       </div>
+
+      {/*
+        Ohje ei kuulu paperille. rf-no-print piilottaa sen
+        tulostettaessa, jotta esikatselu ja tuloste ovat sama asia.
+      */}
+      {preview ? (
+        <p
+          className="rf-no-print fixed inset-x-0 bottom-0 py-3 text-center text-[12px]"
+          style={{ background: "rgba(233, 234, 238, 0.92)", color: "#4b5563" }}
+        >
+          A4-esikatselu. Tulosta selaimesta (Ctrl/Cmd + P) — asettelu on
+          sama kuin tässä.
+        </p>
+      ) : null}
     </main>
   );
 }
