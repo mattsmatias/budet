@@ -39,6 +39,8 @@ import {
   MoveLunchItem,
 } from "./editor";
 import { LunchThemePicker } from "./theme-picker";
+import { LunchChannels } from "./channels";
+import { loadPublicWeek, weekAsText } from "@/lib/restoflow/public-lunch";
 import {
   CopyDay,
   CopyPreviousWeek,
@@ -85,6 +87,17 @@ export default async function LunchPage({
     width: 180,
     color: { dark: "#111318", light: "#ffffff" },
   });
+
+  /*
+   * Julkaisuteksti muodostetaan samasta datasta kuin sivu.
+   *
+   * Palvelimella eikä selaimessa: teksti sisältää hinnat, ja ne
+   * muotoillaan samalla funktiolla kuin muuallakin. Selaimessa
+   * rakennettuna se olisi toinen paikka jossa euro voi näyttää
+   * erilaiselta.
+   */
+  const publicWeek = await loadPublicWeek(restaurant.slug, weekStart);
+  const shareText = publicWeek ? weekAsText(publicWeek, publicUrl) : "";
 
   const dirty = week ? hasUnpublishedChanges(week) : false;
   const publishable = week !== null && hasContent(week);
@@ -300,6 +313,22 @@ export default async function LunchPage({
             {canManage ? (
               <div className="pt-2">
                 <LunchThemePicker current={restaurant.lunchTheme} />
+              </div>
+            ) : null}
+
+            {/*
+              Lista ei ole valmis kun se on tallennettu. Se on valmis kun
+              se on siellä missä asiakas sen näkee.
+            */}
+            {canManage ? (
+              <div className="pt-2">
+                <LunchChannels
+                  publicUrl={publicUrl}
+                  previewUrl={`${publicUrl}?viikko=${weekStart}&esikatselu=1`}
+                  embedUrl={`${publicUrl}/upota`}
+                  displayUrl={`${publicUrl}/naytto`}
+                  shareText={shareText}
+                />
               </div>
             ) : null}
           </div>
