@@ -38,6 +38,7 @@ import {
   LunchPriceField,
   MoveLunchItem,
 } from "./editor";
+import { LunchThemePicker } from "./theme-picker";
 import {
   CopyDay,
   CopyPreviousWeek,
@@ -292,6 +293,15 @@ export default async function LunchPage({
               Avaa sivu
               <RfIcon name="chevron" size={13} />
             </Link>
+
+            {/* Teema on ravintolan valinta, ei viikon — siksi se on
+                jakamisen yhteydessä eikä viikkokohtaisten asetusten
+                seassa. */}
+            {canManage ? (
+              <div className="pt-2">
+                <LunchThemePicker current={restaurant.lunchTheme} />
+              </div>
+            ) : null}
           </div>
 
           <div className="justify-self-start sm:justify-self-end">

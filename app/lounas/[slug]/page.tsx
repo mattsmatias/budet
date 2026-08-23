@@ -9,6 +9,7 @@ import {
   weekStartOf,
   weekdayName,
 } from "@/lib/restoflow/lunch";
+import { lunchTheme } from "@/lib/restoflow/lunch-themes";
 import { formatMoney } from "@/lib/money";
 
 /**
@@ -42,6 +43,7 @@ interface PublicDay {
 
 interface PublicWeek {
   restaurantName: string;
+  theme: string;
   weekStart: string;
   published: boolean;
   publishedAt?: string | null;
@@ -103,14 +105,41 @@ export default async function PublicLunchPage({
   // Tyhjät päivät pois: ne näyttäisivät siltä että ravintola on kiinni.
   const days = week.days.filter((day) => day.items.length > 0);
 
+  /*
+   * Teema konkreettisina arvoina, ei sovelluksen muuttujina.
+   *
+   * Sivu näkyy kirjautumattomalle, ja hänen järjestelmänsä tumma tila
+   * ei saa muuttaa sitä minkä ravintola on valinnut. Arvot asetetaan
+   * juureen muuttujiksi, joten sisältö käyttää samoja nimiä kuin
+   * ennenkin.
+   */
+  const t = lunchTheme(week.theme);
+
   return (
     <main
       className="min-h-screen px-5 py-8 sm:px-6 sm:py-12"
-      style={{ background: "var(--rf-bg)" }}
+      style={
+        {
+          background: t.bg,
+          color: t.text,
+          "--rf-bg": t.bg,
+          "--rf-card": t.card,
+          "--rf-text": t.text,
+          "--rf-text-2": t.text2,
+          "--rf-text-3": t.text3,
+          "--rf-line": t.line,
+        } as React.CSSProperties
+      }
     >
       <div className="mx-auto w-full max-w-2xl">
         <header className="text-center">
-          <h1 className="text-[26px] font-semibold tracking-tight sm:text-[32px]">
+          <h1
+            className="text-[26px] font-semibold sm:text-[32px]"
+            style={{
+              fontFamily: t.headingFont,
+              letterSpacing: t.headingTracking,
+            }}
+          >
             {week.restaurantName}
           </h1>
           <p className="mt-1.5 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
@@ -168,9 +197,10 @@ export default async function PublicLunchPage({
           <div
             className="mt-8 px-5 py-8 text-center"
             style={{
-              background: "var(--rf-card)",
+              background: t.card,
+              border: `1px solid ${t.cardBorder}`,
+              boxShadow: t.cardShadow,
               borderRadius: "var(--rf-r-card)",
-              boxShadow: "var(--rf-shadow-sm)",
             }}
           >
             <p className="text-[15px] font-medium">Lounaslistaa ei ole julkaistu</p>
@@ -186,12 +216,16 @@ export default async function PublicLunchPage({
                 aria-label={weekdayName(day.date)}
                 className="px-5 py-5"
                 style={{
-                  background: "var(--rf-card)",
+                  background: t.card,
+                  border: `1px solid ${t.cardBorder}`,
+                  boxShadow: t.cardShadow,
                   borderRadius: "var(--rf-r-card)",
-                  boxShadow: "var(--rf-shadow-sm)",
                 }}
               >
-                <h2 className="text-[15px] font-semibold uppercase" style={{ letterSpacing: "0.04em" }}>
+                <h2
+                  className="text-[15px] font-semibold uppercase"
+                  style={{ fontFamily: t.headingFont, letterSpacing: "0.04em" }}
+                >
                   {weekdayName(day.date)}
                   <span
                     className="rf-tabular ml-2 font-medium normal-case"
@@ -215,8 +249,13 @@ export default async function PublicLunchPage({
                         </p>
                       ) : null}
 
+                      {/*
+                        Allergeenit eivät ole sivun hiljaisinta tekstiä.
+                        Ne olivat, ja mitattuna se oli 2,4:1 — teksti
+                        jonka joku lukee siksi ettei saa sairastua.
+                      */}
                       {item.diets.length > 0 || item.allergens.length > 0 ? (
-                        <p className="mt-1 text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+                        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-2)" }}>
                           {item.diets.join(" · ")}
                           {item.diets.length > 0 && item.allergens.length > 0 ? " — " : ""}
                           {item.allergens.length > 0

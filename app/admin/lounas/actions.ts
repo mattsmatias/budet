@@ -15,6 +15,7 @@ import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { weekStartOf } from "@/lib/restoflow/lunch";
+import { isLunchTheme } from "@/lib/restoflow/lunch-themes";
 
 export interface LunchState {
   error?: string;
@@ -249,6 +250,38 @@ export async function moveLunchItem(formData: FormData): Promise<void> {
     p_up: formData.get("direction") === "up",
   });
   revalidate();
+}
+
+// ---------------------------------------------------------------------------
+// Teema
+// ---------------------------------------------------------------------------
+
+/**
+ * Julkisen lounassivun teema.
+ *
+ * Ravintolan valinta eikä viikon, joten se ei nollaudu uudella
+ * viikolla eikä sitä tarvitse valita joka maanantai.
+ */
+export async function setLunchTheme(
+  _prev: LunchState,
+  formData: FormData,
+): Promise<LunchState> {
+  const theme = String(formData.get("theme") ?? "");
+
+  if (!isLunchTheme(theme)) return { error: "Tuntematon teema." };
+
+  const { restaurant } = await requireContext("/admin/lounas");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("set_lunch_theme", {
+    p_restaurant: restaurant.id,
+    p_theme: theme,
+  });
+
+  if (error) return { error: explain(error, "Teeman vaihto epäonnistui.") };
+
+  revalidate();
+  return { notice: "Teema vaihdettu." };
 }
 
 // ---------------------------------------------------------------------------

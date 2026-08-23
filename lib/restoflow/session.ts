@@ -11,6 +11,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, isConfigured } from "@/utils/supabase/server";
+import { isLunchTheme, type LunchTheme } from "./lunch-themes";
 import type { Role, StaffPosition } from "./types";
 
 export const ACTIVE_RESTAURANT_COOKIE = "rf_restaurant";
@@ -26,6 +27,8 @@ export interface RestaurantMembership {
   name: string;
   /** Julkisen osoitteen tunnus, esim. "cafe-monami". */
   slug: string;
+  /** Julkisen lounassivun teema. */
+  lunchTheme: LunchTheme;
   timezone: string;
   currency: string;
   role: Role;
@@ -67,7 +70,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("my_restaurants")
-      .select("id, name, slug, timezone, currency, role, position, hourly_rate_cents")
+      .select("id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents")
       .order("name");
 
     if (error || !data) return [];
@@ -76,6 +79,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
       id: row.id as string,
       name: row.name as string,
       slug: row.slug as string,
+      lunchTheme: isLunchTheme(row.lunch_theme) ? row.lunch_theme : "light",
       timezone: row.timezone as string,
       currency: row.currency as string,
       role: row.role as Role,

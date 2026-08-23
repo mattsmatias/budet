@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 23 migraatiota:
+-- Sisältää 25 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -35,6 +35,8 @@
 --   0021_clear_lunch_day_items.sql
 --   0022_lunch_week_price.sql
 --   0023_lunch_includes.sql
+--   0024_lunch_theme.sql
+--   0025_public_lunch_theme.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -5239,6 +5241,193 @@ begin
 
   return json_build_object(
     'restaurantName', v_restaurant.name,
+    'weekStart', v_menu.week_start,
+    'weekEnd', v_menu.week_end,
+    'published', true,
+    'publishedAt', v_menu.published_at,
+    'includesDessert', v_menu.includes_dessert,
+    'includesCoffee', v_menu.includes_coffee,
+    'prices', coalesce((
+      select json_agg(json_build_object('name', p.name, 'cents', p.price_cents)
+                      order by p.sort_order, p.name)
+      from lunch_prices p where p.menu_id = v_menu.id
+    ), '[]'::json),
+    'days', coalesce((
+      select json_agg(day order by day_date)
+      from (
+        select
+          d.date as day_date,
+          json_build_object(
+            'date', d.date,
+            'items', coalesce((
+              select json_agg(json_build_object(
+                       'name', i.name,
+                       'description', i.description,
+                       'diets', coalesce((
+                         select json_agg(t.label order by t.sort_order)
+                         from lunch_item_diets x
+                         join diet_types t on t.id = x.diet_type
+                         where x.lunch_item_id = i.id
+                       ), '[]'::json),
+                       'allergens', coalesce((
+                         select json_agg(a.label order by a.sort_order)
+                         from lunch_item_allergens y
+                         join allergen_types a on a.id = y.allergen_type
+                         where y.lunch_item_id = i.id
+                       ), '[]'::json)
+                     ) order by i.sort_order)
+              from lunch_items i where i.lunch_day_id = d.id
+            ), '[]'::json)
+          ) as day
+        from lunch_days d
+        where d.menu_id = v_menu.id
+      ) rows
+    ), '[]'::json)
+  );
+end;
+$$;
+
+revoke all on function public_lunch_week from public;
+grant execute on function public_lunch_week to anon, authenticated;
+
+
+-- ===========================================================================
+-- 0024_lunch_theme.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0024 — Julkisen lounassivun teema
+-- ---------------------------------------------------------------------------
+--
+-- Ravintolan valinta, ei viikon. Teema päätetään kerran eikä joka
+-- maanantai, joten se on restaurants-taulussa eikä lounasviikossa.
+--
+-- Tarkistus rajaa arvot kolmeen. Vapaa teksti tarkoittaisi että
+-- julkinen sivu voi saada tuntemattoman teeman ja joutuu arvaamaan
+-- mitä tehdä — ja arvaus on siinä kohdassa valkoinen sivu.
+
+alter table restaurants add column if not exists lunch_theme text not null
+  default 'light';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'restaurants_lunch_theme_valid'
+  ) then
+    alter table restaurants add constraint restaurants_lunch_theme_valid
+      check (lunch_theme in ('light', 'dark', 'classic'));
+  end if;
+end;
+$$;
+
+/** Asettaa julkisen lounassivun teeman. */
+create or replace function set_lunch_theme(p_restaurant uuid, p_theme text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Vain esihenkilö voi vaihtaa teemaa';
+  end if;
+
+  if p_theme not in ('light', 'dark', 'classic') then
+    raise exception 'Tuntematon teema';
+  end if;
+
+  update restaurants
+  set lunch_theme = p_theme, updated_at = now()
+  where id = p_restaurant;
+end;
+$$;
+
+revoke all on function set_lunch_theme from public;
+grant execute on function set_lunch_theme to authenticated;
+
+-- Näkymään mukaan, jotta hallintasivu tietää valitun teeman ilman
+-- omaa kyselyä. Sarake loppuun: create or replace view ei salli
+-- järjestyksen muuttamista.
+create or replace view my_restaurants
+with (security_invoker = true)
+as
+select
+  r.id,
+  r.name,
+  r.timezone,
+  r.currency,
+  m.role,
+  m.position,
+  m.hourly_rate_cents,
+  r.slug,
+  r.lunch_theme
+from restaurants r
+join memberships m on m.restaurant_id = r.id
+where m.user_id = auth.uid() and m.active;
+
+grant select on my_restaurants to authenticated;
+
+
+-- ===========================================================================
+-- 0025_public_lunch_theme.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0025 — Julkinen haku palauttaa teeman
+-- ---------------------------------------------------------------------------
+--
+-- Sivu tarvitsee teeman ennen kuin se piirtää mitään, joten se tulee
+-- samasta kutsusta kuin muukin. Erillinen haku tarkoittaisi että sivu
+-- renderöityy kerran ilman teemaa ja välähtää sitten oikeaan.
+
+create or replace function public_lunch_week(p_slug text, p_week_start date default null)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant record;
+  v_menu record;
+  v_week date;
+begin
+  select id, name, timezone, lunch_theme into v_restaurant
+  from restaurants where slug = p_slug;
+
+  if v_restaurant.id is null then
+    return null;
+  end if;
+
+  v_week := coalesce(
+    p_week_start,
+    (date_trunc('week', (now() at time zone v_restaurant.timezone)))::date
+  );
+
+  select * into v_menu
+  from lunch_menus
+  where restaurant_id = v_restaurant.id
+    and week_start = v_week
+    and status = 'published';
+
+  -- Teema tulee mukaan myös julkaisemattomalle viikolle: "ei julkaistu"
+  -- -sivun on näytettävä samalta kuin muunkin sivun.
+  if v_menu.id is null then
+    return json_build_object(
+      'restaurantName', v_restaurant.name,
+      'theme', v_restaurant.lunch_theme,
+      'weekStart', v_week,
+      'published', false,
+      'prices', '[]'::json,
+      'includesDessert', false,
+      'includesCoffee', false,
+      'days', '[]'::json
+    );
+  end if;
+
+  return json_build_object(
+    'restaurantName', v_restaurant.name,
+    'theme', v_restaurant.lunch_theme,
     'weekStart', v_menu.week_start,
     'weekEnd', v_menu.week_end,
     'published', true,
