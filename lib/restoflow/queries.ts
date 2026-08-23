@@ -185,28 +185,49 @@ export async function fetchReceiptImageUrl(
 // Käyttäjät
 // ---------------------------------------------------------------------------
 
+/**
+ * Ravintolan henkilöstö.
+ *
+ * Palkka ei tule jäsenriviltä vaan erillisestä funktiosta. Sarakkeen
+ * lukuoikeus on poistettu kannasta (migraatio 0028), koska rivikäytäntö
+ * antoi jokaiselle jäsenelle koko henkilöstön palkat rajapinnan kautta.
+ *
+ * Jos kutsuja ei ole esihenkilö, funktio palauttaa tyhjän ja palkaksi
+ * jää null. Se on sama arvo jonka tyyppi on aina sallinut, joten
+ * kutsuva koodi käsittelee sen jo.
+ */
 export async function fetchUsers(restaurantId: string): Promise<User[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("memberships")
-    .select("user_id, role, position, hourly_rate_cents, active, profiles ( full_name )")
-    .eq("restaurant_id", restaurantId)
-    .eq("active", true);
 
-  if (error || !data) return [];
+  const [members, rates] = await Promise.all([
+    supabase
+      .from("memberships")
+      .select("user_id, role, position, active, profiles ( full_name )")
+      .eq("restaurant_id", restaurantId)
+      .eq("active", true),
+    supabase.rpc("staff_pay_rates", { p_restaurant: restaurantId }),
+  ]);
 
-  return data.map((row) => {
+  if (members.error || !members.data) return [];
+
+  const rateByUser = new Map<string, number | null>(
+    ((rates.data as { user_id: string; hourly_rate_cents: number | null }[] | null) ?? [])
+      .map((row) => [row.user_id, row.hourly_rate_cents]),
+  );
+
+  return members.data.map((row) => {
     const name =
       (row.profiles as unknown as { full_name: string | null } | null)?.full_name ??
       "Nimetön";
+    const id = row.user_id as string;
 
     return {
-      id: row.user_id as string,
+      id,
       restaurantId,
       name,
       role: row.role as User["role"],
       position: (row.position as User["position"]) ?? null,
-      hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
+      hourlyRateCents: rateByUser.get(id) ?? null,
       initials: initialsOf(name),
       active: Boolean(row.active),
     };
