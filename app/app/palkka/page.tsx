@@ -13,7 +13,7 @@ import { formatMonth } from "@/lib/restoflow/expenses";
 import { windowStartIso } from "@/lib/restoflow/clock-context";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Card } from "@/components/restoflow/ui";
+import { PageHeader, Surface } from "../ui";
 import type { User } from "@/lib/restoflow/types";
 
 export const metadata = { title: "Palkkani" };
@@ -96,15 +96,10 @@ export default async function MyPayPage() {
   const days = slip.lines.filter((l) => l.componentId === null);
 
   return (
-    <div className="rf-enter space-y-5">
-      <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">Palkkani</h1>
-        <p className="mt-1 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonth(month)}
-        </p>
-      </header>
+    <div className="rf-enter space-y-6">
+      <PageHeader title="Palkkani" subtitle={formatMonth(month)} />
 
-      <Card>
+      <Surface>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Kertynyt tässä kuussa
         </p>
@@ -139,10 +134,10 @@ export default async function MyPayPage() {
           Laskettu leimauksistasi. Bruttosumma ilman ennakonpidätystä ja muita
           vähennyksiä — ei palkkalaskelma eikä palkkatodistus.
         </p>
-      </Card>
+      </Surface>
 
       {slip.issues.length > 0 ? (
-        <Card>
+        <Surface>
           <h2 className="text-[15px] font-semibold">Tarkistettavaa</h2>
           <ul className="mt-2 space-y-2">
             {slip.issues.map((issue, index) => (
@@ -158,11 +153,11 @@ export default async function MyPayPage() {
             Kerro esihenkilölle, niin hän korjaa ajan. Sinä et voi muuttaa
             omaa työaikaasi jälkikäteen.
           </p>
-        </Card>
+        </Surface>
       ) : null}
 
       <section>
-        <Card padded={false}>
+        <Surface padded={false}>
           <div className="px-5 pt-5">
             <h2 className="text-[15px] font-semibold">Päivät</h2>
             <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
@@ -191,7 +186,7 @@ export default async function MyPayPage() {
               ))}
             </ul>
           )}
-        </Card>
+        </Surface>
       </section>
 
       <Link

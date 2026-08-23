@@ -6,6 +6,7 @@ import { ClockCard } from "./home/clock-card";
 import { NextShift } from "./home/next-shift";
 import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
+import { Surface } from "./ui";
 
 export const metadata = { title: "Koti" };
 
@@ -67,16 +68,9 @@ export default async function EmployeeHome() {
         <div className="space-y-4">
           <NextShift shift={nextShift} today={today} />
 
-          <div
-            className="px-4 py-3.5"
-            style={{
-              background: "var(--rf-card)",
-              border: "1px solid var(--rf-line)",
-              borderRadius: 14,
-            }}
-          >
+          <Surface>
             <WeeklyHours workedMs={week.workedMs} />
-          </div>
+          </Surface>
         </div>
       </div>
 

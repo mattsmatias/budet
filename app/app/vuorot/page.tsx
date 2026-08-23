@@ -1,257 +1,220 @@
-import Link from "next/link";
-import { ISO_DATE } from "@/lib/restoflow/dates";
 import { employeeContext } from "@/lib/restoflow/page-context";
+import { weekEnd, weekStart } from "@/lib/restoflow/clock-context";
+import { datesInRange } from "@/lib/restoflow/timeclock";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
-import { RfIcon, ShiftStatusIcon } from "@/components/restoflow/icons";
-import { Card, EmptyState, Pill, SectionLabel } from "@/components/restoflow/ui";
+import { RfIcon } from "@/components/restoflow/icons";
 import { AbsenceReporter } from "./absence";
+import { Empty, PageHeader, SectionTitle, Surface, Tag, shortDate } from "../ui";
 
-export const metadata = { title: "Työvuorot" };
+export const metadata = { title: "Vuorot" };
 
-const WEEKDAYS = ["ma", "ti", "ke", "to", "pe", "la", "su"];
+/** Montako viikkoa eteenpäin listataan. */
+const WEEKS_AHEAD = 4;
 
-export default async function ShiftsPage({ searchParams }: PageProps<"/app/vuorot">) {
-  const params = await searchParams;
-  const { shifts, absences, today, month } = await employeeContext("/app/vuorot");
+/**
+ * Vuorot.
+ *
+ * Vastaa kysymykseen "milloin olen töissä". Ei kalenteriruudukkoa vaan
+ * lista: ruudukko näyttää kuukauden muodon, mutta työntekijä ei kysy
+ * mikä päivä on tiistai — hän kysyy milloin hänen pitää tulla.
+ *
+ * Vapaapäivät ovat mukana hiljaisina riveinä. Ilman niitä listasta ei
+ * näe onko keskiviikko vapaa vai puuttuuko se vain, ja juuri se ero on
+ * se mitä viikkoa selatessa haetaan.
+ *
+ * VUOROA EI KUITATA.
+ *
+ * Kuittausvaihe poistettiin migraatiossa 0011: esihenkilön merkitsemä
+ * vuoro on heti voimassa. Siksi täällä ei ole "Vahvista vuoro"
+ * -painiketta. Este ilmoitetaan poissaololla, joka on eri asia kuin
+ * vuoron kiistäminen.
+ */
+export default async function ShiftsPage() {
+  const { shifts, absences, today } = await employeeContext("/app/vuorot");
 
-  const selected =
-    typeof params.paiva === "string" && ISO_DATE.test(params.paiva)
-      ? params.paiva
-      : today;
-
-  const viewMonth = selected.slice(0, 7);
   const byDate = new Map(shifts.map((s) => [s.date, s]));
+  const absenceDates = new Set(
+    absences.flatMap((a) => datesInRange(a.date, a.endDate ?? a.date)),
+  );
 
-  const selectedShift = byDate.get(selected);
-  const upcoming = shifts.filter((s) => s.date > today).slice(0, 5);
+  /*
+   * Muuttuneet vuorot nostetaan ylös.
+   *
+   * Muutos on ainoa asia tällä sivulla joka vaatii huomiota heti:
+   * työntekijä on saattanut suunnitella päivänsä vanhan ajan mukaan.
+   */
   const changed = shifts.filter((s) => s.status === "changed" && s.date >= today);
 
+  const weeks = buildWeeks(today, WEEKS_AHEAD);
+  const hasAny = weeks.some((week) => week.days.some((d) => byDate.has(d)));
+
   return (
-    <div className="rf-enter space-y-5">
-      <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">Työvuorot</h1>
-        <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-          {shifts.length === 0
-            ? "Ei vuoroja"
-            : `${shifts.length} vuoroa`}
-        </p>
-      </header>
+    <div className="rf-enter space-y-6">
+      <PageHeader title="Vuorot" subtitle="Tulevat työvuorosi" />
 
-      {/* Muutokset ensin: ne ovat ainoa asia joka vaatii huomiota heti. */}
-      {changed.map((shift) => (
-        <Card key={shift.id}>
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-blue)" }}>
-              <RfIcon name="alert" size={20} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[15px] font-semibold">Työvuoro muuttui</p>
-              <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                {formatShortDate(shift.date)}
-              </p>
-              <p className="rf-tabular mt-2 text-[15px]">
-                <s style={{ color: "var(--rf-text-3)" }}>
-                  {shift.previousStartTime}–{shift.previousEndTime}
-                </s>
-                <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
-                  {" → "}
+      {changed.length > 0 ? (
+        <div className="space-y-2">
+          {changed.map((shift) => (
+            <Surface key={shift.id}>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-blue)" }}>
+                  <RfIcon name="alert" size={18} />
                 </span>
-                <strong>
-                  {shift.startTime}–{shift.endTime}
-                </strong>
-              </p>
-            </div>
-          </div>
-        </Card>
-      ))}
+                <div className="min-w-0">
+                  <p className="text-[15px] font-medium">Työvuoro muuttui</p>
+                  <p className="rf-tabular mt-1 text-[14px]">
+                    <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
+                    <s style={{ color: "var(--rf-text-3)" }}>
+                      {shift.previousStartTime}–{shift.previousEndTime}
+                    </s>
+                    <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
+                      {" → "}
+                    </span>
+                    <strong>
+                      {shift.startTime}–{shift.endTime}
+                    </strong>
+                  </p>
+                </div>
+              </div>
+            </Surface>
+          ))}
+        </div>
+      ) : null}
 
-      {shifts.length === 0 ? (
-        <EmptyState
-          title="Ei työvuoroja"
-          description="Esihenkilö lisää vuorot hallintanäkymässä. Saat ilmoituksen kun sinulle merkitään vuoro."
+      {!hasAny ? (
+        <Empty
+          title="Ei tulevia työvuoroja"
+          description="Sinulle ei ole vielä lisätty tulevia työvuoroja. Saat ilmoituksen kun esihenkilö merkitsee vuoron."
         />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-          <Card>
-            <div
-              className="mb-3 grid grid-cols-7 text-center text-[11px] font-medium uppercase"
-              style={{ color: "var(--rf-text-3)" }}
-            >
-              {WEEKDAYS.map((d) => (
-                <div key={d}>{d}</div>
-              ))}
-            </div>
+        weeks.map((week) => {
+          const shiftsThisWeek = week.days.filter((d) => byDate.has(d)).length;
+          if (shiftsThisWeek === 0 && week.index > 0) return null;
 
-            <div className="grid grid-cols-7 gap-y-1">
-              {buildMonthGrid(viewMonth).map((cell, i) => {
-                if (!cell) return <div key={`e${i}`} />;
+          return (
+            <section key={week.days[0]} className="space-y-2">
+              <SectionTitle>
+                {week.index === 0 ? "Tämä viikko" : `Viikko ${week.label}`}
+              </SectionTitle>
 
-                const shift = byDate.get(cell);
-                const isSelected = cell === selected;
-                const isToday = cell === today;
-                const day = Number(cell.slice(8));
-
-                return (
-                  <div key={cell} className="flex justify-center">
-                    <Link
-                      href={`/app/vuorot?paiva=${cell}`}
-                      aria-current={isSelected ? "date" : undefined}
-                      aria-label={`${day}.${Number(cell.slice(5, 7))}.${shift ? `, vuoro ${shift.startTime}–${shift.endTime}` : ""}`}
-                      className="rf-press relative flex h-10 w-10 flex-col items-center justify-center"
-                      style={{
-                        background: isSelected ? "var(--rf-text)" : "transparent",
-                        color: isSelected
-                          ? "#fff"
-                          : isToday
-                            ? "var(--rf-blue)"
-                            : "var(--rf-text)",
-                        borderRadius: "50%",
-                        fontWeight: isToday || isSelected ? 600 : 400,
-                      }}
-                    >
-                      <span className="rf-tabular text-[15px]">{day}</span>
-                      {shift ? (
-                        <span
-                          aria-hidden="true"
-                          className="absolute bottom-1 h-1 w-1 rounded-full"
-                          style={{ background: isSelected ? "#fff" : dotColor(shift.status) }}
-                        />
-                      ) : null}
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-
-          <div className="space-y-5">
-            <section>
-              <SectionLabel>{formatLongDate(selected)}</SectionLabel>
-              {selectedShift ? (
-                <Card>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="rf-tabular text-[26px] font-semibold leading-none">
-                        {selectedShift.startTime}–{selectedShift.endTime}
-                      </p>
-                      {selectedShift.location ? (
-                        <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                          {selectedShift.location}
-                        </p>
-                      ) : null}
-                    </div>
-                    <StatusPill status={selectedShift.status} />
-                  </div>
-                </Card>
-              ) : (
-                <Card>
-                  <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                    Ei työvuoroa tänä päivänä.
-                  </p>
-                </Card>
-              )}
+              <Surface padded={false}>
+                <div className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                  {week.days.map((date) => (
+                    <DayLine
+                      key={date}
+                      date={date}
+                      shift={byDate.get(date)}
+                      today={today}
+                      absent={absenceDates.has(date)}
+                    />
+                  ))}
+                </div>
+              </Surface>
             </section>
-
-            {upcoming.length > 0 ? (
-              <section>
-                <SectionLabel>Tulevat työvuorot</SectionLabel>
-                <Card padded={false}>
-                  <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-                    {upcoming.map((shift) => (
-                      <li key={shift.id}>
-                        <Link
-                          href={`/app/vuorot?paiva=${shift.date}`}
-                          className="flex items-center justify-between gap-3 px-5 py-3.5"
-                        >
-                          <div>
-                            <p className="rf-tabular text-[15px] font-medium">
-                              {shift.startTime}–{shift.endTime}
-                            </p>
-                            <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                              {formatShortDate(shift.date)}
-                              {shift.location ? ` · ${shift.location}` : ""}
-                            </p>
-                          </div>
-                          <StatusPill status={shift.status} />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              </section>
-            ) : null}
-          </div>
-        </div>
+          );
+        })
       )}
 
-      <section>
-        <SectionLabel>Poissaolot</SectionLabel>
-        <AbsenceReporter defaultDate={selected} absences={absences} />
+      <section className="space-y-2">
+        <SectionTitle>Poissaolot</SectionTitle>
+        <AbsenceReporter defaultDate={today} absences={absences} />
       </section>
-
-      <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        {month === viewMonth ? "Kuluva kuukausi" : "Toinen kuukausi"} · aikavyöhyke
-        ravintolan mukaan
-      </p>
     </div>
   );
 }
 
-function StatusPill({ status }: { status: Shift["status"] }) {
-  const tone =
-    status === "accepted"
-      ? "ok"
-      : status === "changed"
-        ? "info"
-        : status === "declined"
-          ? "risk"
-          : "warn";
+// ---------------------------------------------------------------------------
+
+const WEEKDAYS = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
+
+function DayLine({
+  date,
+  shift,
+  today,
+  absent,
+}: {
+  date: string;
+  shift: Shift | undefined;
+  today: string;
+  absent: boolean;
+}) {
+  const isToday = date === today;
+  const past = date < today;
+  const d = new Date(`${date}T12:00:00Z`);
 
   return (
-    <Pill tone={tone}>
-      <ShiftStatusIcon status={status} size={13} />
-      {SHIFT_STATUS_LABELS[status]}
-    </Pill>
+    <div
+      className="flex items-center gap-3 px-4 py-3"
+      style={{
+        // Tämä päivä saa hienovaraisen taustan, ei reunusta eikä väriä.
+        background: isToday ? "var(--rf-inset)" : "transparent",
+        opacity: past && !isToday ? 0.55 : 1,
+      }}
+    >
+      <div className="w-[3.25rem] shrink-0">
+        <p
+          className="text-[13px] font-semibold"
+          style={{ color: isToday ? "var(--rf-blue)" : "var(--rf-text-2)" }}
+        >
+          {WEEKDAYS[d.getUTCDay()]}
+        </p>
+        <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          {shortDate(date)}
+        </p>
+      </div>
+
+      {shift ? (
+        <>
+          <div className="min-w-0 flex-1">
+            <p className="rf-tabular text-[15px] font-medium">
+              {shift.startTime}–{shift.endTime}
+            </p>
+            {shift.location ? (
+              <p className="mt-0.5 truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                {shift.location}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="shrink-0">
+            {absent ? (
+              <Tag tone="warn">Poissaolo</Tag>
+            ) : shift.status === "accepted" ? (
+              <Tag tone="ok">
+                <RfIcon name="check" size={12} />
+                Vahvistettu
+              </Tag>
+            ) : (
+              <Tag tone={shift.status === "changed" ? "info" : "neutral"}>
+                {SHIFT_STATUS_LABELS[shift.status]}
+              </Tag>
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="flex-1 text-[14px]" style={{ color: "var(--rf-text-3)" }}>
+          {absent ? "Poissaolo" : "Vapaa"}
+        </p>
+      )}
+    </div>
   );
 }
 
-function dotColor(status: Shift["status"]): string {
-  return status === "accepted"
-    ? "var(--rf-green)"
-    : status === "changed"
-      ? "var(--rf-blue)"
-      : status === "declined"
-        ? "var(--rf-red)"
-        : "var(--rf-amber)";
-}
+/** Viikot tästä päivästä eteenpäin, maanantaista sunnuntaihin. */
+function buildWeeks(today: string, count: number) {
+  const weeks: { index: number; label: string; days: string[] }[] = [];
 
-/** Kuukausiruudukko maanantaista alkaen. Tyhjät solut ovat null. */
-function buildMonthGrid(month: string): (string | null)[] {
-  const [year, m] = month.split("-").map(Number);
-  const first = new Date(Date.UTC(year, m - 1, 1));
-  const daysInMonth = new Date(Date.UTC(year, m, 0)).getUTCDate();
-
-  // getUTCDay: 0 = sunnuntai. Siirretään maanantai-alkuiseksi.
-  const lead = (first.getUTCDay() + 6) % 7;
-
-  const cells: (string | null)[] = Array(lead).fill(null);
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push(`${month}-${String(day).padStart(2, "0")}`);
+  for (let i = 0; i < count; i += 1) {
+    const start = addDays(weekStart(today), i * 7);
+    const days = datesInRange(start, weekEnd(start));
+    weeks.push({ index: i, label: shortDate(start), days });
   }
-  return cells;
+
+  return weeks;
 }
 
-function formatShortDate(isoDate: string): string {
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.`;
-}
-
-function formatLongDate(isoDate: string): string {
-  const months = [
-    "tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta",
-    "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta",
-    "marraskuuta", "joulukuuta",
-  ];
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}. ${months[Number(m) - 1]}`;
+function addDays(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }

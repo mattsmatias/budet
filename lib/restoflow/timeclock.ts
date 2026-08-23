@@ -300,6 +300,14 @@ export interface DaySummary {
   breakMs: number;
   /** Päivä on yhä kesken: sisään on leimattu muttei ulos. */
   open: boolean;
+  /**
+   * Päivän työjaksot erikseen.
+   *
+   * Tauko katkaisee jakson, joten aamupäivä ja iltapäivä ovat kaksi
+   * riviä. Historiassa se on olennaista: "09:00 → 17:00, 7 h" jättäisi
+   * kertomatta mihin tunti katosi.
+   */
+  segments: WorkSegment[];
 }
 
 /**
@@ -331,6 +339,7 @@ export function daySummaries(
       workedMs: worked.workedMs,
       breakMs: worked.breakMs,
       open: firstIn !== null && lastOut === null,
+      segments: workSegments(dayEvents, nowIso),
     };
   });
 }
