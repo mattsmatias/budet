@@ -146,6 +146,75 @@ export function computeWorked(events: ClockEvent[], nowIso: string): WorkedTime 
   };
 }
 
+export interface WorkSegment {
+  /** Jakson alku ja loppu millisekunteina epookista. */
+  startMs: number;
+  endMs: number;
+}
+
+/**
+ * Työjaksot, tauot pois leikattuina.
+ *
+ * `computeWorked` antaa kokonaiskeston, mikä riittää tuntimäärään mutta
+ * ei palkkalisiin: iltalisä maksetaan niiltä minuuteilta jotka osuvat
+ * ikkunaan, eikä tauolla vietetty tunti ole niitä. Jaksot kertovat
+ * milloin työtä oikeasti tehtiin.
+ *
+ * Keskeneräinen jakso päättyy annettuun hetkeen samoin kuin
+ * `computeWorked`issa — muuten käynnissä oleva vuoro näyttäisi nollaa.
+ */
+export function workSegments(events: ClockEvent[], nowIso: string): WorkSegment[] {
+  const sorted = sortEvents(events);
+  const now = Date.parse(nowIso);
+
+  const segments: WorkSegment[] = [];
+  let state: ClockState = "off";
+  let startMs: number | null = null;
+
+  const close = (endMs: number) => {
+    if (startMs !== null && endMs > startMs) segments.push({ startMs, endMs });
+    startMs = null;
+  };
+
+  for (const event of sorted) {
+    const at = Date.parse(event.at);
+    if (Number.isNaN(at)) continue;
+
+    switch (event.type) {
+      case "in":
+        if (state === "off") {
+          state = "working";
+          startMs = at;
+        }
+        break;
+
+      case "break_start":
+        if (state === "working") {
+          close(at);
+          state = "on_break";
+        }
+        break;
+
+      case "break_end":
+        if (state === "on_break") {
+          state = "working";
+          startMs = at;
+        }
+        break;
+
+      case "out":
+        if (state === "working") close(at);
+        state = "off";
+        startMs = null;
+        break;
+    }
+  }
+
+  if (state === "working") close(now);
+
+  return segments;
+}
+
 /**
  * Tapahtumat yhdeltä päivältä ravintolan ajassa.
  *
