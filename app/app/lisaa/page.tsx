@@ -16,7 +16,7 @@ export default async function MorePage() {
   const { user, restaurant, role, clockEvents, today, now } =
     await employeeContext("/app/lisaa");
 
-  const week = workedBetween(clockEvents, weekStart(today), today, now);
+  const week = workedBetween(clockEvents, weekStart(today), today, now, restaurant.timezone);
   const rate = restaurant.hourlyRateCents ?? 0;
   const earned = staffCostCents(week.workedMs, rate);
 

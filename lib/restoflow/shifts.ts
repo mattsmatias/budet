@@ -59,11 +59,13 @@ export function compareShift(
   users: User[],
   clockEvents: ClockEvent[],
   nowIso: string,
+  timezone: string,
 ): ShiftComparison {
   const user = users.find((u) => u.id === shift.userId);
   const dayEvents = eventsOnDate(
     clockEvents.filter((e) => e.userId === shift.userId),
     shift.date,
+    timezone,
   );
 
   const worked = computeWorked(dayEvents, nowIso);
@@ -89,9 +91,10 @@ export function compareShifts(
   users: User[],
   clockEvents: ClockEvent[],
   nowIso: string,
+  timezone: string,
 ): ShiftComparison[] {
   return shifts
-    .map((shift) => compareShift(shift, users, clockEvents, nowIso))
+    .map((shift) => compareShift(shift, users, clockEvents, nowIso, timezone))
     .sort((a, b) => a.shift.date.localeCompare(b.shift.date));
 }
 

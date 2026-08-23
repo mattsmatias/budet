@@ -23,6 +23,7 @@ import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers
 import { can, canAddReceipts, seesPayRates } from "@/lib/restoflow/permissions";
 import { formatDuration, staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
 import { currentState } from "@/lib/restoflow/timeclock";
+import { dayIn } from "@/lib/restoflow/clock-context";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -155,7 +156,11 @@ export default async function AdminDashboard({
   // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
   // asioita joihin pitää reagoida, ja kahdesta listasta toinen jäisi
   // katsomatta.
-  const insights = buildInsights({ ...dashboardInput, now });
+  const insights = buildInsights({
+    ...dashboardInput,
+    now,
+    timezone: restaurant.timezone,
+  });
   const items = focusItems(dashboardInput, insights);
 
   /*
@@ -199,10 +204,12 @@ export default async function AdminDashboard({
   const onDuty = users
     .map((u) => {
       const events = clockEvents.filter((event) => event.userId === u.id);
-      const worked = workedOnDate(events, today, now);
-      const state = currentState(events.filter((event) => event.at.slice(0, 10) === today));
+      const worked = workedOnDate(events, today, now, restaurant.timezone);
+      const state = currentState(
+        events.filter((event) => dayIn(restaurant.timezone, event.at) === today),
+      );
       const firstIn = events.find(
-        (event) => event.type === "in" && event.at.slice(0, 10) === today,
+        (event) => event.type === "in" && dayIn(restaurant.timezone, event.at) === today,
       );
 
       return { user: u, worked, state, since: firstIn?.at ?? null };

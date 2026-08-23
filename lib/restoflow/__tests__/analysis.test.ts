@@ -482,9 +482,19 @@ describe("työvuoro vs. toteutunut", () => {
     startTime: "14:00", endTime: "22:00", location: "Sali", status: "accepted",
   };
 
+  const ZONE = "Europe/Helsinki";
+
+  /*
+   * Aikaleimat ovat UTC:tä, vuoron kellonajat paikallisia.
+   *
+   * Vuoro 14:00-22:00 Helsingissä on 11:00-19:00 UTC. Aiemmin tässä luki
+   * 14:04Z ja 22:17Z, mikä Helsingissä tarkoittaa 17:04 ja seuraavan
+   * päivän 01:17. Testi meni läpi vain koska päivä poimittiin
+   * merkkijonosta UTC:nä.
+   */
   const events: ClockEvent[] = [
-    { id: "e1", userId: "u1", type: "in", at: "2026-08-20T14:04:00.000Z" },
-    { id: "e2", userId: "u1", type: "out", at: "2026-08-20T22:17:00.000Z" },
+    { id: "e1", userId: "u1", type: "in", at: "2026-08-20T11:04:00.000Z" },
+    { id: "e2", userId: "u1", type: "out", at: "2026-08-20T19:17:00.000Z" },
   ];
 
   it("laskee vuoron keston", () => {
@@ -497,20 +507,20 @@ describe("työvuoro vs. toteutunut", () => {
   });
 
   it("laskee eron suunnitellun ja toteutuneen välillä", () => {
-    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z");
+    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z", ZONE);
     expect(c.plannedMs).toBe(480 * 60000);
     expect(c.actualMs).toBe(493 * 60000);
     expect(c.varianceMs).toBe(13 * 60000);
   });
 
   it("laskee kustannuseron tuntipalkasta", () => {
-    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z");
+    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z", ZONE);
     expect(c.plannedCostCents).toBe(12000); // 8 h × 15 €
     expect(c.actualCostCents).toBeGreaterThan(c.plannedCostCents);
   });
 
   it("ei arvaa toteutunutta kun leimauksia ei ole", () => {
-    const c = compareShift(shift, users, [], "2026-08-21T00:00:00.000Z");
+    const c = compareShift(shift, users, [], "2026-08-21T00:00:00.000Z", ZONE);
     expect(c.actualMs).toBe(0);
     expect(c.actualStart).toBeNull();
   });
@@ -533,9 +543,9 @@ describe("työvuoro vs. toteutunut", () => {
 
     const patterns = variancePatterns(
       [
-        compareShift(shift, users, more, "2026-08-21T00:00:00.000Z"),
-        compareShift(day2, users, more, "2026-08-21T00:00:00.000Z"),
-        compareShift(day3, users, more, "2026-08-21T00:00:00.000Z"),
+        compareShift(shift, users, more, "2026-08-21T00:00:00.000Z", ZONE),
+        compareShift(day2, users, more, "2026-08-21T00:00:00.000Z", ZONE),
+        compareShift(day3, users, more, "2026-08-21T00:00:00.000Z", ZONE),
       ],
       2,
     );

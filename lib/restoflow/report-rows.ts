@@ -52,6 +52,7 @@ export async function buildReportRows(
   restaurantId: string,
   month: string,
   role: Parameters<typeof can>[0],
+  timezone: string,
 ): Promise<string[][]> {
   // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
   const showsRates = can(role, "staff.rates.view");
@@ -72,6 +73,7 @@ export async function buildReportRows(
         `${month}-01`,
         lastDay,
         now,
+        timezone,
       );
       const hours = Math.round((worked.workedMs / 3600000) * 100) / 100;
       return {

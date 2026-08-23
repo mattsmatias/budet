@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role);
+  const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role, restaurant.timezone);
   const csv = "﻿" + rows.map((r) => r.map(escapeCell).join(";")).join("\r\n");
 
   return new NextResponse(csv, {

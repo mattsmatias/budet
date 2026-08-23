@@ -15,10 +15,13 @@ export const metadata = { title: "Ilmoitukset" };
  * vaikka vuoro olisi yhä vastaamatta.
  */
 export default async function EmployeeAlertsPage() {
-  const { shifts, clockEvents, absences, today, now } =
+  const { shifts, clockEvents, absences, today, now, restaurant } =
     await employeeContext("/app/ilmoitukset");
 
-  const alerts = buildEmployeeAlerts({ shifts, clockEvents, absences, today, now });
+  const alerts = buildEmployeeAlerts({
+    shifts, clockEvents, absences, today, now,
+    timezone: restaurant.timezone,
+  });
   const actionable = alerts.filter((alert) => alert.severity === "action");
 
   return (

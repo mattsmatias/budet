@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
   const sheets = [];
   for (const kind of kinds) {
-    const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role);
+    const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role, restaurant.timezone);
     sheets.push({ name: SHEET_NAMES[kind], rows: rows.map(toCells) });
   }
 

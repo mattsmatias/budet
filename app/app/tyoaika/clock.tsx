@@ -36,9 +36,12 @@ const initial: ActionState = {};
 export function TimeClock({
   todayEvents,
   weekWorkedMs,
+  timezone,
 }: {
   todayEvents: ClockEvent[];
   weekWorkedMs: number;
+  /** Ravintolan aikavyöhyke: leimauksen kellonaika näytetään siinä ajassa. */
+  timezone: string;
 }) {
   const [state, action] = useActionState(recordClockEvent, initial);
 
@@ -143,7 +146,7 @@ export function TimeClock({
                       }}
                     />
                     <span className="rf-tabular text-[15px] font-medium">
-                      {formatTimeOfDay(event.at)}
+                      {formatTimeOfDay(event.at, timezone)}
                     </span>
                     <span className="text-[15px]" style={{ color: "var(--rf-text-2)" }}>
                       {CLOCK_EVENT_LABELS[event.type]}

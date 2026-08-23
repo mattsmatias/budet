@@ -9,6 +9,7 @@
  * voisi testata eikä sama syöte tuottaisi samaa tulosta.
  */
 
+import { dayIn, timeIn } from "./clock-context";
 import type { ClockEvent, ClockEventType, ClockState } from "./types";
 
 /** Tapahtumat aikajärjestyksessä, vanhin ensin. */
@@ -145,9 +146,20 @@ export function computeWorked(events: ClockEvent[], nowIso: string): WorkedTime 
   };
 }
 
-/** Tapahtumat yhdeltä päivältä. Päivä tulkitaan paikallisena. */
-export function eventsOnDate(events: ClockEvent[], isoDate: string): ClockEvent[] {
-  return sortEvents(events).filter((e) => e.at.slice(0, 10) === isoDate);
+/**
+ * Tapahtumat yhdeltä päivältä ravintolan ajassa.
+ *
+ * Vyöhyke on pakollinen eikä oletusarvoinen. Aiemmin päivä poimittiin
+ * ISO-merkkijonosta, mikä on UTC: Helsingissä klo 02:15 tehty leimaus
+ * kirjautui edelliselle päivälle. Oletusarvo olisi jättänyt saman virhen
+ * voimaan kaikkialle missä sitä ei muisteta antaa.
+ */
+export function eventsOnDate(
+  events: ClockEvent[],
+  isoDate: string,
+  timezone: string,
+): ClockEvent[] {
+  return sortEvents(events).filter((e) => dayIn(timezone, e.at) === isoDate);
 }
 
 /** Tapahtumat aikaväliltä, molemmat päät mukaan lukien. */
@@ -155,9 +167,10 @@ export function eventsBetween(
   events: ClockEvent[],
   fromDate: string,
   toDate: string,
+  timezone: string,
 ): ClockEvent[] {
   return sortEvents(events).filter((e) => {
-    const day = e.at.slice(0, 10);
+    const day = dayIn(timezone, e.at);
     return day >= fromDate && day <= toDate;
   });
 }
@@ -170,8 +183,9 @@ export function workedOnDate(
   events: ClockEvent[],
   isoDate: string,
   nowIso: string,
+  timezone: string,
 ): WorkedTime {
-  return computeWorked(eventsOnDate(events, isoDate), nowIso);
+  return computeWorked(eventsOnDate(events, isoDate, timezone), nowIso);
 }
 
 export function workedBetween(
@@ -179,13 +193,14 @@ export function workedBetween(
   fromDate: string,
   toDate: string,
   nowIso: string,
+  timezone: string,
 ): WorkedTime {
   // Päivä kerrallaan, jotta keskeneräiset jaksot rajautuvat oikein.
   let workedMs = 0;
   let breakMs = 0;
 
   for (const day of datesInRange(fromDate, toDate)) {
-    const result = workedOnDate(events, day, nowIso);
+    const result = workedOnDate(events, day, nowIso, timezone);
     workedMs += result.workedMs;
     breakMs += result.breakMs;
   }
@@ -229,9 +244,9 @@ export function formatClock(ms: number): string {
   return [h, m, s].map((n) => String(n).padStart(2, "0")).join(":");
 }
 
-/** "09:02" */
-export function formatTimeOfDay(iso: string): string {
-  return iso.slice(11, 16);
+/** "09:02" ravintolan ajassa. */
+export function formatTimeOfDay(iso: string, timezone: string): string {
+  return timeIn(timezone, iso);
 }
 
 /** Tunteina desimaalilukuna, palkkalaskentaa varten. */

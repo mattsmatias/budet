@@ -64,7 +64,7 @@ export async function adminContext(returnTo: string): Promise<AdminContext> {
     month,
     today,
     now,
-    monthlyHours: hoursByUser(data, month, now),
+    monthlyHours: hoursByUser(data, month, now, ctx.restaurant.timezone),
   };
 }
 
@@ -78,6 +78,7 @@ function hoursByUser(
   data: RestaurantData,
   month: string,
   now: string,
+  timezone: string,
 ): Record<string, number> {
   const from = `${month}-01`;
   const [year, m] = month.split("-").map(Number);
@@ -86,7 +87,7 @@ function hoursByUser(
   const out: Record<string, number> = {};
   for (const user of data.users) {
     const events = data.clockEvents.filter((e) => e.userId === user.id);
-    const worked = workedBetween(events, from, to, now);
+    const worked = workedBetween(events, from, to, now, timezone);
     out[user.id] = Math.round((worked.workedMs / 3600000) * 10) / 10;
   }
   return out;

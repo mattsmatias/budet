@@ -32,7 +32,7 @@ import { EditShift, NewShiftButton } from "./shift-form";
 export const metadata = { title: "Työvuorot" };
 
 export default async function AdminShiftsPage() {
-  const { users, shifts, openShifts, clockEvents, absences, today, now, role } =
+  const { users, shifts, openShifts, clockEvents, absences, today, now, role, restaurant } =
     await adminContext("/admin/tyovuorot");
 
   const upcoming = shifts.filter((s) => s.date >= today);
@@ -42,7 +42,7 @@ export default async function AdminShiftsPage() {
 
   // Suunniteltu vs. toteutunut vain menneistä vuoroista: tulevassa
   // vuorossa ei ole toteutunutta, ja nolla näyttäisi alitukselta.
-  const comparisons = compareShifts(past, users, clockEvents, now);
+  const comparisons = compareShifts(past, users, clockEvents, now, restaurant.timezone);
   const labour = labourSummary(comparisons);
   const showsRates = seesPayRates(role);
 

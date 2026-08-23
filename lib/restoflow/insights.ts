@@ -52,6 +52,8 @@ export interface InsightContext {
   month: string;
   today: string;
   now: string;
+  /** Ravintolan aikavyöhyke: leimauksen päivä luetaan siinä ajassa. */
+  timezone: string;
 }
 
 /** Kuluvertailu jätetään tekemättä, jos vertailukuukausi on lähes tyhjä. */
@@ -215,7 +217,7 @@ function labourShare(ctx: InsightContext): Insight[] {
   if (past.length === 0) return [];
 
   const summary = labourSummary(
-    compareShifts(past, ctx.users, ctx.clockEvents, ctx.now),
+    compareShifts(past, ctx.users, ctx.clockEvents, ctx.now, ctx.timezone),
   );
 
   if (summary.actualMs === 0) return [];

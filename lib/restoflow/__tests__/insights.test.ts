@@ -56,6 +56,7 @@ function context(partial: Partial<InsightContext> = {}): InsightContext {
     month: "2026-08",
     today: "2026-08-15",
     now: "2026-08-15T12:00:00.000Z",
+    timezone: "Europe/Helsinki",
     ...partial,
   };
 }

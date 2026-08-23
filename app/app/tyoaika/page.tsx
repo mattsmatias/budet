@@ -6,16 +6,18 @@ import { TimeClock } from "./clock";
 export const metadata = { title: "Työaika" };
 
 export default async function TimeTrackingPage() {
-  const { user, clockEvents, today, now } = await employeeContext("/app/tyoaika");
+  const { user, restaurant, clockEvents, today, now } =
+    await employeeContext("/app/tyoaika");
 
-  const todayEvents = eventsOnDate(clockEvents, today);
+  const zone = restaurant.timezone;
+  const todayEvents = eventsOnDate(clockEvents, today, zone);
 
   // Viikko ilman kuluvaa päivää: kuluva päivä lasketaan selaimessa
   // sekunnin tarkkuudella ja lisätään tähän, muuten se laskettaisiin kahdesti.
   const yesterday = previousDay(today);
   const week =
     yesterday >= weekStart(today)
-      ? workedBetween(clockEvents, weekStart(today), yesterday, now)
+      ? workedBetween(clockEvents, weekStart(today), yesterday, now, zone)
       : { workedMs: 0, breakMs: 0, runningSince: null };
 
   return (
@@ -27,7 +29,11 @@ export default async function TimeTrackingPage() {
         </p>
       </header>
 
-      <TimeClock todayEvents={todayEvents} weekWorkedMs={week.workedMs} />
+      <TimeClock
+        todayEvents={todayEvents}
+        weekWorkedMs={week.workedMs}
+        timezone={zone}
+      />
     </div>
   );
 }

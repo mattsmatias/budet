@@ -29,9 +29,10 @@ export default async function EmployeeHome() {
   const { user, restaurant, clockEvents, shifts, today, now } =
     await employeeContext("/app");
 
-  const state = currentState(eventsOnDate(clockEvents, today));
-  const todayWorked = workedOnDate(clockEvents, today, now);
-  const week = workedBetween(clockEvents, weekStart(today), today, now);
+  const zone = restaurant.timezone;
+  const state = currentState(eventsOnDate(clockEvents, today, zone));
+  const todayWorked = workedOnDate(clockEvents, today, now, zone);
+  const week = workedBetween(clockEvents, weekStart(today), today, now, zone);
 
   const nextShift = shifts.find((s) => s.date >= today);
 

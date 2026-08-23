@@ -16,11 +16,14 @@ export const metadata = { title: "Havainnot" };
  * eikä sen perusteella muuteta mitään.
  */
 export default async function InsightsPage() {
-  const { receipts, budgets, shifts, users, clockEvents, month, today, now } =
+  const { receipts, budgets, shifts, users, clockEvents, month, today, now, restaurant } =
     await adminContext("/admin/havainnot");
 
   const insights = sortInsights(
-    buildInsights({ receipts, budgets, shifts, users, clockEvents, month, today, now }),
+    buildInsights({
+      receipts, budgets, shifts, users, clockEvents, month, today, now,
+      timezone: restaurant.timezone,
+    }),
   );
 
   const series = insightSeries(receipts, month);

@@ -21,6 +21,7 @@ function ev(type: ClockEventType, at: string): ClockEvent {
 
 const D = "2026-08-20";
 const t = (hhmm: string) => `${D}T${hhmm}:00.000Z`;
+const ZONE = "Europe/Helsinki";
 
 describe("currentState", () => {
   it("on off ilman tapahtumia", () => {
@@ -155,7 +156,7 @@ describe("workedOnDate", () => {
       ev("in", t("10:00")),
       ev("out", t("14:00")),
     ];
-    expect(workedOnDate(events, D, t("20:00")).workedMs).toBe(4 * 3600000);
+    expect(workedOnDate(events, D, t("20:00"), ZONE).workedMs).toBe(4 * 3600000);
   });
 });
 

@@ -11,6 +11,7 @@
  */
 
 import { currentState, eventsOnDate } from "./timeclock";
+import { dayIn } from "./clock-context";
 import { SHIFT_STATUS_LABELS, type Absence, type ClockEvent, type Shift } from "./types";
 
 export type EmployeeAlertKind =
@@ -35,6 +36,8 @@ export interface EmployeeAlertContext {
   absences: Absence[];
   today: string;
   now: string;
+  /** Ravintolan aikavyöhyke: leimauksen päivä luetaan siinä ajassa. */
+  timezone: string;
 }
 
 /**
@@ -84,13 +87,13 @@ function changedShifts(ctx: EmployeeAlertContext): EmployeeAlert[] {
  */
 function openClock(ctx: EmployeeAlertContext): EmployeeAlert[] {
   const days = [
-    ...new Set(ctx.clockEvents.map((event) => event.at.slice(0, 10))),
+    ...new Set(ctx.clockEvents.map((event) => dayIn(ctx.timezone, event.at))),
   ]
     .filter((day) => day < ctx.today)
     .sort();
 
   const stuck = days.filter((day) => {
-    const state = currentState(eventsOnDate(ctx.clockEvents, day));
+    const state = currentState(eventsOnDate(ctx.clockEvents, day, ctx.timezone));
     return state === "working" || state === "on_break";
   });
 
