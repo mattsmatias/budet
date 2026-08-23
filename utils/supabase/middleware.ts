@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /** Reitit jotka vaativat kirjautumisen. */
@@ -24,6 +24,15 @@ export async function updateSession(request: NextRequest) {
   // sivujen kertoa se itse sen sijaan että pyyntö kaatuisi tähän.
   if (!url || !key) return response;
 
+  /*
+   * Evästeet jotka Supabase haluaa kirjoittaa tällä pyynnöllä.
+   *
+   * Ne on pidettävä erillään vastauksesta, koska vastaus voi vielä
+   * vaihtua uudelleenohjaukseksi. Ilman tätä listaa ne katoaisivat
+   * juuri silloin kun niillä on eniten merkitystä — ks. redirectTo.
+   */
+  const pending: { name: string; value: string; options: CookieOptions }[] = [];
+
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
@@ -32,9 +41,10 @@ export async function updateSession(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
+        cookiesToSet.forEach(({ name, value, options }) => {
+          pending.push({ name, value, options });
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -47,18 +57,40 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  if (!user && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) {
+  /**
+   * Uudelleenohjaus joka ei hukkaa istuntoa.
+   *
+   * Tämä on koko tiedoston tärkein kohta. `getUser` on juuri voinut
+   * kiertää pääsytokenin, jolloin Supabase antaa uudet evästeet ja
+   * mitätöi vanhat palvelimen päässä. Tuore `NextResponse.redirect`
+   * ei kanna niitä mukanaan, joten selaimelle jäisi käteen eväste
+   * joka on jo kuollut.
+   *
+   * Siitä ei toivu itsestään: seuraava pyyntö lähettää saman kuolleen
+   * evästeen, kierrätys epäonnistuu, ohjataan taas — ja sivu jää
+   * lataamaan loputtomiin. Sama koskee uloskirjaavaa tapausta, jossa
+   * Supabase tyhjentää evästeet: ilman näitä otsikoita selain ei saa
+   * koskaan tietää että istunto on mennyt.
+   */
+  const redirectTo = (pathname: string, search = "") => {
     const target = request.nextUrl.clone();
-    target.pathname = "/kirjaudu";
-    target.search = `?seuraava=${encodeURIComponent(path)}`;
-    return NextResponse.redirect(target);
+    target.pathname = pathname;
+    target.search = search;
+
+    const redirect = NextResponse.redirect(target);
+    pending.forEach(({ name, value, options }) =>
+      redirect.cookies.set(name, value, options),
+    );
+
+    return redirect;
+  };
+
+  if (!user && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) {
+    return redirectTo("/kirjaudu", `?seuraava=${encodeURIComponent(path)}`);
   }
 
   if (user && AUTH_ONLY.includes(path)) {
-    const target = request.nextUrl.clone();
-    target.pathname = "/admin";
-    target.search = "";
-    return NextResponse.redirect(target);
+    return redirectTo("/admin");
   }
 
   return response;
