@@ -21,6 +21,7 @@ import {
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
 import { staffCostCents, workedBetween } from "@/lib/restoflow/timeclock";
+import { windowStartIso } from "@/lib/restoflow/clock-context";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -60,7 +61,7 @@ export async function buildReportRows(
   if (kind === "tyoaika" || kind === "henkilostokulut") {
     const [users, events] = await Promise.all([
       fetchUsers(restaurantId),
-      fetchClockEvents(restaurantId, `${month}-01T00:00:00.000Z`),
+      fetchClockEvents(restaurantId, windowStartIso(`${month}-01`)),
     ]);
 
     const now = new Date().toISOString();

@@ -157,11 +157,29 @@ function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className="rf-press flex flex-col items-center gap-1 py-2"
+                className="rf-press flex flex-col items-center gap-1 pt-2 pb-2.5"
                 style={{ color: active ? "var(--rf-blue)" : "var(--rf-text-3)" }}
               >
-                <RfIcon name={tab.icon} size={22} />
-                <span className="text-[10px] font-medium">{tab.label}</span>
+                {/*
+                  Aktiivinen kohta saa taustan ikonin taakse.
+                  Pelkkä värivaihdos on puhelimessa liian hiljainen: sitä
+                  ei erota vilkaisulla eikä kirkkaassa ulkovalossa.
+                */}
+                <span
+                  className="flex items-center justify-center px-4 py-1"
+                  style={{
+                    background: active ? "var(--rf-accent-bg)" : "transparent",
+                    borderRadius: 10,
+                  }}
+                >
+                  <RfIcon name={tab.icon} size={21} />
+                </span>
+                <span
+                  className="text-[10px]"
+                  style={{ fontWeight: active ? 600 : 500 }}
+                >
+                  {tab.label}
+                </span>
               </Link>
             </li>
           );

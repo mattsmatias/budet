@@ -4,6 +4,7 @@ import {
   minutesOfDayIn,
   timeIn,
   weekdayIn,
+  windowStartIso,
 } from "../clock-context";
 import { eventsOnDate, formatTimeOfDay, workedOnDate } from "../timeclock";
 import type { ClockEvent } from "../types";
@@ -110,6 +111,34 @@ describe("tapahtumien päiväkohtainen rajaus", () => {
     const worked = workedOnDate(events, "2026-08-21", "2026-08-22T06:00:00.000Z", HELSINKI);
     // Vain sisäänleimaus osuu 21. päivälle, joten jakso jää auki.
     expect(worked.workedMs).toBeGreaterThan(0);
+  });
+});
+
+describe("hakuikkunan alku", () => {
+  /*
+   * Tämä ansa on purrut kolmesti: jaetussa kontekstissa, palkkakauden
+   * latauksessa ja työajan korjauksessa.
+   *
+   * Kantakysely rajaa UTC-aikaleimoja, mutta päivä on paikallinen. Klo
+   * 01:50 Helsingissä tehty leimaus on edellisen UTC-päivän puolella,
+   * joten `${paiva}T00:00:00Z` jättää yön ensimmäiset tunnit pois.
+   * Yövuorolainen ei nähnyt omaa sisäänleimaustaan.
+   */
+  it("alkaa vuorokautta ennen pyydettyä päivää", () => {
+    expect(windowStartIso("2026-08-24")).toBe("2026-08-23T00:00:00.000Z");
+  });
+
+  it("kattaa yöleimauksen joka on edellisen UTC-päivän puolella", () => {
+    const leimaus = "2026-08-23T22:50:00.000Z"; // 24.8. klo 01:50 Helsingissä
+
+    // Päivä on paikallisesti 24., mutta naiivi raja jättäisi sen pois.
+    expect(dayIn(HELSINKI, leimaus)).toBe("2026-08-24");
+    expect(leimaus >= "2026-08-24T00:00:00.000Z").toBe(false);
+    expect(leimaus >= windowStartIso("2026-08-24")).toBe(true);
+  });
+
+  it("toimii kuukauden vaihteessa", () => {
+    expect(windowStartIso("2026-09-01")).toBe("2026-08-31T00:00:00.000Z");
   });
 });
 

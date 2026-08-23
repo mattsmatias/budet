@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { employeeContext } from "@/lib/restoflow/page-context";
 import {
+  fetchClockEvents,
   fetchPayComponents,
   fetchShifts,
   fetchTimeCorrections,
@@ -9,6 +10,7 @@ import { buildPayslip, monthPeriod } from "@/lib/restoflow/payroll";
 import { formatHours } from "@/lib/restoflow/payroll-data";
 import { formatDuration } from "@/lib/restoflow/timeclock";
 import { formatMonth } from "@/lib/restoflow/expenses";
+import { windowStartIso } from "@/lib/restoflow/clock-context";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card } from "@/components/restoflow/ui";
@@ -28,16 +30,26 @@ export const metadata = { title: "Palkkani" };
  * tule tänne edes vahingossa.
  */
 export default async function MyPayPage() {
-  const { user, restaurant, clockEvents, month, now } =
-    await employeeContext("/app/palkka");
+  const { user, restaurant, month, now } = await employeeContext("/app/palkka");
 
   const period = monthPeriod(month);
 
-  const [shifts, corrections, components] = await Promise.all([
+  /*
+   * Leimaukset haetaan kuukauden alusta, ei jaetusta kontekstista.
+   *
+   * Konteksti antaa ne viikon alusta, mikä riittää etusivulle mutta ei
+   * tähän: maanantaina kuukauden aiemmat päivät olisivat kadonneet
+   * palkkakertymästä äänettömästi. Kuukauden summa on haettava
+   * kuukauden ajalta.
+   */
+  const [events, shifts, corrections, components] = await Promise.all([
+    fetchClockEvents(restaurant.id, windowStartIso(period.startsOn)),
     fetchShifts(restaurant.id),
     fetchTimeCorrections(restaurant.id, period.startsOn, period.endsOn),
     fetchPayComponents(restaurant.id),
   ]);
+
+  const clockEvents = events.filter((e) => e.userId === user.id);
 
   /*
    * Käyttäjä rakennetaan istunnosta eikä jäsenlistasta.

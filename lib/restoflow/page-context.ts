@@ -9,7 +9,7 @@
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { monthIn, todayIn, weekStart } from "./clock-context";
+import { monthIn, todayIn, weekStart, windowStartIso } from "./clock-context";
 import { can, capabilityForPath, landingFor } from "./permissions";
 import { workedBetween } from "./timeclock";
 import {
@@ -128,7 +128,7 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
   // Leimaukset kuluvan viikon alusta: päivä- ja viikkonäkymä tarvitsevat ne,
   // vanhemmat eivät kuulu tähän näkymään.
   const [allEvents, allShifts, allAbsences] = await Promise.all([
-    fetchClockEvents(ctx.restaurant.id, `${weekStart(today)}T00:00:00.000Z`),
+    fetchClockEvents(ctx.restaurant.id, windowStartIso(weekStart(today))),
     fetchShifts(ctx.restaurant.id),
     fetchAbsences(ctx.restaurant.id, today),
   ]);

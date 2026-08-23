@@ -290,6 +290,51 @@ export function datesInRange(fromDate: string, toDate: string): string[] {
   return days;
 }
 
+export interface DaySummary {
+  /** Päivä ravintolan ajassa. */
+  date: string;
+  /** Ensimmäinen sisäänleimaus ja viimeinen uloskirjaus. */
+  firstIn: string | null;
+  lastOut: string | null;
+  workedMs: number;
+  breakMs: number;
+  /** Päivä on yhä kesken: sisään on leimattu muttei ulos. */
+  open: boolean;
+}
+
+/**
+ * Päiväkohtainen koonti leimauksista, uusin ensin.
+ *
+ * Työntekijän etusivu ja työaikanäkymä näyttävät saman listan. Ilman
+ * yhteistä funktiota kumpikin ryhmittelisi tapahtumat omalla tavallaan,
+ * ja kaksi listaa samasta datasta ehtii ajautua erilleen.
+ */
+export function daySummaries(
+  events: ClockEvent[],
+  nowIso: string,
+  timezone: string,
+  limit?: number,
+): DaySummary[] {
+  const days = [...new Set(events.map((e) => dayIn(timezone, e.at)))].sort().reverse();
+  const wanted = limit === undefined ? days : days.slice(0, limit);
+
+  return wanted.map((date) => {
+    const dayEvents = eventsOnDate(events, date, timezone);
+    const worked = computeWorked(dayEvents, nowIso);
+    const firstIn = dayEvents.find((e) => e.type === "in")?.at ?? null;
+    const lastOut = [...dayEvents].reverse().find((e) => e.type === "out")?.at ?? null;
+
+    return {
+      date,
+      firstIn,
+      lastOut,
+      workedMs: worked.workedMs,
+      breakMs: worked.breakMs,
+      open: firstIn !== null && lastOut === null,
+    };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Muotoilu
 // ---------------------------------------------------------------------------
@@ -302,6 +347,22 @@ export function formatDuration(ms: number): string {
 
   if (hours === 0) return `${minutes} min`;
   return `${hours} h ${String(minutes).padStart(2, "0")} min`;
+}
+
+/**
+ * "02 h 34 min" — suureen laskuriin työntekijän etusivulla.
+ *
+ * Erillinen `formatDuration`ista, joka jättää tunnit pois alle tunnin
+ * kestoista ("34 min"). Suuressa laskurissa se tarkoittaisi että luvun
+ * leveys ja muoto vaihtuvat kesken vuoron, ja silmä lukee sen
+ * muutoksena eikä ajan kulumisena.
+ */
+export function formatHoursMinutes(ms: number): string {
+  const totalMinutes = Math.floor(Math.max(0, ms) / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, "0")} h ${String(minutes).padStart(2, "0")} min`;
 }
 
 /** "04:37:21" — suureen laskuriin. */

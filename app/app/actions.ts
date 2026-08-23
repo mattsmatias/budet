@@ -19,6 +19,14 @@ import type { ClockEventType } from "@/lib/restoflow/types";
 export interface ActionState {
   error?: string;
   notice?: string;
+  /**
+   * Mitä juuri leimattiin ja milloin.
+   *
+   * Käyttöliittymä näyttää onnistumisen vasta kun palvelin on
+   * vahvistanut tapahtuman. Kellonaika tulee tästä eikä selaimen
+   * kellosta: näytetty aika on se joka kirjattiin.
+   */
+  clocked?: { type: ClockEventType; at: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -55,8 +63,8 @@ export async function recordClockEvent(
     if (error.message?.includes("ei ole mahdollinen")) {
       return {
         error:
-          "Leimaus ei käy nykyisessä tilassa. Lataa sivu uudelleen — " +
-          "tilanne on saattanut muuttua toisessa välilehdessä.",
+          "Leimaus ei käy nykyisessä tilassa. Tilanne on päivitetty — " +
+          "se on saattanut muuttua toisessa välilehdessä.",
       };
     }
     return { error: explain(error, "Leimaus epäonnistui") };
@@ -65,7 +73,7 @@ export async function recordClockEvent(
   revalidatePath("/app", "layout");
   revalidatePath("/admin", "layout");
 
-  return { notice: LABELS[type] };
+  return { notice: LABELS[type], clocked: { type, at: new Date().toISOString() } };
 }
 
 const LABELS: Record<ClockEventType, string> = {

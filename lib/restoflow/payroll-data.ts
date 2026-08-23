@@ -14,6 +14,7 @@ import {
   fetchTimeCorrections,
   fetchUsers,
 } from "./queries";
+import { windowStartIso } from "./clock-context";
 import { buildPayslip, type PayComponent, type Payslip, type PeriodBounds } from "./payroll";
 import type { User } from "./types";
 
@@ -43,15 +44,16 @@ export async function loadPayroll(
   nowIso: string,
 ): Promise<PayrollData> {
   /*
-   * Leimaukset haetaan kauden alusta.
+   * Hakuikkuna alkaa vuorokautta ennen kautta.
    *
-   * Vuorokauden yli jatkuva vuoro voi alkaa edellisenä päivänä, mutta
-   * sen minuutit kuuluvat sille päivälle jona ne tehtiin — päiväkohtainen
-   * rajaus hoitaa sen, joten kauden alkua aiempaa ei tarvita.
+   * Kysely rajaa UTC-aikaleimoja, mutta kauden raja on paikallinen
+   * päivä. Kuun ensimmäisenä yönä klo 01:50 tehty leimaus on edellisen
+   * UTC-päivän puolella ja jäisi kaudelta pois. Ylimääräiset rivit
+   * rajautuvat pois päiväkohtaisessa laskennassa.
    */
   const [users, events, shifts, corrections, components] = await Promise.all([
     fetchUsers(restaurantId),
-    fetchClockEvents(restaurantId, `${period.startsOn}T00:00:00.000Z`),
+    fetchClockEvents(restaurantId, windowStartIso(period.startsOn)),
     fetchShifts(restaurantId),
     fetchTimeCorrections(restaurantId, period.startsOn, period.endsOn),
     fetchPayComponents(restaurantId),

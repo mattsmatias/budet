@@ -29,7 +29,7 @@ export default async function EmployeeAppLayout({ children }: LayoutProps<"/app"
         className="flex min-h-screen w-full max-w-md flex-col lg:max-w-none"
         style={{ background: "var(--rf-bg)" }}
       >
-        <main className="flex-1 px-4 pb-6 pt-3 lg:mx-auto lg:w-full lg:max-w-3xl lg:px-8 lg:pb-12 lg:pt-8">
+        <main className="flex-1 px-4 pb-6 pt-3 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-9">
           {children}
         </main>
 

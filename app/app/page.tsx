@@ -1,164 +1,93 @@
-import Link from "next/link";
 import { employeeContext } from "@/lib/restoflow/page-context";
 import { weekStart } from "@/lib/restoflow/clock-context";
-import {
-  currentState,
-  eventsOnDate,
-  formatDuration,
-  workedBetween,
-  workedOnDate,
-} from "@/lib/restoflow/timeclock";
-import { CLOCK_STATE_LABELS, SHIFT_STATUS_LABELS } from "@/lib/restoflow/types";
-import { RfIcon } from "@/components/restoflow/icons";
-import {
-  Card,
-  Pill,
-  SectionLabel,
-} from "@/components/restoflow/ui";
+import { fetchClockEvents } from "@/lib/restoflow/queries";
+import { daySummaries, eventsOnDate, workedBetween } from "@/lib/restoflow/timeclock";
+import { ClockCard } from "./home/clock-card";
+import { NextShift } from "./home/next-shift";
+import { WeeklyHours } from "./home/weekly-hours";
+import { RecentDays } from "./home/recent-days";
 
 export const metadata = { title: "Koti" };
+
+/** Montako päivää historiaa etusivulla näytetään. */
+const RECENT_DAYS = 3;
 
 /**
  * Työntekijän koti.
  *
- * Näyttää vain sen mikä koskee tätä työntekijää: oma työaika, oma seuraava
- * vuoro, oma viikko. Kulujen kokonaisuus ei kuulu tänne — se on managerin
- * näkymä, eikä RLS edes antaisi työntekijälle koko aineistoa.
+ * Näkymä vastaa neljään kysymykseen siinä järjestyksessä kuin ne
+ * kysytään: olenko töissä, mistä leimaan, milloin on seuraava vuoro,
+ * paljonko olen tehnyt.
+ *
+ * Sivu kokoaa mutta ei laske. Jokainen osa on oma komponenttinsa, ja
+ * työajan laskenta tulee samasta moottorista kuin esihenkilön puolella.
  */
 export default async function EmployeeHome() {
   const { user, restaurant, clockEvents, shifts, today, now } =
     await employeeContext("/app");
 
   const zone = restaurant.timezone;
-  const state = currentState(eventsOnDate(clockEvents, today, zone));
-  const todayWorked = workedOnDate(clockEvents, today, now, zone);
+
+  /*
+   * Historia haetaan erikseen ja vain tälle sivulle.
+   *
+   * Jaettu konteksti antaa leimaukset viikon alusta, mikä riittää
+   * viikkosummaan mutta ei kolmen viimeisen työpäivän listaan:
+   * maanantaina viikossa on yksi päivä. Kahden viikon ikkuna kattaa
+   * myös osa-aikaisen, joka tekee kaksi vuoroa viikossa.
+   */
+  const history = await fetchClockEvents(restaurant.id, twoWeeksBefore(today));
+  const mine = history.filter((e) => e.userId === user.id);
+
+  const todayEvents = eventsOnDate(clockEvents, today, zone);
   const week = workedBetween(clockEvents, weekStart(today), today, now, zone);
+  const recent = daySummaries(mine, now, zone, RECENT_DAYS);
 
   const nextShift = shifts.find((s) => s.date >= today);
-
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
   return (
-    <div className="rf-enter space-y-5 md:space-y-6">
-      <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">
-          Hei{firstName ? `, ${firstName}` : ""}
+    <div className="rf-enter space-y-6">
+      <header className="px-1 pt-1">
+        <h1 className="text-[26px] font-semibold tracking-tight">
+          Hei{firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
         </h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="mt-0.5 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
         </p>
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-        <div className="space-y-5">
-          <Card>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                  Tämän päivän työaika
-                </p>
-                <p
-                  className="rf-tabular mt-1.5 text-[34px] font-semibold leading-none"
-                  suppressHydrationWarning
-                >
-                  {formatDuration(todayWorked.workedMs)}
-                </p>
-              </div>
-              <Pill
-                tone={state === "working" ? "ok" : state === "on_break" ? "warn" : "neutral"}
-                dot
-              >
-                {CLOCK_STATE_LABELS[state]}
-              </Pill>
-            </div>
+      {/*
+        Työpöydällä leimaus ja vuoro rinnakkain, puhelimessa allekkain.
+        Leimaus on leveämpi myös rinnakkain: se on pääasia eikä puolikas.
+      */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
+        <ClockCard todayEvents={todayEvents} timezone={zone} />
 
-            {todayWorked.breakMs > 0 ? (
-              <p className="mt-3 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                Taukoa {formatDuration(todayWorked.breakMs)} — ei lasketa työaikaan.
-              </p>
-            ) : null}
+        <div className="space-y-4">
+          <NextShift shift={nextShift} today={today} />
 
-            <Link
-              href="/app/tyoaika"
-              className="rf-press mt-4 flex items-center justify-center gap-2 py-3 text-[15px] font-semibold"
-              style={{
-                background: "var(--rf-inset)",
-                color: "var(--rf-text)",
-                borderRadius: "var(--rf-r-control)",
-              }}
-            >
-              <RfIcon name="clock" size={18} />
-              {state === "off" ? "Leimaa sisään" : "Avaa työaika"}
-            </Link>
-          </Card>
-
-          <Card>
-            <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              Työaika tällä viikolla
-            </p>
-            <p
-              className="rf-tabular mt-1.5 text-[28px] font-semibold leading-none"
-              suppressHydrationWarning
-            >
-              {formatDuration(week.workedMs)}
-            </p>
-          </Card>
-        </div>
-
-        <div className="space-y-5">
-          <section>
-            <SectionLabel>Seuraava työvuoro</SectionLabel>
-            {nextShift ? (
-              <Card>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                      {nextShift.date === today ? "Tänään" : formatDayLabel(nextShift.date)}
-                    </p>
-                    <p className="rf-tabular mt-1 text-[22px] font-semibold">
-                      {nextShift.startTime}–{nextShift.endTime}
-                    </p>
-                    {nextShift.location ? (
-                      <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                        {nextShift.location}
-                      </p>
-                    ) : null}
-                  </div>
-                  <Pill
-                    tone={
-                      nextShift.status === "accepted"
-                        ? "ok"
-                        : nextShift.status === "changed"
-                          ? "info"
-                          : nextShift.status === "declined"
-                            ? "risk"
-                            : "warn"
-                    }
-                    dot
-                  >
-                    {SHIFT_STATUS_LABELS[nextShift.status]}
-                  </Pill>
-                </div>
-              </Card>
-            ) : (
-              <Card>
-                <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                  Ei tulevia vuoroja.
-                </p>
-              </Card>
-            )}
-          </section>
+          <div
+            className="px-4 py-3.5"
+            style={{
+              background: "var(--rf-card)",
+              border: "1px solid var(--rf-line)",
+              borderRadius: 14,
+            }}
+          >
+            <WeeklyHours workedMs={week.workedMs} />
+          </div>
         </div>
       </div>
+
+      <RecentDays days={recent} timezone={zone} />
     </div>
   );
 }
 
-function formatDayLabel(isoDate: string): string {
-  const days = [
-    "Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko",
-    "Torstai", "Perjantai", "Lauantai",
-  ];
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  return `${days[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+/** Kaksi viikkoa taaksepäin ISO-aikaleimana. */
+function twoWeeksBefore(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() - 14);
+  return d.toISOString();
 }

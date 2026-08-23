@@ -51,6 +51,26 @@ export function monthStartDate(month: string): string {
   return `${month}-01`;
 }
 
+/**
+ * Hakuikkunan alku paikalliselle päivälle.
+ *
+ * Kantakysely rajaa aikaleimoja, jotka ovat UTC:tä. Paikallinen
+ * vuorokausi alkaa Helsingissä kaksi tai kolme tuntia aiemmin, joten
+ * suoraan `${paiva}T00:00:00Z` jättäisi yön ensimmäiset tunnit
+ * ulkopuolelle:
+ *
+ *   leimaus 24.8. klo 01:50 Helsingissä = 23.8. klo 22:50 UTC
+ *
+ * Yövuorolainen ei siis näkisi omaa sisäänleimaustaan. Vuorokauden
+ * puskuri kattaa kaikki vyöhykkeet, ja ylimääräiset rivit rajautuvat
+ * pois päiväkohtaisessa laskennassa.
+ */
+export function windowStartIso(localDate: string): string {
+  const d = new Date(`${localDate}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString();
+}
+
 // ---------------------------------------------------------------------------
 // Aikaleiman tulkinta ravintolan ajassa
 // ---------------------------------------------------------------------------

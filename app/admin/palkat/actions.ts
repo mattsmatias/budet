@@ -21,6 +21,7 @@ import { can } from "@/lib/restoflow/permissions";
 import { fetchClockEvents } from "@/lib/restoflow/queries";
 import { loadPayroll } from "@/lib/restoflow/payroll-data";
 import { eventsOnDate } from "@/lib/restoflow/timeclock";
+import { windowStartIso } from "@/lib/restoflow/clock-context";
 import { fingerprint, type PeriodBounds } from "@/lib/restoflow/payroll";
 
 export interface PayrollState {
@@ -36,13 +37,6 @@ function explain(error: { message?: string }, fallback: string): string {
     return "Palkkakausi on hyväksytty. Avaa kausi ennen muutosta.";
   }
   return `${fallback}: ${message || "tuntematon virhe"}`;
-}
-
-/** Edellisen vuorokauden alku UTC:nä — hakuikkunan puskuriksi. */
-function previousDayIso(date: string): string {
-  const d = new Date(`${date}T00:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() - 1);
-  return d.toISOString();
 }
 
 /** "10:02" ja päivä ravintolan ajassa → UTC-aikaleima. */
@@ -124,7 +118,7 @@ export async function correctWorkTime(
    * puolella. Ilman puskuria se jäisi hakuikkunan ulkopuolelle ja
    * korjaukseen tallentuisi väärä alkuperäinen aika.
    */
-  const events = await fetchClockEvents(restaurant.id, previousDayIso(date));
+  const events = await fetchClockEvents(restaurant.id, windowStartIso(date));
   const dayEvents = eventsOnDate(
     events.filter((e) => e.userId === userId),
     date,
