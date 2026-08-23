@@ -11,6 +11,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, isConfigured } from "@/utils/supabase/server";
+import { verifiedUser } from "@/utils/supabase/claims";
 import { isLunchTheme, type LunchTheme } from "./lunch-themes";
 import type { Role, StaffPosition } from "./types";
 
@@ -41,9 +42,9 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
 
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+
+    // Paikallinen varmistus verkkokyselyn sijaan — ks. claims.ts.
+    const user = await verifiedUser(supabase);
     if (!user) return null;
 
     const { data: profile } = await supabase
@@ -54,7 +55,7 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
 
     return {
       id: user.id,
-      email: user.email ?? null,
+      email: user.email,
       fullName: profile?.full_name ?? null,
     };
   } catch {
@@ -122,10 +123,14 @@ export interface Context {
  * ei ole. Sivun ei tarvitse käsitellä kumpaakaan tapausta erikseen.
  */
 export async function requireContext(returnTo = "/admin"): Promise<Context> {
-  const user = await getUser();
-  if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
+  /*
+   * Rinnakkain: jäsenyyskysely ei tarvitse käyttäjän tunnusta vaan
+   * evästeen, jonka RLS lukee itse. Peräkkäin ajettuna sivu odotti
+   * kaksi verkkokierrosta yhden sijaan.
+   */
+  const [user, restaurant] = await Promise.all([getUser(), getActiveRestaurant()]);
 
-  const restaurant = await getActiveRestaurant();
+  if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
   if (!restaurant) redirect("/aloitus");
 
   return { user, restaurant, role: restaurant.role };

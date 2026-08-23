@@ -35,13 +35,34 @@ vi.mock("@supabase/ssr", () => ({
     },
   ) => ({
     auth: {
-      getUser: async () => {
+      /*
+       * Istunnon luku kirjoittaa evästeet samalla tavalla kuin oikea
+       * kirjasto: kierrätys tapahtuu tämän kutsun sisällä.
+       */
+      getClaims: async () => {
         if (scenario.writes.length > 0) config.cookies.setAll(scenario.writes);
-        return { data: { user: scenario.user } };
+
+        return scenario.user
+          ? { data: { claims: { sub: scenario.user.id, email: "oktay@esimerkki.fi" } }, error: null }
+          : { data: null, error: null };
       },
     },
   }),
 }));
+
+/*
+ * Avainjoukko tyngätään, jotta testi ei mene verkkoon. Ilman tätä
+ * jokainen testi yrittäisi hakea julkisen avaimen olemattomasta
+ * osoitteesta ja ajo olisi sekä hidas että epävakaa.
+ */
+vi.stubGlobal(
+  "fetch",
+  async () =>
+    new Response(JSON.stringify({ keys: [{ kid: "testi", kty: "EC" }] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }),
+);
 
 const { updateSession } = await import("../middleware");
 

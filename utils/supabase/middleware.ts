@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifiedUser } from "./claims";
 
 /** Reitit jotka vaativat kirjautumisen. */
 const PROTECTED = ["/app", "/admin", "/aloitus"];
@@ -49,11 +50,16 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Tämä kutsu on se joka oikeasti päivittää istunnon. Ilman sitä client
-  // rakennetaan mutta evästeitä ei koskaan kirjoiteta takaisin.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  /*
+   * Tämä kutsu on se joka oikeasti päivittää istunnon. Ilman sitä client
+   * rakennetaan mutta evästeitä ei koskaan kirjoiteta takaisin.
+   *
+   * Allekirjoitus varmennetaan paikallisesti julkisella avaimella eikä
+   * kysymällä Supabaselta. Kysyminen maksoi verkkokierroksen jokaisella
+   * pyynnöllä — myös julkisilla sivuilla, joilla tulosta ei käytetä
+   * mihinkään. Ks. claims.ts.
+   */
+  const user = await verifiedUser(supabase);
 
   const path = request.nextUrl.pathname;
 
