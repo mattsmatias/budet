@@ -57,9 +57,17 @@ export function Panel({
         </div>
 
         {href ? (
+          /*
+           * Pehmuste kasvattaa kosketusalueen, negatiivinen marginaali
+           * palauttaa asettelun.
+           *
+           * Pelkkä teksti on 20 px korkea. Puhelimessa se on liian pieni
+           * osuttavaksi — suositus on 44. Ilman negatiivista marginaalia
+           * pehmuste työntäisi otsikkorivin epätasapainoon.
+           */
           <Link
             href={href}
-            className="shrink-0 whitespace-nowrap text-[13px] font-medium"
+            className="rf-press -my-3 shrink-0 self-center py-3 text-[13px] font-medium whitespace-nowrap"
             style={{ color: "var(--rf-blue)" }}
           >
             {linkLabel} →
@@ -96,10 +104,11 @@ export function PanelEmpty({
         {text}
       </p>
 
+      {/* py-3: sama kosketusalueen kasvatus kuin paneelin otsikkolinkissä. */}
       {cta && href ? (
         <Link
           href={href}
-          className="rf-press mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+          className="rf-press mt-1 inline-flex items-center gap-1.5 py-3 text-[13px] font-semibold"
           style={{ color: "var(--rf-blue)" }}
         >
           {cta}

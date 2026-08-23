@@ -106,7 +106,9 @@ export function MonthPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Kuukausi: ${formatMonth(value)}`}
-        className="rf-press flex items-center gap-2 py-2 pl-3 pr-2.5 text-[14px] font-medium"
+        // py-2.5 eikä py-2: sama 44 px korkeus kuin vieressä olevilla
+        // painikkeilla. Neljän pikselin ero näkyi rivissä epätasaisuutena.
+        className="rf-press flex items-center gap-2 py-2.5 pl-3 pr-2.5 text-[14px] font-medium"
         style={{
           background: "var(--rf-card)",
           color: "var(--rf-text)",

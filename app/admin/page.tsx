@@ -123,6 +123,27 @@ export default async function AdminDashboard({
       }
     : null;
 
+  /*
+   * Sama selitys kolmesti on kohinaa.
+   *
+   * Kuukauden tyhjyys on yksi tosiasia eikä kolme. Aiemmin jokainen
+   * kolmesta paneelista toisti saman lauseen ja saman painikkeen, ja
+   * kaksi niistä olivat vierekkäin samalla rivillä. Selitys ja siirtymä
+   * ovat nyt ensimmäisessä paneelissa; loput toteavat vain tyhjyyden.
+   */
+  const emptyShort = elsewhere
+    ? { text: `${formatMonth(viewMonth)} ei sisällä yhtään kuittia.` }
+    : null;
+
+  /*
+   * Tyhjä kuukausi ei tarkoita tyhjää järjestelmää.
+   *
+   * "Lisää ensimmäinen kuitti" neljän kuitin jälkeen väittää että
+   * tallennus on epäonnistunut. Ero kuukauden tyhjyyden ja aidon
+   * alkutilan välillä on kerrottava.
+   */
+  const emptyMonthOnly = totals.receiptCount === 0 && elsewhere !== undefined;
+
   const dashboardInput = {
     receipts, budgets, shifts, users, clockEvents, absences,
     month: viewMonth, today,
@@ -255,8 +276,15 @@ export default async function AdminDashboard({
         <StatCard
           label="Kirjatut kulut"
           value={<CountUp to={totals.totalCents} format="money" />}
+          /*
+           * Tyhjä kuukausi ei ole lasku.
+           *
+           * Nolla kuittia tuottaa aina -100 % edelliseen kuuhun, ja
+           * alaspäin osoittava nuoli väittäisi kulujen pienentyneen.
+           * Ne eivät ole pienentyneet — niitä ei ole vielä kirjattu.
+           */
           tone={
-            comparison.change === null
+            totals.receiptCount === 0 || comparison.change === null
               ? "muted"
               : comparison.change > 0
                 ? "up"
@@ -265,11 +293,13 @@ export default async function AdminDashboard({
                   : "neutral"
           }
           conclusion={
-            totals.receiptCount === 0
-              ? "Lisää ensimmäinen kuitti aloittaaksesi"
-              : comparison.change === null || comparison.baseMonth === null
-                ? "Ei vertailukohtaa"
-                : `${percent(comparison.change)} vs. ${monthWord(comparison.baseMonth)}`
+            emptyMonthOnly
+              ? "Ei kuitteja tässä kuussa"
+              : totals.receiptCount === 0
+                ? "Lisää ensimmäinen kuitti aloittaaksesi"
+                : comparison.change === null || comparison.baseMonth === null
+                  ? "Ei vertailukohtaa"
+                  : `${percent(comparison.change)} vs. ${monthWord(comparison.baseMonth)}`
           }
           hint="Järjestelmään lisättyjen kuittien summa"
           href="/admin/kulut"
@@ -280,7 +310,8 @@ export default async function AdminDashboard({
         <StatCard
           label="Kuitit"
           value={<CountUp to={receipts_.total} format="integer" />}
-          conclusion={receipts_.label}
+          // "Ei vielä kuitteja" on väärin kun niitä on toisessa kuussa.
+          conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
           tone={receipts_.pending > 0 ? "warn" : "neutral"}
           icon={<RfIcon name="receipt" size={14} />}
           href="/admin/kuitit"
@@ -461,7 +492,7 @@ export default async function AdminDashboard({
         >
           {suppliers.length === 0 ? (
             <PanelEmpty
-              {...(emptyForMonth ?? {
+              {...(emptyShort ?? {
                 text: "Kun kuitteja kertyy, näet suurimmat toimittajat täällä.",
               })}
             />
@@ -650,7 +681,7 @@ export default async function AdminDashboard({
       >
         {recent.length === 0 ? (
           <PanelEmpty
-            {...(emptyForMonth ?? {
+            {...(emptyShort ?? {
               text: "Ensimmäinen kuittisi näkyy täällä.",
               cta: "Lisää kuitti",
               href: "/admin/kuitit/uusi",
