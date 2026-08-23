@@ -10,7 +10,6 @@ import {
   primaryNavFor,
   adminNavFor,
   adminNavSectionsFor,
-  settingsNavFor,
   can,
   canAddReceipts,
   capabilityForPath,
@@ -731,14 +730,27 @@ describe("oikeudet", () => {
     expect(accountant).not.toContain("restaurant");
   });
 
-  it("pitää asetukset osastojen ulkopuolella", () => {
+  /*
+   * Asetukset ei ole valikossa lainkaan — se on tunnusvalikossa.
+   *
+   * Reitti on silti suojattu. Tämä on koko ROUTE_ACCESS-jaon syy:
+   * valikosta puuttuva reitti ei saa olla suojaamaton, koska osoitteen
+   * voi kirjoittaa itse.
+   */
+  it("pitää asetukset valikon ulkopuolella mutta suojattuna", () => {
     const inSections = adminNavSectionsFor("owner").flatMap((s) =>
       s.items.map((i) => i.href),
     );
 
     expect(inSections).not.toContain("/admin/asetukset");
-    expect(settingsNavFor("owner")?.href).toBe("/admin/asetukset");
-    expect(settingsNavFor("employee")).toBeNull();
+    expect(adminNavFor("owner").map((e) => e.href)).not.toContain(
+      "/admin/asetukset",
+    );
+
+    const required = capabilityForPath("/admin/asetukset");
+    expect(required).toBe("settings.view");
+    expect(can("employee", required!)).toBe(false);
+    expect(can("owner", required!)).toBe(true);
   });
 
   /** Ylivuotovalikkoon ei saa jäädä kahdesti samaa kohtaa. */

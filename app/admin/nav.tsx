@@ -7,7 +7,6 @@ import {
   adminNavFor,
   adminNavSectionsFor,
   primaryNavFor,
-  settingsNavFor,
   type NavEntry,
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
@@ -32,7 +31,6 @@ export function AdminNav({
   restaurantName: string;
 }) {
   const sections = adminNavSectionsFor(role);
-  const settings = settingsNavFor(role);
   const primary = primaryNavFor(role);
   const matti = can(role, "matti.use");
 
@@ -40,7 +38,6 @@ export function AdminNav({
     <>
       <DesktopSidebar
         sections={sections}
-        settings={settings}
         restaurantName={restaurantName}
         matti={matti}
       />
@@ -61,12 +58,10 @@ function useActive() {
 
 function DesktopSidebar({
   sections,
-  settings,
   restaurantName,
   matti,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
-  settings: NavEntry | null;
   restaurantName: string;
   matti: boolean;
 }) {
@@ -114,8 +109,14 @@ function DesktopSidebar({
       </nav>
 
       {/*
-       * Asetukset erotettuna pohjalle. Se ei kuulu mihinkään osastoon,
-       * ja pohja on paikka johon sitä tullaan etsimään.
+       * Matti erotettuna pohjalle. Se ei kuulu mihinkään osastoon: se ei
+       * ole sivu vaan tapa käyttää kaikkia muita.
+       *
+       * Asetukset oli tässä alla. Se oli myös tunnusvalikossa, eli
+       * kahdessa paikassa — ja kaksi paikkaa samalle asialle on kaksi
+       * paikkaa joita pitää etsiä. Se löytyy nyt vain oikean yläkulman
+       * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
+       * käyttäjää eivätkä ravintolan työtä.
        */}
       <div
         className="border-t px-2.5 py-2"
@@ -123,17 +124,6 @@ function DesktopSidebar({
       >
         <MattiPanel enabled={matti} />
       </div>
-
-      {settings ? (
-        <div
-          className="border-t px-2.5 py-3"
-          style={{ borderColor: "var(--rf-line)" }}
-        >
-          <ul>
-            <NavLink item={settings} />
-          </ul>
-        </div>
-      ) : null}
     </aside>
   );
 }

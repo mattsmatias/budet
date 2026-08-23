@@ -63,7 +63,15 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
         {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
             puhelimessa, jotta ilmoitukset löytyvät samasta paikasta. */}
-        <div className="rf-z-chrome relative hidden justify-end gap-2 px-6 pt-5 md:flex">
+        {/*
+          Sama leveysrajaus kuin sisällöllä.
+
+          Ilman tätä palkki venyi koko ikkunan leveyteen ja kello sekä
+          tunnus liimautuivat ruudun oikeaan reunaan, kun kortit
+          loppuivat satoja pikseleitä aiemmin. Nyt ne ovat samassa
+          pystylinjassa korttien oikean reunan kanssa.
+        */}
+        <div className="rf-z-chrome relative mx-auto hidden w-full max-w-6xl justify-end gap-2 px-4 pt-5 md:flex md:px-6">
           <HeaderMenus
             alerts={alerts}
             userName={userName}

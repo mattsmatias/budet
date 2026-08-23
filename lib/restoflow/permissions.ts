@@ -222,19 +222,14 @@ export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
 ];
 
-/**
- * Asetukset erillään osastoista.
+/*
+ * Asetukset ei ole valikkokohta.
  *
- * Se ei ole talouden, henkilöstön eikä raportoinnin kohta vaan
- * sovelluksen oma, joten se erotetaan viivalla valikon pohjalle.
+ * Se löytyy tunnusvalikosta uloskirjautumisen vierestä: molemmat
+ * koskevat käyttäjää eivätkä ravintolan työtä. Reitin suoja tulee
+ * ROUTE_ACCESS-taulusta, ei valikosta — niin kuin kaikilla muillakin
+ * valikon ulkopuolisilla reiteillä.
  */
-export const SETTINGS_NAV: NavEntry = {
-  href: "/admin/asetukset",
-  label: "Asetukset",
-  icon: "settings",
-  requires: "settings.view",
-  section: "main",
-};
 
 /**
  * Puhelimen ylivuotovalikko.
@@ -268,11 +263,6 @@ export function adminNavSectionsFor(
     label: section.label,
     items: items.filter((item) => item.section === section.id),
   })).filter((section) => section.items.length > 0);
-}
-
-/** Näkeekö rooli asetukset? */
-export function settingsNavFor(role: Role): NavEntry | null {
-  return can(role, SETTINGS_NAV.requires) ? SETTINGS_NAV : null;
 }
 
 /**
