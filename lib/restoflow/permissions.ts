@@ -29,6 +29,9 @@ export type Capability =
   | "staff.view"
   | "staff.rates.view"
   | "staff.manage"
+  | "payroll.view"
+  | "payroll.view.own"
+  | "payroll.manage"
   | "reports.view"
   | "reports.export"
   | "alerts.view"
@@ -45,6 +48,7 @@ const OWNER: Capability[] = [
   "shifts.view.own", "shifts.view.all", "shifts.manage",
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view", "staff.manage",
+  "payroll.view", "payroll.view.own", "payroll.manage",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
@@ -58,6 +62,7 @@ const MANAGER: Capability[] = [
   "shifts.view.own", "shifts.view.all", "shifts.manage",
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view",
+  "payroll.view", "payroll.view.own", "payroll.manage",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
@@ -75,6 +80,9 @@ const MANAGER: Capability[] = [
 const EMPLOYEE: Capability[] = [
   "shifts.view.own",
   "time.track.own",
+  // Oma palkkakertymä, ei muiden. Työntekijän on nähtävä mitä hänelle
+  // kertyy; muiden palkka ei kuulu hänelle.
+  "payroll.view.own",
 ];
 
 /**
@@ -157,6 +165,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/budjetit", requires: "budgets.view" },
   { href: "/admin/tyovuorot", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", requires: "staff.view" },
+  { href: "/admin/palkat", requires: "payroll.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/lounas", requires: "lunch.view" },
   { href: "/admin/raportit", requires: "reports.view" },
@@ -216,6 +225,7 @@ export const ADMIN_NAV: NavEntry[] = [
 
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
+  { href: "/admin/palkat", label: "Palkat", icon: "payroll", requires: "payroll.view", section: "staff" },
 
   { href: "/admin/lounas", label: "Lounas", icon: "lunch", requires: "lunch.view", section: "restaurant" },
 

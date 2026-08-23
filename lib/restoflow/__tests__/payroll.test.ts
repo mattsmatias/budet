@@ -193,6 +193,56 @@ describe("puuttuva uloskirjaus", () => {
   });
 });
 
+describe("epäuskottava kesto", () => {
+  /*
+   * Tämä tapaus tuli tuotantoaineistosta.
+   *
+   * Yöllä klo 02:15 tehty sisäänleimaus jäi auki, ja seuraavan illan
+   * leimaus sulki sen. Uloskirjaus oli olemassa, joten puuttuvan
+   * leimauksen tarkistus ei huomannut mitään — mutta työaikaa kertyi
+   * kahdenkymmenen tunnin edestä.
+   */
+  const events = [
+    ev("in", local("2026-08-24", "02:15")),
+    ev("break_start", local("2026-08-24", "22:42")),
+    ev("out", local("2026-08-24", "22:45")),
+  ];
+
+  it("varoittaa yli kuudentoista tunnin jaksosta", () => {
+    const result = slip({ events });
+    expect(result.issues.map((i) => i.kind)).toContain("implausible");
+  });
+
+  it("kertoo keston varoituksessa", () => {
+    const result = slip({ events });
+    const issue = result.issues.find((i) => i.kind === "implausible");
+    expect(issue?.message).toContain("20 tuntia");
+  });
+
+  it("ei varoita tavallisesta vuorosta", () => {
+    const normaali = slip({
+      events: [
+        ev("in", local("2026-08-24", "10:00")),
+        ev("out", local("2026-08-24", "18:00")),
+      ],
+    });
+    expect(normaali.issues).toHaveLength(0);
+  });
+
+  /*
+   * Summa näytetään silti.
+   *
+   * Nollaaminen piilottaisi ongelman: käyttäjä näkisi tyhjän päivän
+   * eikä ymmärtäisi mistä varoitus kertoo. Hyväksyntä on se joka
+   * estyy, ei laskenta.
+   */
+  it("näyttää kertyneen summan mutta estää hyväksynnän", () => {
+    const result = slip({ events });
+    expect(result.grossCents).toBeGreaterThan(0);
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+});
+
 describe("työajan korjaus", () => {
   const events = [ev("in", local("2026-08-24", "10:02"))];
 

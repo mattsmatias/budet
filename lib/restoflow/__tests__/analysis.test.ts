@@ -674,8 +674,15 @@ describe("oikeudet", () => {
     }
   });
 
-  it("pitää päävalikon kahdeksassa kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(8);
+  /*
+   * Valikon koko on tuotepäätös, ei sattuma.
+   *
+   * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
+   * Yhdeksäs kohta on Palkat: se on päivittäinen tehtävä eikä analyysi,
+   * joten se kuuluu valikkoon eikä yleiskuvan osioiden taakse.
+   */
+  it("pitää päävalikon yhdeksässä kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(9);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 

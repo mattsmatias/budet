@@ -32,6 +32,7 @@ export type IconName =
   | "report"
   | "bell"
   | "settings"
+  | "payroll"
   | "clock"
   | "camera"
   | "image"
@@ -98,6 +99,10 @@ const PATHS: Record<IconName, string> = {
 
   // Liu'ut, ei ratas — sopii paremmin tähän geometriaan.
   settings: "M4 7.5h8M16 7.5h4M4 16.5h4M12 16.5h8M14 5v5M10 14v5",
+
+  // Seteli — palkka on maksu, ei kalenteri eikä sydän.
+  payroll:
+    "M3 6.5h18v11H3zM12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM6.2 10.2h.01M17.8 13.8h.01",
 
   clock: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.5V12l3 2",
 

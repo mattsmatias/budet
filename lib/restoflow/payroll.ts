@@ -65,7 +65,21 @@ export type PayrollIssueKind =
   | "missing_out"
   | "missing_rate"
   | "illogical"
+  | "implausible"
   | "running";
+
+/**
+ * Pisin uskottava yhtenäinen työjakso.
+ *
+ * Kuudentoista tunnin putki ei ole vuoro vaan unohtunut leimaus. Tämä
+ * löytyi oikeasta aineistosta: yöllä klo 02:15 tehty sisäänleimaus jäi
+ * auki, ja seuraavan illan leimaus sulki sen — 20 tuntia työaikaa
+ * yhdeltä päivältä, ilman että mikään varoitti.
+ *
+ * Uloskirjaus oli olemassa, joten puuttuvan leimauksen tarkistus ei
+ * huomannut mitään. Kesto on se mikä paljastaa virheen.
+ */
+const IMPLAUSIBLE_SEGMENT_MINUTES = 16 * 60;
 
 export interface PayrollIssue {
   kind: PayrollIssueKind;
@@ -199,6 +213,18 @@ export function resolveWorkday(input: {
   }
 
   const workedMs = segments.reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
+
+  const longest = segments.reduce((max, s) => Math.max(max, s.endMs - s.startMs), 0);
+  if (longest > IMPLAUSIBLE_SEGMENT_MINUTES * 60000) {
+    issues.push({
+      kind: "implausible",
+      userId,
+      date,
+      message:
+        `${date}: yhtenäinen työjakso on ${Math.round(longest / 3600000)} tuntia. ` +
+        `Leimaus on todennäköisesti jäänyt auki — tarkista toteutunut aika.`,
+    });
+  }
 
   return {
     date,

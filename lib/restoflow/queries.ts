@@ -11,6 +11,7 @@
  * tietokannan pitäisi skannata kaikki rivit joihin käyttäjällä on oikeus.
  */
 
+import type { PayComponent, TimeCorrection } from "./payroll";
 import type { Merchant } from "./merchants";
 import type { AllergenType, DietType, LunchWeek } from "./lunch";
 import { createClient } from "@/utils/supabase/server";
@@ -798,5 +799,179 @@ export async function fetchInvitations(
     label: (row.label as string | null) ?? null,
     expiresAt: row.expires_at as string,
     createdAt: row.created_at as string,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Palkat
+// ---------------------------------------------------------------------------
+//
+// Nämä eivät ole fetchRestaurantDatassa. Se paketti ladataan jokaisella
+// hallintasivulla, ja palkkatietoja tarvitsee vain Palkat-sivu.
+
+export async function fetchPayComponents(
+  restaurantId: string,
+): Promise<PayComponent[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("pay_components")
+    .select(
+      "id, name, code, unit, value, weekdays, from_minute, to_minute, stackable, valid_from, valid_to, active",
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("name");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    code: row.code as string,
+    unit: row.unit as PayComponent["unit"],
+    // numeric tulee merkkijonona: Number() ennen laskentaa.
+    value: Number(row.value),
+    weekdays: (row.weekdays as number[] | null) ?? [],
+    fromMinute: (row.from_minute as number | null) ?? null,
+    toMinute: (row.to_minute as number | null) ?? null,
+    stackable: Boolean(row.stackable),
+    validFrom: row.valid_from as string,
+    validTo: (row.valid_to as string | null) ?? null,
+    active: Boolean(row.active),
+  }));
+}
+
+export interface PayPeriod {
+  id: string;
+  startsOn: string;
+  endsOn: string;
+  status: "open" | "review" | "approved" | "paid";
+  approvedAt: string | null;
+  paidAt: string | null;
+}
+
+export async function fetchPayPeriods(restaurantId: string): Promise<PayPeriod[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("pay_periods")
+    .select("id, starts_on, ends_on, status, approved_at, paid_at")
+    .eq("restaurant_id", restaurantId)
+    .order("starts_on", { ascending: false })
+    .limit(24);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    startsOn: row.starts_on as string,
+    endsOn: row.ends_on as string,
+    status: row.status as PayPeriod["status"],
+    approvedAt: (row.approved_at as string | null) ?? null,
+    paidAt: (row.paid_at as string | null) ?? null,
+  }));
+}
+
+/** Korjaukset aikaväliltä. Palkkalaskenta tarvitsee vain kauden omat. */
+export async function fetchTimeCorrections(
+  restaurantId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<TimeCorrection[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("time_corrections")
+    .select(
+      "id, user_id, work_date, corrected_in, corrected_out, corrected_break_minutes, reason",
+    )
+    .eq("restaurant_id", restaurantId)
+    .gte("work_date", fromDate)
+    .lte("work_date", toDate);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    userId: row.user_id as string,
+    workDate: row.work_date as string,
+    correctedIn: row.corrected_in as string,
+    correctedOut: row.corrected_out as string,
+    correctedBreakMinutes: (row.corrected_break_minutes as number | null) ?? 0,
+    reason: row.reason as string,
+  }));
+}
+
+/** Yhden korjauksen koko tarina, tarkastusnäkymään. */
+export interface CorrectionRecord extends TimeCorrection {
+  originalIn: string | null;
+  originalOut: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export async function fetchCorrectionHistory(
+  restaurantId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<CorrectionRecord[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("time_corrections")
+    .select(
+      "id, user_id, work_date, original_in, original_out, corrected_in, corrected_out, corrected_break_minutes, reason, created_by, created_at",
+    )
+    .eq("restaurant_id", restaurantId)
+    .gte("work_date", fromDate)
+    .lte("work_date", toDate)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    userId: row.user_id as string,
+    workDate: row.work_date as string,
+    originalIn: (row.original_in as string | null) ?? null,
+    originalOut: (row.original_out as string | null) ?? null,
+    correctedIn: row.corrected_in as string,
+    correctedOut: row.corrected_out as string,
+    correctedBreakMinutes: (row.corrected_break_minutes as number | null) ?? 0,
+    reason: row.reason as string,
+    createdBy: row.created_by as string,
+    createdAt: row.created_at as string,
+  }));
+}
+
+export interface StoredPayslip {
+  id: string;
+  userId: string;
+  status: "draft" | "review" | "approved";
+  workedMinutes: number;
+  baseCents: number;
+  supplementsCents: number;
+  grossCents: number;
+  sourceFingerprint: string;
+  approvedAt: string | null;
+}
+
+export async function fetchPayslips(periodId: string): Promise<StoredPayslip[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payslips")
+    .select(
+      "id, user_id, status, worked_minutes, base_cents, supplements_cents, gross_cents, source_fingerprint, approved_at",
+    )
+    .eq("pay_period_id", periodId);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    userId: row.user_id as string,
+    status: row.status as StoredPayslip["status"],
+    workedMinutes: (row.worked_minutes as number | null) ?? 0,
+    baseCents: (row.base_cents as number | null) ?? 0,
+    supplementsCents: (row.supplements_cents as number | null) ?? 0,
+    grossCents: (row.gross_cents as number | null) ?? 0,
+    sourceFingerprint: (row.source_fingerprint as string | null) ?? "",
+    approvedAt: (row.approved_at as string | null) ?? null,
   }));
 }
