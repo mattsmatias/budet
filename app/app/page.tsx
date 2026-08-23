@@ -74,7 +74,7 @@ export default async function EmployeeHome() {
         </div>
       </div>
 
-      <RecentDays days={recent} timezone={zone} />
+      <RecentDays days={recent} timezone={zone} today={today} />
     </div>
   );
 }

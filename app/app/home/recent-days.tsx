@@ -17,9 +17,11 @@ import { SectionTitle, Tag, shortDay } from "../ui";
 export function RecentDays({
   days,
   timezone,
+  today,
 }: {
   days: DaySummary[];
   timezone: string;
+  today: string;
 }) {
   return (
     <section className="space-y-1.5">
@@ -60,7 +62,7 @@ export function RecentDays({
                 <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
                   {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
                   {" → "}
-                  {day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
+                  {day.open ? "nyt" : day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
                 </p>
               </div>
 
@@ -69,13 +71,17 @@ export function RecentDays({
                   {formatDuration(day.workedMs)}
                 </p>
                 {/*
-                  Auki jäänyt päivä sanotaan ääneen. Kesto kasvaa niin
-                  kauan kuin leimaus on auki, eikä lukua saa esittää
-                  valmiina työaikana.
+                  Käynnissä oleva päivä ja unohtunut leimaus ovat eri
+                  asioita. Tänään auki oleva työaika on normaali tila;
+                  eilinen auki jäänyt on virhe.
                 */}
                 {day.open ? (
                   <span className="mt-1 inline-block">
-                    <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+                    {day.date === today ? (
+                      <Tag tone="ok">Käynnissä</Tag>
+                    ) : (
+                      <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+                    )}
                   </span>
                 ) : null}
               </div>

@@ -86,9 +86,19 @@ export default async function TimePage() {
                 />
                 <p className="text-[15px] font-medium">Avoin työaika</p>
               </div>
+              {/*
+                Aloitusaika on käynnissä olevan jakson alku, ei päivän
+                ensimmäinen leimaus. Aamulla alkanut ja välillä suljettu
+                päivä kertoisi muuten väärän kellonajan.
+              */}
               <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
                 {shortDay(open.date)}
-                {open.firstIn ? ` · aloitettu ${timeIn(zone, open.firstIn)}` : ""}
+                {open.segments.length > 0
+                  ? ` · aloitettu ${timeIn(
+                      zone,
+                      new Date(open.segments[open.segments.length - 1].startMs).toISOString(),
+                    )}`
+                  : ""}
               </p>
             </div>
 
@@ -172,22 +182,31 @@ function DayRow({
       ) : many ? (
         <>
           <ul className="mt-2 space-y-1">
-            {day.segments.map((segment, index) => (
-              <li
-                key={index}
-                className="flex items-baseline justify-between gap-4 text-[13px]"
-                style={{ color: "var(--rf-text-2)" }}
-              >
-                <span className="rf-tabular">
-                  {timeIn(timezone, new Date(segment.startMs).toISOString())}
-                  {" → "}
-                  {timeIn(timezone, new Date(segment.endMs).toISOString())}
-                </span>
-                <span className="rf-tabular shrink-0">
-                  {formatDuration(segment.endMs - segment.startMs)}
-                </span>
-              </li>
-            ))}
+            {day.segments.map((segment, index) => {
+              /*
+               * Käynnissä oleva jakso päättyy nykyhetkeen, mutta sitä
+               * hetkeä ei ole leimattu. Kellonaika siinä väittäisi että
+               * työntekijä on kirjautunut ulos.
+               */
+              const running = day.open && index === day.segments.length - 1;
+
+              return (
+                <li
+                  key={index}
+                  className="flex items-baseline justify-between gap-4 text-[13px]"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  <span className="rf-tabular">
+                    {timeIn(timezone, new Date(segment.startMs).toISOString())}
+                    {" → "}
+                    {running ? "nyt" : timeIn(timezone, new Date(segment.endMs).toISOString())}
+                  </span>
+                  <span className="rf-tabular shrink-0" suppressHydrationWarning>
+                    {formatDuration(segment.endMs - segment.startMs)}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
 
           {day.breakMs > 0 ? (
@@ -200,13 +219,22 @@ function DayRow({
         <p className="rf-tabular mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
           {" → "}
-          {day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
+          {day.open ? "nyt" : day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
         </p>
       )}
 
+      {/*
+        Käynnissä oleva päivä ja unohtunut leimaus ovat eri asioita.
+        Tämän päivän avoin työaika on normaali tila; eilinen avoin
+        työaika on virhe joka pitää korjata.
+      */}
       {day.open ? (
         <div className="mt-2">
-          <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+          {day.date === today ? (
+            <Tag tone="ok">Käynnissä</Tag>
+          ) : (
+            <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+          )}
         </div>
       ) : null}
     </Surface>

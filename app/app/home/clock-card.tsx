@@ -16,8 +16,14 @@ import { RfIcon } from "@/components/restoflow/icons";
 
 const initial: ActionState = {};
 
-/** Kuinka kauan onnistumisnäkymä jää ruudulle. */
-const SUCCESS_MS = 4000;
+/**
+ * Kuinka kauan onnistumisnäkymä jää ruudulle.
+ *
+ * Kaksi ja puoli sekuntia. Onnistuminen korvaa kortin, eli päätoiminto
+ * on sen ajan poissa — neljä sekuntia oli mitattuna liian pitkä: kortti
+ * ehti tuntua jumittuneelta ennen kuin se palasi.
+ */
+const SUCCESS_MS = 2500;
 
 /**
  * Työajan leimaus.
@@ -103,7 +109,15 @@ export function ClockCard({
   const now = new Date().toISOString();
   const clockState = currentState(todayEvents);
   const worked = computeWorked(todayEvents, now);
-  const startedAt = todayEvents.find((e) => e.type === "in")?.at ?? null;
+  /*
+   * Aloitusaika on käynnissä olevan jakson alku, ei päivän ensimmäinen
+   * sisääntulo.
+   *
+   * Jos työntekijä leimaa ulos ja takaisin sisään, päivän ensimmäinen
+   * leimaus on aamulta ja kertoisi väärän ajan. computeWorked tietää
+   * kumpi jakso on käynnissä.
+   */
+  const startedAt = worked.runningSince;
 
   if (celebrating) {
     return (

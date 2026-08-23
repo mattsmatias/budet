@@ -298,7 +298,14 @@ export interface DaySummary {
   lastOut: string | null;
   workedMs: number;
   breakMs: number;
-  /** Päivä on yhä kesken: sisään on leimattu muttei ulos. */
+  /**
+   * Päivä on yhä auki: viimeisen tapahtuman jälkeen ollaan töissä tai
+   * tauolla.
+   *
+   * Tämä ei ole sama kuin "uloskirjaus puuttuu kokonaan". Päivä jossa on
+   * sisään, ulos ja uusi sisään on auki, vaikka uloskirjaus löytyykin —
+   * pelkkä viimeisen ulos-tapahtuman etsiminen jätti sen huomaamatta.
+   */
   open: boolean;
   /**
    * Päivän työjaksot erikseen.
@@ -338,7 +345,7 @@ export function daySummaries(
       lastOut,
       workedMs: worked.workedMs,
       breakMs: worked.breakMs,
-      open: firstIn !== null && lastOut === null,
+      open: currentState(dayEvents) !== "off",
       segments: workSegments(dayEvents, nowIso),
     };
   });
