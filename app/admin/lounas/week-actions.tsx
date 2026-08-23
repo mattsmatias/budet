@@ -249,7 +249,8 @@ export function CopyDay({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rf-press text-[12px] font-medium"
+        // -my-3 py-3: kosketusalue 18 -> 42 px ilman että mikään siirtyy.
+        className="rf-press -my-3 py-3 text-[12px] font-medium"
         style={{ color: "var(--rf-text-3)" }}
       >
         Kopioi toiseen päivään

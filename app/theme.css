@@ -312,6 +312,29 @@ a:hover > .rf-card-lift,
   color: var(--rf-accent-strong);
 }
 
+/* --------------------------------------------------------------------- */
+/* Kosketusalueen laajennus                                              */
+/*                                                                        */
+/* Pieni ikonipainike on visuaalisesti 28 px mutta sormelle liian pieni;  */
+/* suositus on 44. Näkymätön pseudoelementti kasvattaa osumapinnan        */
+/* siirtämättä mitään.                                                    */
+/*                                                                        */
+/* Vain pystysuuntaan. Rivin ikonipainikkeiden väli on kaksi pikseliä,    */
+/* ja vaakasuuntainen laajennus tarkoittaisi että "muokkaa" osuu          */
+/* "poista"-painikkeeseen. Väärä painallus on pahempi kuin pieni kohde    */
+/* silloin kun se poistaa jotain.                                         */
+/* --------------------------------------------------------------------- */
+
+.rf-hit {
+  position: relative;
+}
+
+.rf-hit::after {
+  content: "";
+  position: absolute;
+  inset: -10px 0;
+}
+
 /* Tunnuksen alkukirjain on tunniste, ei ikoni: tummempi kuin kellon
    viiva, jotta ne erottuvat toisistaan vierekkäin. */
 .rf-icon-btn .rf-initial {

@@ -300,7 +300,8 @@ export default async function LunchPage({
               href={`/lounas/${restaurant.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-[13px] font-semibold"
+              // -my-3 py-3: kosketusalue 20 -> 44 px, ulkoasu ennallaan.
+              className="-my-3 inline-flex items-center gap-1.5 py-3 text-[13px] font-semibold"
               style={{ color: "var(--rf-accent)" }}
             >
               Avaa sivu

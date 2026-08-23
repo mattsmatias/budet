@@ -84,7 +84,8 @@ export function LunchItemDialog({
           type="button"
           onClick={show}
           aria-label={`Muokkaa: ${item?.name ?? ""}`}
-          className="rf-press rf-icon-btn flex h-7 w-7 items-center justify-center rounded-[7px]"
+          // rf-hit: ikoni pysyy 28 px, kosketusalue on 44. Ks. theme.css.
+          className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
           style={{ color: "var(--rf-text-3)" }}
         >
           <RfIcon name="settings" size={14} />
@@ -318,7 +319,7 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
         type="button"
         onClick={() => setAsking(true)}
         aria-label={`Poista: ${item.name}`}
-        className="rf-press rf-icon-btn flex h-7 w-7 items-center justify-center rounded-[7px]"
+        className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
         style={{ color: "var(--rf-text-3)" }}
       >
         <RfIcon name="trash" size={14} />

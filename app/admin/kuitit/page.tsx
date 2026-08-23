@@ -257,7 +257,7 @@ export default async function AdminReceiptsPage({
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <Link
                           href={`/admin/kuitit/${receipt.id}`}
-                          className="text-[15px] font-semibold underline-offset-4 hover:underline"
+                          className="rf-hit text-[15px] font-semibold underline-offset-4 hover:underline"
                         >
                           {/* Brändinimi kun se tunnetaan, muuten kuitin
                               oma teksti. "K-Market" on luettavampi kuin
@@ -328,7 +328,9 @@ export default async function AdminReceiptsPage({
                       className="mt-3 border-t pt-3"
                       style={{ borderColor: "var(--rf-line)" }}
                     >
-                      <summary className="rf-press flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium [&::-webkit-details-marker]:hidden">
+                      {/* rf-hit: 20 px rivi, 40 px kosketusalue. Pehmuste
+                          olisi työntänyt sen yläreunan viivan yli. */}
+                      <summary className="rf-press rf-hit flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-medium [&::-webkit-details-marker]:hidden">
                         <span
                           className="rf-summary-chevron"
                           style={{ color: "var(--rf-text-3)" }}
@@ -380,7 +382,7 @@ export default async function AdminReceiptsPage({
                     </span>
                     <Link
                       href={`/admin/kuitit/${receipt.id}`}
-                      className="rf-press flex items-center gap-1 text-[13px] font-medium"
+                      className="rf-press -my-3 flex items-center gap-1 py-3 text-[13px] font-medium"
                       style={{ color: "var(--rf-blue)" }}
                     >
                       Avaa
