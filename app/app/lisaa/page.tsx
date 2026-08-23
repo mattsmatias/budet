@@ -68,6 +68,7 @@ export default async function MorePage() {
                 <Row href="/app/ilmoitukset" icon="bell" label="Ilmoitukset" />
                 <Row href="/app/vuorot" icon="calendar" label="Työvuoroni" />
                 <Row href="/app/tyoaika" icon="clock" label="Työaikani" />
+                <Row href="/app/palkka" icon="payroll" label="Palkkani" />
                 <Row href="/app/asetukset" icon="settings" label="Asetukset" />
                 {can(role, "expenses.view") ? (
                   <Row href="/admin" icon="overview" label="Hallintanäkymä" />
