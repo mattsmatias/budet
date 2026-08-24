@@ -3,45 +3,51 @@
  *
  * Palvelinkomponentit hakevat tietonsa ennen renderöintiä, joten
  * näkymän vaihto näytti pysähdykseltä: vanha sivu jäi ruutuun eikä
- * mikään kertonut että uutta ollaan hakemassa. Luuranko kertoo sen —
- * ja se on sivun oikean muotoinen, joten sisältö ei hyppää paikalleen
- * kun se saapuu.
+ * mikään kertonut että uutta ollaan hakemassa.
  *
- * Muoto on tarkoituksella karkea. Pikselintarkka jäljitelmä lupaisi
- * enemmän kuin tietää: sivulla voi olla kolme korttia tai kymmenen.
+ * LUURANGON ON OLTAVA SIVUN MUOTOINEN.
+ *
+ * Muuten sisältö hyppää paikalleen saapuessaan, ja hyppy on
+ * häiritsevämpi kuin tyhjä ruutu olisi ollut. Tämä oli hetken
+ * vanhan asettelun muotoinen — kaksi saraketta tasaleveinä ja
+ * otsikkorivi vasemmalla — ja jokainen latautuminen päättyi
+ * nytkähdykseen.
+ *
+ * Mitat ovat silti karkeita. Pikselintarkka jäljitelmä lupaisi
+ * enemmän kuin tietää: korttien korkeus riippuu siitä mitä niissä on.
  */
 export default function AdminLoading() {
   return (
     <div className="space-y-5 md:space-y-6" aria-busy="true" aria-live="polite">
       <span className="sr-only">Ladataan…</span>
 
-      {/* Otsikko */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2">
-          <div className="rf-skeleton-block h-7 w-56" />
-          <div className="rf-skeleton-block h-4 w-40" />
-        </div>
-        <div className="flex gap-2">
-          <div className="rf-skeleton-block h-10 w-36" />
-          <div className="rf-skeleton-block h-10 w-32" />
-        </div>
+      {/* Kuukausivalitsin ja vienti, oikeassa reunassa */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="rf-skeleton-block h-9 w-36" />
+        <div className="rf-skeleton-block h-9 w-32" />
       </div>
 
-      {/* Avainluvut */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {/* Neljä avainlukua */}
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rf-skeleton-block h-[124px]" />
+          <div key={i} className="rf-skeleton-block h-[132px]" />
         ))}
       </div>
 
-      {/* Laaja osio */}
-      <div className="rf-skeleton-block h-28" />
-
-      {/* Kaksi palstaa */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rf-skeleton-block h-64" />
-        <div className="rf-skeleton-block h-64" />
+      {/* Kulujakauma ja kaavio: kapea vasemmalla, leveä oikealla */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <div className="rf-skeleton-block h-[340px]" />
+        <div className="rf-skeleton-block h-[340px]" />
       </div>
+
+      {/* Huomiot ja kulurytmi samassa mitassa */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <div className="rf-skeleton-block h-56" />
+        <div className="rf-skeleton-block h-56" />
+      </div>
+
+      {/* Viimeisimmät kuitit */}
+      <div className="rf-skeleton-block h-72" />
     </div>
   );
 }

@@ -192,7 +192,9 @@ function DesktopSidebar({
             className="flex h-8 w-8 shrink-0 items-center justify-center text-[11px] font-bold"
             style={{
               background: "var(--rf-accent-bg)",
-              color: "var(--rf-accent)",
+              // Merkkiväri jää 4,25:een omalla vaalealla pohjallaan.
+              // Nimikirjaimet ovat tekstiä, joten ne saavat tummemman.
+              color: "var(--rf-accent-strong)",
               borderRadius: "50%",
             }}
           >

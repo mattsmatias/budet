@@ -31,7 +31,13 @@
   /* Teksti */
   --rf-text: #0f1729;
   --rf-text-2: #5a6a85;
-  --rf-text-3: #667490;
+  /*
+   * Mitattu selaimessa: #667490 riitti valkoisella (4,55) muttei
+   * harmaalla --rf-inset-pinnalla (4,35). Sivupalkin tunnuskortti ja
+   * korttien jalat ovat juuri sillä pinnalla, joten sävy on valittu
+   * tummemmasta taustasta eikä vaaleammasta.
+   */
+  --rf-text-3: #5c6a83;
   --rf-on-accent: #ffffff;
 
   /* Rajat ja varjot. Varjo on ohut: kortti erottuu reunasta, ei varjosta. */
