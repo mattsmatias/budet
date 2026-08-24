@@ -84,6 +84,25 @@
   --rf-tint-warn: linear-gradient(157deg, #fef6e9 0%, #ffffff 54%);
   --rf-tint-bad: linear-gradient(157deg, #fdefef 0%, #ffffff 54%);
 
+  /* ---------------------------------------------------------------- */
+  /* Sivupalkki.                                                        */
+  /*                                                                    */
+  /* Tumma pinta ei ole tunnelmaa vaan erottelua: kun kuori on tumma ja */
+  /* sisältö vaalea, katse menee lukuihin eikä valikkoon. Budetin       */
+  /* näkymät ovat tiheitä — taulukoita, summia, tilamerkintöjä — ja     */
+  /* juuri niissä ero kuoren ja sisällön välillä auttaa eniten.         */
+  /*                                                                    */
+  /* Sävyt on valittu kontrastista eikä ulkonäöstä. Osaston otsikko on  */
+  /* 11 pikseliä, joten se tarvitsee vähintään 4,5:1 — siksi se on      */
+  /* vaaleampi kuin tummalla pinnalla ensin näyttäisi tarpeelliselta.   */
+  /* ---------------------------------------------------------------- */
+  --rf-side: #17181c;
+  --rf-side-2: #24272e;
+  --rf-side-line: rgba(255, 255, 255, 0.09);
+  --rf-side-text: #f4f5f7;
+  --rf-side-text-2: #a8aeba;
+  --rf-side-text-3: #868d9b;
+
   /* Pyöristykset */
   --rf-r-card: 18px;
   --rf-r-stat: 14px;

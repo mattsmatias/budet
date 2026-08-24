@@ -58,15 +58,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="flex min-h-screen">
-      <AdminNav
-        role={role}
-        user={{
-          name: userName,
-          email: user.email ?? "",
-          initials: initialsOf(userName),
-        }}
-        counts={counts}
-      />
+      <AdminNav role={role} counts={counts} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
@@ -148,13 +140,6 @@ function longDate(iso: string, timeZone: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** "Oktay Matias" → "OM". Yhden sanan nimestä yksi kirjain. */
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
 
 /**
  * Haun sisältö.

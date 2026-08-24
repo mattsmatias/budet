@@ -14,11 +14,14 @@ import type { Alert, Role } from "@/lib/restoflow/types";
  * sen mukana — ja yleiskuvan otsikko vapautuu kertomaan mitä sivulla
  * on, mikä on sen oikea tehtävä.
  *
- * TUNNUS EI OLE TÄÄLLÄ.
+ * TUNNUS ON OIKEASSA YLÄKULMASSA.
  *
- * Käyttäjäkortti on sivupalkin pohjalla. Kaksi paikkaa samalle asialle
- * on kaksi paikkaa joita pitää etsiä; puhelimessa tunnus on yhä
- * yläpalkissa, koska siellä ei ole sivupalkkia.
+ * Siellä sitä on totuttu etsimään. Sivupalkin pohja on varattu
+ * päätoiminnolle: siirtymiä on kymmenen, tekemistä yksi, eikä niiden
+ * kuulu näyttää samalta.
+ *
+ * Asetukset eivät ole tunnusvalikossa vaan sivupalkin Tili-ryhmässä.
+ * Kaksi paikkaa samalle asialle on kaksi paikkaa joita pitää etsiä.
  */
 export function TopBar({
   greeting,
@@ -63,7 +66,6 @@ export function TopBar({
           restaurantName={restaurantName}
           role={role}
           canOpenSettings={false}
-          showUser={false}
         />
       </div>
     </div>

@@ -62,7 +62,14 @@ interface Turn {
   cards?: ToolCard[];
 }
 
-export function MattiPanel({ enabled }: { enabled: boolean }) {
+export function MattiPanel({
+  enabled,
+  dark,
+}: {
+  enabled: boolean;
+  /** Avain tummalla sivupalkilla: vain painikkeen värit vaihtuvat. */
+  dark?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -96,17 +103,23 @@ export function MattiPanel({ enabled }: { enabled: boolean }) {
         onClick={() => setOpen(true)}
         aria-expanded={open}
         className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px]"
-        style={{ color: "var(--rf-text-2)" }}
+        style={{ color: dark ? "var(--rf-side-text-2)" : "var(--rf-text-2)" }}
       >
-        <span style={{ color: "var(--rf-accent)" }}>
+        <span style={{ color: dark ? "#8ea6ff" : "var(--rf-accent)" }}>
           <RfIcon name="sparkle" size={19} />
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block font-medium" style={{ color: "var(--rf-text)" }}>
+          <span
+            className="block font-medium"
+            style={{ color: dark ? "var(--rf-side-text)" : "var(--rf-text)" }}
+          >
             Matti
           </span>
-          <span className="block text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+          <span
+            className="block text-[11px]"
+            style={{ color: dark ? "var(--rf-side-text-3)" : "var(--rf-text-3)" }}
+          >
             BUDet AI
           </span>
         </span>

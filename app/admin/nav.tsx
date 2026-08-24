@@ -11,7 +11,6 @@ import {
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Avatar } from "@/components/restoflow/ui";
 import { signOut } from "@/app/(auth)/actions";
 import { MattiPanel } from "./matti/panel";
 
@@ -27,11 +26,9 @@ import { MattiPanel } from "./matti/panel";
  */
 export function AdminNav({
   role,
-  user,
   counts,
 }: {
   role: Role;
-  user: { name: string; email: string; initials: string };
   /**
    * Lukumäärät valikon kohtiin, avaimena polku.
    *
@@ -50,9 +47,9 @@ export function AdminNav({
       <DesktopSidebar
         sections={sections}
         matti={matti}
-        user={user}
         counts={counts}
         canOpenSettings={can(role, "settings.view")}
+        canAddReceipt={can(role, "receipts.add")}
       />
       <MobileBar items={primary} />
     </>
@@ -72,25 +69,30 @@ function useActive() {
 function DesktopSidebar({
   sections,
   matti,
-  user,
   counts,
   canOpenSettings,
+  canAddReceipt,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
   matti: boolean;
-  user: { name: string; email: string; initials: string };
   counts: Record<string, number>;
   canOpenSettings: boolean;
+  canAddReceipt: boolean;
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
-      style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
+      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col md:flex"
+      style={{ background: "var(--rf-side)", color: "var(--rf-side-text)" }}
     >
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
+          <span
+            className="text-[17px] font-semibold tracking-tight"
+            style={{ color: "var(--rf-side-text)" }}
+          >
+            Budet
+          </span>
         </Link>
       </div>
 
@@ -108,7 +110,7 @@ function DesktopSidebar({
             <p
               id={`nav-${section.id}`}
               className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-              style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+              style={{ color: "var(--rf-side-text-3)", letterSpacing: "0.06em" }}
             >
               {section.label}
             </p>
@@ -145,7 +147,7 @@ function DesktopSidebar({
         <p
           id="nav-account"
           className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-          style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+          style={{ color: "var(--rf-side-text-3)", letterSpacing: "0.06em" }}
         >
           Tili
         </p>
@@ -168,7 +170,7 @@ function DesktopSidebar({
               <button
                 type="submit"
                 className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium"
-                style={{ color: "var(--rf-text-2)" }}
+                style={{ color: "var(--rf-side-text-2)" }}
               >
                 <RfIcon name="logout" size={19} />
                 <span>Kirjaudu ulos</span>
@@ -180,30 +182,40 @@ function DesktopSidebar({
 
       <div
         className="border-t px-2.5 py-2"
-        style={{ borderColor: "var(--rf-line)" }}
+        style={{ borderColor: "var(--rf-side-line)" }}
       >
-        <MattiPanel enabled={matti} />
+        <MattiPanel enabled={matti} dark />
       </div>
 
       {/*
-       * Käyttäjäkortti pohjimmaisena.
+       * Päätoiminto pohjalla.
        *
-       * Kertoo kuka on kirjautuneena. Se ei ole turhaa: sama kone on
-       * usein toimistossa yhteiskäytössä, ja väärällä tunnuksella
-       * kirjattu kuitti menee väärän ihmisen nimiin.
+       * Kuitin lisääminen on se mitä ravintoloitsija tekee useimmin, ja
+       * se oli tähän asti löydettävä Kuitit-sivun kautta. Valkoinen
+       * painike tummalla pinnalla on ainoa asia sivupalkissa joka
+       * huutaa — ja sen kuuluu, koska se on ainoa toiminto muiden
+       * ollessa siirtymiä.
+       *
+       * Käyttäjäkortti oli tässä hetken. Tunnus on nyt oikeassa
+       * yläkulmassa, jossa sitä on totuttu etsimään, eikä samaa asiaa
+       * ole kahdessa paikassa.
        */}
-      <div
-        className="flex items-center gap-2.5 border-t px-4 py-3"
-        style={{ borderColor: "var(--rf-line)", background: "var(--rf-tint)" }}
-      >
-        <Avatar initials={user.initials} size={32} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold">{user.name}</p>
-          <p className="truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
-            {user.email}
-          </p>
+      {canAddReceipt ? (
+        <div className="px-3 pb-4 pt-2">
+          <Link
+            href="/admin/kuitit/uusi"
+            className="rf-press flex items-center justify-center gap-2 py-3 text-[14px] font-semibold"
+            style={{
+              background: "var(--rf-side-text)",
+              color: "var(--rf-side)",
+              borderRadius: 12,
+            }}
+          >
+            <RfIcon name="plus" size={17} />
+            Lisää kuitti
+          </Link>
         </div>
-      </div>
+      ) : null}
     </aside>
   );
 }
@@ -219,8 +231,8 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
         aria-current={active ? "page" : undefined}
         className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
         style={{
-          background: active ? "var(--rf-accent-bg)" : "transparent",
-          color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+          background: active ? "var(--rf-side-2)" : "transparent",
+          color: active ? "var(--rf-side-text)" : "var(--rf-side-text-2)",
           fontWeight: active ? 600 : 500,
         }}
       >
@@ -231,8 +243,8 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
           <span
             className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
             style={{
-              background: active ? "var(--rf-card)" : "var(--rf-inset)",
-              color: "var(--rf-text-2)",
+              background: active ? "rgba(255,255,255,0.14)" : "var(--rf-side-2)",
+              color: "var(--rf-side-text)",
               borderRadius: 980,
             }}
           >
