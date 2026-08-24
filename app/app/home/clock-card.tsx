@@ -63,7 +63,13 @@ export function ClockCard({
    */
   clockIn:
     | { kind: "open"; shift: string }
-    | { kind: "too-early"; shift: string; opensAt: string }
+    | {
+        kind: "too-early";
+        shift: string;
+        opensAt: string;
+        /** Kuinka monen millisekunnin päästä ikkuna aukeaa. */
+        opensInMs: number;
+      }
     | { kind: "no-shift"; next: string | null };
 }) {
   const [state, action] = useActionState(recordClockEvent, initial);
@@ -98,6 +104,31 @@ export function ClockCard({
   useEffect(() => {
     if (state.error) router.refresh();
   }, [state.error, router]);
+
+  /*
+   * Ikkuna aukeaa itsestään.
+   *
+   * Kortin kello tikittää joka sekunti, mutta leimausikkuna ratkaistaan
+   * palvelimella eikä se muuttunut piirroksesta toiseen. Työntekijä
+   * saattoi seistä keittiössä klo 09:45 katsomassa harmaata painiketta
+   * ja tekstiä "avautuu klo 09:45" — ainoa keino oli tietää ladata sivu
+   * uudelleen.
+   *
+   * Nyt hetki haetaan palvelimelta uudelleen kun se koittaa. Puoli
+   * sekuntia yli, jottei pyyntö osu rajalle väärältä puolelta.
+   *
+   * Jos palvelin on yhä eri mieltä — talviaikaan siirtyminen kesken
+   * odotuksen siirtäisi rajaa tunnilla — uusi piirros ajastaa saman
+   * odotuksen uudelleen. Virhe korjaa itsensä eikä jää kiinni.
+   */
+  const opensInMs = clockIn.kind === "too-early" ? clockIn.opensInMs : null;
+
+  useEffect(() => {
+    if (opensInMs === null) return;
+
+    const id = setTimeout(() => router.refresh(), Math.max(0, opensInMs) + 500);
+    return () => clearTimeout(id);
+  }, [opensInMs, router]);
 
   /*
    * Onnistuminen näkyy hetken ja väistyy.

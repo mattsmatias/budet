@@ -4,6 +4,7 @@ import {
   canPerform,
   computeWorked,
   currentState,
+  daySummaries,
   datesInRange,
   formatClock,
   formatDuration,
@@ -210,5 +211,63 @@ describe("staffCostCents", () => {
 
   it("muuntaa millisekunnit tunneiksi", () => {
     expect(msToHours(5400000)).toBe(1.5);
+  });
+});
+
+describe("unohtunut uloskirjaus", () => {
+  const ZONE = "Europe/Helsinki";
+
+  /*
+   * Tänään auki oleva työaika on normaali tila; eilinen auki jäänyt on
+   * virhe. Ilman tätä eroa käyttöliittymä näytti kolmen päivän
+   * takaisesta leimauksesta kasvavaa kelloa ja väitti työn jatkuvan.
+   */
+  it("ei merkitse tämän päivän avointa päivää unohtuneeksi", () => {
+    const events: ClockEvent[] = [
+      { id: "e1", userId: "u1", type: "in", at: "2026-08-24T06:00:00.000Z" },
+    ];
+
+    const [day] = daySummaries(events, "2026-08-24T09:00:00.000Z", ZONE);
+
+    expect(day.open).toBe(true);
+    expect(day.stale).toBe(false);
+  });
+
+  it("merkitsee menneen avoimen päivän unohtuneeksi", () => {
+    const events: ClockEvent[] = [
+      { id: "e1", userId: "u1", type: "in", at: "2026-08-21T06:00:00.000Z" },
+    ];
+
+    const [day] = daySummaries(events, "2026-08-24T09:00:00.000Z", ZONE);
+
+    expect(day.open).toBe(true);
+    expect(day.stale).toBe(true);
+  });
+
+  it("ei merkitse suljettua päivää unohtuneeksi", () => {
+    const events: ClockEvent[] = [
+      { id: "e1", userId: "u1", type: "in", at: "2026-08-21T06:00:00.000Z" },
+      { id: "e2", userId: "u1", type: "out", at: "2026-08-21T14:00:00.000Z" },
+    ];
+
+    const [day] = daySummaries(events, "2026-08-24T09:00:00.000Z", ZONE);
+
+    expect(day.stale).toBe(false);
+  });
+
+  /*
+   * Päivä luetaan ravintolan ajassa. 21:10Z on Helsingissä jo seuraavan
+   * päivän puolella, joten UTC:stä luettuna tämä leimaus näyttäisi
+   * eiliseltä ja merkkautuisi virheellisesti unohtuneeksi.
+   */
+  it("lukee päivän ravintolan ajassa", () => {
+    const events: ClockEvent[] = [
+      { id: "e1", userId: "u1", type: "in", at: "2026-08-23T21:10:00.000Z" },
+    ];
+
+    const [day] = daySummaries(events, "2026-08-24T00:30:00.000Z", ZONE);
+
+    expect(day.date).toBe("2026-08-24");
+    expect(day.stale).toBe(false);
   });
 });

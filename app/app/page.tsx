@@ -9,7 +9,12 @@ import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
 import { Workplace } from "./home/workplace";
 import { Surface, shortDay } from "./ui";
-import { clockInState, formatMinuteOfDay } from "@/lib/restoflow/shift-window";
+import {
+  clockInState,
+  formatMinuteOfDay,
+  nextShiftFrom,
+  opensInMs,
+} from "@/lib/restoflow/shift-window";
 import type { Shift } from "@/lib/restoflow/types";
 
 export const metadata = { title: "Koti" };
@@ -52,7 +57,13 @@ export default async function EmployeeHome() {
   const week = workedBetween(clockEvents, weekStart(today), today, now, zone);
   const recent = daySummaries(mine, now, zone, RECENT_DAYS);
 
-  const nextShift = shifts.find((s) => s.date >= today);
+  /*
+   * Seuraava vuoro, ei "tämän päivän vuoro".
+   *
+   * Illalla kello 20 päättynyt aamuvuoro ei ole seuraava vuoro. Sama
+   * sääntö kuin leimauskortissa, samasta funktiosta.
+   */
+  const nextShift = nextShiftFrom(shifts, now, zone);
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
   /*
@@ -80,6 +91,7 @@ export default async function EmployeeHome() {
             kind: "too-early" as const,
             shift: label(clockIn.shift),
             opensAt: formatMinuteOfDay(clockIn.opensAtMinutes),
+            opensInMs: opensInMs(clockIn.opensAtMinutes, now, zone),
           }
         : {
             kind: "no-shift" as const,

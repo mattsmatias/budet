@@ -43,7 +43,17 @@ export default async function TimePage() {
   const monthWorked = workedBetween(mine, monthStartDate(month), today, now, zone);
   const days = daySummaries(mine, now, zone);
 
-  const open = days.find((d) => d.open);
+  /*
+   * Käynnissä oleva työaika on vain tämän päivän avoin päivä.
+   *
+   * Ennen tässä oli days.find((d) => d.open), joka nappasi minkä
+   * tahansa avoimen päivän. Unohtunut uloskirjaus kolmen päivän takaa
+   * näkyi vihreänä sykkivänä "Avoin työaika" -kortilla ja kasvavana
+   * kellona — samaan aikaan kun Koti-sivu sanoi ettei käyttäjä ole
+   * töissä. Kaksi sivua väitti eri asiaa samasta hetkestä.
+   */
+  const running = days.find((d) => d.open && !d.stale);
+  const unclosed = days.filter((d) => d.stale);
 
   return (
     <div className="rf-enter space-y-6">
@@ -74,7 +84,7 @@ export default async function TimePage() {
         Uloskirjaus on Koti-sivulla, ja toinen painike tässä olisi taas
         se sama kaksi tapaa tehdä sama asia.
       */}
-      {open ? (
+      {running ? (
         <Surface>
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
@@ -92,11 +102,11 @@ export default async function TimePage() {
                 päivä kertoisi muuten väärän kellonajan.
               */}
               <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                {shortDay(open.date)}
-                {open.segments.length > 0
+                {shortDay(running.date)}
+                {running.segments.length > 0
                   ? ` · aloitettu ${timeIn(
                       zone,
-                      new Date(open.segments[open.segments.length - 1].startMs).toISOString(),
+                      new Date(running.segments[running.segments.length - 1].startMs).toISOString(),
                     )}`
                   : ""}
               </p>
@@ -114,6 +124,33 @@ export default async function TimePage() {
               Avaa leimaus
               <RfIcon name="chevron" size={14} />
             </a>
+          </div>
+        </Surface>
+      ) : null}
+
+      {/*
+        Unohtunut uloskirjaus ei ole leimausasia vaan korjausasia.
+        Työntekijä ei voi sulkea mennyttä päivää itse: nyt tehty
+        uloskirjaus kirjaisi tämän hetken, ja työaikaa syntyisi
+        vuorokausia. Siksi tästä ei ole linkkiä leimaukseen.
+      */}
+      {unclosed.length > 0 ? (
+        <Surface>
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-amber-text)" }}>
+              <RfIcon name="alert" size={18} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[15px] font-medium">
+                {unclosed.length === 1
+                  ? "Yhdeltä päivältä puuttuu uloskirjaus"
+                  : `${unclosed.length} päivältä puuttuu uloskirjaus`}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                {unclosed.map((d) => shortDay(d.date)).join(", ")}. Esihenkilö
+                korjaa työajan — älä leimaa uudelleen.
+              </p>
+            </div>
           </div>
         </Surface>
       ) : null}
@@ -158,6 +195,8 @@ function DayRow({
 }) {
   const many = day.segments.length > 1;
 
+  const stale = day.stale;
+
   return (
     <Surface>
       <div className="flex items-baseline justify-between gap-4">
@@ -171,7 +210,7 @@ function DayRow({
         </p>
 
         <p className="rf-tabular text-[15px] font-semibold" suppressHydrationWarning>
-          {formatDuration(day.workedMs)}
+          {stale ? "—" : formatDuration(day.workedMs)}
         </p>
       </div>
 
@@ -199,10 +238,14 @@ function DayRow({
                   <span className="rf-tabular">
                     {timeIn(timezone, new Date(segment.startMs).toISOString())}
                     {" → "}
-                    {running ? "nyt" : timeIn(timezone, new Date(segment.endMs).toISOString())}
+                    {running
+                      ? stale
+                        ? "?"
+                        : "nyt"
+                      : timeIn(timezone, new Date(segment.endMs).toISOString())}
                   </span>
                   <span className="rf-tabular shrink-0" suppressHydrationWarning>
-                    {formatDuration(segment.endMs - segment.startMs)}
+                    {running && stale ? "—" : formatDuration(segment.endMs - segment.startMs)}
                   </span>
                 </li>
               );
@@ -219,7 +262,13 @@ function DayRow({
         <p className="rf-tabular mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
           {" → "}
-          {day.open ? "nyt" : day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
+          {day.open
+            ? stale
+              ? "?"
+              : "nyt"
+            : day.lastOut
+              ? timeIn(timezone, day.lastOut)
+              : "?"}
         </p>
       )}
 

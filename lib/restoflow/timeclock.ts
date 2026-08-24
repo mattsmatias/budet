@@ -308,6 +308,18 @@ export interface DaySummary {
    */
   open: boolean;
   /**
+   * Päivä on auki mutta se ei ole tämä päivä.
+   *
+   * Tänään auki oleva työaika on normaali tila. Menneenä päivänä auki
+   * jäänyt on unohtunut uloskirjaus, ja silloin workedMs on laskettu
+   * nykyhetkeen asti: kolmen päivän takainen leimaus näyttäisi 70
+   * tunnin työpäivää, joka kasvaa sekunnin välein.
+   *
+   * Sääntö on tässä eikä näkymissä, koska sama päivälista piirretään
+   * kolmessa paikassa ja kolme erillistä ehtoa ehtii ajautua erilleen.
+   */
+  stale: boolean;
+  /**
    * Päivän työjaksot erikseen.
    *
    * Tauko katkaisee jakson, joten aamupäivä ja iltapäivä ovat kaksi
@@ -346,6 +358,7 @@ export function daySummaries(
       workedMs: worked.workedMs,
       breakMs: worked.breakMs,
       open: currentState(dayEvents) !== "off",
+      stale: currentState(dayEvents) !== "off" && date !== dayIn(timezone, nowIso),
       segments: workSegments(dayEvents, nowIso),
     };
   });

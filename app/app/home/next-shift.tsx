@@ -13,7 +13,7 @@ import { Empty, Surface, Tag, shortDay } from "../ui";
  * Pinta ja tilamerkintä tulevat jaetusta kirjastosta, jotta tämä
  * näyttää samalta kuin Vuorot-sivun rivit.
  */
-export function NextShift({ shift, today }: { shift: Shift | undefined; today: string }) {
+export function NextShift({ shift, today }: { shift: Shift | null; today: string }) {
   if (!shift) {
     return (
       <Empty

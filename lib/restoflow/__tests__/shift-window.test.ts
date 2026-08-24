@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   clockInState,
   formatMinuteOfDay,
+  nextShiftFrom,
+  opensInMs,
   shiftBounds,
   shiftLengthMinutes,
 } from "../shift-window";
@@ -181,5 +183,87 @@ describe("kellonajan muotoilu", () => {
 
   it("kiertää vuorokauden yli", () => {
     expect(formatMinuteOfDay(26 * 60)).toBe("02:00");
+  });
+});
+
+describe("seuraava vuoro", () => {
+  /*
+   * Tämä testi kuvaa vian joka näkyi työntekijälle illalla: kello 20
+   * etusivu kertoi seuraavaksi vuoroksi sen aamuvuoron jonka hän oli
+   * juuri tehnyt. Pelkkä päivämäärävertailu ei riitä, kun kysymys on
+   * ajasta.
+   */
+  it("ohittaa jo päättyneen tämän päivän vuoron", () => {
+    const morning = shift({ id: "aamu", startTime: "08:00", endTime: "16:00" });
+    const tomorrow = shift({ id: "huomenna", date: "2026-08-25" });
+
+    const next = nextShiftFrom([morning, tomorrow], at("20:00"), ZONE);
+
+    expect(next?.id).toBe("huomenna");
+  });
+
+  it("pitää kesken olevan vuoron seuraavana", () => {
+    const morning = shift({ startTime: "08:00", endTime: "16:00" });
+    expect(nextShiftFrom([morning], at("12:00"), ZONE)?.id).toBe("sh1");
+  });
+
+  it("löytää saman päivän myöhemmän vuoron", () => {
+    const morning = shift({ id: "aamu", startTime: "08:00", endTime: "12:00" });
+    const evening = shift({ id: "ilta", startTime: "17:00", endTime: "22:00" });
+
+    expect(nextShiftFrom([morning, evening], at("13:00"), ZONE)?.id).toBe("ilta");
+  });
+
+  it("järjestää saman päivän vuorot alkuajan mukaan", () => {
+    // Kanta järjestää vain päivän mukaan, joten järjestys voi tulla
+    // kummin päin tahansa.
+    const evening = shift({ id: "ilta", startTime: "17:00", endTime: "22:00" });
+    const morning = shift({ id: "aamu", startTime: "08:00", endTime: "12:00" });
+
+    expect(nextShiftFrom([evening, morning], at("06:00"), ZONE)?.id).toBe("aamu");
+  });
+
+  it("ei palauta hylättyä vuoroa", () => {
+    const declined = shift({ status: "declined" });
+    expect(nextShiftFrom([declined], at("06:00"), ZONE)).toBeNull();
+  });
+
+  it("palauttaa tyhjän kun kaikki on tehty", () => {
+    const morning = shift({ startTime: "08:00", endTime: "16:00" });
+    expect(nextShiftFrom([morning], at("20:00"), ZONE)).toBeNull();
+  });
+
+  /*
+   * Sama korjaus koskee leimauskorttia: "ei vuoroa" -tilan teksti
+   * kertoo seuraavan vuoron, eikä se saa olla mennyt.
+   */
+  it("ei tarjoa päättynyttä vuoroa leimauskortin seuraavaksi", () => {
+    const morning = shift({ startTime: "08:00", endTime: "16:00" });
+    const result = state([morning], "20:00");
+
+    expect(result.kind).toBe("no-shift");
+    if (result.kind === "no-shift") expect(result.next).toBeNull();
+  });
+});
+
+describe("ikkunan avautumiseen jäävä aika", () => {
+  it("laskee erotuksen minuutteina päivän alusta", () => {
+    // Kello 09:00 paikallista, ikkuna aukeaa 09:45 (585 min).
+    expect(opensInMs(585, at("09:00"), ZONE)).toBe(45 * 60_000);
+  });
+
+  /*
+   * Menneisyyteen ei odoteta. Negatiivinen viive tekisi setTimeoutista
+   * välittömän silmukan: piirros → pyyntö → piirros.
+   */
+  it("ei palauta negatiivista aikaa", () => {
+    expect(opensInMs(585, at("10:00"), ZONE)).toBe(0);
+  });
+
+  it("lukee nykyhetken ravintolan ajassa", () => {
+    // 06:45Z on Helsingissä 09:45, eli ikkuna on juuri auennut.
+    expect(opensInMs(585, "2026-08-24T06:45:00.000Z", ZONE)).toBe(0);
+    // UTC:nä luettuna kello olisi 06:45 ja odotusta jäisi kolme tuntia.
+    expect(opensInMs(585, "2026-08-24T06:45:00.000Z", "UTC")).toBe(180 * 60_000);
   });
 });

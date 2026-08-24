@@ -89,9 +89,7 @@ export function clockInState(input: {
    * Ei auki. Kerrotaan seuraavasta vuorosta, jotta näkymä voi näyttää
    * milloin leimaus avautuu sen sijaan että sanoisi vain "ei".
    */
-  const upcoming = mine
-    .filter((s) => s.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))[0];
+  const upcoming = nextShiftFrom(mine, nowIso, timezone);
 
   if (upcoming && upcoming.date === today) {
     const { startMin } = shiftBounds(upcoming);
@@ -101,6 +99,68 @@ export function clockInState(input: {
   }
 
   return { kind: "no-shift", next: upcoming ?? null };
+}
+
+/**
+ * Seuraava vuoro joka ei ole vielä päättynyt.
+ *
+ * PÄÄTTYNYT VUORO EI OLE SEURAAVA VUORO.
+ *
+ * Pelkkä `date >= today` valitsee tämän päivän vuoron vielä illallakin.
+ * Kello 20 työntekijä näki "Seuraava vuoro: tänään 08:00–16:00" — vuoro
+ * jonka hän oli jo tehnyt. Loppuaikaa on siis verrattava nykyhetkeen,
+ * ei pelkkää päivää.
+ *
+ * Vertailu tehdään ravintolan ajassa: vuoron kellonajat ovat
+ * paikallisia, joten UTC-hetkeen niitä ei voi verrata.
+ *
+ * Hylätty vuoro ei ole vuoro. Muut tilat kelpaavat.
+ */
+export function nextShiftFrom(
+  shifts: Shift[],
+  nowIso: string,
+  timezone: string,
+): Shift | null {
+  const today = dayIn(timezone, nowIso);
+  const nowMin = minutesOfDayIn(timezone, nowIso);
+
+  const candidates = shifts
+    .filter((s) => s.status !== "declined" && s.date >= today)
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime),
+    );
+
+  for (const shift of candidates) {
+    if (shift.date > today) return shift;
+    if (shiftBounds(shift).endMin > nowMin) return shift;
+  }
+
+  return null;
+}
+
+/**
+ * Kuinka monen millisekunnin päästä leimausikkuna aukeaa.
+ *
+ * Kortti tarvitsee tämän voidakseen avautua itsestään sen sijaan että
+ * jättäisi harmaan painikkeen ruudulle siihen asti kunnes joku tietää
+ * ladata sivun uudelleen.
+ *
+ * Erotus lasketaan minuuteista päivän alusta, ei kahdesta hetkestä.
+ * Vuoron kellonaika on paikallinen, ja sen muuntaminen absoluuttiseksi
+ * hetkeksi vaatisi vyöhykesiirtymän jota tässä ei tarvita: molemmat
+ * luvut ovat samalla mitta-asteikolla.
+ *
+ * Kesäajan vaihtuminen odotuksen aikana siirtäisi rajaa tunnilla. Se
+ * ei ole tässä ongelma, koska uusi piirros laskee saman odotuksen
+ * uudelleen — virhe korjaa itsensä.
+ */
+export function opensInMs(
+  opensAtMinutes: number,
+  nowIso: string,
+  timezone: string,
+): number {
+  return Math.max(0, opensAtMinutes - minutesOfDayIn(timezone, nowIso)) * 60_000;
 }
 
 /** "09:30" minuuteista keskiyöstä. Yli vuorokauden menevä kiertää ympäri. */

@@ -62,13 +62,23 @@ export function RecentDays({
                 <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
                   {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
                   {" → "}
-                  {day.open ? "nyt" : day.lastOut ? timeIn(timezone, day.lastOut) : "?"}
+                  {day.open
+                    ? day.stale
+                      ? "?"
+                      : "nyt"
+                    : day.lastOut
+                      ? timeIn(timezone, day.lastOut)
+                      : "?"}
                 </p>
               </div>
 
               <div className="shrink-0 text-right">
+                {/*
+                  Unohtuneen päivän kestoa ei tiedetä. Kasvava luku
+                  väittäisi että työ jatkuu yhä.
+                */}
                 <p className="rf-tabular text-[14px] font-semibold" suppressHydrationWarning>
-                  {formatDuration(day.workedMs)}
+                  {day.stale ? "—" : formatDuration(day.workedMs)}
                 </p>
                 {/*
                   Käynnissä oleva päivä ja unohtunut leimaus ovat eri
