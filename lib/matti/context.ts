@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchLunchWeek, fetchRestaurantData } from "@/lib/restoflow/queries";
-import { monthIn, todayIn } from "@/lib/restoflow/clock-context";
+import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import type { RestaurantData } from "@/lib/restoflow/queries";
 import type { LunchWeek } from "@/lib/restoflow/lunch";
 import type { Role } from "@/lib/restoflow/types";
@@ -27,6 +27,10 @@ export interface MattiContext {
   month: string;
   /** Kuluva päivä "2026-08-23". */
   today: string;
+  /** Nykyhetki ISO-muodossa. Kesken oleva vuoro tarvitsee sen. */
+  now: string;
+  /** Ravintolan aikavyöhyke. Päivä luetaan aina siinä ajassa. */
+  timezone: string;
   /** Missä käyttäjä on sovelluksessa. Vihje, ei valtuutus. */
   currentPage: string | null;
   data: RestaurantData;
@@ -60,6 +64,8 @@ export async function mattiContext(
     userName: ctx.user.fullName ?? ctx.user.email ?? "Käyttäjä",
     month: monthIn(ctx.restaurant.timezone),
     today: todayIn(ctx.restaurant.timezone),
+    now: nowIso(),
+    timezone: ctx.restaurant.timezone,
     currentPage,
     data,
     lunchWeek(weekStart) {
