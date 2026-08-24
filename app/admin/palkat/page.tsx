@@ -187,13 +187,10 @@ export default async function PayrollPage({
             {/* Työpöydällä taulukko, puhelimessa kortit: kuusi saraketta
                 375 pikselissä olisi lukukelvoton. */}
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[44rem] text-[14px]">
+              <table className="rf-table w-full min-w-[44rem] text-[14px]">
                 <thead>
-                  <tr
-                    className="border-b text-left text-[12px] uppercase"
-                    style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)", letterSpacing: "0.04em" }}
-                  >
-                    <th className="py-3 pr-4 font-medium">Työntekijä</th>
+                  <tr>
+                    <th>Työntekijä</th>
                     <th className="px-4 py-3 text-right font-medium">Tunnit</th>
                     <th className="px-4 py-3 text-right font-medium">Peruspalkka</th>
                     <th className="px-4 py-3 text-right font-medium">Lisät</th>
@@ -217,16 +214,16 @@ export default async function PayrollPage({
                           {nameOf(slip.userId)}
                         </Link>
                       </td>
-                      <td className="rf-tabular px-4 py-3 text-right">
+                      <td className="num">
                         {formatHours(slip.workedMinutes)}
                       </td>
-                      <td className="rf-tabular px-4 py-3 text-right">
+                      <td className="num">
                         {formatMoney(slip.baseCents)}
                       </td>
                       <td className="rf-tabular px-4 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
                         {slip.supplementsCents === 0 ? "—" : formatMoney(slip.supplementsCents)}
                       </td>
-                      <td className="rf-tabular px-4 py-3 text-right font-semibold">
+                      <td className="num">
                         {formatMoney(slip.grossCents)}
                       </td>
                       <td className="py-3 pl-4">

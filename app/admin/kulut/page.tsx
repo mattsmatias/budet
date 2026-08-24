@@ -143,9 +143,9 @@ export default async function ExpensesPage({
             title="Kulujen kehitys"
             subtitle="Neljä kuukautta · kirjatut kulut"
           />
-          <table className="w-full text-[14px]">
+          <table className="rf-table w-full text-[14px]">
             <caption className="sr-only">Kirjatut kulut kuukausittain</caption>
-            <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <tbody>
               {series.map((point) => {
                 const isCurrent = point.month === viewMonth;
                 return (

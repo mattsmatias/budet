@@ -172,24 +172,21 @@ export default async function SupplierDetailPage({
           <CardHeader title="Kuitit" subtitle={`${all.length} kaikkiaan`} />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-[14px]">
+          <table className="rf-table w-full min-w-[40rem] text-[14px]">
             <caption className="sr-only">Toimittajan kuitit</caption>
             <thead>
-              <tr
-                className="border-b text-left text-[12px] uppercase tracking-[0.04em]"
-                style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
-              >
-                <th scope="col" className="px-5 py-3 font-medium">Päivä</th>
-                <th scope="col" className="px-5 py-3 font-medium">Kuittinumero</th>
-                <th scope="col" className="px-5 py-3 font-medium">Maksutapa</th>
-                <th scope="col" className="px-5 py-3 text-right font-medium">Rivejä</th>
-                <th scope="col" className="px-5 py-3 text-right font-medium">Yhteensä</th>
+              <tr>
+                <th scope="col">Päivä</th>
+                <th scope="col">Kuittinumero</th>
+                <th scope="col">Maksutapa</th>
+                <th scope="col" className="text-right">Rivejä</th>
+                <th scope="col" className="text-right">Yhteensä</th>
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <tbody>
               {all.slice(0, 25).map((r) => (
                 <tr key={r.id}>
-                  <td className="rf-tabular px-5 py-3">{formatDate(r.date)}</td>
+                  <td className="rf-tabular">{formatDate(r.date)}</td>
                   <td className="px-5 py-3 font-mono text-[12px]" style={{ color: "var(--rf-text-2)" }}>
                     {r.receiptNumber ?? "—"}
                   </td>
@@ -199,7 +196,7 @@ export default async function SupplierDetailPage({
                   <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
                     {r.items.length || "—"}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="num">
                     <span className="inline-flex items-center gap-2">
                       {r.status === "needs_review" ? <SeverityDot severity="warning" /> : null}
                       <span className="rf-tabular font-semibold">

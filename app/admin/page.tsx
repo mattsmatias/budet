@@ -687,25 +687,22 @@ export default async function AdminDashboard({
                 Puhelimessa sama tieto ei mahdu riville, joten siellä
                 kortit. */}
             <div className="hidden md:block">
-              <table className="w-full text-[14px]">
+              <table className="rf-table w-full">
                 <caption className="sr-only">Viimeisimmät kuitit</caption>
                 <thead>
-                  <tr
-                    className="border-b text-left text-[12px]"
-                    style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
-                  >
-                    <th scope="col" className="pb-2 font-medium">Toimittaja</th>
-                    <th scope="col" className="pb-2 text-right font-medium">Summa</th>
-                    <th scope="col" className="pb-2 pl-6 font-medium">Kategoria</th>
-                    <th scope="col" className="pb-2 pl-6 font-medium">Päivämäärä</th>
-                    <th scope="col" className="pb-2 pl-6 font-medium">Tila</th>
-                    <th scope="col" className="pb-2" />
+                  <tr>
+                    <th scope="col">Toimittaja</th>
+                    <th scope="col" className="text-right">Summa</th>
+                    <th scope="col">Kategoria</th>
+                    <th scope="col">Päivämäärä</th>
+                    <th scope="col">Tila</th>
+                    <th scope="col" />
                   </tr>
                 </thead>
-                <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                <tbody>
                   {recent.map((receipt) => (
                     <tr key={receipt.id} className="rf-row">
-                      <td className="py-3">
+                      <td>
                         <Link
                           href={`/admin/kuitit/${receipt.id}`}
                           className="font-medium underline-offset-4 hover:underline"
@@ -713,19 +710,19 @@ export default async function AdminDashboard({
                           {receipt.supplierName}
                         </Link>
                       </td>
-                      <td className="rf-tabular py-3 text-right font-semibold">
+                      <td className="num">
                         {formatMoney(receipt.totalCents)}
                       </td>
-                      <td className="py-3 pl-6" style={{ color: "var(--rf-text-2)" }}>
+                      <td style={{ color: "var(--rf-text-2)" }}>
                         {CATEGORY_LABELS[receipt.category]}
                       </td>
                       <td
-                        className="rf-tabular py-3 pl-6"
+                        className="rf-tabular"
                         style={{ color: "var(--rf-text-2)" }}
                       >
                         {formatDate(receipt.date)}
                       </td>
-                      <td className="py-3 pl-6">
+                      <td>
                         {receipt.status === "needs_review" ? (
                           <span
                             className="inline-flex items-center gap-1.5 text-[13px]"

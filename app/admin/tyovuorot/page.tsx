@@ -336,29 +336,26 @@ export default async function AdminShiftsPage() {
             />
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[38rem] text-[14px]">
+            <table className="rf-table w-full min-w-[38rem] text-[14px]">
               <caption className="sr-only">Vuorojen toteutuma</caption>
               <thead>
-                <tr
-                  className="border-b text-left text-[12px] uppercase tracking-[0.04em]"
-                  style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
-                >
-                  <th scope="col" className="px-5 py-3 font-medium">Päivä</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Tekijä</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Suunniteltu</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Toteutunut</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Ero</th>
+                <tr>
+                  <th scope="col">Päivä</th>
+                  <th scope="col">Tekijä</th>
+                  <th scope="col" className="text-right">Suunniteltu</th>
+                  <th scope="col" className="text-right">Toteutunut</th>
+                  <th scope="col" className="text-right">Ero</th>
                 </tr>
               </thead>
-              <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+              <tbody>
                 {comparisons.slice(-15).reverse().map((c) => (
                   <tr key={c.shift.id}>
-                    <td className="rf-tabular px-5 py-3">{formatShortDate(c.shift.date)}</td>
-                    <td className="px-5 py-3">{c.user?.name ?? "—"}</td>
+                    <td className="rf-tabular">{formatShortDate(c.shift.date)}</td>
+                    <td>{c.user?.name ?? "—"}</td>
                     <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
                       {formatDuration(c.plannedMs)}
                     </td>
-                    <td className="rf-tabular px-5 py-3 text-right font-semibold">
+                    <td className="num">
                       {c.actualMs === 0 ? "—" : formatDuration(c.actualMs)}
                     </td>
                     <td

@@ -162,31 +162,28 @@ export default async function StaffPage() {
 
       <Card padded={false} className="hidden md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-[14px]">
+          <table className="rf-table w-full min-w-[44rem] text-[14px]">
             <caption className="sr-only">Käyttäjät ja työtunnit</caption>
             <thead>
-              <tr
-                className="border-b text-left text-[12px] uppercase tracking-[0.04em]"
-                style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
-              >
-                <th scope="col" className="px-5 py-3 font-medium">Käyttäjä</th>
-                <th scope="col" className="px-5 py-3 font-medium">Rooli</th>
-                <th scope="col" className="px-5 py-3 text-right font-medium">Tunnit</th>
-                <th scope="col" className="px-5 py-3 text-right font-medium">Vuoroja</th>
+              <tr>
+                <th scope="col">Käyttäjä</th>
+                <th scope="col">Rooli</th>
+                <th scope="col" className="text-right">Tunnit</th>
+                <th scope="col" className="text-right">Vuoroja</th>
                 {showsRates ? (
                   <>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">
+                    <th scope="col" className="text-right">
                       Tuntipalkka
                     </th>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">Kulu</th>
+                    <th scope="col" className="text-right">Kulu</th>
                   </>
                 ) : null}
               </tr>
             </thead>
-            <tbody className="divide-y align-top" style={{ borderColor: "var(--rf-line)" }}>
+            <tbody className="align-top">
               {rows.map(({ user, hours, shiftCount, cost }) => (
                 <tr key={user.id}>
-                  <td className="px-5 py-3">
+                  <td>
                     <div className="flex items-center gap-3">
                       <Avatar initials={user.initials} size={34} />
                       <div>
@@ -200,12 +197,12 @@ export default async function StaffPage() {
                     </div>
                     {canManage ? <MemberForm user={user} /> : null}
                   </td>
-                  <td className="px-5 py-3">
+                  <td>
                     <Pill tone={user.role === "owner" ? "info" : "neutral"}>
                       {ROLE_LABELS[user.role]}
                     </Pill>
                   </td>
-                  <td className="rf-tabular px-5 py-3 text-right font-semibold">
+                  <td className="num">
                     {hours} h
                   </td>
                   <td
@@ -229,7 +226,7 @@ export default async function StaffPage() {
                           ? "ei asetettu"
                           : formatMoney(user.hourlyRateCents)}
                       </td>
-                      <td className="rf-tabular px-5 py-3 text-right font-semibold">
+                      <td className="num">
                         {formatMoney(cost)}
                       </td>
                     </>

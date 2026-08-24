@@ -97,16 +97,13 @@ export default async function SalesPage() {
         ) : (
           <div className="mt-2 overflow-x-auto">
             <Card padded={false}>
-              <table className="w-full min-w-[34rem] text-[14px]">
+              <table className="rf-table w-full min-w-[34rem] text-[14px]">
                 <thead>
-                  <tr
-                    className="border-b text-left text-[12px] uppercase"
-                    style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)", letterSpacing: "0.04em" }}
-                  >
-                    <th className="px-5 py-3 font-medium">Päivä</th>
-                    <th className="px-5 py-3 text-right font-medium">Myynti</th>
-                    <th className="px-5 py-3 text-right font-medium">Tavoite</th>
-                    <th className="px-5 py-3 font-medium">Vertailu</th>
+                  <tr>
+                    <th>Päivä</th>
+                    <th className="text-right">Myynti</th>
+                    <th className="text-right">Tavoite</th>
+                    <th>Vertailu</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -143,7 +140,7 @@ function Row({
 
   return (
     <tr className="border-b last:border-0" style={{ borderColor: "var(--rf-line)" }}>
-      <td className="px-5 py-3">
+      <td>
         {formatDay(row.date)}
         {row.date === today ? (
           <span className="ml-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
@@ -151,13 +148,13 @@ function Row({
           </span>
         ) : null}
       </td>
-      <td className="rf-tabular px-5 py-3 text-right font-medium">
+      <td className="num">
         {formatMoney(row.netCents)}
       </td>
       <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-3)" }}>
         {row.targetCents ? formatMoney(row.targetCents) : "—"}
       </td>
-      <td className="px-5 py-3">
+      <td>
         {comparison.kind === "none" ? (
           <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
             Ei vertailukohtaa

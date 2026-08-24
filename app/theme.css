@@ -422,6 +422,70 @@
   animation: rf-column-grow 460ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+/*
+ * Taulukko.
+ *
+ * Tyyli oli seitsemässä tiedostossa käsin kirjoitettuna, ja jokainen
+ * oli hieman eri: pehmuste 4 tai 5, otsikko 12 px tai 11, tausta
+ * joskus. Sama taulukko näytti eri sivuilla eri tuotteelta.
+ *
+ * Ruudukkoviivat sekä vaaka- että pystysuunnassa. Pelkät vaakaviivat
+ * riittävät kolmelle sarakkeelle mutta eivät seitsemälle: silmä
+ * eksyy riviltä toiselle juuri siinä kohtaa jossa luku pitäisi lukea.
+ */
+.rf-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rf-table thead th {
+  background: var(--rf-inset);
+  color: var(--rf-text-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--rf-line);
+  border-right: 1px solid var(--rf-line);
+}
+
+.rf-table thead th:last-child {
+  border-right: 0;
+}
+
+.rf-table tbody td {
+  padding: 12px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--rf-line);
+  border-right: 1px solid var(--rf-line);
+}
+
+.rf-table tbody td:last-child {
+  border-right: 0;
+}
+
+.rf-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rf-table tbody tr {
+  transition: background 140ms ease;
+}
+
+.rf-table tbody tr:hover {
+  background: var(--rf-card-hover);
+}
+
+/* Oikealle tasattu sarake on lähes aina luku. */
+.rf-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
 .rf-card-lift {
   transition:
     border-color 180ms ease,

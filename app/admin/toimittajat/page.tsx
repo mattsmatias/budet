@@ -156,30 +156,27 @@ export default async function SuppliersPage() {
           </ul>
 
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[52rem] text-[14px]">
+            <table className="rf-table w-full min-w-[52rem] text-[14px]">
               <caption className="sr-only">Toimittajat ja kulut</caption>
               <thead>
-                <tr
-                  className="border-b text-left text-[12px] uppercase tracking-[0.04em]"
-                  style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
-                >
-                  <th scope="col" className="px-5 py-3 font-medium">Toimittaja</th>
-                  <th scope="col" className="px-5 py-3 font-medium">Kategoriat</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Kuitteja</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Keskiarvo</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Muutos</th>
-                  <th scope="col" className="px-5 py-3 text-right font-medium">Yhteensä</th>
-                  <th scope="col" className="px-5 py-3" />
+                <tr>
+                  <th scope="col">Toimittaja</th>
+                  <th scope="col">Kategoriat</th>
+                  <th scope="col" className="text-right">Kuitteja</th>
+                  <th scope="col" className="text-right">Keskiarvo</th>
+                  <th scope="col" className="text-right">Muutos</th>
+                  <th scope="col" className="text-right">Yhteensä</th>
+                  <th scope="col" />
                 </tr>
               </thead>
-              <tbody className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+              <tbody>
                 {totals.map((s) => {
                   const trend = trends.get(s.supplierId);
                   const spike = trend?.change !== null && (trend?.change ?? 0) >= 0.25;
 
                   return (
                     <tr key={s.supplierId}>
-                      <td className="px-5 py-3">
+                      <td>
                         <Link
                           href={`/admin/toimittajat/${s.supplierId}`}
                           className="font-medium underline-offset-4 hover:underline"
@@ -190,7 +187,7 @@ export default async function SuppliersPage() {
                           {Math.round(s.share * 100)} % kaikista kuluista
                         </p>
                       </td>
-                      <td className="px-5 py-3">
+                      <td>
                         <span className="flex flex-wrap gap-1.5">
                           {s.categories.slice(0, 3).map((c) => (
                             <span
@@ -207,14 +204,14 @@ export default async function SuppliersPage() {
                           ))}
                         </span>
                       </td>
-                      <td className="rf-tabular px-5 py-3 text-right">{s.receiptCount}</td>
+                      <td className="num">{s.receiptCount}</td>
                       <td
                         className="rf-tabular px-5 py-3 text-right"
                         style={{ color: "var(--rf-text-2)" }}
                       >
                         {formatMoney(s.averageCents)}
                       </td>
-                      <td className="rf-tabular px-5 py-3 text-right">
+                      <td className="num">
                         {trend?.change === null || trend === undefined ? (
                           <span style={{ color: "var(--rf-text-3)" }}>uusi</span>
                         ) : spike ? (
@@ -227,10 +224,10 @@ export default async function SuppliersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="rf-tabular px-5 py-3 text-right font-semibold">
+                      <td className="num">
                         {formatMoney(s.totalCents)}
                       </td>
-                      <td className="px-5 py-3 text-right">
+                      <td className="num">
                         <Link
                           href={`/admin/toimittajat/${s.supplierId}`}
                           aria-label={`Avaa ${s.name}`}
@@ -248,12 +245,12 @@ export default async function SuppliersPage() {
                   className="border-t-2 font-semibold"
                   style={{ borderColor: "var(--rf-line-strong)" }}
                 >
-                  <td className="px-5 py-3">Yhteensä</td>
+                  <td>Yhteensä</td>
                   <td />
-                  <td className="rf-tabular px-5 py-3 text-right">{inMonth.length}</td>
+                  <td className="num">{inMonth.length}</td>
                   <td />
                   <td />
-                  <td className="rf-tabular px-5 py-3 text-right">{formatMoney(grandTotal)}</td>
+                  <td className="num">{formatMoney(grandTotal)}</td>
                   <td />
                 </tr>
               </tfoot>
