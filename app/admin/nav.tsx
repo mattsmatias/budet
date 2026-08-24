@@ -12,6 +12,7 @@ import {
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { signOut } from "@/app/(auth)/actions";
+import { ThemeToggle } from "./theme-toggle";
 
 /**
  * Hallintanavigaatio.
@@ -78,7 +79,7 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
+      className="sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-5 py-5">
@@ -129,7 +130,7 @@ function DesktopSidebar({
              */}
             <p
               id={`nav-${section.id}`}
-              className="px-1 pb-1 pt-1 text-[10.5px] font-bold uppercase"
+              className="px-2.5 pb-1.5 pt-1 text-[10.5px] font-bold uppercase"
               style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
             >
               {section.label}
@@ -154,7 +155,7 @@ function DesktopSidebar({
        * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
        * käyttäjää eivätkä ravintolan työtä.
        */}
-      <div className="px-4 pb-5">
+      <div className="px-3 pb-4">
         {/*
          * Asetukset ja uloskirjautuminen omana ryhmänään pohjalla.
          *
@@ -166,7 +167,7 @@ function DesktopSidebar({
          */}
         <p
           id="nav-account"
-          className="px-1 pb-1 pt-1 text-[10.5px] font-bold uppercase"
+          className="px-2.5 pb-1.5 pt-1 text-[10.5px] font-bold uppercase"
           style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
         >
           Tili
@@ -189,15 +190,17 @@ function DesktopSidebar({
             <form action={signOut}>
               <button
                 type="submit"
-                className="rf-press flex w-full items-center justify-between rounded-[10px] px-1 py-2 text-left text-[14px] font-medium"
+                className="rf-press flex w-full items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-[13.5px] font-medium"
                 style={{ color: "var(--rf-text-2)" }}
               >
+                <RfIcon name="logout" size={17} />
                 <span>Kirjaudu ulos</span>
-                <RfIcon name="logout" size={16} />
               </button>
             </form>
           </li>
         </ul>
+
+        <ThemeToggle />
       </div>
 
     </aside>
@@ -214,28 +217,31 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
         href={item.href}
         aria-current={active ? "page" : undefined}
         /*
-         * Pelkkä teksti, ei ikonia eikä laatikkoa.
+         * Ikoni ja sana yhdessä.
          *
-         * Kymmenen ikonia allekkain on kymmenen pientä kuvaa joista
-         * yksikään ei kerro mitä sivulla on; sana kertoo. Valinta
-         * näkyy lihavuutena ja tummuutena, mikä riittää kun kohtia on
-         * ryhmitelty eikä lista ole yhtenäinen muuri.
+         * Ikoni yksin ei kerro mitä sivulla on, mutta sanan rinnalla se
+         * antaa riville tarttumapinnan: silmä löytää tutun muodon
+         * ennen kuin ehtii lukea. Valinta on täytetty pinta eikä
+         * pelkkä lihavointi, jotta se erottuu myös vilkaisulla.
          */
-        className="rf-press flex items-center gap-3 rounded-[9px] px-1 py-2 text-[14px]"
+        className="rf-press flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13.5px]"
         style={{
+          background: active ? "var(--rf-inset)" : "transparent",
           color: active ? "var(--rf-text)" : "var(--rf-text-2)",
           fontWeight: active ? 700 : 500,
         }}
       >
+        <RfIcon name={item.icon} size={17} />
         <span className="flex-1">{item.label}</span>
 
         {count > 0 ? (
           <span
             className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
             style={{
-              background: active ? "var(--rf-card)" : "var(--rf-inset)",
-              color: "var(--rf-text-2)",
+              background: "var(--rf-amber-bg)",
+              color: "var(--rf-amber-text)",
               borderRadius: 980,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {count > 99 ? "99+" : count}

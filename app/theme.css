@@ -12,97 +12,208 @@
  */
 
 .restoflow {
-  /* Pinnat */
-  /*
-   * Kaksi pintaa, ei yhtä.
-   *
-   * Sivun tausta on harmaa ja sovellus lepää sen päällä valkoisena
-   * levynä. Ero on pieni mutta se tekee näkymästä rajatun: sisältö
-   * loppuu johonkin sen sijaan että vuotaisi ikkunan reunaan.
-   */
-  --rf-bg: #eeeef1;
+  /* ------------------------------------------------------------------
+     PINNAT
+
+     Kaksi tasoa: harmaa sivu ja valkoiset kortit sen päällä. Ero on
+     pieni mutta se rajaa näkymän — sisältö loppuu johonkin sen sijaan
+     että vuotaisi ikkunan reunaan.
+     ------------------------------------------------------------------ */
+  --rf-bg: #f4f6fa;
   --rf-shell: #ffffff;
-  --rf-sidebar: #fafafb;
+  --rf-sidebar: #ffffff;
   --rf-card: #ffffff;
-  --rf-card-hover: #fbfbfd;
-  /* Tumma kortti: kuukauden pääluku. Yksi per näkymä. */
-  --rf-ink: #101114;
-  --rf-inset: rgba(17, 19, 24, 0.055);
+  --rf-card-hover: #f6f8fb;
+  --rf-inset: #f6f8fb;
+  /* Tumma pinta: yksi per näkymä, jos sitäkään. */
+  --rf-ink: #0f1729;
 
   /* Teksti */
-  --rf-text: #111318;
-  --rf-text-2: #6b7280;
-  --rf-text-3: #9ca3af;
-  /* Teksti värillisellä pohjalla. Oli aiemmin 31 kertaa "#fff". */
+  --rf-text: #0f1729;
+  --rf-text-2: #5a6a85;
+  --rf-text-3: #667490;
   --rf-on-accent: #ffffff;
 
-  /* Rajat ja varjot. Varjo luetaan syvyytenä, ei koristeena. */
-  --rf-line: rgba(17, 19, 24, 0.085);
-  --rf-line-strong: rgba(17, 19, 24, 0.16);
-  --rf-shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.04);
-  --rf-shadow: 0 1px 2px rgba(17, 19, 24, 0.04), 0 6px 20px rgba(17, 19, 24, 0.05);
-  --rf-shadow-lg: 0 2px 4px rgba(17, 19, 24, 0.04), 0 16px 40px rgba(17, 19, 24, 0.09);
+  /* Rajat ja varjot. Varjo on ohut: kortti erottuu reunasta, ei varjosta. */
+  --rf-line: #e7ecf3;
+  --rf-line-strong: #dde4ee;
+  --rf-shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
+  --rf-shadow: 0 1px 2px rgba(15, 23, 41, 0.05);
+  --rf-shadow-lg: 0 4px 6px rgba(15, 23, 41, 0.05), 0 12px 32px rgba(15, 23, 41, 0.09);
 
-  /* --------------------------------------------------------------- */
-  /* Aksentti: toiminta, ei koriste.                                   */
-  /*                                                                   */
-  /* Sininen tarkoittaa "tästä voi painaa" tai "tämä on valittuna".    */
-  /* Se ei ole brändipinta eikä otsikon väri. Purppura on toissijainen */
-  /* ja käytössä vain siellä missä kaksi eri sarjaa on erotettava      */
-  /* toisistaan samassa kuvassa.                                       */
-  /* --------------------------------------------------------------- */
-  --rf-accent: #315bff;
-  --rf-accent-strong: #2549d6;
-  --rf-accent-bg: #eef2ff;
-  --rf-accent-2: #6c5ce7;
+  /* ------------------------------------------------------------------
+     MERKKIVÄRI
 
-  /* --------------------------------------------------------------- */
-  /* Tilavärit. Vihreä = kunnossa, oranssi = tarkistettava,            */
-  /* punainen = ongelma. Väri ei koskaan kerro tilaa yksin — vieressä  */
-  /* on aina luku tai sana.                                            */
-  /* --------------------------------------------------------------- */
-  --rf-green: #16a36a;
-  --rf-green-text: #0f7a4f;
-  --rf-green-bg: #e8f7f0;
+     Punainen on Budetin väri: päätoiminto ja linkit. Se on tarpeeksi
+     tumma toimiakseen myös tekstinä — vaaleampi punainen näytti
+     paremmalta painikkeessa mutta jäi alle luettavuusrajan linkissä,
+     ja kaksi eri punaista samaan tarkoitukseen on yksi liikaa.
 
-  --rf-blue: #315bff;
-  --rf-blue-text: #2549d6;
-  --rf-blue-bg: #eef2ff;
+     Ongelman tilamerkintä on eri punainen (--rf-red) ja aina
+     taustallisena merkintänä, joten ne eivät sekoitu: merkkiväri on
+     täytetty painike tai alleviivaamaton linkki, tila on pilleri.
+     ------------------------------------------------------------------ */
+  --rf-accent: #d13831;
+  --rf-accent-strong: #a82a24;
+  --rf-accent-bg: #fdecea;
+  --rf-accent-2: #7b76e8;
 
-  --rf-amber: #f59e0b;
-  --rf-amber-text: #a45c05;
-  --rf-amber-bg: #fef5e7;
+  /* ------------------------------------------------------------------
+     TILAVÄRIT
 
-  --rf-red: #ef4444;
-  --rf-red-text: #c62828;
-  --rf-red-bg: #fdeded;
+     Vihreä = kunnossa, oranssi = tarkistettava, punainen = ongelma.
+     Väri ei koskaan kerro tilaa yksin — vieressä on aina luku tai sana.
 
-  /* ---------------------------------------------------------------- */
-  /* Korttien sävyt.                                                    */
-  /*                                                                    */
-  /* Pehmeä liukuma kortin yläkulmasta valkoiseen. Sävy EI ole satunnainen
-  /* koriste: se tulee kortin tilasta samasta lähteestä kuin pilleri ja
-  /* palkki. Keltainen tausta kortissa jonka tila on kunnossa opettaisi
-  /* lukijalle ettei väriin kannata luottaa, ja sen jälkeen myös oikea
-  /* keltainen menisi ohi.
-  /*
-  /* Neutraali on hyvin vaalea sinivalkoinen — se on se pinta joka
-  /* hallitsee näkymää, ja tilavärit erottuvat siitä.
-  /* ---------------------------------------------------------------- */
+     Sävyt on mitattu omia taustojaan vasten, ei valkoista: pilleri on
+     aina värillisellä pohjalla, ja valkoista vasten mitattu sävy jää
+     siinä liian vaaleaksi.
+     ------------------------------------------------------------------ */
+  --rf-green: #0f7248;
+  --rf-green-text: #0f7248;
+  --rf-green-bg: #e6f6ee;
+
+  --rf-blue: #1f6fb2;
+  --rf-blue-text: #1a5e97;
+  --rf-blue-bg: #e8f2fb;
+
+  --rf-amber: #8f5405;
+  --rf-amber-text: #8f5405;
+  --rf-amber-bg: #fdf1de;
+
+  --rf-red: #b02b24;
+  --rf-red-text: #b02b24;
+  --rf-red-bg: #fceceb;
+
+  /* ------------------------------------------------------------------
+     KORTTIEN SÄVYT
+
+     Litteät pastellit, ei liukumia. Sävy tulee kortin tilasta samasta
+     lähteestä kuin pilleri ja palkki — satunnainen väri olisi nopeasti
+     mukavampi katsoa mutta opettaisi ettei väriin kannata luottaa.
+     ------------------------------------------------------------------ */
   --rf-tint: #ffffff;
-  --rf-tint-accent: #e8ecfb;
-  --rf-tint-good: #e6f5ec;
-  --rf-tint-warn: #fdeade;
-  --rf-tint-bad: #fbe4e4;
+  --rf-tint-accent: #fdecea;
+  --rf-tint-good: #e6f6ee;
+  --rf-tint-warn: #fdf1de;
+  --rf-tint-bad: #fceceb;
 
   /* Pyöristykset */
   /* Suuret pyöristykset. Esikuvan pehmeys on enimmäkseen näissä. */
-  --rf-r-shell: 26px;
-  --rf-r-card: 20px;
-  --rf-r-stat: 18px;
-  --rf-r-control: 12px;
+  --rf-r-shell: 16px;
+  --rf-r-card: 14px;
+  --rf-r-stat: 14px;
+  --rf-r-control: 10px;
   --rf-r-pill: 980px;
 
+}
+
+/*
+ * Tumma teema.
+ *
+ * Kolme tilaa, ei kahta: valinta leimaa data-theme-määreen, ja
+ * oletusasetus ei leimaa mitään — silloin vain käyttöjärjestelmän
+ * asetus ratkaisee. Siksi sävyt määritellään kolmesti.
+ *
+ * Tummalla pohjalla merkkiväri vaalenee. Sama punainen jäisi
+ * lukukelvottomaksi, ja tumman teeman tehtävä on olla luettavampi
+ * hämärässä eikä vain tummempi.
+ */
+.restoflow[data-theme="dark"],
+.restoflow[data-theme="dark"] * {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  .restoflow:not([data-theme="light"]) {
+    --rf-bg: #0d1117;
+    --rf-shell: #161b22;
+    --rf-sidebar: #161b22;
+    --rf-card: #161b22;
+    --rf-card-hover: #1c222b;
+    --rf-inset: #1c222b;
+    --rf-ink: #e9eef6;
+
+    --rf-text: #e9eef6;
+    --rf-text-2: #9aa7bb;
+    --rf-text-3: #7c8ba1;
+
+    --rf-line: #262d38;
+    --rf-line-strong: #313a47;
+    --rf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --rf-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --rf-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+    --rf-accent: #f4635b;
+    --rf-accent-strong: #f8807a;
+    --rf-accent-bg: #3a1f1e;
+    --rf-accent-2: #9a95f0;
+
+    --rf-green: #4ac489;
+    --rf-green-text: #4ac489;
+    --rf-green-bg: #15342a;
+    --rf-blue: #6cb7f5;
+    --rf-blue-text: #6cb7f5;
+    --rf-blue-bg: #14293c;
+    --rf-amber: #e0a44a;
+    --rf-amber-text: #e0a44a;
+    --rf-amber-bg: #382a14;
+    --rf-red: #ef6d64;
+    --rf-red-text: #ef6d64;
+    --rf-red-bg: #3a1e1d;
+
+    --rf-tint: #161b22;
+    --rf-tint-accent: #3a1f1e;
+    --rf-tint-good: #15342a;
+    --rf-tint-warn: #382a14;
+    --rf-tint-bad: #3a1e1d;
+  }
+}
+
+.restoflow[data-theme="dark"] {
+  --rf-bg: #0d1117;
+  --rf-shell: #161b22;
+  --rf-sidebar: #161b22;
+  --rf-card: #161b22;
+  --rf-card-hover: #1c222b;
+  --rf-inset: #1c222b;
+  --rf-ink: #e9eef6;
+
+  --rf-text: #e9eef6;
+  --rf-text-2: #9aa7bb;
+  --rf-text-3: #7c8ba1;
+
+  --rf-line: #262d38;
+  --rf-line-strong: #313a47;
+  --rf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --rf-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --rf-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  --rf-accent: #f4635b;
+  --rf-accent-strong: #f8807a;
+  --rf-accent-bg: #3a1f1e;
+  --rf-accent-2: #9a95f0;
+
+  --rf-green: #4ac489;
+  --rf-green-text: #4ac489;
+  --rf-green-bg: #15342a;
+  --rf-blue: #6cb7f5;
+  --rf-blue-text: #6cb7f5;
+  --rf-blue-bg: #14293c;
+  --rf-amber: #e0a44a;
+  --rf-amber-text: #e0a44a;
+  --rf-amber-bg: #382a14;
+  --rf-red: #ef6d64;
+  --rf-red-text: #ef6d64;
+  --rf-red-bg: #3a1e1d;
+
+  --rf-tint: #161b22;
+  --rf-tint-accent: #3a1f1e;
+  --rf-tint-good: #15342a;
+  --rf-tint-warn: #382a14;
+  --rf-tint-bad: #3a1e1d;
+}
+
+.restoflow {
   background: var(--rf-bg);
   color: var(--rf-text);
   font-family:

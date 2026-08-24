@@ -49,7 +49,23 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fi" className={`${jakarta.variable} h-full`}>
-      <body className="restoflow min-h-full">{children}</body>
+      <body className="restoflow min-h-full" suppressHydrationWarning>
+        {/*
+          Teema ennen ensimmäistä piirtoa.
+
+          Ilman tätä sivu välähtäisi vaaleana ennen kuin React ehtii
+          lukea valinnan. Skripti on tarkoituksella pieni ja
+          synkroninen: se ajetaan ennen kuin mitään on maalattu.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('budet-theme');" +
+              "if(t==='dark'||t==='light')document.body.dataset.theme=t}catch(e){}",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
