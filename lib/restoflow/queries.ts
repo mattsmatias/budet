@@ -27,6 +27,7 @@ import type {
   ReceiptItem,
   ReviewReason,
   Shift,
+  StaffPosition,
   Supplier,
   User,
 } from "./types";
@@ -995,4 +996,61 @@ export async function fetchPayslips(periodId: string): Promise<StoredPayslip[]> 
     sourceFingerprint: (row.source_fingerprint as string | null) ?? "",
     approvedAt: (row.approved_at as string | null) ?? null,
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Työyhteisö
+// ---------------------------------------------------------------------------
+
+export interface Colleague {
+  id: string;
+  name: string;
+  initials: string;
+  /** Työtehtävä, ei käyttöoikeusrooli. Null jos tehtävää ei ole merkitty. */
+  position: StaffPosition | null;
+  avatarUrl: string | null;
+  /** Päivä ja kuukausi. Vuotta ei ole kannassa. */
+  birthDay: number | null;
+  birthMonth: number | null;
+}
+
+/**
+ * Oman ravintolan aktiiviset työntekijät.
+ *
+ * Ei palkkoja eikä yhteystietoja: nimi, tehtävä, kuva ja syntymäpäivä.
+ * Rajaus toiseen ravintolaan ei ole tämän kyselyn varassa vaan RLS:n:
+ * profiles_read vaatii yhteisen jäsenyyden.
+ */
+export async function fetchColleagues(restaurantId: string): Promise<Colleague[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("memberships")
+    .select("user_id, position, profiles ( full_name, avatar_url, birth_day, birth_month )")
+    .eq("restaurant_id", restaurantId)
+    .eq("active", true);
+
+  if (error || !data) return [];
+
+  return data
+    .map((row) => {
+      const profile = row.profiles as unknown as {
+        full_name: string | null;
+        avatar_url: string | null;
+        birth_day: number | null;
+        birth_month: number | null;
+      } | null;
+
+      const name = profile?.full_name ?? "Nimetön";
+
+      return {
+        id: row.user_id as string,
+        name,
+        initials: initialsOf(name),
+        position: (row.position as StaffPosition | null) ?? null,
+        avatarUrl: profile?.avatar_url ?? null,
+        birthDay: profile?.birth_day ?? null,
+        birthMonth: profile?.birth_month ?? null,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "fi"));
 }

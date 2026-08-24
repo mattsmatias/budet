@@ -5,7 +5,8 @@ import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
-import { PasswordForm, ProfileForm } from "./forms";
+import { BirthdayForm, PasswordForm, ProfileForm } from "./forms";
+import { fetchColleagues } from "@/lib/restoflow/queries";
 
 export const metadata = { title: "Asetukset" };
 
@@ -14,6 +15,10 @@ export default async function EmployeeSettingsPage() {
 
   const name = user.fullName ?? "";
   const rate = restaurant.hourlyRateCents;
+
+  // Oma syntymäpäivä luetaan samasta listasta kuin työyhteisösivu, jotta
+  // näytetty arvo on varmasti sama.
+  const me = (await fetchColleagues(restaurant.id)).find((c) => c.id === user.id);
 
   return (
     <div className="rf-enter space-y-5">
@@ -56,6 +61,16 @@ export default async function EmployeeSettingsPage() {
               näkyy tässä vain sinulle.
             </p>
           </div>
+        </Card>
+      </section>
+
+      <section>
+        <SectionLabel>Työyhteisö</SectionLabel>
+        <Card>
+          <BirthdayForm
+            birthDay={me?.birthDay ?? null}
+            birthMonth={me?.birthMonth ?? null}
+          />
         </Card>
       </section>
 

@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 29 migraatiota:
+-- Sisältää 31 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -41,6 +41,8 @@
 --   0027_payroll.sql
 --   0028_wage_privacy.sql
 --   0029_clock_requires_shift.sql
+--   0030_workplace.sql
+--   0031_profiles_policy_recursion.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -6409,4 +6411,130 @@ select
 from restaurants r
 join memberships m on m.restaurant_id = r.id
 where m.user_id = auth.uid() and m.active;
+
+
+-- ===========================================================================
+-- 0030_workplace.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0030 — Työyhteisö
+-- ---------------------------------------------------------------------------
+--
+-- Työntekijä näkee ketkä ovat hänen työkavereitaan ja kenellä on tänään
+-- syntymäpäivä. Ei sosiaalinen verkosto: nimi, tehtävä, ja päivä.
+--
+-- SYNTYMÄVUOTTA EI TALLENNETA
+--
+-- Vaatimus oli ettei vuotta näytetä. Sen olisi voinut toteuttaa
+-- piilottamalla vuosi näkymässä, mutta silloin se olisi silti kannassa
+-- ja rajapinnan takana — ja juuri se ero UI:n ja kannan välillä on se
+-- mikä palkoissa piti korjata erikseen (migraatio 0028).
+--
+-- Päivä ja kuukausi erillisinä lukuina. Budet ei tarvitse ikää mihinkään,
+-- joten sitä ei kysytä. Tietoa jota ei ole ei voi vuotaa.
+
+alter table profiles add column if not exists birth_day smallint;
+alter table profiles add column if not exists birth_month smallint;
+
+alter table profiles drop constraint if exists profiles_birthday_valid;
+
+/*
+ * Molemmat tai ei kumpaakaan, ja päivä kuukauden mukaan.
+ *
+ * 29.2. sallitaan: karkauspäivänä syntynyt on olemassa, eikä vuoden
+ * puuttuminen saa tehdä hänestä mahdotonta.
+ */
+alter table profiles add constraint profiles_birthday_valid check (
+  (birth_day is null and birth_month is null)
+  or (
+    birth_month between 1 and 12
+    and birth_day between 1 and
+      case birth_month
+        when 2 then 29
+        when 4 then 30 when 6 then 30 when 9 then 30 when 11 then 30
+        else 31
+      end
+  )
+);
+
+-- ---------------------------------------------------------------------------
+-- Näkyvyys
+-- ---------------------------------------------------------------------------
+--
+-- profiles_read sallii jo saman ravintolan jäsenten lukea toistensa
+-- profiilit. Uudet sarakkeet kulkevat samaa reittiä, eikä erillistä
+-- käytäntöä tarvita: päivä ja kuukausi ovat juuri se tieto joka on
+-- tarkoituskin näyttää työkavereille.
+--
+-- Muiden ravintoloiden työntekijät eivät näy, koska käytäntö vaatii
+-- yhteisen jäsenyyden. Se on tarkistettu erikseen alla olevassa
+-- testissä eikä oletettu.
+
+
+-- ===========================================================================
+-- 0031_profiles_policy_recursion.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0031 — Oman profiilin päivitys ei enää kaadu rekursioon
+-- ---------------------------------------------------------------------------
+--
+-- Oman nimen tallennus asetuksissa palautti:
+--
+--   42P17  infinite recursion detected in policy for relation "profiles"
+--
+-- Luku toimi, kirjoitus ei. Toiminto oli siis rikki niin kauan kuin se
+-- on ollut olemassa, ja vika löytyi vasta kun syntymäpäivän tallennusta
+-- testattiin oikeaa rajapintaa vasten eikä käyttöliittymän läpi.
+--
+-- SYY
+--
+-- profiles_update_self -käytännön with check -lauseke teki alikyselyn
+-- samaan tauluun jota se suojasi:
+--
+--   is_super_admin = (select is_super_admin from profiles where id = auth.uid())
+--
+-- Jokainen päivitys joutui siis tarkistamaan käytännön, joka luki
+-- taulua, mikä tarkisti käytännön. Postgres katkaisee kierteen
+-- virheeseen.
+--
+-- AIKOMUS OLI OIKEA, KEINO EI
+--
+-- Lauseke yritti estää käyttäjää nostamasta itseään pääkäyttäjäksi.
+-- Rivitason suojaus ei voi verrata uutta riviä vanhaan — with check
+-- näkee vain uuden — joten vertailu piti hakea kannasta, ja siitä
+-- kierre syntyi.
+--
+-- Sama sääntö sarakeoikeutena on sekä yksinkertaisempi että tiukempi:
+-- kenttää ei voi kirjoittaa lainkaan, joten sen arvoa ei tarvitse
+-- verrata mihinkään.
+
+-- ---------------------------------------------------------------------------
+-- 1. Rekursoiva käytäntö pois
+-- ---------------------------------------------------------------------------
+--
+-- Käytännön using-ehto on sama kuin profiles_update_own -käytännössä
+-- (id = auth.uid()), joten pääsysääntö ei muutu. Vain rikkinäinen
+-- lisäehto katoaa.
+
+drop policy if exists profiles_update_self on profiles;
+
+-- ---------------------------------------------------------------------------
+-- 2. Suojattu kenttä sarakeoikeudella
+-- ---------------------------------------------------------------------------
+--
+-- Käyttäjä saa muuttaa omia tietojaan mutta ei pääkäyttäjälippuaan.
+-- is_super_admin jää listan ulkopuolelle, jolloin sitä koskeva
+-- päivitys hylätään oikeuspuutteena eikä käytäntötarkistuksena.
+
+revoke update on profiles from authenticated;
+
+grant update (
+  full_name,
+  avatar_url,
+  locale,
+  birth_day,
+  birth_month
+) on profiles to authenticated;
 

@@ -1,11 +1,13 @@
 import { employeeContext } from "@/lib/restoflow/page-context";
 import { weekStart } from "@/lib/restoflow/clock-context";
-import { fetchClockEvents } from "@/lib/restoflow/queries";
+import { fetchClockEvents, fetchColleagues } from "@/lib/restoflow/queries";
+import { birthdaysToday } from "@/lib/restoflow/workplace";
 import { daySummaries, eventsOnDate, workedBetween } from "@/lib/restoflow/timeclock";
 import { ClockCard } from "./home/clock-card";
 import { NextShift } from "./home/next-shift";
 import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
+import { Workplace } from "./home/workplace";
 import { Surface, shortDay } from "./ui";
 import { clockInState, formatMinuteOfDay } from "@/lib/restoflow/shift-window";
 import type { Shift } from "@/lib/restoflow/types";
@@ -39,8 +41,12 @@ export default async function EmployeeHome() {
    * maanantaina viikossa on yksi päivä. Kahden viikon ikkuna kattaa
    * myös osa-aikaisen, joka tekee kaksi vuoroa viikossa.
    */
-  const history = await fetchClockEvents(restaurant.id, twoWeeksBefore(today));
+  const [history, colleagues] = await Promise.all([
+    fetchClockEvents(restaurant.id, twoWeeksBefore(today)),
+    fetchColleagues(restaurant.id),
+  ]);
   const mine = history.filter((e) => e.userId === user.id);
+  const birthdays = birthdaysToday(colleagues, now, zone);
 
   const todayEvents = eventsOnDate(clockEvents, today, zone);
   const week = workedBetween(clockEvents, weekStart(today), today, now, zone);
@@ -108,6 +114,8 @@ export default async function EmployeeHome() {
           </Surface>
         </div>
       </div>
+
+      <Workplace colleagues={colleagues} birthdays={birthdays} />
 
       <RecentDays days={recent} timezone={zone} today={today} />
     </div>

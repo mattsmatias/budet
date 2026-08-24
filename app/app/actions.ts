@@ -278,3 +278,49 @@ function explain(
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;
 }
+
+// ---------------------------------------------------------------------------
+// Syntymäpäivä
+// ---------------------------------------------------------------------------
+
+/**
+ * Oma syntymäpäivä työyhteisöä varten.
+ *
+ * Päivä ja kuukausi, ei vuotta. Vuotta ei kysytä koska Budet ei tarvitse
+ * ikää mihinkään, eikä tietoa jota ei ole voi vuotaa.
+ *
+ * Tyhjä syöte poistaa merkinnän. Syntymäpäivän kertominen on
+ * vapaaehtoista, ja siitä on päästävä myös pois.
+ */
+export async function updateBirthday(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const { user } = await requireContext("/app/asetukset");
+
+  const raw = String(formData.get("birthday") ?? "").trim();
+
+  let day: number | null = null;
+  let month: number | null = null;
+
+  if (raw !== "") {
+    // Selaimen date-kenttä antaa muodon "2000-08-24". Vuosi jätetään
+    // lukematta: se on kentän pakko, ei meidän tarpeemme.
+    const match = raw.match(/^\d{4}-(\d{2})-(\d{2})$/);
+    if (!match) return { error: "Tarkista päivämäärä." };
+
+    month = Number(match[1]);
+    day = Number(match[2]);
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ birth_day: day, birth_month: month })
+    .eq("id", user.id);
+
+  if (error) return { error: explain(error, "Syntymäpäivän tallennus epäonnistui") };
+
+  revalidatePath("/app", "layout");
+  return { notice: raw === "" ? "Syntymäpäivä poistettu." : "Syntymäpäivä tallennettu." };
+}

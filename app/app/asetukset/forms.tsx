@@ -2,7 +2,12 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { changePassword, updateProfile, type ActionState } from "../actions";
+import {
+  changePassword,
+  updateBirthday,
+  updateProfile,
+  type ActionState,
+} from "../actions";
 
 const initial: ActionState = {};
 
@@ -157,5 +162,58 @@ function Submit({ idle, busy }: { idle: string; busy: string }) {
     >
       {pending ? busy : idle}
     </button>
+  );
+}
+
+/**
+ * Syntymäpäivä työyhteisöä varten.
+ *
+ * Selaimen date-kenttä vaatii vuoden, mutta sitä ei tallenneta.
+ * Vaihtoehto olisi kaksi erillistä valikkoa päivälle ja kuukaudelle;
+ * se olisi tarkempi mutta hitaampi täyttää, ja kenttä täytetään kerran.
+ */
+export function BirthdayForm({
+  birthDay,
+  birthMonth,
+}: {
+  birthDay: number | null;
+  birthMonth: number | null;
+}) {
+  const [state, action] = useActionState(updateBirthday, initial);
+
+  // Vuosi on kentän pakko, ei tieto. 2000 on karkausvuosi, joten 29.2.
+  // kelpaa myös.
+  const current =
+    birthDay && birthMonth
+      ? `2000-${String(birthMonth).padStart(2, "0")}-${String(birthDay).padStart(2, "0")}`
+      : "";
+
+  return (
+    <form action={action} className="mt-3 space-y-3">
+      <label className="block">
+        <span className="block text-[13px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+          Syntymäpäivä
+        </span>
+        <input
+          type="date"
+          name="birthday"
+          defaultValue={current}
+          className="mt-1.5 w-full px-3.5 py-2.5 text-[15px]"
+          style={{
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line-strong)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        />
+      </label>
+
+      <Feedback state={state} />
+      <Submit idle="Tallenna syntymäpäivä" busy="Tallennetaan…" />
+
+      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        Työkaverit näkevät päivän ja kuukauden. Vuotta ei tallenneta.
+        Tyhjennä kenttä ja tallenna, jos et halua näkyä.
+      </p>
+    </form>
   );
 }
