@@ -17,32 +17,28 @@ import {
   sortByDateDesc,
   totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
-import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
 import { currentState } from "@/lib/restoflow/timeclock";
 import { can } from "@/lib/restoflow/permissions";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
-import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import {
   ButtonLink,
   CategoryBubble,
   Pill,
 } from "@/components/restoflow/ui";
 import {
-  BudgetBarLine,
   Panel,
   PanelEmpty,
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
+import { RfIcon } from "@/components/restoflow/icons";
 import { MonthPicker } from "./month-picker";
 import { Rhythm } from "./home/rhythm";
-import { Purchases } from "./home/purchases";
 import { StatusHeader } from "./home/status-header";
 import { Donut, seriesColor, Sparkline } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
 import { shiftBounds } from "@/lib/restoflow/shift-window";
-import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
@@ -71,9 +67,8 @@ export default async function AdminDashboard({
 }: PageProps<"/admin">) {
   const params = await searchParams;
   const {
-    receipts, users, budgets, shifts, clockEvents, absences, merchants,
+    receipts, users, budgets, shifts, clockEvents, absences,
     openShifts, sales,
-    suppliers: supplierRows,
     month, today, now, monthlyHours, restaurant, role, categories: customCategories,
   } = await adminContext("/admin");
 
@@ -114,10 +109,6 @@ export default async function AdminDashboard({
   const categories = totalsByCustomCategory(
     receiptsInMonth(receipts, viewMonth),
     customCategories,
-  );
-  const suppliers = supplierTotalsInMonth(receipts, viewMonth).slice(0, 5);
-  const trends = new Map(
-    supplierTrends(receipts, viewMonth).map((trend) => [trend.supplierId, trend]),
   );
   const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
 
@@ -185,21 +176,6 @@ export default async function AdminDashboard({
     timezone: restaurant.timezone,
   });
   const items = focusItems(dashboardInput, insights);
-
-  /*
-   * Kaupan tunnus toimittajalistaan.
-   *
-   * Sama kahden askeleen haku kuin kuittilistassa: toimittaja tietää
-   * brändinsä, brändi tietää värinsä. Kartat rakennetaan kerran, koska
-   * viisi riviä tekisi kymmenen hakua listan piirtämisen aikana.
-   */
-  const merchantById = new Map(merchants.map((m) => [m.id, m]));
-  const merchantBySupplier = new Map(
-    supplierRows
-      .filter((row) => row.merchantId !== null)
-      .map((row) => [row.id, merchantById.get(row.merchantId!) ?? null]),
-  );
-  const merchantOfSupplier = (id: string) => merchantBySupplier.get(id) ?? null;
 
   const budgets_ = budgetLines(receipts, budgets, viewMonth);
 
@@ -673,7 +649,7 @@ export default async function AdminDashboard({
         kuukauden muodon. Molemmat luetaan harvoin mutta kumpikaan ei
         ansaitse koko rivin leveyttä.
       */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <StatusHeader
           status={status}
           items={items}
@@ -682,98 +658,14 @@ export default async function AdminDashboard({
         <Rhythm rhythm={rhythm} />
       </div>
 
-      {pulse ? <Today pulse={pulse} canManageSales={can(role, "sales.manage")} /> : null}
+      {/*
+        Tänään, Ostot ja Budjetit olivat tässä.
 
-      <Purchases
-        categories={categories.slice(0, 5).map((row) => ({
-          key: row.key,
-          name: row.name,
-          baseCategory: row.baseCategory,
-          totalCents: row.totalCents,
-          share: row.share,
-        }))}
-        suppliers={suppliers.map((supplier) => ({
-          supplierId: supplier.supplierId,
-          name: supplier.name,
-          totalCents: supplier.totalCents,
-          share: supplier.share,
-          change: trends.get(supplier.supplierId)?.change ?? null,
-        }))}
-        merchantOf={merchantOfSupplier}
-        totalCents={totals.totalCents}
-        empty={
-          emptyForMonth ?? {
-            text: "Lisää kuitteja nähdäksesi mihin raha menee ja keneltä ostat eniten.",
-            cta: "Lisää kuitti",
-            href: "/admin/kuitit/uusi",
-          }
-        }
-      />
-
-      {/* Budjetit */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel
-          title="Budjetit"
-          subtitle={budgets_.length > 0 ? formatMonth(viewMonth) : undefined}
-          href={budgets_.length > 0 ? "/admin/budjetit" : undefined}
-        >
-          {budgets_.length === 0 ? (
-            <PanelEmpty
-              text="Budjetteja ei ole määritetty. Aseta kategoriakohtaiset rajat, niin Budet voi tunnistaa ylitykset ajoissa."
-              cta="Määritä budjetit"
-              href="/admin/budjetit"
-            />
-          ) : (
-            <ul className="space-y-4">
-              {budgets_.slice(0, 5).map((line) => (
-                <li key={line.category} className="flex items-start gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 shrink-0"
-                    style={{ color: "var(--rf-text-3)" }}
-                  >
-                    <CategoryIcon category={line.category} size={18} />
-                  </span>
-
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <span className="text-[14px] font-medium">
-                        {CATEGORY_LABELS[line.category]}
-                      </span>
-                      <span
-                        className="rf-tabular text-[13px]"
-                        style={{ color: "var(--rf-text-2)" }}
-                      >
-                        {formatMoney(line.spentCents)} / {formatMoney(line.budgetCents)}
-                      </span>
-                    </span>
-
-                    <BudgetBarLine tone={line.tone} ratio={line.ratio} />
-
-                    <span className="mt-1.5 flex items-center justify-between gap-3">
-                      <span className="rf-tabular text-[13px] font-semibold">
-                        {line.percent} %
-                      </span>
-                      <Pill
-                        tone={
-                          line.tone === "over" || line.tone === "critical"
-                            ? "risk"
-                            : line.tone === "warning"
-                              ? "warn"
-                              : "ok"
-                        }
-                      >
-                        {line.label}
-                      </Pill>
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-      </div>
+        Yleiskatsaus vastaa viiteen kysymykseen, ei kahdeksaan.
+        Päivän luvut ovat avainluvuissa, ostot Toimittajat-sivulla ja
+        budjetin käyttöaste omassa avainlukukortissaan — kolme lohkoa
+        toisti sitä mikä on jo sanottu ylempänä tai omalla sivullaan.
+      */}
 
       {/* 9. Viimeisimmät kuitit */}
       <Panel
