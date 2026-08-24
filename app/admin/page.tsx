@@ -46,6 +46,7 @@ import {
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
 import { Hero } from "./home/hero";
+import { ServiceDayBoard } from "./home/service-day";
 import { StatusHeader } from "./home/status-header";
 import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
@@ -53,6 +54,7 @@ import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
 import { monthStartDate } from "@/lib/restoflow/clock-context";
+import { buildServiceDay } from "@/lib/restoflow/service-day";
 
 export const metadata = { title: "Yleiskatsaus" };
 
@@ -261,6 +263,23 @@ export default async function AdminDashboard({
 
   const status = overallStatus(items, evaluability(dashboardInput).canJudge);
 
+  /*
+   * Aikajana vain kuluvalle kuukaudelle.
+   *
+   * Menneen kuukauden "tänään" ei ole mitään, ja tyhjä jana väittäisi
+   * ravintolan olleen kiinni.
+   */
+  const serviceDay = isCurrentMonth
+    ? buildServiceDay({
+        date: today,
+        shifts,
+        clockEvents,
+        users,
+        nowIso: now,
+        timezone: restaurant.timezone,
+      })
+    : null;
+
   // Trendiviiva vain jos historiaa on. Kahden pisteen viiva näyttäisi
   // suunnalta olematta sellainen.
   const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
@@ -354,6 +373,18 @@ export default async function AdminDashboard({
         trend={hasTrend ? trend : null}
         canAddReceipt={can(role, "receipts.add")}
       />
+
+      {/*
+        Palvelupäivä ennen kuukauden lukuja.
+
+        Kello 14 ravintoloitsijan kysymys on "kuka on salissa", ei
+        "paljonko elokuussa on kulunut". Kuukausi ei katoa mihinkään —
+        se on tämän alla, siinä järjestyksessä kuin kysymykset
+        oikeasti kysytään.
+      */}
+      {serviceDay ? (
+        <ServiceDayBoard day={serviceDay} live={isCurrentMonth && serviceDay.nowMin !== null} />
+      ) : null}
 
       <StatusHeader status={status} items={items} />
 

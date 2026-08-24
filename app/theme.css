@@ -248,6 +248,68 @@
 /* Hillittyjä: kortin pitää reagoida, ei esiintyä.                        */
 /* --------------------------------------------------------------------- */
 
+/*
+ * Palkki kasvaa paikalleen vasemmalta.
+ *
+ * Suunta on merkitsevä: aikajana luetaan vasemmalta oikealle, joten
+ * palkin on kasvettava samaan suuntaan kuin aika kuluu. Oikealta
+ * kasvava palkki näyttäisi kelaavan taaksepäin.
+ */
+@keyframes rf-bar-grow {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.rf-bar-grow {
+  transform-origin: left center;
+  animation: rf-bar-grow 520ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/*
+ * Laajeneva rengas: "tämä on elossa juuri nyt".
+ *
+ * Vain yksi kerrallaan koko näkymässä. Kaksi sykkivää pistettä eivät
+ * kerro kumpi on tärkeämpi, ja kolme on levotonta.
+ */
+@keyframes rf-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.rf-ping {
+  animation: rf-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/*
+ * Liike on tehoste, ei tieto.
+ *
+ * Kaikki tämän tiedoston animaatiot kertovat jotain minkä näkee myös
+ * ilman niitä: tila on värissä, aika on sijainnissa. Siksi ne voi
+ * sammuttaa kokonaan ilman että mitään katoaa.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .rf-bar-grow,
+  .rf-ping,
+  .rf-pulse-dot,
+  .rf-draw-line,
+  .rf-enter {
+    animation: none !important;
+  }
+}
+
 .rf-card-lift {
   transition:
     border-color 180ms ease,
