@@ -15,8 +15,20 @@
 import { dayIn, minutesOfDayIn } from "./clock-context";
 import type { Shift } from "./types";
 
+/**
+ * Vuoron kellonajat.
+ *
+ * Vain nämä kaksi kenttää tarvitaan keston laskentaan. Avoin vuoro ei
+ * ole Shift — siltä puuttuu tekijä — mutta se alkaa ja päättyy samalla
+ * tavalla.
+ */
+export interface TimeSpan {
+  startTime: string;
+  endTime: string;
+}
+
 /** Vuoron kesto minuutteina, yön yli menevä mukaan lukien. */
-export function shiftLengthMinutes(shift: Shift): number {
+export function shiftLengthMinutes(shift: TimeSpan): number {
   const start = toMinutes(shift.startTime);
   const end = toMinutes(shift.endTime);
   return end > start ? end - start : end + 24 * 60 - start;
@@ -29,7 +41,7 @@ export function shiftLengthMinutes(shift: Shift): number {
  * yksinkertaisempaa kuin kahden päivämäärän käsittely, ja vertailu
  * tehdään samassa yksikössä.
  */
-export function shiftBounds(shift: Shift): { startMin: number; endMin: number } {
+export function shiftBounds(shift: TimeSpan): { startMin: number; endMin: number } {
   const startMin = toMinutes(shift.startTime);
   return { startMin, endMin: startMin + shiftLengthMinutes(shift) };
 }

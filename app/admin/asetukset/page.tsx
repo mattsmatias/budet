@@ -47,7 +47,11 @@ export default async function SettingsPage() {
           <h2 className="text-[16px] font-semibold">Ravintola</h2>
 
           {canEdit ? (
-            <SettingsForm name={restaurant.name} timezone={restaurant.timezone} />
+            <SettingsForm
+              name={restaurant.name}
+              timezone={restaurant.timezone}
+              openShiftClaiming={restaurant.openShiftClaiming}
+            />
           ) : (
             <dl className="mt-3">
               <Row label="Nimi" value={restaurant.name} />

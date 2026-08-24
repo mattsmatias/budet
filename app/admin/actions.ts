@@ -553,6 +553,8 @@ export async function updateSettings(
     p_restaurant: restaurant.id,
     p_name: parsed.data.name,
     p_timezone: parsed.data.timezone,
+    // Valintaruutu ei lähetä mitään kun se on pois päältä.
+    p_open_shift_claiming: formData.get("openShiftClaiming") === "on",
   });
 
   if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };

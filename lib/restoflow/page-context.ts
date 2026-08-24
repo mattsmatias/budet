@@ -15,12 +15,14 @@ import { workedBetween } from "./timeclock";
 import {
   fetchAbsences,
   fetchClockEvents,
+  fetchOpenShifts,
   fetchRestaurantData,
   fetchShifts,
   type RestaurantData,
 } from "./queries";
 import { requireContext, type Context } from "./session";
-import type { Absence, ClockEvent, Shift } from "./types";
+import { claimableShifts } from "./open-shifts";
+import type { Absence, ClockEvent, OpenShift, Shift } from "./types";
 
 export interface AdminContext extends Context, RestaurantData {
   /** Kuluva kuukausi "2026-08" ravintolan aikavyöhykkeellä. */
@@ -109,6 +111,13 @@ export interface EmployeeContext extends Context {
   /** Kuitit joihin käyttäjällä on oikeus — RLS rajaa työntekijän omiin. */
   /** Vain tämän käyttäjän poissaoloilmoitukset. */
   absences: Absence[];
+  /**
+   * Avoimet vuorot jotka tämä työntekijä voi ottaa.
+   *
+   * Jo rajattu: oma asema, ei mennyt, ei päällekkäinen. Tyhjä myös
+   * silloin kun ravintola on kytkenyt ottamisen pois.
+   */
+  claimable: OpenShift[];
 }
 
 /**
@@ -127,11 +136,16 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
 
   // Leimaukset kuluvan viikon alusta: päivä- ja viikkonäkymä tarvitsevat ne,
   // vanhemmat eivät kuulu tähän näkymään.
-  const [allEvents, allShifts, allAbsences] = await Promise.all([
+  const [allEvents, allShifts, allAbsences, openShifts] = await Promise.all([
     fetchClockEvents(ctx.restaurant.id, windowStartIso(weekStart(today))),
     fetchShifts(ctx.restaurant.id),
     fetchAbsences(ctx.restaurant.id, today),
+    ctx.restaurant.openShiftClaiming
+      ? fetchOpenShifts(ctx.restaurant.id, today)
+      : Promise.resolve([]),
   ]);
+
+  const myShifts = allShifts.filter((s) => s.userId === ctx.user.id);
 
   return {
     ...ctx,
@@ -139,7 +153,14 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
     today,
     now,
     clockEvents: allEvents.filter((e) => e.userId === ctx.user.id),
-    shifts: allShifts.filter((s) => s.userId === ctx.user.id),
+    shifts: myShifts,
     absences: allAbsences.filter((a) => a.userId === ctx.user.id),
+    claimable: claimableShifts({
+      openShifts,
+      myShifts,
+      position: ctx.restaurant.position,
+      nowIso: now,
+      timezone: ctx.restaurant.timezone,
+    }),
   };
 }

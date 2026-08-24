@@ -4,6 +4,7 @@ import { datesInRange } from "@/lib/restoflow/timeclock";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { AbsenceReporter } from "./absence";
+import { OpenShifts } from "./open-shifts";
 import { Empty, PageHeader, SectionTitle, Surface, Tag, shortDate } from "../ui";
 
 export const metadata = { title: "Vuorot" };
@@ -30,7 +31,7 @@ const WEEKS_AHEAD = 4;
  * vuoron kiistäminen.
  */
 export default async function ShiftsPage() {
-  const { shifts, absences, today } = await employeeContext("/app/vuorot");
+  const { shifts, absences, claimable, today } = await employeeContext("/app/vuorot");
 
   const byDate = new Map(shifts.map((s) => [s.date, s]));
   const absenceDates = new Set(
@@ -80,6 +81,8 @@ export default async function ShiftsPage() {
           ))}
         </div>
       ) : null}
+
+      <OpenShifts shifts={claimable} />
 
       {!hasAny ? (
         <Empty

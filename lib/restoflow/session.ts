@@ -32,6 +32,8 @@ export interface RestaurantMembership {
   lunchTheme: LunchTheme;
   /** Kuinka monta minuuttia ennen vuoroa saa leimata sisään. */
   clockInEarlyMinutes: number;
+  /** Saako työntekijä ottaa avoimen vuoron itselleen? */
+  openShiftClaiming: boolean;
   timezone: string;
   currency: string;
   role: Role;
@@ -73,7 +75,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("my_restaurants")
-      .select("id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents, clock_in_early_minutes")
+      .select("id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents, clock_in_early_minutes, open_shift_claiming")
       .order("name");
 
     if (error || !data) return [];
@@ -84,6 +86,7 @@ export const getMemberships = cache(async (): Promise<RestaurantMembership[]> =>
       slug: row.slug as string,
       lunchTheme: isLunchTheme(row.lunch_theme) ? row.lunch_theme : "light",
       clockInEarlyMinutes: (row.clock_in_early_minutes as number | null) ?? 30,
+      openShiftClaiming: (row.open_shift_claiming as boolean | null) ?? true,
       timezone: row.timezone as string,
       currency: row.currency as string,
       role: row.role as Role,

@@ -29,9 +29,11 @@ const TIMEZONES = [
 export function SettingsForm({
   name,
   timezone,
+  openShiftClaiming,
 }: {
   name: string;
   timezone: string;
+  openShiftClaiming: boolean;
 }) {
   const [state, action] = useActionState(updateSettings, initial);
 
@@ -77,6 +79,36 @@ export function SettingsForm({
           Palvelin käy UTC:ssä, joten väärä vyöhyke siirtäisi yövuorot
           väärälle päivälle.
         </p>
+      </div>
+
+      {/*
+        Avoimien vuorojen ottaminen.
+        Oletus päällä: avoin vuoro on olemassa siksi että tekijä
+        puuttuu, ja hälytys siitä ei tee työtä. Katkaisin on tässä
+        niitä varten jotka haluavat jakaa vuorot itse.
+      */}
+      <div>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            name="openShiftClaiming"
+            defaultChecked={openShiftClaiming}
+            className="mt-0.5 size-[18px] shrink-0 cursor-pointer"
+          />
+          <span className="min-w-0">
+            <span className="block text-[13px] font-medium">
+              Työntekijä voi ottaa avoimen vuoron
+            </span>
+            <span
+              className="mt-0.5 block text-[12px] leading-relaxed"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              Työntekijä näkee oman asemansa avoimet vuorot ja voi ottaa niistä
+              yhden itselleen. Päällekkäiset vuorot estyvät. Ilman tätä avoimet
+              vuorot näkyvät vain sinulle.
+            </span>
+          </span>
+        </label>
       </div>
 
       <Feedback state={state} />

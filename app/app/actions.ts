@@ -324,3 +324,69 @@ export async function updateBirthday(
   revalidatePath("/app", "layout");
   return { notice: raw === "" ? "Syntymäpäivä poistettu." : "Syntymäpäivä tallennettu." };
 }
+
+// ---------------------------------------------------------------------------
+// Avoimet vuorot
+// ---------------------------------------------------------------------------
+
+/**
+ * Ota avoin vuoro itselle.
+ *
+ * Kaikki säännöt ovat claim_open_shift-funktiossa: asema,
+ * päällekkäisyys, päättynyt vuoro ja se ettei joku muu ehtinyt ensin.
+ * Tämä ei tarkista niitä uudelleen — kaksi totuutta samasta säännöstä
+ * ajautuu erilleen, ja kanta on se joka ratkaisee.
+ *
+ * Kilpajuoksu on tavallinen eikä poikkeus: avoin vuoro ilmestyy
+ * kaikille kerralla, ja kaksi ihmistä voi painaa samalla sekunnilla.
+ * Siksi häviäjälle kerrotaan mitä tapahtui eikä näytetä virhettä.
+ */
+export async function claimOpenShift(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const shiftId = String(formData.get("shiftId") ?? "");
+  if (!UUID.test(shiftId)) {
+    return { error: "Tuntematon työvuoro." };
+  }
+
+  await requireContext("/app/vuorot");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("claim_open_shift", { p_shift: shiftId });
+
+  if (error) {
+    const message = error.message ?? "";
+
+    if (message.includes("Joku ehti ensin") || message.includes("jo tekijä")) {
+      return {
+        error: "Joku ehti ensin — vuoro on jo otettu.",
+      };
+    }
+    if (message.includes("samaan aikaan")) {
+      return {
+        error: "Sinulla on jo työvuoro samaan aikaan. Kysy esihenkilöltä.",
+      };
+    }
+    if (message.includes("jo päättynyt")) {
+      return { error: "Työvuoro on jo päättynyt." };
+    }
+    if (message.includes("toiselle asemalle")) {
+      return { error: "Työvuoro on toiselle asemalle." };
+    }
+    if (message.includes("ei ole käytössä")) {
+      return { error: "Vuorojen ottaminen ei ole käytössä tässä ravintolassa." };
+    }
+
+    return { error: explain(error, "Vuoron ottaminen epäonnistui") };
+  }
+
+  revalidatePath("/app", "layout");
+  revalidatePath("/admin", "layout");
+
+  return { notice: "Työvuoro on nyt sinun." };
+}
+
+/** Tunniste tulee lomakkeelta, joten muoto tarkistetaan ennen kantaa. */
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
