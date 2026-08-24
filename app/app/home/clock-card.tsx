@@ -51,9 +51,20 @@ const SUCCESS_MS = 2500;
 export function ClockCard({
   todayEvents,
   timezone,
+  clockIn,
 }: {
   todayEvents: ClockEvent[];
   timezone: string;
+  /**
+   * Saako sisään leimata, ja jos ei niin miksi.
+   *
+   * Päätös tehdään palvelimella samasta säännöstä jonka tietokanta
+   * lopulta ratkaisee. Kortti ei arvaa vaan näyttää tuloksen.
+   */
+  clockIn:
+    | { kind: "open"; shift: string }
+    | { kind: "too-early"; shift: string; opensAt: string }
+    | { kind: "no-shift"; next: string | null };
 }) {
   const [state, action] = useActionState(recordClockEvent, initial);
   const [, setTick] = useState(0);
@@ -156,7 +167,13 @@ export function ClockCard({
           className="text-[12px] font-semibold uppercase"
           style={{ letterSpacing: "0.07em", color: "var(--rf-text-2)" }}
         >
-          {working ? "Työaika käynnissä" : onBreak ? "Tauolla" : "Et ole töissä"}
+          {working
+            ? "Työ käynnissä"
+            : onBreak
+              ? "Tauolla"
+              : clockIn.kind === "no-shift"
+                ? "Ei työvuoroa"
+                : "Et ole töissä"}
         </p>
       </div>
 
@@ -165,7 +182,9 @@ export function ClockCard({
           ? `Aloitettu ${timeIn(timezone, startedAt)}`
           : onBreak
             ? "Työaika ei kerry tauolla"
-            : "Tänään"}
+            : clockIn.kind === "open"
+              ? `Työvuoro ${clockIn.shift}`
+              : "Tänään"}
       </p>
 
       {/* suppressHydrationWarning: palvelin ja selain laskevat eri
@@ -192,6 +211,28 @@ export function ClockCard({
         </div>
       ) : null}
 
+      {/*
+        Este selitetään ennen painiketta.
+        Harmaa painike ilman syytä on arvoitus, ja arvoituksen edessä
+        käyttäjä painaa uudelleen.
+      */}
+      {!working && !onBreak && clockIn.kind !== "open" ? (
+        <p
+          className="mt-5 px-4 py-3 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text-2)",
+            borderRadius: 12,
+          }}
+        >
+          {clockIn.kind === "too-early"
+            ? `Sisäänleimaus avautuu klo ${clockIn.opensAt}. Työvuoro ${clockIn.shift}.`
+            : clockIn.next
+              ? `Sinulle ei ole työvuoroa juuri nyt. Seuraava vuoro: ${clockIn.next}.`
+              : "Sinulle ei ole suunniteltu työvuoroa. Esihenkilö lisää vuorot."}
+        </p>
+      ) : null}
+
       <form
         action={action}
         onSubmit={(event) => {
@@ -203,7 +244,10 @@ export function ClockCard({
         }}
         className="mt-6 space-y-2.5"
       >
-        <PrimaryAction working={working || onBreak} />
+        <PrimaryAction
+          working={working || onBreak}
+          blocked={!working && !onBreak && clockIn.kind !== "open"}
+        />
 
         {/* Tauko on toissijainen: pienempi, hillitympi, oman rivinsä. */}
         {working ? <SecondaryAction type="break_start" label="Aloita tauko" /> : null}
@@ -289,10 +333,10 @@ function Success({
 }
 
 const SUCCESS_TITLES: Record<ClockEventType, string> = {
-  in: "Työaika käynnistetty",
+  in: "Työvuoro aloitettu",
   break_start: "Tauko alkoi",
   break_end: "Takaisin töissä",
-  out: "Työaika päättyi",
+  out: "Työvuoro päättyi",
 };
 
 const SUCCESS_NOTES: Record<ClockEventType, string> = {
@@ -310,7 +354,13 @@ const SUCCESS_NOTES: Record<ClockEventType, string> = {
  * kunnianhimoinen tavoite silloin kun kyseessä on ainoa asia jota
  * käyttäjä tuli tekemään.
  */
-function PrimaryAction({ working }: { working: boolean }) {
+function PrimaryAction({
+  working,
+  blocked,
+}: {
+  working: boolean;
+  blocked: boolean;
+}) {
   const { pending } = useFormStatus();
 
   return (
@@ -318,12 +368,16 @@ function PrimaryAction({ working }: { working: boolean }) {
       type="submit"
       name="type"
       value={working ? "out" : "in"}
-      disabled={pending}
-      className="rf-press flex w-full items-center justify-center gap-2.5 text-[17px] font-semibold disabled:opacity-60"
+      disabled={pending || blocked}
+      className="rf-press flex w-full items-center justify-center gap-2.5 text-[17px] font-semibold disabled:opacity-40"
       style={{
         minHeight: 60,
-        background: working ? "var(--rf-text)" : "var(--rf-accent)",
-        color: "#fff",
+        background: blocked
+          ? "var(--rf-inset)"
+          : working
+            ? "var(--rf-text)"
+            : "var(--rf-accent)",
+        color: blocked ? "var(--rf-text-3)" : "#fff",
         borderRadius: 14,
       }}
     >
@@ -332,7 +386,7 @@ function PrimaryAction({ working }: { working: boolean }) {
       ) : (
         <>
           <RfIcon name={working ? "check" : "clock"} size={20} />
-          {working ? "Leimaa ulos" : "Leimaa sisään"}
+          {working ? "Lopeta työvuoro" : "Aloita työvuoro"}
         </>
       )}
     </button>

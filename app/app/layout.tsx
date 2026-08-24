@@ -16,14 +16,11 @@ import { AppBottomNav, AppSidebar } from "./nav";
  * lukukelvottoman pitkäksi riviksi.
  */
 export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
-  const { user, restaurant } = await requireContext("/app");
+  const { user } = await requireContext("/app");
 
   return (
     <div className="flex min-h-screen justify-center lg:justify-start">
-      <AppSidebar
-        userName={user.fullName ?? user.email ?? "Käyttäjä"}
-        restaurantName={restaurant.name}
-      />
+      <AppSidebar userName={user.fullName ?? user.email ?? "Käyttäjä"} />
 
       <div
         className="flex min-h-screen w-full max-w-md flex-col lg:max-w-none"

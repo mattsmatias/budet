@@ -34,20 +34,8 @@ type Tab = (typeof TABS)[number];
  * pystypalstassa. Sticky-alapalkki flex-rivin jäsenenä ei tarttuisi
  * mihinkään.
  */
-export function AppSidebar({
-  userName,
-  restaurantName,
-}: {
-  userName: string;
-  restaurantName: string;
-}) {
-  return (
-    <DesktopSidebar
-      tabs={TABS}
-      userName={userName}
-      restaurantName={restaurantName}
-    />
-  );
+export function AppSidebar({ userName }: { userName: string }) {
+  return <DesktopSidebar tabs={TABS} userName={userName} />;
 }
 
 /** Alapalkki puhelimeen. Sijoitetaan sisältöpalstan pohjalle. */
@@ -66,11 +54,9 @@ function useActive() {
 function DesktopSidebar({
   tabs,
   userName,
-  restaurantName,
 }: {
   tabs: readonly Tab[];
   userName: string;
-  restaurantName: string;
 }) {
   const isActive = useActive();
 
@@ -84,9 +70,6 @@ function DesktopSidebar({
           <Logo />
           <span className="text-[17px] font-semibold tracking-tight">Budet</span>
         </Link>
-        <p className="mt-2 truncate text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {restaurantName}
-        </p>
       </div>
 
       <nav aria-label="Päänavigaatio" className="flex-1 overflow-y-auto px-2.5 pb-4">

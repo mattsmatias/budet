@@ -23,24 +23,14 @@ import { MattiPanel } from "./matti/panel";
  * Kohdat tulevat roolin oikeuksista, eivät kovakoodatusta listasta — sama
  * funktio ohjaa sivujen pääsytarkistusta.
  */
-export function AdminNav({
-  role,
-  restaurantName,
-}: {
-  role: Role;
-  restaurantName: string;
-}) {
+export function AdminNav({ role }: { role: Role }) {
   const sections = adminNavSectionsFor(role);
   const primary = primaryNavFor(role);
   const matti = can(role, "matti.use");
 
   return (
     <>
-      <DesktopSidebar
-        sections={sections}
-        restaurantName={restaurantName}
-        matti={matti}
-      />
+      <DesktopSidebar sections={sections} matti={matti} />
       <MobileBar items={primary} />
     </>
   );
@@ -58,11 +48,9 @@ function useActive() {
 
 function DesktopSidebar({
   sections,
-  restaurantName,
   matti,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
-  restaurantName: string;
   matti: boolean;
 }) {
   return (
@@ -75,9 +63,6 @@ function DesktopSidebar({
           <Logo />
           <span className="text-[17px] font-semibold tracking-tight">Budet</span>
         </Link>
-        <p className="mt-2 truncate text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {restaurantName}
-        </p>
       </div>
 
       <nav

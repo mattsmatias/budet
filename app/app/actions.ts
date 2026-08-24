@@ -60,6 +60,15 @@ export async function recordClockEvent(
   });
 
   if (error) {
+    // Kanta on ainoa joka tietää onko vuoroa. Käännetään sen sanoma
+    // ihmisen kielelle sen sijaan että näytettäisiin poikkeus.
+    if (error.message?.includes("Ei voimassa olevaa työvuoroa")) {
+      return {
+        error:
+          "Sinulla ei ole juuri nyt voimassa olevaa työvuoroa. " +
+          "Leimaus avautuu vuoron alkaessa.",
+      };
+    }
     if (error.message?.includes("ei ole mahdollinen")) {
       return {
         error:

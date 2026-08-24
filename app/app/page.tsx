@@ -6,7 +6,9 @@ import { ClockCard } from "./home/clock-card";
 import { NextShift } from "./home/next-shift";
 import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
-import { Surface } from "./ui";
+import { Surface, shortDay } from "./ui";
+import { clockInState, formatMinuteOfDay } from "@/lib/restoflow/shift-window";
+import type { Shift } from "@/lib/restoflow/types";
 
 export const metadata = { title: "Koti" };
 
@@ -47,6 +49,39 @@ export default async function EmployeeHome() {
   const nextShift = shifts.find((s) => s.date >= today);
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0];
 
+  /*
+   * Saako sisään leimata?
+   *
+   * Sama sääntö kuin record_clock_event-funktiossa. Tämä päättää mitä
+   * kortti näyttää; kanta päättää mitä tapahtuu. Jos ne eroaisivat,
+   * käyttäjä näkisi painikkeen joka ei toimi — tai päinvastoin.
+   */
+  const clockIn = clockInState({
+    shifts,
+    userId: user.id,
+    nowIso: now,
+    timezone: zone,
+    earlyMinutes: restaurant.clockInEarlyMinutes,
+  });
+
+  const label = (shift: Shift) => `${shift.startTime}–${shift.endTime}`;
+
+  const clockInProps =
+    clockIn.kind === "open"
+      ? { kind: "open" as const, shift: label(clockIn.shift) }
+      : clockIn.kind === "too-early"
+        ? {
+            kind: "too-early" as const,
+            shift: label(clockIn.shift),
+            opensAt: formatMinuteOfDay(clockIn.opensAtMinutes),
+          }
+        : {
+            kind: "no-shift" as const,
+            next: clockIn.next
+              ? `${clockIn.next.date === today ? "tänään" : shortDay(clockIn.next.date)} ${label(clockIn.next)}`
+              : null,
+          };
+
   return (
     <div className="rf-enter space-y-6">
       <header className="px-1 pt-1">
@@ -63,7 +98,7 @@ export default async function EmployeeHome() {
         Leimaus on leveämpi myös rinnakkain: se on pääasia eikä puolikas.
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <ClockCard todayEvents={todayEvents} timezone={zone} />
+        <ClockCard todayEvents={todayEvents} timezone={zone} clockIn={clockInProps} />
 
         <div className="space-y-4">
           <NextShift shift={nextShift} today={today} />
