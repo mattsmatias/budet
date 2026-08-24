@@ -28,7 +28,6 @@ export default async function AdminMorePage() {
   return (
     <div className="rf-enter space-y-5">
       <header className="px-1 pt-1">
-        <h1 className="text-[26px] font-semibold tracking-tight">Lisää</h1>
       </header>
 
       <Card>

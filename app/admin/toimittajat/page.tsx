@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { RfIcon } from "@/components/restoflow/icons";
 import Link from "next/link";
 import {
   formatChange,
@@ -44,8 +45,7 @@ export default async function SuppliersPage() {
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Toimittajat</h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Kenelle rahamme menevät? · {formatMonth(month)}
         </p>
       </div>
@@ -53,14 +53,23 @@ export default async function SuppliersPage() {
       <ScopeNotice />
 
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3 md:gap-4">
-        <MetricCard label="Toimittajia" value={String(totals.length)} />
+        <MetricCard
+          label="Toimittajia"
+          value={String(totals.length)}
+          icon={<RfIcon name="suppliers" size={17} />}
+          tileTone="brand"
+        />
         <MetricCard
           label="Kirjatut kulut"
+          icon={<RfIcon name="expenses" size={17} />}
+          tileTone="green"
           value={formatMoney(grandTotal)}
           hint={receiptCountLabel(inMonth.length)}
         />
         <MetricCard
           label="Suurin toimittaja"
+          icon={<RfIcon name="trend" size={17} />}
+          tileTone="violet"
           value={biggest?.name ?? "—"}
           hint={
             biggest

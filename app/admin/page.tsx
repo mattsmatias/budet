@@ -390,7 +390,7 @@ export default async function AdminDashboard({
 {pulse ? (
           <StatCard
             label="Myynti tänään"
-            tileTone="up"
+            tileTone="green"
             value={
               pulse.sales.cents === null ? "—" : <CountUp to={pulse.sales.cents} format="money" />
             }
@@ -431,7 +431,7 @@ export default async function AdminDashboard({
         ) : (
           <StatCard
             label="Kuitit"
-            tileTone="up"
+            tileTone="green"
             value={<CountUp to={receipts_.total} format="integer" />}
             delta={
               receipts_.pending > 0 ? { text: `${receipts_.pending} kesken` } : undefined
@@ -486,7 +486,7 @@ export default async function AdminDashboard({
         {onDuty !== null ? (
           <StatCard
             label="Töissä nyt"
-            tileTone="neutral"
+            tileTone="blue"
             value={`${onDuty} / ${staffTotal}`}
             delta={upcomingToday > 0 ? { text: `${upcomingToday} tulossa` } : undefined}
             conclusion={
@@ -504,7 +504,7 @@ export default async function AdminDashboard({
         ) : (
           <StatCard
             label="Työtunnit"
-            tileTone="neutral"
+            tileTone="blue"
             value={totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />}
             conclusion={
               totalHours === null ? "Vain kuluvalta kuukaudelta" : "Leimauksista laskettu"

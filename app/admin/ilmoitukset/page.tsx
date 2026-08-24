@@ -66,8 +66,7 @@ export default async function NotificationsPage() {
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">Ilmoitukset</h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {items.length} asiaa vaatii huomiota
         </p>
       </div>
@@ -80,7 +79,7 @@ export default async function NotificationsPage() {
 
       {reasons.length > 0 ? (
         <Card>
-          <h2 className="text-[16px] font-semibold">Miksi kuitit ovat jonossa</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Miksi kuitit ovat jonossa</h2>
           <ul className="mt-3 space-y-2">
             {reasons.map(({ reason, count }) => (
               <li key={reason} className="flex items-baseline justify-between gap-4 text-[14px]">

@@ -21,6 +21,14 @@ const EXTRA: { href: string; label: string }[] = [
   { href: "/admin/myynti", label: "Myynti" },
   { href: "/admin/toimittajat", label: "Toimittajat" },
   { href: "/admin/lisaa", label: "Lisää" },
+  /*
+   * Kuitin lisäys on oma nimensä.
+   *
+   * Pisin osuma antaisi sille "Kuitit", ja lomake näyttäisi
+   * kuittilistalta. Sivun nimi on ainoa asia joka erottaa ne, kun
+   * sivu ei enää kirjoita omaa otsikkoaan.
+   */
+  { href: "/admin/kuitit/uusi", label: "Uusi kuitti" },
 ];
 
 export function PageTitle({ fallback }: { fallback: string }) {

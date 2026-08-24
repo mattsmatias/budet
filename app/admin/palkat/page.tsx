@@ -11,7 +11,6 @@ import { CountUp } from "@/components/restoflow/count-up";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, Pill } from "@/components/restoflow/ui";
 import { Panel, PanelEmpty, StatCard } from "@/components/restoflow/dashboard-ui";
-import { MonthPicker } from "../month-picker";
 import { PeriodPicker } from "./period-picker";
 import { PeriodActions } from "./period-actions";
 import { PayComponents } from "./components-editor";
@@ -87,16 +86,12 @@ export default async function PayrollPage({
     <div className="rf-stagger space-y-5 md:space-y-6">
       <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
-            Palkat
-          </h1>
-          <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {formatMonth(viewMonth)} · {chosen.label}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <MonthPicker value={viewMonth} months={selectable} />
           <PeriodPicker
             month={viewMonth}
             current={chosen.key}
@@ -148,7 +143,7 @@ export default async function PayrollPage({
       {/* Varoitukset ennen listaa: ne muuttavat sitä mitä listassa lukee. */}
       {data.issues.length > 0 ? (
         <Card>
-          <h2 className="text-[16px] font-semibold">Tarkistettavaa</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Tarkistettavaa</h2>
           <ul className="mt-3 space-y-2">
             {data.issues.slice(0, 8).map((issue, index) => (
               <li

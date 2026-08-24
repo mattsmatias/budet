@@ -27,10 +27,7 @@ export default async function SettingsPage() {
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-          Asetukset
-        </h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
         </p>
       </div>
@@ -44,7 +41,7 @@ export default async function SettingsPage() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <h2 className="text-[16px] font-semibold">Ravintola</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Ravintola</h2>
 
           {canEdit ? (
             <SettingsForm
@@ -63,7 +60,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Kirjanpitokuukaudet</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Kirjanpitokuukaudet</h2>
           <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
             Suljettu kuukausi on kirjanpitoon lähetetty kuukausi. Sen jälkeen
             tehty muutos ei enää täsmää siihen mitä kirjanpitäjälle on annettu.
@@ -84,7 +81,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Yhteenveto</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Yhteenveto</h2>
           <dl className="mt-3">
             <Row label="Kuitteja yhteensä" value={String(receipts.length)} />
             <Row label="Käyttäjiä" value={String(users.length)} />
@@ -94,7 +91,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Kulukategoriat</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Kulukategoriat</h2>
           <p className="mt-1.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             Kategoriat joihin kuitit luokitellaan.
           </p>
@@ -120,7 +117,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Kuittien poiminta</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Kuittien poiminta</h2>
           <dl className="mt-3">
             <Row label="Poimija" value={extractorName()} />
             <Row label="Tuetut muodot" value="JPG, PNG, HEIC, PDF" />
@@ -138,7 +135,7 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <h2 className="text-[16px] font-semibold">Mitä Budet ei tee</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Mitä Budet ei tee</h2>
           <ul
             className="mt-3 space-y-1.5 text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}

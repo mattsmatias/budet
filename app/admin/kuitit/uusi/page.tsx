@@ -38,9 +38,6 @@ export default async function NewReceiptPage() {
         >
           <RfIcon name="back" size={22} />
         </Link>
-        <h1 className="text-[22px] font-semibold tracking-tight md:text-[26px]">
-          Uusi kuitti
-        </h1>
       </header>
 
       <CaptureFlow

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RfIcon } from "@/components/restoflow/icons";
 import { notFound } from "next/navigation";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
@@ -58,7 +59,7 @@ export default async function SupplierDetailPage({
           <Icon path={ICONS.back} size={22} />
         </Link>
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">{supplier.name}</h1>
+          <h2 className="text-[20px] font-bold tracking-[-0.02em]">{supplier.name}</h2>
           <p className="mt-0.5 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
             <span className="inline-flex items-center gap-1.5 align-middle">
               <CategoryIcon category={supplier.defaultCategory} size={15} />
@@ -69,13 +70,30 @@ export default async function SupplierDetailPage({
         </div>
       </div>
 
-      
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
-        <MetricCard label="Kuitteja" value={String(inMonth.length)} hint={formatMonth(month)} />
-        <MetricCard label="Yhteensä" value={formatMoney(monthTotal)} />
-        <MetricCard label="Keskimääräinen kuitti" value={formatMoney(average)} />
+        <MetricCard
+          label="Kuitteja"
+          value={String(inMonth.length)}
+          icon={<RfIcon name="receipt" size={17} />}
+          tileTone="brand"
+          hint={formatMonth(month)}
+        />
+        <MetricCard
+          label="Yhteensä"
+          value={formatMoney(monthTotal)}
+          icon={<RfIcon name="expenses" size={17} />}
+          tileTone="green"
+        />
+        <MetricCard
+          label="Keskimääräinen kuitti"
+          value={formatMoney(average)}
+          icon={<RfIcon name="budget" size={17} />}
+          tileTone="violet"
+        />
         <MetricCard
           label="Muutos"
+          icon={<RfIcon name="trend" size={17} />}
+          tileTone="blue"
           value={trend?.change === null || !trend ? "—" : formatChange(trend.change)}
           hint={
             trend && trend.change !== null

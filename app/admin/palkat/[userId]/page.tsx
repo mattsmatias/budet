@@ -96,10 +96,10 @@ export default async function PayslipPage({
 
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
+            <h2 className="text-[20px] font-bold tracking-[-0.02em]">
               {person.name}
-            </h1>
-            <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+            </h2>
+            <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               Palkkakausi {fi(startsOn)} – {fi(endsOn)}
             </p>
           </div>
@@ -141,7 +141,7 @@ export default async function PayslipPage({
       {/* --- Työaika --------------------------------------------------- */}
 
       <Card>
-        <h2 className="text-[16px] font-semibold">Työaika</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Työaika</h2>
 
         <dl className="mt-3 space-y-2 text-[14px]">
           <Row label="Perustunnit" value={formatHours(slip.workedMinutes)} />
@@ -154,7 +154,7 @@ export default async function PayslipPage({
       {/* --- Palkka ------------------------------------------------------ */}
 
       <Card>
-        <h2 className="text-[16px] font-semibold">Palkka</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkka</h2>
 
         <dl className="mt-3 space-y-3 text-[14px]">
           <div className="flex items-baseline justify-between gap-4">
@@ -204,7 +204,7 @@ export default async function PayslipPage({
       {/* --- Mistä summa muodostui --------------------------------------- */}
 
       <Card>
-        <h2 className="text-[16px] font-semibold">Mistä tämä summa muodostui?</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Mistä tämä summa muodostui?</h2>
         <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
           Jokainen rivi on yksi työpäivä. Aika on leimauksista, ei
           suunnitellusta vuorosta.

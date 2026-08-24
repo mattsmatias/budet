@@ -34,10 +34,7 @@ export default async function InsightsPage() {
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-          Havainnot
-        </h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {formatMonth(month)} ·{" "}
           {watch.length === 0
             ? "ei seurattavaa"

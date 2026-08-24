@@ -82,6 +82,12 @@
   --rf-blue-text: #1a5e97;
   --rf-blue-bg: #e8f2fb;
 
+  /* Violetti on tunnisteväri eikä tila: sillä ei ole merkitystä
+     "hyvä" tai "huono", vaan se erottaa avainluvun naapureistaan.
+     Siksi se on oma tokeninsa eikä lainaa mitään tilaväriä. */
+  --rf-violet: #5b57d6;
+  --rf-violet-bg: #eef1fd;
+
   --rf-amber: #8f5405;
   --rf-amber-text: #8f5405;
   --rf-amber-bg: #fdf1de;
@@ -160,6 +166,8 @@
     --rf-blue: #6cb7f5;
     --rf-blue-text: #6cb7f5;
     --rf-blue-bg: #14293c;
+    --rf-violet: #a5a1f7;
+    --rf-violet-bg: #23213f;
     --rf-amber: #e0a44a;
     --rf-amber-text: #e0a44a;
     --rf-amber-bg: #382a14;
@@ -205,6 +213,8 @@
   --rf-blue: #6cb7f5;
   --rf-blue-text: #6cb7f5;
   --rf-blue-bg: #14293c;
+  --rf-violet: #a5a1f7;
+  --rf-violet-bg: #23213f;
   --rf-amber: #e0a44a;
   --rf-amber-text: #e0a44a;
   --rf-amber-bg: #382a14;

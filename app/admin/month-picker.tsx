@@ -95,8 +95,30 @@ export function MonthPicker({
     }
   }
 
+  /*
+   * Askellus valitsimen rinnalla.
+   *
+   * Kulut-sivulla oli oma edellinen/seuraava-parinsa ja sen vieressä
+   * yläpalkin valitsin — kaksi säädintä jotka näyttivät samaa
+   * kuukautta. Askellus kuuluu samaan säätimeen kuin valinta, ja
+   * silloin se on käytettävissä joka sivulla eikä vain yhdellä.
+   *
+   * Lista on uusin ensin, joten edellinen kuukausi on seuraava
+   * alkio.
+   */
+  const index = months.indexOf(value);
+  const older = index >= 0 && index < months.length - 1 ? months[index + 1] : null;
+  const newer = index > 0 ? months[index - 1] : null;
+
   return (
-    <div ref={container} className="relative" onKeyDown={onKeyDown}>
+    <div ref={container} className="relative flex items-center gap-1" onKeyDown={onKeyDown}>
+      <StepButton
+        label="Edellinen kuukausi"
+        icon="back"
+        month={older}
+        onSelect={select}
+      />
+
       <button
         type="button"
         onClick={() => {
@@ -106,15 +128,15 @@ export function MonthPicker({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Kuukausi: ${formatMonth(value)}`}
-        // py-2.5 eikä py-2: sama 44 px korkeus kuin vieressä olevilla
-        // painikkeilla. Neljän pikselin ero näkyi rivissä epätasaisuutena.
-        className="rf-press flex items-center gap-2 py-2.5 pl-3 pr-2.5 text-[14px] font-medium"
+        // Kiinteä korkeus eikä pehmuste: askelnapit ovat 40 px, ja
+        // pehmusteesta laskettu korkeus jäi kolme pikseliä suuremmaksi.
+        // Ero näkyi rivissä epätasaisuutena.
+        className="rf-press flex h-10 items-center gap-2 pl-3 pr-2.5 text-[14px] font-medium"
         style={{
           background: "var(--rf-card)",
           color: "var(--rf-text)",
           border: `1px solid ${open ? "var(--rf-accent)" : "var(--rf-line)"}`,
           borderRadius: "var(--rf-r-control)",
-          minHeight: 40,
           opacity: pending ? 0.6 : 1,
           transition: "opacity 160ms ease, border-color 160ms ease",
         }}
@@ -138,11 +160,18 @@ export function MonthPicker({
         </span>
       </button>
 
+      <StepButton
+        label="Seuraava kuukausi"
+        icon="chevron"
+        month={newer}
+        onSelect={select}
+      />
+
       {open ? (
         <ul
           role="listbox"
           aria-label="Kuukausi"
-          className="rf-enter absolute right-0 z-40 mt-2 max-h-[19rem] w-52 overflow-y-auto p-1.5"
+          className="rf-enter absolute right-0 top-[calc(100%+8px)] z-40 max-h-[19rem] w-52 overflow-y-auto p-1.5"
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
@@ -190,4 +219,44 @@ export function MonthPicker({
 function formatMonth(month: string): string {
   const [year, m] = month.split("-");
   return `${MONTH_NAMES[Number(m) - 1]} ${year}`;
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Askelnappi kuukaudesta toiseen.
+ *
+ * Poissa käytöstä eikä piilossa: nappi joka katoaa listan päässä
+ * siirtäisi viereisiä painikkeita, ja rivi hyppäisi joka kerta kun
+ * reunaan osuu.
+ */
+function StepButton({
+  label,
+  icon,
+  month,
+  onSelect,
+}: {
+  label: string;
+  icon: "back" | "chevron";
+  month: string | null;
+  onSelect: (month: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => month && onSelect(month)}
+      disabled={month === null}
+      aria-label={label}
+      title={label}
+      className="rf-press flex h-10 w-9 shrink-0 items-center justify-center disabled:opacity-35"
+      style={{
+        background: "var(--rf-card)",
+        color: "var(--rf-text-2)",
+        border: "1px solid var(--rf-line)",
+        borderRadius: "var(--rf-r-control)",
+      }}
+    >
+      <RfIcon name={icon} size={15} />
+    </button>
+  );
 }

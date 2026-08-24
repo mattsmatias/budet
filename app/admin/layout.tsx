@@ -97,7 +97,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
         <header
-          className="rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
+          className="rf-no-print rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
           style={{
             borderColor: "var(--rf-line)",
             background: "rgba(255,255,255,0.86)",

@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { RfIcon } from "@/components/restoflow/icons";
 import {
   compareShifts,
   formatVariance,
@@ -60,10 +61,7 @@ export default async function AdminShiftsPage() {
     <div className="rf-enter space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-            Työvuorot
-          </h1>
-          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {upcoming.length} tulevaa
             {openShifts.length > 0 ? ` · ${openShifts.length} avointa` : ""}
           </p>
@@ -195,17 +193,23 @@ export default async function AdminShiftsPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             <MetricCard
               label="Suunniteltu"
+              icon={<RfIcon name="calendar" size={17} />}
+              tileTone="brand"
               value={formatDuration(labour.plannedMs)}
               hint={`${labour.shiftCount} mennyttä vuoroa`}
             />
             <MetricCard
               label="Toteutunut"
+              icon={<RfIcon name="clock" size={17} />}
+              tileTone="green"
               value={formatDuration(labour.actualMs)}
               hint={`${formatVariance(labour.varianceMs)} suunniteltuun`}
             />
             {showsRates ? (
               <MetricCard
                 label="Työvoimakustannus"
+                icon={<RfIcon name="payroll" size={17} />}
+                tileTone="violet"
                 value={formatMoney(labour.actualCostCents)}
                 hint={
                   labour.varianceCostCents === 0

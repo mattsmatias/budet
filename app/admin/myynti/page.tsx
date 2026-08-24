@@ -34,10 +34,7 @@ export default async function SalesPage() {
     <div className="rf-stagger space-y-5 md:space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
-            Myynti
-          </h1>
-          <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             Päivän veroton myynti kassan päiväraportista
           </p>
         </div>
@@ -45,7 +42,7 @@ export default async function SalesPage() {
 
       {canManage ? (
         <Card>
-          <h2 className="text-[16px] font-semibold">
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             {todayRow ? "Muuta tämän päivän myyntiä" : "Kirjaa päivän myynti"}
           </h2>
           <SalesForm

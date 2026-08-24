@@ -85,13 +85,13 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
+      className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
+          <span className="text-[16px] font-extrabold tracking-[-0.02em]">Budet</span>
         </Link>
       </div>
 

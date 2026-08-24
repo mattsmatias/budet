@@ -6,7 +6,6 @@ import {
   periodTotals,
   previousMonth,
 } from "@/lib/restoflow/expenses";
-import { MonthPicker } from "../month-picker";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
@@ -78,16 +77,12 @@ export default async function ReportsPage({
     <div className="rf-enter space-y-5 md:space-y-6">
       <div className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-            Raportointi
-          </h1>
-          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
             {formatMoney(totals.totalCents)} kirjattuja kuluja
           </p>
         </div>
 
-        <MonthPicker value={viewMonth} months={selectable} />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
@@ -95,7 +90,7 @@ export default async function ReportsPage({
           <Card key={report.kind} hover>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 className="text-[16px] font-semibold">{report.title}</h2>
+                <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{report.title}</h2>
                 <p
                   className="mt-1.5 text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}
@@ -111,10 +106,20 @@ export default async function ReportsPage({
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <a
                 href={`/admin/raportit/csv?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
-                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
+                /*
+                 * Latauspainike ei ole punainen.
+                 *
+                 * Kortteja on viisi, ja punaisia painikkeita oli
+                 * yhtä monta plus yläpalkin "Lisää kuitti". Kun
+                 * kaikki on korostettu, mikään ei ole — ja
+                 * korostettu oli tässä väärä: raportin lataus on
+                 * viiden samanarvoisen vaihtoehdon yksi.
+                 */
+                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[13px] font-bold"
                 style={{
-                  background: "var(--rf-accent)",
-                  color: "var(--rf-on-accent)",
+                  background: "var(--rf-inset)",
+                  color: "var(--rf-text)",
+                  border: "1px solid var(--rf-line-strong)",
                   borderRadius: "var(--rf-r-control)",
                 }}
               >
@@ -153,7 +158,7 @@ export default async function ReportsPage({
       </div>
 
       <Card>
-        <h2 className="text-[16px] font-semibold">Toimitus kirjanpitäjälle</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Toimitus kirjanpitäjälle</h2>
 
         {accountants.length > 0 ? (
           <>

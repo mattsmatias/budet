@@ -46,7 +46,15 @@ export function InviteForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rf-press flex w-full items-center justify-center gap-2 py-3.5 text-[15px] font-semibold"
+        /*
+         * Ei koko rivin levyinen palkki.
+         *
+         * Se oli sivun näyttävin elementti — leveämpi ja punaisempi
+         * kuin yksikään avainluku — vaikka käyttäjän kutsuminen on
+         * harvinaisin asia mitä tällä sivulla tehdään. Nyt se on
+         * saman kokoinen kuin muiden sivujen päätoiminto.
+         */
+        className="rf-press inline-flex items-center justify-center gap-2 whitespace-nowrap px-[15px] py-[9px] text-[13px] font-bold"
         style={{
           background: "var(--rf-accent)",
           color: "var(--rf-on-accent)",

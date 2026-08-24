@@ -115,10 +115,7 @@ export default async function AdminReceiptsPage({
     <div className="rf-enter space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-            Kuitit
-          </h1>
-          <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {visible.length} kuittia · {formatMoney(total)}
             {reviewCount > 0 && filter === "all" ? ` · ${reviewCount} tarkistettavaa` : ""}
           </p>

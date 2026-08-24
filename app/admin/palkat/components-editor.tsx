@@ -41,7 +41,7 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[16px] font-semibold">Palkkalajit</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkkalajit</h2>
           <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
             Ilta-, yö- ja viikonloppulisät. Budet ei tunne työehtosopimusta,
             joten arvot syötetään itse.

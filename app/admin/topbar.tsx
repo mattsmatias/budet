@@ -1,7 +1,7 @@
 import { HeaderMenus } from "./header-menus";
 import { MattiPanel } from "./matti/panel";
 import { PageTitle } from "./page-title";
-import { MonthPicker } from "./month-picker";
+import { MonthScope } from "./month-scope";
 import { Search, type SearchItem } from "./search";
 import { ButtonLink } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -56,7 +56,7 @@ export function TopBar({
 }) {
   return (
     <header
-      className="rf-z-chrome sticky top-0 hidden items-center gap-3.5 border-b px-[22px] py-3.5 md:flex"
+      className="rf-no-print rf-z-chrome sticky top-0 hidden items-center gap-3.5 border-b px-[22px] py-3.5 md:flex"
       style={{ background: "var(--rf-card)", borderColor: "var(--rf-line)" }}
     >
       {/*
@@ -85,7 +85,7 @@ export function TopBar({
         luvuista. Kuukausi koskee useaa sivua, joten se kuuluu samaan
         palkkiin kuin haku.
       */}
-      <MonthPicker value={month} months={months} />
+      <MonthScope value={month} months={months} />
 
       {canAddReceipt ? (
         <ButtonLink

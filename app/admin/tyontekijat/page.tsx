@@ -6,6 +6,7 @@ import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { revokeInvitation } from "../actions";
 import { Avatar, Card, MetricCard, Pill } from "@/components/restoflow/ui";
+import { RfIcon } from "@/components/restoflow/icons";
 import { InviteForm, MemberForm } from "./forms";
 
 export const metadata = { title: "Työntekijät" };
@@ -39,10 +40,8 @@ export default async function StaffPage() {
   return (
     <div className="rf-enter space-y-5">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-tight md:text-[30px]">
-          Työntekijät
-        </h1>
-        <p className="mt-1 text-[14px] md:text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {users.length} käyttäjää
           {invitations.length > 0 ? ` · ${invitations.length} avointa kutsua` : ""}
         </p>
@@ -51,12 +50,16 @@ export default async function StaffPage() {
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3">
         <MetricCard
           label="Työtunnit"
+          icon={<RfIcon name="clock" size={17} />}
+          tileTone="brand"
           value={`${Math.round(totalHours)} h`}
           hint="Kuluva kuukausi"
         />
         {showsRates ? (
           <MetricCard
             label="Henkilöstökulut"
+            icon={<RfIcon name="payroll" size={17} />}
+          tileTone="green"
             value={formatMoney(totalCost)}
             hint={
               missingRates > 0
@@ -67,6 +70,8 @@ export default async function StaffPage() {
         ) : null}
         <MetricCard
           label="Keskimäärin"
+          icon={<RfIcon name="staff" size={17} />}
+          tileTone="violet"
           value={
             users.length === 0 ? "0 h" : `${Math.round(totalHours / users.length)} h`
           }

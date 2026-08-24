@@ -32,11 +32,14 @@ export function Card({
 }) {
   return (
     <div
-      className={`${hover ? "rf-card-hover" : ""} ${padded ? "p-5" : ""} ${className}`}
+      className={`${hover ? "rf-card-hover" : ""} ${
+        padded ? "px-[18px] pb-4 pt-[15px]" : ""
+      } ${className}`}
       style={{
         background: "var(--rf-card)",
         border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
       {children}
@@ -54,11 +57,11 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-start justify-between gap-4">
+    <div className="mb-[13px] flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold">{title}</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{title}</h2>
         {subtitle ? (
-          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
             {subtitle}
           </p>
         ) : null}
@@ -280,7 +283,9 @@ export type MetricTone =
   | "bad"
   | "accent"
   | "brand"
-  | "violet";
+  | "violet"
+  | "green"
+  | "blue";
 
 /**
  * Muutospilleri.
@@ -312,11 +317,27 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
 
 /** Ikonilaatan sävy. Sama lähde kuin pillerillä. */
 function tileSkin(tone: MetricTone): { bg: string; fg: string } {
+  /*
+   * Neljä tunnistesävyä ennen tilasävyjä.
+   *
+   * brand / green / violet / blue eivät kerro onko luku hyvä vai
+   * huono — ne erottavat neljä korttia toisistaan. Tilasävyt (up,
+   * down, warn, bad) kertovat, ja niitä käytetään vain kun kortin
+   * tila on oikeasti se.
+   *
+   * Nämä olivat hetken samoja: tunnisteeksi tarkoitettu "up" piirsi
+   * keltaisen laatan Myynti tänään -korttiin, ja keltainen luetaan
+   * varoituksena.
+   */
   return tone === "brand"
     ? { bg: "var(--rf-accent-bg)", fg: "var(--rf-accent)" }
     : tone === "violet"
-      ? { bg: "#eef1fd", fg: "#5b57d6" }
-      : tone === "up" || tone === "warn"
+      ? { bg: "var(--rf-violet-bg)", fg: "var(--rf-violet)" }
+      : tone === "green"
+        ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }
+        : tone === "blue"
+          ? { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" }
+          : tone === "up" || tone === "warn"
     ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
     : tone === "down"
       ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }

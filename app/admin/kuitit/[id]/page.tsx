@@ -113,9 +113,9 @@ export default async function AdminReceiptDetailPage({
         >
           <RfIcon name="back" size={22} />
         </Link>
-        <h1 className="truncate text-[22px] font-semibold tracking-tight md:text-[26px]">
+        <h2 className="truncate text-[20px] font-bold tracking-[-0.02em]">
           {receipt.supplierName}
-        </h1>
+        </h2>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
