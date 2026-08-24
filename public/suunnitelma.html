@@ -8,540 +8,408 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
 <style>
 /* ===========================================================================
-   BUDET — RAVINTOLOITSIJAN PUOLI
+   BUDET — HALLINTA
    ---------------------------------------------------------------------------
-   Kolme näkymää, yksi muotokieli. Navigaatiosta voi vaihtaa.
+   Vaalea ja ilmava: valkoiset kortit hyvin vaalealla pohjalla, ohuet
+   reunat, pastellilaatat ikonien takana.
 
-   MUOTOKIELI ON LIPUKE, EI OHJELMISTOIKKUNA.
+   PUNAINEN ON KAHDESSA TEHTÄVÄSSÄ, JA SE ON TIETOINEN VALINTA.
 
-   Pohja on lämmin paperi, pinnat valkoisia lipukkeita, muste tummaa
-   ruskeanmustaa. Ravintolan paperi on tilauslista ja tilikuitti — ei
-   siniharmaa hallintapaneeli.
+   Merkkiväri täytetyssä painikkeessa ja kulun etumerkki taulukossa.
+   Ne eivät sekoitu, koska ne eivät koskaan esiinny samassa muodossa:
+   painike on täytetty ja suuri, luku on pelkkää tekstiä. Tilamerkintä
+   ongelmasta on sen sijaan aina rusehtava rose eikä sama punainen.
 
-   NAVIGAATIO ON KISKO.
-
-   Vasen palkki on keittiön lipukekisko: kapea, hiljainen, ja valittu
-   kohta on ainoa täytetty pinta koko kiskossa. Ikoneita ei ole —
-   kymmenen pientä kuvaa allekkain ei kerro kumpi sivu on kumpi, sana
-   kertoo.
-
-   Kellonajat ja päivämäärät ovat aina tasalevyistä monoa. Ne ovat
-   koneen tulostetta eivätkä puhetta, ja tasalevyisenä ne asettuvat
-   sarakkeisiin itsestään.
+   Numerot ovat tasalevyistä monoa. Taulukossa ja aikajanalla ne
+   asettuvat sarakkeisiin itsestään, eikä lukua tarvitse etsiä riviltä.
    =========================================================================== */
 
 :root {
-  /* Puhdas — valittu paletti. Valkoinen pohja, neutraali harmaa. */
-  --paper:      #f5f6f8;
-  --card:       #ffffff;
-  --card-2:     #f2f3f6;
-  --edge:       #e3e5ea;
-  --edge-soft:  #edeff3;
+  --bg:        #f4f6fa;
+  --card:      #ffffff;
+  --card-2:    #f6f8fb;
+  --line:      #e7ecf3;
+  --line-2:    #dde4ee;
 
-  --ink:        #0e1016;
-  --ink-2:      #5b6170;
-  --ink-3:      #6f7686;
+  --ink:       #0f1729;
+  --ink-2:     #5a6a85;
+  --ink-3:     #667490;
 
-  --cobalt:     #1e2fd6;
-  --cobalt-2:   #1523a8;
-  --cobalt-bg:  #e8eafc;
+  /* Merkkiväri. Vain täytetyissä painikkeissa ja logossa. */
+  --brand:     #e8443c;
+  --brand-2:   #c22c25;
+  --brand-bg:  #fdecea;
 
-  --go:         #14804a;
-  --go-ink:     #0c6038;
-  --go-bg:      #e3f4ea;
-  --hold:       #b0710f;
-  --hold-ink:   #85530a;
-  --hold-bg:    #fbefd9;
-  --stop:       #cc2f26;
-  --stop-ink:   #9e211a;
-  --stop-bg:    #fce8e6;
+  /* Tila */
+  --ok:        #0f7248;
+  --ok-bg:     #e6f6ee;
+  --warn:      #8f5405;
+  --warn-bg:   #fdf1de;
+  --bad:       #b02b24;
+  --bad-bg:    #fceceb;
 
-  --s1: #1e2fd6;
-  --s2: #7c5cd6;
-  --s3: #14804a;
-  --s4: #b0710f;
-  --s5: #8e94a1;
+  /* Sarjat */
+  --c1: #f0913a;
+  --c2: #4aa3f0;
+  --c3: #7b76e8;
+  --c4: #e8695f;
+  --c5: #97a3b6;
 
-  --f-display: "Fraunces", Georgia, serif;
-  --f-display-w: 600;
-  --f-display-track: -.015em;
-  --f-ui: "Instrument Sans", -apple-system, system-ui, sans-serif;
-  --f-data: "IBM Plex Mono", ui-monospace, monospace;
+  --r-lg: 14px;
+  --r-md: 10px;
+  --r-sm: 7px;
 
-  --r-lg: 18px;
-  --r-md: 12px;
-  --r-sm: 8px;
-
-  --shadow: 0 1px 1px rgba(14,16,22,.04), 0 8px 24px rgba(14,16,22,.06);
-  --shadow-lift: 0 2px 4px rgba(14,16,22,.05), 0 18px 44px rgba(14,16,22,.10);
+  --shadow: 0 1px 2px rgba(15,23,41,.05);
+  --shadow-lift: 0 4px 6px rgba(15,23,41,.05), 0 12px 32px rgba(15,23,41,.09);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #14130f; --card: #1e1c17; --card-2: #26231d;
-    --edge: #322e26; --edge-soft: #2a2720;
-    --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #8e8779;
-    --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #23255c;
-    --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #17402c;
-    --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #402f14;
-    --stop: #e5695c; --stop-ink: #f3a49a; --stop-bg: #46221e;
-    --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #7d766a;
-    --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-    --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
+    --bg: #0d1117; --card: #161b22; --card-2: #1c222b;
+    --line: #262d38; --line-2: #313a47;
+    --ink: #e9eef6; --ink-2: #9aa7bb; --ink-3: #7c8ba1;
+    --brand: #f4635b; --brand-2: #f8807a; --brand-bg: #3a1f1e;
+    --ok: #4ac489; --ok-bg: #15342a; --warn: #e0a44a; --warn-bg: #382a14;
+    --bad: #ef6d64; --bad-bg: #3a1e1d;
+    --c1: #f0a35c; --c2: #6cb7f5; --c3: #9a95f0; --c4: #f08c83; --c5: #7d8a9d;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-lift: 0 4px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.5);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #14130f; --card: #1e1c17; --card-2: #26231d;
-  --edge: #322e26; --edge-soft: #2a2720;
-  --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #8e8779;
-  --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #23255c;
-  --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #17402c;
-  --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #402f14;
-  --stop: #e5695c; --stop-ink: #f3a49a; --stop-bg: #46221e;
-  --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #7d766a;
-  --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-  --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
-}
-
-:root[data-type="b"] {
-  --f-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --f-display-w: 700; --f-display-track: -.03em;
-  --f-ui: "Public Sans", system-ui, sans-serif;
-}
-:root[data-type="c"] {
-  --f-display: "Archivo", system-ui, sans-serif;
-  --f-display-w: 800; --f-display-track: -.035em;
-  --f-ui: "Archivo", system-ui, sans-serif;
+  --bg: #0d1117; --card: #161b22; --card-2: #1c222b;
+  --line: #262d38; --line-2: #313a47;
+  --ink: #e9eef6; --ink-2: #9aa7bb; --ink-3: #7c8ba1;
+  --brand: #f4635b; --brand-2: #f8807a; --brand-bg: #3a1f1e;
+  --ok: #4ac489; --ok-bg: #15342a; --warn: #e0a44a; --warn-bg: #382a14;
+  --bad: #ef6d64; --bad-bg: #3a1e1d;
+  --c1: #f0a35c; --c2: #6cb7f5; --c3: #9a95f0; --c4: #f08c83; --c5: #7d8a9d;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-lift: 0 4px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.5);
 }
 
 * { box-sizing: border-box; }
 
 body {
-  margin: 0; background: var(--paper); color: var(--ink);
-  font-family: var(--f-ui); font-size: 15px; line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Plus Jakarta Sans", -apple-system, system-ui, sans-serif;
+  font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  letter-spacing: -.008em;
 }
 
-.mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
-.serif { font-family: var(--f-display); font-weight: var(--f-display-w); letter-spacing: var(--f-display-track); }
-
-h1, h2, h3 { margin: 0; text-wrap: balance; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+h1,h2,h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
-ul, ol { margin: 0; padding: 0; list-style: none; }
+ul,ol { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; }
-:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; border-radius: var(--r-sm); }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: var(--r-sm); }
 
-.card { background: var(--card); border: 1px solid var(--edge); border-radius: var(--r-lg); box-shadow: var(--shadow); }
-.k {
-  font-family: var(--f-data); font-size: 10px; font-weight: 600;
-  letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
-}
-
-/* ===================== KUORI ============================================ */
-
-.app { display: grid; grid-template-columns: 246px minmax(0, 1fr); min-height: 100vh; }
-
-/* --- kisko -------------------------------------------------------------- */
-
-.rail {
-  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
-  background: var(--card-2); border-right: 1px solid var(--edge); padding: 22px 0 0;
-}
-.mark { display: flex; align-items: baseline; gap: 9px; padding: 0 22px 16px; }
-.mark .logo {
-  width: 26px; height: 26px; border-radius: 7px; flex: none;
-  background: var(--ink); color: var(--paper); display: flex;
-  align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
-  font-family: var(--f-display);
-}
-.mark .wm { font-size: 20px; line-height: 1; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
 
 /*
-   Kisko mahtuu ruudulle.
+ * Ruudukon osa ei saa kasvaa sisältönsä mukaan.
+ *
+ * CSS-ruudukon osan oletusleveys on min-content, joten yksi leveä
+ * taulukko työntää koko sivun ikkunaa leveämmäksi — ja vaakavieritys
+ * osuu silloin kaikkeen muuhunkin. Leveä sisältö vierii oman
+ * kääreensä sisällä, ei sivun.
+ */
+.app, .work, .view, .view > *, .kpis > *, .charts > * { min-width: 0; }
+.eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
 
-   Vieritettävä valikko on huono kahdesta syystä: kelaaminen piilottaa
-   kohtia joita ei tiedä etsiä, ja vierityspalkki on ainoa kohta koko
-   näkymässä jossa selaimen oma tyyli näkyisi läpi.
+/* ===================== KUORI =========================================== */
 
-   Ryhmiä on kolme entisen viiden sijaan. "Yleistä" yhdelle kohdalle
-   oli otsikko ilman ryhmää, ja Raportointi kuului Talouteen eikä
-   Ravintolaan — raportti on tiliote, ei ruokalista.
+.app { display: grid; grid-template-columns: 232px minmax(0,1fr); min-height: 100vh; }
 
-   Jos ikkuna on silti liian matala, palkki on ohut ja teeman värinen.
-*/
-.nav {
-  flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 10px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--edge) transparent;
+.side {
+  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+  background: var(--card); border-right: 1px solid var(--line);
 }
-.nav::-webkit-scrollbar { width: 8px; }
-.nav::-webkit-scrollbar-track { background: transparent; }
-.nav::-webkit-scrollbar-thumb {
-  background: var(--edge); border-radius: 999px;
-  border: 2px solid var(--card-2);
+.logo { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; }
+.logo .dot {
+  width: 26px; height: 26px; border-radius: 50%; flex: none; position: relative;
+  background: var(--brand);
 }
-.nav::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+.logo .dot::after {
+  content: ""; position: absolute; inset: 7px 6px 7px 9px;
+  border-radius: 50% 0 0 50%; background: var(--card);
+}
+.logo .wm { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
 
-.nav .grp { margin-bottom: 12px; }
-.nav .grp:last-child { margin-bottom: 0; }
-.nav .grp > p { padding: 0 8px 5px; }
-.nav a {
-  display: flex; align-items: center; gap: 10px; padding: 6px 10px;
-  border-radius: var(--r-sm); font-size: 14px; color: var(--ink-2);
+.menu { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px 12px;
+  scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.menu::-webkit-scrollbar { width: 8px }
+.menu::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 999px; border: 2px solid var(--card) }
+.menu a {
+  display: flex; align-items: center; gap: 11px; padding: 9px 11px; border-radius: var(--r-md);
+  font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-bottom: 2px;
   transition: background .15s, color .15s;
 }
-.nav a:hover { background: var(--edge-soft); color: var(--ink); }
-.nav a[aria-current="page"] {
-  background: var(--ink); color: var(--paper); font-weight: 600;
+.menu a:hover { background: var(--card-2); color: var(--ink) }
+.menu a[aria-current="page"] { background: var(--card-2); color: var(--ink); font-weight: 700 }
+.menu a svg { width: 17px; height: 17px; flex: none; opacity: .9 }
+.menu a .lbl { flex: 1; min-width: 0 }
+.menu a .n {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600; flex: none;
+  padding: 1px 6px; border-radius: 999px; background: var(--warn-bg); color: var(--warn);
 }
-.nav a .lbl { flex: 1; min-width: 0; }
-.nav a .n {
-  font-family: var(--f-data); font-size: 11px; font-weight: 600; flex: none;
-  padding: 1px 7px; border-radius: 999px; background: var(--edge-soft); color: var(--ink-2);
-}
-.nav a[aria-current="page"] .n { background: rgba(255,255,255,.18); color: var(--paper); }
-.nav a .n.warn { background: var(--hold-bg); color: var(--hold-ink); }
 
-.rail-foot { border-top: 1px solid var(--edge); padding: 12px 14px 14px; flex: none; }
+.side-foot { border-top: 1px solid var(--line); padding: 12px; flex: none }
+.bell-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-md); color: var(--ink-2); font-size: 13.5px; transition: background .15s }
+.bell-row:hover { background: var(--card-2) }
+.bell-row svg { width: 16px; height: 16px; flex: none }
+.bell-row .lbl { flex: 1 }
+.bell-row .n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center }
 
-/* Tili ei ole ravintolan työtä vaan tunnuksen hallintaa, joten se on
-   viivan alapuolella eikä valikossa. Kaksi riviä vierekkäin, koska
-   kumpaakaan ei paineta päivittäin. */
-.acct { display: flex; gap: 4px; padding-bottom: 10px; }
-.acct a {
-  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 7px 8px; border-radius: var(--r-sm); font-size: 12.5px;
-  color: var(--ink-2); transition: background .15s, color .15s;
-}
-.acct a:hover { background: var(--edge-soft); color: var(--ink); }
-.acct svg { width: 14px; height: 14px; flex: none; }
+.me { display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin-top: 4px; border-radius: var(--r-md); transition: background .15s }
+.me:hover { background: var(--card-2) }
+.me .av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: var(--brand-bg); color: var(--brand-2) }
+.me .who { flex: 1; min-width: 0 }
+.me .who .n { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.me .who .r { display: block; font-size: 11.5px; color: var(--ink-3) }
+.me .chev { color: var(--ink-3); flex: none }
+.me .chev svg { width: 14px; height: 14px; display: block }
 
-.me { display: flex; align-items: center; gap: 10px; padding: 2px 6px 11px; }
-.me .av {
-  width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex;
-  align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
-  background: var(--cobalt-bg); color: var(--cobalt-2);
+.themer { display: flex; gap: 3px; margin-top: 10px; padding: 3px; background: var(--card-2); border-radius: 999px }
+.themer button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 8px; border: 0; border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ink-2); font-size: 12.5px; font-weight: 600;
+  transition: background .15s, color .15s, box-shadow .15s;
 }
-.me .who { min-width: 0; }
-.me .who .n { display: block; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.me .who .r { display: block; font-size: 11.5px; color: var(--ink-3); }
-.add {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 11px; border-radius: var(--r-md); border: 0; cursor: pointer;
-  background: var(--ink); color: var(--paper); font-size: 13.5px; font-weight: 600;
-  transition: transform .16s;
-}
-.add:hover { transform: translateY(-1px); }
+.themer button svg { width: 14px; height: 14px }
+.themer button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow) }
 
 /* --- työalue ------------------------------------------------------------ */
 
-.work { min-width: 0; display: flex; flex-direction: column; }
+.work { min-width: 0; display: flex; flex-direction: column }
+.bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  padding: 14px 22px; background: var(--card); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 20;
+}
+.bar .where { min-width: 0; margin-right: auto }
+.bar .crumb { font-size: 11.5px; color: var(--ink-3) }
+.bar h1 { font-size: 18px; font-weight: 700; letter-spacing: -.02em; margin-top: 1px }
+.search {
+  display: flex; align-items: center; gap: 9px; width: min(340px, 100%);
+  padding: 8px 13px; border-radius: var(--r-md);
+  background: var(--card-2); border: 1px solid var(--line);
+}
+.search svg { width: 15px; height: 15px; color: var(--ink-3); flex: none }
+.search span { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.primary {
+  display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 0;
+  border-radius: var(--r-md); background: var(--brand); color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: background .15s, transform .15s;
+}
+.primary:hover { background: var(--brand-2); transform: translateY(-1px) }
+.primary svg { width: 15px; height: 15px }
+.avatar-btn { display: flex; align-items: center; gap: 5px; padding: 3px 7px 3px 3px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; cursor: pointer; color: var(--ink-2) }
+.avatar-btn .av { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-bg); color: var(--brand-2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700 }
+.avatar-btn svg { width: 13px; height: 13px }
 
-.top {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 24px 30px 20px; border-bottom: 1px solid var(--edge);
-}
-.top .where { min-width: 0; }
-.top .where h1 { font-size: 26px; line-height: 1.1; }
-.top .where .when { margin-top: 4px; font-size: 12px; }
-.tools { display: flex; align-items: center; gap: 8px; }
-.tool {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 50%; background: var(--card);
-  border: 1px solid var(--edge); color: var(--ink-2); cursor: pointer; position: relative;
-  transition: border-color .16s, transform .16s;
-}
-.tool:hover { border-color: var(--ink-3); transform: translateY(-1px); }
-.tool svg { width: 17px; height: 17px; }
-.tool .dot {
-  position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px; padding: 0 4px;
-  border-radius: 9px; background: var(--stop); color: #fff; font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; border: 2px solid var(--paper);
-}
-.ghost {
-  display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 15px;
-  border-radius: 999px; background: var(--card); border: 1px solid var(--edge);
-  color: var(--ink); font-size: 13.5px; font-weight: 600; cursor: pointer;
-  transition: transform .16s;
-}
-.ghost:hover { transform: translateY(-1px); }
+.view { padding: 18px 22px 40px; display: grid; gap: 14px }
+.view[hidden] { display: none }
 
-.view { padding: 24px 30px 40px; display: flex; flex-direction: column; gap: 0; }
-.view[hidden] { display: none; }
+/* ===================== KPI ============================================== */
 
-.head {
-  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
-  gap: 14px; margin: 30px 2px 14px;
-}
-.head:first-child { margin-top: 0; }
-.head .t { display: flex; align-items: baseline; gap: 12px; }
-.head h2 { font-size: 23px; line-height: 1; }
-.head .note { font-size: 13px; color: var(--ink-2); }
-.rule { flex: 1; height: 1px; background: var(--edge); min-width: 20px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 14px }
+.kpi { padding: 15px 16px; min-width: 0 }
+.kpi .top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 9px 11px }
+.kpi .tile { width: 34px; height: 34px; border-radius: var(--r-md); flex: none; display: flex; align-items: center; justify-content: center }
+.kpi .tile svg { width: 17px; height: 17px }
+.kpi .t1 { background: var(--brand-bg); color: var(--brand-2) }
+.kpi .t2 { background: var(--ok-bg); color: var(--ok) }
+.kpi .t3 { background: #eef1fd; color: #5b57d6 }
+.kpi .t4 { background: #eaf3fd; color: #2b7fd0 }
+.kpi .body { flex: 1; min-width: 0 }
+.kpi .lab { font-size: 12px; color: var(--ink-2); font-weight: 500 }
+.kpi .val { display: block; margin-top: 3px; font-size: 22px; font-weight: 800; letter-spacing: -.03em; white-space: nowrap }
+.pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; flex: none }
+.pill.up { background: var(--ok-bg); color: var(--ok) }
+.pill.dn { background: var(--bad-bg); color: var(--bad) }
+.pill.nu { background: var(--card-2); color: var(--ink-2) }
+.kpi .meter { margin-top: 11px; height: 4px; border-radius: 999px; background: var(--card-2); overflow: hidden }
+.kpi .meter i { display: block; height: 100%; border-radius: 999px }
+.kpi .foot { margin-top: 8px; font-size: 11.5px; color: var(--ink-3) }
+
+/* ===================== KORTIN OTSIKKO =================================== */
+
+.ch { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 15px 18px 0 }
+.ch h3 { font-size: 15px; font-weight: 700; letter-spacing: -.015em; margin-right: auto }
+.seg { display: flex; gap: 2px; padding: 3px; background: var(--card-2); border-radius: 999px }
+.seg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: pointer; transition: background .15s, color .15s }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow) }
 
 /* ===================== PALVELUPÄIVÄ ===================================== */
 
-.pass-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 20px 22px 0; }
-.pass-title { display: flex; align-items: center; gap: 11px; }
-.pass-title h3 { font-size: 17px; font-weight: 600; }
-.beat { position: relative; width: 10px; height: 10px; flex: none; }
-.beat i, .beat b { position: absolute; inset: 0; border-radius: 50%; background: var(--go); display: block; }
-.beat i { animation: beat 2.2s cubic-bezier(0,0,.2,1) infinite; }
+.pass .now-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 700 }
+.beat { position: relative; width: 8px; height: 8px; flex: none }
+.beat i, .beat b { position: absolute; inset: 0; border-radius: 50%; background: currentColor; display: block }
+.beat i { animation: beat 2.2s cubic-bezier(0,0,.2,1) infinite }
 @keyframes beat { 0% { transform: scale(1); opacity: .5 } 70%,100% { transform: scale(2.6); opacity: 0 } }
 
-.tally { display: flex; flex-wrap: wrap; gap: 7px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 12.5px; }
-.chip b { font-family: var(--f-data); font-weight: 600; }
-.chip.go { background: var(--go-bg); color: var(--go-ink) }
-.chip.wait { background: var(--card-2); color: var(--ink-2) }
-.chip.hold { background: var(--hold-bg); color: var(--hold-ink) }
+.rail { position: relative; padding: 16px 18px 14px }
+.glines { position: absolute; left: 18px; right: 18px; top: 16px; bottom: 44px; pointer-events: none }
+.glines i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line) }
+.nowline { position: absolute; top: 8px; bottom: 38px; width: 2px; background: var(--brand); z-index: 3; border-radius: 2px }
+.nowline::after { content: "14.38"; position: absolute; left: 50%; top: -22px; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; color: #fff; background: var(--ink); padding: 2px 6px; border-radius: 5px }
 
-.rail-wrap { position: relative; padding: 22px 22px 20px; }
-.gridlines { position: absolute; left: 22px; right: 22px; top: 22px; bottom: 52px; pointer-events: none; }
-.gridlines i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--edge-soft); }
-.nowline { position: absolute; top: 14px; bottom: 46px; width: 2px; background: var(--stop); z-index: 3; border-radius: 2px; }
-.nowline::before { content: ""; position: absolute; left: -3px; top: -6px; width: 8px; height: 8px; border-radius: 50%; background: var(--stop); }
-.nowline::after {
-  content: "14.38"; position: absolute; left: 50%; top: -26px; transform: translateX(-50%);
-  font-family: var(--f-data); font-size: 10.5px; font-weight: 600; color: #fff;
-  background: var(--stop); padding: 2px 6px; border-radius: 5px;
-}
-
-.lane { margin-bottom: 12px; }
-.lane:last-of-type { margin-bottom: 0; }
-.lane-name { margin-bottom: 6px; }
-.track { position: relative; height: 46px; }
+.lane { margin-bottom: 9px }
+.lane:last-of-type { margin-bottom: 0 }
+.lane > p { margin-bottom: 5px }
+.track { position: relative; height: 40px }
 .slot {
-  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 9px;
-  padding: 0 11px; border-radius: var(--r-md); overflow: hidden; border: 1px solid transparent;
-  transform-origin: left center; animation: slot .55s cubic-bezier(.32,.72,0,1) both;
-  transition: box-shadow .16s, transform .16s;
+  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px; border-radius: var(--r-md); overflow: hidden; border: 1px solid transparent;
+  transform-origin: left center; animation: slot .5s cubic-bezier(.32,.72,0,1) both;
+  transition: box-shadow .15s, transform .15s;
 }
-.slot:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); z-index: 4; }
+.slot:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); z-index: 4 }
 @keyframes slot { from { transform: scaleX(.02); opacity: 0 } to { transform: scaleX(1); opacity: 1 } }
-.slot .who { width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: var(--card); }
-.slot .lbl { min-width: 0; flex: 1 }
-.slot .lbl .n { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.slot .lbl .h { display: block; font-family: var(--f-data); font-size: 10.5px; opacity: .75 }
-.slot.go { background: var(--go-bg); color: var(--go-ink); border-color: color-mix(in srgb, var(--go) 32%, transparent) }
-.slot.wait { background: var(--card-2); color: var(--ink-2); border-color: var(--edge-soft) }
-.slot.hold { background: var(--hold-bg); color: var(--hold-ink); border-color: color-mix(in srgb, var(--hold) 45%, transparent) }
+.slot .av { width: 23px; height: 23px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; background: var(--card) }
+.slot .t { min-width: 0; flex: 1 }
+.slot .t .n { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.slot .t .h { display: block; font-family: "IBM Plex Mono", monospace; font-size: 10px; opacity: .75 }
+.slot.go { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 25%, transparent) }
+.slot.wait { background: var(--card-2); color: var(--ink-2); border-color: var(--line) }
+.slot.hold { background: var(--warn-bg); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 38%, transparent) }
 .slot.done { background: var(--card-2); color: var(--ink-3) }
-.throb { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor; animation: throb 1.9s ease-in-out infinite }
+.throb { width: 6px; height: 6px; border-radius: 50%; flex: none; background: currentColor; animation: throb 1.9s ease-in-out infinite }
 @keyframes throb { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
-.bang { flex: none; font-weight: 700; font-size: 14px; line-height: 1 }
-.clock-row { position: relative; height: 14px; margin-top: 10px }
-.clock-row span { position: absolute; transform: translateX(-50%); font-family: var(--f-data); font-size: 10.5px; color: var(--ink-3) }
+.bang { flex: none; font-weight: 800; font-size: 13px }
+.hours { position: relative; height: 13px; margin-top: 8px }
+.hours span { position: absolute; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--ink-3) }
 
-/* --- rauhallinen päivä: yksi rivi, ei koko kiskoa ---------------------- */
+/* ===================== KAAVIOT ========================================== */
 
-.pass-line {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
-  padding: 16px 22px;
-}
-.pass-line .txt { min-width: 0; flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px }
-.pass-line .h { font-size: 15px; font-weight: 600 }
-.pass-line .d { font-size: 13.5px; color: var(--ink-2) }
-.pass-line .next {
-  font-family: var(--f-data); font-size: 12.5px; color: var(--ink-2);
-  padding: 4px 11px; border-radius: 999px; background: var(--card-2);
-}
-.pass-line .more { font-size: 13px; font-weight: 600; color: var(--cobalt); flex: none; white-space: nowrap }
+.charts { display: grid; grid-template-columns: minmax(0,320px) minmax(0,1fr); gap: 14px }
+.donut-wrap { display: flex; flex-direction: column; align-items: center; padding: 14px 18px 18px }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; width: 100%; margin-top: 14px }
+.legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2) }
+.legend .sw { width: 9px; height: 9px; border-radius: 2px; flex: none }
+.legend .pc { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3) }
 
-:root[data-day="rauha"] [data-pass="full"] { display: none }
-:root:not([data-day="rauha"]) [data-pass="calm"] { display: none }
+.area { padding: 12px 18px 16px; position: relative }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 0 18px 14px }
+.chart-legend li { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink-2) }
+.chart-legend .sw { width: 10px; height: 3px; border-radius: 2px; flex: none }
 
-/* ===================== LUVUT ============================================ */
+/* ===================== TAULUKKO ========================================= */
 
-.figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px }
-.fig { padding: 17px 18px 16px }
-.fig .v { display: block; margin-top: 9px; font-size: 29px; line-height: 1 }
-.fig .m { display: block; margin-top: 7px; font-size: 12.5px; color: var(--ink-2) }
-.fig .m.up { color: var(--go-ink) }
-.fig .bar { margin-top: 12px; height: 5px; border-radius: 999px; background: var(--card-2); overflow: hidden }
-.fig .bar i { display: block; height: 100%; border-radius: 999px }
-
-.split { display: grid; grid-template-columns: 1.75fr 1fr; gap: 14px; align-items: start }
-.alerts { padding: 20px 22px 18px }
-.alerts .lead { display: flex; align-items: flex-start; gap: 13px }
-.alerts .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; margin-top: 7px; background: var(--hold); box-shadow: 0 0 0 4px var(--hold-bg) }
-.alerts h3 { font-size: 20px; line-height: 1.15 }
-.alerts .sub { margin-top: 5px; font-size: 13px; color: var(--ink-2) }
-.dockets { margin-top: 16px; display: flex; flex-direction: column; gap: 8px }
-.docket { display: flex; gap: 12px; padding: 13px 14px; border-radius: var(--r-md); background: var(--card-2); border-left: 3px solid var(--hold); transition: transform .16s, box-shadow .16s }
-.docket:hover { transform: translateX(2px); box-shadow: var(--shadow) }
-.docket.crit { border-left-color: var(--stop) }
-.docket .ic { flex: none; margin-top: 2px; color: var(--hold-ink) }
-.docket.crit .ic { color: var(--stop-ink) }
-.docket .ic svg { width: 16px; height: 16px; display: block }
-.docket .txt { min-width: 0; flex: 1 }
-.docket .h { font-size: 14px; font-weight: 600 }
-.docket .d { margin-top: 3px; font-size: 13px; color: var(--ink-2) }
-.docket .arrow { flex: none; align-self: center; color: var(--ink-3) }
-.docket .arrow svg { width: 15px; height: 15px; display: block }
-
-.month-card { padding: 22px; border-radius: var(--r-lg); background: var(--ink); color: var(--paper); box-shadow: var(--shadow-lift); position: relative; overflow: hidden }
-.month-card .k { opacity: .6 }
-.month-card .v { display: block; margin-top: 10px; font-size: 42px; line-height: .95 }
-.month-card .prev { margin-top: 10px; font-size: 12.5px; opacity: .6 }
-.month-card .delta { display: inline-flex; gap: 4px; margin-top: 14px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: color-mix(in srgb, var(--hold) 30%, transparent); color: #ffd89a }
-.month-card .acts { display: flex; gap: 8px; margin-top: 20px }
-.month-card .acts a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: transform .16s }
-.month-card .acts a:hover { transform: translateY(-1px) }
-.month-card .acts .a1 { background: var(--paper); color: var(--ink) }
-.month-card .acts .a2 { background: rgba(255,255,255,.13); color: var(--paper) }
-.month-card .spark { position: absolute; right: 20px; top: 24px; opacity: .85 }
-
-.rhythm { padding: 20px 22px 18px }
-.rhythm-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px }
-.rhythm-top h3 { font-size: 17px; font-weight: 600 }
-.rhythm-top .n { font-size: 12.5px; color: var(--ink-3) }
-.cols { display: flex; align-items: flex-end; gap: 3px; height: 100px; margin-top: 20px }
-.cols li { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative }
-.cols i { display: block; width: 100%; border-radius: 3px; transform-origin: bottom center; animation: col .5s cubic-bezier(.32,.72,0,1) both }
-@keyframes col { from { transform: scaleY(0); opacity: .3 } to { transform: scaleY(1); opacity: 1 } }
-.cols li:hover i { filter: brightness(1.12) }
-.tip { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); font-family: var(--f-data); font-size: 10.5px; padding: 4px 7px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 5 }
-.cols li:hover .tip { opacity: 1 }
-.days { display: flex; gap: 3px; margin-top: 7px }
-.days li { flex: 1; min-width: 0; text-align: center; font-family: var(--f-data); font-size: 9px; color: var(--ink-3) }
-.rhythm-foot { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 18px; font-size: 13px; color: var(--ink-2) }
-.rhythm-foot b { color: var(--ink); font-weight: 600 }
-
-.buys { padding: 20px 22px; margin-top: 14px }
-.buys-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px }
-.buys-top h3 { font-size: 17px; font-weight: 600 }
-.link { font-size: 13px; font-weight: 600; color: var(--cobalt) }
-.buys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px }
-.stack { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: var(--card-2) }
-.stack i { height: 100%; transform-origin: left center; animation: slot .6s cubic-bezier(.32,.72,0,1) both }
-.rows { margin-top: 13px }
-.row { display: flex; align-items: center; gap: 11px; padding: 8px 6px; border-radius: var(--r-sm); transition: background .15s }
-.row:hover { background: var(--card-2) }
-.row .swat { width: 9px; height: 9px; border-radius: 2px; flex: none }
-.row .nm { flex: 1; min-width: 0; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.row .amt { font-family: var(--f-data); font-size: 13px; font-weight: 600; flex: none }
-.row .pc { font-family: var(--f-data); font-size: 12px; color: var(--ink-3); width: 38px; text-align: right; flex: none }
-.vendor { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--r-sm); transition: background .15s }
-.vendor:hover { background: var(--card-2) }
-.vendor .logo { width: 30px; height: 30px; border-radius: var(--r-sm); flex: none; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: var(--card-2); color: var(--ink-2); border: 1px solid var(--edge-soft) }
-.vendor .who { flex: 1; min-width: 0 }
-.vendor .who .n { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.vendor .who .s { display: block; font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3) }
-.trend { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px; font-family: var(--f-data); font-size: 11px; font-weight: 600; flex: none }
-.trend.up { background: var(--hold-bg); color: var(--hold-ink) }
-.trend.down { background: var(--go-bg); color: var(--go-ink) }
-
-/* ===================== KUITIT =========================================== */
-
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px }
-.filt {
-  display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px;
-  background: var(--card); border: 1px solid var(--edge); color: var(--ink-2);
-  font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color .15s, color .15s;
-}
-.filt:hover { border-color: var(--ink-3); color: var(--ink) }
-.filt[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 600 }
-.filt .c { font-family: var(--f-data); font-size: 11px; opacity: .7 }
-
-.sheet { overflow: hidden }
 .tablewrap { overflow-x: auto }
-table { width: 100%; border-collapse: collapse; min-width: 620px }
+table { width: 100%; border-collapse: collapse; min-width: 660px }
 thead th {
-  text-align: left; padding: 13px 18px; background: var(--card-2);
-  font-family: var(--f-data); font-size: 10px; font-weight: 600;
-  letter-spacing: .11em; text-transform: uppercase; color: var(--ink-3);
-  border-bottom: 1px solid var(--edge); white-space: nowrap;
+  text-align: left; padding: 11px 16px; background: var(--card-2);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-3); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line);
+  white-space: nowrap;
 }
-thead th.r { text-align: right }
-tbody td { padding: 13px 18px; border-bottom: 1px solid var(--edge-soft); font-size: 13.5px; vertical-align: middle }
+thead th:last-child { border-right: 0 }
+tbody td { padding: 12px 16px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); font-size: 13px }
+tbody td:last-child { border-right: 0 }
 tbody tr:last-child td { border-bottom: 0 }
 tbody tr { transition: background .14s }
 tbody tr:hover { background: var(--card-2) }
-td.r { text-align: right; font-family: var(--f-data); font-weight: 600 }
-td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
-.who-cell { display: flex; align-items: center; gap: 10px }
-.who-cell .logo { width: 28px; height: 28px; border-radius: var(--r-sm); flex: none; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; background: var(--card-2); color: var(--ink-2); border: 1px solid var(--edge-soft) }
-.tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap }
-.tag.ok { background: var(--go-bg); color: var(--go-ink) }
-.tag.warn { background: var(--hold-bg); color: var(--hold-ink) }
-.tag.bad { background: var(--stop-bg); color: var(--stop-ink) }
+td.num { font-family: "IBM Plex Mono", monospace; font-weight: 600 }
+td.num.out { color: var(--bad) }
+td.num.in { color: var(--ok) }
+td.date { font-family: "IBM Plex Mono", monospace; color: var(--ink-2); white-space: nowrap }
+.who-cell { display: flex; align-items: center; gap: 9px }
+.who-cell .logo { width: 26px; height: 26px; border-radius: var(--r-sm); flex: none; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: var(--card-2); color: var(--ink-2); border: 1px solid var(--line) }
+.status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: var(--card-2); color: var(--ink-2) }
+.status svg { width: 12px; height: 12px }
+.status.ok { background: var(--ok-bg); color: var(--ok) }
+.status.warn { background: var(--warn-bg); color: var(--warn) }
+.status.bad { background: var(--bad-bg); color: var(--bad) }
 
-/* ===================== TYÖVUOROT ======================================== */
+/* ===================== HUOMIO =========================================== */
+
+.notes { padding: 15px 18px 16px }
+.notes h3 { font-size: 15px; font-weight: 700 }
+.notes .sub { margin-top: 3px; font-size: 12.5px; color: var(--ink-2) }
+.notelist { margin-top: 13px; display: flex; flex-direction: column; gap: 8px }
+.note { display: flex; gap: 11px; padding: 11px 13px; border-radius: var(--r-md); background: var(--card-2); border-left: 3px solid var(--warn); transition: transform .15s }
+.note:hover { transform: translateX(2px) }
+.note.crit { border-left-color: var(--bad) }
+.note .ic { flex: none; margin-top: 1px; color: var(--warn) }
+.note.crit .ic { color: var(--bad) }
+.note .ic svg { width: 15px; height: 15px; display: block }
+.note .tx { flex: 1; min-width: 0 }
+.note .h { font-size: 13px; font-weight: 600 }
+.note .d { margin-top: 2px; font-size: 12.5px; color: var(--ink-2) }
+.note .go { flex: none; align-self: center; color: var(--ink-3) }
+.note .go svg { width: 14px; height: 14px; display: block }
+
+/* ===================== RYTMI ============================================ */
+
+.rhythm { padding: 0 18px 16px }
+.cols { display: flex; align-items: flex-end; gap: 3px; height: 84px; margin-top: 14px }
+.cols li { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative }
+.cols i { display: block; width: 100%; border-radius: 3px; transform-origin: bottom center; animation: col .45s cubic-bezier(.32,.72,0,1) both }
+@keyframes col { from { transform: scaleY(0); opacity: .3 } to { transform: scaleY(1); opacity: 1 } }
+.tip { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--card); font-family: "IBM Plex Mono", monospace; font-size: 10px; padding: 3px 7px; border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 5 }
+.cols li:hover .tip { opacity: 1 }
+.days { display: flex; gap: 3px; margin-top: 6px }
+.days li { flex: 1; min-width: 0; text-align: center; font-family: "IBM Plex Mono", monospace; font-size: 8.5px; color: var(--ink-3) }
+.rfoot { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 14px; font-size: 12.5px; color: var(--ink-2) }
+.rfoot b { color: var(--ink); font-weight: 700 }
+
+/* ===================== VUOROT =========================================== */
 
 .roster { overflow-x: auto }
-.grid7 { min-width: 780px }
-.grid7 .hdr, .grid7 .r7 { display: grid; grid-template-columns: 168px repeat(7, 1fr) }
-.grid7 .hdr { background: var(--card-2); border-bottom: 1px solid var(--edge) }
-.grid7 .hdr span { padding: 12px 10px; text-align: center }
-.grid7 .hdr span:first-child { text-align: left; padding-left: 18px }
-.grid7 .hdr .dd { display: block; font-family: var(--f-data); font-size: 15px; font-weight: 600; color: var(--ink) }
-.grid7 .hdr .wd { display: block; font-family: var(--f-data); font-size: 9.5px; letter-spacing: .11em; text-transform: uppercase; color: var(--ink-3) }
-.grid7 .hdr .today .dd { color: var(--stop) }
-.grid7 .r7 { border-bottom: 1px solid var(--edge-soft) }
-.grid7 .r7:last-child { border-bottom: 0 }
-.grid7 .person { display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; min-width: 0 }
-.grid7 .person .av { width: 28px; height: 28px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; background: var(--cobalt-bg); color: var(--cobalt-2) }
-.grid7 .person .t { min-width: 0 }
-.grid7 .person .t .n { display: block; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.grid7 .person .t .p { display: block; font-size: 11.5px; color: var(--ink-3) }
-.cell { padding: 7px 5px; display: flex; align-items: center; justify-content: center; border-left: 1px solid var(--edge-soft) }
-.cell.today { background: color-mix(in srgb, var(--hold) 6%, transparent) }
-.sh {
-  width: 100%; padding: 6px 4px; border-radius: var(--r-sm); text-align: center;
-  font-family: var(--f-data); font-size: 11px; font-weight: 600; line-height: 1.35;
-  background: var(--cobalt-bg); color: var(--cobalt-2); cursor: default;
-  transition: transform .14s;
-}
-.sh:hover { transform: scale(1.04) }
-.sh.kitchen { background: var(--go-bg); color: var(--go-ink) }
-.sh.open { background: transparent; border: 1px dashed var(--hold); color: var(--hold-ink) }
+.g7 { min-width: 760px }
+.g7 .hd, .g7 .r { display: grid; grid-template-columns: 158px repeat(7, 1fr) }
+.g7 .hd { background: var(--card-2); border-bottom: 1px solid var(--line) }
+.g7 .hd span { padding: 10px 8px; text-align: center }
+.g7 .hd span:first-child { text-align: left; padding-left: 16px; align-self: center }
+.g7 .hd .dd { display: block; font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 600 }
+.g7 .hd .wd { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3) }
+.g7 .hd .tod .dd { color: var(--brand) }
+.g7 .r { border-bottom: 1px solid var(--line) }
+.g7 .r:last-child { border-bottom: 0 }
+.g7 .p { display: flex; align-items: center; gap: 9px; padding: 9px 10px 9px 16px; min-width: 0 }
+.g7 .p .av { width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: var(--card-2); color: var(--ink-2) }
+.g7 .p .t { min-width: 0 }
+.g7 .p .t .n { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.g7 .p .t .q { display: block; font-size: 11px; color: var(--ink-3) }
+.cell { padding: 6px 4px; display: flex; align-items: center; justify-content: center; border-left: 1px solid var(--line) }
+.cell.tod { background: var(--card-2) }
+.sh { width: 100%; padding: 5px 3px; border-radius: var(--r-sm); text-align: center; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600; background: #eef1fd; color: #4b47c9; transition: transform .13s }
+.sh:hover { transform: scale(1.05) }
+.sh.kit { background: var(--ok-bg); color: var(--ok) }
+.sh.open { background: transparent; border: 1px dashed var(--warn); color: var(--warn) }
 .sh.off { background: transparent; color: var(--ink-3); font-weight: 400 }
-.week-foot { display: flex; flex-wrap: wrap; gap: 22px; padding: 16px 18px; border-top: 1px solid var(--edge); font-size: 13px; color: var(--ink-2) }
-.week-foot b { color: var(--ink); font-weight: 600 }
+.wfoot { display: flex; flex-wrap: wrap; gap: 20px; padding: 14px 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-2) }
+.wfoot b { color: var(--ink); font-weight: 700 }
 
-/* ===================== VAIHDIN ========================================== */
+/* ===================== SUODATTIMET ====================================== */
 
-.typepick {
-  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 100;
-  display: flex; align-items: center; gap: 4px; padding: 5px;
-  background: var(--ink); border-radius: 999px; box-shadow: var(--shadow-lift);
-  max-width: calc(100vw - 24px);
-}
-.typepick { flex-wrap: wrap; justify-content: center }
-.typepick .lbl { font-family: var(--f-data); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--paper); opacity: .5; padding: 0 8px 0 11px; white-space: nowrap }
-.typepick .div { width: 1px; align-self: stretch; margin: 3px 6px; background: var(--paper); opacity: .18 }
-.typepick button { padding: 7px 12px }
-.typepick button { border: 0; cursor: pointer; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; color: var(--paper); opacity: .62; transition: background .16s, opacity .16s; white-space: nowrap }
-.typepick button:hover { opacity: .9 }
-.typepick button[aria-pressed="true"] { background: var(--paper); color: var(--ink); opacity: 1 }
+.filters { display: flex; flex-wrap: wrap; gap: 7px }
+.filt { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--ink-2); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, color .15s }
+.filt:hover { border-color: var(--line-2); color: var(--ink) }
+.filt[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--card) }
+.filt .c { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; opacity: .7 }
 
-.rise { animation: rise .5s cubic-bezier(.32,.72,0,1) both }
-@keyframes rise { from { opacity: 0; transform: translateY(11px) } to { opacity: 1; transform: none } }
+.rise { animation: rise .45s cubic-bezier(.32,.72,0,1) both }
+@keyframes rise { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: none } }
 
-@media (max-width: 1080px) {
-  .figs { grid-template-columns: repeat(2, 1fr) }
-  .split { grid-template-columns: 1fr }
-  .buys-grid { grid-template-columns: 1fr; gap: 26px }
-}
+@media (max-width: 1180px) { .charts { grid-template-columns: 1fr } }
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr }
-  .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--edge) }
-  .nav { max-height: none }
-  .nav .grp { margin-bottom: 14px }
-  .view, .top { padding-left: 18px; padding-right: 18px }
-  .typepick .lbl { display: none }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line) }
+  .view, .bar { padding-left: 16px; padding-right: 16px }
+  .search { width: 100% }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important }
-}
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important } }
 </style>
 </head>
 <body>
@@ -549,276 +417,325 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
 
 <div class="app">
 
-  <!-- ======================= KISKO ======================= -->
-  <aside class="rail">
-    <div class="mark">
-      <span class="logo">B</span>
-      <span class="serif wm">Budet</span>
-    </div>
+  <!-- =================== SIVUPALKKI =================== -->
+  <aside class="side">
+    <div class="logo"><span class="dot"></span><span class="wm">Budet</span></div>
 
-    <nav class="nav" aria-label="Hallinta">
-      <div class="grp">
-        <a href="#" data-go="yleiskatsaus" aria-current="page"><span class="lbl">Yleiskatsaus</span></a>
-      </div>
+    <nav class="menu" aria-label="Hallinta">
+      <a href="#" data-go="yleis" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>
+        <span class="lbl">Yleiskatsaus</span></a>
 
-      <div class="grp">
-        <p class="k">Talous</p>
-        <a href="#" data-go="kuitit"><span class="lbl">Kuitit</span><span class="n warn">3</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Kulut</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Budjetit</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Toimittajat</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Raportointi</span></a>
-      </div>
+      <a href="#" data-go="kuitit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 9h6M9 13h4" stroke-linecap="round"/></svg>
+        <span class="lbl">Kuitit</span><span class="n">3</span></a>
 
-      <div class="grp">
-        <p class="k">Henkilöstö</p>
-        <a href="#" data-go="vuorot"><span class="lbl">Työvuorot</span><span class="n warn">2</span></a>
-        <a href="#" data-go="vuorot"><span class="lbl">Työntekijät</span><span class="n">6</span></a>
-        <a href="#" data-go="vuorot"><span class="lbl">Palkat</span></a>
-      </div>
+      <a href="#" data-go="yleis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/></svg>
+        <span class="lbl">Kulut</span></a>
 
-      <div class="grp">
-        <p class="k">Ravintola</p>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Lounas</span></a>
-      </div>
+      <a href="#" data-go="yleis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.5l6 3" stroke-linecap="round"/></svg>
+        <span class="lbl">Budjetit</span></a>
+
+      <a href="#" data-go="yleis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8.5 12 4l9 4.5-9 4.5z"/><path d="M3 12.5 12 17l9-4.5M3 16.5 12 21l9-4.5"/></svg>
+        <span class="lbl">Toimittajat</span></a>
+
+      <a href="#" data-go="vuorot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2.2"/><path d="M3 10h18M8 3v4M16 3v4" stroke-linecap="round"/></svg>
+        <span class="lbl">Työvuorot</span><span class="n">2</span></a>
+
+      <a href="#" data-go="vuorot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5.4a3.4 3.4 0 0 1 0 5.2M18 14.4a6.5 6.5 0 0 1 3.5 5.6"/></svg>
+        <span class="lbl">Työntekijät</span></a>
+
+      <a href="#" data-go="vuorot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.5v19M16.5 6.5H9.8a2.8 2.8 0 0 0 0 5.6h4.4a2.8 2.8 0 0 1 0 5.6H7"/></svg>
+        <span class="lbl">Palkat</span></a>
+
+      <a href="#" data-go="yleis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M6 20V9.5M18 20V9.5"/><path d="M3.5 9.5 12 4l8.5 5.5z" stroke-linejoin="round"/></svg>
+        <span class="lbl">Lounas</span></a>
+
+      <a href="#" data-go="yleis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5"/></svg>
+        <span class="lbl">Raportointi</span></a>
     </nav>
 
-    <div class="rail-foot">
-      <div class="acct">
-        <a href="#">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6" stroke-linecap="round"/></svg>
-          Asetukset
-        </a>
-        <a href="#">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/><path d="m17 15 3-3-3-3M20 12H9"/></svg>
-          Kirjaudu ulos
-        </a>
-      </div>
+    <div class="side-foot">
+      <a class="bell-row" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9"/><path d="M13.7 19a2 2 0 0 1-3.4 0"/></svg>
+        <span class="lbl">Ilmoitukset</span><span class="n">2</span>
+      </a>
 
-      <div class="me">
+      <a class="me" href="#">
         <span class="av">OM</span>
-        <span class="who"><span class="n">Oktay Matias</span><span class="r">Omistaja · Cafe Monami</span></span>
+        <span class="who"><span class="n">Oktay Matias</span><span class="r">Omistaja</span></span>
+        <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9 4-4 4 4M8 15l4 4 4-4"/></svg></span>
+      </a>
+
+      <div class="themer" role="group" aria-label="Teema">
+        <button type="button" data-theme-set="light" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M22 12h-2M4 12H2M18.4 5.6l-1.4 1.4M7 17l-1.4 1.4M18.4 18.4 17 17M7 7 5.6 5.6"/></svg>
+          Vaalea
+        </button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5"/></svg>
+          Tumma
+        </button>
       </div>
-      <button class="add" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Lisää kuitti
-      </button>
     </div>
   </aside>
 
-  <!-- ======================= TYÖALUE ======================= -->
+  <!-- =================== TYÖALUE =================== -->
   <main class="work">
 
-    <header class="top">
+    <header class="bar">
       <div class="where">
-        <h1 class="serif" id="page-title">Yleiskatsaus</h1>
-        <p class="mono when" style="color:var(--ink-2)">MA 24.08.2026 · 14.38 · ILTAVUORO</p>
+        <p class="crumb">Cafe Monami · MA 24.08.2026</p>
+        <h1 id="ptitle">Yleiskatsaus</h1>
       </div>
-      <div class="tools">
-        <button class="tool" type="button" aria-label="Haku"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-        <button class="tool" type="button" aria-label="Matti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.5 10.1 12.8 4.5 10.9 10.1 9z"/></svg></button>
-        <button class="tool" type="button" aria-label="Ilmoitukset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9"/><path d="M13.7 19a2 2 0 0 1-3.4 0"/></svg><span class="dot">2</span></button>
-        <button class="ghost" type="button">Elokuu
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-        </button>
-      </div>
+
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Etsi kuitteja, toimittajia, työntekijöitä…</span></div>
+
+      <button class="primary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Lisää kuitti
+      </button>
+
+      <button class="avatar-btn" type="button" aria-label="Tunnus">
+        <span class="av">OM</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
     </header>
 
-    <!-- ---------------- YLEISKATSAUS ---------------- -->
-    <div class="view" data-view="yleiskatsaus">
+    <!-- ---------- YLEISKATSAUS ---------- -->
+    <div class="view" data-view="yleis">
 
-      <div class="head"><div class="t"><h2 class="serif">Nyt</h2></div><span class="rule"></span></div>
+      <section class="kpis" aria-label="Avainluvut">
+        <div class="card kpi rise">
+          <div class="top">
+            <span class="tile t1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/></svg></span>
+            <div class="body"><p class="lab">Kirjatut kulut</p><span class="val mono">3 482,60 €</span></div>
+            <span class="pill dn">▲ 12,4 %</span>
+          </div>
+          <p class="foot">3 098,20 € heinäkuussa</p>
+        </div>
 
-      <section class="card rise" data-pass="calm" aria-label="Palvelupäivä">
-        <div class="pass-line">
-          <span class="beat" aria-hidden="true"><i></i><b></b></span>
-          <span class="txt">
-            <span class="h">Kaikki paikalla</span>
-            <span class="d">3 töissä · 2 tulossa tänään</span>
-            <span class="next">Seuraava · Liisa Koski 17.00</span>
-          </span>
-          <a class="more" href="#">Työvuorot →</a>
+        <div class="card kpi rise">
+          <div class="top">
+            <span class="tile t2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 17 9.5 11l3.5 3.5L20 7"/><path d="M15 7h5v5"/></svg></span>
+            <div class="body"><p class="lab">Myynti tänään</p><span class="val mono">1 240,00 €</span></div>
+            <span class="pill up">▲ 8,0 %</span>
+          </div>
+          <p class="foot">1 148,00 € viime maanantaina</p>
+        </div>
+
+        <div class="card kpi rise">
+          <div class="top">
+            <span class="tile t3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.5l6 3" stroke-linecap="round"/></svg></span>
+            <div class="body"><p class="lab">Budjetti jäljellä</p><span class="val mono">1 637,40 €</span></div>
+            <span class="pill nu">68 %</span>
+          </div>
+          <div class="meter"><i style="width:68%;background:#5b57d6"></i></div>
+        </div>
+
+        <div class="card kpi rise">
+          <div class="top">
+            <span class="tile t4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5.4a3.4 3.4 0 0 1 0 5.2M18 14.4a6.5 6.5 0 0 1 3.5 5.6"/></svg></span>
+            <div class="body"><p class="lab">Töissä nyt</p><span class="val mono">3 / 6</span></div>
+            <span class="pill nu">2 tulossa</span>
+          </div>
+          <p class="foot">Seuraava: Liisa Koski 17.00</p>
         </div>
       </section>
 
-      <section class="card rise" data-pass="full" aria-label="Palvelupäivä">
-        <div class="pass-top">
-          <div class="pass-title"><span class="beat" aria-hidden="true"><i></i><b></b></span><h3>Päivä käynnissä</h3></div>
-          <div class="tally">
-            <span class="chip go"><b>3</b> töissä</span>
-            <span class="chip wait"><b>2</b> tulossa</span>
-            <span class="chip hold"><b>1</b> huomiota</span>
-          </div>
+      <section class="card pass rise" aria-label="Palvelupäivä">
+        <div class="ch">
+          <h3>Palvelupäivä</h3>
+          <span class="now-badge"><span class="beat" aria-hidden="true"><i></i><b></b></span>Käynnissä</span>
         </div>
 
-        <div class="rail-wrap">
-          <div class="gridlines" aria-hidden="true">
-            <i style="left:0%"></i><i style="left:16.6%"></i><i style="left:33.3%"></i><i style="left:50%"></i>
-            <i style="left:66.6%"></i><i style="left:83.3%"></i><i style="left:100%"></i>
-          </div>
-          <div class="nowline" style="left:calc(22px + (100% - 44px) * .463)" aria-hidden="true"></div>
+        <div class="rail">
+          <div class="glines" aria-hidden="true"><i style="left:0%"></i><i style="left:16.6%"></i><i style="left:33.3%"></i><i style="left:50%"></i><i style="left:66.6%"></i><i style="left:83.3%"></i><i style="left:100%"></i></div>
+          <div class="nowline" style="left:calc(18px + (100% - 36px) * .463)" aria-hidden="true"></div>
 
-          <div class="lane">
-            <p class="k lane-name">Vuoropäällikkö</p>
-            <div class="track">
-              <div class="slot go" style="left:8.3%;width:55.5%;animation-delay:.12s">
-                <span class="who">OM</span><span class="lbl"><span class="n">Oktay Matias</span><span class="h">10.00–20.00</span></span>
-                <span class="throb" aria-hidden="true"></span>
-              </div>
-            </div>
-          </div>
+          <div class="lane"><p class="eyebrow">Vuoropäällikkö</p><div class="track">
+            <div class="slot go" style="left:8.3%;width:55.5%;animation-delay:.1s"><span class="av">OM</span><span class="t"><span class="n">Oktay Matias</span><span class="h">10.00–20.00</span></span><span class="throb"></span></div>
+          </div></div>
 
-          <div class="lane">
-            <p class="k lane-name">Sali</p>
-            <div class="track">
-              <div class="slot done" style="left:0%;width:27.7%;animation-delay:.19s">
-                <span class="who">MS</span><span class="lbl"><span class="n">Minna Salo</span><span class="h">09.00–14.00</span></span></div>
-              <div class="slot go" style="left:27.7%;width:38.8%;animation-delay:.26s">
-                <span class="who">JV</span><span class="lbl"><span class="n">Jussi Virta</span><span class="h">14.00–21.00</span></span>
-                <span class="throb" aria-hidden="true"></span></div>
-              <div class="slot wait" style="left:66.6%;width:22.2%;animation-delay:.33s">
-                <span class="who">LK</span><span class="lbl"><span class="n">Liisa Koski</span><span class="h">17.00–21.00</span></span></div>
-            </div>
-          </div>
+          <div class="lane"><p class="eyebrow">Sali</p><div class="track">
+            <div class="slot done" style="left:0%;width:27.7%;animation-delay:.16s"><span class="av">MS</span><span class="t"><span class="n">Minna Salo</span><span class="h">09.00–14.00</span></span></div>
+            <div class="slot go" style="left:27.7%;width:38.8%;animation-delay:.22s"><span class="av">JV</span><span class="t"><span class="n">Jussi Virta</span><span class="h">14.00–21.00</span></span><span class="throb"></span></div>
+            <div class="slot wait" style="left:66.6%;width:22.2%;animation-delay:.28s"><span class="av">LK</span><span class="t"><span class="n">Liisa Koski</span><span class="h">17.00–21.00</span></span></div>
+          </div></div>
 
-          <div class="lane">
-            <p class="k lane-name">Keittiö</p>
-            <div class="track">
-              <div class="slot go" style="left:5.5%;width:33.3%;animation-delay:.4s">
-                <span class="who">PN</span><span class="lbl"><span class="n">Pekka Nieminen</span><span class="h">09.30–15.30</span></span>
-                <span class="throb" aria-hidden="true"></span></div>
-              <div class="slot hold" style="left:38.8%;width:33.3%;animation-delay:.47s">
-                <span class="who">AK</span><span class="lbl"><span class="n">Ali Karhu</span><span class="h">14.00–20.00</span></span>
-                <span class="bang" aria-hidden="true">!</span></div>
-            </div>
-          </div>
+          <div class="lane"><p class="eyebrow">Keittiö</p><div class="track">
+            <div class="slot go" style="left:5.5%;width:33.3%;animation-delay:.34s"><span class="av">PN</span><span class="t"><span class="n">Pekka Nieminen</span><span class="h">09.30–15.30</span></span><span class="throb"></span></div>
+            <div class="slot hold" style="left:38.8%;width:33.3%;animation-delay:.4s"><span class="av">AK</span><span class="t"><span class="n">Ali Karhu</span><span class="h">14.00–20.00</span></span><span class="bang">!</span></div>
+          </div></div>
 
-          <div class="clock-row" aria-hidden="true">
+          <div class="hours" aria-hidden="true">
             <span style="left:0%">09.00</span><span style="left:16.6%">11.00</span><span style="left:33.3%">13.00</span>
-            <span style="left:50%">15.00</span><span style="left:66.6%">17.00</span><span style="left:83.3%">19.00</span>
-            <span style="left:100%">21.00</span>
+            <span style="left:50%">15.00</span><span style="left:66.6%">17.00</span><span style="left:83.3%">19.00</span><span style="left:100%">21.00</span>
           </div>
         </div>
       </section>
 
-      <div class="head"><div class="t"><h2 class="serif">Huomio</h2><span class="note">Nämä eivät odota kuukauden vaihtumista</span></div><span class="rule"></span></div>
+      <section class="charts">
+        <div class="card">
+          <div class="ch"><h3>Kulujakauma</h3></div>
+          <div class="donut-wrap">
+            <svg width="188" height="188" viewBox="0 0 188 188" role="img" aria-label="Kulujakauma kategorioittain">
+              <g transform="rotate(-90 94 94)" fill="none" stroke-width="26" stroke-linecap="butt">
+                <circle cx="94" cy="94" r="72" stroke="var(--card-2)" stroke-width="26"/>
+                <circle cx="94" cy="94" r="72" stroke="var(--c1)" stroke-dasharray="262.4 452.4" stroke-dashoffset="0"/>
+                <circle cx="94" cy="94" r="72" stroke="var(--c2)" stroke-dasharray="86 452.4" stroke-dashoffset="-262.4"/>
+                <circle cx="94" cy="94" r="72" stroke="var(--c3)" stroke-dasharray="54.3 452.4" stroke-dashoffset="-348.4"/>
+                <circle cx="94" cy="94" r="72" stroke="var(--c4)" stroke-dasharray="31.7 452.4" stroke-dashoffset="-402.7"/>
+                <circle cx="94" cy="94" r="72" stroke="var(--c5)" stroke-dasharray="18.1 452.4" stroke-dashoffset="-434.4"/>
+              </g>
+              <text x="94" y="88" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink-3)" letter-spacing=".06em">ELOKUU</text>
+              <text x="94" y="108" text-anchor="middle" font-size="17" font-weight="800" fill="var(--ink)" font-family="IBM Plex Mono, monospace">3 482 €</text>
+            </svg>
 
-      <div class="split">
-        <section class="card alerts rise" aria-label="Huomiota vaativat">
-          <div class="lead">
-            <span class="swatch" aria-hidden="true"></span>
-            <div><h3 class="serif">2 asiaa vaatii huomiota</h3>
-              <p class="sub">Yksi keittiössä juuri nyt, yksi kirjanpidossa.</p></div>
-          </div>
-          <ul class="dockets">
-            <li><a class="docket crit" href="#">
-              <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v5"/><path d="M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></span>
-              <span class="txt"><span class="h">Ali Karhu ei ole leimannut sisään</span>
-                <span class="d">Vuoro 14.00–20.00 alkoi 38 minuuttia sitten. Soita tai tarkista onko hän paikalla.</span></span>
-              <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
-            </a></li>
-            <li><a class="docket" href="#">
-              <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 9h6M9 13h4"/></svg></span>
-              <span class="txt"><span class="h">Metro Tukun kuitista puuttuu ALV</span>
-                <span class="d">21.8. · 96,40 € — täydennä ennen kuin elokuu suljetaan kirjanpitoon.</span></span>
-              <span class="arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
-            </a></li>
-          </ul>
-        </section>
-
-        <div class="month-card rise">
-          <svg class="spark" width="104" height="34" viewBox="0 0 104 34" fill="none" aria-hidden="true">
-            <path d="M0 26 L20 21 L41 24 L62 13 L83 17 L104 6" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="104" cy="6" r="2.6" fill="#ffd89a"/>
-          </svg>
-          <p class="k">Kirjatut kulut · elokuu</p>
-          <span class="serif v">3 482,60 €</span>
-          <p class="prev">3 098,20 € heinäkuussa</p>
-          <span class="delta">↑ 12,4 %</span>
-          <div class="acts">
-            <a class="a1" href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Lisää kuitti</a>
-            <a class="a2" href="#">Avaa kulut</a>
+            <ul class="legend">
+              <li><span class="sw" style="background:var(--c1)"></span>Ruoka-aineet<span class="pc">58 %</span></li>
+              <li><span class="sw" style="background:var(--c2)"></span>Juomat<span class="pc">19 %</span></li>
+              <li><span class="sw" style="background:var(--c3)"></span>Siivous<span class="pc">12 %</span></li>
+              <li><span class="sw" style="background:var(--c4)"></span>Pakkaukset<span class="pc">7 %</span></li>
+              <li><span class="sw" style="background:var(--c5)"></span>Muut<span class="pc">4 %</span></li>
+            </ul>
           </div>
         </div>
-      </div>
 
-      <div class="head"><div class="t"><h2 class="serif">Tänään</h2><span class="note">Maanantai 24. elokuuta</span></div><span class="rule"></span></div>
-
-      <section class="figs" aria-label="Päivän luvut">
-        <div class="card fig rise"><p class="k">Myynti</p><span class="serif v">1 240,00 €</span>
-          <span class="m up">+8 % vs. sama viikonpäivä</span><div class="bar"><i style="width:64%;background:var(--go)"></i></div></div>
-        <div class="card fig rise"><p class="k">Työvoima</p><span class="serif v">312,50 €</span>
-          <span class="m">25 % myynnistä · 21 h 20 min</span><div class="bar"><i style="width:25%;background:var(--cobalt)"></i></div></div>
-        <div class="card fig rise"><p class="k">Kulut</p><span class="serif v">418,90 €</span>
-          <span class="m">1 kuitti · Kespro</span><div class="bar"><i style="width:34%;background:var(--s2)"></i></div></div>
-        <div class="card fig rise"><p class="k">Kuukausi tähän asti</p><span class="serif v">4 118,00 €</span>
-          <span class="m">Myynti − kulut − työvoima. Karkea.</span><div class="bar"><i style="width:52%;background:var(--s3)"></i></div></div>
-      </section>
-
-      <div class="head"><div class="t"><h2 class="serif">Elokuu 2026</h2></div><span class="rule"></span></div>
-
-      <section class="card rhythm rise" aria-label="Kulurytmi">
-        <div class="rhythm-top"><h3>Kulurytmi</h3><p class="n">Kuluja 12 päivänä · 7 päivää jäljellä</p></div>
-        <ol class="cols" id="cols"></ol>
-        <ol class="days" id="days" aria-hidden="true"></ol>
-        <div class="rhythm-foot">
-          <p><b>58 %</b> kuluista osuu torstaisin</p>
-          <p>Suurin päivä <b>20.8.</b> <span class="mono">1 044,80 €</span></p>
-          <p>Keskimäärin <span class="mono">290,22 €</span> / ostopäivä</p>
-        </div>
-      </section>
-
-      <section class="card buys rise" aria-label="Ostot">
-        <div class="buys-top"><h3>Ostot</h3><a class="link" href="#">Kaikki kulut →</a></div>
-        <div class="buys-grid">
-          <div>
-            <p class="k" style="margin-bottom:12px">Mihin</p>
-            <div class="stack" aria-hidden="true">
-              <i style="width:58%;background:var(--s1);animation-delay:.4s"></i>
-              <i style="width:19%;background:var(--s2);animation-delay:.47s"></i>
-              <i style="width:12%;background:var(--s3);animation-delay:.54s"></i>
-              <i style="width:7%;background:var(--s4);animation-delay:.61s"></i>
-              <i style="width:4%;background:var(--s5);animation-delay:.68s"></i>
+        <div class="card">
+          <div class="ch">
+            <h3>Myynti ja kulut</h3>
+            <div class="seg" role="group" aria-label="Aikaväli">
+              <button type="button" aria-pressed="false">3 kk</button>
+              <button type="button" aria-pressed="true">6 kk</button>
+              <button type="button" aria-pressed="false">Vuosi</button>
             </div>
-            <ul class="rows">
-              <li><a class="row" href="#"><span class="swat" style="background:var(--s1)"></span><span class="nm">Ruoka-aineet</span><span class="amt">2 019,90 €</span><span class="pc">58 %</span></a></li>
-              <li><a class="row" href="#"><span class="swat" style="background:var(--s2)"></span><span class="nm">Juomat</span><span class="amt">661,70 €</span><span class="pc">19 %</span></a></li>
-              <li><a class="row" href="#"><span class="swat" style="background:var(--s3)"></span><span class="nm">Siivous</span><span class="amt">417,90 €</span><span class="pc">12 %</span></a></li>
-              <li><a class="row" href="#"><span class="swat" style="background:var(--s4)"></span><span class="nm">Pakkaukset</span><span class="amt">243,80 €</span><span class="pc">7 %</span></a></li>
-              <li><a class="row" href="#"><span class="swat" style="background:var(--s5)"></span><span class="nm">Muut</span><span class="amt">139,30 €</span><span class="pc">4 %</span></a></li>
-            </ul>
           </div>
-          <div>
-            <p class="k" style="margin-bottom:12px">Keneltä</p>
-            <ul>
-              <li><a class="vendor" href="#"><span class="logo">KE</span><span class="who"><span class="n">Kespro</span><span class="s">41,2 % ostoista</span></span><span class="trend up">↑ 18 %</span><span class="amt mono" style="font-size:13px;font-weight:600">1 434,80 €</span></a></li>
-              <li><a class="vendor" href="#"><span class="logo">ME</span><span class="who"><span class="n">Metro Tukku</span><span class="s">22,7 % ostoista</span></span><span class="trend down">↓ 9 %</span><span class="amt mono" style="font-size:13px;font-weight:600">790,50 €</span></a></li>
-              <li><a class="vendor" href="#"><span class="logo">HE</span><span class="who"><span class="n">Heinon Tukku</span><span class="s">18,4 % ostoista</span></span><span class="amt mono" style="font-size:13px;font-weight:600">640,90 €</span></a></li>
-              <li><a class="vendor" href="#"><span class="logo">VA</span><span class="who"><span class="n">Valio</span><span class="s">11,3 % ostoista</span></span><span class="trend up">↑ 6 %</span><span class="amt mono" style="font-size:13px;font-weight:600">393,60 €</span></a></li>
-              <li><a class="vendor" href="#"><span class="logo">SI</span><span class="who"><span class="n">Sinebrychoff</span><span class="s">6,4 % ostoista</span></span><span class="amt mono" style="font-size:13px;font-weight:600">222,80 €</span></a></li>
-            </ul>
+
+          <div class="area">
+            <svg viewBox="0 0 760 240" width="100%" height="230" role="img" aria-label="Myynti ja kulut kuukausittain">
+              <defs>
+                <linearGradient id="gSale" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--c2)" stop-opacity=".28"/>
+                  <stop offset="100%" stop-color="var(--c2)" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gCost" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--c1)" stop-opacity=".3"/>
+                  <stop offset="100%" stop-color="var(--c1)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+
+              <g stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5">
+                <line x1="52" y1="30" x2="748" y2="30"/><line x1="52" y1="72" x2="748" y2="72"/>
+                <line x1="52" y1="114" x2="748" y2="114"/><line x1="52" y1="156" x2="748" y2="156"/>
+                <line x1="52" y1="198" x2="748" y2="198"/>
+              </g>
+              <g font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-3)" text-anchor="end">
+                <text x="44" y="34">32 k</text><text x="44" y="76">26 k</text>
+                <text x="44" y="118">20 k</text><text x="44" y="160">14 k</text><text x="44" y="202">8 k</text>
+              </g>
+
+              <path d="M52 176 L168 150 L284 158 L400 118 L516 96 L632 74 L748 52 L748 198 L52 198 Z" fill="url(#gSale)"/>
+              <path d="M52 176 L168 150 L284 158 L400 118 L516 96 L632 74 L748 52"
+                    fill="none" stroke="var(--c2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <path d="M52 192 L168 184 L284 188 L400 168 L516 160 L632 150 L748 138 L748 198 L52 198 Z" fill="url(#gCost)"/>
+              <path d="M52 192 L168 184 L284 188 L400 168 L516 160 L632 150 L748 138"
+                    fill="none" stroke="var(--c1)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+              <line x1="632" y1="30" x2="632" y2="198" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 4"/>
+              <circle cx="632" cy="74" r="4.5" fill="var(--c2)" stroke="var(--card)" stroke-width="2.5"/>
+              <circle cx="632" cy="150" r="4.5" fill="var(--c1)" stroke="var(--card)" stroke-width="2.5"/>
+
+              <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600">
+                <rect x="586" y="52" width="66" height="19" rx="5" fill="var(--ink)"/>
+                <text x="619" y="65.5" text-anchor="middle" fill="var(--card)">28 400 €</text>
+                <rect x="586" y="130" width="66" height="19" rx="5" fill="var(--ink)"/>
+                <text x="619" y="143.5" text-anchor="middle" fill="var(--card)">15 900 €</text>
+              </g>
+
+              <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink-3)" text-anchor="middle">
+                <text x="52" y="222">Maa</text><text x="168" y="222">Huh</text><text x="284" y="222">Tou</text>
+                <text x="400" y="222">Kes</text><text x="516" y="222">Hei</text><text x="632" y="222">Elo</text><text x="748" y="222">Syy</text>
+              </g>
+            </svg>
           </div>
+
+          <ul class="chart-legend">
+            <li><span class="sw" style="background:var(--c2)"></span>Myynti</li>
+            <li><span class="sw" style="background:var(--c1)"></span>Kulut</li>
+            <li style="margin-left:auto;color:var(--ink-3)">Syyskuu on ennuste</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="charts">
+        <div class="card notes">
+          <h3>Vaatii huomiota</h3>
+          <p class="sub">Kaksi asiaa. Toinen salissa juuri nyt.</p>
+          <div class="notelist">
+            <a class="note crit" href="#">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg></span>
+              <span class="tx"><span class="h">Ali Karhu ei ole leimannut sisään</span>
+                <span class="d">Vuoro 14.00–20.00 alkoi 38 min sitten.</span></span>
+              <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+            </a>
+            <a class="note" href="#">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/></svg></span>
+              <span class="tx"><span class="h">Metro Tukun kuitista puuttuu ALV</span>
+                <span class="d">21.8. · 96,40 € — täydennä ennen kuun sulkua.</span></span>
+              <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ch"><h3>Kulurytmi</h3><span style="font-size:12.5px;color:var(--ink-3)">Elokuu · 12 ostopäivää</span></div>
+          <div class="rhythm">
+            <ol class="cols" id="cols"></ol>
+            <ol class="days" id="days" aria-hidden="true"></ol>
+            <div class="rfoot">
+              <p><b>58 %</b> kuluista osuu torstaisin</p>
+              <p>Suurin päivä <b>20.8.</b> <span class="mono">1 044,80 €</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Viimeisimmät kuitit">
+        <div class="ch"><h3>Viimeisimmät kuitit</h3><a href="#" style="font-size:12.5px;font-weight:700;color:var(--brand-2)">Kaikki kuitit →</a></div>
+        <div class="tablewrap" style="margin-top:14px">
+          <table>
+            <thead><tr><th>Toimittaja</th><th>Kategoria</th><th>Summa</th><th>Tila</th><th>Päivä</th></tr></thead>
+            <tbody>
+              <tr><td><span class="who-cell"><span class="logo">KE</span>Kespro</span></td><td>Ruoka-aineet</td>
+                <td class="num out">−418,90 €</td><td><span class="status ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Tarkistettu</span></td><td class="date">24.08.2026</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">ME</span>Metro Tukku</span></td><td>Ruoka-aineet</td>
+                <td class="num out">−96,40 €</td><td><span class="status warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5"/></svg>ALV puuttuu</span></td><td class="date">21.08.2026</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">HE</span>Heinon Tukku</span></td><td>Ruoka-aineet</td>
+                <td class="num out">−1 044,80 €</td><td><span class="status ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Tarkistettu</span></td><td class="date">20.08.2026</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">?</span>Tuntematon</span></td><td>—</td>
+                <td class="num out">−287,50 €</td><td><span class="status bad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg>Toimittaja puuttuu</span></td><td class="date">19.08.2026</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">SI</span>Sinebrychoff</span></td><td>Juomat</td>
+                <td class="num out">−880,00 €</td><td><span class="status ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Tarkistettu</span></td><td class="date">13.08.2026</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">MY</span>Päivän myynti</span></td><td>Myynti</td>
+                <td class="num in">+1 240,00 €</td><td><span class="status ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>Kirjattu</span></td><td class="date">24.08.2026</td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
 
-    <!-- ---------------- KUITIT ---------------- -->
+    <!-- ---------- KUITIT ---------- -->
     <div class="view" data-view="kuitit" hidden>
-
-      <div class="head"><div class="t"><h2 class="serif">Tarkistettavat</h2>
-        <span class="note">Nämä estävät kuukauden sulkemisen</span></div><span class="rule"></span></div>
-
-      <section class="card alerts rise" aria-label="Tarkistettavat kuitit" style="margin-bottom:6px">
-        <div class="lead">
-          <span class="swatch" aria-hidden="true"></span>
-          <div><h3 class="serif">3 kuittia odottaa täydennystä</h3>
-            <p class="sub">Kahdesta puuttuu ALV, yhdestä toimittaja. Yhteensä 512,30 €.</p></div>
-        </div>
-      </section>
-
-      <div class="head"><div class="t"><h2 class="serif">Kaikki kuitit</h2>
-        <span class="note">Elokuu 2026 · 47 kuittia</span></div><span class="rule"></span></div>
-
       <div class="filters">
         <button class="filt" type="button" aria-pressed="true">Kaikki <span class="c">47</span></button>
         <button class="filt" type="button" aria-pressed="false">Tarkistettavat <span class="c">3</span></button>
@@ -827,132 +744,90 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
         <button class="filt" type="button" aria-pressed="false">Siivous <span class="c">6</span></button>
       </div>
 
-      <section class="card sheet rise" aria-label="Kuitit">
-        <div class="tablewrap">
+      <section class="card notes rise">
+        <h3>3 kuittia odottaa täydennystä</h3>
+        <p class="sub">Kahdesta puuttuu ALV, yhdestä toimittaja. Yhteensä 512,30 €. Nämä estävät elokuun sulkemisen kirjanpitoon.</p>
+      </section>
+
+      <section class="card rise" aria-label="Kaikki kuitit">
+        <div class="ch"><h3>Elokuu 2026</h3><span style="font-size:12.5px;color:var(--ink-3)">47 kuittia · 3 482,60 €</span></div>
+        <div class="tablewrap" style="margin-top:14px">
           <table>
-            <thead>
-              <tr><th>Toimittaja</th><th>Päivä</th><th>Kategoria</th><th>Tila</th><th class="r">ALV</th><th class="r">Summa</th></tr>
-            </thead>
+            <thead><tr><th>Toimittaja</th><th>Kategoria</th><th>Summa</th><th>ALV</th><th>Tila</th><th>Päivä</th></tr></thead>
             <tbody>
-              <tr><td><span class="who-cell"><span class="logo">KE</span>Kespro</span></td>
-                <td class="d">24.8.</td><td>Ruoka-aineet</td><td><span class="tag ok">Tarkistettu</span></td>
-                <td class="r">51,44 €</td><td class="r">418,90 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">ME</span>Metro Tukku</span></td>
-                <td class="d">21.8.</td><td>Ruoka-aineet</td><td><span class="tag warn">ALV puuttuu</span></td>
-                <td class="r" style="color:var(--hold-ink)">—</td><td class="r">96,40 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">HE</span>Heinon Tukku</span></td>
-                <td class="d">20.8.</td><td>Ruoka-aineet</td><td><span class="tag ok">Tarkistettu</span></td>
-                <td class="r">128,32 €</td><td class="r">1 044,80 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">?</span>Tuntematon</span></td>
-                <td class="d">19.8.</td><td>—</td><td><span class="tag bad">Toimittaja puuttuu</span></td>
-                <td class="r" style="color:var(--stop-ink)">—</td><td class="r">287,50 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">VA</span>Valio</span></td>
-                <td class="d">17.8.</td><td>Ruoka-aineet</td><td><span class="tag ok">Tarkistettu</span></td>
-                <td class="r">18,42 €</td><td class="r">150,00 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">SI</span>Sinebrychoff</span></td>
-                <td class="d">13.8.</td><td>Juomat</td><td><span class="tag ok">Tarkistettu</span></td>
-                <td class="r">170,32 €</td><td class="r">880,00 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">LI</span>Lindström</span></td>
-                <td class="d">10.8.</td><td>Siivous</td><td><span class="tag warn">ALV puuttuu</span></td>
-                <td class="r" style="color:var(--hold-ink)">—</td><td class="r">128,40 €</td></tr>
-              <tr><td><span class="who-cell"><span class="logo">KE</span>Kespro</span></td>
-                <td class="d">6.8.</td><td>Ruoka-aineet</td><td><span class="tag ok">Tarkistettu</span></td>
-                <td class="r">115,47 €</td><td class="r">940,00 €</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">KE</span>Kespro</span></td><td>Ruoka-aineet</td><td class="num out">−418,90 €</td><td class="num">51,44 €</td><td><span class="status ok">Tarkistettu</span></td><td class="date">24.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">ME</span>Metro Tukku</span></td><td>Ruoka-aineet</td><td class="num out">−96,40 €</td><td class="num" style="color:var(--warn)">—</td><td><span class="status warn">ALV puuttuu</span></td><td class="date">21.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">HE</span>Heinon Tukku</span></td><td>Ruoka-aineet</td><td class="num out">−1 044,80 €</td><td class="num">128,32 €</td><td><span class="status ok">Tarkistettu</span></td><td class="date">20.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">?</span>Tuntematon</span></td><td>—</td><td class="num out">−287,50 €</td><td class="num" style="color:var(--bad)">—</td><td><span class="status bad">Toimittaja puuttuu</span></td><td class="date">19.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">VA</span>Valio</span></td><td>Ruoka-aineet</td><td class="num out">−150,00 €</td><td class="num">18,42 €</td><td><span class="status ok">Tarkistettu</span></td><td class="date">17.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">SI</span>Sinebrychoff</span></td><td>Juomat</td><td class="num out">−880,00 €</td><td class="num">170,32 €</td><td><span class="status ok">Tarkistettu</span></td><td class="date">13.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">LI</span>Lindström</span></td><td>Siivous</td><td class="num out">−128,40 €</td><td class="num" style="color:var(--warn)">—</td><td><span class="status warn">ALV puuttuu</span></td><td class="date">10.08.</td></tr>
+              <tr><td><span class="who-cell"><span class="logo">KE</span>Kespro</span></td><td>Ruoka-aineet</td><td class="num out">−940,00 €</td><td class="num">115,47 €</td><td><span class="status ok">Tarkistettu</span></td><td class="date">06.08.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
     </div>
 
-    <!-- ---------------- TYÖVUOROT ---------------- -->
+    <!-- ---------- TYÖVUOROT ---------- -->
     <div class="view" data-view="vuorot" hidden>
+      <section class="card rise" aria-label="Viikon vuorot">
+        <div class="ch"><h3>Viikko 35</h3><span style="font-size:12.5px;color:var(--ink-3)">24.–30. elokuuta 2026</span></div>
 
-      <div class="head"><div class="t"><h2 class="serif">Viikko 35</h2>
-        <span class="note">24.–30. elokuuta 2026</span></div><span class="rule"></span></div>
+        <div class="roster" style="margin-top:14px">
+          <div class="g7">
+            <div class="hd">
+              <span class="eyebrow">Työntekijä</span>
+              <span class="tod"><span class="dd">24</span><span class="wd">Ma</span></span>
+              <span><span class="dd">25</span><span class="wd">Ti</span></span>
+              <span><span class="dd">26</span><span class="wd">Ke</span></span>
+              <span><span class="dd">27</span><span class="wd">To</span></span>
+              <span><span class="dd">28</span><span class="wd">Pe</span></span>
+              <span><span class="dd">29</span><span class="wd">La</span></span>
+              <span><span class="dd">30</span><span class="wd">Su</span></span>
+            </div>
 
-      <section class="card roster rise" aria-label="Viikon vuorot">
-        <div class="grid7">
-          <div class="hdr">
-            <span class="k" style="align-self:center">Työntekijä</span>
-            <span class="today"><span class="dd">24</span><span class="wd">Ma</span></span>
-            <span><span class="dd">25</span><span class="wd">Ti</span></span>
-            <span><span class="dd">26</span><span class="wd">Ke</span></span>
-            <span><span class="dd">27</span><span class="wd">To</span></span>
-            <span><span class="dd">28</span><span class="wd">Pe</span></span>
-            <span><span class="dd">29</span><span class="wd">La</span></span>
-            <span><span class="dd">30</span><span class="wd">Su</span></span>
-          </div>
+            <div class="r"><span class="p"><span class="av">OM</span><span class="t"><span class="n">Oktay Matias</span><span class="q">Vuoropäällikkö</span></span></span>
+              <span class="cell tod"><span class="sh">10–20</span></span><span class="cell"><span class="sh">10–18</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span><span class="cell"><span class="sh">10–20</span></span>
+              <span class="cell"><span class="sh">12–22</span></span><span class="cell"><span class="sh">12–22</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span></div>
 
-          <div class="r7">
-            <span class="person"><span class="av">OM</span><span class="t"><span class="n">Oktay Matias</span><span class="p">Vuoropäällikkö</span></span></span>
-            <span class="cell today"><span class="sh">10–20</span></span>
-            <span class="cell"><span class="sh">10–18</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh">10–20</span></span>
-            <span class="cell"><span class="sh">12–22</span></span>
-            <span class="cell"><span class="sh">12–22</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-          </div>
+            <div class="r"><span class="p"><span class="av">MS</span><span class="t"><span class="n">Minna Salo</span><span class="q">Tarjoilija</span></span></span>
+              <span class="cell tod"><span class="sh">09–14</span></span><span class="cell"><span class="sh">09–14</span></span>
+              <span class="cell"><span class="sh">09–14</span></span><span class="cell"><span class="sh off">Vapaa</span></span>
+              <span class="cell"><span class="sh">09–15</span></span><span class="cell"><span class="sh off">Vapaa</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span></div>
 
-          <div class="r7">
-            <span class="person"><span class="av">MS</span><span class="t"><span class="n">Minna Salo</span><span class="p">Tarjoilija</span></span></span>
-            <span class="cell today"><span class="sh">09–14</span></span>
-            <span class="cell"><span class="sh">09–14</span></span>
-            <span class="cell"><span class="sh">09–14</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh">09–15</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-          </div>
+            <div class="r"><span class="p"><span class="av">JV</span><span class="t"><span class="n">Jussi Virta</span><span class="q">Tarjoilija</span></span></span>
+              <span class="cell tod"><span class="sh">14–21</span></span><span class="cell"><span class="sh">14–21</span></span>
+              <span class="cell"><span class="sh">14–21</span></span><span class="cell"><span class="sh">14–22</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span><span class="cell"><span class="sh">16–23</span></span>
+              <span class="cell"><span class="sh">14–20</span></span></div>
 
-          <div class="r7">
-            <span class="person"><span class="av">JV</span><span class="t"><span class="n">Jussi Virta</span><span class="p">Tarjoilija</span></span></span>
-            <span class="cell today"><span class="sh">14–21</span></span>
-            <span class="cell"><span class="sh">14–21</span></span>
-            <span class="cell"><span class="sh">14–21</span></span>
-            <span class="cell"><span class="sh">14–22</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh">16–23</span></span>
-            <span class="cell"><span class="sh">14–20</span></span>
-          </div>
+            <div class="r"><span class="p"><span class="av">LK</span><span class="t"><span class="n">Liisa Koski</span><span class="q">Tarjoilija</span></span></span>
+              <span class="cell tod"><span class="sh">17–21</span></span><span class="cell"><span class="sh off">Vapaa</span></span>
+              <span class="cell"><span class="sh">17–21</span></span><span class="cell"><span class="sh">17–22</span></span>
+              <span class="cell"><span class="sh">17–23</span></span><span class="cell"><span class="sh">16–23</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span></div>
 
-          <div class="r7">
-            <span class="person"><span class="av">LK</span><span class="t"><span class="n">Liisa Koski</span><span class="p">Tarjoilija</span></span></span>
-            <span class="cell today"><span class="sh">17–21</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh">17–21</span></span>
-            <span class="cell"><span class="sh">17–22</span></span>
-            <span class="cell"><span class="sh">17–23</span></span>
-            <span class="cell"><span class="sh">16–23</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-          </div>
+            <div class="r"><span class="p"><span class="av">PN</span><span class="t"><span class="n">Pekka Nieminen</span><span class="q">Keittiö</span></span></span>
+              <span class="cell tod"><span class="sh kit">09.30–15.30</span></span><span class="cell"><span class="sh kit">09.30–15.30</span></span>
+              <span class="cell"><span class="sh kit">09.30–15.30</span></span><span class="cell"><span class="sh off">Vapaa</span></span>
+              <span class="cell"><span class="sh kit">09.30–16</span></span><span class="cell"><span class="sh kit">10–16</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span></div>
 
-          <div class="r7">
-            <span class="person"><span class="av">PN</span><span class="t"><span class="n">Pekka Nieminen</span><span class="p">Keittiö</span></span></span>
-            <span class="cell today"><span class="sh kitchen">09.30–15.30</span></span>
-            <span class="cell"><span class="sh kitchen">09.30–15.30</span></span>
-            <span class="cell"><span class="sh kitchen">09.30–15.30</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh kitchen">09.30–16</span></span>
-            <span class="cell"><span class="sh kitchen">10–16</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-          </div>
-
-          <div class="r7">
-            <span class="person"><span class="av">AK</span><span class="t"><span class="n">Ali Karhu</span><span class="p">Keittiö</span></span></span>
-            <span class="cell today"><span class="sh kitchen">14–20</span></span>
-            <span class="cell"><span class="sh kitchen">14–20</span></span>
-            <span class="cell"><span class="sh off">Vapaa</span></span>
-            <span class="cell"><span class="sh kitchen">14–21</span></span>
-            <span class="cell"><span class="sh kitchen">14–22</span></span>
-            <span class="cell"><span class="sh open">Avoin</span></span>
-            <span class="cell"><span class="sh open">Avoin</span></span>
+            <div class="r"><span class="p"><span class="av">AK</span><span class="t"><span class="n">Ali Karhu</span><span class="q">Keittiö</span></span></span>
+              <span class="cell tod"><span class="sh kit">14–20</span></span><span class="cell"><span class="sh kit">14–20</span></span>
+              <span class="cell"><span class="sh off">Vapaa</span></span><span class="cell"><span class="sh kit">14–21</span></span>
+              <span class="cell"><span class="sh kit">14–22</span></span><span class="cell"><span class="sh open">Avoin</span></span>
+              <span class="cell"><span class="sh open">Avoin</span></span></div>
           </div>
         </div>
 
-        <div class="week-foot">
-          <p><b>2 vuoroa</b> ilman tekijää lauantaina ja sunnuntaina</p>
-          <p>Viikon tunnit yhteensä <span class="mono">218 h 30 min</span></p>
+        <div class="wfoot">
+          <p><b>2 vuoroa</b> ilman tekijää viikonloppuna</p>
+          <p>Viikon tunnit <span class="mono">218 h 30 min</span></p>
           <p>Arvioitu palkkakulu <span class="mono">3 277,50 €</span></p>
         </div>
       </section>
@@ -961,144 +836,85 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
   </main>
 </div>
 
-<div class="typepick">
-  <span class="lbl">Päivä</span>
-  <span role="group" aria-label="Päivän tila" style="display:flex;gap:4px">
-    <button type="button" data-day="poikkeama" aria-pressed="true">Poikkeama</button>
-    <button type="button" data-day="rauha" aria-pressed="false">Rauhallinen</button>
-  </span>
-
-  <span class="div" aria-hidden="true"></span>
-
-  <span class="lbl">Kirjasin</span>
-  <span role="group" aria-label="Kirjasinvaihtoehto" style="display:flex;gap:4px">
-    <button type="button" data-set="a" aria-pressed="true">Antiikva</button>
-    <button type="button" data-set="b" aria-pressed="false">Groteski</button>
-    <button type="button" data-set="c" aria-pressed="false">Teollinen</button>
-  </span>
-</div>
-
 <script>
-  /* --- kulurytmin pylväät ------------------------------------------------
-     Elokuu 2026, 1.8. lauantai. null = päivä ei ole vielä tullut. */
-  const spend = [0, 0, 18000, 0, 0, 94000, 0, 0, 0, 22000, 0, 0, 88000, 0,
-                 0, 0, 15000, 0, 0, 104480, 0, 9640, 41000, 41890,
-                 null, null, null, null, null, null, null];
+  /* --- kulurytmi --------------------------------------------------------- */
+  const spend = [0,0,18000,0,0,94000,0,0,0,22000,0,0,88000,0,0,0,15000,0,0,
+                 104480,0,9640,41000,41890,null,null,null,null,null,null,null];
   const max = 104480;
   const cols = document.getElementById("cols");
   const days = document.getElementById("days");
   const euro = new Intl.NumberFormat("fi-FI", { style: "currency", currency: "EUR" });
 
-  spend.forEach((cents, index) => {
-    const day = index + 1;
+  spend.forEach((cents, i) => {
+    const day = i + 1;
     const wd = new Date(Date.UTC(2026, 7, day, 12)).getUTCDay();
     const weekend = wd === 0 || wd === 6;
     const today = day === 24;
-
     const li = document.createElement("li");
     const bar = document.createElement("i");
 
     if (cents === null) {
-      bar.style.cssText = "height:3px;background:var(--edge);animation:none";
+      bar.style.cssText = "height:3px;background:var(--line);animation:none";
       li.title = day + ".8. — ei vielä";
     } else if (cents === 0) {
-      bar.style.cssText = "height:3px;background:var(--edge-soft);animation:none";
+      bar.style.cssText = "height:3px;background:var(--card-2);animation:none";
       li.title = day + ".8. — ei ostoja";
     } else {
       bar.style.height = Math.max(9, (cents / max) * 100) + "%";
-      bar.style.background = today ? "var(--ink)" : weekend ? "var(--s2)" : "var(--s1)";
-      if (weekend && !today) bar.style.opacity = ".6";
-      bar.style.animationDelay = (380 + Math.min(index * 19, 580)) + "ms";
-
+      bar.style.background = today ? "var(--ink)" : weekend ? "var(--c3)" : "var(--c1)";
+      bar.style.animationDelay = (300 + Math.min(i * 17, 520)) + "ms";
       const tip = document.createElement("span");
       tip.className = "tip";
       tip.textContent = day + ".8. · " + euro.format(cents / 100);
       li.appendChild(tip);
     }
-
     li.appendChild(bar);
     cols.appendChild(li);
 
     const d = document.createElement("li");
     d.textContent = day;
-    if (today) { d.style.color = "var(--ink)"; d.style.fontWeight = "600"; }
+    if (today) { d.style.color = "var(--ink)"; d.style.fontWeight = "700"; }
     else if (day % 2 === 0) d.style.opacity = "0";
     days.appendChild(d);
   });
 
   /* --- navigaatio -------------------------------------------------------- */
-  const TITLES = { yleiskatsaus: "Yleiskatsaus", kuitit: "Kuitit", vuorot: "Työvuorot" };
-  const nav = document.querySelector(".nav");
-  const title = document.getElementById("page-title");
+  const menu = document.querySelector(".menu");
+  const ptitle = document.getElementById("ptitle");
 
-  nav.addEventListener("click", (event) => {
-    const link = event.target.closest("a[data-go]");
-    if (!link) return;
-    event.preventDefault();
+  menu.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-go]");
+    if (!a) return;
+    e.preventDefault();
 
-    const target = link.dataset.go;
+    menu.querySelectorAll("a").forEach(x => x.removeAttribute("aria-current"));
+    a.setAttribute("aria-current", "page");
 
-    nav.querySelectorAll("a").forEach((a) => a.removeAttribute("aria-current"));
-    link.setAttribute("aria-current", "page");
+    document.querySelectorAll(".view").forEach(v => { v.hidden = v.dataset.view !== a.dataset.go; });
+    ptitle.textContent = a.querySelector(".lbl").textContent;
 
-    document.querySelectorAll(".view").forEach((view) => {
-      view.hidden = view.dataset.view !== target;
+    document.querySelectorAll(".view:not([hidden]) .rise").forEach(el => {
+      el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
     });
-
-    /* Otsikko seuraa valittua kohtaa eikä näkymää: "Kulut" ja
-       "Budjetit" käyttävät toistaiseksi samaa piirrosta, mutta
-       otsikon on kerrottava mihin käyttäjä painoi. */
-    title.textContent = link.querySelector(".lbl").textContent;
-
-    /* Animaatiot uudelleen, jotta näkymä saapuu eikä vain ilmesty. */
-    document.querySelectorAll(".view:not([hidden]) .rise").forEach((el) => {
-      el.style.animation = "none";
-      void el.offsetWidth;
-      el.style.animation = "";
-    });
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  /* --- vaihtimet ---------------------------------------------------------
-     Väri ja kirjasin ovat eri akseleita, joten valinnat eivät nollaa
-     toisiaan: aria-pressed päivitetään vain saman ryhmän sisällä. */
-  document.querySelector(".typepick").addEventListener("click", (event) => {
-    const button = event.target.closest("button");
-    if (!button) return;
-
-    const group = button.closest("[role='group']");
-    group.querySelectorAll("button").forEach((b) =>
-      b.setAttribute("aria-pressed", String(b === button)));
-
-    if (button.dataset.day) {
-      document.documentElement.dataset.day = button.dataset.day;
-
-      /* Poikkeamalista supistuu samalla: rauhallisena päivänä
-         keittiön huomautusta ei ole olemassa. */
-      const crit = document.querySelector(".docket.crit")?.closest("li");
-      const head = document.querySelector(".alerts h3");
-      const sub = document.querySelector(".alerts .sub");
-      const swatch = document.querySelector(".alerts .swatch");
-      const calm = button.dataset.day === "rauha";
-
-      if (crit) crit.hidden = calm;
-      if (head) head.textContent = calm ? "1 asia vaatii huomiota" : "2 asiaa vaatii huomiota";
-      if (sub) sub.textContent = calm
-        ? "Kirjanpidossa, ei salissa."
-        : "Yksi keittiössä juuri nyt, yksi kirjanpidossa.";
-      if (swatch) swatch.style.opacity = "1";
-    } else {
-      document.documentElement.dataset.type = button.dataset.set;
-    }
+  /* --- teema ------------------------------------------------------------- */
+  document.querySelector(".themer").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-theme-set]");
+    if (!b) return;
+    document.documentElement.dataset.theme = b.dataset.themeSet;
+    document.querySelectorAll(".themer button").forEach(x =>
+      x.setAttribute("aria-pressed", String(x === b)));
   });
 
-  /* --- suodatinpainikkeet ------------------------------------------------ */
-  document.querySelector(".filters")?.addEventListener("click", (event) => {
-    const button = event.target.closest(".filt");
-    if (!button) return;
-    document.querySelectorAll(".filt").forEach((b) =>
-      b.setAttribute("aria-pressed", String(b === button)));
+  /* --- segmentit ja suodattimet ------------------------------------------ */
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".seg button, .filt");
+    if (!b) return;
+    const group = b.closest(".seg, .filters");
+    group.querySelectorAll("button").forEach(x =>
+      x.setAttribute("aria-pressed", String(x === b)));
   });
 </script>
 
