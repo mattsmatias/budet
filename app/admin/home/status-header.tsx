@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
+import { severityColor, severityIcon } from "@/components/restoflow/ui";
 import type { FocusItem } from "@/lib/restoflow/dashboard";
 import { FOCUS_LIMIT, type OverallStatus } from "@/lib/restoflow/status";
 
@@ -105,7 +106,7 @@ export function StatusHeader({
                   className="mt-px shrink-0"
                   style={{ color: severityColor(focus.severity) }}
                 >
-                  <RfIcon name={focus.severity === "info" ? "info" : "alert"} size={15} />
+                  <RfIcon name={severityIcon(focus.severity)} size={15} />
                 </span>
 
                 <span className="min-w-0 flex-1">
@@ -183,12 +184,4 @@ function haloOf(tone: OverallStatus["tone"]): string {
       : tone === "bad"
         ? "var(--rf-red-bg)"
         : "var(--rf-inset)";
-}
-
-function severityColor(severity: FocusItem["severity"]): string {
-  return severity === "critical"
-    ? "var(--rf-red-text)"
-    : severity === "warning"
-      ? "var(--rf-amber-text)"
-      : "var(--rf-blue)";
 }

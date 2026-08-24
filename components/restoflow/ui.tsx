@@ -689,10 +689,36 @@ export function BudgetBar({
 }
 
 /** Vakavuusmerkki hälytyksille. */
+export type Severity = "info" | "warning" | "critical";
+
+/**
+ * Vakavuuden väri ja merkki.
+ *
+ * Sama pari joka paikassa: yleiskuvan huomiokortti, kellon
+ * pudotusvalikko ja ilmoitussivu. Ne olivat kolme erillistä kopiota,
+ * ja kaksi niistä oli jo ehtinyt erota kolmannesta — pudotusvalikossa
+ * vakavuus oli pelkkä pallo silloin kun se muualla oli ikoni.
+ *
+ * Tekstiväri eikä pintaväri: nämä piirtyvät tekstin ja ikonien
+ * väreinä vaaleaa pohjaa vasten, ja kylläisempi sävy jäi alle 4,5:n.
+ */
+export function severityColor(severity: Severity): string {
+  return severity === "critical"
+    ? "var(--rf-red-text)"
+    : severity === "warning"
+      ? "var(--rf-amber-text)"
+      : "var(--rf-blue-text)";
+}
+
+/** Kriittinen ja varoitus huutomerkkinä, tieto i-kirjaimena. */
+export function severityIcon(severity: Severity): "alert" | "info" {
+  return severity === "info" ? "info" : "alert";
+}
+
 export function SeverityDot({
   severity,
 }: {
-  severity: "info" | "warning" | "critical";
+  severity: Severity;
 }) {
   const color =
     severity === "critical"

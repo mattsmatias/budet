@@ -6,7 +6,7 @@ import { signOut } from "@/app/(auth)/actions";
 import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { personInitials } from "@/lib/restoflow/initials";
-import { SeverityDot } from "@/components/restoflow/ui";
+import { severityColor, severityIcon } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 
 /**
@@ -135,12 +135,13 @@ function NotificationMenu({
   onClose: () => void;
 }) {
   const shown = alerts.slice(0, 5);
+  const critical = alerts.filter((a) => a.severity === "critical").length;
 
   return (
     <Dropdown
       label={alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"}
       badge={alerts.length}
-      width={340}
+      width={380}
       open={open}
       onToggle={onToggle}
       onClose={onClose}
@@ -149,57 +150,91 @@ function NotificationMenu({
       {(close) => (
         <>
           <div
-            className="flex items-baseline justify-between gap-3 border-b px-4 py-3"
+            className="border-b px-[18px] pb-2.5 pt-3"
             style={{ borderColor: "var(--rf-line)" }}
           >
-            <p className="text-[14px] font-semibold">
+            <p className="text-[15px] font-bold tracking-[-0.0075em]">
               Huomiot{alerts.length > 0 ? ` · ${alerts.length}` : ""}
             </p>
 
+            {/*
+              Jakauma otsikon alle.
+
+              Pelkkä luku kertoo montako mutta ei sitä kannattaako
+              avata nyt. Yksi kiireellinen kahdeksan joukossa on eri
+              tilanne kuin kahdeksan tarkistettavaa, ja ero ratkaisee
+              keskeyttääkö käyttäjä sen mitä on tekemässä.
+            */}
             {alerts.length > 0 ? (
-              <Link
-                href="/admin/ilmoitukset"
-                onClick={close}
-                className="shrink-0 text-[12px] font-medium"
-                style={{ color: "var(--rf-accent)" }}
-              >
-                Näytä kaikki
-              </Link>
+              <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                {critical > 0 ? (
+                  <>
+                    <strong className="font-bold" style={{ color: "var(--rf-red-text)" }}>
+                      {critical} kiireellinen
+                    </strong>
+                    {alerts.length > critical ? ` · ${alerts.length - critical} muuta` : ""}
+                  </>
+                ) : (
+                  "Ei kiireellisiä"
+                )}
+              </p>
             ) : null}
           </div>
 
           {alerts.length === 0 ? (
-            <p
-              className="px-4 py-5 text-[13px] leading-relaxed"
-              style={{ color: "var(--rf-text-2)" }}
-            >
-              Ei huomioita juuri nyt. Ne ilmestyvät tänne itsestään kun
-              aineistossa on jotain tarkistettavaa.
-            </p>
+            <div className="flex items-start gap-2.5 px-[18px] py-5">
+              <span className="mt-px shrink-0" style={{ color: "var(--rf-green-text)" }}>
+                <RfIcon name="check" size={16} />
+              </span>
+              <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                Ei huomioita juuri nyt. Ne ilmestyvät tänne itsestään kun
+                aineistossa on jotain tarkistettavaa.
+              </p>
+            </div>
           ) : (
-            <ul className="max-h-[22rem] overflow-y-auto p-1.5">
+            /*
+              Rivit ovat samat kuin yleiskuvan huomiokortissa: ikoni,
+              värillinen vasen reuna, otsikko ja selitys. Sama asia
+              näytti kahdessa paikassa kahdelta eri asialta — täällä
+              vakavuus oli pallo, siellä ikoni ja reuna.
+            */
+            <ul className="max-h-[24rem] space-y-1.5 overflow-y-auto p-2">
               {shown.map((alert) => (
                 <li key={alert.id}>
                   <Link
                     href={alert.href}
                     role="menuitem"
                     onClick={close}
-                    className="rf-press flex items-start gap-2.5 rounded-[9px] px-2.5 py-2.5"
+                    className="rf-press rf-alert-row flex items-start gap-[11px] py-[11px] pl-[11px] pr-[13px]"
+                    style={{
+                      background: "var(--rf-inset)",
+                      borderRadius: "var(--rf-r-control)",
+                      borderLeft: `2.5px solid ${severityColor(alert.severity)}`,
+                    }}
                   >
-                    <span className="mt-1 shrink-0">
-                      <SeverityDot severity={alert.severity} />
+                    <span
+                      className="mt-px shrink-0"
+                      style={{ color: severityColor(alert.severity) }}
+                    >
+                      <RfIcon name={severityIcon(alert.severity)} size={15} />
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-medium leading-snug">
+                      <span className="block text-[13px] font-semibold leading-snug">
                         {alert.title}
                       </span>
                       <span
-                        className="mt-0.5 block text-[12px] leading-snug"
+                        className="mt-0.5 block text-[12.5px] leading-snug"
                         style={{ color: "var(--rf-text-2)" }}
                       >
                         {alert.detail}
                       </span>
+                    </span>
+
+                    {/* Nuoli kertoo että rivi vie jonnekin. Ilman sitä
+                        koko lista näytti tekstiltä eikä linkeiltä. */}
+                    <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                      <RfIcon name="chevron" size={14} />
                     </span>
                   </Link>
                 </li>
@@ -207,14 +242,24 @@ function NotificationMenu({
             </ul>
           )}
 
-          {alerts.length > shown.length ? (
+          {/*
+            Yksi polku koko listaan, aina samassa paikassa.
+
+            Otsikossa oli "Näytä kaikki" ja pohjalla "Ja N muuta" —
+            kaksi punaista linkkiä samaan osoitteeseen, ja
+            jälkimmäinen katosi kun huomioita oli viisi tai vähemmän.
+          */}
+          {alerts.length > 0 ? (
             <Link
               href="/admin/ilmoitukset"
               onClick={close}
-              className="block border-t px-4 py-2.5 text-center text-[12px]"
-              style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-2)" }}
+              className="rf-press block border-t px-[18px] py-2.5 text-center text-[12.5px] font-bold"
+              style={{ borderColor: "var(--rf-line)", color: "var(--rf-accent)" }}
             >
-              Ja {alerts.length - shown.length} muuta →
+              {alerts.length > shown.length
+                ? `Näytä kaikki ${alerts.length} huomiota`
+                : "Avaa huomiot"}{" "}
+              <span aria-hidden="true">→</span>
             </Link>
           ) : null}
         </>

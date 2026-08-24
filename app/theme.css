@@ -563,6 +563,20 @@ a:hover > .rf-card-lift,
   background: var(--rf-card-hover);
 }
 
+/*
+ * Huomiorivi vaalean pohjan päällä.
+ *
+ * .rf-row vaalenee osoittimen alla, mutta huomiorivin pohja on jo
+ * --rf-inset — vaaleneminen tekisi siitä valkoisen eli näkymättömän
+ * kortin päällä. Tämä tummenee sen sijaan.
+ */
+.rf-alert-row {
+  transition: background-color 140ms ease;
+}
+.rf-alert-row:hover {
+  background: var(--rf-line);
+}
+
 /* --------------------------------------------------------------------- */
 /* Yläpalkin pyöreät painikkeet.                                          */
 /*                                                                        */
