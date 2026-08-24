@@ -302,12 +302,36 @@
  */
 @media (prefers-reduced-motion: reduce) {
   .rf-bar-grow,
+  .rf-column-grow,
   .rf-ping,
   .rf-pulse-dot,
   .rf-draw-line,
   .rf-enter {
     animation: none !important;
   }
+}
+
+/*
+ * Pylväs kasvaa pohjasta ylös.
+ *
+ * Alareuna on nollakohta, joten kasvun on lähdettävä sieltä. Keskeltä
+ * skaalautuva pylväs näyttäisi hetken siltä että se ulottuu nollan
+ * alapuolelle.
+ */
+@keyframes rf-column-grow {
+  from {
+    transform: scaleY(0);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.rf-column-grow {
+  transform-origin: bottom center;
+  animation: rf-column-grow 460ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 .rf-card-lift {
