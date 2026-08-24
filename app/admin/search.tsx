@@ -100,12 +100,10 @@ export function Search({ items }: { items: SearchItem[] }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rf-press flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left"
+        className="rf-glass rf-press flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left"
         style={{
-          background: "var(--rf-card)",
-          border: "1px solid var(--rf-line)",
+          background: "var(--rf-glass)",
           borderRadius: "var(--rf-r-pill)",
-          boxShadow: "var(--rf-shadow-sm)",
         }}
       >
         <span style={{ color: "var(--rf-text-3)" }}>
@@ -130,12 +128,10 @@ export function Search({ items }: { items: SearchItem[] }) {
 
       {open ? (
         <div
-          className="rf-z-menu absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden"
+          className="rf-glass rf-z-menu absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden"
           style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
+            background: "var(--rf-glass-strong)",
             borderRadius: "var(--rf-r-card)",
-            boxShadow: "var(--rf-shadow-lg)",
           }}
         >
           <div

@@ -16,7 +16,7 @@
   --rf-bg: #f5f6f8;
   --rf-card: #ffffff;
   --rf-card-hover: #fbfbfd;
-  --rf-inset: #f1f2f5;
+  --rf-inset: rgba(17, 19, 24, 0.055);
 
   /* Teksti */
   --rf-text: #111318;
@@ -26,8 +26,8 @@
   --rf-on-accent: #ffffff;
 
   /* Rajat ja varjot. Varjo luetaan syvyytenä, ei koristeena. */
-  --rf-line: #e7e9ee;
-  --rf-line-strong: #d7dae2;
+  --rf-line: rgba(17, 19, 24, 0.085);
+  --rf-line-strong: rgba(17, 19, 24, 0.16);
   --rf-shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.04);
   --rf-shadow: 0 1px 2px rgba(17, 19, 24, 0.04), 0 6px 20px rgba(17, 19, 24, 0.05);
   --rf-shadow-lg: 0 2px 4px rgba(17, 19, 24, 0.04), 0 16px 40px rgba(17, 19, 24, 0.09);
@@ -67,6 +67,27 @@
   --rf-red-bg: #fdeded;
 
   /* ---------------------------------------------------------------- */
+  /* Lasi.                                                              */
+  /*                                                                    */
+  /* Pinta on läpikuultava ja sumentaa taakseen jäävän. Jotta siinä on  */
+  /* jotain nähtävää, sivun tausta on pehmeä värikenttä eikä valokuva:  */
+  /* kuva vaihtelisi kohdasta toiseen, ja tekstin kontrasti vaihtelisi  */
+  /* sen mukana. Kenttä on sama kaikkialla, joten luettavuus voidaan    */
+  /* mitata kerran.                                                     */
+  /*                                                                    */
+  /* Läpikuultavuus on 62 %, ei 20 %. Esikuvien lähes näkymätön teksti  */
+  /* toimii kuvassa mutta ei työkalussa jossa luetaan euroja.           */
+  /* ---------------------------------------------------------------- */
+  --rf-glass: rgba(255, 255, 255, 0.62);
+  --rf-glass-strong: rgba(255, 255, 255, 0.78);
+  --rf-glass-line: rgba(255, 255, 255, 0.72);
+  --rf-glass-blur: saturate(180%) blur(22px);
+  --rf-glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(17, 19, 24, 0.04),
+    0 10px 34px rgba(17, 19, 24, 0.07);
+
+  /* ---------------------------------------------------------------- */
   /* Korttien sävyt.                                                    */
   /*                                                                    */
   /* Pehmeä liukuma kortin yläkulmasta valkoiseen. Sävy EI ole satunnainen
@@ -78,11 +99,19 @@
   /* Neutraali on hyvin vaalea sinivalkoinen — se on se pinta joka
   /* hallitsee näkymää, ja tilavärit erottuvat siitä.
   /* ---------------------------------------------------------------- */
-  --rf-tint: linear-gradient(157deg, #f3f6fe 0%, #ffffff 54%);
-  --rf-tint-accent: linear-gradient(157deg, #eaf0ff 0%, #ffffff 54%);
-  --rf-tint-good: linear-gradient(157deg, #e9f8f1 0%, #ffffff 54%);
-  --rf-tint-warn: linear-gradient(157deg, #fef6e9 0%, #ffffff 54%);
-  --rf-tint-bad: linear-gradient(157deg, #fdefef 0%, #ffffff 54%);
+  --rf-tint: var(--rf-glass);
+  --rf-tint-accent:
+    linear-gradient(157deg, rgba(49, 91, 255, 0.16), rgba(255, 255, 255, 0) 56%),
+    var(--rf-glass);
+  --rf-tint-good:
+    linear-gradient(157deg, rgba(22, 163, 106, 0.16), rgba(255, 255, 255, 0) 56%),
+    var(--rf-glass);
+  --rf-tint-warn:
+    linear-gradient(157deg, rgba(245, 158, 11, 0.18), rgba(255, 255, 255, 0) 56%),
+    var(--rf-glass);
+  --rf-tint-bad:
+    linear-gradient(157deg, rgba(239, 68, 68, 0.16), rgba(255, 255, 255, 0) 56%),
+    var(--rf-glass);
 
   /* Pyöristykset */
   --rf-r-card: 18px;
@@ -90,7 +119,12 @@
   --rf-r-control: 12px;
   --rf-r-pill: 980px;
 
-  background: var(--rf-bg);
+  background:
+    radial-gradient(900px 640px at 6% -8%, rgba(99, 132, 255, 0.22), transparent 62%),
+    radial-gradient(820px 640px at 98% 4%, rgba(110, 214, 178, 0.2), transparent 62%),
+    radial-gradient(760px 560px at 62% 108%, rgba(255, 186, 120, 0.18), transparent 62%),
+    linear-gradient(180deg, #f4f6fb 0%, #eef1f7 100%);
+  background-attachment: fixed;
   color: var(--rf-text);
   font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
@@ -234,6 +268,20 @@
 /* Yleiskuvan mikrointeraktiot.                                          */
 /* Hillittyjä: kortin pitää reagoida, ei esiintyä.                        */
 /* --------------------------------------------------------------------- */
+
+/*
+ * Lasipinta.
+ *
+ * Taustan väri tulee kutsupaikasta, koska se kertoo tilan. Kaikki muu
+ * on täällä: sumennus, hiusreuna ja varjo. Kolmea kopiota näistä ei
+ * kannata pitää synkronissa käsin.
+ */
+.rf-glass {
+  backdrop-filter: var(--rf-glass-blur);
+  -webkit-backdrop-filter: var(--rf-glass-blur);
+  border: 1px solid var(--rf-glass-line);
+  box-shadow: var(--rf-glass-shadow);
+}
 
 .rf-card-lift {
   transition:

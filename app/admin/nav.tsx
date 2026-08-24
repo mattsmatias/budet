@@ -82,7 +82,17 @@ function DesktopSidebar({
   return (
     <aside
       className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
-      style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
+      style={{
+        /*
+         * Sivupalkki on vahvempaa lasia kuin kortit. Se on suuri pinta
+         * jonka läpi näkyy koko taustan värikenttä, ja ohuemmalla
+         * lasilla valikon teksti kilpailisi sen kanssa.
+         */
+        borderColor: "var(--rf-glass-line)",
+        background: "var(--rf-glass-strong)",
+        backdropFilter: "var(--rf-glass-blur)",
+        WebkitBackdropFilter: "var(--rf-glass-blur)",
+      }}
     >
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
@@ -237,7 +247,7 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
           <span
             className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
             style={{
-              background: active ? "var(--rf-card)" : "var(--rf-inset)",
+              background: active ? "var(--rf-glass-strong)" : "rgba(17,19,24,0.06)",
               color: "var(--rf-text-2)",
               borderRadius: 980,
             }}

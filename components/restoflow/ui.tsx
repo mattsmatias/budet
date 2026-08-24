@@ -32,11 +32,10 @@ export function Card({
 }) {
   return (
     <div
-      className={`${hover ? "rf-card-hover" : ""} ${padded ? "p-5" : ""} ${className}`}
+      className={`rf-glass ${hover ? "rf-card-hover" : ""} ${padded ? "p-5" : ""} ${className}`}
       style={{
-        background: "var(--rf-card)",
+        background: "var(--rf-glass)",
         borderRadius: "var(--rf-r-card)",
-        boxShadow: "var(--rf-shadow)",
       }}
     >
       {children}
@@ -182,12 +181,10 @@ export function MetricCard({
 
   const body = (
     <div
-      className="rf-card-lift flex h-full flex-col overflow-hidden"
+      className="rf-glass rf-card-lift flex h-full flex-col overflow-hidden"
       style={{
         background: highlight ? "var(--rf-tint-accent)" : tintFor(tone),
-        border: `1px solid ${highlight ? "var(--rf-accent-bg)" : "var(--rf-line)"}`,
         borderRadius: "var(--rf-r-card)",
-        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
       <div className="flex flex-1 flex-col px-4 pt-4 sm:px-[18px] sm:pt-[18px]">
@@ -198,10 +195,10 @@ export function MetricCard({
                 aria-hidden="true"
                 className="flex h-6 w-6 shrink-0 items-center justify-center"
                 style={{
-                  background: "var(--rf-card)",
+                  background: "var(--rf-glass-strong)",
                   color: "var(--rf-text-2)",
                   borderRadius: 8,
-                  boxShadow: "var(--rf-shadow-sm)",
+                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.7)",
                 }}
               >
                 {icon}
@@ -303,7 +300,7 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
         ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
         : tone === "bad"
           ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
-          : { bg: "var(--rf-card)", fg: "var(--rf-text-2)" };
+          : { bg: "var(--rf-glass-strong)", fg: "var(--rf-text-2)" };
 
   return (
     <span

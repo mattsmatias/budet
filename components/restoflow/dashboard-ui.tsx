@@ -39,7 +39,7 @@ export function Panel({
 }) {
   return (
     <section
-      className="flex h-full flex-col px-5 py-5"
+      className="rf-glass flex h-full flex-col px-5 py-5"
       style={{
         /*
          * Sama pehmeä liukuma kuin avainluvuissa, jotta osiot ja
@@ -47,10 +47,8 @@ export function Panel({
          * kunnossa eikä tarkistettava — se on paikka jossa asiat
          * ovat, ja sen tila kerrotaan sisällä.
          */
-        background: "var(--rf-tint)",
-        border: "1px solid var(--rf-line)",
+        background: "var(--rf-glass)",
         borderRadius: "var(--rf-r-card)",
-        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
       <div className="mb-4 flex items-baseline justify-between gap-3">
