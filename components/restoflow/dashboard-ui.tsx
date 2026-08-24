@@ -72,12 +72,20 @@ export function Panel({
   subtitle,
   href,
   linkLabel = "Kaikki",
+  action,
   children,
 }: {
   title: string;
   subtitle?: string;
   href?: string;
   linkLabel?: string;
+  /**
+   * Osion oma säädin otsikkorivillä — jaksovalitsin, suodatin.
+   *
+   * Sulkee pois linkin: molemmat asettuisivat samaan kohtaan, ja
+   * kahdesta oikean reunan elementistä toinen jäisi rivin alle.
+   */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -105,7 +113,9 @@ export function Panel({
           ) : null}
         </div>
 
-        {href ? (
+        {action ? <div className="shrink-0">{action}</div> : null}
+
+        {href && !action ? (
           /*
            * Pehmuste kasvattaa kosketusalueen, negatiivinen marginaali
            * palauttaa asettelun.

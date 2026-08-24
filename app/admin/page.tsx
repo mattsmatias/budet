@@ -6,7 +6,6 @@ import {
   compareToPreviousMonth,
   focusItems,
   receiptSplit,
-  staffCostShare,
 } from "@/lib/restoflow/dashboard";
 import { buildInsights } from "@/lib/restoflow/insights";
 import {
@@ -19,8 +18,8 @@ import {
   totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
-import { staffCostCents } from "@/lib/restoflow/timeclock";
-import { can, seesPayRates } from "@/lib/restoflow/permissions";
+import { currentState } from "@/lib/restoflow/timeclock";
+import { can } from "@/lib/restoflow/permissions";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -42,12 +41,13 @@ import { Purchases } from "./home/purchases";
 import { StatusHeader } from "./home/status-header";
 import { Donut, seriesColor, Sparkline } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
+import { shiftBounds } from "@/lib/restoflow/shift-window";
 import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
-import { monthStartDate } from "@/lib/restoflow/clock-context";
+import { dayIn, minutesOfDayIn, monthStartDate } from "@/lib/restoflow/clock-context";
 import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
 
 export const metadata = { title: "Yleiskatsaus" };
@@ -80,6 +80,24 @@ export default async function AdminDashboard({
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
   const isCurrentMonth = viewMonth === month;
+
+  /*
+   * Kaavion jakso osoitteessa eikä komponentin tilassa.
+   *
+   * Näkymä on palvelinkomponentti, ja tilan lisääminen tekisi siitä
+   * selainkomponentin koko kaavion ajaksi. Osoitteessa valinta myös
+   * säilyy linkkiä jaettaessa.
+   */
+  const CHART_RANGES = [
+    { months: 3, label: "3 kk" },
+    { months: 6, label: "6 kk" },
+    { months: 12, label: "Vuosi" },
+  ] as const;
+
+  const requestedChart = Number(params.kaavio);
+  const chartMonths = CHART_RANGES.some((r) => r.months === requestedChart)
+    ? requestedChart
+    : 6;
 
   // Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
   const selectable: string[] = [];
@@ -192,18 +210,7 @@ export default async function AdminDashboard({
     ? Object.values(monthlyHours).reduce((sum, hours) => sum + hours, 0)
     : null;
 
-  const staffCost = isCurrentMonth
-    ? users.reduce(
-        (sum, u) =>
-          sum + staffCostCents((monthlyHours[u.id] ?? 0) * 3600000, u.hourlyRateCents ?? 0),
-        0,
-      )
-    : null;
 
-  const costShare =
-    staffCost === null ? null : staffCostShare(staffCost, totals.totalCents);
-
-  const showsRates = seesPayRates(role);
 
   /*
    * "Työaika tänään" laski tässä ketkä ovat sisällä.
@@ -273,7 +280,56 @@ export default async function AdminDashboard({
    * ettei kukaan ehtinyt kirjata sitä — kaavio katkaisee viivan siitä
    * kohtaa eikä vedä sitä pohjaan.
    */
-  const flow = monthlyFlow(receipts, sales, viewMonth, 6);
+  const flow = monthlyFlow(receipts, sales, viewMonth, chartMonths);
+
+  /*
+   * Budjetti jäljellä.
+   *
+   * Vain niistä kategorioista joille budjetti on asetettu. Kategoria
+   * ilman budjettia ei ole nolla budjettia vaan päätös jota ei ole
+   * tehty, eikä sitä lasketa jäljellä olevaan.
+   */
+  const budgetTotal = budgets_.reduce((sum, line) => sum + line.budgetCents, 0);
+  const budgetSpent = budgets_.reduce((sum, line) => sum + line.spentCents, 0);
+  const budgetLeft = budgetTotal - budgetSpent;
+  const budgetUsed = budgetTotal > 0 ? budgetSpent / budgetTotal : null;
+
+  /*
+   * Ketkä ovat sisällä juuri nyt.
+   *
+   * Tila luetaan leimauksista eikä tallenneta mihinkään. Päivä luetaan
+   * ravintolan ajassa — merkkijonon viipale on UTC:tä, ja yöllä tehty
+   * leimaus osuisi väärälle päivälle.
+   */
+  const onDuty = isCurrentMonth
+    ? users.filter((u) => {
+        const mine = clockEvents.filter(
+          (e) => e.userId === u.id && dayIn(restaurant.timezone, e.at) === today,
+        );
+        return currentState(mine) !== "off";
+      }).length
+    : null;
+
+  const staffTotal = users.filter((u) => u.position !== null).length;
+
+  /*
+   * Seuraava alkava vuoro tänään.
+   *
+   * Kertoo milloin salissa on taas enemmän väkeä. Päättynyt vuoro ei
+   * kelpaa: sama sääntö kuin työntekijän omassa näkymässä.
+   */
+  const nextToday = shifts
+    .filter((sh) => sh.date === today && sh.status !== "declined")
+    .map((sh) => ({ sh, bounds: shiftBounds(sh) }))
+    .filter(({ bounds }) => bounds.startMin > minutesOfDayIn(restaurant.timezone, now))
+    .sort((a, b) => a.bounds.startMin - b.bounds.startMin)[0];
+
+  const upcomingToday = shifts.filter(
+    (sh) =>
+      sh.date === today &&
+      sh.status !== "declined" &&
+      shiftBounds(sh).startMin > minutesOfDayIn(restaurant.timezone, now),
+  ).length;
 
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
@@ -360,69 +416,129 @@ export default async function AdminDashboard({
           href="/admin/kulut"
         />
 
-        <StatCard
-          label="Kuitit"
-          value={<CountUp to={receipts_.total} format="integer" />}
-          // "Ei vielä kuitteja" on väärin kun niitä on toisessa kuussa.
-          delta={
-            receipts_.pending > 0
-              ? { text: `${receipts_.pending} kesken` }
-              : undefined
-          }
-          conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
-          tone={receipts_.pending > 0 ? "warn" : "neutral"}
-          icon={<RfIcon name="receipt" size={17} />}
-          href="/admin/kuitit"
-          linkLabel="Kuitit"
-        />
-
-        <StatCard
-          label="Työtunnit"
-          value={
-            totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />
-          }
-          conclusion={
-            totalHours === null
-              ? "Vain kuluvalta kuukaudelta"
-              : totalHours === 0
-                ? "Ei leimauksia tässä kuussa"
-                : "Leimauksista laskettu"
-          }
-          tone="muted"
-          icon={<RfIcon name="clock" size={17} />}
-          href="/admin/tyovuorot"
-        />
-
-        {showsRates ? (
+{pulse ? (
           <StatCard
-            label="Henkilöstökulut"
+            label="Myynti tänään"
             value={
-              staffCost === null ? "—" : <CountUp to={staffCost} format="money" />
+              pulse.sales.cents === null ? "—" : <CountUp to={pulse.sales.cents} format="money" />
+            }
+            /*
+             * Puuttuva myynti ei ole nolla. "—" ja "Ei vielä kirjattu"
+             * kertovat sen; nolla väittäisi ettei tänään myyty mitään.
+             */
+            delta={
+              pulse.sales.cents !== null && pulse.sales.comparison.kind !== "none"
+                ? {
+                    text: percent(pulse.sales.comparison.ratio - 1),
+                    tone: pulse.sales.comparison.ratio >= 1 ? "down" : "warn",
+                  }
+                : undefined
             }
             conclusion={
-              staffCost === null
-                ? "Vain kuluvalta kuukaudelta"
-                : costShare === null
-                  ? "Osuutta ei voi laskea"
-                  : `${Math.round(costShare * 100)} % kirjatuista kuluista`
+              pulse.sales.cents === null
+                ? "Ei vielä kirjattu"
+                : pulse.sales.comparison.kind === "target"
+                  ? `Tavoite ${formatMoney(pulse.sales.comparison.targetCents)}`
+                  : pulse.sales.comparison.kind === "weekday"
+                    ? `${formatMoney(pulse.sales.comparison.averageCents)} saman viikonpäivän keskiarvo`
+                    : "Ei vertailukohtaa"
             }
-            tone="muted"
-            icon={<RfIcon name="staff" size={17} />}
-            hint="Tunnit × tuntipalkka. Ei palkkalaskelma."
-            href="/admin/tyovuorot"
+            tone={
+              pulse.sales.cents === null
+                ? "muted"
+                : pulse.sales.comparison.kind === "none"
+                  ? "neutral"
+                  : pulse.sales.comparison.ratio >= 1
+                    ? "down"
+                    : "warn"
+            }
+            icon={<RfIcon name="trend" size={17} />}
+            href={can(role, "sales.view") ? "/admin/myynti" : undefined}
+            linkLabel="Myynti"
           />
         ) : (
           <StatCard
-            label="Toimittajat"
-            value={String(supplierTotalsInMonth(receipts, viewMonth).length)}
-            conclusion={
-              suppliers.length === 0 ? "Ei vielä toimittajia" : "Kuukauden aikana"
+            label="Kuitit"
+            value={<CountUp to={receipts_.total} format="integer" />}
+            delta={
+              receipts_.pending > 0 ? { text: `${receipts_.pending} kesken` } : undefined
             }
-            tone="muted"
-            icon={<RfIcon name="suppliers" size={17} />}
-            href="/admin/toimittajat"
+            conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
+            tone={receipts_.pending > 0 ? "warn" : "neutral"}
+            icon={<RfIcon name="receipt" size={17} />}
+            href="/admin/kuitit"
+            linkLabel="Kuitit"
           />
         )}
+
+        <StatCard
+          label="Budjetti jäljellä"
+          value={budgetTotal === 0 ? "—" : <CountUp to={budgetLeft} format="money" />}
+          delta={
+            budgetUsed === null
+              ? undefined
+              : {
+                  text: `${Math.round(budgetUsed * 100)} %`,
+                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "neutral",
+                }
+          }
+          bar={
+            budgetUsed === null
+              ? undefined
+              : {
+                  percent: budgetUsed * 100,
+                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "neutral",
+                }
+          }
+          conclusion={
+            budgetTotal === 0
+              ? "Budjetteja ei ole määritetty"
+              : `${formatMoney(budgetSpent)} / ${formatMoney(budgetTotal)}`
+          }
+          tone={
+            budgetUsed === null
+              ? "muted"
+              : budgetUsed > 1
+                ? "bad"
+                : budgetUsed > 0.9
+                  ? "warn"
+                  : "neutral"
+          }
+          icon={<RfIcon name="budget" size={17} />}
+          href="/admin/budjetit"
+          linkLabel="Budjetit"
+        />
+
+        {onDuty !== null ? (
+          <StatCard
+            label="Töissä nyt"
+            value={`${onDuty} / ${staffTotal}`}
+            delta={upcomingToday > 0 ? { text: `${upcomingToday} tulossa` } : undefined}
+            conclusion={
+              nextToday
+                ? `Seuraava: ${users.find((u) => u.id === nextToday.sh.userId)?.name ?? "vuoro"} ${nextToday.sh.startTime}`
+                : onDuty === 0
+                  ? "Kukaan ei ole leimannut sisään"
+                  : "Ei enempää vuoroja tänään"
+            }
+            tone="muted"
+            icon={<RfIcon name="staff" size={17} />}
+            href="/admin/tyovuorot"
+            linkLabel="Vuorot"
+          />
+        ) : (
+          <StatCard
+            label="Työtunnit"
+            value={totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />}
+            conclusion={
+              totalHours === null ? "Vain kuluvalta kuukaudelta" : "Leimauksista laskettu"
+            }
+            tone="muted"
+            icon={<RfIcon name="clock" size={17} />}
+            href="/admin/tyovuorot"
+          />
+        )}
+
       </section>
 
       {/*
@@ -487,9 +603,35 @@ export default async function AdminDashboard({
 
         <Panel
           title="Myynti ja kulut"
-          subtitle="Kuusi kuukautta"
-          href={can(role, "sales.view") ? "/admin/myynti" : undefined}
-          linkLabel="Myynti"
+          action={
+            <div
+              role="group"
+              aria-label="Aikaväli"
+              className="flex gap-0.5 p-0.5"
+              style={{ background: "var(--rf-inset)", borderRadius: 980 }}
+            >
+              {CHART_RANGES.map((range) => {
+                const on = range.months === chartMonths;
+                return (
+                  <Link
+                    key={range.months}
+                    href={`/admin?kuukausi=${viewMonth}&kaavio=${range.months}`}
+                    scroll={false}
+                    aria-current={on ? "true" : undefined}
+                    className="rf-press px-3 py-1 text-[12px] font-semibold"
+                    style={{
+                      background: on ? "var(--rf-card)" : "transparent",
+                      color: on ? "var(--rf-text)" : "var(--rf-text-2)",
+                      boxShadow: on ? "var(--rf-shadow-sm)" : "none",
+                      borderRadius: 980,
+                    }}
+                  >
+                    {range.label}
+                  </Link>
+                );
+              })}
+            </div>
+          }
         >
           {flow.labels.length < 2 ? (
             <PanelEmpty text="Kehitys näkyy täällä kun aineistoa on kahdelta kuukaudelta." />

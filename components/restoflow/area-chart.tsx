@@ -128,9 +128,13 @@ export function AreaChart({
         );
       })}
 
-      {/* Korostettu kohta: pystyviiva ja pisteet, ei lipukkeita.
-          Lipukkeet peittäisivät viivan juuri siitä kohdasta jota
-          katsotaan, ja tarkat luvut ovat kortin otsikossa. */}
+      {/*
+        Korostettu kohta: pystyviiva, pisteet ja arvot.
+
+        Lipuke on tumma laatta eikä pelkkä teksti, koska se piirtyy
+        viivan päälle — vaalea teksti vaalealla täytöllä katoaisi juuri
+        siitä kohdasta jota katsotaan.
+      */}
       <line
         x1={x(mark)}
         y1={PAD_T}
@@ -143,16 +147,41 @@ export function AreaChart({
       {series.map((s, i) => {
         const v = s.points[mark];
         if (v === null || v === undefined) return null;
+
+        /* Lipuke kääntyy vasemmalle kun piste on oikeassa reunassa. */
+        const right = x(mark) > W - 120;
+        const boxX = right ? x(mark) - 84 : x(mark) + 12;
+
         return (
-          <circle
-            key={i}
-            cx={x(mark)}
-            cy={y(v)}
-            r="4"
-            fill={s.color}
-            stroke="var(--rf-card)"
-            strokeWidth="2.5"
-          />
+          <g key={i}>
+            <rect
+              x={boxX}
+              y={y(v) - 10}
+              width={72}
+              height={20}
+              rx={5}
+              fill="var(--rf-text)"
+            />
+            <text
+              x={boxX + 36}
+              y={y(v) + 4}
+              textAnchor="middle"
+              className="rf-tabular"
+              fontSize="10.5"
+              fontWeight="600"
+              fill="var(--rf-card)"
+            >
+              {format(v)}
+            </text>
+            <circle
+              cx={x(mark)}
+              cy={y(v)}
+              r="4"
+              fill={s.color}
+              stroke="var(--rf-card)"
+              strokeWidth="2.5"
+            />
+          </g>
         );
       })}
 
