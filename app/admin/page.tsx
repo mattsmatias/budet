@@ -46,6 +46,14 @@ import {
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
+import { StatusHeader } from "./home/status-header";
+import { Today } from "./home/today";
+import { fetchDailySales } from "@/lib/restoflow/queries";
+import { labourCost } from "@/lib/restoflow/payroll-data";
+import { todayPulse } from "@/lib/restoflow/pulse";
+import { overallStatus } from "@/lib/restoflow/status";
+import { evaluability } from "@/lib/restoflow/dashboard";
+import { monthStartDate } from "@/lib/restoflow/clock-context";
 
 export const metadata = { title: "Yleiskatsaus" };
 
@@ -221,6 +229,39 @@ export default async function AdminDashboard({
 
   const firstName = (user.fullName ?? user.email ?? "").split(" ")[0] ?? "";
 
+  /*
+   * Kärjen tiedot.
+   *
+   * Myynti ja työvoima haetaan erikseen, koska jaettu paketti ei sisällä
+   * niitä: myynti on uusi taulu, ja työvoima tulee palkkamoottorista
+   * jotta se on sama luku kuin palkkalaskelmassa.
+   *
+   * Vain kuluvalle kuukaudelle. Menneen kuukauden "tänään" ei ole
+   * mitään, ja vanhan kuun kärki näyttäisi tyhjältä ilman syytä.
+   */
+  const [sales, labourToday, labourMonth] = isCurrentMonth
+    ? await Promise.all([
+        fetchDailySales(restaurant.id),
+        labourCost(restaurant.id, restaurant.timezone, today, today, now),
+        labourCost(restaurant.id, restaurant.timezone, monthStartDate(month), today, now),
+      ])
+    : [[], null, null];
+
+  const pulse =
+    isCurrentMonth && labourToday && labourMonth
+      ? todayPulse({
+          today,
+          month,
+          receipts,
+          sales,
+          labourTodayCents: labourToday.cents,
+          labourTodayMinutes: labourToday.minutes,
+          labourMonthCents: labourMonth.cents,
+        })
+      : null;
+
+  const status = overallStatus(items, evaluability(dashboardInput).canJudge);
+
   // Trendiviiva vain jos historiaa on. Kahden pisteen viiva näyttäisi
   // suunnalta olematta sellainen.
   const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
@@ -240,14 +281,19 @@ export default async function AdminDashboard({
           tasapelissä myöhempi DOM-solmu voitti. */}
       <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[24px] font-semibold tracking-tight md:text-[28px]">
+          {/*
+            Tervehdys on pieni ja tila suuri.
+            Aiemmin järjestys oli päinvastoin: ruudun suurin teksti oli
+            "Hyvää iltaa" ja vastaus kysymykseen "onko kaikki kunnossa"
+            löytyi vasta neljän kortin alta.
+          */}
+          <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
             {greeting(now, restaurant.timezone)}
-            {firstName ? `, ${firstName}` : ""}{" "}
-            <span aria-hidden="true">👋</span>
-          </h1>
-          <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-            {restaurant.name} · {formatMonth(viewMonth)}
+            {firstName ? `, ${firstName}` : ""} · {restaurant.name}
           </p>
+          <h1 className="mt-0.5 text-[20px] font-semibold tracking-tight">
+            {formatMonth(viewMonth)}
+          </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -274,6 +320,15 @@ export default async function AdminDashboard({
           ) : null}
         </div>
       </header>
+
+      {/*
+        Kolme lohkoa siinä järjestyksessä kuin kysymykset kysytään:
+        onko kaikki kunnossa, miten tänään menee, mitä kuussa on
+        tapahtunut.
+      */}
+      <StatusHeader status={status} items={items} />
+
+      {pulse ? <Today pulse={pulse} canManageSales={can(role, "sales.manage")} /> : null}
 
       {/* 2. KPI-kortit */}
       <section
