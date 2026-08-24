@@ -153,7 +153,7 @@ button { font: inherit; }
   position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
   background: var(--card-2); border-right: 1px solid var(--edge); padding: 22px 0 0;
 }
-.mark { display: flex; align-items: baseline; gap: 9px; padding: 0 22px 24px; }
+.mark { display: flex; align-items: baseline; gap: 9px; padding: 0 22px 16px; }
 .mark .logo {
   width: 26px; height: 26px; border-radius: 7px; flex: none;
   background: var(--ink); color: var(--paper); display: flex;
@@ -162,11 +162,37 @@ button { font: inherit; }
 }
 .mark .wm { font-size: 20px; line-height: 1; }
 
-.nav { flex: 1; overflow-y: auto; padding: 0 14px 14px; }
-.nav .grp { margin-bottom: 20px; }
-.nav .grp > p { padding: 0 8px 7px; }
+/*
+   Kisko mahtuu ruudulle.
+
+   Vieritettävä valikko on huono kahdesta syystä: kelaaminen piilottaa
+   kohtia joita ei tiedä etsiä, ja vierityspalkki on ainoa kohta koko
+   näkymässä jossa selaimen oma tyyli näkyisi läpi.
+
+   Ryhmiä on kolme entisen viiden sijaan. "Yleistä" yhdelle kohdalle
+   oli otsikko ilman ryhmää, ja Raportointi kuului Talouteen eikä
+   Ravintolaan — raportti on tiliote, ei ruokalista.
+
+   Jos ikkuna on silti liian matala, palkki on ohut ja teeman värinen.
+*/
+.nav {
+  flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--edge) transparent;
+}
+.nav::-webkit-scrollbar { width: 8px; }
+.nav::-webkit-scrollbar-track { background: transparent; }
+.nav::-webkit-scrollbar-thumb {
+  background: var(--edge); border-radius: 999px;
+  border: 2px solid var(--card-2);
+}
+.nav::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+.nav .grp { margin-bottom: 12px; }
+.nav .grp:last-child { margin-bottom: 0; }
+.nav .grp > p { padding: 0 8px 5px; }
 .nav a {
-  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  display: flex; align-items: center; gap: 10px; padding: 6px 10px;
   border-radius: var(--r-sm); font-size: 14px; color: var(--ink-2);
   transition: background .15s, color .15s;
 }
@@ -182,8 +208,21 @@ button { font: inherit; }
 .nav a[aria-current="page"] .n { background: rgba(255,255,255,.18); color: var(--paper); }
 .nav a .n.warn { background: var(--hold-bg); color: var(--hold-ink); }
 
-.rail-foot { border-top: 1px solid var(--edge); padding: 14px; }
-.me { display: flex; align-items: center; gap: 10px; padding: 4px 6px 12px; }
+.rail-foot { border-top: 1px solid var(--edge); padding: 12px 14px 14px; flex: none; }
+
+/* Tili ei ole ravintolan työtä vaan tunnuksen hallintaa, joten se on
+   viivan alapuolella eikä valikossa. Kaksi riviä vierekkäin, koska
+   kumpaakaan ei paineta päivittäin. */
+.acct { display: flex; gap: 4px; padding-bottom: 10px; }
+.acct a {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 8px; border-radius: var(--r-sm); font-size: 12.5px;
+  color: var(--ink-2); transition: background .15s, color .15s;
+}
+.acct a:hover { background: var(--edge-soft); color: var(--ink); }
+.acct svg { width: 14px; height: 14px; flex: none; }
+
+.me { display: flex; align-items: center; gap: 10px; padding: 2px 6px 11px; }
 .me .av {
   width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex;
   align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
@@ -519,7 +558,6 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
 
     <nav class="nav" aria-label="Hallinta">
       <div class="grp">
-        <p class="k">Yleistä</p>
         <a href="#" data-go="yleiskatsaus" aria-current="page"><span class="lbl">Yleiskatsaus</span></a>
       </div>
 
@@ -529,6 +567,7 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
         <a href="#" data-go="yleiskatsaus"><span class="lbl">Kulut</span></a>
         <a href="#" data-go="yleiskatsaus"><span class="lbl">Budjetit</span></a>
         <a href="#" data-go="yleiskatsaus"><span class="lbl">Toimittajat</span></a>
+        <a href="#" data-go="yleiskatsaus"><span class="lbl">Raportointi</span></a>
       </div>
 
       <div class="grp">
@@ -541,17 +580,21 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
       <div class="grp">
         <p class="k">Ravintola</p>
         <a href="#" data-go="yleiskatsaus"><span class="lbl">Lounas</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Raportointi</span></a>
-      </div>
-
-      <div class="grp">
-        <p class="k">Tili</p>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Asetukset</span></a>
-        <a href="#" data-go="yleiskatsaus"><span class="lbl">Kirjaudu ulos</span></a>
       </div>
     </nav>
 
     <div class="rail-foot">
+      <div class="acct">
+        <a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6" stroke-linecap="round"/></svg>
+          Asetukset
+        </a>
+        <a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/><path d="m17 15 3-3-3-3M20 12H9"/></svg>
+          Kirjaudu ulos
+        </a>
+      </div>
+
       <div class="me">
         <span class="av">OM</span>
         <span class="who"><span class="n">Oktay Matias</span><span class="r">Omistaja · Cafe Monami</span></span>
