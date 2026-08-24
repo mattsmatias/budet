@@ -11,6 +11,8 @@ import {
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
+import { Avatar } from "@/components/restoflow/ui";
+import { signOut } from "@/app/(auth)/actions";
 import { MattiPanel } from "./matti/panel";
 
 /**
@@ -23,14 +25,35 @@ import { MattiPanel } from "./matti/panel";
  * Kohdat tulevat roolin oikeuksista, eivät kovakoodatusta listasta — sama
  * funktio ohjaa sivujen pääsytarkistusta.
  */
-export function AdminNav({ role }: { role: Role }) {
+export function AdminNav({
+  role,
+  user,
+  counts,
+}: {
+  role: Role;
+  user: { name: string; email: string; initials: string };
+  /**
+   * Lukumäärät valikon kohtiin, avaimena polku.
+   *
+   * Vain se mikä odottaa ihmistä: tarkistettavat kuitit, tekijättömät
+   * vuorot, palkkalaskelmien huomiot. Luku joka ei vaadi mitään on
+   * koriste, ja koristeluku opettaa ohittamaan kaikki luvut.
+   */
+  counts: Record<string, number>;
+}) {
   const sections = adminNavSectionsFor(role);
   const primary = primaryNavFor(role);
   const matti = can(role, "matti.use");
 
   return (
     <>
-      <DesktopSidebar sections={sections} matti={matti} />
+      <DesktopSidebar
+        sections={sections}
+        matti={matti}
+        user={user}
+        counts={counts}
+        canOpenSettings={can(role, "settings.view")}
+      />
       <MobileBar items={primary} />
     </>
   );
@@ -49,9 +72,15 @@ function useActive() {
 function DesktopSidebar({
   sections,
   matti,
+  user,
+  counts,
+  canOpenSettings,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
   matti: boolean;
+  user: { name: string; email: string; initials: string };
+  counts: Record<string, number>;
+  canOpenSettings: boolean;
 }) {
   return (
     <aside
@@ -86,7 +115,7 @@ function DesktopSidebar({
 
             <ul aria-labelledby={`nav-${section.id}`} className="space-y-0.5">
               {section.items.map((item) => (
-                <NavLink key={item.href} item={item} />
+                <NavLink key={item.href} item={item} count={counts[item.href] ?? 0} />
               ))}
             </ul>
           </div>
@@ -103,17 +132,83 @@ function DesktopSidebar({
        * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
        * käyttäjää eivätkä ravintolan työtä.
        */}
+      <div className="px-2.5 pb-2">
+        {/*
+         * Asetukset ja uloskirjautuminen omana ryhmänään pohjalla.
+         *
+         * Ne eivät ole ravintolan työtä vaan tilin hallintaa, ja siksi
+         * ne ovat erillään päivittäisistä kohdista — mutta näkyvissä
+         * eivätkä valikon takana. Tunnusvalikko työpöydän oikeasta
+         * yläkulmasta poistui samalla: kaksi paikkaa samalle asialle on
+         * kaksi paikkaa joita pitää etsiä.
+         */}
+        <p
+          id="nav-account"
+          className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
+          style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+        >
+          Tili
+        </p>
+
+        <ul aria-labelledby="nav-account" className="space-y-0.5">
+          {canOpenSettings ? (
+            <NavLink
+              item={{
+                href: "/admin/asetukset",
+                label: "Asetukset",
+                icon: "settings",
+                requires: "settings.view",
+                section: "main",
+              }}
+              count={0}
+            />
+          ) : null}
+          <li>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                <RfIcon name="logout" size={19} />
+                <span>Kirjaudu ulos</span>
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
+
       <div
         className="border-t px-2.5 py-2"
         style={{ borderColor: "var(--rf-line)" }}
       >
         <MattiPanel enabled={matti} />
       </div>
+
+      {/*
+       * Käyttäjäkortti pohjimmaisena.
+       *
+       * Kertoo kuka on kirjautuneena. Se ei ole turhaa: sama kone on
+       * usein toimistossa yhteiskäytössä, ja väärällä tunnuksella
+       * kirjattu kuitti menee väärän ihmisen nimiin.
+       */}
+      <div
+        className="flex items-center gap-2.5 border-t px-4 py-3"
+        style={{ borderColor: "var(--rf-line)", background: "var(--rf-tint)" }}
+      >
+        <Avatar initials={user.initials} size={32} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-semibold">{user.name}</p>
+          <p className="truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+            {user.email}
+          </p>
+        </div>
+      </div>
     </aside>
   );
 }
 
-function NavLink({ item }: { item: NavEntry }) {
+function NavLink({ item, count }: { item: NavEntry; count: number }) {
   const isActive = useActive();
   const active = isActive(item.href);
 
@@ -131,6 +226,19 @@ function NavLink({ item }: { item: NavEntry }) {
       >
         <RfIcon name={item.icon} size={19} />
         <span className="flex-1">{item.label}</span>
+
+        {count > 0 ? (
+          <span
+            className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
+            style={{
+              background: active ? "var(--rf-card)" : "var(--rf-inset)",
+              color: "var(--rf-text-2)",
+              borderRadius: 980,
+            }}
+          >
+            {count > 99 ? "99+" : count}
+          </span>
+        ) : null}
       </Link>
     </li>
   );

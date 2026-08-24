@@ -42,7 +42,13 @@ function Dropdown({
   children,
 }: {
   label: string;
-  badge?: boolean;
+  /**
+   * Lukumäärä merkkinä. Nolla piilottaa merkin.
+   *
+   * Piste kertoi että jotain on. Luku kertoo paljonko, ja se ratkaisee
+   * avaako käyttäjä valikon nyt vai illalla.
+   */
+  badge?: number;
   width: number;
   open: boolean;
   onToggle: () => void;
@@ -68,12 +74,16 @@ function Dropdown({
         {badge ? (
           <span
             aria-hidden="true"
-            className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"
+            className="rf-tabular absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center px-1 text-[10.5px] font-bold leading-none"
             style={{
               background: "var(--rf-red)",
-              border: "2px solid var(--rf-card)",
+              color: "#fff",
+              borderRadius: 980,
+              border: "2px solid var(--rf-bg)",
             }}
-          />
+          >
+            {badge > 99 ? "99+" : badge}
+          </span>
         ) : null}
       </button>
 
@@ -128,7 +138,7 @@ function NotificationMenu({
   return (
     <Dropdown
       label={alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"}
-      badge={alerts.length > 0}
+      badge={alerts.length}
       width={340}
       open={open}
       onToggle={onToggle}
@@ -326,12 +336,20 @@ export function HeaderMenus({
   restaurantName,
   role,
   canOpenSettings,
+  showUser = true,
 }: {
   alerts: Alert[];
   userName: string;
   restaurantName: string;
   role: Role;
   canOpenSettings: boolean;
+  /**
+   * Näytetäänkö tunnusvalikko?
+   *
+   * Työpöydällä ei: käyttäjäkortti on sivupalkin pohjalla. Puhelimessa
+   * kyllä, koska siellä ei ole sivupalkkia.
+   */
+  showUser?: boolean;
 }) {
   const [openMenu, setOpenMenu] = useState<"alerts" | "user" | null>(null);
 
@@ -348,6 +366,7 @@ export function HeaderMenus({
         onClose={close}
       />
 
+      {showUser ? (
       <UserMenu
         userName={userName}
         restaurantName={restaurantName}
@@ -359,6 +378,7 @@ export function HeaderMenus({
         }
         onClose={close}
       />
+      ) : null}
     </div>
   );
 }

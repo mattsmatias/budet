@@ -78,7 +78,7 @@ export default async function AdminDashboard({
     receipts, users, budgets, shifts, clockEvents, absences, merchants,
     openShifts, sales,
     suppliers: supplierRows,
-    month, today, now, monthlyHours, restaurant, user, role, categories: customCategories,
+    month, today, now, monthlyHours, restaurant, role, categories: customCategories,
   } = await adminContext("/admin");
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
@@ -229,7 +229,6 @@ export default async function AdminDashboard({
 
   const staffCount = users.filter((u) => u.position !== null).length;
 
-  const firstName = (user.fullName ?? user.email ?? "").split(" ")[0] ?? "";
 
   /*
    * Kärjen tiedot.
@@ -281,15 +280,15 @@ export default async function AdminDashboard({
           tasapelissä myöhempi DOM-solmu voitti. */}
       <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          {/*
-            Tervehdys on pieni ja tila suuri.
-            Aiemmin järjestys oli päinvastoin: ruudun suurin teksti oli
-            "Hyvää iltaa" ja vastaus kysymykseen "onko kaikki kunnossa"
-            löytyi vasta neljän kortin alta.
+{/*
+            Tervehdys siirtyi yläpalkkiin.
+
+            Se oli tässä, jolloin se katosi heti kun käyttäjä siirtyi
+            Kuiteille. Palkissa se on aina näkyvissä, ja sivun otsikko
+            vapautui kertomaan mitä sivulla on — mikä on sen tehtävä.
           */}
           <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-            {greeting(now, restaurant.timezone)}
-            {firstName ? `, ${firstName}` : ""} · {restaurant.name}
+            {restaurant.name}
           </p>
           <h1 className="mt-0.5 text-[20px] font-semibold tracking-tight">
             {formatMonth(viewMonth)}
@@ -902,26 +901,6 @@ export default async function AdminDashboard({
 
 // ---------------------------------------------------------------------------
 
-/**
- * Tervehdys ravintolan ajassa.
- *
- * Palvelin käy UTC:ssä, joten kellonaika on luettava ravintolan
- * vyöhykkeellä — muuten suomalainen omistaja saa "hyvää iltaa" aamulla.
- */
-function greeting(nowIso: string, timeZone: string): string {
-  const hour = Number(
-    new Intl.DateTimeFormat("fi-FI", {
-      timeZone,
-      hour: "2-digit",
-      hour12: false,
-    }).format(new Date(nowIso)),
-  );
-
-  if (hour < 5) return "Hyvää yötä";
-  if (hour < 11) return "Hyvää huomenta";
-  if (hour < 17) return "Hyvää päivää";
-  return "Hyvää iltaa";
-}
 
 /** "+5,3 %" tai "−12,0 %". Ei koskaan ilman vertailujaksoa. */
 function percent(change: number): string {

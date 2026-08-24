@@ -3,9 +3,14 @@ import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
-import { can } from "@/lib/restoflow/permissions";
+import { needsReview } from "@/lib/restoflow/expenses";
+import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
+import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
+import { TopBar } from "./topbar";
+import type { SearchItem } from "./search";
+import type { StaffPosition } from "@/lib/restoflow/types";
 
 /**
  * Managerin kuori.
@@ -18,6 +23,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { user, restaurant, role } = await requireContext("/admin");
 
   const data = await fetchRestaurantData(restaurant.id);
+  const month = monthIn(restaurant.timezone);
+  const today = todayIn(restaurant.timezone);
+  const now = nowIso();
+
   const alerts = buildAlerts({
     receipts: data.receipts,
     budgets: data.budgets,
@@ -25,9 +34,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     users: data.users,
     clockEvents: data.clockEvents,
     absences: data.absences,
-    month: monthIn(restaurant.timezone),
-    today: todayIn(restaurant.timezone),
-    now: nowIso(),
+    month,
+    today,
+    now,
     timezone: restaurant.timezone,
     openShifts: data.openShifts,
     sales: data.sales,
@@ -35,9 +44,29 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   const userName = user.fullName ?? user.email ?? "Käyttäjä";
 
+  /*
+   * Valikon luvut.
+   *
+   * Vain se mikä odottaa ihmistä. Kuittien kokonaismäärä ei kuulu
+   * tähän: se ei vaadi mitään, ja luku joka ei vaadi mitään opettaa
+   * ohittamaan myös ne jotka vaativat.
+   */
+  const counts: Record<string, number> = {
+    "/admin/kuitit": needsReview(data.receipts).length,
+    "/admin/tyovuorot": data.openShifts.filter((s) => s.date >= today).length,
+  };
+
   return (
     <div className="flex min-h-screen">
-      <AdminNav role={role} />
+      <AdminNav
+        role={role}
+        user={{
+          name: userName,
+          email: user.email ?? "",
+          initials: initialsOf(userName),
+        }}
+        counts={counts}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
@@ -65,25 +94,23 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           />
         </header>
 
-        {/* Yläpalkki työpöydällä: sama tieto oikeassa yläkulmassa kuin
-            puhelimessa, jotta ilmoitukset löytyvät samasta paikasta. */}
         {/*
-          Sama leveysrajaus kuin sisällöllä.
+          Työpöydän yläpalkki.
 
-          Ilman tätä palkki venyi koko ikkunan leveyteen ja kello sekä
-          tunnus liimautuivat ruudun oikeaan reunaan, kun kortit
-          loppuivat satoja pikseleitä aiemmin. Nyt ne ovat samassa
-          pystylinjassa korttien oikean reunan kanssa.
+          Sama leveysrajaus kuin sisällöllä. Ilman tätä palkki venyi koko
+          ikkunan leveyteen ja kello liimautui ruudun oikeaan reunaan,
+          kun kortit loppuivat satoja pikseleitä aiemmin.
         */}
-        <div className="rf-z-chrome relative mx-auto hidden w-full max-w-6xl justify-end gap-2 px-4 pt-5 md:flex md:px-6">
-          <HeaderMenus
-            alerts={alerts}
-            userName={userName}
-            restaurantName={restaurant.name}
-            role={role}
-            canOpenSettings={can(role, "settings.view")}
-          />
-        </div>
+        <TopBar
+          greeting={greeting(now, restaurant.timezone)}
+          firstName={userName.split(" ")[0] ?? ""}
+          date={longDate(now, restaurant.timezone)}
+          alerts={alerts}
+          userName={userName}
+          restaurantName={restaurant.name}
+          role={role}
+          search={searchItems(role, data.suppliers, data.users)}
+        />
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-24 md:px-6 md:pb-7 md:pt-4">
           {children}
@@ -91,4 +118,93 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       </div>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+
+/** "Hyvää huomenta" — ravintolan ajassa, ei palvelimen. */
+function greeting(iso: string, timeZone: string): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("fi-FI", { timeZone, hour: "2-digit", hour12: false })
+      .format(new Date(iso)),
+  );
+
+  if (hour < 5) return "Hyvää yötä";
+  if (hour < 11) return "Hyvää huomenta";
+  if (hour < 17) return "Hyvää päivää";
+  return "Hyvää iltaa";
+}
+
+/** "maanantai 24. elokuuta 2026", ensimmäinen kirjain isolla. */
+function longDate(iso: string, timeZone: string): string {
+  const text = new Intl.DateTimeFormat("fi-FI", {
+    timeZone,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(iso));
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** "Oktay Matias" → "OM". Yhden sanan nimestä yksi kirjain. */
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+/**
+ * Haun sisältö.
+ *
+ * Sivut roolin mukaan, toimittajat ja työntekijät. Kaikki on jo haettu
+ * tähän näkymään, joten haku ei tee yhtään lisäkyselyä.
+ *
+ * Työntekijät vain jos rooli saa nähdä heidät. Kirjanpitäjä ei saa
+ * löytää henkilöstöä haun kautta silloin kun hän ei näe sitä sivuakaan.
+ */
+function searchItems(
+  role: Parameters<typeof adminNavFor>[0],
+  suppliers: { id: string; name: string }[],
+  users: { id: string; name: string; position: StaffPosition | null; active: boolean }[],
+): SearchItem[] {
+  const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, s.label]));
+
+  const pages: SearchItem[] = adminNavFor(role).map((entry) => ({
+    id: `page-${entry.href}`,
+    label: entry.label,
+    // Osaston nimi eikä polku: "/admin/kuitit" on osoite, ei selitys.
+    detail: sectionLabel.get(entry.section) ?? "Hallinta",
+    href: entry.href,
+    icon: entry.icon,
+    group: "Sivu",
+  }));
+
+  const supplierItems: SearchItem[] = can(role, "suppliers.view")
+    ? suppliers.map((supplier) => ({
+        id: `supplier-${supplier.id}`,
+        label: supplier.name,
+        detail: "Toimittaja",
+        href: `/admin/toimittajat/${supplier.id}`,
+        icon: "suppliers" as const,
+        group: "Toimittaja",
+      }))
+    : [];
+
+  const staffItems: SearchItem[] = can(role, "staff.view")
+    ? users
+        .filter((person) => person.active)
+        .map((person) => ({
+          id: `staff-${person.id}`,
+          label: person.name,
+          detail: person.position ? POSITION_LABELS[person.position] : "Työntekijä",
+          href: "/admin/tyontekijat",
+          icon: "staff" as const,
+          group: "Henkilö",
+        }))
+    : [];
+
+  return [...pages, ...supplierItems, ...staffItems];
 }
