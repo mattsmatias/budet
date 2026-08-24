@@ -5,6 +5,7 @@ import { useCallback, useState, type ReactNode } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
+import { personInitials } from "@/lib/restoflow/initials";
 import { SeverityDot } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 
@@ -263,8 +264,8 @@ function UserMenu({
       onToggle={onToggle}
       onClose={onClose}
       trigger={() => (
-        <span className="rf-initial text-[14px] font-semibold">
-          {initialOf(userName)}
+        <span className="rf-initial text-[13px] font-bold tracking-[-0.01em]">
+          {personInitials(userName)}
         </span>
       )}
     >
@@ -309,10 +310,6 @@ function UserMenu({
       )}
     </Dropdown>
   );
-}
-
-function initialOf(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
 }
 
 // ---------------------------------------------------------------------------

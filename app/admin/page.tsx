@@ -36,7 +36,13 @@ import {
 import { RfIcon } from "@/components/restoflow/icons";
 import { Rhythm } from "./home/rhythm";
 import { StatusHeader } from "./home/status-header";
-import { Donut, seriesColor, Sparkline } from "@/components/restoflow/dashboard-ui";
+import {
+  COST_COLOR,
+  Donut,
+  SALES_COLOR,
+  seriesColor,
+  Sparkline,
+} from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
 import { shiftBounds } from "@/lib/restoflow/shift-window";
 import { labourCost } from "@/lib/restoflow/payroll-data";
@@ -535,7 +541,7 @@ export default async function AdminDashboard({
         vierekkäin ne luetaan yhtenä silmäyksenä.
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-        <Panel title="Kulujakauma" subtitle={formatMonth(viewMonth)} href="/admin/kulut">
+        <Panel title="Kulujakauma" href="/admin/kulut">
           {categories.length === 0 ? (
             <PanelEmpty
               {...(emptyForMonth ?? {
@@ -545,7 +551,7 @@ export default async function AdminDashboard({
               })}
             />
           ) : (
-            <div className="flex flex-col items-center gap-5">
+            <div className="flex flex-col items-center pt-1">
               <Donut
                 slices={categories.slice(0, 5).map((row) => ({
                   key: row.key,
@@ -554,20 +560,21 @@ export default async function AdminDashboard({
                   share: row.share,
                 }))}
                 total={formatMoney(totals.totalCents)}
+                caption={monthWord(viewMonth)}
               />
 
-              <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-1.5">
+              <ul className="mt-3.5 grid w-full grid-cols-2 gap-x-3.5 gap-y-1.5">
                 {categories.slice(0, 5).map((row, index) => (
-                  <li key={row.key} className="flex items-center gap-2 text-[12.5px]">
+                  <li key={row.key} className="flex items-center gap-[7px] text-[12px]">
                     <span
                       aria-hidden="true"
-                      className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+                      className="h-[9px] w-[9px] shrink-0 rounded-[2px]"
                       style={{ background: seriesColor(index) }}
                     />
                     <span className="min-w-0 flex-1 truncate" style={{ color: "var(--rf-text-2)" }}>
                       {row.name}
                     </span>
-                    <span className="rf-tabular shrink-0 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <span className="rf-tabular shrink-0 text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
                       {Math.round(row.share * 100)} %
                     </span>
                   </li>
@@ -583,7 +590,7 @@ export default async function AdminDashboard({
             <div
               role="group"
               aria-label="Aikaväli"
-              className="flex gap-0.5 p-0.5"
+              className="flex gap-0.5 p-[3px]"
               style={{ background: "var(--rf-inset)", borderRadius: 980 }}
             >
               {CHART_RANGES.map((range) => {
@@ -594,7 +601,7 @@ export default async function AdminDashboard({
                     href={`/admin?kuukausi=${viewMonth}&kaavio=${range.months}`}
                     scroll={false}
                     aria-current={on ? "true" : undefined}
-                    className="rf-press px-3 py-1 text-[12px] font-semibold"
+                    className="rf-press px-3 py-[5px] text-[12px] font-semibold"
                     style={{
                       background: on ? "var(--rf-card)" : "transparent",
                       color: on ? "var(--rf-text)" : "var(--rf-text-2)",
@@ -616,23 +623,31 @@ export default async function AdminDashboard({
               <AreaChart
                 labels={flow.labels}
                 series={[
-                  { label: "Myynti", color: "var(--rf-blue)", points: flow.sales },
-                  { label: "Kulut", color: "var(--rf-amber)", points: flow.costs },
+                  { label: "Myynti", color: SALES_COLOR, points: flow.sales },
+                  { label: "Kulut", color: COST_COLOR, points: flow.costs },
                 ]}
                 format={(value) => `${Math.round(value / 100000)} k`}
               />
 
-              <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-                <li className="flex items-center gap-2 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-                  <span aria-hidden="true" className="h-[3px] w-3 rounded-full" style={{ background: "var(--rf-blue)" }} />
+              <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px]">
+                <li className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="h-[3px] w-2.5 rounded-[2px]"
+                    style={{ background: SALES_COLOR }}
+                  />
                   Myynti
                 </li>
-                <li className="flex items-center gap-2 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-                  <span aria-hidden="true" className="h-[3px] w-3 rounded-full" style={{ background: "var(--rf-amber)" }} />
+                <li className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="h-[3px] w-2.5 rounded-[2px]"
+                    style={{ background: COST_COLOR }}
+                  />
                   Kulut
                 </li>
                 {flow.salesMissing ? (
-                  <li className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
                     Myynti puuttuu osalta kuukausia — viiva katkeaa siitä.
                   </li>
                 ) : null}

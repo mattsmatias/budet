@@ -257,11 +257,17 @@ export function monthlyFlow(
   };
 }
 
-/** "2026-08" → "elo" */
+/**
+ * "2026-08" → "Elo"
+ *
+ * Isolla alkukirjaimella: akselin merkinnät ovat nimiä eivätkä
+ * lauseen sanoja, ja pienellä kirjoitettuina ne lukivat kaavion alla
+ * kuin keskeneräinen virke.
+ */
 function shortMonth(month: string): string {
   const names = [
-    "tam", "hel", "maa", "huh", "tou", "kes",
-    "hei", "elo", "syy", "lok", "mar", "jou",
+    "Tam", "Hel", "Maa", "Huh", "Tou", "Kes",
+    "Hei", "Elo", "Syy", "Lok", "Mar", "Jou",
   ];
   return names[Number(month.slice(5, 7)) - 1] ?? month;
 }

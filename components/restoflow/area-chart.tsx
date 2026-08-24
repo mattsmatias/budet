@@ -25,12 +25,19 @@ export interface Series {
   points: (number | null)[];
 }
 
+/*
+ * Mitat suunnitelmasta.
+ *
+ * Ylä- ja alareunan väljyys ei ole koristetta: lipuke nousee pisteen
+ * yläpuolelle ja kuukausien nimet jäävät pohjaviivan alle. Ahtaammalla
+ * kaaviolla ylin lipuke leikkautui piirtoalueen reunaan.
+ */
 const W = 760;
-const H = 210;
-const PAD_L = 54;
+const H = 240;
+const PAD_L = 52;
 const PAD_R = 12;
-const PAD_T = 14;
-const PAD_B = 30;
+const PAD_T = 30;
+const PAD_B = 42;
 
 export function AreaChart({
   labels,
@@ -76,7 +83,7 @@ export function AreaChart({
       <defs>
         {series.map((s, i) => (
           <linearGradient key={i} id={`rf-area-${i}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={s.color} stopOpacity="0.26" />
+            <stop offset="0%" stopColor={s.color} stopOpacity="0.28" />
             <stop offset="100%" stopColor={s.color} stopOpacity="0" />
           </linearGradient>
         ))}
@@ -98,7 +105,7 @@ export function AreaChart({
             />
             <text
               x={PAD_L - 10}
-              y={y(value) + 3.5}
+              y={y(value) + 4}
               textAnchor="end"
               className="rf-tabular"
               fontSize="10"
@@ -120,7 +127,7 @@ export function AreaChart({
               d={path}
               fill="none"
               stroke={s.color}
-              strokeWidth="2.2"
+              strokeWidth="2.4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -149,22 +156,22 @@ export function AreaChart({
         if (v === null || v === undefined) return null;
 
         /* Lipuke kääntyy vasemmalle kun piste on oikeassa reunassa. */
-        const right = x(mark) > W - 120;
-        const boxX = right ? x(mark) - 84 : x(mark) + 12;
+        const right = x(mark) > W - 110;
+        const boxX = right ? x(mark) - 78 : x(mark) + 12;
 
         return (
           <g key={i}>
             <rect
               x={boxX}
-              y={y(v) - 10}
-              width={72}
-              height={20}
+              y={y(v) - 9.5}
+              width={66}
+              height={19}
               rx={5}
               fill="var(--rf-text)"
             />
             <text
-              x={boxX + 36}
-              y={y(v) + 4}
+              x={boxX + 33}
+              y={y(v) + 3.5}
               textAnchor="middle"
               className="rf-tabular"
               fontSize="10.5"
@@ -176,7 +183,7 @@ export function AreaChart({
             <circle
               cx={x(mark)}
               cy={y(v)}
-              r="4"
+              r="4.5"
               fill={s.color}
               stroke="var(--rf-card)"
               strokeWidth="2.5"
@@ -189,10 +196,10 @@ export function AreaChart({
         <text
           key={i}
           x={x(i)}
-          y={H - 8}
+          y={H - 18}
           textAnchor="middle"
           className="rf-tabular"
-          fontSize="10"
+          fontSize="10.5"
           fill="var(--rf-text-3)"
         >
           {label}

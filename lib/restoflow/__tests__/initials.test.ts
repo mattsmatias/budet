@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { initials } from "../initials";
+import { initials, personInitials } from "../initials";
 
 describe("initials", () => {
   it("ottaa kahden sanan alkukirjaimet", () => {
@@ -31,5 +31,29 @@ describe("initials", () => {
 
   it("suurentaa kirjaimet", () => {
     expect(initials("kespro oy")).toBe("KO");
+  });
+});
+
+describe("personInitials", () => {
+  it("ottaa etunimen ja sukunimen alkukirjaimet", () => {
+    expect(personInitials("Oktay Hun")).toBe("OH");
+  });
+
+  /*
+   * Toinen etunimi ei ole se jolla ihmistä kutsutaan. Sukunimi on
+   * viimeinen sana, ei toinen — tässä initials() ja personInitials()
+   * eroavat toisistaan.
+   */
+  it("ohittaa toisen etunimen", () => {
+    expect(personInitials("Oktay Matias Hun")).toBe("OH");
+    expect(initials("Oktay Matias Hun")).toBe("OM");
+  });
+
+  it("antaa yhdestä sanasta kaksi kirjainta", () => {
+    expect(personInitials("Oktay")).toBe("OK");
+  });
+
+  it("ei kaadu tyhjästä", () => {
+    expect(personInitials("  ")).toBe("?");
   });
 });

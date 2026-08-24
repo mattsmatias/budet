@@ -1,4 +1,5 @@
 import { formatMoney } from "@/lib/money";
+import { seriesColor } from "@/components/restoflow/dashboard-ui";
 import {
   WEEKDAY_LABELS,
   type SpendDay,
@@ -50,12 +51,18 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h3 className="text-[15px] font-bold tracking-[-0.0075em]">Kulurytmi</h3>
 
+        {/*
+          Kuukausi ja ostopäivät samalla rivillä.
+          Palkkirivi ei kerro kumpaa kuukautta katsotaan, ja kortti on
+          sivulla jossa kuukausi vaihtuu yläpalkista.
+        */}
         <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+          {monthName(rhythm)}
           {empty
-            ? "Ei ostoja tässä kuussa"
+            ? " · ei ostoja"
             : rhythm.activeDays === 1
-              ? "Kuluja yhtenä päivänä"
-              : `Kuluja ${rhythm.activeDays} päivänä`}
+              ? " · 1 ostopäivä"
+              : ` · ${rhythm.activeDays} ostopäivää`}
         </p>
       </div>
 
@@ -64,7 +71,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
         Suunta on sama kuin kuukauden kuluminen, joten liike lukee
         kuukauden läpi eikä vain herätä huomiota.
       */}
-      <ol className="mt-5 flex h-[92px] items-end gap-[3px]">
+      <ol className="mt-[14px] flex h-[84px] items-end gap-[3px]">
         {rhythm.days.map((day, index) => (
           <Column key={day.date} day={day} max={rhythm.maxCents} index={index} />
         ))}
@@ -75,7 +82,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
         {rhythm.days.map((day) => (
           <li
             key={day.date}
-            className="min-w-0 flex-1 text-center text-[9px] font-semibold"
+            className="min-w-0 flex-1 text-center text-[8.5px] font-semibold"
             style={{
               color: day.isToday ? "var(--rf-text)" : "var(--rf-text-3)",
               opacity: day.day % 2 === 1 || day.isToday ? 1 : 0,
@@ -176,13 +183,20 @@ function Column({
           style={{
             height: `${height}%`,
             minHeight: 4,
-            borderRadius: 4,
+            borderRadius: 3,
+            /*
+             * Palkit ovat jakauman paletista.
+             *
+             * Ne olivat korostusvärillä, eli samalla punaisella kuin
+             * "Lisää kuitti" ja kriittiset huomiot. Kulupalkki ei ole
+             * toiminto eikä hälytys — se on sama raha kuin viereisessä
+             * donitsissa, ja saa saman värin.
+             */
             background: day.isToday
               ? "var(--rf-ink)"
               : weekend
-                ? "var(--rf-accent-2)"
-                : "var(--rf-accent)",
-            opacity: weekend && !day.isToday ? 0.55 : 1,
+                ? seriesColor(2)
+                : seriesColor(0),
             animationDelay: `${Math.min(index * 22, 700)}ms`,
           }}
         />
@@ -191,4 +205,18 @@ function Column({
       <span className="sr-only">{label}</span>
     </li>
   );
+}
+
+// ---------------------------------------------------------------------------
+
+const MONTHS = [
+  "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
+  "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
+];
+
+/** Kuukauden nimi rytmin ensimmäisestä päivästä. */
+function monthName(rhythm: SpendRhythm): string {
+  const first = rhythm.days[0]?.date;
+  if (!first) return "";
+  return MONTHS[Number(first.slice(5, 7)) - 1] ?? "";
 }

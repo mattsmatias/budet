@@ -339,16 +339,27 @@ export function Sparkline({
  * silmä ei erota kymmentä sävyä piirakasta.
  */
 export const SERIES_COLORS = [
-  "#315bff",
-  "#6c5ce7",
-  "#16a36a",
-  "#f59e0b",
-  "#94a3b8",
+  "#f0913a",
+  "#4aa3f0",
+  "#7b76e8",
+  "#e8695f",
+  "#97a3b6",
 ] as const;
 
 export function seriesColor(index: number): string {
   return SERIES_COLORS[Math.min(index, SERIES_COLORS.length - 1)];
 }
+
+/*
+ * Kaavion kaksi sarjaa samasta paletista.
+ *
+ * Myynti ja kulut piirrettiin omilla väreillään (sininen ja
+ * keltainen), ja donitsin viereinen kaavio puhui siis eri kieltä kuin
+ * donitsi. Nimetyt vakiot indeksien sijaan: seriesColor(1) ei kerro
+ * lukijalle että kyse on myynnistä.
+ */
+export const COST_COLOR = SERIES_COLORS[0];
+export const SALES_COLOR = SERIES_COLORS[1];
 
 export interface DonutSlice {
   key: string;
@@ -373,14 +384,33 @@ export interface DonutSlice {
 export function Donut({
   slices,
   total,
-  size = 148,
+  caption,
+  size = 188,
 }: {
   slices: DonutSlice[];
   total: string;
+  /**
+   * Kuukausi renkaan sisällä.
+   *
+   * Se oli kortin alaotsikkona otsikon alla, ja renkaan keskellä luki
+   * "yhteensä" — sana joka ei kerro mitään, koska rengas on
+   * kokonaisuus jo muodoltaan. Kuukausi on se mitä lukija kysyy
+   * summasta, ja se mahtuu samaan katseeseen.
+   */
+  caption?: string;
   size?: number;
 }) {
-  const stroke = 18;
-  const radius = (size - stroke) / 2;
+  const stroke = 26;
+
+  /*
+   * Rengas jättää reunaan väljyyttä.
+   *
+   * Ilman sitä säde on (188−26)/2 = 81, ja renkaan ulkoreuna osuu
+   * täsmälleen laatikon reunaan: piirtojälki rosoittuu eikä siivun
+   * korostuksella ole tilaa kasvaa.
+   */
+  const inset = 9;
+  const radius = (size - stroke) / 2 - inset;
   const circumference = 2 * Math.PI * radius;
 
   // Siirtymät lasketaan valmiiksi: muuttujan kasvattaminen renderin
@@ -433,12 +463,17 @@ export function Donut({
         </g>
       </svg>
 
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="rf-tabular text-[17px] font-semibold tracking-[-0.02em]">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px]">
+        {caption ? (
+          <span
+            className="text-[11px] font-bold uppercase"
+            style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+          >
+            {caption}
+          </span>
+        ) : null}
+        <span className="rf-tabular text-[17px] font-extrabold tracking-[-0.01em]">
           {total}
-        </span>
-        <span className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
-          yhteensä
         </span>
       </div>
     </div>
