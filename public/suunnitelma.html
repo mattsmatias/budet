@@ -249,46 +249,6 @@ button { font: inherit; }
 .seg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink-2); cursor: pointer; transition: background .15s, color .15s }
 .seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow) }
 
-/* ===================== PALVELUPÄIVÄ ===================================== */
-
-.pass .now-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 700 }
-.beat { position: relative; width: 8px; height: 8px; flex: none }
-.beat i, .beat b { position: absolute; inset: 0; border-radius: 50%; background: currentColor; display: block }
-.beat i { animation: beat 2.2s cubic-bezier(0,0,.2,1) infinite }
-@keyframes beat { 0% { transform: scale(1); opacity: .5 } 70%,100% { transform: scale(2.6); opacity: 0 } }
-
-.rail { position: relative; padding: 16px 18px 14px }
-.glines { position: absolute; left: 18px; right: 18px; top: 16px; bottom: 44px; pointer-events: none }
-.glines i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line) }
-.nowline { position: absolute; top: 8px; bottom: 38px; width: 2px; background: var(--brand); z-index: 3; border-radius: 2px }
-.nowline::after { content: "14.38"; position: absolute; left: 50%; top: -22px; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; color: #fff; background: var(--ink); padding: 2px 6px; border-radius: 5px }
-
-.lane { margin-bottom: 9px }
-.lane:last-of-type { margin-bottom: 0 }
-.lane > p { margin-bottom: 5px }
-.track { position: relative; height: 40px }
-.slot {
-  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 8px;
-  padding: 0 10px; border-radius: var(--r-md); overflow: hidden; border: 1px solid transparent;
-  transform-origin: left center; animation: slot .5s cubic-bezier(.32,.72,0,1) both;
-  transition: box-shadow .15s, transform .15s;
-}
-.slot:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); z-index: 4 }
-@keyframes slot { from { transform: scaleX(.02); opacity: 0 } to { transform: scaleX(1); opacity: 1 } }
-.slot .av { width: 23px; height: 23px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; background: var(--card) }
-.slot .t { min-width: 0; flex: 1 }
-.slot .t .n { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.slot .t .h { display: block; font-family: "IBM Plex Mono", monospace; font-size: 10px; opacity: .75 }
-.slot.go { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 25%, transparent) }
-.slot.wait { background: var(--card-2); color: var(--ink-2); border-color: var(--line) }
-.slot.hold { background: var(--warn-bg); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 38%, transparent) }
-.slot.done { background: var(--card-2); color: var(--ink-3) }
-.throb { width: 6px; height: 6px; border-radius: 50%; flex: none; background: currentColor; animation: throb 1.9s ease-in-out infinite }
-@keyframes throb { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
-.bang { flex: none; font-weight: 800; font-size: 13px }
-.hours { position: relative; height: 13px; margin-top: 8px }
-.hours span { position: absolute; transform: translateX(-50%); font-family: "IBM Plex Mono", monospace; font-size: 10px; color: var(--ink-3) }
-
 /* ===================== KAAVIOT ========================================== */
 
 .charts { display: grid; grid-template-columns: minmax(0,320px) minmax(0,1fr); gap: 14px }
@@ -548,38 +508,6 @@ td.date { font-family: "IBM Plex Mono", monospace; color: var(--ink-2); white-sp
             <span class="pill nu">2 tulossa</span>
           </div>
           <p class="foot">Seuraava: Liisa Koski 17.00</p>
-        </div>
-      </section>
-
-      <section class="card pass rise" aria-label="Palvelupäivä">
-        <div class="ch">
-          <h3>Palvelupäivä</h3>
-          <span class="now-badge"><span class="beat" aria-hidden="true"><i></i><b></b></span>Käynnissä</span>
-        </div>
-
-        <div class="rail">
-          <div class="glines" aria-hidden="true"><i style="left:0%"></i><i style="left:16.6%"></i><i style="left:33.3%"></i><i style="left:50%"></i><i style="left:66.6%"></i><i style="left:83.3%"></i><i style="left:100%"></i></div>
-          <div class="nowline" style="left:calc(18px + (100% - 36px) * .463)" aria-hidden="true"></div>
-
-          <div class="lane"><p class="eyebrow">Vuoropäällikkö</p><div class="track">
-            <div class="slot go" style="left:8.3%;width:55.5%;animation-delay:.1s"><span class="av">OM</span><span class="t"><span class="n">Oktay Matias</span><span class="h">10.00–20.00</span></span><span class="throb"></span></div>
-          </div></div>
-
-          <div class="lane"><p class="eyebrow">Sali</p><div class="track">
-            <div class="slot done" style="left:0%;width:27.7%;animation-delay:.16s"><span class="av">MS</span><span class="t"><span class="n">Minna Salo</span><span class="h">09.00–14.00</span></span></div>
-            <div class="slot go" style="left:27.7%;width:38.8%;animation-delay:.22s"><span class="av">JV</span><span class="t"><span class="n">Jussi Virta</span><span class="h">14.00–21.00</span></span><span class="throb"></span></div>
-            <div class="slot wait" style="left:66.6%;width:22.2%;animation-delay:.28s"><span class="av">LK</span><span class="t"><span class="n">Liisa Koski</span><span class="h">17.00–21.00</span></span></div>
-          </div></div>
-
-          <div class="lane"><p class="eyebrow">Keittiö</p><div class="track">
-            <div class="slot go" style="left:5.5%;width:33.3%;animation-delay:.34s"><span class="av">PN</span><span class="t"><span class="n">Pekka Nieminen</span><span class="h">09.30–15.30</span></span><span class="throb"></span></div>
-            <div class="slot hold" style="left:38.8%;width:33.3%;animation-delay:.4s"><span class="av">AK</span><span class="t"><span class="n">Ali Karhu</span><span class="h">14.00–20.00</span></span><span class="bang">!</span></div>
-          </div></div>
-
-          <div class="hours" aria-hidden="true">
-            <span style="left:0%">09.00</span><span style="left:16.6%">11.00</span><span style="left:33.3%">13.00</span>
-            <span style="left:50%">15.00</span><span style="left:66.6%">17.00</span><span style="left:83.3%">19.00</span><span style="left:100%">21.00</span>
-          </div>
         </div>
       </section>
 
