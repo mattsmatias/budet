@@ -43,7 +43,7 @@
 
   --ink:        #191712;
   --ink-2:      #6b665c;
-  --ink-3:      #9a9488;
+  --ink-3:      #757063;
 
   --cobalt:     #1e2fd6;
   --cobalt-2:   #1523a8;
@@ -83,7 +83,7 @@
   :root:not([data-theme="light"]) {
     --paper: #14130f; --card: #1e1c17; --card-2: #26231d;
     --edge: #322e26; --edge-soft: #2a2720;
-    --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #787165;
+    --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #8e8779;
     --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #23255c;
     --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #17402c;
     --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #402f14;
@@ -97,7 +97,7 @@
 :root[data-theme="dark"] {
   --paper: #14130f; --card: #1e1c17; --card-2: #26231d;
   --edge: #322e26; --edge-soft: #2a2720;
-  --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #787165;
+  --ink: #f4f1ea; --ink-2: #a9a297; --ink-3: #8e8779;
   --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #23255c;
   --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #17402c;
   --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #402f14;
@@ -105,6 +105,63 @@
   --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #7d766a;
   --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
   --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
+}
+
+/* ---------------------------------------------------------------------
+   VÄRITEEMAT
+
+   Neljä kokonaista palettia, ei neljää sävyä. Pohja, kortti, reuna ja
+   muste vaihtuvat yhdessä — puolittainen vaihto tuottaa yhdistelmiä
+   joissa kontrasti pettää jossain kohtaa näkymää.
+
+   Tilavärit (vihreä, keltainen, punainen) säilyvät merkityksinä
+   kaikissa. Ne on viritetty kunkin pohjan päälle, mutta ne eivät
+   koskaan vaihda merkitystä.
+   --------------------------------------------------------------------- */
+
+/* PUHDAS — valkoinen pohja, neutraali harmaa, terävä. */
+:root[data-skin="puhdas"] {
+  --paper: #f5f6f8; --card: #ffffff; --card-2: #f2f3f6;
+  --edge: #e3e5ea; --edge-soft: #edeff3;
+  --ink: #0e1016; --ink-2: #5b6170; --ink-3: #6f7686;
+  --cobalt: #1e2fd6; --cobalt-2: #1523a8; --cobalt-bg: #e8eafc;
+  --go: #14804a; --go-ink: #0c6038; --go-bg: #e3f4ea;
+  --hold: #b0710f; --hold-ink: #85530a; --hold-bg: #fbefd9;
+  --stop: #cc2f26; --stop-ink: #9e211a; --stop-bg: #fce8e6;
+  --s1: #1e2fd6; --s2: #7c5cd6; --s3: #14804a; --s4: #b0710f; --s5: #8e94a1;
+  --shadow: 0 1px 1px rgba(14,16,22,.04), 0 8px 24px rgba(14,16,22,.06);
+  --shadow-lift: 0 2px 4px rgba(14,16,22,.05), 0 18px 44px rgba(14,16,22,.10);
+}
+
+/* GRAFIITTI — neutraali vaalea harmaa, syvä petroolinvihreä aksentti.
+   Rauhallisin vaihtoehto: aksentti ei kilpaile tilavärien kanssa,
+   koska se on tummempi ja vähemmän kylläinen kuin mikään niistä. */
+:root[data-skin="grafiitti"] {
+  --paper: #eeefee; --card: #fbfbfa; --card-2: #f3f4f2;
+  --edge: #dcdedb; --edge-soft: #e7e9e6;
+  --ink: #14171a; --ink-2: #5c6469; --ink-3: #697175;
+  --cobalt: #0f6f68; --cobalt-2: #0a534e; --cobalt-bg: #dff0ee;
+  --go: #15794a; --go-ink: #0d5936; --go-bg: #e2f2e9;
+  --hold: #a9700f; --hold-ink: #7f520a; --hold-bg: #f8eed9;
+  --stop: #c2352a; --stop-ink: #93251c; --stop-bg: #fbe7e4;
+  --s1: #0f6f68; --s2: #4a6fa5; --s3: #15794a; --s4: #a9700f; --s5: #8d959a;
+  --shadow: 0 1px 1px rgba(20,23,26,.04), 0 8px 24px rgba(20,23,26,.06);
+  --shadow-lift: 0 2px 4px rgba(20,23,26,.05), 0 18px 44px rgba(20,23,26,.10);
+}
+
+/* YÖ — tumma. Aksentti vaalenee, koska tumman pohjan päällä sama
+   koboltti jäisi lukukelvottomaksi. */
+:root[data-skin="yo"] {
+  --paper: #101215; --card: #191c21; --card-2: #21252b;
+  --edge: #2c3138; --edge-soft: #252a30;
+  --ink: #eef1f5; --ink-2: #9aa3ae; --ink-3: #8f97a2;
+  --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #232a5c;
+  --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #143c2a;
+  --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #3c2c12;
+  --stop: #e5695c; --stop-ink: #f3a49a; --stop-bg: #42201c;
+  --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #737b85;
+  --shadow: 0 1px 1px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
+  --shadow-lift: 0 2px 4px rgba(0,0,0,.4), 0 18px 44px rgba(0,0,0,.5);
 }
 
 :root[data-type="b"] {
@@ -456,7 +513,10 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
   background: var(--ink); border-radius: 999px; box-shadow: var(--shadow-lift);
   max-width: calc(100vw - 24px);
 }
-.typepick .lbl { font-family: var(--f-data); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--paper); opacity: .5; padding: 0 9px 0 11px; white-space: nowrap }
+.typepick { flex-wrap: wrap; justify-content: center }
+.typepick .lbl { font-family: var(--f-data); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--paper); opacity: .5; padding: 0 8px 0 11px; white-space: nowrap }
+.typepick .div { width: 1px; align-self: stretch; margin: 3px 6px; background: var(--paper); opacity: .18 }
+.typepick button { padding: 7px 12px }
 .typepick button { border: 0; cursor: pointer; padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: transparent; color: var(--paper); opacity: .62; transition: background .16s, opacity .16s; white-space: nowrap }
 .typepick button:hover { opacity: .9 }
 .typepick button[aria-pressed="true"] { background: var(--paper); color: var(--ink); opacity: 1 }
@@ -884,11 +944,23 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
   </main>
 </div>
 
-<div class="typepick" role="group" aria-label="Kirjasinvaihtoehto">
+<div class="typepick">
+  <span class="lbl">Väri</span>
+  <span role="group" aria-label="Väriteema" style="display:flex;gap:4px">
+    <button type="button" data-skin="paperi" aria-pressed="true">Paperi</button>
+    <button type="button" data-skin="puhdas" aria-pressed="false">Puhdas</button>
+    <button type="button" data-skin="grafiitti" aria-pressed="false">Grafiitti</button>
+    <button type="button" data-skin="yo" aria-pressed="false">Yö</button>
+  </span>
+
+  <span class="div" aria-hidden="true"></span>
+
   <span class="lbl">Kirjasin</span>
-  <button type="button" data-set="a" aria-pressed="true">Antiikva</button>
-  <button type="button" data-set="b" aria-pressed="false">Groteski</button>
-  <button type="button" data-set="c" aria-pressed="false">Teollinen</button>
+  <span role="group" aria-label="Kirjasinvaihtoehto" style="display:flex;gap:4px">
+    <button type="button" data-set="a" aria-pressed="true">Antiikva</button>
+    <button type="button" data-set="b" aria-pressed="false">Groteski</button>
+    <button type="button" data-set="c" aria-pressed="false">Teollinen</button>
+  </span>
 </div>
 
 <script>
@@ -973,14 +1045,22 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  /* --- kirjasinvaihdin --------------------------------------------------- */
-  const picker = document.querySelector(".typepick");
-  picker.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-set]");
+  /* --- vaihtimet ---------------------------------------------------------
+     Väri ja kirjasin ovat eri akseleita, joten valinnat eivät nollaa
+     toisiaan: aria-pressed päivitetään vain saman ryhmän sisällä. */
+  document.querySelector(".typepick").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
     if (!button) return;
-    document.documentElement.dataset.type = button.dataset.set;
-    picker.querySelectorAll("button").forEach((b) =>
+
+    const group = button.closest("[role='group']");
+    group.querySelectorAll("button").forEach((b) =>
       b.setAttribute("aria-pressed", String(b === button)));
+
+    if (button.dataset.skin) {
+      document.documentElement.dataset.skin = button.dataset.skin;
+    } else {
+      document.documentElement.dataset.type = button.dataset.set;
+    }
   });
 
   /* --- suodatinpainikkeet ------------------------------------------------ */
