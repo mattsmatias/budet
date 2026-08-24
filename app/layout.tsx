@@ -1,16 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "./theme.css";
 
 /**
- * SF Pro ei ole jaettavissa verkkofonttina, joten järjestelmäfontti tulee
- * ensin — Mac- ja iOS-käyttäjä saa aidon SF Pron. Inter on lähin vastine
- * muille alustoille.
+ * Plus Jakarta Sans.
+ *
+ * Geometrinen ja korkea x-korkeus: numerot erottuvat toisistaan myös
+ * pienessä koossa, mikä on tämän sovelluksen tärkein vaatimus
+ * kirjasimelle. Järjestelmäfontti oli neutraali muttei mitään — ja kun
+ * koko näkymä on lukuja, kirjasin on osa sitä miltä ne näyttävät.
+ *
+ * Lihavuudet 400–800, koska otsikot ovat selvästi lihavia eikä
+ * puolilihava riitä niihin.
  */
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-app",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -41,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fi" className={`${inter.variable} h-full`}>
+    <html lang="fi" className={`${jakarta.variable} h-full`}>
       <body className="restoflow min-h-full">{children}</body>
     </html>
   );

@@ -32,9 +32,10 @@ export function Card({
 }) {
   return (
     <div
-      className={`rf-glass ${hover ? "rf-card-hover" : ""} ${padded ? "p-5" : ""} ${className}`}
+      className={`${hover ? "rf-card-hover" : ""} ${padded ? "p-5" : ""} ${className}`}
       style={{
-        background: "var(--rf-glass)",
+        background: "var(--rf-card)",
+        border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
       }}
     >
@@ -181,10 +182,15 @@ export function MetricCard({
 
   const body = (
     <div
-      className="rf-glass rf-card-lift flex h-full flex-col overflow-hidden"
+      className="rf-card-lift flex h-full flex-col overflow-hidden"
       style={{
         background: highlight ? "var(--rf-tint-accent)" : tintFor(tone),
-        borderRadius: "var(--rf-r-card)",
+        /*
+         * Pastellikortilla ei ole reunaa. Väri erottaa sen taustasta
+         * jo itsessään, ja reuna tekisi siitä laatikon värin sijaan.
+         */
+        border: tone === "neutral" && !highlight ? "1px solid var(--rf-line)" : "1px solid transparent",
+        borderRadius: "var(--rf-r-stat)",
       }}
     >
       <div className="flex flex-1 flex-col px-4 pt-4 sm:px-[18px] sm:pt-[18px]">
@@ -195,10 +201,9 @@ export function MetricCard({
                 aria-hidden="true"
                 className="flex h-6 w-6 shrink-0 items-center justify-center"
                 style={{
-                  background: "var(--rf-glass-strong)",
+                  background: "rgba(255,255,255,0.7)",
                   color: "var(--rf-text-2)",
-                  borderRadius: 8,
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.7)",
+                  borderRadius: 9,
                 }}
               >
                 {icon}
@@ -251,7 +256,7 @@ export function MetricCard({
       {hasFoot ? (
         <div
           className="mt-3 flex items-center justify-between gap-3 px-4 py-2.5 sm:px-[18px]"
-          style={{ borderTop: "1px solid var(--rf-line)" }}
+          style={{ borderTop: "1px solid rgba(17,19,24,0.07)" }}
         >
           <span
             className="rf-tabular min-w-0 truncate text-[12px]"
@@ -300,7 +305,7 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
         ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
         : tone === "bad"
           ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
-          : { bg: "var(--rf-glass-strong)", fg: "var(--rf-text-2)" };
+          : { bg: "rgba(255,255,255,0.72)", fg: "var(--rf-text-2)" };
 
   return (
     <span

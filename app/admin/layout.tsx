@@ -5,7 +5,7 @@ import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
-import { POSITION_LABELS } from "@/lib/restoflow/types";
+import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
@@ -57,10 +57,33 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <AdminNav role={role} counts={counts} />
+    /*
+     * Sovellus lepää harmaalla sivulla valkoisena levynä.
+     *
+     * Ero on pieni mutta se rajaa näkymän: sisältö loppuu johonkin sen
+     * sijaan että vuotaisi ikkunan reunaan. Puhelimessa levyä ei ole —
+     * siellä reunus söisi leveyttä jota ei ole varaa antaa.
+     */
+    <div className="min-h-screen md:p-5">
+      <div
+        className="flex min-h-screen md:min-h-[calc(100vh-2.5rem)]"
+        style={{
+          background: "var(--rf-shell)",
+          borderRadius: "var(--rf-r-shell)",
+          boxShadow: "0 1px 2px rgba(17,19,24,0.04), 0 18px 50px rgba(17,19,24,0.07)",
+        }}
+      >
+        <AdminNav
+          role={role}
+          user={{
+            name: userName,
+            roleLabel: ROLE_LABELS[role],
+            initials: initialsOf(userName),
+          }}
+          counts={counts}
+        />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
         <header
           className="rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
@@ -89,9 +112,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         {/*
           Työpöydän yläpalkki.
 
-          Sama leveysrajaus kuin sisällöllä. Ilman tätä palkki venyi koko
-          ikkunan leveyteen ja kello liimautui ruudun oikeaan reunaan,
-          kun kortit loppuivat satoja pikseleitä aiemmin.
+          Palkki ja sisältö jakavat saman pehmusteen levyn reunasta,
+          joten painikkeet ja korttien oikea reuna ovat samassa
+          pystylinjassa.
         */}
         <TopBar
           greeting={greeting(now, restaurant.timezone)}
@@ -102,14 +125,25 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           restaurantName={restaurant.name}
           role={role}
           search={searchItems(role, data.suppliers, data.users)}
+          matti={can(role, "matti.use")}
+          canOpenSettings={can(role, "settings.view")}
         />
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 pb-24 md:px-6 md:pb-7 md:pt-4">
+        <main className="w-full flex-1 px-4 py-5 pb-24 md:px-7 md:pb-8 md:pt-5">
           {children}
         </main>
+        </div>
       </div>
     </div>
   );
+}
+
+/** "Oktay Matias" → "OM". Yhden sanan nimestä yksi kirjain. */
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 // ---------------------------------------------------------------------------

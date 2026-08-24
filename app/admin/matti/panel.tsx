@@ -62,7 +62,14 @@ interface Turn {
   cards?: ToolCard[];
 }
 
-export function MattiPanel({ enabled }: { enabled: boolean }) {
+export function MattiPanel({
+  enabled,
+  compact,
+}: {
+  enabled: boolean;
+  /** Yläpalkin pyöreä ikonipainike sivupalkin rivin sijaan. */
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -88,6 +95,30 @@ export function MattiPanel({ enabled }: { enabled: boolean }) {
   }, []);
 
   if (!enabled) return null;
+
+  if (compact) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-label="Matti, BUDet AI -työkaveri"
+          title="Matti (Ctrl J)"
+          className="rf-press flex h-10 w-10 items-center justify-center"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-accent)",
+            borderRadius: "50%",
+          }}
+        >
+          <RfIcon name="sparkle" size={17} />
+        </button>
+
+        {open ? <Overlay container={container} pathname={pathname} close={close} /> : null}
+      </>
+    );
+  }
 
   return (
     <>

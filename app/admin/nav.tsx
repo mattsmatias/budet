@@ -12,7 +12,6 @@ import {
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { signOut } from "@/app/(auth)/actions";
-import { MattiPanel } from "./matti/panel";
 
 /**
  * Hallintanavigaatio.
@@ -26,9 +25,11 @@ import { MattiPanel } from "./matti/panel";
  */
 export function AdminNav({
   role,
+  user,
   counts,
 }: {
   role: Role;
+  user: { name: string; roleLabel: string; initials: string };
   /**
    * Lukumäärät valikon kohtiin, avaimena polku.
    *
@@ -40,16 +41,14 @@ export function AdminNav({
 }) {
   const sections = adminNavSectionsFor(role);
   const primary = primaryNavFor(role);
-  const matti = can(role, "matti.use");
 
   return (
     <>
       <DesktopSidebar
         sections={sections}
-        matti={matti}
+        user={user}
         counts={counts}
         canOpenSettings={can(role, "settings.view")}
-        canAddReceipt={can(role, "receipts.add")}
       />
       <MobileBar items={primary} />
     </>
@@ -68,31 +67,19 @@ function useActive() {
 
 function DesktopSidebar({
   sections,
-  matti,
+  user,
   counts,
   canOpenSettings,
-  canAddReceipt,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
-  matti: boolean;
+  user: { name: string; roleLabel: string; initials: string };
   counts: Record<string, number>;
   canOpenSettings: boolean;
-  canAddReceipt: boolean;
 }) {
   return (
     <aside
       className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
-      style={{
-        /*
-         * Sivupalkki on vahvempaa lasia kuin kortit. Se on suuri pinta
-         * jonka läpi näkyy koko taustan värikenttä, ja ohuemmalla
-         * lasilla valikon teksti kilpailisi sen kanssa.
-         */
-        borderColor: "var(--rf-glass-line)",
-        background: "var(--rf-glass-strong)",
-        backdropFilter: "var(--rf-glass-blur)",
-        WebkitBackdropFilter: "var(--rf-glass-blur)",
-      }}
+      style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
@@ -101,9 +88,37 @@ function DesktopSidebar({
         </Link>
       </div>
 
+      {/*
+       * Kuka on kirjautuneena.
+       *
+       * Sama kone on usein toimistossa yhteiskäytössä, ja väärällä
+       * tunnuksella kirjattu kuitti menee väärän ihmisen nimiin.
+       * Kuvaa ei ole — nimikirjaimet ovat aina saatavilla eikä
+       * puuttuvan kuvan tilalle jää harmaata ihmishahmoa.
+       */}
+      <div className="flex flex-col items-center px-5 pb-6 pt-2 text-center">
+        <span
+          aria-hidden="true"
+          className="flex items-center justify-center text-[20px] font-bold"
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            background: "var(--rf-accent-bg)",
+            color: "var(--rf-accent-strong)",
+          }}
+        >
+          {user.initials}
+        </span>
+        <p className="mt-3 truncate text-[15px] font-bold">{user.name}</p>
+        <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          {user.roleLabel}
+        </p>
+      </div>
+
       <nav
         aria-label="Hallintanavigaatio"
-        className="flex-1 overflow-y-auto px-2.5 pb-4"
+        className="flex-1 overflow-y-auto px-4 pb-4"
       >
         {sections.map((section) => (
           <div key={section.id} className="mb-4 last:mb-0">
@@ -114,8 +129,8 @@ function DesktopSidebar({
              */}
             <p
               id={`nav-${section.id}`}
-              className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-              style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+              className="px-1 pb-1 pt-1 text-[10.5px] font-bold uppercase"
+              style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
             >
               {section.label}
             </p>
@@ -139,7 +154,7 @@ function DesktopSidebar({
        * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
        * käyttäjää eivätkä ravintolan työtä.
        */}
-      <div className="px-2.5 pb-2">
+      <div className="px-4 pb-5">
         {/*
          * Asetukset ja uloskirjautuminen omana ryhmänään pohjalla.
          *
@@ -151,8 +166,8 @@ function DesktopSidebar({
          */}
         <p
           id="nav-account"
-          className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-          style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
+          className="px-1 pb-1 pt-1 text-[10.5px] font-bold uppercase"
+          style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
         >
           Tili
         </p>
@@ -174,52 +189,17 @@ function DesktopSidebar({
             <form action={signOut}>
               <button
                 type="submit"
-                className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium"
+                className="rf-press flex w-full items-center justify-between rounded-[10px] px-1 py-2 text-left text-[14px] font-medium"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                <RfIcon name="logout" size={19} />
                 <span>Kirjaudu ulos</span>
+                <RfIcon name="logout" size={16} />
               </button>
             </form>
           </li>
         </ul>
       </div>
 
-      <div
-        className="border-t px-2.5 py-2"
-        style={{ borderColor: "var(--rf-line)" }}
-      >
-        <MattiPanel enabled={matti} />
-      </div>
-
-      {/*
-       * Päätoiminto pohjalla.
-       *
-       * Kuitin lisääminen on se mitä ravintoloitsija tekee useimmin, ja
-       * se oli tähän asti löydettävä Kuitit-sivun kautta. Se on
-       * sivupalkin ainoa täytetty painike — ja sen kuuluu olla, koska
-       * se on ainoa toiminto muiden ollessa siirtymiä.
-       *
-       * Käyttäjäkortti oli tässä hetken. Tunnus on nyt oikeassa
-       * yläkulmassa, jossa sitä on totuttu etsimään, eikä samaa asiaa
-       * ole kahdessa paikassa.
-       */}
-      {canAddReceipt ? (
-        <div className="px-3 pb-4 pt-2">
-          <Link
-            href="/admin/kuitit/uusi"
-            className="rf-press flex items-center justify-center gap-2 py-3 text-[14px] font-semibold"
-            style={{
-              background: "var(--rf-accent)",
-              color: "var(--rf-on-accent)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            <RfIcon name="plus" size={17} />
-            Lisää kuitti
-          </Link>
-        </div>
-      ) : null}
     </aside>
   );
 }
@@ -233,21 +213,27 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
+        /*
+         * Pelkkä teksti, ei ikonia eikä laatikkoa.
+         *
+         * Kymmenen ikonia allekkain on kymmenen pientä kuvaa joista
+         * yksikään ei kerro mitä sivulla on; sana kertoo. Valinta
+         * näkyy lihavuutena ja tummuutena, mikä riittää kun kohtia on
+         * ryhmitelty eikä lista ole yhtenäinen muuri.
+         */
+        className="rf-press flex items-center gap-3 rounded-[9px] px-1 py-2 text-[14px]"
         style={{
-          background: active ? "var(--rf-accent-bg)" : "transparent",
-          color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
-          fontWeight: active ? 600 : 500,
+          color: active ? "var(--rf-text)" : "var(--rf-text-2)",
+          fontWeight: active ? 700 : 500,
         }}
       >
-        <RfIcon name={item.icon} size={19} />
         <span className="flex-1">{item.label}</span>
 
         {count > 0 ? (
           <span
             className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
             style={{
-              background: active ? "var(--rf-glass-strong)" : "rgba(17,19,24,0.06)",
+              background: active ? "var(--rf-card)" : "var(--rf-inset)",
               color: "var(--rf-text-2)",
               borderRadius: 980,
             }}

@@ -42,10 +42,10 @@ import {
   Panel,
   PanelEmpty,
   seriesColor,
-  Sparkline,
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
+import { Hero } from "./home/hero";
 import { StatusHeader } from "./home/status-header";
 import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
@@ -325,6 +325,36 @@ export default async function AdminDashboard({
         onko kaikki kunnossa, miten tänään menee, mitä kuussa on
         tapahtunut.
       */}
+      <Hero
+        label="Kirjatut kulut"
+        cents={totals.totalCents}
+        delta={
+          totals.receiptCount > 0 && comparison.change !== null
+            ? percent(comparison.change)
+            : null
+        }
+        deltaTone={
+          totals.receiptCount === 0 || comparison.change === null
+            ? "flat"
+            : comparison.change > 0
+              ? "up"
+              : comparison.change < 0
+                ? "down"
+                : "flat"
+        }
+        footnote={
+          emptyMonthOnly
+            ? "Ei kuitteja tässä kuussa"
+            : totals.receiptCount === 0
+              ? "Lisää ensimmäinen kuitti aloittaaksesi"
+              : comparison.baseMonth === null
+                ? `${formatMonth(viewMonth)} · ei vertailukohtaa`
+                : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
+        }
+        trend={hasTrend ? trend : null}
+        canAddReceipt={can(role, "receipts.add")}
+      />
+
       <StatusHeader status={status} items={items} />
 
       {pulse ? <Today pulse={pulse} canManageSales={can(role, "sales.manage")} /> : null}
@@ -334,55 +364,11 @@ export default async function AdminDashboard({
         aria-label="Avainluvut"
         className="grid auto-rows-fr grid-cols-2 gap-3 xl:grid-cols-4"
       >
-        <StatCard
-          label="Kirjatut kulut"
-          value={<CountUp to={totals.totalCents} format="money" />}
-          /*
-           * Tyhjä kuukausi ei ole lasku.
-           *
-           * Nolla kuittia tuottaa aina -100 % edelliseen kuuhun, ja
-           * alaspäin osoittava nuoli väittäisi kulujen pienentyneen.
-           * Ne eivät ole pienentyneet — niitä ei ole vielä kirjattu.
-           */
-          tone={
-            totals.receiptCount === 0 || comparison.change === null
-              ? "muted"
-              : comparison.change > 0
-                ? "up"
-                : comparison.change < 0
-                  ? "down"
-                  : "neutral"
-          }
-          /*
-           * Muutos pillerinä, vertailuluku jalassa.
-           *
-           * Aiemmin sama asia oli yhdessä lauseessa luvun alla:
-           * "+12,4 % vs. heinäkuu". Prosentti kuuluu luvun viereen,
-           * koska se luetaan samalla silmäyksellä; euromäärä johon
-           * verrataan kuuluu jalkaan, koska se luetaan vasta jos
-           * prosentti herättää kysymyksen.
-           */
-          delta={
-            totals.receiptCount > 0 && comparison.change !== null
-              ? { text: percent(comparison.change) }
-              : undefined
-          }
-          conclusion={
-            emptyMonthOnly
-              ? "Ei kuitteja tässä kuussa"
-              : totals.receiptCount === 0
-                ? "Lisää ensimmäinen kuitti aloittaaksesi"
-                : comparison.baseMonth === null
-                  ? "Ei vertailukohtaa"
-                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
-          }
-          linkLabel="Kulut"
-          hint="Järjestelmään lisättyjen kuittien summa"
-          href="/admin/kulut"
-          icon={<RfIcon name="expenses" size={14} />}
-          trend={hasTrend ? <Sparkline values={trend} /> : undefined}
-        />
-
+        {/*
+          Kirjatut kulut nousi tumpaan korttiin ylös.
+          Sama luku kahdessa paikassa opettaa lukijalle että toinen
+          niistä on turha — ja hän ei tiedä kumpi.
+        */}
         <StatCard
           label="Kuitit"
           value={<CountUp to={receipts_.total} format="integer" />}

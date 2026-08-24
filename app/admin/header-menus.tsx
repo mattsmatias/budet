@@ -91,12 +91,14 @@ function Dropdown({
         <div
           role="menu"
           aria-label={label}
-          className="rf-glass rf-enter absolute right-0 z-40 mt-2 overflow-hidden"
+          className="rf-enter absolute right-0 z-40 mt-2 overflow-hidden"
           style={{
             width,
             maxWidth: "calc(100vw - 2rem)",
-            background: "var(--rf-glass-strong)",
-            borderRadius: "var(--rf-r-control)",
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-card)",
+            boxShadow: "var(--rf-shadow-lg)",
           }}
         >
           {children(onClose)}

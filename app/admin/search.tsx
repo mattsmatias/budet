@@ -96,42 +96,37 @@ export function Search({ items }: { items: SearchItem[] }) {
   };
 
   return (
-    <div ref={container} className="relative w-full max-w-md">
+    <div ref={container} className="relative">
+      {/*
+        Pyöreä ikonipainike leveän kentän sijaan.
+
+        Kenttä vei kolmanneksen palkista ja näytti tyhjältä lomakkeelta.
+        Koska haku avautuu joka tapauksessa omaan paneeliinsa, leveä
+        kenttä ei ollut kenttä vaan painike joka näytti kentältä.
+      */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rf-glass rf-press flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left"
+        aria-label="Haku"
+        title={mac ? "Haku (⌘K)" : "Haku (Ctrl K)"}
+        className="rf-press flex h-10 w-10 items-center justify-center"
         style={{
-          background: "var(--rf-glass)",
-          borderRadius: "var(--rf-r-pill)",
+          background: "var(--rf-inset)",
+          color: "var(--rf-text-2)",
+          borderRadius: "50%",
         }}
       >
-        <span style={{ color: "var(--rf-text-3)" }}>
-          <RfIcon name="search" size={16} />
-        </span>
-        <span className="flex-1 truncate text-[13.5px]" style={{ color: "var(--rf-text-3)" }}>
-          Etsi sivua, toimittajaa tai työntekijää…
-        </span>
-        <kbd
-          suppressHydrationWarning
-          className="shrink-0 px-1.5 py-0.5 text-[11px] font-medium"
-          style={{
-            background: "var(--rf-inset)",
-            color: "var(--rf-text-3)",
-            borderRadius: 6,
-            fontFamily: "inherit",
-          }}
-        >
-          {mac ? "⌘K" : "Ctrl K"}
-        </kbd>
+        <RfIcon name="search" size={17} />
       </button>
 
       {open ? (
         <div
-          className="rf-glass rf-z-menu absolute left-0 right-0 top-[calc(100%+8px)] overflow-hidden"
+          className="rf-z-menu absolute right-0 top-[calc(100%+10px)] w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden"
           style={{
-            background: "var(--rf-glass-strong)",
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
             borderRadius: "var(--rf-r-card)",
+            boxShadow: "var(--rf-shadow-lg)",
           }}
         >
           <div
@@ -167,6 +162,18 @@ export function Search({ items }: { items: SearchItem[] }) {
               aria-label="Haku"
               className="w-full bg-transparent text-[15px] outline-none"
             />
+            <kbd
+              suppressHydrationWarning
+              className="shrink-0 px-1.5 py-0.5 text-[11px] font-medium"
+              style={{
+                background: "var(--rf-inset)",
+                color: "var(--rf-text-3)",
+                borderRadius: 6,
+                fontFamily: "inherit",
+              }}
+            >
+              {mac ? "⌘K" : "Ctrl K"}
+            </kbd>
           </div>
 
           {results.length === 0 ? (

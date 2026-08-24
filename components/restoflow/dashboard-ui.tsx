@@ -39,7 +39,7 @@ export function Panel({
 }) {
   return (
     <section
-      className="rf-glass flex h-full flex-col px-5 py-5"
+      className="flex h-full flex-col px-5 py-5"
       style={{
         /*
          * Sama pehmeä liukuma kuin avainluvuissa, jotta osiot ja
@@ -47,7 +47,8 @@ export function Panel({
          * kunnossa eikä tarkistettava — se on paikka jossa asiat
          * ovat, ja sen tila kerrotaan sisällä.
          */
-        background: "var(--rf-glass)",
+        background: "var(--rf-card)",
+        border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
       }}
     >
@@ -204,10 +205,13 @@ export function Sparkline({
   values,
   width = 88,
   height = 26,
+  stroke = "var(--rf-text-3)",
 }: {
   values: number[];
   width?: number;
   height?: number;
+  /** Viivan väri. Tummalla kortilla harmaa katoaisi taustaan. */
+  stroke?: string;
 }) {
   if (values.length < 3) return null;
 
@@ -248,7 +252,7 @@ export function Sparkline({
       <polyline
         className="rf-draw-line"
         points={points.join(" ")}
-        stroke="var(--rf-text-3)"
+        stroke={stroke}
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
