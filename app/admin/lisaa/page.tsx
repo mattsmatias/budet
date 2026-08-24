@@ -68,6 +68,14 @@ export default async function AdminMorePage() {
         </section>
       ) : null}
 
+      {/*
+        Työntekijänäkymä oli tässä listan toisena.
+
+        Se vei hallinnasta ulos toiseen sovellukseen saman tunnuksen
+        alla, eikä listasta käynyt ilmi että paluu on eri paikassa.
+        Ravintoloitsijan työpöytä ja työntekijän näkymä ovat eri
+        työkaluja.
+      */}
       <section>
         <SectionLabel>Muuta</SectionLabel>
         <Card padded={false}>
@@ -81,17 +89,6 @@ export default async function AdminMorePage() {
                   <RfIcon name="bell" size={20} />
                 </span>
                 <span className="flex-1 text-[15px] font-medium">Huomiot</span>
-                <span style={{ color: "var(--rf-text-3)" }}>
-                  <RfIcon name="chevron" size={16} />
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link href="/app" className="flex items-center gap-3 px-5 py-3.5">
-                <span style={{ color: "var(--rf-text-2)" }}>
-                  <RfIcon name="clock" size={20} />
-                </span>
-                <span className="flex-1 text-[15px] font-medium">Työntekijänäkymä</span>
                 <span style={{ color: "var(--rf-text-3)" }}>
                   <RfIcon name="chevron" size={16} />
                 </span>

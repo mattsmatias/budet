@@ -230,6 +230,13 @@ function NotificationMenu({
  * Asetukset ja uloskirjautuminen eivät ole päivittäisiä tehtäviä eivätkä
  * kuulu samaan listaan kuin Kuitit ja Työvuorot — ne ovat tilin
  * hallintaa, ja tilin hallinta löytyy tunnuksen takaa.
+ *
+ * TÄSSÄ OLI MYÖS LINKKI TYÖNTEKIJÄNÄKYMÄÄN.
+ *
+ * Se vei hallinnasta ulos toiseen sovellukseen saman tunnuksen
+ * alla, eikä valikosta käynyt ilmi että paluu on eri paikassa.
+ * Ravintoloitsijan työpöytä ja työntekijän näkymä ovat eri
+ * työkaluja; tämä valikko koskee vain tätä.
  */
 function UserMenu({
   userName,
@@ -285,19 +292,6 @@ function UserMenu({
                 Asetukset
               </Link>
             ) : null}
-
-            <Link
-              href="/app"
-              role="menuitem"
-              onClick={close}
-              className="rf-press flex items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-[14px]"
-              style={{ color: "var(--rf-text)" }}
-            >
-              <span style={{ color: "var(--rf-text-3)" }}>
-                <RfIcon name="clock" size={17} />
-              </span>
-              Työntekijänäkymä
-            </Link>
 
             <form action={signOut}>
               <button

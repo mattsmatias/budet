@@ -5,7 +5,7 @@ import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
-import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
+import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
@@ -83,16 +83,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
      */
     <div className="min-h-screen">
       <div className="flex min-h-screen">
-        <AdminNav
-          role={role}
-          user={{
-            name: userName,
-            roleLabel: ROLE_LABELS[role],
-            initials: initialsOf(userName),
-          }}
-          counts={counts}
-          alerts={alerts.length}
-        />
+        <AdminNav role={role} counts={counts} />
 
         <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
@@ -134,8 +125,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           userName={userName}
           role={role}
           search={searchItems(role, data.suppliers, data.users)}
-          matti={can(role, "matti.use")}
           canAddReceipt={can(role, "receipts.add")}
+          canOpenSettings={can(role, "settings.view")}
           months={months}
           month={month}
         />
@@ -147,14 +138,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       </div>
     </div>
   );
-}
-
-/** "Oktay Matias" → "OM". Yhden sanan nimestä yksi kirjain. */
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,4 @@
 import { HeaderMenus } from "./header-menus";
-import { MattiPanel } from "./matti/panel";
 import { PageTitle } from "./page-title";
 import { MonthScope } from "./month-scope";
 import { Search, type SearchItem } from "./search";
@@ -35,8 +34,8 @@ export function TopBar({
   userName,
   role,
   search,
-  matti,
   canAddReceipt,
+  canOpenSettings,
   months,
   month,
 }: {
@@ -47,8 +46,9 @@ export function TopBar({
   userName: string;
   role: Role;
   search: SearchItem[];
-  matti: boolean;
   canAddReceipt: boolean;
+  /** Näkyykö Asetukset tunnusvalikossa. */
+  canOpenSettings: boolean;
   /** Valittavat kuukaudet, uusin ensin. */
   months: string[];
   /** Kuluva kuukausi — valinta luetaan osoitteesta. */
@@ -98,14 +98,12 @@ export function TopBar({
         </ButtonLink>
       ) : null}
 
-      <MattiPanel enabled={matti} compact />
-
       <HeaderMenus
         alerts={alerts}
         userName={userName}
         restaurantName={restaurantName}
         role={role}
-        canOpenSettings={false}
+        canOpenSettings={canOpenSettings}
       />
     </header>
   );

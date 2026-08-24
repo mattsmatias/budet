@@ -57,13 +57,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           lukea valinnan. Skripti on tarkoituksella pieni ja
           synkroninen: se ajetaan ennen kuin mitään on maalattu.
         */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "try{var t=localStorage.getItem('budet-theme');" +
-              "if(t==='dark'||t==='light')document.body.dataset.theme=t}catch(e){}",
-          }}
-        />
         {children}
       </body>
     </html>

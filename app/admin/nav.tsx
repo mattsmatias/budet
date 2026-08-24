@@ -11,8 +11,7 @@ import {
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
-import { signOut } from "@/app/(auth)/actions";
-import { ThemeToggle } from "./theme-toggle";
+import { MattiPanel } from "./matti/panel";
 
 /**
  * Hallintanavigaatio.
@@ -26,14 +25,9 @@ import { ThemeToggle } from "./theme-toggle";
  */
 export function AdminNav({
   role,
-  user,
   counts,
-  alerts,
 }: {
   role: Role;
-  user: { name: string; roleLabel: string; initials: string };
-  /** Avoimien huomioiden määrä ilmoitusriville. */
-  alerts: number;
   /**
    * Lukumäärät valikon kohtiin, avaimena polku.
    *
@@ -48,13 +42,7 @@ export function AdminNav({
 
   return (
     <>
-      <DesktopSidebar
-        sections={sections}
-        user={user}
-        counts={counts}
-        alerts={alerts}
-        canOpenSettings={can(role, "settings.view")}
-      />
+      <DesktopSidebar sections={sections} counts={counts} matti={can(role, "matti.use")} />
       <MobileBar items={primary} />
     </>
   );
@@ -72,16 +60,13 @@ function useActive() {
 
 function DesktopSidebar({
   sections,
-  user,
   counts,
-  alerts,
-  canOpenSettings,
+  matti,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
-  user: { name: string; roleLabel: string; initials: string };
   counts: Record<string, number>;
-  alerts: number;
-  canOpenSettings: boolean;
+  /** Onko roolilla oikeus Mattiin. */
+  matti: boolean;
 }) {
   return (
     <aside
@@ -116,100 +101,21 @@ function DesktopSidebar({
       </nav>
 
       {/*
-       * Matti erotettuna pohjalle. Se ei kuulu mihinkään osastoon: se ei
-       * ole sivu vaan tapa käyttää kaikkia muita.
-       *
-       * Asetukset oli tässä alla. Se oli myös tunnusvalikossa, eli
-       * kahdessa paikassa — ja kaksi paikkaa samalle asialle on kaksi
-       * paikkaa joita pitää etsiä. Se löytyy nyt vain oikean yläkulman
-       * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
-       * käyttäjää eivätkä ravintolan työtä.
-       */}
-      <div className="border-t px-3 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
-        <Link
-          href="/admin/ilmoitukset"
-          className="rf-press mb-1 flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] font-medium"
-          style={{ color: "var(--rf-text-2)" }}
-        >
-          <RfIcon name="bell" size={17} />
-          <span className="flex-1">Ilmoitukset</span>
-          {alerts > 0 ? (
-            <span
-              className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-bold"
-              style={{
-                background: "var(--rf-accent)",
-                color: "var(--rf-on-accent)",
-                borderRadius: 980,
-              }}
-            >
-              {alerts > 99 ? "99+" : alerts}
-            </span>
-          ) : null}
-        </Link>
+        Kiskon pohjalla vain Matti.
 
-        {/*
-         * Asetukset ja uloskirjautuminen omana ryhmänään pohjalla.
-         *
-         * Ne eivät ole ravintolan työtä vaan tilin hallintaa, ja siksi
-         * ne ovat erillään päivittäisistä kohdista — mutta näkyvissä
-         * eivätkä valikon takana. Tunnusvalikko työpöydän oikeasta
-         * yläkulmasta poistui samalla: kaksi paikkaa samalle asialle on
-         * kaksi paikkaa joita pitää etsiä.
-         */}
-        <ul aria-label="Tili" className="space-y-0.5">
-          {canOpenSettings ? (
-            <NavLink
-              item={{
-                href: "/admin/asetukset",
-                label: "Asetukset",
-                icon: "settings",
-                requires: "settings.view",
-                section: "main",
-              }}
-              count={0}
-            />
-          ) : null}
-          <li>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px] font-medium"
-                style={{ color: "var(--rf-text-2)" }}
-              >
-                <RfIcon name="logout" size={17} />
-                <span>Kirjaudu ulos</span>
-              </button>
-            </form>
-          </li>
-        </ul>
+        Tässä oli Ilmoitukset, Asetukset, Kirjaudu ulos, tunnusrivi ja
+        teemakytkin — kaikki tilin hallintaa, ja kaikki myös yläpalkin
+        tunnusvalikossa. Kaksi paikkaa samalle asialle on kaksi paikkaa
+        joita pitää etsiä, ja kisko on ravintolan työtä varten.
 
-        <div
-          className="mt-1 flex items-center gap-2.5 rounded-[10px] px-2.5 py-2"
-          style={{ background: "var(--rf-inset)" }}
-        >
-          <span
-            aria-hidden="true"
-            className="flex h-8 w-8 shrink-0 items-center justify-center text-[11px] font-bold"
-            style={{
-              background: "var(--rf-accent-bg)",
-              // Merkkiväri jää 4,25:een omalla vaalealla pohjallaan.
-              // Nimikirjaimet ovat tekstiä, joten ne saavat tummemman.
-              color: "var(--rf-accent-strong)",
-              borderRadius: "50%",
-            }}
-          >
-            {user.initials}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-bold">{user.name}</span>
-            <span className="block truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
-              {user.roleLabel}
-            </span>
-          </span>
+        Matti ei ole sivu vaan tapa käyttää kaikkia muita, joten se ei
+        kuulu mihinkään osastoon vaan omalle rivilleen viivan alle.
+      */}
+      {matti ? (
+        <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
+          <MattiPanel enabled />
         </div>
-
-        <ThemeToggle />
-      </div>
+      ) : null}
 
     </aside>
   );

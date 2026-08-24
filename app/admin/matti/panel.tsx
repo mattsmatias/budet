@@ -126,18 +126,25 @@ export function MattiPanel({
         type="button"
         onClick={() => setOpen(true)}
         aria-expanded={open}
-        className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px]"
+        /*
+         * Sama mitta kuin kiskon muilla riveillä.
+         *
+         * Matti on kiskon pohjalla viivan alla, ja eri pehmuste teki
+         * siitä irrallisen: rivi oli leveämpi ja teksti isompi kuin
+         * yhdelläkään sen yläpuolella.
+         */
+        className="rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px]"
         style={{ color: "var(--rf-text-2)" }}
       >
         <span style={{ color: "var(--rf-accent)" }}>
-          <RfIcon name="sparkle" size={19} />
+          <RfIcon name="sparkle" size={17} />
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block font-medium" style={{ color: "var(--rf-text)" }}>
+          <span className="block font-bold" style={{ color: "var(--rf-text)" }}>
             Matti
           </span>
-          <span className="block text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+          <span className="block text-[11px] font-medium" style={{ color: "var(--rf-text-3)" }}>
             BUDet AI
           </span>
         </span>
