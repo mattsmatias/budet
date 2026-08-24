@@ -27,10 +27,12 @@ import type {
   Alert,
   Budget,
   ClockEvent,
+  OpenShift,
   Receipt,
   Shift,
   User,
 } from "./types";
+import type { DailySales } from "./sales";
 
 export interface DashboardInput {
   receipts: Receipt[];
@@ -41,6 +43,16 @@ export interface DashboardInput {
   absences: Absence[];
   month: string;
   today: string;
+
+  /*
+   * Toiminnalliset poikkeamat tarvitsevat nykyhetken ja vyöhykkeen:
+   * "vuoro alkoi 20 minuuttia sitten" ei ole pääteltävissä päivästä.
+   * Avoimet vuorot ja myynti kulkevat samassa paketissa.
+   */
+  now: string;
+  timezone: string;
+  openShifts?: OpenShift[];
+  sales?: DailySales[];
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +113,10 @@ export function attention(input: DashboardInput): Attention {
     absences: input.absences,
     month: input.month,
     today: input.today,
+    now: input.now,
+    timezone: input.timezone,
+    openShifts: input.openShifts,
+    sales: input.sales,
   });
 
   const counts = alertCounts(alerts);

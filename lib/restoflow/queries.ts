@@ -727,6 +727,8 @@ export interface RestaurantData {
   /** Tunnetut kaupat. Yhteinen luettelo, ei ravintolakohtainen. */
   merchants: Merchant[];
   merchantCategories: MerchantCategory[];
+  /** Päivän myynnit, uusin ensin. Poikkeamat tarvitsevat vertailuhistorian. */
+  sales: DailySales[];
 }
 
 /**
@@ -751,6 +753,7 @@ export async function fetchRestaurantData(
     categories,
     merchants,
     merchantCategories,
+    sales,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
     fetchUsers(restaurantId),
@@ -764,6 +767,7 @@ export async function fetchRestaurantData(
     fetchExpenseCategories(restaurantId),
     fetchMerchants(),
     fetchMerchantCategories(),
+    fetchDailySales(restaurantId),
   ]);
 
   return {
@@ -779,6 +783,7 @@ export async function fetchRestaurantData(
     categories,
     merchants,
     merchantCategories,
+    sales,
   };
 }
 

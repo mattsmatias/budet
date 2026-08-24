@@ -24,10 +24,14 @@ import {
   type Budget,
   type ClockEvent,
   type Receipt,
+  type OpenShift,
   type Shift,
   type User,
 } from "./types";
 import { currentState } from "./timeclock";
+import { dayIn } from "./clock-context";
+import { operationalAlerts } from "./operations";
+import type { DailySales } from "./sales";
 
 /** Toimittajan kulunousu joka ylittää tämän nostaa hälytyksen. */
 const SUPPLIER_SPIKE_THRESHOLD = 0.25;
@@ -44,6 +48,21 @@ export interface AlertContext {
   absences: Absence[];
   month: string;
   today: string;
+
+  /*
+   * Toiminnallisten poikkeamien lisätiedot.
+   *
+   * Nykyhetki ja vyöhyke ovat pakollisia: "vuoro alkoi 20 minuuttia
+   * sitten" ei ole pääteltävissä päivämäärästä.
+   *
+   * Avoimet vuorot ja myynti ovat valinnaisia vain siksi että ne
+   * lisättiin myöhemmin; molemmat kulkevat samassa datapaketissa kuin
+   * muutkin, joten käytännössä ne ovat aina mukana.
+   */
+  now: string;
+  timezone: string;
+  openShifts?: OpenShift[];
+  sales?: DailySales[];
 }
 
 /**
@@ -61,6 +80,17 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
     ...receiptReviewAlerts(ctx),
     ...unclosedShiftAlerts(ctx),
     ...shiftAlerts(ctx),
+    ...operationalAlerts({
+      users: ctx.users,
+      shifts: ctx.shifts,
+      openShifts: ctx.openShifts ?? [],
+      clockEvents: ctx.clockEvents,
+      receipts: ctx.receipts,
+      sales: ctx.sales ?? [],
+      today: ctx.today,
+      now: ctx.now,
+      timezone: ctx.timezone,
+    }),
   ].sort((a, b) => severityRank(a) - severityRank(b));
 }
 
@@ -194,11 +224,13 @@ function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
 
     // Vain eiliseen tai vanhempaan jäänyt avoin leimaus on ongelma —
     // tänään käynnissä oleva vuoro on normaali tila.
-    const older = events.filter((e) => e.at.slice(0, 10) < ctx.today);
+    // Päivä ravintolan ajassa. Merkkijonon viipale on UTC:tä, jolloin
+    // yöllä tehty leimaus osuisi väärälle päivälle.
+    const older = events.filter((e) => dayIn(ctx.timezone, e.at) < ctx.today);
     if (older.length === 0) continue;
 
-    const lastDay = older[older.length - 1].at.slice(0, 10);
-    const dayEvents = older.filter((e) => e.at.slice(0, 10) === lastDay);
+    const lastDay = dayIn(ctx.timezone, older[older.length - 1].at);
+    const dayEvents = older.filter((e) => dayIn(ctx.timezone, e.at) === lastDay);
 
     if (currentState(dayEvents) !== "off") {
       alerts.push({

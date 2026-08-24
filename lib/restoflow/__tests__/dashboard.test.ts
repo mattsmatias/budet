@@ -60,6 +60,8 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
     absences: [],
     month: "2026-08",
     today: "2026-08-15",
+    now: "2026-08-15T12:00:00Z",
+    timezone: "Europe/Helsinki",
     ...partial,
   };
 }

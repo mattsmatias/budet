@@ -16,7 +16,7 @@ import {
   landingFor,
   seesPayRates,
 } from "../permissions";
-import { buildAlerts } from "../alerts";
+import { buildAlerts, type AlertContext } from "../alerts";
 import {
   MockReceiptExtractor,
   emptyResult,
@@ -792,9 +792,25 @@ describe("poikkeamat", () => {
     { id: "u1", restaurantId: "rest-1", name: "Ali", role: "employee", position: "waiter", hourlyRateCents: 1500, initials: "A", active: true },
   ];
 
+  /*
+   * Nykyhetki ja vyöhyke ovat pakollisia, mutta useimmat poikkeamat
+   * eivät riipu niistä. Apuri antaa niille kiinteän arvon, jotta
+   * jokainen testi kertoo vain siitä mitä se tutkii.
+   */
+  const alertsOf = (
+    input: Partial<AlertContext> & Pick<AlertContext, "month" | "today">,
+  ) =>
+    buildAlerts({
+      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      absences: [], openShifts: [], sales: [],
+      now: `${input.today}T12:00:00Z`,
+      timezone: "Europe/Helsinki",
+      ...input,
+    });
+
   it("nostaa kaksoiskappaleen kriittiseksi", () => {
     const dup = { date: "2026-08-18", totalCents: 8720, supplierId: "s-x", supplierName: "X" };
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
       budgets: [], shifts: [], users, clockEvents: [],
       absences: [],
@@ -808,7 +824,7 @@ describe("poikkeamat", () => {
     const budgets: Budget[] = [
       { id: "b1", restaurantId: "rest-1", category: "cleaning", month: null, amountCents: 10000 },
     ];
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [receipt({ date: "2026-08-01", totalCents: 12000, category: "cleaning" })],
       budgets, shifts: [], users, clockEvents: [],
       absences: [],
@@ -818,7 +834,7 @@ describe("poikkeamat", () => {
   });
 
   it("huomaa sulkematta jääneen työajan", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [], budgets: [], shifts: [], users,
       clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-18T16:00:00.000Z" }],
       absences: [],
@@ -828,7 +844,7 @@ describe("poikkeamat", () => {
   });
 
   it("ei hälytä tänään käynnissä olevasta vuorosta", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [], budgets: [], shifts: [], users,
       clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-20T09:00:00.000Z" }],
       absences: [],
@@ -839,7 +855,7 @@ describe("poikkeamat", () => {
 
   it("järjestää vakavimmat ensin", () => {
     const dup = { date: "2026-08-18", totalCents: 8720, supplierId: "s-x", supplierName: "X" };
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
       budgets: [],
       shifts: [{ id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-25", startTime: "14:00", endTime: "22:00", location: "Sali", status: "pending" }],
@@ -851,7 +867,7 @@ describe("poikkeamat", () => {
   });
 
   it("nostaa poissaoloilmoituksen kriittiseksi", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [], budgets: [], shifts: [], users, clockEvents: [],
       absences: [
         {
@@ -870,7 +886,7 @@ describe("poikkeamat", () => {
   // oleva jakso katoaisi huomioista heti seuraavana aamuna — juuri silloin
   // kun tekijää vielä etsitään.
   it("pitää kesken olevan jakson näkyvissä", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [], budgets: [], shifts: [], users, clockEvents: [],
       absences: [
         {
@@ -885,7 +901,7 @@ describe("poikkeamat", () => {
   });
 
   it("unohtaa päättyneen jakson", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [], budgets: [], shifts: [], users, clockEvents: [],
       absences: [
         {
@@ -900,7 +916,7 @@ describe("poikkeamat", () => {
   });
 
   it("ei tuota hälytyksiä puhtaasta aineistosta", () => {
-    const alerts = buildAlerts({
+    const alerts = alertsOf({
       receipts: [receipt({ date: "2026-08-01", totalCents: 11400, vatCents: 1400, category: "food" })],
       budgets: [], shifts: [], users, clockEvents: [],
       absences: [],

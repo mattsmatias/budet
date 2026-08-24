@@ -412,7 +412,13 @@ export type AlertKind =
   | "unclosed_shift"
   | "absence_reported"
   | "open_shift"
-  | "shift_variance";
+  | "shift_variance"
+  // Toiminnalliset poikkeamat: mitä juuri nyt on menossa pieleen.
+  | "late_clock_in"
+  | "shift_overrun"
+  | "unassigned_shift"
+  | "sales_shortfall"
+  | "receipt_gap";
 
 /**
  * Poikkeama.

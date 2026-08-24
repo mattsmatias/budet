@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
-import { monthIn, todayIn } from "@/lib/restoflow/clock-context";
+import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { can } from "@/lib/restoflow/permissions";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
@@ -27,6 +27,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     absences: data.absences,
     month: monthIn(restaurant.timezone),
     today: todayIn(restaurant.timezone),
+    now: nowIso(),
+    timezone: restaurant.timezone,
+    openShifts: data.openShifts,
+    sales: data.sales,
   });
 
   const userName = user.fullName ?? user.email ?? "Käyttäjä";

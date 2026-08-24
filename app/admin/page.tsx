@@ -48,7 +48,6 @@ import {
 import { MonthPicker } from "./month-picker";
 import { StatusHeader } from "./home/status-header";
 import { Today } from "./home/today";
-import { fetchDailySales } from "@/lib/restoflow/queries";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
@@ -77,6 +76,7 @@ export default async function AdminDashboard({
   const params = await searchParams;
   const {
     receipts, users, budgets, shifts, clockEvents, absences, merchants,
+    openShifts, sales,
     suppliers: supplierRows,
     month, today, now, monthlyHours, restaurant, user, role, categories: customCategories,
   } = await adminContext("/admin");
@@ -155,7 +155,9 @@ export default async function AdminDashboard({
 
   const dashboardInput = {
     receipts, budgets, shifts, users, clockEvents, absences,
-    month: viewMonth, today,
+    openShifts, sales,
+    month: viewMonth, today, now,
+    timezone: restaurant.timezone,
   };
 
   const focus = attention(dashboardInput);
@@ -232,20 +234,18 @@ export default async function AdminDashboard({
   /*
    * Kärjen tiedot.
    *
-   * Myynti ja työvoima haetaan erikseen, koska jaettu paketti ei sisällä
-   * niitä: myynti on uusi taulu, ja työvoima tulee palkkamoottorista
-   * jotta se on sama luku kuin palkkalaskelmassa.
+   * Työvoima haetaan erikseen palkkamoottorista, jotta kärjen luku on
+   * sama kuin palkkalaskelmassa. Myynti tulee jaetusta paketista.
    *
    * Vain kuluvalle kuukaudelle. Menneen kuukauden "tänään" ei ole
    * mitään, ja vanhan kuun kärki näyttäisi tyhjältä ilman syytä.
    */
-  const [sales, labourToday, labourMonth] = isCurrentMonth
+  const [labourToday, labourMonth] = isCurrentMonth
     ? await Promise.all([
-        fetchDailySales(restaurant.id),
         labourCost(restaurant.id, restaurant.timezone, today, today, now),
         labourCost(restaurant.id, restaurant.timezone, monthStartDate(month), today, now),
       ])
-    : [[], null, null];
+    : [null, null];
 
   const pulse =
     isCurrentMonth && labourToday && labourMonth
