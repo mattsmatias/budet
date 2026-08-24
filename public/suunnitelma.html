@@ -35,35 +35,36 @@
    =========================================================================== */
 
 :root {
-  --paper:      #f2efe9;
-  --card:       #fffefb;
-  --card-2:     #f8f5ef;
-  --edge:       #e2ddd2;
-  --edge-soft:  #ece7dd;
+  /* Puhdas — valittu paletti. Valkoinen pohja, neutraali harmaa. */
+  --paper:      #f5f6f8;
+  --card:       #ffffff;
+  --card-2:     #f2f3f6;
+  --edge:       #e3e5ea;
+  --edge-soft:  #edeff3;
 
-  --ink:        #191712;
-  --ink-2:      #6b665c;
-  --ink-3:      #757063;
+  --ink:        #0e1016;
+  --ink-2:      #5b6170;
+  --ink-3:      #6f7686;
 
   --cobalt:     #1e2fd6;
   --cobalt-2:   #1523a8;
-  --cobalt-bg:  #e7e9fb;
+  --cobalt-bg:  #e8eafc;
 
-  --go:         #1a7f4b;
-  --go-ink:     #0f5c35;
-  --go-bg:      #e4f2e9;
-  --hold:       #b7791f;
-  --hold-ink:   #8a5a12;
-  --hold-bg:    #f9eeda;
-  --stop:       #c0392b;
-  --stop-ink:   #97281c;
-  --stop-bg:    #f9e6e3;
+  --go:         #14804a;
+  --go-ink:     #0c6038;
+  --go-bg:      #e3f4ea;
+  --hold:       #b0710f;
+  --hold-ink:   #85530a;
+  --hold-bg:    #fbefd9;
+  --stop:       #cc2f26;
+  --stop-ink:   #9e211a;
+  --stop-bg:    #fce8e6;
 
   --s1: #1e2fd6;
   --s2: #7c5cd6;
-  --s3: #1a7f4b;
-  --s4: #b7791f;
-  --s5: #8d8577;
+  --s3: #14804a;
+  --s4: #b0710f;
+  --s5: #8e94a1;
 
   --f-display: "Fraunces", Georgia, serif;
   --f-display-w: 600;
@@ -75,8 +76,8 @@
   --r-md: 12px;
   --r-sm: 8px;
 
-  --shadow: 0 1px 1px rgba(25,23,18,.04), 0 8px 24px rgba(25,23,18,.06);
-  --shadow-lift: 0 2px 4px rgba(25,23,18,.05), 0 18px 44px rgba(25,23,18,.10);
+  --shadow: 0 1px 1px rgba(14,16,22,.04), 0 8px 24px rgba(14,16,22,.06);
+  --shadow-lift: 0 2px 4px rgba(14,16,22,.05), 0 18px 44px rgba(14,16,22,.10);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -105,63 +106,6 @@
   --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #7d766a;
   --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
   --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
-}
-
-/* ---------------------------------------------------------------------
-   VÄRITEEMAT
-
-   Neljä kokonaista palettia, ei neljää sävyä. Pohja, kortti, reuna ja
-   muste vaihtuvat yhdessä — puolittainen vaihto tuottaa yhdistelmiä
-   joissa kontrasti pettää jossain kohtaa näkymää.
-
-   Tilavärit (vihreä, keltainen, punainen) säilyvät merkityksinä
-   kaikissa. Ne on viritetty kunkin pohjan päälle, mutta ne eivät
-   koskaan vaihda merkitystä.
-   --------------------------------------------------------------------- */
-
-/* PUHDAS — valkoinen pohja, neutraali harmaa, terävä. */
-:root[data-skin="puhdas"] {
-  --paper: #f5f6f8; --card: #ffffff; --card-2: #f2f3f6;
-  --edge: #e3e5ea; --edge-soft: #edeff3;
-  --ink: #0e1016; --ink-2: #5b6170; --ink-3: #6f7686;
-  --cobalt: #1e2fd6; --cobalt-2: #1523a8; --cobalt-bg: #e8eafc;
-  --go: #14804a; --go-ink: #0c6038; --go-bg: #e3f4ea;
-  --hold: #b0710f; --hold-ink: #85530a; --hold-bg: #fbefd9;
-  --stop: #cc2f26; --stop-ink: #9e211a; --stop-bg: #fce8e6;
-  --s1: #1e2fd6; --s2: #7c5cd6; --s3: #14804a; --s4: #b0710f; --s5: #8e94a1;
-  --shadow: 0 1px 1px rgba(14,16,22,.04), 0 8px 24px rgba(14,16,22,.06);
-  --shadow-lift: 0 2px 4px rgba(14,16,22,.05), 0 18px 44px rgba(14,16,22,.10);
-}
-
-/* GRAFIITTI — neutraali vaalea harmaa, syvä petroolinvihreä aksentti.
-   Rauhallisin vaihtoehto: aksentti ei kilpaile tilavärien kanssa,
-   koska se on tummempi ja vähemmän kylläinen kuin mikään niistä. */
-:root[data-skin="grafiitti"] {
-  --paper: #eeefee; --card: #fbfbfa; --card-2: #f3f4f2;
-  --edge: #dcdedb; --edge-soft: #e7e9e6;
-  --ink: #14171a; --ink-2: #5c6469; --ink-3: #697175;
-  --cobalt: #0f6f68; --cobalt-2: #0a534e; --cobalt-bg: #dff0ee;
-  --go: #15794a; --go-ink: #0d5936; --go-bg: #e2f2e9;
-  --hold: #a9700f; --hold-ink: #7f520a; --hold-bg: #f8eed9;
-  --stop: #c2352a; --stop-ink: #93251c; --stop-bg: #fbe7e4;
-  --s1: #0f6f68; --s2: #4a6fa5; --s3: #15794a; --s4: #a9700f; --s5: #8d959a;
-  --shadow: 0 1px 1px rgba(20,23,26,.04), 0 8px 24px rgba(20,23,26,.06);
-  --shadow-lift: 0 2px 4px rgba(20,23,26,.05), 0 18px 44px rgba(20,23,26,.10);
-}
-
-/* YÖ — tumma. Aksentti vaalenee, koska tumman pohjan päällä sama
-   koboltti jäisi lukukelvottomaksi. */
-:root[data-skin="yo"] {
-  --paper: #101215; --card: #191c21; --card-2: #21252b;
-  --edge: #2c3138; --edge-soft: #252a30;
-  --ink: #eef1f5; --ink-2: #9aa3ae; --ink-3: #8f97a2;
-  --cobalt: #8b95ff; --cobalt-2: #a8b0ff; --cobalt-bg: #232a5c;
-  --go: #3fbd7a; --go-ink: #7ddaa8; --go-bg: #143c2a;
-  --hold: #dfa53f; --hold-ink: #f0c67c; --hold-bg: #3c2c12;
-  --stop: #e5695c; --stop-ink: #f3a49a; --stop-bg: #42201c;
-  --s1: #8b95ff; --s2: #b39aff; --s3: #3fbd7a; --s4: #dfa53f; --s5: #737b85;
-  --shadow: 0 1px 1px rgba(0,0,0,.35), 0 8px 24px rgba(0,0,0,.4);
-  --shadow-lift: 0 2px 4px rgba(0,0,0,.4), 0 18px 44px rgba(0,0,0,.5);
 }
 
 :root[data-type="b"] {
@@ -355,6 +299,24 @@ button { font: inherit; }
 .bang { flex: none; font-weight: 700; font-size: 14px; line-height: 1 }
 .clock-row { position: relative; height: 14px; margin-top: 10px }
 .clock-row span { position: absolute; transform: translateX(-50%); font-family: var(--f-data); font-size: 10.5px; color: var(--ink-3) }
+
+/* --- rauhallinen päivä: yksi rivi, ei koko kiskoa ---------------------- */
+
+.pass-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  padding: 16px 22px;
+}
+.pass-line .txt { min-width: 0; flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px }
+.pass-line .h { font-size: 15px; font-weight: 600 }
+.pass-line .d { font-size: 13.5px; color: var(--ink-2) }
+.pass-line .next {
+  font-family: var(--f-data); font-size: 12.5px; color: var(--ink-2);
+  padding: 4px 11px; border-radius: 999px; background: var(--card-2);
+}
+.pass-line .more { font-size: 13px; font-weight: 600; color: var(--cobalt); flex: none; white-space: nowrap }
+
+:root[data-day="rauha"] [data-pass="full"] { display: none }
+:root:not([data-day="rauha"]) [data-pass="calm"] { display: none }
 
 /* ===================== LUVUT ============================================ */
 
@@ -624,7 +586,19 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
 
       <div class="head"><div class="t"><h2 class="serif">Nyt</h2></div><span class="rule"></span></div>
 
-      <section class="card rise" aria-label="Palvelupäivä">
+      <section class="card rise" data-pass="calm" aria-label="Palvelupäivä">
+        <div class="pass-line">
+          <span class="beat" aria-hidden="true"><i></i><b></b></span>
+          <span class="txt">
+            <span class="h">Kaikki paikalla</span>
+            <span class="d">3 töissä · 2 tulossa tänään</span>
+            <span class="next">Seuraava · Liisa Koski 17.00</span>
+          </span>
+          <a class="more" href="#">Työvuorot →</a>
+        </div>
+      </section>
+
+      <section class="card rise" data-pass="full" aria-label="Palvelupäivä">
         <div class="pass-top">
           <div class="pass-title"><span class="beat" aria-hidden="true"><i></i><b></b></span><h3>Päivä käynnissä</h3></div>
           <div class="tally">
@@ -945,12 +919,10 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
 </div>
 
 <div class="typepick">
-  <span class="lbl">Väri</span>
-  <span role="group" aria-label="Väriteema" style="display:flex;gap:4px">
-    <button type="button" data-skin="paperi" aria-pressed="true">Paperi</button>
-    <button type="button" data-skin="puhdas" aria-pressed="false">Puhdas</button>
-    <button type="button" data-skin="grafiitti" aria-pressed="false">Grafiitti</button>
-    <button type="button" data-skin="yo" aria-pressed="false">Yö</button>
+  <span class="lbl">Päivä</span>
+  <span role="group" aria-label="Päivän tila" style="display:flex;gap:4px">
+    <button type="button" data-day="poikkeama" aria-pressed="true">Poikkeama</button>
+    <button type="button" data-day="rauha" aria-pressed="false">Rauhallinen</button>
   </span>
 
   <span class="div" aria-hidden="true"></span>
@@ -1056,8 +1028,23 @@ td.d { font-family: var(--f-data); color: var(--ink-2); white-space: nowrap }
     group.querySelectorAll("button").forEach((b) =>
       b.setAttribute("aria-pressed", String(b === button)));
 
-    if (button.dataset.skin) {
-      document.documentElement.dataset.skin = button.dataset.skin;
+    if (button.dataset.day) {
+      document.documentElement.dataset.day = button.dataset.day;
+
+      /* Poikkeamalista supistuu samalla: rauhallisena päivänä
+         keittiön huomautusta ei ole olemassa. */
+      const crit = document.querySelector(".docket.crit")?.closest("li");
+      const head = document.querySelector(".alerts h3");
+      const sub = document.querySelector(".alerts .sub");
+      const swatch = document.querySelector(".alerts .swatch");
+      const calm = button.dataset.day === "rauha";
+
+      if (crit) crit.hidden = calm;
+      if (head) head.textContent = calm ? "1 asia vaatii huomiota" : "2 asiaa vaatii huomiota";
+      if (sub) sub.textContent = calm
+        ? "Kirjanpidossa, ei salissa."
+        : "Yksi keittiössä juuri nyt, yksi kirjanpidossa.";
+      if (swatch) swatch.style.opacity = "1";
     } else {
       document.documentElement.dataset.type = button.dataset.set;
     }
