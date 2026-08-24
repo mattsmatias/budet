@@ -41,9 +41,16 @@ export function Panel({
     <section
       className="flex h-full flex-col px-5 py-5"
       style={{
-        background: "var(--rf-card)",
+        /*
+         * Sama pehmeä liukuma kuin avainluvuissa, jotta osiot ja
+         * kortit ovat samaa pintaa. Neutraali sävy: osio ei ole
+         * kunnossa eikä tarkistettava — se on paikka jossa asiat
+         * ovat, ja sen tila kerrotaan sisällä.
+         */
+        background: "var(--rf-tint)",
         border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
       <div className="mb-4 flex items-baseline justify-between gap-3">

@@ -66,6 +66,24 @@
   --rf-red-text: #c62828;
   --rf-red-bg: #fdeded;
 
+  /* ---------------------------------------------------------------- */
+  /* Korttien sävyt.                                                    */
+  /*                                                                    */
+  /* Pehmeä liukuma kortin yläkulmasta valkoiseen. Sävy EI ole satunnainen
+  /* koriste: se tulee kortin tilasta samasta lähteestä kuin pilleri ja
+  /* palkki. Keltainen tausta kortissa jonka tila on kunnossa opettaisi
+  /* lukijalle ettei väriin kannata luottaa, ja sen jälkeen myös oikea
+  /* keltainen menisi ohi.
+  /*
+  /* Neutraali on hyvin vaalea sinivalkoinen — se on se pinta joka
+  /* hallitsee näkymää, ja tilavärit erottuvat siitä.
+  /* ---------------------------------------------------------------- */
+  --rf-tint: linear-gradient(157deg, #f3f6fe 0%, #ffffff 54%);
+  --rf-tint-accent: linear-gradient(157deg, #eaf0ff 0%, #ffffff 54%);
+  --rf-tint-good: linear-gradient(157deg, #e9f8f1 0%, #ffffff 54%);
+  --rf-tint-warn: linear-gradient(157deg, #fef6e9 0%, #ffffff 54%);
+  --rf-tint-bad: linear-gradient(157deg, #fdefef 0%, #ffffff 54%);
+
   /* Pyöristykset */
   --rf-r-card: 18px;
   --rf-r-stat: 14px;

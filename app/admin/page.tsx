@@ -354,15 +354,30 @@ export default async function AdminDashboard({
                   ? "down"
                   : "neutral"
           }
+          /*
+           * Muutos pillerinä, vertailuluku jalassa.
+           *
+           * Aiemmin sama asia oli yhdessä lauseessa luvun alla:
+           * "+12,4 % vs. heinäkuu". Prosentti kuuluu luvun viereen,
+           * koska se luetaan samalla silmäyksellä; euromäärä johon
+           * verrataan kuuluu jalkaan, koska se luetaan vasta jos
+           * prosentti herättää kysymyksen.
+           */
+          delta={
+            totals.receiptCount > 0 && comparison.change !== null
+              ? { text: percent(comparison.change) }
+              : undefined
+          }
           conclusion={
             emptyMonthOnly
               ? "Ei kuitteja tässä kuussa"
               : totals.receiptCount === 0
                 ? "Lisää ensimmäinen kuitti aloittaaksesi"
-                : comparison.change === null || comparison.baseMonth === null
+                : comparison.baseMonth === null
                   ? "Ei vertailukohtaa"
-                  : `${percent(comparison.change)} vs. ${monthWord(comparison.baseMonth)}`
+                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
           }
+          linkLabel="Kulut"
           hint="Järjestelmään lisättyjen kuittien summa"
           href="/admin/kulut"
           icon={<RfIcon name="expenses" size={14} />}
@@ -373,10 +388,16 @@ export default async function AdminDashboard({
           label="Kuitit"
           value={<CountUp to={receipts_.total} format="integer" />}
           // "Ei vielä kuitteja" on väärin kun niitä on toisessa kuussa.
+          delta={
+            receipts_.pending > 0
+              ? { text: `${receipts_.pending} kesken` }
+              : undefined
+          }
           conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
           tone={receipts_.pending > 0 ? "warn" : "neutral"}
           icon={<RfIcon name="receipt" size={14} />}
           href="/admin/kuitit"
+          linkLabel="Kuitit"
         />
 
         <StatCard
