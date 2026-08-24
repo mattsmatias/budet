@@ -81,18 +81,13 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col md:flex"
-      style={{ background: "var(--rf-side)", color: "var(--rf-side-text)" }}
+      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
+      style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
       <div className="px-5 py-5">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
-          <span
-            className="text-[17px] font-semibold tracking-tight"
-            style={{ color: "var(--rf-side-text)" }}
-          >
-            Budet
-          </span>
+          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
         </Link>
       </div>
 
@@ -110,7 +105,7 @@ function DesktopSidebar({
             <p
               id={`nav-${section.id}`}
               className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-              style={{ color: "var(--rf-side-text-3)", letterSpacing: "0.06em" }}
+              style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
             >
               {section.label}
             </p>
@@ -147,7 +142,7 @@ function DesktopSidebar({
         <p
           id="nav-account"
           className="px-3 pb-1.5 pt-1 text-[11px] font-semibold uppercase"
-          style={{ color: "var(--rf-side-text-3)", letterSpacing: "0.06em" }}
+          style={{ color: "var(--rf-text-3)", letterSpacing: "0.06em" }}
         >
           Tili
         </p>
@@ -170,7 +165,7 @@ function DesktopSidebar({
               <button
                 type="submit"
                 className="rf-press flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium"
-                style={{ color: "var(--rf-side-text-2)" }}
+                style={{ color: "var(--rf-text-2)" }}
               >
                 <RfIcon name="logout" size={19} />
                 <span>Kirjaudu ulos</span>
@@ -182,19 +177,18 @@ function DesktopSidebar({
 
       <div
         className="border-t px-2.5 py-2"
-        style={{ borderColor: "var(--rf-side-line)" }}
+        style={{ borderColor: "var(--rf-line)" }}
       >
-        <MattiPanel enabled={matti} dark />
+        <MattiPanel enabled={matti} />
       </div>
 
       {/*
        * Päätoiminto pohjalla.
        *
        * Kuitin lisääminen on se mitä ravintoloitsija tekee useimmin, ja
-       * se oli tähän asti löydettävä Kuitit-sivun kautta. Valkoinen
-       * painike tummalla pinnalla on ainoa asia sivupalkissa joka
-       * huutaa — ja sen kuuluu, koska se on ainoa toiminto muiden
-       * ollessa siirtymiä.
+       * se oli tähän asti löydettävä Kuitit-sivun kautta. Se on
+       * sivupalkin ainoa täytetty painike — ja sen kuuluu olla, koska
+       * se on ainoa toiminto muiden ollessa siirtymiä.
        *
        * Käyttäjäkortti oli tässä hetken. Tunnus on nyt oikeassa
        * yläkulmassa, jossa sitä on totuttu etsimään, eikä samaa asiaa
@@ -206,9 +200,9 @@ function DesktopSidebar({
             href="/admin/kuitit/uusi"
             className="rf-press flex items-center justify-center gap-2 py-3 text-[14px] font-semibold"
             style={{
-              background: "var(--rf-side-text)",
-              color: "var(--rf-side)",
-              borderRadius: 12,
+              background: "var(--rf-accent)",
+              color: "var(--rf-on-accent)",
+              borderRadius: "var(--rf-r-control)",
             }}
           >
             <RfIcon name="plus" size={17} />
@@ -231,8 +225,8 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
         aria-current={active ? "page" : undefined}
         className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-medium"
         style={{
-          background: active ? "var(--rf-side-2)" : "transparent",
-          color: active ? "var(--rf-side-text)" : "var(--rf-side-text-2)",
+          background: active ? "var(--rf-accent-bg)" : "transparent",
+          color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
           fontWeight: active ? 600 : 500,
         }}
       >
@@ -243,8 +237,8 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
           <span
             className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
             style={{
-              background: active ? "rgba(255,255,255,0.14)" : "var(--rf-side-2)",
-              color: "var(--rf-side-text)",
+              background: active ? "var(--rf-card)" : "var(--rf-inset)",
+              color: "var(--rf-text-2)",
               borderRadius: 980,
             }}
           >
