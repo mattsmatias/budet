@@ -12,6 +12,7 @@
  */
 
 import type { PayComponent, TimeCorrection } from "./payroll";
+import type { DailySales } from "./sales";
 import type { Merchant } from "./merchants";
 import type { AllergenType, DietType, LunchWeek } from "./lunch";
 import { createClient } from "@/utils/supabase/server";
@@ -1053,4 +1054,37 @@ export async function fetchColleagues(restaurantId: string): Promise<Colleague[]
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "fi"));
+}
+
+// ---------------------------------------------------------------------------
+// Päivän myynti
+// ---------------------------------------------------------------------------
+
+/**
+ * Myyntipäivät uusin ensin.
+ *
+ * Oletusraja kattaa noin kolme kuukautta: viikonpäivävertailu tarvitsee
+ * historiaa, mutta koko historian lataaminen joka sivunlatauksella olisi
+ * tuhlausta.
+ */
+export async function fetchDailySales(
+  restaurantId: string,
+  limit = 100,
+): Promise<DailySales[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("daily_sales")
+    .select("sales_date, net_sales_cents, target_cents, note")
+    .eq("restaurant_id", restaurantId)
+    .order("sales_date", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    date: row.sales_date as string,
+    netCents: (row.net_sales_cents as number | null) ?? 0,
+    targetCents: (row.target_cents as number | null) ?? null,
+    note: (row.note as string | null) ?? null,
+  }));
 }

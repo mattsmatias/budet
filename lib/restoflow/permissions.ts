@@ -32,6 +32,8 @@ export type Capability =
   | "payroll.view"
   | "payroll.view.own"
   | "payroll.manage"
+  | "sales.view"
+  | "sales.manage"
   | "reports.view"
   | "reports.export"
   | "alerts.view"
@@ -49,6 +51,7 @@ const OWNER: Capability[] = [
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view", "staff.manage",
   "payroll.view", "payroll.view.own", "payroll.manage",
+  "sales.view", "sales.manage",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
@@ -63,6 +66,7 @@ const MANAGER: Capability[] = [
   "time.track.own", "time.view.all",
   "staff.view", "staff.rates.view",
   "payroll.view", "payroll.view.own", "payroll.manage",
+  "sales.view", "sales.manage",
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
@@ -98,6 +102,8 @@ const ACCOUNTANT: Capability[] = [
   "budgets.view",
   "reports.view", "reports.export",
   "time.view.all",
+  // Kirjanpitäjä lukee myynnin raportteja varten muttei kirjaa sitä.
+  "sales.view",
   "alerts.view",
 ];
 
@@ -166,6 +172,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/tyovuorot", requires: "shifts.view.all" },
   { href: "/admin/tyontekijat", requires: "staff.view" },
   { href: "/admin/palkat", requires: "payroll.view" },
+  { href: "/admin/myynti", requires: "sales.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/lounas", requires: "lunch.view" },
   { href: "/admin/raportit", requires: "reports.view" },

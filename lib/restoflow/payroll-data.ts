@@ -109,3 +109,46 @@ export function formatHours(minutes: number): string {
   const rounded = Math.round(hours * 10) / 10;
   return `${rounded.toLocaleString("fi-FI", { maximumFractionDigits: 1 })} h`;
 }
+
+// ---------------------------------------------------------------------------
+// Työvoimakustannus muualle sovellukseen
+// ---------------------------------------------------------------------------
+
+export interface LabourCost {
+  minutes: number;
+  /** Bruttopalkka lisineen, sentteinä. */
+  cents: number;
+  /** Kuinka monelta työntekijältä. */
+  people: number;
+  /** Kaudella olevat tarkistettavat kohdat. */
+  issues: number;
+}
+
+/**
+ * Työvoimakustannus aikaväliltä — sama laskenta kuin palkkalaskelmissa.
+ *
+ * Aiemmin tämä laskettiin kolmessa paikassa kolmella eri tarkkuudella:
+ * budjetti ja raportit kertoivat tunnit tuntipalkalla, palkkamoduuli
+ * laski lisät ja korjaukset. Sama asia näytti kahta eri lukua kahdessa
+ * näkymässä, ja kumpikin väitti olevansa työvoimakustannus.
+ *
+ * Nyt on yksi lähde. Se on hitaampi kuin kertolasku, koska se lukee
+ * korjaukset ja palkkalajit — mutta väärä luku on kalliimpi kuin
+ * hidas kysely.
+ */
+export async function labourCost(
+  restaurantId: string,
+  timezone: string,
+  from: string,
+  to: string,
+  nowIso: string,
+): Promise<LabourCost> {
+  const data = await loadPayroll(restaurantId, timezone, { startsOn: from, endsOn: to }, nowIso);
+
+  return {
+    minutes: data.slips.reduce((sum, s) => sum + s.workedMinutes, 0),
+    cents: data.slips.reduce((sum, s) => sum + s.grossCents, 0),
+    people: data.slips.filter((s) => s.workedMinutes > 0).length,
+    issues: data.issues.length,
+  };
+}
