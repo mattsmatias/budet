@@ -45,6 +45,23 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const userName = user.fullName ?? user.email ?? "Käyttäjä";
 
   /*
+   * Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
+   *
+   * Lista on kuoressa eikä sivulla, koska valitsin on nyt palkissa ja
+   * palkki on kaikilla sivuilla sama.
+   */
+  const months: string[] = [];
+  {
+    let cursor = month;
+    for (let i = 0; i < 13; i += 1) {
+      months.push(cursor);
+      const [year, m] = cursor.split("-").map(Number);
+      cursor =
+        m === 1 ? `${year - 1}-12` : `${year}-${String(m - 1).padStart(2, "0")}`;
+    }
+  }
+
+  /*
    * Valikon luvut.
    *
    * Vain se mikä odottaa ihmistä. Kuittien kokonaismäärä ei kuulu
@@ -119,6 +136,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           search={searchItems(role, data.suppliers, data.users)}
           matti={can(role, "matti.use")}
           canAddReceipt={can(role, "receipts.add")}
+          months={months}
+          month={month}
         />
 
         <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">

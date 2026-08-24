@@ -26,7 +26,15 @@ import {
  * tullut.
  */
 export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
-  if (rhythm.totalCents === 0) return null;
+  /*
+   * Tyhjä kuukausi piirretään silti.
+   *
+   * Komponentti palautti aiemmin null kun kuluja ei ollut, ja silloin
+   * viereinen huomiokortti jäi yksin koko rivin leveydelle. Tyhjä
+   * kuukausi on tuloskin — se kertoo ettei ostoja ole vielä kirjattu —
+   * ja rivin muoto pysyy samana kuukaudesta toiseen.
+   */
+  const empty = rhythm.totalCents === 0;
 
   return (
     <section
@@ -42,9 +50,11 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
         <h3 className="text-[16px] font-bold tracking-[-0.02em]">Kulurytmi</h3>
 
         <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-          {rhythm.activeDays === 1
-            ? "Kuluja yhtenä päivänä"
-            : `Kuluja ${rhythm.activeDays} päivänä`}
+          {empty
+            ? "Ei ostoja tässä kuussa"
+            : rhythm.activeDays === 1
+              ? "Kuluja yhtenä päivänä"
+              : `Kuluja ${rhythm.activeDays} päivänä`}
         </p>
       </div>
 
@@ -76,7 +86,11 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
       </ol>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">
-        {rhythm.peakWeekday ? (
+        {empty ? (
+          <p style={{ color: "var(--rf-text-3)" }}>
+            Rytmi näkyy kun kuukaudessa on ostoja useammalta päivältä.
+          </p>
+        ) : rhythm.peakWeekday ? (
           <p style={{ color: "var(--rf-text-2)" }}>
             <strong className="font-bold" style={{ color: "var(--rf-text)" }}>
               {Math.round(rhythm.peakWeekday.share * 100)} %

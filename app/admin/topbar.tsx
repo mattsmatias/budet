@@ -1,6 +1,7 @@
 import { HeaderMenus } from "./header-menus";
 import { MattiPanel } from "./matti/panel";
 import { PageTitle } from "./page-title";
+import { MonthPicker } from "./month-picker";
 import { Search, type SearchItem } from "./search";
 import { ButtonLink } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -36,6 +37,8 @@ export function TopBar({
   search,
   matti,
   canAddReceipt,
+  months,
+  month,
 }: {
   restaurantName: string;
   /** "Maanantai 24. elokuuta 2026" — ravintolan ajassa. */
@@ -46,6 +49,10 @@ export function TopBar({
   search: SearchItem[];
   matti: boolean;
   canAddReceipt: boolean;
+  /** Valittavat kuukaudet, uusin ensin. */
+  months: string[];
+  /** Kuluva kuukausi — valinta luetaan osoitteesta. */
+  month: string;
 }) {
   return (
     <header
@@ -62,6 +69,16 @@ export function TopBar({
       </div>
 
       <Search items={search} />
+
+      {/*
+        Kuukausi on palkissa eikä sivulla.
+
+        Se oli sivun ensimmäinen rivi, ja se rivi oli ainoa asia joka
+        erotti näkymän suunnitelmasta: sisältö alkoi säätimestä eikä
+        luvuista. Kuukausi koskee useaa sivua, joten se kuuluu samaan
+        palkkiin kuin haku.
+      */}
+      <MonthPicker value={month} months={months} />
 
       {canAddReceipt ? (
         <ButtonLink

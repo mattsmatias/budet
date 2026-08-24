@@ -23,7 +23,6 @@ import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
 import {
-  ButtonLink,
   CategoryBubble,
   Pill,
 } from "@/components/restoflow/ui";
@@ -33,7 +32,6 @@ import {
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { RfIcon } from "@/components/restoflow/icons";
-import { MonthPicker } from "./month-picker";
 import { Rhythm } from "./home/rhythm";
 import { StatusHeader } from "./home/status-header";
 import { Donut, seriesColor, Sparkline } from "@/components/restoflow/dashboard-ui";
@@ -328,27 +326,13 @@ export default async function AdminDashboard({
         tehdä. Ne eivät liity toisiinsa.
       */}
       {/*
-        Sivulla ei ole omaa otsikkoa: yläpalkki kantaa sen.
+        Sivu alkaa luvuista.
 
-        Kuukauden hallinta on silti sivukohtaista — se koskee vain
-        tätä näkymää eikä kuulu palkkiin joka on kaikilla sivuilla
-        sama.
+        Kuukausivalitsin ja vienti olivat tässä omalla rivillään.
+        Valitsin siirtyi yläpalkkiin, ja vienti löytyy Raportointi-
+        sivulta johon valikko vie — säädinrivi ennen sisältöä oli
+        ainoa asia joka erotti näkymän suunnitelmasta.
       */}
-      <div className="rf-z-page relative flex flex-wrap items-center justify-end gap-2">
-        <MonthPicker value={viewMonth} months={selectable} />
-
-        {can(role, "reports.view") ? (
-          <ButtonLink
-            href={`/admin/raportit?kuukausi=${viewMonth}`}
-            tone="ghost"
-            size="sm"
-            icon={<RfIcon name="download" size={15} />}
-          >
-            Vie raportti
-          </ButtonLink>
-        ) : null}
-      </div>
-
       {/* 2. KPI-kortit */}
       <section
         aria-label="Avainluvut"
@@ -800,11 +784,6 @@ export default async function AdminDashboard({
         )}
       </Panel>
 
-      <p className="px-1 pb-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Budet seuraa kirjattuja kuluja. Myyntidata ei ole yhdistetty, joten
-        tulosta ja katetta ei lasketa.
-        {isCurrentMonth ? "" : ` Katselet mennyttä kuukautta — työaika ja henkilöstökulu näkyvät vain kuluvalta.`}
-      </p>
     </div>
   );
 }
