@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
+import { clearInvite, readInvite } from "@/app/(auth)/liity/actions";
+import { createClient } from "@/utils/supabase/server";
 import { getActiveRestaurant, requireUser } from "@/lib/restoflow/session";
 import { Card } from "@/components/restoflow/ui";
 import { SetupForm } from "./form";
@@ -17,6 +19,30 @@ export const metadata = { title: "Aloitus" };
 export default async function SetupPage({ searchParams }: PageProps<"/aloitus">) {
   const params = await searchParams;
   const user = await requireUser("/aloitus");
+
+  /*
+   * Koodi lunastetaan tässä, ei erillisellä painikkeella.
+   *
+   * Käyttäjä on jo antanut koodin ja nähnyt mihin liittyy; toinen
+   * vahvistus samasta asiasta olisi vaihe joka ei päätä mitään.
+   *
+   * Kaikki reitit kulkevat tämän sivun kautta: tunnuksen luonti
+   * istunnolla, ja sähköpostivahvistuksen jälkeinen kirjautuminen.
+   *
+   * ENNEN jäsenyystarkistusta. Jos lunastus olisi sen jälkeen, jo
+   * johonkin ravintolaan kuuluva ohjattaisiin pois ennen kuin hänen
+   * kutsuaan ehditään käyttää — ja koodi jäisi lunastamatta ilman että
+   * kukaan huomaisi.
+   */
+  const invite = await readInvite();
+  if (invite) {
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("accept_invitation", { p_code: invite.code });
+
+    await clearInvite();
+    if (!error) redirect("/app");
+  }
+
   if (await getActiveRestaurant()) redirect("/admin");
 
   const mode = params.tila === "liity" ? "join" : "create";

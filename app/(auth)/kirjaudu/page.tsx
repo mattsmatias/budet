@@ -24,6 +24,22 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
         </Link>
       </p>
 
+      {/*
+        Kutsuttu ei ole luomassa tunnusta vaan liittymässä. Ilman omaa
+        riviä hän valitsisi "Luo tunnus" ja päätyisi perustamaan
+        ravintolan johon ei ole tulossa.
+      */}
+      <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+        Saitko kutsukoodin?{" "}
+        <Link
+          href="/liity"
+          className="font-medium underline underline-offset-4"
+          style={{ color: "var(--rf-blue)" }}
+        >
+          Liity ravintolaan
+        </Link>
+      </p>
+
       {linkError ? (
         <p
           role="alert"
