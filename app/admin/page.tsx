@@ -19,33 +19,28 @@ import {
   totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
+import { staffCostCents } from "@/lib/restoflow/timeclock";
 import { can, canAddReceipts, seesPayRates } from "@/lib/restoflow/permissions";
-import { formatDuration, staffCostCents, workedOnDate } from "@/lib/restoflow/timeclock";
-import { currentState } from "@/lib/restoflow/timeclock";
-import { dayIn } from "@/lib/restoflow/clock-context";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
-import { MerchantBadge } from "@/components/restoflow/merchant-badge";
 import {
-  Avatar,
   ButtonLink,
   CategoryBubble,
   Pill,
 } from "@/components/restoflow/ui";
 import {
   BudgetBarLine,
-  Donut,
   Panel,
   PanelEmpty,
-  seriesColor,
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
 import { Hero } from "./home/hero";
 import { ServiceDayBoard } from "./home/service-day";
 import { Rhythm } from "./home/rhythm";
+import { Purchases } from "./home/purchases";
 import { StatusHeader } from "./home/status-header";
 import { SectionHeading } from "@/components/restoflow/dashboard-ui";
 import { Today } from "./home/today";
@@ -212,24 +207,15 @@ export default async function AdminDashboard({
 
   const showsRates = seesPayRates(role);
 
-  // Tänään sisällä olevat. Tila luetaan leimauksista, ei tallenneta.
-  const onDuty = users
-    .map((u) => {
-      const events = clockEvents.filter((event) => event.userId === u.id);
-      const worked = workedOnDate(events, today, now, restaurant.timezone);
-      const state = currentState(
-        events.filter((event) => dayIn(restaurant.timezone, event.at) === today),
-      );
-      const firstIn = events.find(
-        (event) => event.type === "in" && dayIn(restaurant.timezone, event.at) === today,
-      );
+  /*
+   * "Työaika tänään" laski tässä ketkä ovat sisällä.
+   *
+   * Palvelupäivän aikajana näyttää saman ja enemmän: kuka on töissä,
+   * kuka tauolla, kuka myöhässä ja kuka tulossa. Paneelissa oli myös
+   * seitsemäs kerta samaa virhettä — since.slice(11, 16) luki UTC-ajan,
+   * joten kesällä sisäänleimaus 13.55 näkyi muodossa 10.55.
+   */
 
-      return { user: u, worked, state, since: firstIn?.at ?? null };
-    })
-    .filter((row) => row.state === "working" || row.state === "on_break")
-    .sort((a, b) => (a.since ?? "").localeCompare(b.since ?? ""));
-
-  const staffCount = users.filter((u) => u.position !== null).length;
 
 
   /*
@@ -501,135 +487,33 @@ export default async function AdminDashboard({
         molemmissa erikseen, joten ne ehtivät jo erota toisistaan.
       */}
 
-      {/* 5 & 6. Mihin ja kenelle */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel
-          title="Mihin rahat menevät?"
-          subtitle={`${formatMonth(viewMonth)} · kirjattujen kulujen jakauma`}
-          href="/admin/kulut"
-        >
-          {categories.length === 0 ? (
-            <PanelEmpty
-              {...(emptyForMonth ?? {
-                text: "Lisää kuitteja nähdäksesi kulujakauman.",
-                cta: "Lisää kuitti",
-                href: "/admin/kuitit/uusi",
-              })}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-              <Donut
-                slices={categories.slice(0, 5).map((row) => ({
-                  key: row.key,
-                  label: row.name,
-                  valueCents: row.totalCents,
-                  share: row.share,
-                }))}
-                total={formatMoney(totals.totalCents)}
-              />
+      <Purchases
+        categories={categories.slice(0, 5).map((row) => ({
+          key: row.key,
+          name: row.name,
+          baseCategory: row.baseCategory,
+          totalCents: row.totalCents,
+          share: row.share,
+        }))}
+        suppliers={suppliers.map((supplier) => ({
+          supplierId: supplier.supplierId,
+          name: supplier.name,
+          totalCents: supplier.totalCents,
+          share: supplier.share,
+          change: trends.get(supplier.supplierId)?.change ?? null,
+        }))}
+        merchantOf={merchantOfSupplier}
+        totalCents={totals.totalCents}
+        empty={
+          emptyForMonth ?? {
+            text: "Lisää kuitteja nähdäksesi mihin raha menee ja keneltä ostat eniten.",
+            cta: "Lisää kuitti",
+            href: "/admin/kuitit/uusi",
+          }
+        }
+      />
 
-            <ul className="w-full flex-1 space-y-1">
-              {categories.slice(0, 5).map((row, index) => (
-                <li key={row.key}>
-                  <Link
-                    href={`/admin/kuitit?suodatin=${row.baseCategory}`}
-                    className="rf-press flex items-center justify-between gap-3 rounded-[10px] px-2 py-2"
-                  >
-                    <span className="flex min-w-0 items-center gap-2.5 text-[14px]">
-                      <span
-                        aria-hidden="true"
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ background: seriesColor(index) }}
-                      />
-                      <span className="truncate">{row.name}</span>
-                    </span>
-
-                    <span className="flex shrink-0 items-baseline gap-3">
-                      <span className="rf-tabular text-[14px] font-semibold">
-                        {formatMoney(row.totalCents)}
-                      </span>
-                      <span
-                        className="rf-tabular w-10 text-right text-[13px]"
-                        style={{ color: "var(--rf-text-3)" }}
-                      >
-                        {Math.round(row.share * 100)} %
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            </div>
-          )}
-        </Panel>
-
-        <Panel
-          title="Kenelle rahat menevät?"
-          subtitle="Suurimmat toimittajat"
-          href="/admin/toimittajat"
-        >
-          {suppliers.length === 0 ? (
-            <PanelEmpty
-              {...(emptyShort ?? {
-                text: "Kun kuitteja kertyy, näet suurimmat toimittajat täällä.",
-              })}
-            />
-          ) : (
-            <ul className="space-y-3">
-              {suppliers.map((supplier) => {
-                const supplierTrend = trends.get(supplier.supplierId);
-                const hasTrend =
-                  supplierTrend !== undefined && supplierTrend.change !== null;
-
-                return (
-                  <li key={supplier.supplierId}>
-                    <Link
-                      href={`/admin/toimittajat/${supplier.supplierId}`}
-                      className="flex items-baseline justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
-                      style={{ borderColor: "var(--rf-line)" }}
-                    >
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <MerchantBadge
-                          merchant={merchantOfSupplier(supplier.supplierId)}
-                          fallbackName={supplier.name}
-                          size={30}
-                        />
-                        <span className="min-w-0">
-                          <span className="block truncate text-[14px] font-medium">
-                            {merchantOfSupplier(supplier.supplierId)?.name ??
-                              supplier.name}
-                          </span>
-                          <span
-                            className="rf-tabular block text-[12px]"
-                            style={{ color: "var(--rf-text-3)" }}
-                          >
-                            {hasTrend
-                              ? `${percent(supplierTrend!.change as number)} vs. edellinen kuukausi`
-                              : "Ei vertailukohtaa"}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="rf-tabular block text-[14px] font-semibold">
-                          {formatMoney(supplier.totalCents)}
-                        </span>
-                        <span
-                          className="rf-tabular block text-[12px]"
-                          style={{ color: "var(--rf-text-3)" }}
-                        >
-                          {(supplier.share * 100).toFixed(1).replace(".", ",")} %
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Panel>
-      </div>
-
-      {/* 7 & 8. Budjetit ja työaika */}
+      {/* Budjetit */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel
           title="Budjetit"
@@ -692,62 +576,6 @@ export default async function AdminDashboard({
           )}
         </Panel>
 
-        <Panel
-          title="Työaika tänään"
-          subtitle={isCurrentMonth ? undefined : "Aina kuluva päivä"}
-          href="/admin/tyontekijat"
-          linkLabel="Kaikki työntekijät"
-        >
-          <p className="rf-tabular text-[20px] font-semibold">
-            {onDuty.length} / {staffCount} työntekijää työssä
-          </p>
-
-          {onDuty.length === 0 ? (
-            <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-              {staffCount === 0
-                ? "Ravintolaan ei ole vielä lisätty työntekijöitä."
-                : "Kukaan ei ole vielä leimannut sisään."}
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {onDuty.map((row) => (
-                <li
-                  key={row.user.id}
-                  className="flex items-center justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
-                  style={{ borderColor: "var(--rf-line)" }}
-                >
-                  <span className="flex min-w-0 items-center gap-2.5">
-                    <span
-                      aria-hidden="true"
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{
-                        background:
-                          row.state === "on_break" ? "var(--rf-amber)" : "var(--rf-green)",
-                      }}
-                    />
-                    <Avatar initials={row.user.initials} size={28} />
-                    <span className="min-w-0">
-                      <span className="block truncate text-[14px] font-medium">
-                        {row.user.name}
-                      </span>
-                      <span
-                        className="rf-tabular block text-[12px]"
-                        style={{ color: "var(--rf-text-3)" }}
-                      >
-                        {row.since ? `${row.since.slice(11, 16)} → nyt` : "Työssä"}
-                        {row.state === "on_break" ? " · tauolla" : ""}
-                      </span>
-                    </span>
-                  </span>
-
-                  <span className="rf-tabular shrink-0 text-[13px] font-medium">
-                    {formatDuration(row.worked.workedMs)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
       </div>
 
       {/* 9. Viimeisimmät kuitit */}
