@@ -39,15 +39,16 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
   return (
     <section
       aria-label="Kulurytmi"
-      className="px-5 py-5 sm:px-6"
+      className="px-[18px] pb-4 pt-[15px]"
       style={{
         background: "var(--rf-card)",
         border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-[16px] font-bold tracking-[-0.02em]">Kulurytmi</h3>
+        <h3 className="text-[15px] font-bold tracking-[-0.0075em]">Kulurytmi</h3>
 
         <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
           {empty

@@ -159,17 +159,29 @@ function initialsOf(name: string): string {
 
 // ---------------------------------------------------------------------------
 
-/** "maanantai 24. elokuuta 2026", ensimmäinen kirjain isolla. */
+/**
+ * "MA 24.08.2026" — ravintolan ajassa.
+ *
+ * Murupolku oli "Maanantaina 24. elokuuta 2026", ja se vei puolet
+ * palkin vasemmasta reunasta sivun nimeltä. Päivämäärä on palkissa
+ * kiintopiste eikä luettava lause: lyhennetty viikonpäivä ja numerot
+ * kertovat saman kahdessatoista merkissä.
+ */
 function longDate(iso: string, timeZone: string): string {
-  const text = new Intl.DateTimeFormat("fi-FI", {
+  const parts = new Intl.DateTimeFormat("fi-FI", {
     timeZone,
-    weekday: "long",
-    day: "numeric",
-    month: "long",
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-  }).format(new Date(iso));
+  }).formatToParts(new Date(iso));
 
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+
+  // fi-FI antaa lyhyen viikonpäivän muodossa "ma" — pisteineen tai ilman.
+  const weekday = get("weekday").replace(".", "").toUpperCase();
+
+  return `${weekday} ${get("day")}.${get("month")}.${get("year")}`;
 }
 
 

@@ -90,7 +90,7 @@ export function Panel({
 }) {
   return (
     <section
-      className="flex h-full flex-col px-5 py-5"
+      className="flex h-full flex-col px-[18px] pb-4 pt-[15px]"
       style={{
         /*
          * Sama pehmeä liukuma kuin avainluvuissa, jotta osiot ja
@@ -101,13 +101,14 @@ export function Panel({
         background: "var(--rf-card)",
         border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-card)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="mb-4 flex items-baseline justify-between gap-3">
+      <div className="mb-[13px] flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[16px] font-semibold">{title}</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{title}</h2>
           {subtitle ? (
-            <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
               {subtitle}
             </p>
           ) : null}
@@ -481,7 +482,7 @@ export function AttentionPanel({
 
   return (
     <section
-      className="px-5 py-5"
+      className="px-[18px] pb-4 pt-[15px]"
       style={{
         background: "var(--rf-amber-bg)",
         border: "1px solid rgba(245, 158, 11, 0.22)",
@@ -489,7 +490,7 @@ export function AttentionPanel({
       }}
     >
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2.5 text-[16px] font-semibold">
+        <h2 className="flex items-center gap-2.5 text-[15px] font-bold tracking-[-0.0075em]">
           <span
             aria-hidden="true"
             className="flex h-7 w-7 items-center justify-center"

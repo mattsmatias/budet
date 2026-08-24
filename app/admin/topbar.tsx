@@ -41,7 +41,7 @@ export function TopBar({
   month,
 }: {
   restaurantName: string;
-  /** "Maanantai 24. elokuuta 2026" — ravintolan ajassa. */
+  /** "MA 24.08.2026" — ravintolan ajassa. */
   date: string;
   alerts: Alert[];
   userName: string;
@@ -56,14 +56,21 @@ export function TopBar({
 }) {
   return (
     <header
-      className="rf-z-chrome sticky top-0 hidden items-center gap-4 border-b px-6 py-3.5 md:flex"
+      className="rf-z-chrome sticky top-0 hidden items-center gap-3.5 border-b px-[22px] py-3.5 md:flex"
       style={{ background: "var(--rf-card)", borderColor: "var(--rf-line)" }}
     >
-      <div className="mr-auto min-w-0">
+      {/*
+        Otsikko ei kutistu nollaan.
+
+        Se oli mr-auto + min-w-0, ja oikean reunan säätimet söivät sen
+        kokonaan kapealla työpöydällä: palkki alkoi hakukentästä eikä
+        sivun nimestä.
+      */}
+      <div className="mr-auto min-w-[128px] flex-1">
         <p className="truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
           {restaurantName} · {date}
         </p>
-        <h1 className="mt-0.5 truncate text-[18px] font-extrabold tracking-[-0.025em]">
+        <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
           <PageTitle fallback="Hallinta" />
         </h1>
       </div>

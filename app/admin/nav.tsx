@@ -85,7 +85,7 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col border-r md:flex"
+      className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-5 py-5">
@@ -128,7 +128,7 @@ function DesktopSidebar({
       <div className="border-t px-3 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
         <Link
           href="/admin/ilmoitukset"
-          className="rf-press mb-1 flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13.5px] font-medium"
+          className="rf-press mb-1 flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="bell" size={17} />
@@ -173,7 +173,7 @@ function DesktopSidebar({
             <form action={signOut}>
               <button
                 type="submit"
-                className="rf-press flex w-full items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-[13.5px] font-medium"
+                className="rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px] font-medium"
                 style={{ color: "var(--rf-text-2)" }}
               >
                 <RfIcon name="logout" size={17} />
@@ -232,7 +232,7 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
          * ennen kuin ehtii lukea. Valinta on täytetty pinta eikä
          * pelkkä lihavointi, jotta se erottuu myös vilkaisulla.
          */
-        className="rf-press flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13.5px]"
+        className="rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px]"
         style={{
           background: active ? "var(--rf-inset)" : "transparent",
           color: active ? "var(--rf-text)" : "var(--rf-text-2)",

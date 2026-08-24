@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -21,6 +22,7 @@ import { currentState } from "@/lib/restoflow/timeclock";
 import { can } from "@/lib/restoflow/permissions";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
+import { initials } from "@/lib/restoflow/initials";
 import { CountUp } from "@/components/restoflow/count-up";
 import {
   CategoryBubble,
@@ -343,6 +345,15 @@ export default async function AdminDashboard({
           value={<CountUp to={totals.totalCents} format="money" />}
           icon={<RfIcon name="expenses" size={17} />}
           /*
+           * Laatan väri on tunniste eikä tila.
+           *
+           * Neljä korttia rinnakkain näyttivät samalta, koska kaikkien
+           * laatta oli sävytetty luvun tilan mukaan ja tila oli
+           * useimmiten neutraali. Väri per kortti tekee rivistä
+           * luettavan: sama kortti löytyy joka kerta samasta värista.
+           */
+          tileTone="brand"
+          /*
            * Tyhjä kuukausi ei ole lasku.
            *
            * Nolla kuittia tuottaa aina −100 % edelliseen kuuhun, ja
@@ -379,6 +390,7 @@ export default async function AdminDashboard({
 {pulse ? (
           <StatCard
             label="Myynti tänään"
+            tileTone="up"
             value={
               pulse.sales.cents === null ? "—" : <CountUp to={pulse.sales.cents} format="money" />
             }
@@ -419,6 +431,7 @@ export default async function AdminDashboard({
         ) : (
           <StatCard
             label="Kuitit"
+            tileTone="up"
             value={<CountUp to={receipts_.total} format="integer" />}
             delta={
               receipts_.pending > 0 ? { text: `${receipts_.pending} kesken` } : undefined
@@ -433,6 +446,7 @@ export default async function AdminDashboard({
 
         <StatCard
           label="Budjetti jäljellä"
+          tileTone="violet"
           value={budgetTotal === 0 ? "—" : <CountUp to={budgetLeft} format="money" />}
           delta={
             budgetUsed === null
@@ -472,6 +486,7 @@ export default async function AdminDashboard({
         {onDuty !== null ? (
           <StatCard
             label="Töissä nyt"
+            tileTone="neutral"
             value={`${onDuty} / ${staffTotal}`}
             delta={upcomingToday > 0 ? { text: `${upcomingToday} tulossa` } : undefined}
             conclusion={
@@ -489,6 +504,7 @@ export default async function AdminDashboard({
         ) : (
           <StatCard
             label="Työtunnit"
+            tileTone="neutral"
             value={totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />}
             conclusion={
               totalHours === null ? "Vain kuluvalta kuukaudelta" : "Leimauksista laskettu"
@@ -672,17 +688,30 @@ export default async function AdminDashboard({
                 nopeampi silmäillä kuin viisi korttia allekkain.
                 Puhelimessa sama tieto ei mahdu riville, joten siellä
                 kortit. */}
-            <div className="hidden md:block">
+            {/*
+              Taulukko ulottuu kortin reunoihin.
+
+              Osiokortilla on 18 px pehmuste, ja se jätti otsikkorivin
+              harmaan kaistan kellumaan keskelle korttia. Kaista on
+              taulukon oma reuna, joten sen kuuluu koskettaa kortin
+              reunaa — negatiivinen marginaali kumoaa pehmusteen ja
+              alanurkat leikataan kortin kaarteeseen.
+
+              Työpöydällä taulukko: viisi saraketta rinnakkain on
+              nopeampi silmäillä kuin viisi korttia allekkain.
+              Puhelimessa sama tieto ei mahdu riville, joten siellä
+              kortit.
+            */}
+            <div className="-mx-[18px] -mb-4 mt-[14px] hidden overflow-hidden rounded-b-[var(--rf-r-card)] md:block">
               <table className="rf-table w-full">
                 <caption className="sr-only">Viimeisimmät kuitit</caption>
                 <thead>
                   <tr>
                     <th scope="col">Toimittaja</th>
-                    <th scope="col" className="text-right">Summa</th>
                     <th scope="col">Kategoria</th>
-                    <th scope="col">Päivämäärä</th>
+                    <th scope="col">Summa</th>
                     <th scope="col">Tila</th>
-                    <th scope="col" />
+                    <th scope="col">Päivä</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -691,49 +720,58 @@ export default async function AdminDashboard({
                       <td>
                         <Link
                           href={`/admin/kuitit/${receipt.id}`}
-                          className="font-medium underline-offset-4 hover:underline"
+                          className="flex items-center gap-[9px] underline-offset-4 hover:underline"
                         >
-                          {receipt.supplierName}
+                          {/*
+                            Nimikirjaimet eivät ole koriste.
+
+                            Toimittajanimet ovat lyhyitä ja
+                            samankaltaisia — Kespro, Kesko, Metro —
+                            ja pelkkä tekstisarake luetaan kirjain
+                            kerrallaan. Sama toimittaja saa joka
+                            rivillä saman muodon, ja rivi tunnistuu
+                            ennen lukemista.
+                          */}
+                          <span
+                            aria-hidden="true"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center text-[10px] font-bold tracking-[-0.0075em]"
+                            style={{
+                              background: "var(--rf-inset)",
+                              color: "var(--rf-text-2)",
+                              borderRadius: 7,
+                            }}
+                          >
+                            {initials(receipt.supplierName)}
+                          </span>
+                          <span className="min-w-0 truncate">{receipt.supplierName}</span>
                         </Link>
                       </td>
-                      <td className="num">
-                        {formatMoney(receipt.totalCents)}
-                      </td>
+
                       <td style={{ color: "var(--rf-text-2)" }}>
                         {CATEGORY_LABELS[receipt.category]}
                       </td>
-                      <td
-                        className="rf-tabular"
-                        style={{ color: "var(--rf-text-2)" }}
-                      >
-                        {formatDate(receipt.date)}
+
+                      {/*
+                        Miinusmerkki kuuluu lukuun.
+
+                        Kuitti on rahaa ulos. Ilman merkkiä sama
+                        sarake näyttäisi myöhemmin samalta kuin
+                        myyntirivi, ja luku olisi luettava otsikosta.
+                      */}
+                      <td className="rf-tabular font-semibold" style={{ color: "var(--rf-red-text)" }}>
+                        −{formatMoney(receipt.totalCents)}
                       </td>
+
                       <td>
                         {receipt.status === "needs_review" ? (
-                          <span
-                            className="inline-flex items-center gap-1.5 text-[13px]"
-                            style={{ color: "var(--rf-amber-text)" }}
-                          >
-                            <RfIcon name="alert" size={14} />
-                            Tarkistettava
-                          </span>
+                          <StatusChip tone="warn">Tarkistettava</StatusChip>
                         ) : (
-                          <span
-                            className="inline-flex items-center gap-1.5 text-[13px]"
-                            style={{ color: "var(--rf-green-text)" }}
-                          >
-                            <RfIcon name="check" size={14} />
-                            Tarkistettu
-                          </span>
+                          <StatusChip tone="ok">Tarkistettu</StatusChip>
                         )}
                       </td>
-                      <td className="py-3 text-right" style={{ color: "var(--rf-text-3)" }}>
-                        <Link
-                          href={`/admin/kuitit/${receipt.id}`}
-                          aria-label={`Avaa ${receipt.supplierName}`}
-                        >
-                          <RfIcon name="chevron" size={15} />
-                        </Link>
+
+                      <td className="rf-tabular whitespace-nowrap" style={{ color: "var(--rf-text-2)" }}>
+                        {formatDate(receipt.date)}
                       </td>
                     </tr>
                   ))}
@@ -819,3 +857,29 @@ function formatDate(isoDate: string): string {
   return `${Number(d)}.${Number(m)}.`;
 }
 
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Tilamerkki taulukkoriville.
+ *
+ * Pienempi ja tiiviimpi kuin yleinen Pill: taulukkorivi on 13 px, ja
+ * yleinen pilleri kasvatti rivin korkeutta kahdella pikselillä
+ * jokaisella rivillä.
+ */
+function StatusChip({ tone, children }: { tone: "ok" | "warn"; children: ReactNode }) {
+  const ok = tone === "ok";
+  return (
+    <span
+      className="inline-flex shrink-0 items-center gap-[5px] whitespace-nowrap px-[9px] py-[3px] text-[11.5px] font-semibold"
+      style={{
+        background: ok ? "var(--rf-green-bg)" : "var(--rf-amber-bg)",
+        color: ok ? "var(--rf-green-text)" : "var(--rf-amber-text)",
+        borderRadius: 999,
+      }}
+    >
+      <RfIcon name={ok ? "check" : "alert"} size={13} />
+      {children}
+    </span>
+  );
+}

@@ -10,8 +10,12 @@ import { FOCUS_LIMIT, type OverallStatus } from "@/lib/restoflow/status";
  * huomiota. Kolmekymmentä: mitä pitää tehdä. Sen takia tila, lista ja
  * toimintalinkki ovat samassa lohkossa eivätkä kolmessa eri paikassa.
  *
- * Väri on merkitys eikä koriste. Vihreä tarkoittaa että on tarkastettu
- * eikä löytynyt mitään; harmaa että ei ole voitu tarkastaa.
+ * VÄRI ON RIVIN REUNASSA EIKÄ KEHYKSESSÄ.
+ *
+ * Koko kortti sai aiemmin punaisen kehyksen kun yksi rivi oli
+ * kriittinen, ja silloin kaikki rivit näyttivät yhtä kiireisiltä.
+ * Vakavuus koskee riviä, joten se kuuluu rivin reunaan — kaksi eri
+ * vakavuutta erottuu toisistaan samassa listassa.
  */
 export function StatusHeader({
   status,
@@ -35,24 +39,32 @@ export function StatusHeader({
   return (
     <section
       aria-label="Tilanne"
-      className="px-5 py-5 sm:px-6 sm:py-6"
+      className="flex h-full flex-col px-[18px] pb-4 pt-[15px]"
       style={{
         background: "var(--rf-card)",
-        border: `1px solid ${borderOf(status.tone)}`,
-        borderRadius: 18,
-        boxShadow: "0 1px 2px rgba(16,24,40,0.04)",
+        border: "1px solid var(--rf-line)",
+        borderRadius: "var(--rf-r-card)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="flex items-start gap-3.5">
-        <Dot tone={status.tone} />
+      <div className="flex items-start gap-2.5">
+        {/*
+          Piste vain kun listaa ei ole.
+
+          Kun rivejä on, jokainen kantaa oman värinsä eikä yhteinen
+          piste kerro niistä mitään uutta. Kun rivejä ei ole, piste on
+          ainoa asia joka erottaa "tarkastettu, kaikki kunnossa"
+          tilasta "ei voitu tarkastaa".
+        */}
+        {shown.length === 0 ? <Dot tone={status.tone} /> : null}
 
         <div className="min-w-0 flex-1">
-          <h2 className="text-[19px] font-semibold tracking-tight sm:text-[21px]">
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             {status.headline}
           </h2>
           {status.detail ? (
             <p
-              className="mt-1 max-w-xl text-[13px] leading-relaxed"
+              className="mt-[3px] text-[12.5px] leading-relaxed"
               style={{ color: "var(--rf-text-2)" }}
             >
               {status.detail}
@@ -64,7 +76,7 @@ export function StatusHeader({
       {status.tone === "unknown" && canAddReceipt ? (
         <Link
           href="/admin/kuitit/uusi"
-          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+          className="rf-press mt-4 inline-flex items-center gap-2 self-start px-4 py-2.5 text-[13.5px] font-bold"
           style={{
             background: "var(--rf-accent)",
             color: "var(--rf-on-accent)",
@@ -77,25 +89,29 @@ export function StatusHeader({
       ) : null}
 
       {shown.length > 0 ? (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-[13px] flex flex-col gap-2">
           {shown.map((focus) => (
             <li key={focus.id}>
               <Link
                 href={focus.href}
-                className="rf-press flex items-start gap-3 px-3.5 py-3"
-                style={{ background: "var(--rf-inset)", borderRadius: 12 }}
+                className="rf-press flex items-start gap-[11px] py-[11px] pr-[13px] pl-[11px]"
+                style={{
+                  background: "var(--rf-inset)",
+                  borderRadius: "var(--rf-r-control)",
+                  borderLeft: `2.5px solid ${severityColor(focus.severity)}`,
+                }}
               >
-                <span className="mt-0.5 shrink-0" style={{ color: severityColor(focus.severity) }}>
-                  <RfIcon
-                    name={focus.severity === "info" ? "info" : "alert"}
-                    size={16}
-                  />
+                <span
+                  className="mt-px shrink-0"
+                  style={{ color: severityColor(focus.severity) }}
+                >
+                  <RfIcon name={focus.severity === "info" ? "info" : "alert"} size={15} />
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium">{focus.title}</span>
+                  <span className="block text-[13px] font-semibold">{focus.title}</span>
                   <span
-                    className="mt-0.5 block text-[13px] leading-relaxed"
+                    className="mt-0.5 block text-[12.5px] leading-relaxed"
                     style={{ color: "var(--rf-text-2)" }}
                   >
                     {focus.detail}
@@ -103,7 +119,7 @@ export function StatusHeader({
                 </span>
 
                 <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                  <RfIcon name="chevron" size={15} />
+                  <RfIcon name="chevron" size={14} />
                 </span>
               </Link>
             </li>
@@ -118,13 +134,15 @@ export function StatusHeader({
       {rest > 0 ? (
         <Link
           href="/admin/havainnot"
-          className="rf-press rf-hit mt-3 inline-flex items-center gap-1.5 px-1 text-[13px] font-medium"
-          style={{ color: "var(--rf-blue)" }}
+          className="rf-press rf-hit mt-3 inline-flex items-center gap-1.5 self-start text-[12.5px] font-bold"
+          style={{ color: "var(--rf-accent)" }}
         >
           {rest === 1 ? "1 muu kohta" : `${rest} muuta kohtaa`}
           <RfIcon name="chevron" size={13} />
         </Link>
       ) : null}
+
+      <div className="mt-auto" />
     </section>
   );
 }
@@ -137,8 +155,8 @@ function Dot({ tone }: { tone: OverallStatus["tone"] }) {
       aria-hidden="true"
       className="mt-1.5 shrink-0"
       style={{
-        width: 11,
-        height: 11,
+        width: 10,
+        height: 10,
         borderRadius: "50%",
         background: dotOf(tone),
         boxShadow: `0 0 0 4px ${haloOf(tone)}`,
@@ -165,12 +183,6 @@ function haloOf(tone: OverallStatus["tone"]): string {
       : tone === "bad"
         ? "var(--rf-red-bg)"
         : "var(--rf-inset)";
-}
-
-function borderOf(tone: OverallStatus["tone"]): string {
-  // Vain ongelmatila saa värillisen reunan. Vihreä kehys joka päivä
-  // muuttuisi taustaksi, eikä poikkeus erottuisi enää mistään.
-  return tone === "bad" ? "var(--rf-red)" : tone === "warn" ? "var(--rf-amber)" : "var(--rf-line)";
 }
 
 function severityColor(severity: FocusItem["severity"]): string {

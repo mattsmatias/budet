@@ -98,18 +98,59 @@ export function Search({ items }: { items: SearchItem[] }) {
   return (
     <div ref={container} className="relative">
       {/*
-        Pyöreä ikonipainike leveän kentän sijaan.
+        Painike näyttää kentältä, koska se on hakupalkin paikka.
 
-        Kenttä vei kolmanneksen palkista ja näytti tyhjältä lomakkeelta.
-        Koska haku avautuu joka tapauksessa omaan paneeliinsa, leveä
-        kenttä ei ollut kenttä vaan painike joka näytti kentältä.
+        Pyöreä ikoni vei vähemmän tilaa mutta ei kertonut mistä
+        haetaan. Leveä kenttä nimeää kohteet — kuitit, toimittajat,
+        työntekijät — ja se on hakukentän ainoa tehtävä ennen kuin
+        siihen kirjoitetaan mitään.
       */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Haku"
         title={mac ? "Haku (⌘K)" : "Haku (Ctrl K)"}
-        className="rf-press flex h-10 w-10 items-center justify-center"
+        className="rf-press hidden w-[340px] shrink items-center gap-[9px] px-[13px] py-2 text-left text-[14px] xl:flex"
+        style={{
+          background: "var(--rf-inset)",
+          border: "1px solid var(--rf-line)",
+          borderRadius: "var(--rf-r-control)",
+          color: "var(--rf-text-3)",
+        }}
+      >
+        <RfIcon name="search" size={16} />
+        <span className="min-w-0 flex-1 truncate">
+          Etsi kuitteja, toimittajia, työntekijöitä…
+        </span>
+        <kbd
+          suppressHydrationWarning
+          className="shrink-0 px-1.5 py-0.5 text-[11px] font-medium"
+          style={{
+            background: "var(--rf-card)",
+            border: "1px solid var(--rf-line)",
+            color: "var(--rf-text-3)",
+            borderRadius: 6,
+            fontFamily: "inherit",
+          }}
+        >
+          {mac ? "⌘K" : "Ctrl K"}
+        </kbd>
+      </button>
+
+      {/*
+        Kapealla työpöydällä pelkkä ikoni.
+
+        Kenttä on 340 px, ja se työnsi vasemman reunan otsikon
+        nollaan asti — sivun nimi katosi kokonaan. Kenttä palaa heti
+        kun tilaa on; siihen asti ikoni kertoo saman asian eikä vie
+        muilta.
+      */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Haku"
+        title={mac ? "Haku (⌘K)" : "Haku (Ctrl K)"}
+        className="rf-press flex h-10 w-10 shrink-0 items-center justify-center xl:hidden"
         style={{
           background: "var(--rf-inset)",
           color: "var(--rf-text-2)",

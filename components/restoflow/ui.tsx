@@ -129,6 +129,7 @@ export function MetricCard({
   delta,
   bar,
   tone = "neutral",
+  tileTone,
   icon,
   href,
   linkLabel = "Näytä",
@@ -156,6 +157,8 @@ export function MetricCard({
   /** Täyttyvä palkki: budjetin käyttöaste, kapasiteetti. */
   bar?: { percent: number; tone?: MetricTone };
   tone?: MetricTone;
+  /** Ikonilaatan sävy erikseen, kun väri on tunniste eikä tila. */
+  tileTone?: MetricTone;
   icon?: ReactNode;
   href?: string;
   /** Jalan linkin teksti. */
@@ -167,7 +170,7 @@ export function MetricCard({
   const aside = conclusion && hint ? hint : null;
   const hasFoot = footText !== undefined || href !== undefined || trend !== undefined;
 
-  const skin = tileSkin(highlight ? "accent" : tone);
+  const skin = tileSkin(tileTone ?? (highlight ? "accent" : tone));
 
   const body = (
     <div
@@ -179,12 +182,12 @@ export function MetricCard({
         boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="flex flex-1 flex-col px-4 pt-4">
+      <div className="flex flex-1 flex-col px-4 pb-4 pt-[15px]">
         <div className="flex items-start gap-3">
           {icon ? (
             <span
               aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center"
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center"
               style={{
                 background: skin.bg,
                 color: skin.fg,
@@ -202,7 +205,7 @@ export function MetricCard({
             >
               {label}
             </p>
-            <p className="rf-tabular mt-1 text-[21px] font-extrabold leading-none tracking-[-0.03em] sm:text-[23px]">
+            <p className="rf-tabular mt-[3px] text-[22px] font-extrabold leading-none tracking-[-0.03em]">
               {value}
             </p>
           </div>
@@ -214,6 +217,28 @@ export function MetricCard({
           <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
             {aside}
           </p>
+        ) : null}
+
+        {hasFoot ? (
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span
+              className="rf-tabular min-w-0 truncate text-[11.5px]"
+              style={{ color: footColor(tone) }}
+            >
+              {footText}
+            </span>
+
+            {trend ? <span className="shrink-0">{trend}</span> : null}
+
+            {href && !trend ? (
+              <span
+                className="shrink-0 text-[11.5px] font-bold"
+                style={{ color: "var(--rf-accent)" }}
+              >
+                {linkLabel} <span aria-hidden="true">→</span>
+              </span>
+            ) : null}
+          </div>
         ) : null}
 
         {bar ? (
@@ -234,28 +259,6 @@ export function MetricCard({
 
         <div className="mt-auto" />
       </div>
-
-      {hasFoot ? (
-        <div className="flex items-center justify-between gap-3 px-4 pb-3.5 pt-3">
-          <span
-            className="rf-tabular min-w-0 truncate text-[11.5px]"
-            style={{ color: footColor(tone) }}
-          >
-            {footText}
-          </span>
-
-          {trend ? <span className="shrink-0">{trend}</span> : null}
-
-          {href && !trend ? (
-            <span
-              className="shrink-0 text-[11.5px] font-bold"
-              style={{ color: "var(--rf-accent)" }}
-            >
-              {linkLabel} <span aria-hidden="true">→</span>
-            </span>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 
@@ -268,7 +271,16 @@ export function MetricCard({
   );
 }
 
-export type MetricTone = "neutral" | "up" | "down" | "muted" | "warn" | "bad" | "accent";
+export type MetricTone =
+  | "neutral"
+  | "up"
+  | "down"
+  | "muted"
+  | "warn"
+  | "bad"
+  | "accent"
+  | "brand"
+  | "violet";
 
 /**
  * Muutospilleri.
@@ -300,7 +312,11 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
 
 /** Ikonilaatan sävy. Sama lähde kuin pillerillä. */
 function tileSkin(tone: MetricTone): { bg: string; fg: string } {
-  return tone === "up" || tone === "warn"
+  return tone === "brand"
+    ? { bg: "var(--rf-accent-bg)", fg: "var(--rf-accent)" }
+    : tone === "violet"
+      ? { bg: "#eef1fd", fg: "#5b57d6" }
+      : tone === "up" || tone === "warn"
     ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
     : tone === "down"
       ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }
@@ -720,7 +736,7 @@ export function Button({
   return (
     <button
       {...rest}
-      className={`rf-press inline-flex items-center justify-center gap-2 font-semibold disabled:opacity-50 ${
+      className={`rf-press inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold disabled:opacity-50 ${
         size === "sm" ? "px-3.5 text-[13px]" : "px-4 text-[14px]"
       } ${full ? "w-full" : ""} ${rest.className ?? ""}`}
       style={{
@@ -759,8 +775,8 @@ export function ButtonLink({
   return (
     <Link
       href={href}
-      className={`rf-press inline-flex items-center justify-center gap-2 font-semibold ${
-        size === "sm" ? "px-3.5 text-[13px]" : "px-4 text-[14px]"
+      className={`rf-press inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap font-bold ${
+        size === "sm" ? "px-[15px] text-[13px]" : "px-4 text-[14px]"
       } ${full ? "w-full" : ""}`}
       style={{
         minHeight: size === "sm" ? 36 : 44,

@@ -21,16 +21,16 @@ export default function AdminLoading() {
     <div className="space-y-5 md:space-y-6" aria-busy="true" aria-live="polite">
       <span className="sr-only">Ladataan…</span>
 
-      {/* Kuukausivalitsin ja vienti, oikeassa reunassa */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <div className="rf-skeleton-block h-9 w-36" />
-        <div className="rf-skeleton-block h-9 w-32" />
-      </div>
+      {/*
+        Neljä avainlukua.
 
-      {/* Neljä avainlukua */}
+        Kuukausivalitsin oli tässä omalla rivillään. Se siirtyi
+        yläpalkkiin, ja luuranko jäi lupaamaan riviä jota ei enää
+        tule — sisältö hyppäsi ylös joka latauksella.
+      */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rf-skeleton-block h-[132px]" />
+          <div key={i} className="rf-skeleton-block h-[117px]" />
         ))}
       </div>
 
