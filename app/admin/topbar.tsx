@@ -1,93 +1,88 @@
-import Link from "next/link";
-import { RfIcon } from "@/components/restoflow/icons";
 import { HeaderMenus } from "./header-menus";
 import { MattiPanel } from "./matti/panel";
+import { PageTitle } from "./page-title";
 import { Search, type SearchItem } from "./search";
+import { ButtonLink } from "@/components/restoflow/ui";
+import { RfIcon } from "@/components/restoflow/icons";
 import type { Alert, Role } from "@/lib/restoflow/types";
 
 /**
  * Työpöydän yläpalkki.
  *
- * Tervehdys vasemmalla, pyöreät toimintopainikkeet oikealla.
+ * Vasemmalla missä ollaan, oikealla mitä voi tehdä.
  *
- * NELJÄ PAINIKETTA, EI ENEMPÄÄ.
+ * OTSIKKO ON PALKISSA EIKÄ SIVULLA.
  *
- * Haku, Matti, ilmoitukset ja asetukset. Jokainen niistä on asia jota
- * tarvitaan miltä tahansa sivulta, ja juuri se erottaa ne
- * navigaatiosta: sivupalkki vie jonnekin, nämä tekevät jotain tässä.
+ * Jokainen sivu kirjoitti aiemmin oman otsikkonsa, ja ne olivat eri
+ * kokoisia ja eri kohdissa. Palkissa otsikko on aina samassa paikassa
+ * ja sivun ensimmäinen rivi on sen sisältöä — ei toistoa siitä missä
+ * käyttäjä jo tietää olevansa.
  *
- * TERVEHDYS ON TÄSSÄ EIKÄ SIVULLA.
+ * Nimi tulee reitistä eikä propista: kaksi totuutta samasta nimestä
+ * ajautuu ennen pitkää erilleen.
  *
- * Se oli aiemmin yleiskuvan otsikossa, jolloin se katosi heti kun
- * käyttäjä siirtyi Kuiteille — ja vei tilan siltä mitä sivulla
- * oikeasti on.
+ * PÄÄTOIMINTO ON PALKISSA.
+ *
+ * Kuitin lisääminen on se mitä ravintoloitsija tekee useimmin, ja se
+ * on sama toiminto miltä tahansa sivulta. Sivukohtaiset toiminnot
+ * ovat sivulla; tämä ei ole sivukohtainen.
  */
 export function TopBar({
-  greeting,
-  firstName,
+  restaurantName,
   date,
   alerts,
   userName,
-  restaurantName,
   role,
   search,
   matti,
-  canOpenSettings,
+  canAddReceipt,
 }: {
-  greeting: string;
-  firstName: string;
+  restaurantName: string;
   /** "Maanantai 24. elokuuta 2026" — ravintolan ajassa. */
   date: string;
   alerts: Alert[];
   userName: string;
-  restaurantName: string;
   role: Role;
   search: SearchItem[];
   matti: boolean;
-  canOpenSettings: boolean;
+  canAddReceipt: boolean;
 }) {
   return (
-    <div className="rf-z-chrome relative hidden items-center justify-between gap-6 px-7 pt-6 md:flex">
-      <div className="min-w-0">
-        <h2 className="truncate text-[24px] font-extrabold tracking-[-0.025em]">
-          {greeting}
-          {firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
-        </h2>
-        <p className="mt-1 truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-          {date} · {restaurantName}
+    <header
+      className="rf-z-chrome sticky top-0 hidden items-center gap-4 border-b px-6 py-3.5 md:flex"
+      style={{ background: "var(--rf-card)", borderColor: "var(--rf-line)" }}
+    >
+      <div className="mr-auto min-w-0">
+        <p className="truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+          {restaurantName} · {date}
         </p>
+        <h1 className="mt-0.5 truncate text-[18px] font-extrabold tracking-[-0.025em]">
+          <PageTitle fallback="Hallinta" />
+        </h1>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <Search items={search} />
+      <Search items={search} />
 
-        <MattiPanel enabled={matti} compact />
+      {canAddReceipt ? (
+        <ButtonLink
+          href="/admin/kuitit/uusi"
+          tone="primary"
+          size="sm"
+          icon={<RfIcon name="plus" size={15} />}
+        >
+          Lisää kuitti
+        </ButtonLink>
+      ) : null}
 
-        <HeaderMenus
-          alerts={alerts}
-          userName={userName}
-          restaurantName={restaurantName}
-          role={role}
-          canOpenSettings={false}
-          showUser={false}
-        />
+      <MattiPanel enabled={matti} compact />
 
-        {canOpenSettings ? (
-          <Link
-            href="/admin/asetukset"
-            aria-label="Asetukset"
-            title="Asetukset"
-            className="rf-press flex h-10 w-10 items-center justify-center"
-            style={{
-              background: "var(--rf-inset)",
-              color: "var(--rf-text-2)",
-              borderRadius: "50%",
-            }}
-          >
-            <RfIcon name="settings" size={17} />
-          </Link>
-        ) : null}
-      </div>
-    </div>
+      <HeaderMenus
+        alerts={alerts}
+        userName={userName}
+        restaurantName={restaurantName}
+        role={role}
+        canOpenSettings={false}
+      />
+    </header>
   );
 }

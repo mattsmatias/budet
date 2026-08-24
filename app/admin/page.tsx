@@ -20,7 +20,7 @@ import {
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
-import { can, canAddReceipts, seesPayRates } from "@/lib/restoflow/permissions";
+import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -296,59 +296,27 @@ export default async function AdminDashboard({
         tehdä. Ne eivät liity toisiinsa.
       */}
       {/*
-        Otsikkorivi.
+        Sivulla ei ole omaa otsikkoa: yläpalkki kantaa sen.
 
-        Murupolku kertoo missä ollaan, otsikko mitä katsotaan ja
-        oikean reunan painikkeet mitä voi tehdä. Kolme asiaa mutta
-        sama kysymysketju — toisin kuin aiemmin, jolloin samalla
-        rivillä oli tervehdys, kuukausi ja toiminnot.
+        Kuukauden hallinta on silti sivukohtaista — se koskee vain
+        tätä näkymää eikä kuulu palkkiin joka on kaikilla sivuilla
+        sama.
       */}
-      <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-3)" }}>
-            {restaurant.name} · {formatMonth(viewMonth)}
-          </p>
-          <h1 className="mt-0.5 text-[22px] font-extrabold tracking-[-0.03em]">
-            Yleiskatsaus
-          </h1>
-        </div>
+      <div className="rf-z-page relative flex flex-wrap items-center justify-end gap-2">
+        <MonthPicker value={viewMonth} months={selectable} />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <MonthPicker value={viewMonth} months={selectable} />
+        {can(role, "reports.view") ? (
+          <ButtonLink
+            href={`/admin/raportit?kuukausi=${viewMonth}`}
+            tone="ghost"
+            size="sm"
+            icon={<RfIcon name="download" size={15} />}
+          >
+            Vie raportti
+          </ButtonLink>
+        ) : null}
+      </div>
 
-          {can(role, "reports.view") ? (
-            <ButtonLink
-              href={`/admin/raportit?kuukausi=${viewMonth}`}
-              tone="ghost"
-              size="sm"
-              icon={<RfIcon name="download" size={15} />}
-            >
-              Vie raportti
-            </ButtonLink>
-          ) : null}
-
-          {canAddReceipts(role) ? (
-            <ButtonLink
-              href="/admin/kuitit/uusi"
-              tone="primary"
-              size="sm"
-              icon={<RfIcon name="plus" size={15} />}
-            >
-              Lisää kuitti
-            </ButtonLink>
-          ) : null}
-        </div>
-      </header>
-
-      {/*
-        Kolme aikajännettä siinä järjestyksessä kuin kysymykset
-        kysytään: mitä nyt tapahtuu, miten tänään menee, mitä kuussa on
-        tapahtunut.
-
-        Kuukausi oli tässä ensimmäisenä. Se on kirjanpitäjän
-        aikayksikkö, ei ravintoloitsijan — kello 14 kysymys on "kuka on
-        salissa", ei "paljonko elokuussa on kulunut".
-      */}
       {/* 2. KPI-kortit */}
       <section
         aria-label="Avainluvut"

@@ -58,21 +58,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     /*
-     * Sovellus lepää harmaalla sivulla valkoisena levynä.
+     * Kaksi saraketta: kisko ja työalue.
      *
-     * Ero on pieni mutta se rajaa näkymän: sisältö loppuu johonkin sen
-     * sijaan että vuotaisi ikkunan reunaan. Puhelimessa levyä ei ole —
-     * siellä reunus söisi leveyttä jota ei ole varaa antaa.
+     * Levykuori oli tässä hetken. Yläpalkki on nyt itse pinta, ja
+     * kaksi reunusta sisäkkäin söi leveyttä ilman että kumpikaan
+     * kertoi mitään.
      */
-    <div className="min-h-screen md:p-5">
-      <div
-        className="flex min-h-screen md:min-h-[calc(100vh-2.5rem)]"
-        style={{
-          background: "var(--rf-shell)",
-          borderRadius: "var(--rf-r-shell)",
-          boxShadow: "0 1px 2px rgba(17,19,24,0.04), 0 18px 50px rgba(17,19,24,0.07)",
-        }}
-      >
+    <div className="min-h-screen">
+      <div className="flex min-h-screen">
         <AdminNav
           role={role}
           user={{
@@ -81,6 +74,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             initials: initialsOf(userName),
           }}
           counts={counts}
+          alerts={alerts.length}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -117,19 +111,17 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           pystylinjassa.
         */}
         <TopBar
-          greeting={greeting(now, restaurant.timezone)}
-          firstName={userName.split(" ")[0] ?? ""}
+          restaurantName={restaurant.name}
           date={longDate(now, restaurant.timezone)}
           alerts={alerts}
           userName={userName}
-          restaurantName={restaurant.name}
           role={role}
           search={searchItems(role, data.suppliers, data.users)}
           matti={can(role, "matti.use")}
-          canOpenSettings={can(role, "settings.view")}
+          canAddReceipt={can(role, "receipts.add")}
         />
 
-        <main className="w-full flex-1 px-4 py-5 pb-24 md:px-7 md:pb-8 md:pt-5">
+        <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">
           {children}
         </main>
         </div>
@@ -147,19 +139,6 @@ function initialsOf(name: string): string {
 }
 
 // ---------------------------------------------------------------------------
-
-/** "Hyvää huomenta" — ravintolan ajassa, ei palvelimen. */
-function greeting(iso: string, timeZone: string): string {
-  const hour = Number(
-    new Intl.DateTimeFormat("fi-FI", { timeZone, hour: "2-digit", hour12: false })
-      .format(new Date(iso)),
-  );
-
-  if (hour < 5) return "Hyvää yötä";
-  if (hour < 11) return "Hyvää huomenta";
-  if (hour < 17) return "Hyvää päivää";
-  return "Hyvää iltaa";
-}
 
 /** "maanantai 24. elokuuta 2026", ensimmäinen kirjain isolla. */
 function longDate(iso: string, timeZone: string): string {

@@ -28,9 +28,12 @@ export function AdminNav({
   role,
   user,
   counts,
+  alerts,
 }: {
   role: Role;
   user: { name: string; roleLabel: string; initials: string };
+  /** Avoimien huomioiden määrä ilmoitusriville. */
+  alerts: number;
   /**
    * Lukumäärät valikon kohtiin, avaimena polku.
    *
@@ -49,6 +52,7 @@ export function AdminNav({
         sections={sections}
         user={user}
         counts={counts}
+        alerts={alerts}
         canOpenSettings={can(role, "settings.view")}
       />
       <MobileBar items={primary} />
@@ -70,11 +74,13 @@ function DesktopSidebar({
   sections,
   user,
   counts,
+  alerts,
   canOpenSettings,
 }: {
   sections: ReturnType<typeof adminNavSectionsFor>;
   user: { name: string; roleLabel: string; initials: string };
   counts: Record<string, number>;
+  alerts: number;
   canOpenSettings: boolean;
 }) {
   return (
@@ -89,54 +95,18 @@ function DesktopSidebar({
         </Link>
       </div>
 
-      {/*
-       * Kuka on kirjautuneena.
-       *
-       * Sama kone on usein toimistossa yhteiskäytössä, ja väärällä
-       * tunnuksella kirjattu kuitti menee väärän ihmisen nimiin.
-       * Kuvaa ei ole — nimikirjaimet ovat aina saatavilla eikä
-       * puuttuvan kuvan tilalle jää harmaata ihmishahmoa.
-       */}
-      <div className="flex flex-col items-center px-5 pb-6 pt-2 text-center">
-        <span
-          aria-hidden="true"
-          className="flex items-center justify-center text-[20px] font-bold"
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: "50%",
-            background: "var(--rf-accent-bg)",
-            color: "var(--rf-accent-strong)",
-          }}
-        >
-          {user.initials}
-        </span>
-        <p className="mt-3 truncate text-[15px] font-bold">{user.name}</p>
-        <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {user.roleLabel}
-        </p>
-      </div>
-
       <nav
         aria-label="Hallintanavigaatio"
         className="flex-1 overflow-y-auto px-4 pb-4"
       >
         {sections.map((section) => (
-          <div key={section.id} className="mb-4 last:mb-0">
+          <div key={section.id} className="mb-1 last:mb-0">
             {/*
              * Otsikko on ryhmän nimi eikä koriste, joten se merkitään
              * myös rakenteeseen: ruudunlukija kuulee listan nimen eikä
              * vain seitsemää irrallista linkkiä.
              */}
-            <p
-              id={`nav-${section.id}`}
-              className="px-2.5 pb-1.5 pt-1 text-[10.5px] font-bold uppercase"
-              style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
-            >
-              {section.label}
-            </p>
-
-            <ul aria-labelledby={`nav-${section.id}`} className="space-y-0.5">
+            <ul aria-label={section.label} className="space-y-0.5">
               {section.items.map((item) => (
                 <NavLink key={item.href} item={item} count={counts[item.href] ?? 0} />
               ))}
@@ -155,7 +125,28 @@ function DesktopSidebar({
        * tunnusvalikosta, uloskirjautumisen vierestä: molemmat koskevat
        * käyttäjää eivätkä ravintolan työtä.
        */}
-      <div className="px-3 pb-4">
+      <div className="border-t px-3 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
+        <Link
+          href="/admin/ilmoitukset"
+          className="rf-press mb-1 flex items-center gap-3 rounded-[10px] px-2.5 py-2 text-[13.5px] font-medium"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          <RfIcon name="bell" size={17} />
+          <span className="flex-1">Ilmoitukset</span>
+          {alerts > 0 ? (
+            <span
+              className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-bold"
+              style={{
+                background: "var(--rf-accent)",
+                color: "var(--rf-on-accent)",
+                borderRadius: 980,
+              }}
+            >
+              {alerts > 99 ? "99+" : alerts}
+            </span>
+          ) : null}
+        </Link>
+
         {/*
          * Asetukset ja uloskirjautuminen omana ryhmänään pohjalla.
          *
@@ -165,15 +156,7 @@ function DesktopSidebar({
          * yläkulmasta poistui samalla: kaksi paikkaa samalle asialle on
          * kaksi paikkaa joita pitää etsiä.
          */}
-        <p
-          id="nav-account"
-          className="px-2.5 pb-1.5 pt-1 text-[10.5px] font-bold uppercase"
-          style={{ color: "var(--rf-text-3)", letterSpacing: "0.08em" }}
-        >
-          Tili
-        </p>
-
-        <ul aria-labelledby="nav-account" className="space-y-0.5">
+        <ul aria-label="Tili" className="space-y-0.5">
           {canOpenSettings ? (
             <NavLink
               item={{
@@ -199,6 +182,29 @@ function DesktopSidebar({
             </form>
           </li>
         </ul>
+
+        <div
+          className="mt-1 flex items-center gap-2.5 rounded-[10px] px-2.5 py-2"
+          style={{ background: "var(--rf-inset)" }}
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-[11px] font-bold"
+            style={{
+              background: "var(--rf-accent-bg)",
+              color: "var(--rf-accent)",
+              borderRadius: "50%",
+            }}
+          >
+            {user.initials}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[13px] font-bold">{user.name}</span>
+            <span className="block truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+              {user.roleLabel}
+            </span>
+          </span>
+        </div>
 
         <ThemeToggle />
       </div>
