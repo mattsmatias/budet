@@ -16,9 +16,18 @@ import { FOCUS_LIMIT, type OverallStatus } from "@/lib/restoflow/status";
 export function StatusHeader({
   status,
   items,
+  canAddReceipt,
 }: {
   status: OverallStatus;
   items: FocusItem[];
+  /**
+   * Tyhjä tila tarvitsee polun eteenpäin.
+   *
+   * "Ei vielä arvioitavaa" on tosi mutta hyödytön ilman seuraavaa
+   * askelta. Painike on vain tässä tilassa: kun arvioitavaa on, kärjen
+   * kohdat ovat itse ne askeleet.
+   */
+  canAddReceipt: boolean;
 }) {
   const shown = items.slice(0, FOCUS_LIMIT);
   const rest = items.length - shown.length;
@@ -51,6 +60,21 @@ export function StatusHeader({
           ) : null}
         </div>
       </div>
+
+      {status.tone === "unknown" && canAddReceipt ? (
+        <Link
+          href="/admin/kuitit/uusi"
+          className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+          style={{
+            background: "var(--rf-accent)",
+            color: "var(--rf-on-accent)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <RfIcon name="plus" size={16} />
+          Lisää ensimmäinen kuitti
+        </Link>
+      ) : null}
 
       {shown.length > 0 ? (
         <ul className="mt-4 space-y-2">

@@ -23,6 +23,49 @@ export { MetricCard as StatCard } from "./ui";
 
 // ---------------------------------------------------------------------------
 
+/**
+ * Osaston otsikko yleiskuvassa.
+ *
+ * KOLME AIKAJÄNNETTÄ, EI YKSI PITKÄ LISTA.
+ *
+ * Yleiskuva vastasi aiemmin kymmeneen kysymykseen peräkkäin ilman että
+ * mikään kertoi milloin aihe vaihtuu. Nyt sivu on jaettu sen mukaan
+ * mihin hetkeen luku viittaa: nyt, tänään, kuukausi. Ravintoloitsija
+ * tietää kumpaa hän etsii jo ennen kuin lukee lukuja.
+ *
+ * Otsikko on pieni ja vaalea. Se on kyltti eikä sisältöä — jos se
+ * huutaisi, se veisi huomion siltä mitä sen alla on.
+ */
+export function SectionHeading({
+  title,
+  hint,
+  action,
+}: {
+  title: string;
+  hint?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-1">
+      <div className="min-w-0">
+        <h2
+          className="text-[11px] font-bold uppercase"
+          style={{ color: "var(--rf-text-3)", letterSpacing: "0.09em" }}
+        >
+          {title}
+        </h2>
+        {hint ? (
+          <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            {hint}
+          </p>
+        ) : null}
+      </div>
+
+      {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
+    </div>
+  );
+}
+
 /** Yleiskuvan osiokortti: otsikko, valinnainen "Kaikki →" ja sisältö. */
 export function Panel({
   title,

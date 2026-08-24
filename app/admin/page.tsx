@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
-  attention,
   budgetLines,
   compareToPreviousMonth,
   focusItems,
@@ -36,7 +35,6 @@ import {
   Pill,
 } from "@/components/restoflow/ui";
 import {
-  AttentionPanel,
   BudgetBarLine,
   Donut,
   Panel,
@@ -48,6 +46,7 @@ import { MonthPicker } from "./month-picker";
 import { Hero } from "./home/hero";
 import { ServiceDayBoard } from "./home/service-day";
 import { StatusHeader } from "./home/status-header";
+import { SectionHeading } from "@/components/restoflow/dashboard-ui";
 import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
@@ -162,7 +161,6 @@ export default async function AdminDashboard({
     timezone: restaurant.timezone,
   };
 
-  const focus = attention(dashboardInput);
 
   // Havainnot syötetään samaan listaan. Käyttäjän kannalta ero
   // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
@@ -297,53 +295,80 @@ export default async function AdminDashboard({
           Kerros on page eikä chrome: sivun otsikko nousee korttien yli
           mutta jää tunnusvalikon alle. Aiemmin molemmat olivat 40, ja
           tasapelissä myöhempi DOM-solmu voitti. */}
-      <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-{/*
-            Tervehdys siirtyi yläpalkkiin.
+      {/*
+        Sivun otsikko on pelkkä tunniste.
 
-            Se oli tässä, jolloin se katosi heti kun käyttäjä siirtyi
-            Kuiteille. Palkissa se on aina näkyvissä, ja sivun otsikko
-            vapautui kertomaan mitä sivulla on — mikä on sen tehtävä.
-          */}
-          <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-            {restaurant.name}
-          </p>
-          <h1 className="mt-0.5 text-[20px] font-semibold tracking-tight">
-            {formatMonth(viewMonth)}
-          </h1>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <MonthPicker value={viewMonth} months={selectable} />
-
-          {canAddReceipts(role) ? (
-            <ButtonLink
-              href={`/admin/kuitit/uusi`}
-              tone="primary"
-              icon={<RfIcon name="plus" size={16} />}
-            >
-              Lisää kuitti
-            </ButtonLink>
-          ) : null}
-
-          {can(role, "reports.view") ? (
-            <ButtonLink
-              href={`/admin/raportit?kuukausi=${viewMonth}`}
-              tone="ghost"
-              icon={<RfIcon name="download" size={16} />}
-            >
-              Vie raportti
-            </ButtonLink>
-          ) : null}
-        </div>
-      </header>
+        Tervehdys on yläpalkissa ja kuukauden hallinta oman osastonsa
+        otsikossa. Tässä oli aiemmin molemmat, jolloin rivi kantoi
+        kolme eri asiaa: kuka olen, mitä kuukautta katson ja mitä voin
+        tehdä. Ne eivät liity toisiinsa.
+      */}
+      <h1 className="sr-only">Yleiskatsaus</h1>
 
       {/*
-        Kolme lohkoa siinä järjestyksessä kuin kysymykset kysytään:
-        onko kaikki kunnossa, miten tänään menee, mitä kuussa on
+        Kolme aikajännettä siinä järjestyksessä kuin kysymykset
+        kysytään: mitä nyt tapahtuu, miten tänään menee, mitä kuussa on
         tapahtunut.
+
+        Kuukausi oli tässä ensimmäisenä. Se on kirjanpitäjän
+        aikayksikkö, ei ravintoloitsijan — kello 14 kysymys on "kuka on
+        salissa", ei "paljonko elokuussa on kulunut".
       */}
+      {serviceDay ? (
+        <>
+          <SectionHeading title="Nyt" />
+          <ServiceDayBoard day={serviceDay} live={serviceDay.nowMin !== null} />
+        </>
+      ) : null}
+
+      <SectionHeading title="Huomio" />
+      <StatusHeader
+        status={status}
+        items={items}
+        canAddReceipt={can(role, "receipts.add")}
+      />
+
+      {pulse ? (
+        <>
+          <SectionHeading
+            title="Tänään"
+            hint="Päivän myynti, työvoima ja kulut. Kuukauden tulos on karkea."
+          />
+          <Today pulse={pulse} canManageSales={can(role, "sales.manage")} />
+        </>
+      ) : null}
+
+      <SectionHeading
+        title={formatMonth(viewMonth)}
+        action={
+          <>
+            <MonthPicker value={viewMonth} months={selectable} />
+
+            {canAddReceipts(role) ? (
+              <ButtonLink
+                href="/admin/kuitit/uusi"
+                tone="primary"
+                size="sm"
+                icon={<RfIcon name="plus" size={15} />}
+              >
+                Lisää kuitti
+              </ButtonLink>
+            ) : null}
+
+            {can(role, "reports.view") ? (
+              <ButtonLink
+                href={`/admin/raportit?kuukausi=${viewMonth}`}
+                tone="ghost"
+                size="sm"
+                icon={<RfIcon name="download" size={15} />}
+              >
+                Vie raportti
+              </ButtonLink>
+            ) : null}
+          </>
+        }
+      />
+
       <Hero
         label="Kirjatut kulut"
         cents={totals.totalCents}
@@ -373,22 +398,6 @@ export default async function AdminDashboard({
         trend={hasTrend ? trend : null}
         canAddReceipt={can(role, "receipts.add")}
       />
-
-      {/*
-        Palvelupäivä ennen kuukauden lukuja.
-
-        Kello 14 ravintoloitsijan kysymys on "kuka on salissa", ei
-        "paljonko elokuussa on kulunut". Kuukausi ei katoa mihinkään —
-        se on tämän alla, siinä järjestyksessä kuin kysymykset
-        oikeasti kysytään.
-      */}
-      {serviceDay ? (
-        <ServiceDayBoard day={serviceDay} live={isCurrentMonth && serviceDay.nowMin !== null} />
-      ) : null}
-
-      <StatusHeader status={status} items={items} />
-
-      {pulse ? <Today pulse={pulse} canManageSales={can(role, "sales.manage")} /> : null}
 
       {/* 2. KPI-kortit */}
       <section
@@ -465,62 +474,15 @@ export default async function AdminDashboard({
         )}
       </section>
 
-      {/* 3. Vaatii huomiota — kolme eri tilaa */}
-      {focus.state !== "attention" ? (
-        <div
-          className="px-5 py-5"
-          style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: "var(--rf-r-card)",
-          }}
-        >
-          {focus.state === "no-data" ? (
-            <>
-              <h2 className="text-[16px] font-semibold">Ei vielä arvioitavaa</h2>
-              <p
-                className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
-                style={{ color: "var(--rf-text-2)" }}
-              >
-                Lisää ensimmäinen kuitti tai määritä budjetit, jotta Budet
-                voi tunnistaa poikkeamat. Tyhjä aineisto ei tarkoita että
-                kaikki on kunnossa — se tarkoittaa ettei mitään ole vielä
-                tarkastettavana.
-              </p>
-              <Link
-                href="/admin/kuitit/uusi"
-                className="rf-press mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
-                style={{
-                  background: "var(--rf-accent)",
-                  color: "var(--rf-on-accent)",
-                  borderRadius: "var(--rf-r-control)",
-                }}
-              >
-                <RfIcon name="plus" size={16} />
-                Lisää kuitti
-              </Link>
-            </>
-          ) : focus.state === "clear" ? (
-            <>
-              <h2 className="flex items-center gap-2 text-[16px] font-semibold">
-                Kaikki kunnossa
-                <span style={{ color: "var(--rf-green-text)" }}>
-                  <RfIcon name="check" size={18} />
-                </span>
-              </h2>
-              <p
-                className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
-                style={{ color: "var(--rf-text-2)" }}
-              >
-                Ei tarkistettavia kuitteja, budjettiylityksiä eikä poikkeavia
-                kuluja. Tarkastettu {monthWord(viewMonth)}n aineistosta.
-              </p>
-            </>
-          ) : null}
-        </div>
-      ) : (
-        <AttentionPanel items={items} />
-      )}
+      {/*
+        "Vaatii huomiota" oli tässä omana lohkonaan.
+
+        Se vastasi samaan kysymykseen kuin StatusHeader viisikymmentä
+        riviä ylempänä: onko kaikki kunnossa ja mikä ei ole. Kaksi
+        vastausta samaan kysymykseen samalla sivulla opettaa lukijan
+        epäilemään kumpaakin — ja kolme eri tilaa oli toteutettu
+        molemmissa erikseen, joten ne ehtivät jo erota toisistaan.
+      */}
 
       {/* 5 & 6. Mihin ja kenelle */}
       <div className="grid gap-4 lg:grid-cols-2">
