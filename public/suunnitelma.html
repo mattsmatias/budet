@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Budet — yleiskatsauksen ulkoasuehdotus</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ===========================================================================
+   BUDET — PALVELUPÄIVÄ
+   ---------------------------------------------------------------------------
+   Ravintolan hallintanäkymä, ei yleiskäyttöinen hallintapaneeli.
+
+   Kolme kirjasinta, kolme tehtävää — kaikki lainattua ravintolan omasta
+   maailmasta:
+     Instrument Serif  → suuret luvut ja osastot. Ruokalista on ladottu
+                         antiikvalla, ja siitä tämä työkalu on kotoisin.
+     Instrument Sans   → käyttöliittymä. Sama suku, eri ääni.
+     IBM Plex Mono     → kellonajat ja päivämäärät. Keittiön tulostin.
+
+   Pohja on lämmin paperi eikä viileä harmaa: tämä on lipuke pinnalla,
+   ei ohjelmistoikkuna. Aksentti on koboltti — ainoa kylmä väri
+   näkymässä, ja siksi se erottuu ilman että sitä tarvitsee korostaa.
+   =========================================================================== */
+
+:root {
+  /* Pinnat — lämmin paperi, ei viileä harmaa */
+  --paper:      #f2efe9;
+  --card:       #fffefb;
+  --card-2:     #f8f5ef;
+  --edge:       #e2ddd2;
+  --edge-soft:  #ece7dd;
+
+  /* Muste */
+  --ink:        #191712;
+  --ink-2:      #6b665c;
+  --ink-3:      #9a9488;
+
+  /* Aksentti — ainoa kylmä väri näkymässä */
+  --cobalt:     #1e2fd6;
+  --cobalt-2:   #1523a8;
+  --cobalt-bg:  #e7e9fb;
+
+  /* Tila. Nämä eivät ole koristeita: vihreä = menossa,
+     keltainen = tarkista, punainen = pysäytä. */
+  --go:         #1a7f4b;
+  --go-ink:     #0f5c35;
+  --go-bg:      #e4f2e9;
+  --hold:       #b7791f;
+  --hold-ink:   #8a5a12;
+  --hold-bg:    #f9eeda;
+  --stop:       #c0392b;
+  --stop-ink:   #97281c;
+  --stop-bg:    #f9e6e3;
+
+  /* Sarjat — jakaumat, eivät tiloja */
+  --s1: #1e2fd6;
+  --s2: #7c5cd6;
+  --s3: #1a7f4b;
+  --s4: #b7791f;
+  --s5: #8d8577;
+
+  --r-lg: 18px;
+  --r-md: 12px;
+  --r-sm: 8px;
+
+  --shadow: 0 1px 1px rgba(25,23,18,.04), 0 8px 24px rgba(25,23,18,.06);
+  --shadow-lift: 0 2px 4px rgba(25,23,18,.05), 0 18px 44px rgba(25,23,18,.10);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #14130f;
+    --card:       #1e1c17;
+    --card-2:     #26231d;
+    --edge:       #322e26;
+    --edge-soft:  #2a2720;
+
+    --ink:        #f4f1ea;
+    --ink-2:      #a9a297;
+    --ink-3:      #787165;
+
+    --cobalt:     #8b95ff;
+    --cobalt-2:   #a8b0ff;
+    --cobalt-bg:  #23255c;
+
+    --go:         #3fbd7a;
+    --go-ink:     #7ddaa8;
+    --go-bg:      #17402c;
+    --hold:       #dfa53f;
+    --hold-ink:   #f0c67c;
+    --hold-bg:    #402f14;
+    --stop:       #e5695c;
+    --stop-ink:   #f3a49a;
+    --stop-bg:    #46221e;
+
+    --s1: #8b95ff;
+    --s2: #b39aff;
+    --s3: #3fbd7a;
+    --s4: #dfa53f;
+    --s5: #7d766a;
+
+    --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #14130f;
+  --card:       #1e1c17;
+  --card-2:     #26231d;
+  --edge:       #322e26;
+  --edge-soft:  #2a2720;
+
+  --ink:        #f4f1ea;
+  --ink-2:      #a9a297;
+  --ink-3:      #787165;
+
+  --cobalt:     #8b95ff;
+  --cobalt-2:   #a8b0ff;
+  --cobalt-bg:  #23255c;
+
+  --go:         #3fbd7a;
+  --go-ink:     #7ddaa8;
+  --go-bg:      #17402c;
+  --hold:       #dfa53f;
+  --hold-ink:   #f0c67c;
+  --hold-bg:    #402f14;
+  --stop:       #e5695c;
+  --stop-ink:   #f3a49a;
+  --stop-bg:    #46221e;
+
+  --s1: #8b95ff;
+  --s2: #b39aff;
+  --s3: #3fbd7a;
+  --s4: #dfa53f;
+  --s5: #7d766a;
+
+  --shadow: 0 1px 1px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; font-variant-numeric: tabular-nums; }
+.serif { font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-weight: 400; }
+
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+/* --- kehys ------------------------------------------------------------- */
+
+.shell { max-width: 1180px; margin: 0 auto; padding: 26px 22px 64px; }
+
+/* --- yläpalkki --------------------------------------------------------- */
+
+.top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 18px; padding-bottom: 22px;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.brand .name { font-size: 27px; line-height: 1.1; letter-spacing: -.01em; }
+.brand .sep { color: var(--ink-3); }
+.brand .when { font-size: 12.5px; color: var(--ink-2); letter-spacing: .01em; }
+
+.tools { display: flex; align-items: center; gap: 8px; }
+.tool {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--edge); color: var(--ink-2);
+  cursor: pointer; position: relative; transition: border-color .18s, transform .18s;
+}
+.tool:hover { border-color: var(--ink-3); transform: translateY(-1px); }
+.tool svg { width: 17px; height: 17px; }
+.tool .dot {
+  position: absolute; top: -3px; right: -3px; min-width: 17px; height: 17px;
+  padding: 0 4px; border-radius: 9px; background: var(--stop); color: #fff;
+  font-size: 10px; font-weight: 700; display: flex; align-items: center;
+  justify-content: center; border: 2px solid var(--paper);
+}
+.pill-btn {
+  display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px;
+  border-radius: 999px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  border: 1px solid transparent; transition: transform .18s, box-shadow .18s;
+}
+.pill-btn:hover { transform: translateY(-1px); }
+.pill-btn.solid { background: var(--ink); color: var(--paper); }
+.pill-btn.line  { background: var(--card); color: var(--ink); border-color: var(--edge); }
+
+/* --- osaston otsikko --------------------------------------------------- */
+
+.head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+  gap: 14px; margin: 34px 2px 14px;
+}
+.head:first-of-type { margin-top: 4px; }
+.head .t { display: flex; align-items: baseline; gap: 12px; }
+.head h2 { font-size: 25px; line-height: 1; letter-spacing: -.01em; }
+.head .note { font-size: 13px; color: var(--ink-2); }
+.rule { flex: 1; height: 1px; background: var(--edge); min-width: 20px; }
+
+/* --- kortit ------------------------------------------------------------ */
+
+.card {
+  background: var(--card); border: 1px solid var(--edge);
+  border-radius: var(--r-lg); box-shadow: var(--shadow);
+}
+
+/* =========================== PASS ====================================== */
+
+.pass { overflow: hidden; }
+.pass-top {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 20px 22px 0;
+}
+.pass-title { display: flex; align-items: center; gap: 11px; }
+.pass-title h3 { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+
+.beat { position: relative; width: 10px; height: 10px; flex: none; }
+.beat i, .beat b {
+  position: absolute; inset: 0; border-radius: 50%; background: var(--go); display: block;
+}
+.beat i { animation: beat 2.2s cubic-bezier(0,0,.2,1) infinite; }
+@keyframes beat { 0% { transform: scale(1); opacity: .5 } 70%,100% { transform: scale(2.6); opacity: 0 } }
+
+.tally { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
+  border-radius: 999px; font-size: 12.5px; font-weight: 500;
+}
+.chip b { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chip.go   { background: var(--go-bg);   color: var(--go-ink) }
+.chip.wait { background: var(--card-2);  color: var(--ink-2) }
+.chip.hold { background: var(--hold-bg); color: var(--hold-ink) }
+
+.rail { position: relative; padding: 22px 22px 20px; }
+.gridlines { position: absolute; left: 22px; right: 22px; top: 22px; bottom: 52px; pointer-events: none; }
+.gridlines i { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--edge-soft); }
+
+.nowline {
+  position: absolute; top: 14px; bottom: 46px; width: 2px; background: var(--stop);
+  z-index: 3; border-radius: 2px;
+}
+.nowline::before {
+  content: ""; position: absolute; left: -3px; top: -6px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--stop);
+}
+.nowline::after {
+  content: "14.38"; position: absolute; left: 50%; top: -26px; transform: translateX(-50%);
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+  color: #fff; background: var(--stop); padding: 2px 6px; border-radius: 5px;
+  letter-spacing: .02em;
+}
+
+.lane { margin-bottom: 12px; }
+.lane:last-of-type { margin-bottom: 0; }
+.lane-name {
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.track { position: relative; height: 46px; }
+
+.slot {
+  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; gap: 9px;
+  padding: 0 11px; border-radius: var(--r-md); overflow: hidden;
+  transform-origin: left center; animation: slot .55s cubic-bezier(.32,.72,0,1) both;
+  border: 1px solid transparent; cursor: default;
+  transition: box-shadow .18s, transform .18s;
+}
+.slot:hover { box-shadow: var(--shadow-lift); transform: translateY(-1px); z-index: 4; }
+@keyframes slot { from { transform: scaleX(.02); opacity: 0 } to { transform: scaleX(1); opacity: 1 } }
+
+.slot .who {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .01em;
+  background: var(--card); color: inherit;
+}
+.slot .lbl { min-width: 0; flex: 1; }
+.slot .lbl .n { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot .lbl .h { display: block; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; opacity: .75; }
+
+.slot.go   { background: var(--go-bg);   color: var(--go-ink);   border-color: color-mix(in srgb, var(--go) 32%, transparent) }
+.slot.wait { background: var(--card-2);  color: var(--ink-2);    border-color: var(--edge-soft) }
+.slot.hold { background: var(--hold-bg); color: var(--hold-ink); border-color: color-mix(in srgb, var(--hold) 45%, transparent) }
+.slot.done { background: var(--card-2);  color: var(--ink-3);    border-color: transparent }
+
+.throb { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor;
+  animation: throb 1.9s ease-in-out infinite; }
+@keyframes throb { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
+.mark { flex: none; font-weight: 700; font-size: 14px; line-height: 1; }
+
+.clock-row { position: relative; height: 14px; margin-top: 10px; }
+.clock-row span {
+  position: absolute; transform: translateX(-50%);
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--ink-3);
+}
+
+/* =========================== TÄNÄÄN ==================================== */
+
+.figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.fig { padding: 17px 18px 16px; }
+.fig .k {
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
+}
+.fig .v { display: block; margin-top: 9px; font-size: 31px; line-height: 1; letter-spacing: -.015em; }
+.fig .m { display: block; margin-top: 7px; font-size: 12.5px; color: var(--ink-2); }
+.fig .m.up { color: var(--go-ink) }
+.fig .bar { margin-top: 12px; height: 5px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+.fig .bar i { display: block; height: 100%; border-radius: 999px; }
+
+/* =========================== HUOMIO ==================================== */
+
+.split { display: grid; grid-template-columns: 1.75fr 1fr; gap: 14px; align-items: start; }
+
+.alerts { padding: 20px 22px 18px; }
+.alerts .lead { display: flex; align-items: flex-start; gap: 13px; }
+.alerts .swatch {
+  width: 11px; height: 11px; border-radius: 3px; flex: none; margin-top: 7px;
+  background: var(--hold); box-shadow: 0 0 0 4px var(--hold-bg);
+}
+.alerts h3 { font-size: 21px; line-height: 1.15; letter-spacing: -.01em; }
+.alerts .sub { margin-top: 5px; font-size: 13px; color: var(--ink-2); }
+
+.dockets { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.docket {
+  display: flex; gap: 12px; padding: 13px 14px; border-radius: var(--r-md);
+  background: var(--card-2); border-left: 3px solid var(--hold);
+  transition: transform .18s, box-shadow .18s;
+}
+.docket:hover { transform: translateX(2px); box-shadow: var(--shadow); }
+.docket.crit { border-left-color: var(--stop) }
+.docket .ic { flex: none; margin-top: 2px; color: var(--hold-ink) }
+.docket.crit .ic { color: var(--stop-ink) }
+.docket .ic svg { width: 16px; height: 16px; display: block }
+.docket .txt { min-width: 0; flex: 1 }
+.docket .h { font-size: 14px; font-weight: 600 }
+.docket .d { margin-top: 3px; font-size: 13px; color: var(--ink-2) }
+.docket .go { flex: none; align-self: center; color: var(--ink-3) }
+.docket .go svg { width: 15px; height: 15px; display: block }
+
+/* --- kuukauden pääluku (musta lipuke) --- */
+
+.month-card {
+  padding: 22px; border-radius: var(--r-lg); background: var(--ink);
+  color: var(--paper); box-shadow: var(--shadow-lift); position: relative; overflow: hidden;
+}
+.month-card .k {
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; opacity: .6;
+}
+.month-card .v { display: block; margin-top: 10px; font-size: 44px; line-height: .95; letter-spacing: -.02em; }
+.month-card .prev { margin-top: 10px; font-size: 12.5px; opacity: .6; }
+.month-card .delta {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 14px;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: color-mix(in srgb, var(--hold) 30%, transparent);
+  color: #ffd89a;
+}
+.month-card .acts { display: flex; gap: 8px; margin-top: 20px; }
+.month-card .acts a {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px;
+  border-radius: 999px; font-size: 13px; font-weight: 600;
+  transition: transform .18s;
+}
+.month-card .acts a:hover { transform: translateY(-1px) }
+.month-card .acts .a1 { background: var(--paper); color: var(--ink) }
+.month-card .acts .a2 { background: rgba(255,255,255,.13); color: var(--paper) }
+.month-card .spark { position: absolute; right: 20px; top: 24px; opacity: .85 }
+
+/* =========================== RYTMI ===================================== */
+
+.rhythm { padding: 20px 22px 18px }
+.rhythm-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px }
+.rhythm-top h3 { font-size: 17px; font-weight: 600; letter-spacing: -.01em }
+.rhythm-top .n { font-size: 12.5px; color: var(--ink-3) }
+
+.cols { display: flex; align-items: flex-end; gap: 3px; height: 104px; margin-top: 20px }
+.cols li { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; position: relative }
+.cols i {
+  display: block; width: 100%; border-radius: 3px; transform-origin: bottom center;
+  animation: col .5s cubic-bezier(.32,.72,0,1) both;
+}
+@keyframes col { from { transform: scaleY(0); opacity: .3 } to { transform: scaleY(1); opacity: 1 } }
+.cols li:hover i { filter: brightness(1.12) }
+.cols .tip {
+  position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px; padding: 4px 7px; border-radius: 5px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 5;
+}
+.cols li:hover .tip { opacity: 1 }
+
+.days { display: flex; gap: 3px; margin-top: 7px }
+.days li {
+  flex: 1; min-width: 0; text-align: center;
+  font-family: "IBM Plex Mono", monospace; font-size: 9px; color: var(--ink-3);
+}
+.rhythm-foot { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 18px; font-size: 13px; color: var(--ink-2) }
+.rhythm-foot b { color: var(--ink); font-weight: 600 }
+
+/* =========================== OSTOT ===================================== */
+
+.buys { padding: 20px 22px 20px }
+.buys-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px }
+.buys-top h3 { font-size: 17px; font-weight: 600; letter-spacing: -.01em }
+.link { font-size: 13px; font-weight: 600; color: var(--cobalt) }
+.link:hover { color: var(--cobalt-2) }
+
+.buys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px }
+.sub-k {
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
+}
+.stack { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: var(--card-2) }
+.stack i { height: 100%; transform-origin: left center; animation: slot .6s cubic-bezier(.32,.72,0,1) both }
+
+.rows { margin-top: 13px; display: flex; flex-direction: column }
+.row {
+  display: flex; align-items: center; gap: 11px; padding: 8px 6px; border-radius: var(--r-sm);
+  transition: background .15s;
+}
+.row:hover { background: var(--card-2) }
+.row .swat { width: 9px; height: 9px; border-radius: 2px; flex: none }
+.row .nm { flex: 1; min-width: 0; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.row .amt { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; flex: none }
+.row .pc { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-3); width: 38px; text-align: right; flex: none }
+
+.vendor { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--r-sm); transition: background .15s }
+.vendor:hover { background: var(--card-2) }
+.vendor .logo {
+  width: 30px; height: 30px; border-radius: var(--r-sm); flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; background: var(--card-2); color: var(--ink-2);
+  border: 1px solid var(--edge-soft);
+}
+.vendor .who { flex: 1; min-width: 0 }
+.vendor .who .n { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.vendor .who .s { display: block; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3) }
+.trend {
+  display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px;
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; flex: none;
+}
+.trend.up { background: var(--hold-bg); color: var(--hold-ink) }
+.trend.down { background: var(--go-bg); color: var(--go-ink) }
+
+/* --- porrastettu saapuminen ------------------------------------------- */
+
+.rise { animation: rise .55s cubic-bezier(.32,.72,0,1) both }
+@keyframes rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+
+@media (max-width: 940px) {
+  .figs { grid-template-columns: repeat(2, 1fr) }
+  .split { grid-template-columns: 1fr }
+  .buys-grid { grid-template-columns: 1fr; gap: 26px }
+}
+@media (max-width: 620px) {
+  .shell { padding: 18px 14px 48px }
+  .brand .name { font-size: 23px }
+  .head h2 { font-size: 21px }
+  .month-card .v { font-size: 36px }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+</style>
+<style>
+/* Kelluva merkintä: tämä ei ole sovellus vaan ehdotus. */
+.preview-note{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99;
+  display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:999px;
+  background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:500;
+  box-shadow:var(--shadow-lift);max-width:calc(100vw - 28px)}
+.preview-note b{font-weight:700}
+@media (max-width:520px){.preview-note{font-size:11.5px;padding:8px 13px}}
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+
+  <!-- ===================== YLÄPALKKI ===================== -->
+  <header class="top rise" style="animation-delay:0ms">
+    <div class="brand">
+      <span class="serif name">Cafe Monami</span>
+      <span class="sep">·</span>
+      <span class="mono when">MA 24.08.2026 · ILTAVUORO</span>
+    </div>
+
+    <div class="tools">
+      <button class="tool" aria-label="Haku">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      </button>
+      <button class="tool" aria-label="Matti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.5 10.1 12.8 4.5 10.9 10.1 9z"/></svg>
+      </button>
+      <button class="tool" aria-label="Ilmoitukset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9"/><path d="M13.7 19a2 2 0 0 1-3.4 0"/></svg>
+        <span class="dot">2</span>
+      </button>
+      <button class="tool" aria-label="Asetukset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== NYT ===================== -->
+  <div class="head rise" style="animation-delay:60ms">
+    <div class="t"><h2 class="serif">Nyt</h2></div>
+    <span class="rule"></span>
+  </div>
+
+  <section class="card pass rise" style="animation-delay:90ms" aria-label="Palvelupäivä">
+    <div class="pass-top">
+      <div class="pass-title">
+        <span class="beat" aria-hidden="true"><i></i><b></b></span>
+        <h3>Päivä käynnissä</h3>
+      </div>
+      <div class="tally">
+        <span class="chip go"><b>3</b> töissä</span>
+        <span class="chip wait"><b>2</b> tulossa</span>
+        <span class="chip hold"><b>1</b> huomiota</span>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="gridlines" aria-hidden="true">
+        <i style="left:0%"></i><i style="left:16.6%"></i><i style="left:33.3%"></i>
+        <i style="left:50%"></i><i style="left:66.6%"></i><i style="left:83.3%"></i><i style="left:100%"></i>
+      </div>
+
+      <div class="nowline" style="left:calc(22px + (100% - 44px) * .463)" aria-hidden="true"></div>
+
+      <div class="lane">
+        <p class="lane-name">Vuoropäällikkö</p>
+        <div class="track">
+          <div class="slot go" style="left:8.3%;width:55.5%;animation-delay:.15s">
+            <span class="who">OM</span>
+            <span class="lbl"><span class="n">Oktay Matias</span><span class="h">10.00–20.00</span></span>
+            <span class="throb" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <p class="lane-name">Sali</p>
+        <div class="track">
+          <div class="slot done" style="left:0%;width:27.7%;animation-delay:.22s">
+            <span class="who">MS</span>
+            <span class="lbl"><span class="n">Minna Salo</span><span class="h">09.00–14.00</span></span>
+          </div>
+          <div class="slot go" style="left:27.7%;width:38.8%;animation-delay:.29s">
+            <span class="who">JV</span>
+            <span class="lbl"><span class="n">Jussi Virta</span><span class="h">14.00–21.00</span></span>
+            <span class="throb" aria-hidden="true"></span>
+          </div>
+          <div class="slot wait" style="left:66.6%;width:22.2%;animation-delay:.36s">
+            <span class="who">LK</span>
+            <span class="lbl"><span class="n">Liisa Koski</span><span class="h">17.00–21.00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lane">
+        <p class="lane-name">Keittiö</p>
+        <div class="track">
+          <div class="slot go" style="left:5.5%;width:33.3%;animation-delay:.43s">
+            <span class="who">PN</span>
+            <span class="lbl"><span class="n">Pekka Nieminen</span><span class="h">09.30–15.30</span></span>
+            <span class="throb" aria-hidden="true"></span>
+          </div>
+          <div class="slot hold" style="left:38.8%;width:33.3%;animation-delay:.5s">
+            <span class="who">AK</span>
+            <span class="lbl"><span class="n">Ali Karhu</span><span class="h">14.00–20.00</span></span>
+            <span class="mark" aria-hidden="true">!</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="clock-row" aria-hidden="true">
+        <span style="left:0%">09.00</span><span style="left:16.6%">11.00</span>
+        <span style="left:33.3%">13.00</span><span style="left:50%">15.00</span>
+        <span style="left:66.6%">17.00</span><span style="left:83.3%">19.00</span>
+        <span style="left:100%">21.00</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HUOMIO ===================== -->
+  <div class="head rise" style="animation-delay:140ms">
+    <div class="t"><h2 class="serif">Huomio</h2>
+      <span class="note">Nämä eivät odota kuukauden vaihtumista</span></div>
+    <span class="rule"></span>
+  </div>
+
+  <div class="split">
+    <section class="card alerts rise" style="animation-delay:170ms" aria-label="Huomiota vaativat">
+      <div class="lead">
+        <span class="swatch" aria-hidden="true"></span>
+        <div>
+          <h3 class="serif">2 asiaa vaatii huomiota</h3>
+          <p class="sub">Yksi keittiössä juuri nyt, yksi kirjanpidossa.</p>
+        </div>
+      </div>
+
+      <ul class="dockets">
+        <li><a class="docket crit" href="#">
+          <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v5"/><path d="M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></span>
+          <span class="txt">
+            <span class="h">Ali Karhu ei ole leimannut sisään</span>
+            <span class="d">Vuoro 14.00–20.00 alkoi 38 minuuttia sitten. Soita tai tarkista onko hän paikalla.</span>
+          </span>
+          <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+        </a></li>
+
+        <li><a class="docket" href="#">
+          <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 9h6M9 13h4"/></svg></span>
+          <span class="txt">
+            <span class="h">Metro Tukun kuitista puuttuu ALV</span>
+            <span class="d">21.8. · 96,40 € — täydennä ennen kuin elokuu suljetaan kirjanpitoon.</span>
+          </span>
+          <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+        </a></li>
+      </ul>
+    </section>
+
+    <div class="month-card rise" style="animation-delay:200ms">
+      <svg class="spark" width="104" height="34" viewBox="0 0 104 34" fill="none" aria-hidden="true">
+        <path d="M0 26 L20 21 L41 24 L62 13 L83 17 L104 6" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="104" cy="6" r="2.6" fill="#ffd89a"/>
+      </svg>
+
+      <p class="k">Kirjatut kulut · elokuu</p>
+      <span class="serif v">3 482,60 €</span>
+      <p class="prev">3 098,20 € heinäkuussa</p>
+      <span class="delta">↑ 12,4 %</span>
+
+      <div class="acts">
+        <a class="a1" href="#">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Lisää kuitti
+        </a>
+        <a class="a2" href="#">Avaa kulut</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TÄNÄÄN ===================== -->
+  <div class="head rise" style="animation-delay:230ms">
+    <div class="t"><h2 class="serif">Tänään</h2>
+      <span class="note">Maanantai 24. elokuuta</span></div>
+    <span class="rule"></span>
+  </div>
+
+  <section class="figs" aria-label="Päivän luvut">
+    <div class="card fig rise" style="animation-delay:260ms">
+      <p class="k">Myynti</p>
+      <span class="serif v">1 240,00 €</span>
+      <span class="m up">+8 % vs. sama viikonpäivä</span>
+      <div class="bar"><i style="width:64%;background:var(--go)"></i></div>
+    </div>
+
+    <div class="card fig rise" style="animation-delay:290ms">
+      <p class="k">Työvoima</p>
+      <span class="serif v">312,50 €</span>
+      <span class="m">25 % myynnistä · 21 h 20 min</span>
+      <div class="bar"><i style="width:25%;background:var(--cobalt)"></i></div>
+    </div>
+
+    <div class="card fig rise" style="animation-delay:320ms">
+      <p class="k">Kulut</p>
+      <span class="serif v">418,90 €</span>
+      <span class="m">1 kuitti · Kespro</span>
+      <div class="bar"><i style="width:34%;background:var(--s2)"></i></div>
+    </div>
+
+    <div class="card fig rise" style="animation-delay:350ms">
+      <p class="k">Kuukausi tähän asti</p>
+      <span class="serif v">4 118,00 €</span>
+      <span class="m">Myynti − kulut − työvoima. Karkea.</span>
+      <div class="bar"><i style="width:52%;background:var(--s3)"></i></div>
+    </div>
+  </section>
+
+  <!-- ===================== ELOKUU ===================== -->
+  <div class="head rise" style="animation-delay:380ms">
+    <div class="t"><h2 class="serif">Elokuu 2026</h2></div>
+    <span class="rule"></span>
+    <div class="tools">
+      <button class="pill-btn line">Elokuu
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <button class="pill-btn line">Vie raportti</button>
+    </div>
+  </div>
+
+  <section class="card rhythm rise" style="animation-delay:410ms" aria-label="Kulurytmi">
+    <div class="rhythm-top">
+      <h3>Kulurytmi</h3>
+      <p class="n">Kuluja 12 päivänä · 12 päivää jäljellä</p>
+    </div>
+    <ol class="cols" id="cols"></ol>
+    <ol class="days" id="days" aria-hidden="true"></ol>
+    <div class="rhythm-foot">
+      <p><b>58 %</b> kuluista osuu torstaisin</p>
+      <p>Suurin päivä <b>20.8.</b> <span class="mono">1 044,80 €</span></p>
+      <p>Keskimäärin <span class="mono">290,22 €</span> / ostopäivä</p>
+    </div>
+  </section>
+
+  <section class="card buys rise" style="animation-delay:440ms;margin-top:14px" aria-label="Ostot">
+    <div class="buys-top">
+      <h3>Ostot</h3>
+      <a class="link" href="#">Kaikki kulut →</a>
+    </div>
+
+    <div class="buys-grid">
+      <div>
+        <p class="sub-k">Mihin</p>
+        <div class="stack" aria-hidden="true">
+          <i style="width:58%;background:var(--s1);animation-delay:.45s"></i>
+          <i style="width:19%;background:var(--s2);animation-delay:.52s"></i>
+          <i style="width:12%;background:var(--s3);animation-delay:.59s"></i>
+          <i style="width:7%;background:var(--s4);animation-delay:.66s"></i>
+          <i style="width:4%;background:var(--s5);animation-delay:.73s"></i>
+        </div>
+        <ul class="rows">
+          <li><a class="row" href="#"><span class="swat" style="background:var(--s1)"></span><span class="nm">Ruoka-aineet</span><span class="amt">2 019,90 €</span><span class="pc">58 %</span></a></li>
+          <li><a class="row" href="#"><span class="swat" style="background:var(--s2)"></span><span class="nm">Juomat</span><span class="amt">661,70 €</span><span class="pc">19 %</span></a></li>
+          <li><a class="row" href="#"><span class="swat" style="background:var(--s3)"></span><span class="nm">Siivous</span><span class="amt">417,90 €</span><span class="pc">12 %</span></a></li>
+          <li><a class="row" href="#"><span class="swat" style="background:var(--s4)"></span><span class="nm">Pakkaukset</span><span class="amt">243,80 €</span><span class="pc">7 %</span></a></li>
+          <li><a class="row" href="#"><span class="swat" style="background:var(--s5)"></span><span class="nm">Muut</span><span class="amt">139,30 €</span><span class="pc">4 %</span></a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="sub-k">Keneltä</p>
+        <ul>
+          <li><a class="vendor" href="#">
+            <span class="logo">KE</span>
+            <span class="who"><span class="n">Kespro</span><span class="s">41,2 % ostoista</span></span>
+            <span class="trend up">↑ 18 %</span>
+            <span class="amt mono" style="font-size:13px;font-weight:600">1 434,80 €</span>
+          </a></li>
+          <li><a class="vendor" href="#">
+            <span class="logo">ME</span>
+            <span class="who"><span class="n">Metro Tukku</span><span class="s">22,7 % ostoista</span></span>
+            <span class="trend down">↓ 9 %</span>
+            <span class="amt mono" style="font-size:13px;font-weight:600">790,50 €</span>
+          </a></li>
+          <li><a class="vendor" href="#">
+            <span class="logo">HE</span>
+            <span class="who"><span class="n">Heinon Tukku</span><span class="s">18,4 % ostoista</span></span>
+            <span class="amt mono" style="font-size:13px;font-weight:600">640,90 €</span>
+          </a></li>
+          <li><a class="vendor" href="#">
+            <span class="logo">VA</span>
+            <span class="who"><span class="n">Valio</span><span class="s">11,3 % ostoista</span></span>
+            <span class="trend up">↑ 6 %</span>
+            <span class="amt mono" style="font-size:13px;font-weight:600">393,60 €</span>
+          </a></li>
+          <li><a class="vendor" href="#">
+            <span class="logo">SI</span>
+            <span class="who"><span class="n">Sinebrychoff</span><span class="s">6,4 % ostoista</span></span>
+            <span class="amt mono" style="font-size:13px;font-weight:600">222,80 €</span>
+          </a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  /* Elokuu 2026 — 1.8. lauantai. Kulut kasautuvat torstaille.
+     null = päivä ei ole vielä tullut. */
+  const spend = [0, 0, 18000, 0, 0, 94000, 0, 0, 0, 22000, 0, 0, 88000, 0,
+                 0, 0, 15000, 0, 0, 104480, 0, 9640, 41000, 41890,
+                 null, null, null, null, null, null, null];
+  const max = 104480;
+  const cols = document.getElementById("cols");
+  const days = document.getElementById("days");
+  const euro = new Intl.NumberFormat("fi-FI", { style: "currency", currency: "EUR" });
+
+  spend.forEach((cents, index) => {
+    const day = index + 1;
+    const wd = new Date(Date.UTC(2026, 7, day, 12)).getUTCDay();
+    const weekend = wd === 0 || wd === 6;
+    const today = day === 24;
+
+    const li = document.createElement("li");
+    const bar = document.createElement("i");
+
+    if (cents === null) {
+      /* Tuleva päivä ei ole nolla. Ääriviiva sanoo "ei vielä". */
+      bar.style.cssText = "height:3px;background:var(--edge);animation:none";
+      li.title = day + ".8. — ei vielä";
+    } else if (cents === 0) {
+      bar.style.cssText = "height:3px;background:var(--edge-soft);animation:none";
+      li.title = day + ".8. — ei ostoja";
+    } else {
+      bar.style.height = Math.max(9, (cents / max) * 100) + "%";
+      bar.style.background = today ? "var(--ink)" : weekend ? "var(--s2)" : "var(--s1)";
+      if (weekend && !today) bar.style.opacity = ".6";
+      bar.style.animationDelay = (420 + Math.min(index * 20, 620)) + "ms";
+
+      const tip = document.createElement("span");
+      tip.className = "tip";
+      tip.textContent = day + ".8. · " + euro.format(cents / 100);
+      li.appendChild(tip);
+    }
+
+    li.appendChild(bar);
+    cols.appendChild(li);
+
+    const d = document.createElement("li");
+    d.textContent = day;
+    if (today) { d.style.color = "var(--ink)"; d.style.fontWeight = "600"; }
+    else if (day % 2 === 0) d.style.opacity = "0";
+    days.appendChild(d);
+  });
+</script>
+
+<div class="preview-note"><b>Ulkoasuehdotus</b> · esimerkkidataa, ei Cafe Monamin oikeita lukuja</div>
+</body>
+</html>
