@@ -43,3 +43,28 @@ export function isoDateOr(value: unknown, fallback: string): string {
 export function isoMonthOr(value: unknown, fallback: string): string {
   return isIsoMonth(value) ? value : fallback;
 }
+
+/**
+ * Yläpalkin valitsimen näyttämä kuukausi.
+ *
+ * VALITSIN EI TIEDÄ VALINTAA PROPSISTAAN.
+ *
+ * Kuori antaa sille kuluvan kuukauden, koska Next-kuori ei saa
+ * osoitteen hakuparametreja lainkaan — se ei renderöidy uudestaan kun
+ * ne muuttuvat. Sivu sen sijaan lukee ?kuukausi-parametrin. Niinpä
+ * heinäkuun valitseminen vaihtoi sivun luvut mutta jätti painikkeeseen
+ * lukemaan "Elokuu 2026".
+ *
+ * Valinta luetaan siis osoitteesta ja kuluva kuukausi on vain vara.
+ * Tuntematon arvo putoaa varaan: osoiterivin voi kirjoittaa itse, eikä
+ * "2026-99" saa jäädä painikkeeseen näkyviin.
+ */
+export function pickedMonth(
+  param: string | null,
+  fallback: string,
+  months: string[],
+): string {
+  return param !== null && isIsoMonth(param) && months.includes(param)
+    ? param
+    : fallback;
+}

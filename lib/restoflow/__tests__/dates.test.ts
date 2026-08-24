@@ -6,6 +6,7 @@ import {
   isIsoMonth,
   isoDateOr,
   isoMonthOr,
+  pickedMonth,
 } from "../dates";
 
 /**
@@ -76,5 +77,32 @@ describe("varasija", () => {
     expect(isoDateOr("roska", "2026-01-01")).toBe("2026-01-01");
     expect(isoDateOr(undefined, "2026-01-01")).toBe("2026-01-01");
     expect(isoMonthOr(null, "2026-08")).toBe("2026-08");
+  });
+});
+
+describe("pickedMonth", () => {
+  const months = ["2026-08", "2026-07", "2026-06"];
+
+  it("näyttää osoitteessa valitun kuukauden", () => {
+    expect(pickedMonth("2026-07", "2026-08", months)).toBe("2026-07");
+  });
+
+  it("näyttää kuluvan kuukauden kun valintaa ei ole", () => {
+    expect(pickedMonth(null, "2026-08", months)).toBe("2026-08");
+  });
+
+  /*
+   * Osoiterivin voi kirjoittaa itse. Roskan tai listan ulkopuolisen
+   * kuukauden ei saa jäädä painikkeeseen näkyviin — sivu ei näytä
+   * niiden lukuja, joten painike valehtelisi.
+   */
+  it("hylkää kelvottoman arvon", () => {
+    expect(pickedMonth("2026-99", "2026-08", months)).toBe("2026-08");
+    expect(pickedMonth("elokuu", "2026-08", months)).toBe("2026-08");
+    expect(pickedMonth("", "2026-08", months)).toBe("2026-08");
+  });
+
+  it("hylkää listan ulkopuolisen kuukauden", () => {
+    expect(pickedMonth("2019-01", "2026-08", months)).toBe("2026-08");
   });
 });

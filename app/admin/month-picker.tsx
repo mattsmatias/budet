@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { RfIcon } from "@/components/restoflow/icons";
+import { pickedMonth } from "@/lib/restoflow/dates";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 
 const MONTH_NAMES = [
@@ -25,15 +26,23 @@ const MONTH_NAMES = [
  * huonompi kuin natiivi, ja ulkonäkö ei ole sen arvoinen.
  */
 export function MonthPicker({
-  value,
+  value: fallback,
   months,
 }: {
+  /**
+   * Kuluva kuukausi. Vara, ei valinta.
+   *
+   * Kuori antaa tämän, eikä kuori näe osoitteen hakuparametreja —
+   * valinta luetaan siis osoitteesta pickedMonth-funktiolla.
+   */
   value: string;
   months: string[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
+
+  const value = pickedMonth(params.get("kuukausi"), fallback, months);
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(() => Math.max(0, months.indexOf(value)));
