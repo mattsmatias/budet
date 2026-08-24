@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Archivo:wght@500;600;700;800&family=Instrument+Sans:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
 <style>
 /* ===========================================================================
@@ -16,12 +16,19 @@
    ---------------------------------------------------------------------------
    Ravintolan hallintanäkymä, ei yleiskäyttöinen hallintapaneeli.
 
-   Kolme kirjasinta, kolme tehtävää — kaikki lainattua ravintolan omasta
-   maailmasta:
-     Instrument Serif  → suuret luvut ja osastot. Ruokalista on ladottu
-                         antiikvalla, ja siitä tämä työkalu on kotoisin.
-     Instrument Sans   → käyttöliittymä. Sama suku, eri ääni.
-     IBM Plex Mono     → kellonajat ja päivämäärät. Keittiön tulostin.
+   Kolme kirjasinvaihtoehtoa samalle sivulle. Vaihdin on alareunassa,
+   ja vertailu tehdään silmällä: "Fraunces" ei kerro miltä 3 482,60 €
+   näyttää.
+
+     ANTIIKVA   Fraunces + Instrument Sans. Ruokalista on ladottu
+                antiikvalla, ja siitä tämä työkalu on kotoisin.
+     GROTESKI   Bricolage Grotesque + Public Sans. Ei antiikvaa
+                lainkaan — nykyaikainen tuote, ei painotuote.
+     TEOLLINEN  Archivo molemmissa. Tiivis ja tekninen, luettava
+                pienessä koossa myös huonossa valossa.
+
+   Kellonajat ja päivämäärät ovat kaikissa IBM Plex Monoa: keittiön
+   tulostin ei vaihdu kirjasinvalinnan mukana.
 
    Pohja on lämmin paperi eikä viileä harmaa: tämä on lipuke pinnalla,
    ei ohjelmistoikkuna. Aksentti on koboltti — ainoa kylmä väri
@@ -64,6 +71,17 @@
   --s3: #1a7f4b;
   --s4: #b7791f;
   --s5: #8d8577;
+
+  /* ------------------------------------------------------------------
+     Kirjasimet tokeneina, jotta kolmea vaihtoehtoa voi verrata samalla
+     sivulla samalla datalla. Vertailu tehdään silmällä eikä nimien
+     perusteella: "Fraunces" ei kerro miltä 3 482,60 € näyttää.
+     ------------------------------------------------------------------ */
+  --f-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --f-display-w: 600;
+  --f-display-track: -.015em;
+  --f-ui: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   --r-lg: 18px;
   --r-md: 12px;
@@ -145,20 +163,38 @@
   --shadow-lift: 0 2px 4px rgba(0,0,0,.35), 0 18px 44px rgba(0,0,0,.45);
 }
 
+:root[data-type="b"] {
+  --f-display: "Bricolage Grotesque", -apple-system, system-ui, sans-serif;
+  --f-display-w: 700;
+  --f-display-track: -.03em;
+  --f-ui: "Public Sans", -apple-system, system-ui, sans-serif;
+}
+
+:root[data-type="c"] {
+  --f-display: "Archivo", -apple-system, system-ui, sans-serif;
+  --f-display-w: 800;
+  --f-display-track: -.035em;
+  --f-ui: "Archivo", -apple-system, system-ui, sans-serif;
+}
+
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--f-ui);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-.mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; font-variant-numeric: tabular-nums; }
-.serif { font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-weight: 400; }
+.mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.serif {
+  font-family: var(--f-display);
+  font-weight: var(--f-display-w);
+  letter-spacing: var(--f-display-track);
+}
 
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
@@ -250,7 +286,7 @@ a:focus-visible, button:focus-visible {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px;
   border-radius: 999px; font-size: 12.5px; font-weight: 500;
 }
-.chip b { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chip b { font-family: var(--f-data); font-weight: 600; font-variant-numeric: tabular-nums; }
 .chip.go   { background: var(--go-bg);   color: var(--go-ink) }
 .chip.wait { background: var(--card-2);  color: var(--ink-2) }
 .chip.hold { background: var(--hold-bg); color: var(--hold-ink) }
@@ -269,7 +305,7 @@ a:focus-visible, button:focus-visible {
 }
 .nowline::after {
   content: "14.38"; position: absolute; left: 50%; top: -26px; transform: translateX(-50%);
-  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; font-weight: 600;
+  font-family: var(--f-data); font-size: 10.5px; font-weight: 600;
   color: #fff; background: var(--stop); padding: 2px 6px; border-radius: 5px;
   letter-spacing: .02em;
 }
@@ -277,7 +313,7 @@ a:focus-visible, button:focus-visible {
 .lane { margin-bottom: 12px; }
 .lane:last-of-type { margin-bottom: 0; }
 .lane-name {
-  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  font-family: var(--f-data); font-size: 10px; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
   margin-bottom: 6px;
 }
@@ -301,7 +337,7 @@ a:focus-visible, button:focus-visible {
 }
 .slot .lbl { min-width: 0; flex: 1; }
 .slot .lbl .n { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.slot .lbl .h { display: block; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; opacity: .75; }
+.slot .lbl .h { display: block; font-family: var(--f-data); font-size: 10.5px; opacity: .75; }
 
 .slot.go   { background: var(--go-bg);   color: var(--go-ink);   border-color: color-mix(in srgb, var(--go) 32%, transparent) }
 .slot.wait { background: var(--card-2);  color: var(--ink-2);    border-color: var(--edge-soft) }
@@ -316,7 +352,7 @@ a:focus-visible, button:focus-visible {
 .clock-row { position: relative; height: 14px; margin-top: 10px; }
 .clock-row span {
   position: absolute; transform: translateX(-50%);
-  font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: var(--ink-3);
+  font-family: var(--f-data); font-size: 10.5px; color: var(--ink-3);
 }
 
 /* =========================== TÄNÄÄN ==================================== */
@@ -324,7 +360,7 @@ a:focus-visible, button:focus-visible {
 .figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .fig { padding: 17px 18px 16px; }
 .fig .k {
-  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  font-family: var(--f-data); font-size: 10px; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3);
 }
 .fig .v { display: block; margin-top: 9px; font-size: 31px; line-height: 1; letter-spacing: -.015em; }
@@ -370,7 +406,7 @@ a:focus-visible, button:focus-visible {
   color: var(--paper); box-shadow: var(--shadow-lift); position: relative; overflow: hidden;
 }
 .month-card .k {
-  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  font-family: var(--f-data); font-size: 10px; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase; opacity: .6;
 }
 .month-card .v { display: block; margin-top: 10px; font-size: 44px; line-height: .95; letter-spacing: -.02em; }
@@ -409,7 +445,7 @@ a:focus-visible, button:focus-visible {
 .cols li:hover i { filter: brightness(1.12) }
 .cols .tip {
   position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
-  background: var(--ink); color: var(--paper); font-family: "IBM Plex Mono", monospace;
+  background: var(--ink); color: var(--paper); font-family: var(--f-data);
   font-size: 10.5px; padding: 4px 7px; border-radius: 5px; white-space: nowrap;
   opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 5;
 }
@@ -418,7 +454,7 @@ a:focus-visible, button:focus-visible {
 .days { display: flex; gap: 3px; margin-top: 7px }
 .days li {
   flex: 1; min-width: 0; text-align: center;
-  font-family: "IBM Plex Mono", monospace; font-size: 9px; color: var(--ink-3);
+  font-family: var(--f-data); font-size: 9px; color: var(--ink-3);
 }
 .rhythm-foot { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 18px; font-size: 13px; color: var(--ink-2) }
 .rhythm-foot b { color: var(--ink); font-weight: 600 }
@@ -433,7 +469,7 @@ a:focus-visible, button:focus-visible {
 
 .buys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px }
 .sub-k {
-  font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+  font-family: var(--f-data); font-size: 10px; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px;
 }
 .stack { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: var(--card-2) }
@@ -447,8 +483,8 @@ a:focus-visible, button:focus-visible {
 .row:hover { background: var(--card-2) }
 .row .swat { width: 9px; height: 9px; border-radius: 2px; flex: none }
 .row .nm { flex: 1; min-width: 0; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.row .amt { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; flex: none }
-.row .pc { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-3); width: 38px; text-align: right; flex: none }
+.row .amt { font-family: var(--f-data); font-size: 13px; font-weight: 600; flex: none }
+.row .pc { font-family: var(--f-data); font-size: 12px; color: var(--ink-3); width: 38px; text-align: right; flex: none }
 
 .vendor { display: flex; align-items: center; gap: 11px; padding: 9px 6px; border-radius: var(--r-sm); transition: background .15s }
 .vendor:hover { background: var(--card-2) }
@@ -460,13 +496,43 @@ a:focus-visible, button:focus-visible {
 }
 .vendor .who { flex: 1; min-width: 0 }
 .vendor .who .n { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.vendor .who .s { display: block; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3) }
+.vendor .who .s { display: block; font-family: var(--f-data); font-size: 11.5px; color: var(--ink-3) }
 .trend {
   display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 999px;
-  font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600; flex: none;
+  font-family: var(--f-data); font-size: 11px; font-weight: 600; flex: none;
 }
 .trend.up { background: var(--hold-bg); color: var(--hold-ink) }
 .trend.down { background: var(--go-bg); color: var(--go-ink) }
+
+.disclaimer{margin:34px 2px 70px;font-size:12.5px;color:var(--ink-3);text-align:center}
+
+/* --- kirjasinvaihdin --------------------------------------------------- */
+
+.typepick {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 100;
+  display: flex; align-items: center; gap: 4px; padding: 5px;
+  background: var(--ink); border-radius: 999px; box-shadow: var(--shadow-lift);
+  max-width: calc(100vw - 24px);
+}
+.typepick .lbl {
+  font-family: var(--f-data); font-size: 10px; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--paper); opacity: .5; padding: 0 9px 0 11px; white-space: nowrap;
+}
+.typepick button {
+  border: 0; cursor: pointer; padding: 7px 14px; border-radius: 999px;
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  background: transparent; color: var(--paper); opacity: .62;
+  transition: background .18s, opacity .18s; white-space: nowrap;
+}
+.typepick button:hover { opacity: .9 }
+.typepick button[aria-pressed="true"] {
+  background: var(--paper); color: var(--ink); opacity: 1;
+}
+@media (max-width: 560px) {
+  .typepick .lbl { display: none }
+  .typepick button { padding: 7px 11px; font-size: 11.5px }
+}
 
 /* --- porrastettu saapuminen ------------------------------------------- */
 
@@ -491,15 +557,6 @@ a:focus-visible, button:focus-visible {
     transition: none !important;
   }
 }
-</style>
-<style>
-/* Kelluva merkintä: tämä ei ole sovellus vaan ehdotus. */
-.preview-note{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99;
-  display:flex;align-items:center;gap:10px;padding:9px 16px;border-radius:999px;
-  background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:500;
-  box-shadow:var(--shadow-lift);max-width:calc(100vw - 28px)}
-.preview-note b{font-weight:700}
-@media (max-width:520px){.preview-note{font-size:11.5px;padding:8px 13px}}
 </style>
 </head>
 <body>
@@ -797,7 +854,31 @@ a:focus-visible, button:focus-visible {
     </div>
   </section>
 
+  <p class="disclaimer">Ulkoasuehdotus. Luvut ovat esimerkkiä, eivät Cafe Monamin oikeita lukuja.</p>
+
+  <div class="typepick" role="group" aria-label="Kirjasinvaihtoehto">
+    <span class="lbl">Kirjasin</span>
+    <button type="button" data-set="a" aria-pressed="true">Antiikva</button>
+    <button type="button" data-set="b" aria-pressed="false">Groteski</button>
+    <button type="button" data-set="c" aria-pressed="false">Teollinen</button>
+  </div>
+
 </div>
+
+<script>
+  /* Kirjasinvaihdin. Sama data, sama asettelu — vain kirjasin vaihtuu,
+     jotta vertailu koskee kirjasinta eikä mitään muuta. */
+  const picker = document.querySelector(".typepick");
+  picker.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-set]");
+    if (!button) return;
+
+    document.documentElement.dataset.type = button.dataset.set;
+    picker.querySelectorAll("button").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b === button));
+    });
+  });
+</script>
 
 <script>
   /* Elokuu 2026 — 1.8. lauantai. Kulut kasautuvat torstaille.
@@ -849,6 +930,5 @@ a:focus-visible, button:focus-visible {
   });
 </script>
 
-<div class="preview-note"><b>Ulkoasuehdotus</b> · esimerkkidataa, ei Cafe Monamin oikeita lukuja</div>
 </body>
 </html>
