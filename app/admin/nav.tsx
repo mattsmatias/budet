@@ -84,8 +84,18 @@ function DesktopSidebar({
         aria-label="Hallintanavigaatio"
         className="flex-1 overflow-y-auto px-3 pb-3 pt-1"
       >
+        {/*
+          Ryhmät erottuvat väljyydellä, eivät viivalla eivätkä
+          otsikolla.
+
+          Kymmenen samannäköistä riviä luetaan yhtenä pötkönä, ja
+          silmä joutuu lukemaan joka kerta koko listan. Otsikot
+          nimeäisivät ryhmät mutta veisivät sata pikseliä pystyssä —
+          matalalla ruudulla kisko alkaisi vieriä, ja vierivä valikko
+          on huonompi kuin nimeämätön.
+        */}
         {sections.map((section) => (
-          <div key={section.id} className="mb-1 last:mb-0">
+          <div key={section.id} className="mb-2.5 last:mb-0">
             {/*
              * Otsikko on ryhmän nimi eikä koriste, joten se merkitään
              * myös rakenteeseen: ruudunlukija kuulee listan nimen eikä

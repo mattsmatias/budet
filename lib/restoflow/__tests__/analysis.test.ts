@@ -719,7 +719,6 @@ describe("oikeudet", () => {
       "finance",
       "staff",
       "restaurant",
-      "reporting",
     ]);
 
     const finance = sections.find((s) => s.id === "finance")!;
@@ -745,7 +744,14 @@ describe("oikeudet", () => {
 
     const accountant = adminNavSectionsFor("accountant").map((s) => s.id);
     expect(accountant).not.toContain("staff");
-    expect(accountant).not.toContain("restaurant");
+
+    /*
+     * Kirjanpitäjä näkee Raportoinnin muttei Lounasta, ja molemmat
+     * ovat samassa "Muut"-ryhmässä. Ryhmä siis jää mutta kutistuu
+     * yhteen riviin — se on eri asia kuin tyhjä ryhmä.
+     */
+    const muut = adminNavSectionsFor("accountant").find((x) => x.id === "restaurant");
+    expect(muut?.items.map((i) => i.href)).toEqual(["/admin/raportit"]);
   });
 
   /*

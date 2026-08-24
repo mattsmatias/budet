@@ -192,8 +192,13 @@ export const NAV_SECTIONS = [
   { id: "main", label: "Päävalikko" },
   { id: "finance", label: "Talous" },
   { id: "staff", label: "Henkilöstö" },
-  { id: "restaurant", label: "Ravintola" },
-  { id: "reporting", label: "Raportointi" },
+  /*
+   * Ravintola ja Raportointi olivat kaksi omaa osastoaan, joissa
+   * kummassakin oli yksi rivi. Yhden rivin osasto ei ryhmittele
+   * mitään — se vain jakaa listan pienempiin paloihin. Nyt ne ovat
+   * yhtä: kaikki mikä ei ole rahaa eikä väkeä.
+   */
+  { id: "restaurant", label: "Muut" },
 ] as const;
 
 export type NavSection = (typeof NAV_SECTIONS)[number]["id"];
@@ -246,7 +251,7 @@ export const ADMIN_NAV: NavEntry[] = [
 
   { href: "/admin/lounas", label: "Lounas", icon: "lunch", requires: "lunch.view", section: "restaurant" },
 
-  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
+  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "restaurant" },
 ];
 
 /*
@@ -266,7 +271,7 @@ export const ADMIN_NAV: NavEntry[] = [
 export const MORE_NAV: NavEntry[] = [
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
   { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
-  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "reporting" },
+  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "restaurant" },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {

@@ -166,11 +166,23 @@ const SHAPES: Partial<Record<IconName, ReactNode>> = {
   // Pylväät pohjaviivan päällä: ilman viivaa ne leijuvat.
   expenses: <path d="M4 19V9M10 19V5M16 19v-6M22 19H2" />,
 
-  // Kello: budjetti on kuukauden mitta, ei tähtäin.
+  /*
+   * Lompakko, ei kello.
+   *
+   * Suunnitelmassa Budjetit oli kello, mutta kello on jo ajan merkki
+   * — Työntekijät-sivun "Työtunnit" käyttää sitä. Kisko on aina
+   * näkyvissä, joten samalla ruudulla oli kaksi lähes samanlaista
+   * kelloa eri merkityksillä.
+   *
+   * Budjetti ei ole aika vaan raja. Tähtäin ja mittari olisivat
+   * molemmat ympyröitä eli sama sekaannus uudestaan; lompakon
+   * siluetti ei muistuta mitään muuta sarjassa.
+   */
   budget: (
     <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 3.5v8.5l6 3" />
+      <rect x="3" y="6" width="18" height="13" rx="2.6" />
+      <path d="M3 10.5h18" />
+      <path d="M16.5 15h1.5" />
     </>
   ),
 
