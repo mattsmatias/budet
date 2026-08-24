@@ -73,7 +73,7 @@ function DesktopSidebar({
       className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
-      <div className="px-5 py-5">
+      <div className="px-[18px] pb-4 pt-[18px]">
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
           <span className="text-[16px] font-extrabold tracking-[-0.02em]">Budet</span>
@@ -82,7 +82,7 @@ function DesktopSidebar({
 
       <nav
         aria-label="Hallintanavigaatio"
-        className="flex-1 overflow-y-auto px-4 pb-4"
+        className="flex-1 overflow-y-auto px-3 pb-3 pt-1"
       >
         {sections.map((section) => (
           <div key={section.id} className="mb-1 last:mb-0">
@@ -91,7 +91,7 @@ function DesktopSidebar({
              * myös rakenteeseen: ruudunlukija kuulee listan nimen eikä
              * vain seitsemää irrallista linkkiä.
              */}
-            <ul aria-label={section.label} className="space-y-0.5">
+            <ul aria-label={section.label}>
               {section.items.map((item) => (
                 <NavLink key={item.href} item={item} count={counts[item.href] ?? 0} />
               ))}
@@ -138,19 +138,19 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
          * ennen kuin ehtii lukea. Valinta on täytetty pinta eikä
          * pelkkä lihavointi, jotta se erottuu myös vilkaisulla.
          */
-        className="rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px]"
+        className="rf-press mb-0.5 flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] leading-[1.5] tracking-[-0.0083em]"
         style={{
           background: active ? "var(--rf-inset)" : "transparent",
           color: active ? "var(--rf-text)" : "var(--rf-text-2)",
           fontWeight: active ? 700 : 500,
         }}
       >
-        <RfIcon name={item.icon} size={17} />
+        <RfIcon name={item.icon} size={17} strokeWidth={1.8} />
         <span className="flex-1">{item.label}</span>
 
         {count > 0 ? (
           <span
-            className="rf-tabular shrink-0 px-1.5 py-0.5 text-[11px] font-semibold"
+            className="rf-tabular shrink-0 px-1.5 py-px text-[10.5px] font-semibold"
             style={{
               background: "var(--rf-amber-bg)",
               color: "var(--rf-amber-text)",

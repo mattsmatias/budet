@@ -11,6 +11,7 @@
  * mukana. Ammattimainen taloustyökalu näyttää samalta joka koneella.
  */
 
+import type { ReactNode } from "react";
 import type { ExpenseCategory } from "@/lib/restoflow/types";
 import {
   productGlyph,
@@ -135,6 +136,88 @@ const PATHS: Record<IconName, string> = {
   trend: "M3.5 17 9.5 11l3.8 3.8L20.5 7.5M15.5 7.5h5v5",
 };
 
+/**
+ * Ikonit joita ei saa yhdellä polulla.
+ *
+ * Suurin osa sarjasta on yksi viiva, mutta valikon ikonit ovat
+ * suunnitelmassa neliöitä ja ympyröitä — ne pysyvät tarkkoina
+ * pienessäkin koossa, kun muoto on primitiivi eikä käsin piirretty
+ * approksimaatio. Nämä voittavat PATHS-taulukon samalla nimellä.
+ */
+const SHAPES: Partial<Record<IconName, ReactNode>> = {
+  // Neljä yhtä suurta ruutua: yleiskuva on koko näkymä, ei yksi osa.
+  overview: (
+    <>
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1.6" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6" />
+    </>
+  ),
+
+  // Repäisty alareuna tekee kuitista tunnistettavan pienenäkin.
+  receipt: (
+    <>
+      <path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z" />
+      <path d="M9 9h6M9 13h4" />
+    </>
+  ),
+
+  // Pylväät pohjaviivan päällä: ilman viivaa ne leijuvat.
+  expenses: <path d="M4 19V9M10 19V5M16 19v-6M22 19H2" />,
+
+  // Kello: budjetti on kuukauden mitta, ei tähtäin.
+  budget: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5v8.5l6 3" />
+    </>
+  ),
+
+  // Pinotut tasot — toimittajat ovat kerroksia saman kuukauden päällä.
+  suppliers: (
+    <>
+      <path d="M3 8.5 12 4l9 4.5-9 4.5z" />
+      <path d="M3 12.5 12 17l9-4.5M3 16.5 12 21l9-4.5" />
+    </>
+  ),
+
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2.2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </>
+  ),
+
+  // Yksi ihminen edessä, toinen puoliksi takana: ryhmä, ei pari.
+  staff: (
+    <>
+      <circle cx="9" cy="8" r="3.4" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 5.4a3.4 3.4 0 0 1 0 5.2M18 14.4a6.5 6.5 0 0 1 3.5 5.6" />
+    </>
+  ),
+
+  // Valuuttamerkki — palkka on rahaa, ei seteli esineenä.
+  payroll: <path d="M12 2.5v19M16.5 6.5H9.8a2.8 2.8 0 0 0 0 5.6h4.4a2.8 2.8 0 0 1 0 5.6H7" />,
+
+  // Rakennus pylväineen — lounas on paikka johon tullaan.
+  lunch: (
+    <>
+      <path d="M4 20h16M6 20V9.5M18 20V9.5" />
+      <path d="M3.5 9.5 12 4l8.5 5.5z" />
+    </>
+  ),
+
+  // Taitettu nurkka erottaa raportin kuitista.
+  report: (
+    <>
+      <path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z" />
+      <path d="M14 3v5h5" />
+    </>
+  ),
+};
+
 export function RfIcon({
   name,
   size = 20,
@@ -160,7 +243,7 @@ export function RfIcon({
       aria-label={label}
       role={label ? "img" : undefined}
     >
-      <path d={PATHS[name]} />
+      {SHAPES[name] ?? <path d={PATHS[name]} />}
     </svg>
   );
 }

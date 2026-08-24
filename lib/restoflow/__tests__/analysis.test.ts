@@ -656,7 +656,7 @@ describe("oikeudet", () => {
    */
   it("säilyttää pääsytarkistuksen valikosta piilotetuilla reiteillä", () => {
     const hidden = [
-      "/admin/toimittajat",
+      "/admin/myynti",
       "/admin/havainnot",
       "/admin/ilmoitukset",
       // Asetukset on omana kohtanaan valikon pohjalla, ei osastoissa.
@@ -678,11 +678,11 @@ describe("oikeudet", () => {
    * Valikon koko on tuotepäätös, ei sattuma.
    *
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
-   * Yhdeksäs kohta on Palkat: se on päivittäinen tehtävä eikä analyysi,
-   * joten se kuuluu valikkoon eikä yleiskuvan osioiden taakse.
+   * Kymmenes kohta on Toimittajat: sivu vastaa kysymykseen "kenelle
+   * raha menee", eikä sitä kysymystä osaa esittää kuitin kautta.
    */
-  it("pitää päävalikon yhdeksässä kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(9);
+  it("pitää päävalikon kymmenessä kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(10);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 
@@ -727,6 +727,7 @@ describe("oikeudet", () => {
       "/admin/kuitit",
       "/admin/kulut",
       "/admin/budjetit",
+      "/admin/toimittajat",
     ]);
   });
 

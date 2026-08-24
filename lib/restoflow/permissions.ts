@@ -230,6 +230,16 @@ export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view", section: "finance" },
   { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
 
+  /*
+   * Toimittajat on valikossa.
+   *
+   * Reitti on ollut olemassa koko ajan, mutta sinne pääsi vain
+   * kuitin toimittajanimen kautta — eli vasta kun tiesi jo minkä
+   * toimittajan haluaa. Sivu vastaa kysymykseen "kenelle raha
+   * menee", ja se on kysymys jota ei osaa esittää linkin kautta.
+   */
+  { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view", section: "finance" },
+
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
   { href: "/admin/palkat", label: "Palkat", icon: "payroll", requires: "payroll.view", section: "staff" },
