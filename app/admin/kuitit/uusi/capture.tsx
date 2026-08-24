@@ -189,12 +189,20 @@ export function CaptureFlow({
         <button
           type="button"
           onClick={() => cameraRef.current?.click()}
+          /*
+           * Päätoiminnon väri on korostusväri, ei sininen.
+           *
+           * Tämä oli ainoa sininen painike koko hallinnassa, ja se
+           * jäi tänne kun korostusväri vaihdettiin. Sininen on tässä
+           * järjestelmässä tiedon väri — punainen on se jota
+           * painetaan.
+           */
           className="rf-press flex w-full flex-col items-center gap-3 py-10"
           style={{
-            background: "var(--rf-blue)",
+            background: "var(--rf-accent)",
             color: "var(--rf-on-accent)",
             borderRadius: "var(--rf-r-card)",
-            boxShadow: "0 4px 20px rgba(0,113,227,0.28)",
+            boxShadow: "var(--rf-shadow-lg)",
           }}
         >
           <RfIcon name="camera" size={38} />

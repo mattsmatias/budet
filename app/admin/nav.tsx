@@ -296,7 +296,10 @@ function MobileBar({ items }: { items: NavItems }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className="rf-press relative flex flex-col items-center gap-1 py-2"
-                style={{ color: active ? "var(--rf-blue)" : "var(--rf-text-3)" }}
+                /* Valittu välilehti on korostusvärillä kuten kiskossakin:
+                   sininen oli tässä ainoa paikka jossa "valittu" oli
+                   sininen, ja puhelin näytti eri sovellukselta. */
+                style={{ color: active ? "var(--rf-accent)" : "var(--rf-text-3)" }}
               >
                 <RfIcon name={item.icon} size={22} />
                 <span className="text-[10px] font-medium">{item.label}</span>
@@ -312,7 +315,7 @@ function MobileBar({ items }: { items: NavItems }) {
               aria-current={isActive("/admin/lisaa") ? "page" : undefined}
               className="rf-press flex flex-col items-center gap-1 py-2"
               style={{
-                color: isActive("/admin/lisaa") ? "var(--rf-blue)" : "var(--rf-text-3)",
+                color: isActive("/admin/lisaa") ? "var(--rf-accent)" : "var(--rf-text-3)",
               }}
             >
               <RfIcon name="more" size={22} />

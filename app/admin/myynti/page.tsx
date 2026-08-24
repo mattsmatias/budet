@@ -5,6 +5,7 @@ import { compareSales, type DailySales } from "@/lib/restoflow/sales";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
+import { Panel, PanelEmpty } from "@/components/restoflow/dashboard-ui";
 import { SalesForm } from "./form";
 
 export const metadata = { title: "Myynti" };
@@ -79,40 +80,38 @@ export default async function SalesPage() {
         </Card>
       ) : null}
 
-      <section>
-        <h2 className="px-1 text-[12px] font-semibold uppercase" style={{ letterSpacing: "0.05em", color: "var(--rf-text-3)" }}>
-          Kirjatut päivät
-        </h2>
+      {/*
+        Otsikko kortin sisään.
 
+        Tässä oli harmaa versaaliotsikko kortin yläpuolella — ainoa
+        laatuaan koko hallinnassa. Muualla osion nimi on kortin
+        ensimmäinen rivi, ja kaksi eri tapaa nimetä osio saa saman
+        sivun näyttämään kahdesta eri sovelluksesta kootulta.
+      */}
+      <Panel title="Kirjatut päivät" subtitle={`${sales.length} päivää`}>
         {sales.length === 0 ? (
-          <Card className="mt-2">
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Budet
-              alkaa verrata päiviä toisiinsa.
-            </p>
-          </Card>
+          <PanelEmpty text="Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Budet alkaa verrata päiviä toisiinsa." />
         ) : (
-          <div className="mt-2 overflow-x-auto">
-            <Card padded={false}>
-              <table className="rf-table w-full min-w-[34rem] text-[14px]">
-                <thead>
-                  <tr>
-                    <th>Päivä</th>
-                    <th className="text-right">Myynti</th>
-                    <th className="text-right">Tavoite</th>
-                    <th>Vertailu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sales.slice(0, 30).map((row) => (
-                    <Row key={row.date} row={row} history={sales} today={today} />
-                  ))}
-                </tbody>
-              </table>
-            </Card>
+          /* Taulukko kortin reunoihin, kuten Viimeisimmät kuitit. */
+          <div className="-mx-[18px] -mb-4 mt-[14px] overflow-x-auto rounded-b-[var(--rf-r-card)]">
+            <table className="rf-table w-full min-w-[34rem]">
+              <thead>
+                <tr>
+                  <th>Päivä</th>
+                  <th className="text-right">Myynti</th>
+                  <th className="text-right">Tavoite</th>
+                  <th>Vertailu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sales.slice(0, 30).map((row) => (
+                  <Row key={row.date} row={row} history={sales} today={today} />
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
+      </Panel>
 
       <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
         Veroton summa, koska työvoiman osuus myynnistä lasketaan siitä.
