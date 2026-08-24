@@ -98,33 +98,27 @@ export function Pill({
     </span>
   );
 }
-
 /**
  * Avainluku.
  *
  * Yksi kortti koko sovellukselle. Aiemmin näitä oli kaksi rinnakkain,
  * ja sama luku näytti eri sivuilla eri tuotteelta.
  *
- * KOLME KERROSTA, YLHÄÄLTÄ ALAS.
+ * IKONILAATTA ON TARTTUMAPINTA, EI KORISTE.
  *
- *   Otsikko pienenä. Luku suurena, ja muutos pillerinä sen vieressä.
- *   Hiuslinjan alla jalka: vertailu vasemmalla, linkki oikealla.
+ * Neljä korttia rinnakkain on neljä lähes samanlaista suorakaidetta.
+ * Värillinen laatta antaa jokaiselle tunnistettavan muodon, ja silmä
+ * löytää oikean kortin ennen kuin ehtii lukea otsikon.
  *
- * Muutos oli aiemmin tekstirivi luvun alla. Pillerinä se luetaan samalla
- * silmäyksellä kuin luku itse, eikä katse joudu palaamaan riviä alas.
+ * Laatan väri tulee kortin tilasta samasta lähteestä kuin pilleri —
+ * satunnainen väri olisi nopeasti mukavampi katsoa mutta opettaisi
+ * ettei väriin kannata luottaa.
  *
- * JALKA TEKEE KLIKATTAVUUDEN NÄKYVÄKSI.
+ * MUUTOS ON PILLERI, EI RIVI.
  *
- * Kortti on ollut linkki jo pitkään, mutta mikään ei kertonut sitä.
- * Nyt linkki on siinä missä sitä etsitään, ja hiuslinja erottaa
- * lukeman toiminnasta.
- *
- * SÄVY TULEE TILASTA, EI KORISTEEKSI.
- *
- * Kortin tausta on pehmeä liukuma, ja sen sävy on sama joka kertoo
- * tilan pillerissä ja palkissa. Satunnainen väri olisi nopeasti
- * mukavampi katsoa mutta opettaisi ettei väriin kannata luottaa —
- * ja Budetissa keltainen tarkoittaa tarkistettavaa.
+ * Prosentti kuuluu luvun viereen, koska se luetaan samalla
+ * silmäyksellä. Vertailuluku kuuluu jalkaan, koska se luetaan vasta
+ * jos prosentti herättää kysymyksen.
  */
 export function MetricCard({
   label,
@@ -148,7 +142,7 @@ export function MetricCard({
    * lukua lueta ravintolan tuloksena.
    */
   hint?: string;
-  /** Pieni trendiviiva oikeaan yläkulmaan. */
+  /** Pieni trendiviiva. Näytetään jalassa, ei luvun vieressä. */
   trend?: ReactNode;
   /** Johtopäätös luvusta. Ilman tätä kortti on pelkkä numero. */
   conclusion?: ReactNode;
@@ -156,7 +150,7 @@ export function MetricCard({
    * Muutos pillerinä luvun vieressä.
    *
    * Lyhyt: "↑ 12,4 %", "+7", "Tahdissa". Kokonainen lause kuuluu
-   * jalkaan, ei pilleriin — pitkä pilleri työntää luvun riviltä pois.
+   * jalkaan — pitkä pilleri työntää luvun riviltä pois.
    */
   delta?: { text: string; tone?: MetricTone };
   /** Täyttyvä palkki: budjetin käyttöaste, kapasiteetti. */
@@ -169,73 +163,62 @@ export function MetricCard({
   /** Korostettu kortti: puhelimessa tärkein luku nostetaan esiin. */
   highlight?: boolean;
 }) {
-  /*
-   * Jalka näyttää sen mikä on olemassa.
-   *
-   * Johtopäätös voittaa vihjeen: "3 098,20 € heinäkuussa" kertoo
-   * enemmän kuin "kirjatut kulut". Jos molemmat ovat, vihje jää
-   * lukeman alle omaksi rivikseen.
-   */
   const footText = conclusion ?? hint;
   const aside = conclusion && hint ? hint : null;
-  const hasFoot = footText !== undefined || href !== undefined;
+  const hasFoot = footText !== undefined || href !== undefined || trend !== undefined;
+
+  const skin = tileSkin(highlight ? "accent" : tone);
 
   const body = (
     <div
       className="rf-card-lift flex h-full flex-col overflow-hidden"
       style={{
-        background: highlight ? "var(--rf-tint-accent)" : tintFor(tone),
-        /*
-         * Pastellikortilla ei ole reunaa. Väri erottaa sen taustasta
-         * jo itsessään, ja reuna tekisi siitä laatikon värin sijaan.
-         */
-        border: tone === "neutral" && !highlight ? "1px solid var(--rf-line)" : "1px solid transparent",
+        background: "var(--rf-card)",
+        border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-stat)",
+        boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="flex flex-1 flex-col px-4 pt-4 sm:px-[18px] sm:pt-[18px]">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {icon ? (
-              <span
-                aria-hidden="true"
-                className="flex h-6 w-6 shrink-0 items-center justify-center"
-                style={{
-                  background: "rgba(255,255,255,0.7)",
-                  color: "var(--rf-text-2)",
-                  borderRadius: 9,
-                }}
-              >
-                {icon}
-              </span>
-            ) : null}
+      <div className="flex flex-1 flex-col px-4 pt-4">
+        <div className="flex items-start gap-3">
+          {icon ? (
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center"
+              style={{
+                background: skin.bg,
+                color: skin.fg,
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              {icon}
+            </span>
+          ) : null}
+
+          <div className="min-w-0 flex-1">
             <p
-              className="truncate text-[12.5px] font-medium"
+              className="truncate text-[12px] font-medium"
               style={{ color: "var(--rf-text-2)" }}
             >
               {label}
             </p>
+            <p className="rf-tabular mt-1 text-[21px] font-extrabold leading-none tracking-[-0.03em] sm:text-[23px]">
+              {value}
+            </p>
           </div>
 
-          {trend ? <div className="shrink-0">{trend}</div> : null}
-        </div>
-
-        <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-          <p className="rf-tabular text-[24px] font-semibold leading-none tracking-[-0.025em] sm:text-[27px]">
-            {value}
-          </p>
           {delta ? <DeltaPill text={delta.text} tone={delta.tone ?? tone} /> : null}
         </div>
 
         {aside ? (
-          <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
             {aside}
           </p>
         ) : null}
 
         {bar ? (
           <div
-            className="mt-3.5 h-1.5 w-full overflow-hidden"
+            className="mt-3 h-1 w-full overflow-hidden"
             style={{ background: "var(--rf-inset)", borderRadius: 980 }}
           >
             <div
@@ -249,25 +232,23 @@ export function MetricCard({
           </div>
         ) : null}
 
-        {/* Jalka pysyy pohjassa myös silloin kun kortit ovat eri korkuisia. */}
         <div className="mt-auto" />
       </div>
 
       {hasFoot ? (
-        <div
-          className="mt-3 flex items-center justify-between gap-3 px-4 py-2.5 sm:px-[18px]"
-          style={{ borderTop: "1px solid rgba(17,19,24,0.07)" }}
-        >
+        <div className="flex items-center justify-between gap-3 px-4 pb-3.5 pt-3">
           <span
-            className="rf-tabular min-w-0 truncate text-[12px]"
+            className="rf-tabular min-w-0 truncate text-[11.5px]"
             style={{ color: footColor(tone) }}
           >
             {footText}
           </span>
 
-          {href ? (
+          {trend ? <span className="shrink-0">{trend}</span> : null}
+
+          {href && !trend ? (
             <span
-              className="shrink-0 text-[12px] font-semibold"
+              className="shrink-0 text-[11.5px] font-bold"
               style={{ color: "var(--rf-accent)" }}
             >
               {linkLabel} <span aria-hidden="true">→</span>
@@ -287,15 +268,15 @@ export function MetricCard({
   );
 }
 
-export type MetricTone = "neutral" | "up" | "down" | "muted" | "warn" | "bad";
+export type MetricTone = "neutral" | "up" | "down" | "muted" | "warn" | "bad" | "accent";
 
 /**
  * Muutospilleri.
  *
- * Kulujen kasvu ei ole hyvä eikä huono ilman kontekstia, joten neutraali
- * on harmaa. Vihreä pilleri laskeville kuluille olisi arvostelma jota
- * ohjelma ei voi tehdä — mutta budjetin ylitys on ylitys, ja se saa
- * värinsä.
+ * Kulujen kasvu ei ole hyvä eikä huono ilman kontekstia, joten
+ * neutraali on harmaa. Vihreä pilleri laskeville kuluille olisi
+ * arvostelma jota ohjelma ei voi tehdä — mutta budjetin ylitys on
+ * ylitys, ja se saa värinsä.
  */
 function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
   const skin =
@@ -305,21 +286,29 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
         ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
         : tone === "bad"
           ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
-          : { bg: "rgba(255,255,255,0.72)", fg: "var(--rf-text-2)" };
+          : { bg: "var(--rf-inset)", fg: "var(--rf-text-2)" };
 
   return (
     <span
-      className="rf-tabular inline-flex shrink-0 items-center px-2 py-[3px] text-[11.5px] font-semibold"
-      style={{
-        background: skin.bg,
-        color: skin.fg,
-        borderRadius: "var(--rf-r-pill)",
-        boxShadow: tone === "neutral" || tone === "muted" ? "var(--rf-shadow-sm)" : "none",
-      }}
+      className="rf-tabular inline-flex shrink-0 items-center px-2 py-[3px] text-[11px] font-bold"
+      style={{ background: skin.bg, color: skin.fg, borderRadius: "var(--rf-r-pill)" }}
     >
       {text}
     </span>
   );
+}
+
+/** Ikonilaatan sävy. Sama lähde kuin pillerillä. */
+function tileSkin(tone: MetricTone): { bg: string; fg: string } {
+  return tone === "up" || tone === "warn"
+    ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
+    : tone === "down"
+      ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }
+      : tone === "bad"
+        ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
+        : tone === "accent"
+          ? { bg: "var(--rf-accent-bg)", fg: "var(--rf-accent)" }
+          : { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" };
 }
 
 /**
@@ -335,16 +324,6 @@ function footColor(tone: MetricTone): string {
     : tone === "bad"
       ? "var(--rf-red-text)"
       : "var(--rf-text-3)";
-}
-
-function tintFor(tone: MetricTone): string {
-  return tone === "up" || tone === "warn"
-    ? "var(--rf-tint-warn)"
-    : tone === "down"
-      ? "var(--rf-tint-good)"
-      : tone === "bad"
-        ? "var(--rf-tint-bad)"
-        : "var(--rf-tint)";
 }
 
 function solidFor(tone: MetricTone): string {

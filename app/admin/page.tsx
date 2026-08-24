@@ -37,18 +37,18 @@ import {
   StatCard,
 } from "@/components/restoflow/dashboard-ui";
 import { MonthPicker } from "./month-picker";
-import { Hero } from "./home/hero";
 import { Rhythm } from "./home/rhythm";
 import { Purchases } from "./home/purchases";
 import { StatusHeader } from "./home/status-header";
-import { SectionHeading } from "@/components/restoflow/dashboard-ui";
+import { Donut, seriesColor, Sparkline } from "@/components/restoflow/dashboard-ui";
+import { AreaChart } from "@/components/restoflow/area-chart";
 import { Today } from "./home/today";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
 import { monthStartDate } from "@/lib/restoflow/clock-context";
-import { spendRhythm } from "@/lib/restoflow/spend-rhythm";
+import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
 
 export const metadata = { title: "Yleiskatsaus" };
 
@@ -265,6 +265,16 @@ export default async function AdminDashboard({
   const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
   const hasTrend = trend.filter((value) => value > 0).length >= 3;
 
+  /*
+   * Myynnin ja kulujen kehitys samalla akselilla.
+   *
+   * Myynti on null niiltä kuukausilta joilta sitä ei ole kirjattu.
+   * Nolla kertoisi että myynti loppui, ja se on eri asia kuin se
+   * ettei kukaan ehtinyt kirjata sitä — kaavio katkaisee viivan siitä
+   * kohtaa eikä vedä sitä pohjaan.
+   */
+  const flow = monthlyFlow(receipts, sales, viewMonth, 6);
+
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
       {/* 1. Yläosa */}
@@ -285,7 +295,50 @@ export default async function AdminDashboard({
         kolme eri asiaa: kuka olen, mitä kuukautta katson ja mitä voin
         tehdä. Ne eivät liity toisiinsa.
       */}
-      <h1 className="sr-only">Yleiskatsaus</h1>
+      {/*
+        Otsikkorivi.
+
+        Murupolku kertoo missä ollaan, otsikko mitä katsotaan ja
+        oikean reunan painikkeet mitä voi tehdä. Kolme asiaa mutta
+        sama kysymysketju — toisin kuin aiemmin, jolloin samalla
+        rivillä oli tervehdys, kuukausi ja toiminnot.
+      */}
+      <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-3)" }}>
+            {restaurant.name} · {formatMonth(viewMonth)}
+          </p>
+          <h1 className="mt-0.5 text-[22px] font-extrabold tracking-[-0.03em]">
+            Yleiskatsaus
+          </h1>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <MonthPicker value={viewMonth} months={selectable} />
+
+          {can(role, "reports.view") ? (
+            <ButtonLink
+              href={`/admin/raportit?kuukausi=${viewMonth}`}
+              tone="ghost"
+              size="sm"
+              icon={<RfIcon name="download" size={15} />}
+            >
+              Vie raportti
+            </ButtonLink>
+          ) : null}
+
+          {canAddReceipts(role) ? (
+            <ButtonLink
+              href="/admin/kuitit/uusi"
+              tone="primary"
+              size="sm"
+              icon={<RfIcon name="plus" size={15} />}
+            >
+              Lisää kuitti
+            </ButtonLink>
+          ) : null}
+        </div>
+      </header>
 
       {/*
         Kolme aikajännettä siinä järjestyksessä kuin kysymykset
@@ -296,96 +349,49 @@ export default async function AdminDashboard({
         aikayksikkö, ei ravintoloitsijan — kello 14 kysymys on "kuka on
         salissa", ei "paljonko elokuussa on kulunut".
       */}
-      <SectionHeading title="Huomio" />
-      <StatusHeader
-        status={status}
-        items={items}
-        canAddReceipt={can(role, "receipts.add")}
-      />
-
-      {pulse ? (
-        <>
-          <SectionHeading
-            title="Tänään"
-            hint="Päivän myynti, työvoima ja kulut. Kuukauden tulos on karkea."
-          />
-          <Today pulse={pulse} canManageSales={can(role, "sales.manage")} />
-        </>
-      ) : null}
-
-      <SectionHeading
-        title={formatMonth(viewMonth)}
-        action={
-          <>
-            <MonthPicker value={viewMonth} months={selectable} />
-
-            {canAddReceipts(role) ? (
-              <ButtonLink
-                href="/admin/kuitit/uusi"
-                tone="primary"
-                size="sm"
-                icon={<RfIcon name="plus" size={15} />}
-              >
-                Lisää kuitti
-              </ButtonLink>
-            ) : null}
-
-            {can(role, "reports.view") ? (
-              <ButtonLink
-                href={`/admin/raportit?kuukausi=${viewMonth}`}
-                tone="ghost"
-                size="sm"
-                icon={<RfIcon name="download" size={15} />}
-              >
-                Vie raportti
-              </ButtonLink>
-            ) : null}
-          </>
-        }
-      />
-
-      <Rhythm rhythm={rhythm} />
-
-      <Hero
-        label="Kirjatut kulut"
-        cents={totals.totalCents}
-        delta={
-          totals.receiptCount > 0 && comparison.change !== null
-            ? percent(comparison.change)
-            : null
-        }
-        deltaTone={
-          totals.receiptCount === 0 || comparison.change === null
-            ? "flat"
-            : comparison.change > 0
-              ? "up"
-              : comparison.change < 0
-                ? "down"
-                : "flat"
-        }
-        footnote={
-          emptyMonthOnly
-            ? "Ei kuitteja tässä kuussa"
-            : totals.receiptCount === 0
-              ? "Lisää ensimmäinen kuitti aloittaaksesi"
-              : comparison.baseMonth === null
-                ? `${formatMonth(viewMonth)} · ei vertailukohtaa`
-                : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
-        }
-        trend={hasTrend ? trend : null}
-        canAddReceipt={can(role, "receipts.add")}
-      />
-
       {/* 2. KPI-kortit */}
       <section
         aria-label="Avainluvut"
-        className="grid auto-rows-fr grid-cols-2 gap-3 xl:grid-cols-4"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
-        {/*
-          Kirjatut kulut nousi tumpaan korttiin ylös.
-          Sama luku kahdessa paikassa opettaa lukijalle että toinen
-          niistä on turha — ja hän ei tiedä kumpi.
-        */}
+        <StatCard
+          label="Kirjatut kulut"
+          value={<CountUp to={totals.totalCents} format="money" />}
+          icon={<RfIcon name="expenses" size={17} />}
+          /*
+           * Tyhjä kuukausi ei ole lasku.
+           *
+           * Nolla kuittia tuottaa aina −100 % edelliseen kuuhun, ja
+           * alaspäin osoittava nuoli väittäisi kulujen pienentyneen.
+           * Ne eivät ole pienentyneet — niitä ei ole vielä kirjattu.
+           */
+          tone={
+            totals.receiptCount === 0 || comparison.change === null
+              ? "muted"
+              : comparison.change > 0
+                ? "up"
+                : comparison.change < 0
+                  ? "down"
+                  : "neutral"
+          }
+          delta={
+            totals.receiptCount > 0 && comparison.change !== null
+              ? { text: percent(comparison.change) }
+              : undefined
+          }
+          conclusion={
+            emptyMonthOnly
+              ? "Ei kuitteja tässä kuussa"
+              : totals.receiptCount === 0
+                ? "Lisää ensimmäinen kuitti"
+                : comparison.baseMonth === null
+                  ? "Ei vertailukohtaa"
+                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
+          }
+          trend={hasTrend ? <Sparkline values={trend} width={64} height={20} /> : undefined}
+          href="/admin/kulut"
+        />
+
         <StatCard
           label="Kuitit"
           value={<CountUp to={receipts_.total} format="integer" />}
@@ -397,7 +403,7 @@ export default async function AdminDashboard({
           }
           conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
           tone={receipts_.pending > 0 ? "warn" : "neutral"}
-          icon={<RfIcon name="receipt" size={14} />}
+          icon={<RfIcon name="receipt" size={17} />}
           href="/admin/kuitit"
           linkLabel="Kuitit"
         />
@@ -415,7 +421,7 @@ export default async function AdminDashboard({
                 : "Leimauksista laskettu"
           }
           tone="muted"
-          icon={<RfIcon name="clock" size={14} />}
+          icon={<RfIcon name="clock" size={17} />}
           href="/admin/tyovuorot"
         />
 
@@ -433,7 +439,7 @@ export default async function AdminDashboard({
                   : `${Math.round(costShare * 100)} % kirjatuista kuluista`
             }
             tone="muted"
-            icon={<RfIcon name="staff" size={14} />}
+            icon={<RfIcon name="staff" size={17} />}
             hint="Tunnit × tuntipalkka. Ei palkkalaskelma."
             href="/admin/tyovuorot"
           />
@@ -445,7 +451,7 @@ export default async function AdminDashboard({
               suppliers.length === 0 ? "Ei vielä toimittajia" : "Kuukauden aikana"
             }
             tone="muted"
-            icon={<RfIcon name="suppliers" size={14} />}
+            icon={<RfIcon name="suppliers" size={17} />}
             href="/admin/toimittajat"
           />
         )}
@@ -460,6 +466,113 @@ export default async function AdminDashboard({
         epäilemään kumpaakin — ja kolme eri tilaa oli toteutettu
         molemmissa erikseen, joten ne ehtivät jo erota toisistaan.
       */}
+
+      {/*
+        Kaksi kaaviota rinnakkain.
+
+        Jakauma vastaa kysymykseen "mihin", kehitys kysymykseen "mihin
+        suuntaan". Ne ovat eri kysymyksiä samasta rahasta, ja
+        vierekkäin ne luetaan yhtenä silmäyksenä.
+      */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <Panel title="Kulujakauma" subtitle={formatMonth(viewMonth)} href="/admin/kulut">
+          {categories.length === 0 ? (
+            <PanelEmpty
+              {...(emptyForMonth ?? {
+                text: "Lisää kuitteja nähdäksesi kulujakauman.",
+                cta: "Lisää kuitti",
+                href: "/admin/kuitit/uusi",
+              })}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-5">
+              <Donut
+                slices={categories.slice(0, 5).map((row) => ({
+                  key: row.key,
+                  label: row.name,
+                  valueCents: row.totalCents,
+                  share: row.share,
+                }))}
+                total={formatMoney(totals.totalCents)}
+              />
+
+              <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-1.5">
+                {categories.slice(0, 5).map((row, index) => (
+                  <li key={row.key} className="flex items-center gap-2 text-[12.5px]">
+                    <span
+                      aria-hidden="true"
+                      className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+                      style={{ background: seriesColor(index) }}
+                    />
+                    <span className="min-w-0 flex-1 truncate" style={{ color: "var(--rf-text-2)" }}>
+                      {row.name}
+                    </span>
+                    <span className="rf-tabular shrink-0 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {Math.round(row.share * 100)} %
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Panel>
+
+        <Panel
+          title="Myynti ja kulut"
+          subtitle="Kuusi kuukautta"
+          href={can(role, "sales.view") ? "/admin/myynti" : undefined}
+          linkLabel="Myynti"
+        >
+          {flow.labels.length < 2 ? (
+            <PanelEmpty text="Kehitys näkyy täällä kun aineistoa on kahdelta kuukaudelta." />
+          ) : (
+            <>
+              <AreaChart
+                labels={flow.labels}
+                series={[
+                  { label: "Myynti", color: "var(--rf-blue)", points: flow.sales },
+                  { label: "Kulut", color: "var(--rf-amber)", points: flow.costs },
+                ]}
+                format={(value) => `${Math.round(value / 100000)} k`}
+              />
+
+              <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                <li className="flex items-center gap-2 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                  <span aria-hidden="true" className="h-[3px] w-3 rounded-full" style={{ background: "var(--rf-blue)" }} />
+                  Myynti
+                </li>
+                <li className="flex items-center gap-2 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                  <span aria-hidden="true" className="h-[3px] w-3 rounded-full" style={{ background: "var(--rf-amber)" }} />
+                  Kulut
+                </li>
+                {flow.salesMissing ? (
+                  <li className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                    Myynti puuttuu osalta kuukausia — viiva katkeaa siitä.
+                  </li>
+                ) : null}
+              </ul>
+            </>
+          )}
+        </Panel>
+      </div>
+
+      {/*
+        Huomiot ja kulurytmi rinnakkain.
+
+        Vasemmalla se mikä vaatii tekemistä, oikealla se mikä selittää
+        kuukauden muodon. Molemmat luetaan harvoin mutta kumpikaan ei
+        ansaitse koko rivin leveyttä.
+      */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <StatusHeader
+          status={status}
+          items={items}
+          canAddReceipt={can(role, "receipts.add")}
+        />
+        <Rhythm rhythm={rhythm} />
+      </div>
+
+      {pulse ? <Today pulse={pulse} canManageSales={can(role, "sales.manage")} /> : null}
 
       <Purchases
         categories={categories.slice(0, 5).map((row) => ({

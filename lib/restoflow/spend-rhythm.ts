@@ -197,3 +197,78 @@ function weekdayOf(isoDate: string): number {
   const d = new Date(`${isoDate}T12:00:00Z`).getUTCDay();
   return d === 0 ? 7 : d;
 }
+
+// ---------------------------------------------------------------------------
+
+/** Kuukausivirran piste: kulut ja myynti samalta kuukaudelta. */
+export interface FlowPoint {
+  month: string;
+  label: string;
+  costCents: number;
+  /** Null kun myyntiä ei ole kirjattu. Ei nolla. */
+  salesCents: number | null;
+}
+
+export interface MonthlyFlow {
+  labels: string[];
+  costs: number[];
+  sales: (number | null)[];
+  /** Onko jokin kuukausi ilman myyntiä? Kaavio kertoo sen. */
+  salesMissing: boolean;
+}
+
+/**
+ * Kulujen ja myynnin kehitys viimeisiltä kuukausilta.
+ *
+ * MYYNNIN PUUTTUMINEN EI OLE NOLLAMYYNTI.
+ *
+ * Myynti on Budetissa uusi taulu, ja historiaa on vasta siitä asti
+ * kun sitä on alettu kirjata. Nollaan putoava viiva väittäisi että
+ * ravintola lakkasi myymästä — kaavio katkaisee viivan sen sijaan,
+ * ja siksi tässä palautetaan null eikä 0.
+ */
+export function monthlyFlow(
+  receipts: Receipt[],
+  sales: { date: string; netCents: number }[],
+  month: string,
+  count: number,
+): MonthlyFlow {
+  const months: string[] = [];
+  let cursor = month;
+  for (let i = 0; i < count; i += 1) {
+    months.unshift(cursor);
+    cursor = previousMonthOf(cursor);
+  }
+
+  const costs = months.map((m) =>
+    receiptsInMonth(receipts, m).reduce((sum, r) => sum + r.totalCents, 0),
+  );
+
+  const salesByMonth = months.map((m) => {
+    const rows = sales.filter((s) => s.date.startsWith(m));
+    return rows.length === 0 ? null : rows.reduce((sum, s) => sum + s.netCents, 0);
+  });
+
+  return {
+    labels: months.map(shortMonth),
+    costs,
+    sales: salesByMonth,
+    salesMissing: salesByMonth.some((v) => v === null),
+  };
+}
+
+/** "2026-08" → "elo" */
+function shortMonth(month: string): string {
+  const names = [
+    "tam", "hel", "maa", "huh", "tou", "kes",
+    "hei", "elo", "syy", "lok", "mar", "jou",
+  ];
+  return names[Number(month.slice(5, 7)) - 1] ?? month;
+}
+
+function previousMonthOf(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  return m === 1
+    ? `${year - 1}-12`
+    : `${year}-${String(m - 1).padStart(2, "0")}`;
+}
