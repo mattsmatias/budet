@@ -82,26 +82,39 @@ function DesktopSidebar({
 
       <nav
         aria-label="Hallintanavigaatio"
-        className="flex-1 overflow-y-auto px-3 pb-3 pt-1"
+        className="flex-1 overflow-y-auto px-3 pb-3"
       >
         {/*
-          Ryhmät erottuvat väljyydellä, eivät viivalla eivätkä
-          otsikolla.
+          Ryhmän nimi rivien yläpuolella.
 
           Kymmenen samannäköistä riviä luetaan yhtenä pötkönä, ja
-          silmä joutuu lukemaan joka kerta koko listan. Otsikot
-          nimeäisivät ryhmät mutta veisivät sata pikseliä pystyssä —
-          matalalla ruudulla kisko alkaisi vieriä, ja vierivä valikko
-          on huonompi kuin nimeämätön.
+          silmä joutuu lukemaan joka kerta koko listan. Pelkkä väljyys
+          erotti ryhmät muttei kertonut mitä ne ovat.
+
+          Ensimmäinen ryhmä jää nimeämättä: "PÄÄVALIKKO" yhden
+          Yleiskatsaus-rivin yllä toistaisi sanan joka ei kerro mitään,
+          ja veisi rivin verran tilaa pystyssä.
+
+          Otsikko on ryhmän nimi eikä koriste, joten se merkitään myös
+          rakenteeseen: ruudunlukija kuulee listan nimen eikä vain
+          neljää irrallista linkkiä.
         */}
         {sections.map((section) => (
-          <div key={section.id} className="mb-2.5 last:mb-0">
-            {/*
-             * Otsikko on ryhmän nimi eikä koriste, joten se merkitään
-             * myös rakenteeseen: ruudunlukija kuulee listan nimen eikä
-             * vain seitsemää irrallista linkkiä.
-             */}
-            <ul aria-label={section.label}>
+          <div key={section.id}>
+            {section.id === "main" ? null : (
+              <p
+                id={`rf-nav-${section.id}`}
+                className="px-[11px] pb-0.5 pt-2.5 text-[10.5px] font-bold uppercase"
+                style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
+              >
+                {section.label}
+              </p>
+            )}
+
+            <ul
+              aria-label={section.id === "main" ? section.label : undefined}
+              aria-labelledby={section.id === "main" ? undefined : `rf-nav-${section.id}`}
+            >
               {section.items.map((item) => (
                 <NavLink key={item.href} item={item} count={counts[item.href] ?? 0} />
               ))}
