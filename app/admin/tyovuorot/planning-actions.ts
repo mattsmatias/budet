@@ -18,6 +18,9 @@ import { fetchShifts } from "@/lib/restoflow/queries";
 import type { StaffPosition } from "@/lib/restoflow/types";
 import type { AdminState } from "../actions";
 
+/** Tunnisteen muoto. Selaimen lähettämään listaan ei luoteta. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Kannan funktio palauttaa yhden rivin: luodut ja ohitetut. */
 interface CopyResult {
   created: number;
@@ -148,6 +151,73 @@ export async function createShiftByDrop(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/admin", "layout");
+}
+
+/**
+ * Monen vuoron poisto kerralla.
+ *
+ * SÄÄNNÖT EIVÄT LÖYSTY JOUKOSSA.
+ *
+ * Jokaiseen riviin sovelletaan samat säännöt kuin yksittäin: luonnos
+ * poistetaan, julkaistu perutaan, ja menneen päivän nimetty vuoro on
+ * suojattu. Joukkotoiminto joka ohittaisi säännöt olisi tapa kiertää
+ * ne.
+ *
+ * TULOS KERROTAAN KOLMENA LUKUNA.
+ *
+ * Valinnassa on lähes aina rivejä joihin ei voi koskea. "Valmis"
+ * jättäisi auki mitä oikeasti tapahtui, ja käyttäjä laskisi rivit
+ * itse.
+ */
+export async function removeShifts(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const { role } = await requireContext("/admin/tyovuorot");
+  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta poistaa vuoroja." };
+
+  const ids = formData
+    .getAll("id")
+    .map((value) => String(value))
+    .filter((value) => UUID.test(value));
+
+  if (ids.length === 0) return { error: "Valitse vähintään yksi vuoro." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("bulk_remove_shifts", { p_ids: ids });
+
+  if (error) return { error: error.message ?? "Poisto epäonnistui." };
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const result = (row ?? {}) as { removed?: number; cancelled?: number; blocked?: number };
+
+  const removed = Number(result.removed ?? 0);
+  const cancelled = Number(result.cancelled ?? 0);
+  const blocked = Number(result.blocked ?? 0);
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+
+  const parts: string[] = [];
+  if (removed > 0) parts.push(`${removed} poistettu`);
+  if (cancelled > 0) parts.push(`${cancelled} peruttu`);
+
+  if (parts.length === 0) {
+    return {
+      error:
+        "Yhtäkään valittua vuoroa ei voitu poistaa. Mennyttä nimettyä vuoroa ei " +
+        "voi poistaa, ja jo peruttu on jo peruttu.",
+    };
+  }
+
+  return {
+    notice:
+      parts.join(", ") +
+      "." +
+      (blocked > 0
+        ? ` ${blocked} jäi koskematta: mennyt nimetty vuoro tai jo peruttu.`
+        : ""),
+  };
 }
 
 export async function createRecurringShifts(

@@ -7,6 +7,7 @@ import {
   plannedMinutes,
   planSummary,
   publicationOf,
+  removalOutcome,
 } from "../shift-planning";
 import type { Shift, User } from "../types";
 
@@ -309,5 +310,80 @@ describe("formatPlanned", () => {
     expect(formatPlanned(480)).toBe("8 h");
     expect(formatPlanned(45)).toBe("45 min");
     expect(formatPlanned(0)).toBe("0 min");
+  });
+});
+
+/*
+ * Poiston säännöt ovat samat yksittäin ja joukossa.
+ *
+ * Vahvistus lupaa mitä tapahtuu, ja juuri sen lupauksen takia
+ * painiketta painetaan. Kanta noudattaa samoja sääntöjä.
+ */
+describe("removalOutcome", () => {
+  const TANAAN = "2026-09-15";
+
+  it("poistaa luonnoksen", () => {
+    expect(removalOutcome([shift({ publishedAt: null, date: "2026-09-20" })], TANAAN))
+      .toEqual({ removed: 1, cancelled: 0, blocked: 0 });
+  });
+
+  it("peruu julkaistun", () => {
+    expect(removalOutcome([shift({ date: "2026-09-20" })], TANAAN))
+      .toEqual({ removed: 0, cancelled: 1, blocked: 0 });
+  });
+
+  it("peruu julkaistun myös menneeltä päivältä", () => {
+    // Peruutus ei pyyhi mitään: rivi säilyy peruttuna historiassa.
+    expect(removalOutcome([shift({ date: "2026-09-01" })], TANAAN))
+      .toEqual({ removed: 0, cancelled: 1, blocked: 0 });
+  });
+
+  it("suojaa menneen nimetyn luonnoksen", () => {
+    expect(
+      removalOutcome([shift({ publishedAt: null, date: "2026-09-01" })], TANAAN),
+    ).toEqual({ removed: 0, cancelled: 0, blocked: 1 });
+  });
+
+  /*
+   * Tekijätön vuoro ei ole kenenkään tehtyä työtä.
+   *
+   * Menneen päivän suoja on olemassa työn suojaksi, eikä avoimeen
+   * vuoroon voi liittyä leimauksia.
+   */
+  it("poistaa menneen avoimen luonnoksen", () => {
+    expect(
+      removalOutcome(
+        [shift({ publishedAt: null, date: "2026-09-01", userId: "" })],
+        TANAAN,
+      ),
+    ).toEqual({ removed: 1, cancelled: 0, blocked: 0 });
+  });
+
+  it("ohittaa jo perutun", () => {
+    expect(
+      removalOutcome(
+        [shift({ date: "2026-09-20", cancelledAt: "2026-09-10T08:00:00.000Z" })],
+        TANAAN,
+      ),
+    ).toEqual({ removed: 0, cancelled: 0, blocked: 1 });
+  });
+
+  it("laskee sekalaisen valinnan oikein", () => {
+    const outcome = removalOutcome(
+      [
+        shift({ id: "a", publishedAt: null, date: "2026-09-20" }),
+        shift({ id: "b", publishedAt: null, date: "2026-09-21" }),
+        shift({ id: "c", date: "2026-09-22" }),
+        shift({ id: "d", publishedAt: null, date: "2026-09-01" }),
+        shift({ id: "e", date: "2026-09-20", cancelledAt: "2026-09-10T08:00:00.000Z" }),
+      ],
+      TANAAN,
+    );
+
+    expect(outcome).toEqual({ removed: 2, cancelled: 1, blocked: 2 });
+  });
+
+  it("kestää tyhjän valinnan", () => {
+    expect(removalOutcome([], TANAAN)).toEqual({ removed: 0, cancelled: 0, blocked: 0 });
   });
 });

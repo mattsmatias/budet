@@ -226,6 +226,45 @@ export function planSummary(input: {
   };
 }
 
+export interface RemovalOutcome {
+  /** Poistetaan lopullisesti: luonnos jota ei ole luvattu kenellekään. */
+  removed: number;
+  /** Perutaan: julkaistu vuoro säilyy peruttuna, työntekijä saa tiedon. */
+  cancelled: number;
+  /** Ei koskettavissa: mennyt nimetty vuoro tai jo peruttu. */
+  blocked: number;
+}
+
+/**
+ * Mitä valituille vuoroille tapahtuu jos ne poistetaan.
+ *
+ * SAMA PÄÄTTELY KUIN KANNASSA.
+ *
+ * Vahvistus lupaa mitä tapahtuu, ja juuri sen lupauksen takia
+ * painiketta painetaan. Jos näkymä laskisi toisin kuin kanta, lupaus
+ * olisi väärä — siksi säännöt ovat tässä yhdessä paikassa ja
+ * bulk_remove_shifts noudattaa samoja.
+ *
+ * Menneen päivän suoja koskee vain nimettyjä vuoroja: tekijätön vuoro
+ * ei ole kenenkään tehtyä työtä.
+ */
+export function removalOutcome(shifts: Shift[], today: string): RemovalOutcome {
+  let removed = 0;
+  let cancelled = 0;
+  let blocked = 0;
+
+  for (const shift of shifts) {
+    const state = publicationOf(shift);
+
+    if (state === "cancelled") blocked += 1;
+    else if (state === "published") cancelled += 1;
+    else if (shift.userId !== "" && shift.date < today) blocked += 1;
+    else removed += 1;
+  }
+
+  return { removed, cancelled, blocked };
+}
+
 /** "450" → "7 h 30 min". Suunnitelmassa tunnit ja minuutit erikseen. */
 export function formatPlanned(minutes: number): string {
   const hours = Math.floor(minutes / 60);

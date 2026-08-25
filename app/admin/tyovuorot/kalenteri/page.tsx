@@ -20,6 +20,7 @@ import { CountUp } from "@/components/restoflow/count-up";
 import { DayPanel } from "./day-panel";
 import { DragStaff } from "./drag-staff";
 import { CopyRange, RecurringForm } from "./copy-controls";
+import { BulkShifts } from "./bulk-shifts";
 import { PublishBar } from "../publish-bar";
 
 export const metadata = { title: "Työvuorokalenteri" };
@@ -165,6 +166,12 @@ export default async function ShiftCalendarPage({
         <div className="flex flex-wrap gap-2.5">
           <CopyRange month={viewMonth} monthStart={monthStart} monthEnd={monthEnd} />
           <RecurringForm users={users} monthStart={monthStart} monthEnd={monthEnd} />
+          <BulkShifts
+            shifts={monthShifts}
+            users={users}
+            today={today}
+            monthLabel={formatMonth(viewMonth)}
+          />
         </div>
       ) : null}
 

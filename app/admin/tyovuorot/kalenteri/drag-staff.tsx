@@ -33,7 +33,27 @@ export function DragStaff({ users }: { users: User[] }) {
   const [pending, startTransition] = useTransition();
   const overRef = useRef<HTMLElement | null>(null);
 
+  /*
+   * VAIN OMA RAAHAUS KELPAA.
+   *
+   * Kuuntelija on dokumentissa, joten se näkee jokaisen pudotuksen
+   * sivulla — myös sellaisen jota tämä komponentti ei aloittanut:
+   * tiedoston raahaus ikkunaan, toisen elementin raahaus, tai
+   * automaation synteettinen tapahtuma.
+   *
+   * Pelkkä dataTransferin lukeminen ei riitä suojaksi, koska sen
+   * sisältö voi tulla mistä tahansa. Tämä lippu asetetaan vain omassa
+   * dragstartissa ja nollataan heti pudotuksen jälkeen, joten yksikään
+   * ulkopuolinen tapahtuma ei voi luoda vuoroa.
+   */
+  const ownDragRef = useRef<string | null>(null);
+
   useEffect(() => {
+    function endDrag() {
+      ownDragRef.current = null;
+      clearHighlight();
+    }
+
     function clearHighlight() {
       if (overRef.current) {
         overRef.current.style.removeProperty("outline");
@@ -47,6 +67,8 @@ export function DragStaff({ users }: { users: User[] }) {
     }
 
     function onDragOver(event: DragEvent) {
+      if (ownDragRef.current === null) return;
+
       const cell = dayUnder(event.target);
       if (!cell) return;
 
@@ -62,9 +84,12 @@ export function DragStaff({ users }: { users: User[] }) {
     }
 
     function onDrop(event: DragEvent) {
+      // Vain tämän komponentin aloittama raahaus luo vuoron.
+      const userId = ownDragRef.current;
+      ownDragRef.current = null;
+
       const cell = dayUnder(event.target);
       const date = cell?.dataset.day;
-      const userId = event.dataTransfer?.getData("text/budet-user");
 
       clearHighlight();
       setDragging(null);
@@ -84,13 +109,13 @@ export function DragStaff({ users }: { users: User[] }) {
 
     document.addEventListener("dragover", onDragOver);
     document.addEventListener("drop", onDrop);
-    document.addEventListener("dragend", clearHighlight);
+    document.addEventListener("dragend", endDrag);
 
     return () => {
       document.removeEventListener("dragover", onDragOver);
       document.removeEventListener("drop", onDrop);
-      document.removeEventListener("dragend", clearHighlight);
-      clearHighlight();
+      document.removeEventListener("dragend", endDrag);
+      endDrag();
     };
   }, []);
 
@@ -121,9 +146,13 @@ export function DragStaff({ users }: { users: User[] }) {
               onDragStart={(event) => {
                 event.dataTransfer.setData("text/budet-user", user.id);
                 event.dataTransfer.effectAllowed = "copy";
+                ownDragRef.current = user.id;
                 setDragging(user.id);
               }}
-              onDragEnd={() => setDragging(null)}
+              onDragEnd={() => {
+                ownDragRef.current = null;
+                setDragging(null);
+              }}
               className="rf-press flex cursor-grab items-center gap-2 px-2.5 py-1.5 active:cursor-grabbing"
               style={{
                 background: "var(--rf-inset)",
