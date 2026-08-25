@@ -9,6 +9,7 @@ import {
   deleteSalesGroup,
   savePosMapping,
   saveSalesGroup,
+  seedDefaultSalesGroups,
   setDefaultSalesGroup,
   type VatState,
 } from "./vat-actions";
@@ -36,11 +37,42 @@ export function SalesGroups({ groups }: { groups: SalesGroup[] }) {
   return (
     <div>
       {groups.length === 0 ? (
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-          Yhtään myyntiryhmää ei ole vielä määritetty. Lisää ne samoina
-          ryhminä kuin kassajärjestelmäsi päiväraportissa — silloin päivän
-          myynti voidaan täsmäyttää raporttiin ryhmä kerrallaan.
-        </p>
+        /*
+          Tyhjä näkymä on este jota kukaan ei ohita illan päätteeksi.
+          Pohja vie sen pois yhdellä painalluksella; ryhmiä voi
+          muokata ja poistaa vapaasti jälkeenpäin.
+        */
+        <div
+          className="px-3.5 py-3.5"
+          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        >
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+            Yhtään myyntiryhmää ei ole vielä määritetty. Suomessa ravintolan
+            kannat ovat samat joka ravintolalle, joten voit aloittaa
+            vakiopohjasta ja muokata sitä.
+          </p>
+
+          <form action={seedDefaultSalesGroups} className="mt-3">
+            <button
+              type="submit"
+              className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+              style={{
+                background: "var(--rf-accent)",
+                color: "var(--rf-on-accent)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <RfIcon name="plus" size={15} />
+              Lisää Suomen vakioryhmät
+            </button>
+          </form>
+
+          <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            Ravintolamyynti 14 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
+            Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Budet ei
+            seuraa verokantojen muutoksia puolestasi.
+          </p>
+        </div>
       ) : (
         <ul className="space-y-1.5">
           {groups.map((group) =>

@@ -187,3 +187,20 @@ export async function deletePosMapping(formData: FormData): Promise<void> {
 
   revalidatePath("/admin", "layout");
 }
+
+/**
+ * Suomen vakioryhmät ravintolalle jolla ei ole vielä yhtään.
+ *
+ * Sama pohja kuin uudella ravintolalla. Kanta tarkistaa ettei ryhmiä
+ * ole ennestään — ravintola joka on määrittänyt omat ryhmänsä ei saa
+ * löytää niiden joukosta kolmea uutta.
+ */
+export async function seedDefaultSalesGroups(): Promise<void> {
+  const { restaurant, role } = await requireContext(PATH);
+  if (!can(role, "settings.edit")) return;
+
+  const supabase = await createClient();
+  await supabase.rpc("seed_default_sales_groups", { p_restaurant: restaurant.id });
+
+  revalidatePath("/admin", "layout");
+}
