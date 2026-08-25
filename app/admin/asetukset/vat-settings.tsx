@@ -9,6 +9,7 @@ import {
   deleteSalesGroup,
   savePosMapping,
   saveSalesGroup,
+  seedDefaultPosMappings,
   seedDefaultSalesGroups,
   setDefaultSalesGroup,
   type VatState,
@@ -504,6 +505,40 @@ export function PosMappings({
           <Submit label="Lisää kohdistus" />
           <Feedback state={state} />
         </div>
+      </form>
+
+      {/*
+        Yleiset nimet yhdellä painalluksella.
+
+        Kohdistuksia on helposti kymmeniä, ja niiden naputtelu yksitellen
+        on juuri sitä työtä joka jää tekemättä. Lista ei kirjoita päälle:
+        omat kohdistukset säilyvät sellaisinaan.
+
+        Painike on lomakkeen jälkeen eikä ennen sitä — käsin lisääminen
+        on se mitä täällä useimmiten tehdään, ja pohja tarvitaan kerran.
+      */}
+      <form action={seedDefaultPosMappings} className="mt-4">
+        <button
+          type="submit"
+          className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            border: "1px solid var(--rf-line-strong)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <RfIcon name="plus" size={15} />
+          Lisää yleiset kassaryhmänimet
+        </button>
+
+        <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          RUOKA, LOUNAS, VEDET ja muut tavalliset nimet ravintolamyyntiin;
+          OLUT, VIINI, ALKO ja vastaavat alkoholimyyntiin. Omat kohdistuksesi
+          säilyvät ennallaan. Monitulkintaisia nimiä kuten JUOMAT tai TAKE AWAY
+          ei kohdisteta puolestasi — niistä Budet varoittaa raporttia
+          luettaessa.
+        </p>
       </form>
     </div>
   );

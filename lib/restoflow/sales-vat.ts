@@ -56,9 +56,18 @@ export interface PosMapping {
  */
 export interface PosVatRate {
   vatRate: number;
-  grossCents: number;
+
+  /**
+   * Vero. Ainoa pakollinen luku.
+   *
+   * Osa kassoista tulostaa kannoittain vain veron: "ALV 14 % 12,34".
+   * Silloin veroton ja verollinen ovat null. Ne ovat vertailun
+   * tarkkuutta, eivät sen edellytys — kassan ilmoittama vero on yhä
+   * kassan ilmoittama vero.
+   */
   vatCents: number;
-  netCents: number;
+  grossCents: number | null;
+  netCents: number | null;
 }
 
 /** Päivän myyntirivi: yksi myyntiryhmä yhtenä päivänä. */
@@ -301,12 +310,24 @@ export function reconcile(input: {
       ? posRates.map((rate) => {
           const own = summary.byRate.find((r) => r.vatRate === rate.vatRate);
 
+          /*
+           * Myynti kun se tiedetään, muuten vero.
+           *
+           * Kaikki kassat eivät tulosta kannoittaista myyntiä. Silloin
+           * verrataan sitä mitä on — vero on aina — ja raja lasketaan
+           * samassa yksikössä: verona se on pienin muutos jonka väärä
+           * kohdistus voisi aiheuttaa.
+           */
+          const byGross = rate.grossCents !== null;
+
           return compare(
-            `Myynti ${formatRate(rate.vatRate)}`,
-            rate.grossCents,
-            own?.grossCents ?? 0,
+            `${byGross ? "Myynti" : "ALV"} ${formatRate(rate.vatRate)}`,
+            byGross ? rate.grossCents : rate.vatCents,
+            byGross ? (own?.grossCents ?? 0) : (own?.vatCents ?? 0),
             tolerance,
-            wholeGroupFloor(input.lines),
+            byGross
+              ? wholeGroupFloor(input.lines)
+              : (smallestRateSwapCents(summary) ?? 0),
           );
         })
       : summary.byRate.map((rate) =>
@@ -369,7 +390,7 @@ function describeSplit(noted: Comparison[]): string {
   );
 
   const size = formatMoney(Math.abs(biggest.diffCents ?? 0));
-  const rate = biggest.label.replace(/^Myynti /, "");
+  const rate = biggest.label.replace(/^(Myynti|ALV) /, "");
 
   return (
     `Kassan verokantajako eroaa tuoteryhmien jaosta ${size} ` +

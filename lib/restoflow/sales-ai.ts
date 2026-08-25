@@ -53,6 +53,13 @@ export interface SalesExtraction {
 export interface SalesExtractionInput {
   fileName: string;
   file?: File;
+  /**
+   * Raportin loput sivut järjestyksessä.
+   *
+   * Z-raportti on pitkä liuska, ja puhelimella siitä saa tarkan kuvan
+   * vain osissa. Sivuja saa olla niin monta kuin raportissa on.
+   */
+  extraPages?: File[];
 }
 
 export interface SalesExtractor {
@@ -150,12 +157,23 @@ export class RemoteSalesExtractor implements SalesExtractor {
 
     const started = Date.now();
 
-    // Sama valmistelu kuin kuiteilla: HEIC muuntuu JPEG:ksi ja iso
-    // kuva pienenee luettavaan kokoon.
-    const { file } = await prepareForExtraction(input.file);
+    /*
+     * Sama valmistelu kuin kuiteilla: HEIC muuntuu JPEG:ksi ja iso
+     * kuva pienenee luettavaan kokoon.
+     *
+     * Sivujärjestys säilyy: Promise.all palauttaa tulokset syötteen
+     * järjestyksessä riippumatta siitä missä järjestyksessä ne
+     * valmistuvat. Raportin loppusumma on viimeisellä sivulla, joten
+     * järjestys on osa sisältöä.
+     */
+    const prepared = await Promise.all(
+      [input.file, ...(input.extraPages ?? [])].map(async (page) =>
+        (await prepareForExtraction(page)).file,
+      ),
+    );
 
     const body = new FormData();
-    body.set("file", file);
+    for (const page of prepared) body.append("pages", page);
 
     let response: Response;
     try {

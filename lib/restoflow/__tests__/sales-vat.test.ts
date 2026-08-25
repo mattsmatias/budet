@@ -396,6 +396,49 @@ describe("kassan ALV-erittely", () => {
     expect(r.explanation).not.toContain("kohdistettu väärään verokantaan");
   });
 
+  /*
+   * Kassa joka tulostaa kannoittain vain veron.
+   *
+   * "ALV 14 % 12,34" ilman veroton- ja verollinen-sarakkeita on
+   * tavallinen. Ennen koko rivi hylättiin ja päivä palasi johtamaan
+   * veron ryhmistä.
+   */
+  it("kelpuuttaa ALV-rivin ilman verotonta ja verollista", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15987,
+      posVatRates: [
+        { vatRate: 0.255, vatCents: 213, grossCents: null, netCents: null },
+        { vatRate: 0.135, vatCents: 15774, grossCents: null, netCents: null },
+      ],
+      lines,
+    });
+
+    // Kassan vero on yhä kassan vero, vaikka rivit ovat vajaat.
+    expect(r.vat.budetCents).toBe(15987);
+    expect(r.vat.status).toBe("match");
+  });
+
+  it("vertaa vajailla riveillä veroa ja tuntee sielläkin huomion", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15987,
+      posVatRates: [
+        { vatRate: 0.255, vatCents: 213, grossCents: null, netCents: null },
+        { vatRate: 0.135, vatCents: 15774, grossCents: null, netCents: null },
+      ],
+      lines,
+    });
+
+    const yleinen = r.byRate.find((c) => c.label === `ALV ${formatRate(0.255)}`);
+
+    // Kassa 2,13, ryhmistä 2,03 — kymmenen senttiä, ei kohdistusvirhe.
+    expect(yleinen?.posCents).toBe(213);
+    expect(yleinen?.budetCents).toBe(203);
+    expect(yleinen?.status).toBe("note");
+    expect(r.status).toBe("match");
+  });
+
   it("syyttää kohdistusta kun ero on kokonaisen ryhmän kokoinen", () => {
     const r = reconcile({
       posGrossCents: 133670,

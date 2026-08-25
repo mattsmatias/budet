@@ -29,6 +29,9 @@ export const maxDuration = 60;
 
 const MAX_BYTES = 20 * 1024 * 1024;
 
+/** Yhden pyynnön yhteiskoko. Sivuja saa olla monta, tavuja ei rajatta. */
+const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
+
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 const PDF_TYPE = "application/pdf";
 
@@ -60,8 +63,8 @@ const extraction = z.object({
     z.object({
       ratePercent: z.number(),
       vatCents: z.number().int(),
-      netCents: z.number().int(),
-      grossCents: z.number().int(),
+      netCents: z.number().int().nullable(),
+      grossCents: z.number().int().nullable(),
     }),
   ),
   imageQuality: z.enum(["good", "poor"]),
@@ -94,11 +97,13 @@ Palautus-, alennus- ja mitätöintirivit eivät ole myyntiryhmiä. Maksutavat (K
 vatRates: raportin ALV-erittely verokannoittain. Lähes jokainen Z-raportti päättyy taulukkoon jossa on rivi kutakin verokantaa kohti: "ALV 25,5 %", "ALV 13,50 %", "ALV 10 %", "ALV 0 %". Riviltä löytyy kolme lukua: vero, veroton ja verollinen. Sarakkeet voivat olla otsikoitu "ALV / NE / TTC", "Vero / Veroton / Verollinen" tai "ALV / Netto / Brutto".
 
 ratePercent: verokanta prosenttilukuna sellaisena kuin se rivillä lukee. 25,5 % = 25.5. 13,50 % = 13.5. Ei osuutena.
-vatCents: rivin veron määrä sentteinä.
-netCents: rivin veroton myynti sentteinä.
-grossCents: rivin verollinen myynti sentteinä.
+vatCents: rivin veron määrä sentteinä. Tämä on pakollinen — ilman sitä riviä ei palauteta lainkaan.
+netCents: rivin veroton myynti sentteinä, tai null jos raportti ei kerro sitä.
+grossCents: rivin verollinen myynti sentteinä, tai null jos raportti ei kerro sitä.
 
-Tämä taulukko on eri asia kuin myyntiryhmät. Ryhmät kertovat mitä myytiin, ALV-erittely millä kannalla. Palauta molemmat jos molemmat ovat raportissa. Jos jokin kolmesta luvusta puuttuu riviltä, jätä koko rivi pois — älä laske sitä muista.
+Osa kassoista tulostaa kannoittain vain veron: "ALV 14 % 12,34". Palauta silloin vatCents ja jätä netCents ja grossCents nulliksi. ÄLÄ laske puuttuvia lukuja verosta ja kannasta — laskettu luku näyttäisi raportissa lukevalta.
+
+Tämä taulukko on eri asia kuin myyntiryhmät. Ryhmät kertovat mitä myytiin, ALV-erittely millä kannalla. Palauta molemmat jos molemmat ovat raportissa.
 
 transactions: kuittien tai tapahtumien lukumäärä. Raportissa "Kuitteja", "Tapahtumia", "Asiakkaita", "Myyntitapahtumat". Ei euroja vaan kappaleita.
 
@@ -127,52 +132,93 @@ export async function POST(request: Request) {
   }
 
   const form = await request.formData();
-  const file = form.get("file");
 
-  if (!(file instanceof File)) {
+  /*
+   * Raportti voi olla monta kuvaa.
+   *
+   * Z-raportti on pitkä liuska. Puhelimella siitä saa tarkan kuvan
+   * vain osissa, ja aiemmin toinen puolisko oli pakko jättää
+   * lukematta. Vanha "file"-kenttä kelpaa yhä: se on sama pyyntö
+   * yhdellä sivulla.
+   */
+  const files = [...form.getAll("pages"), ...form.getAll("file")].filter(
+    (entry): entry is File => entry instanceof File,
+  );
+
+  if (files.length === 0) {
     return NextResponse.json({ error: "Tiedosto puuttuu." }, { status: 400 });
   }
 
-  if (file.size > MAX_BYTES) {
+  let totalBytes = 0;
+
+  for (const file of files) {
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: "Tiedosto on liian suuri. Kuvaa raportti uudelleen." },
+        { status: 413 },
+      );
+    }
+
+    totalBytes += file.size;
+
+    if (file.type !== PDF_TYPE && !IMAGE_TYPES.has(file.type)) {
+      return NextResponse.json(
+        {
+          error:
+            file.type === "image/heic" || file.type === "image/heif"
+              ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
+              : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
+        },
+        { status: 415 },
+      );
+    }
+  }
+
+  /*
+   * Sivumäärää ei rajata, yhteiskokoa rajataan.
+   *
+   * Raportissa on niin monta sivua kuin siinä on, mutta yksi pyyntö ei
+   * saa kasvaa rajatta: liian suuri pyyntö epäonnistuu vasta
+   * rajapinnassa, ja silloin virhe on siellä eikä täällä.
+   */
+  if (totalBytes > MAX_TOTAL_BYTES) {
     return NextResponse.json(
-      { error: "Tiedosto on liian suuri. Kuvaa raportti uudelleen." },
+      {
+        error:
+          "Kuvat ovat yhteensä liian suuret. Kuvaa raportti harvempana " +
+          "sivuna tai pienemmällä tarkkuudella.",
+      },
       { status: 413 },
     );
   }
 
-  const isPdf = file.type === PDF_TYPE;
+  const sources = await Promise.all(
+    files.map(async (file) => {
+      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
 
-  if (!isPdf && !IMAGE_TYPES.has(file.type)) {
-    return NextResponse.json(
-      {
-        error:
-          file.type === "image/heic" || file.type === "image/heif"
-            ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
-            : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
-      },
-      { status: 415 },
-    );
-  }
-
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-
-  const source = isPdf
-    ? ({
-        type: "document" as const,
-        source: {
-          type: "base64" as const,
-          media_type: "application/pdf" as const,
-          data: base64,
-        },
-      })
-    : ({
-        type: "image" as const,
-        source: {
-          type: "base64" as const,
-          media_type: file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-          data: base64,
-        },
-      });
+      return file.type === PDF_TYPE
+        ? ({
+            type: "document" as const,
+            source: {
+              type: "base64" as const,
+              media_type: "application/pdf" as const,
+              data: base64,
+            },
+          })
+        : ({
+            type: "image" as const,
+            source: {
+              type: "base64" as const,
+              media_type: file.type as
+                | "image/jpeg"
+                | "image/png"
+                | "image/gif"
+                | "image/webp",
+              data: base64,
+            },
+          });
+    }),
+  );
 
   const client = new Anthropic();
 
@@ -184,7 +230,22 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: [source, { type: "text", text: "Poimi tämän päiväraportin luvut." }],
+          content: [
+            ...sources,
+            {
+              type: "text",
+              text:
+                files.length === 1
+                  ? "Poimi tämän päiväraportin luvut."
+                  : `Poimi tämän päiväraportin luvut. Raportti on ${files.length} ` +
+                    "kuvassa, järjestyksessä. Ne ovat saman raportin osia: " +
+                    "myyntiryhmät jatkuvat kuvasta toiseen, ja ALV-erittely " +
+                    "sekä loppusumma ovat tavallisesti viimeisessä. Poimi " +
+                    "jokainen ryhmä kerran — jos sama ryhmä näkyy kahdessa " +
+                    "kuvassa päällekkäisen rajauksen takia, palauta se vain " +
+                    "kerran äläkä laske summia yhteen.",
+            },
+          ],
         },
       ],
       output_config: { format: zodOutputFormat(extraction) },
@@ -283,25 +344,31 @@ function sanitize(
     }));
 
   /*
-   * ALV-rivi kelpaa vain kokonaisena.
+   * ALV-rivi kelpaa vajaanakin, muttei ristiriitaisena.
    *
-   * Vero plus veroton on verollinen. Jos ne eivät täsmää sentin
-   * sisällä, rivi on luettu väärin, eikä väärin luettua kassan lukua
-   * saa päästää kirjanpidon lähteeksi — se on juuri se luku johon
-   * kaikki muu verrataan.
+   * Vero on ainoa pakollinen luku: osa kassoista tulostaa kannoittain
+   * vain sen. Veroton ja verollinen ovat vertailun tarkkuutta, eivät
+   * sen edellytys.
+   *
+   * Jos molemmat kuitenkin ovat, niiden on summauduttava verolliseksi
+   * sentin sisällä. Ristiriitainen rivi on luettu väärin, eikä väärin
+   * luettu kassan luku saa päästä kirjanpidon lähteeksi — se on juuri
+   * se luku johon kaikki muu verrataan.
    */
   const vatRates = parsed.vatRates
     .filter((r) => {
       const rate = r.ratePercent / 100;
-      return (
-        rate >= 0 &&
-        rate < 1 &&
-        r.vatCents >= 0 &&
-        r.netCents >= 0 &&
-        r.grossCents >= 0 &&
-        r.grossCents <= MAX_CENTS &&
-        Math.abs(r.vatCents + r.netCents - r.grossCents) <= 1
-      );
+
+      if (rate < 0 || rate >= 1) return false;
+      if (r.vatCents < 0 || r.vatCents > MAX_CENTS) return false;
+      if (r.netCents !== null && (r.netCents < 0 || r.netCents > MAX_CENTS)) return false;
+      if (r.grossCents !== null && (r.grossCents < 0 || r.grossCents > MAX_CENTS)) {
+        return false;
+      }
+
+      if (r.netCents === null || r.grossCents === null) return true;
+
+      return Math.abs(r.vatCents + r.netCents - r.grossCents) <= 1;
     })
     .map((r) => ({
       // Prosentti sentin tarkkuudella: 13,5 % → 0,135. Pyöristys on

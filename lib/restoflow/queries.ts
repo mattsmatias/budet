@@ -1279,9 +1279,11 @@ export async function fetchPosVatRates(
   return data
     .map((row) => ({
       vatRate: Number(row.vat_rate),
-      grossCents: row.gross_cents as number,
       vatCents: row.vat_cents as number,
-      netCents: row.net_cents as number,
+      // Vain vero on pakollinen: osa kassoista tulostaa kannoittain
+      // vain sen.
+      grossCents: (row.gross_cents as number | null) ?? null,
+      netCents: (row.net_cents as number | null) ?? null,
     }))
     .sort((a, b) => b.vatRate - a.vatRate);
 }

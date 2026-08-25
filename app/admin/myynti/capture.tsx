@@ -56,14 +56,34 @@ export function ReportCapture({
   const camera = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
 
-  async function read(file: File | undefined) {
-    if (!file) return;
+  /**
+   * Lukee raportin, oli se yksi kuva tai monta.
+   *
+   * Z-raportti on pitkä liuska: tarkka kuva syntyy vain osissa, ja
+   * loppusumma on viimeisessä. Sivut lähetetään yhtenä pyyntönä
+   * järjestyksessä, koska ne ovat saman raportin osia — erillisinä
+   * pyyntöinä kukin osa näyttäisi omalta vajaalta raportiltaan.
+   */
+  async function read(selected: FileList | File[] | null | undefined) {
+    const pages = [...(selected ?? [])];
+    if (pages.length === 0) return;
+
+    const [file, ...extraPages] = pages;
 
     setPhase({ at: "reading" });
 
+    const label =
+      pages.length === 1
+        ? file.name
+        : `${file.name} + ${extraPages.length} ${extraPages.length === 1 ? "sivu" : "sivua"}`;
+
     try {
-      const result = await salesExtractor.extract({ fileName: file.name, file });
-      setPhase({ at: "review", result, fileName: file.name });
+      const result = await salesExtractor.extract({
+        fileName: file.name,
+        file,
+        extraPages,
+      });
+      setPhase({ at: "review", result, fileName: label });
     } catch (error) {
       setPhase({
         at: "failed",
@@ -95,15 +115,17 @@ export function ReportCapture({
         type="file"
         accept="image/*"
         capture="environment"
+        multiple
         className="sr-only"
-        onChange={(event) => void read(event.target.files?.[0])}
+        onChange={(event) => void read(event.target.files)}
       />
       <input
         ref={picker}
         type="file"
         accept="image/*,application/pdf"
+        multiple
         className="sr-only"
-        onChange={(event) => void read(event.target.files?.[0])}
+        onChange={(event) => void read(event.target.files)}
       />
 
       {phase.at === "reading" ? (
@@ -146,8 +168,16 @@ export function ReportCapture({
             }}
           >
             <RfIcon name="file" size={16} />
-            Valitse tiedosto
+            Valitse tiedostot
           </button>
+
+          <p
+            className="w-full text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            Pitkän raportin voi kuvata useampana kuvana kerralla — kuvaa ne
+            järjestyksessä, niin ALV-erittely ja loppusumma tulevat mukaan.
+          </p>
         </div>
       )}
 

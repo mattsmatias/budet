@@ -255,3 +255,25 @@ export async function seedDefaultSalesGroups(): Promise<void> {
 
   revalidatePath("/admin", "layout");
 }
+
+/**
+ * Yleiset kassaryhmänimet kohdistuksiksi.
+ *
+ * Suomalaiset kassat käyttävät samoja sanoja: OLUT on olut joka
+ * ravintolassa. Lista on lähtökohta jonka ravintola muokkaa.
+ *
+ * EI KIRJOITA PÄÄLLE.
+ *
+ * Kanta ohittaa nimet jotka ravintolalla on jo, myös silloin kun ne
+ * osoittavat eri ryhmään kuin oletus. Oma kohdistus on tietoinen
+ * päätös eikä oletuslistan pidä kumota sitä.
+ */
+export async function seedDefaultPosMappings(): Promise<void> {
+  const { restaurant, role } = await requireContext(PATH);
+  if (!can(role, "settings.edit")) return;
+
+  const supabase = await createClient();
+  await supabase.rpc("seed_default_pos_mappings", { p_restaurant: restaurant.id });
+
+  revalidatePath("/admin", "layout");
+}

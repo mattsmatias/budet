@@ -281,19 +281,22 @@ function parseVatRates(raw: FormDataEntryValue | null): PosVatRate[] {
 
   const seen = new Set<number>();
 
+  const cents = (value: unknown): number | null =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0
+      ? Math.round(value)
+      : null;
+
   return parsed
     .filter(
       (rate): rate is PosVatRate =>
         typeof rate?.vatRate === "number" &&
         rate.vatRate >= 0 &&
         rate.vatRate < 1 &&
-        typeof rate.grossCents === "number" &&
-        typeof rate.vatCents === "number" &&
-        typeof rate.netCents === "number" &&
-        rate.grossCents >= 0 &&
-        rate.vatCents >= 0 &&
-        rate.netCents >= 0 &&
-        Math.abs(rate.vatCents + rate.netCents - rate.grossCents) <= 1,
+        cents(rate.vatCents) !== null &&
+        // Vajaa rivi kelpaa: vero riittää. Ristiriitainen ei kelpaa.
+        (cents(rate.grossCents) === null ||
+          cents(rate.netCents) === null ||
+          Math.abs(rate.vatCents + rate.netCents - rate.grossCents) <= 1),
     )
     .filter((rate) => {
       // Sama kanta kahdesti on kaksi totuutta samasta rivistä, ja
@@ -304,9 +307,9 @@ function parseVatRates(raw: FormDataEntryValue | null): PosVatRate[] {
     })
     .map((rate) => ({
       vatRate: rate.vatRate,
-      grossCents: Math.round(rate.grossCents),
       vatCents: Math.round(rate.vatCents),
-      netCents: Math.round(rate.netCents),
+      grossCents: cents(rate.grossCents),
+      netCents: cents(rate.netCents),
     }));
 }
 
