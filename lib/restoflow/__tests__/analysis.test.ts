@@ -657,7 +657,6 @@ describe("oikeudet", () => {
    */
   it("säilyttää pääsytarkistuksen valikosta piilotetuilla reiteillä", () => {
     const hidden = [
-      "/admin/myynti",
       "/admin/havainnot",
       "/admin/ilmoitukset",
       // Asetukset on omana kohtanaan valikon pohjalla, ei osastoissa.
@@ -679,13 +678,15 @@ describe("oikeudet", () => {
    * Valikon koko on tuotepäätös, ei sattuma.
    *
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
-   * Kymmenes kohta on Toimittajat: sivu vastaa kysymykseen "kenelle
-   * raha menee", eikä sitä kysymystä osaa esittää kuitin kautta.
+   * Yhdestoista kohta on Myynti: kassan päiväraportti kirjataan joka
+   * ilta, ja päivittäinen tehtävä kuuluu valikkoon eikä yhden kortin
+   * taakse yleiskuvaan.
    */
-  it("pitää päävalikon kymmenessä kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(10);
+  it("pitää päävalikon yhdessätoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(11);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
+
 
   /**
    * Sivupalkin kasvu ei saa muuttaa alapalkkia.
@@ -724,6 +725,8 @@ describe("oikeudet", () => {
 
     const finance = sections.find((s) => s.id === "finance")!;
     expect(finance.items.map((i) => i.href)).toEqual([
+      // Myynti ensin: paljonko tuli, sitten paljonko meni.
+      "/admin/myynti",
       "/admin/kuitit",
       "/admin/kulut",
       "/admin/budjetit",

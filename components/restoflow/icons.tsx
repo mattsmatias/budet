@@ -48,6 +48,7 @@ export type IconName =
   | "info"
   | "more"
   | "logout"
+  | "sales"
   | "trend";
 
 /**
@@ -132,6 +133,8 @@ const PATHS: Record<IconName, string> = {
   more: "M5.2 12h.01M12 12h.01M18.8 12h.01",
 
   logout: "M9.5 20.5H5.5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h4M16 16.5l4.5-4.5L16 7.5M20.5 12H9.5",
+
+  sales: "M3 12h18v8.5H3zM7 12V5.4h10V12M9.6 8.8h4.8",
 
   trend: "M3.5 17 9.5 11l3.8 3.8L20.5 7.5M15.5 7.5h5v5",
 };
@@ -218,6 +221,25 @@ const SHAPES: Partial<Record<IconName, ReactNode>> = {
     <>
       <path d="M4 20h16M6 20V9.5M18 20V9.5" />
       <path d="M3.5 9.5 12 4l8.5 5.5z" />
+    </>
+  ),
+
+  /*
+   * Kassakone, ei nuoli ylöspäin.
+   *
+   * Nouseva nuoli tarkoittaa kasvua, ei myyntiä. Myyntisivulla
+   * kirjataan kassan päiväraportti, ja huono päivä on siellä yhtä
+   * usein kuin hyvä — nuoli lupaisi ylöspäin joka päivä.
+   *
+   * Kohotettu näyttöosa erottaa kassan Budjetit-lompakosta: molemmat
+   * ovat pyöristettyjä laatikoita, ja pelkkä laatikko olisi sarjassa
+   * jo toista kertaa.
+   */
+  sales: (
+    <>
+      <rect x="3" y="12" width="18" height="8.5" rx="2" />
+      <path d="M7 12V7.2a1.8 1.8 0 0 1 1.8-1.8h6.4A1.8 1.8 0 0 1 17 7.2V12" />
+      <path d="M9.6 8.8h4.8" />
     </>
   ),
 

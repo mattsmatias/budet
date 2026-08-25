@@ -231,6 +231,19 @@ export interface NavEntry {
 export const ADMIN_NAV: NavEntry[] = [
   { href: "/admin", label: "Yleiskatsaus", icon: "overview", requires: "expenses.view", section: "main" },
 
+  /*
+   * Myynti on valikossa, ja se on TALOUDEN ensimmäinen kohta.
+   *
+   * Reitti oli olemassa mutta sinne pääsi vain yleiskuvan kortista.
+   * Myynti on kuitenkin illan viimeinen työvaihe: kassan päiväraportti
+   * kirjataan joka päivä, ja päivittäinen tehtävä kuuluu valikkoon.
+   *
+   * Kulut ovat vastaus kysymykseen paljonko meni; myynti kysymykseen
+   * paljonko tuli. Jälkimmäinen tulee ensin, koska ilman sitä
+   * ensimmäisellä ei ole mittakaavaa.
+   */
+  { href: "/admin/myynti", label: "Myynti", icon: "sales", requires: "sales.view", section: "finance" },
+
   { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view", section: "finance" },
   { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view", section: "finance" },
   { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
