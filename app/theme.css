@@ -248,7 +248,24 @@
 }
 
 /* Numerot tasalevyisinä, jotta sarakkeet eivät hypi. */
+/*
+ * Luvun kirjasin.
+ *
+ * Sama luokka merkitsi ennen vain tabular-numsin. Leveys oli lukossa
+ * muttei muoto: luku näytti leipätekstiltä. Nyt se on omaa kirjasintaan
+ * kaikkialla missä tämä luokka on — avainluvut, taulukot, akselit,
+ * donitsin keskus — eli täsmälleen niissä kohdissa joissa
+ * suunnitelmakin vaihtaa kirjasinta.
+ *
+ * tabular-nums jää varalle: jos kirjasin ei ehdi latautua, sarakkeet
+ * pysyvät silti suorassa.
+ *
+ * Kirjainväli jätetään kutsupaikalle. Sääntö oli tässä hetken, ja se
+ * voitti Tailwindin tracking-luokan lähdejärjestyksessä — avainluvun
+ * -0,03em kutistui -0,01em:ksi ilman että mikään kertoi siitä.
+ */
 .rf-tabular {
+  font-family: var(--font-num), ui-monospace, "SF Mono", Menlo, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }

@@ -467,7 +467,12 @@ export default async function AdminDashboard({
               ? undefined
               : {
                   percent: budgetUsed * 100,
-                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "neutral",
+                  /*
+                   * Sama violetti kuin kortin laatassa kun kaikki on
+                   * kunnossa. Palkki kuuluu korttiin eikä ole
+                   * hälytys ennen kuin raja lähestyy.
+                   */
+                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "violet",
                 }
           }
           conclusion={

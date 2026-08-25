@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "./theme.css";
 
@@ -18,6 +18,26 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-app",
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+/**
+ * IBM Plex Mono luvuille.
+ *
+ * Tabular-nums riitti pitämään sarakkeet suorassa, mutta luku näytti
+ * silti leipätekstiltä: sama kirjasin, sama muoto, vain leveys
+ * lukittuna. Suunnitelmassa jokainen luku on omalla kirjasimellaan, ja
+ * ero on juuri se joka tekee avainluvusta luvun eikä otsikon.
+ *
+ * Vain kolme lihavuutta: 400 taulukoihin ja akseleihin, 600
+ * korostettuihin sarakkeisiin, 700 avainlukuihin. Jokainen paino on
+ * oma latauksensa, ja kirjasin jota käytetään vain numeroihin ei
+ * ansaitse viittä.
+ */
+const mono = IBM_Plex_Mono({
+  variable: "--font-num",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "600", "700"],
   display: "swap",
 });
 
@@ -48,7 +68,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fi" className={`${jakarta.variable} h-full`}>
+    <html lang="fi" className={`${jakarta.variable} ${mono.variable} h-full`}>
       <body className="restoflow min-h-full" suppressHydrationWarning>
         {/*
           Teema ennen ensimmäistä piirtoa.

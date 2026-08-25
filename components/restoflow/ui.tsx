@@ -171,7 +171,20 @@ export function MetricCard({
 }) {
   const footText = conclusion ?? hint;
   const aside = conclusion && hint ? hint : null;
-  const hasFoot = footText !== undefined || href !== undefined || trend !== undefined;
+
+  /*
+   * PALKKI KORVAA JALAN.
+   *
+   * Budjettikortissa oli molemmat: palkki ja sen alla "0,00 € /
+   * 15 000,00 €". Rivi ei kertonut mitään uutta — luku on jäljellä
+   * oleva summa ja pilleri käyttöaste, joten käytetty ja koko
+   * budjetti luetaan niistä. Ylimääräinen rivi teki kortista
+   * neljätoista pikseliä muita korkeamman, ja auto-rows-fr venytti
+   * koko rivin sen mukaan.
+   */
+  const hasFoot =
+    bar === undefined &&
+    (footText !== undefined || href !== undefined || trend !== undefined);
 
   const skin = tileSkin(tileTone ?? (highlight ? "accent" : tone));
 
@@ -186,7 +199,7 @@ export function MetricCard({
       }}
     >
       <div className="flex flex-1 flex-col px-4 pb-4 pt-[15px]">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-[11px]">
           {icon ? (
             <span
               aria-hidden="true"
@@ -208,7 +221,7 @@ export function MetricCard({
             >
               {label}
             </p>
-            <p className="rf-tabular mt-[3px] text-[22px] font-extrabold leading-none tracking-[-0.03em]">
+            <p className="rf-tabular mt-[3px] text-[22px] font-bold leading-[1.4] tracking-[-0.03em]">
               {value}
             </p>
           </div>
@@ -225,7 +238,7 @@ export function MetricCard({
         {hasFoot ? (
           <div className="mt-2 flex items-center justify-between gap-3">
             <span
-              className="rf-tabular min-w-0 truncate text-[11.5px]"
+              className="min-w-0 truncate text-[11.5px]"
               style={{ color: footColor(tone) }}
             >
               {footText}
@@ -246,7 +259,7 @@ export function MetricCard({
 
         {bar ? (
           <div
-            className="mt-3 h-1 w-full overflow-hidden"
+            className="mt-[11px] h-1 w-full overflow-hidden"
             style={{ background: "var(--rf-inset)", borderRadius: 980 }}
           >
             <div
@@ -307,7 +320,7 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
 
   return (
     <span
-      className="rf-tabular inline-flex shrink-0 items-center px-2 py-[3px] text-[11px] font-bold"
+      className="inline-flex shrink-0 items-center px-[7px] py-[2px] text-[11px] font-bold"
       style={{ background: skin.bg, color: skin.fg, borderRadius: "var(--rf-r-pill)" }}
     >
       {text}
@@ -363,6 +376,14 @@ function footColor(tone: MetricTone): string {
       : "var(--rf-text-3)";
 }
 
+/**
+ * Täyttyvän palkin väri.
+ *
+ * Neutraali palkki oli korostuspunainen, eli sama väri jolla muualla
+ * merkitään ylitys. Budjetti jossa on 40 % käytetty näytti siis
+ * hälyttävältä. Neutraali käyttää nyt kortin omaa tunnisteväriä, ja
+ * punainen jää sille mitä se tarkoittaa.
+ */
 function solidFor(tone: MetricTone): string {
   return tone === "up" || tone === "warn"
     ? "var(--rf-amber)"
@@ -370,7 +391,13 @@ function solidFor(tone: MetricTone): string {
       ? "var(--rf-green)"
       : tone === "bad"
         ? "var(--rf-red)"
-        : "var(--rf-accent)";
+        : tone === "violet"
+          ? "var(--rf-violet)"
+          : tone === "green"
+            ? "var(--rf-green)"
+            : tone === "brand" || tone === "accent"
+              ? "var(--rf-accent)"
+              : "var(--rf-blue)";
 }
 
 /**
