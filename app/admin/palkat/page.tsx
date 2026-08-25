@@ -100,43 +100,75 @@ export default async function PayrollPage({
         </div>
       </header>
 
+      {/*
+        Samat kortit kuin yleiskuvassa ja kuluissa.
+
+        Laatan väri on tunniste eikä tila: sama paikka rivissä on joka
+        sivulla samaa väriä, jolloin kortti löytyy silmäyksellä.
+        Ikonit olivat täällä 14 pikseliä muiden 17:n sijaan, laattaväri
+        puuttui kokonaan ja ruudukko oli oma — kolme pientä eroa jotka
+        yhdessä saivat saman kortin näyttämään toisen sovelluksen
+        kortilta.
+      */}
       <section
         aria-label="Avainluvut"
-        className="grid auto-rows-fr grid-cols-2 gap-3 xl:grid-cols-4"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatCard
           label="Työntekijöitä"
-          value={String(summary.staffCount)}
+          tileTone="brand"
+          value={<CountUp to={summary.staffCount} format="integer" />}
           conclusion={summary.staffCount === 0 ? "Ei työaikaa kaudella" : "Palkkaa kertynyt"}
           tone="muted"
-          icon={<RfIcon name="staff" size={14} />}
+          icon={<RfIcon name="staff" size={17} />}
+          href="/admin/tyontekijat"
+          linkLabel="Työntekijät"
         />
 
         <StatCard
           label="Tehdyt tunnit"
+          tileTone="green"
+          /*
+           * Tunnit eivät nouse paikalleen.
+           *
+           * CountUp pyöristää tunnit kokonaisiksi, ja palkanmaksussa
+           * puoli tuntia on rahaa: 142,5 h näkyisi 143 tuntina.
+           * Animaatio ei ole väärän luvun arvoinen.
+           */
           value={formatHours(summary.workedMinutes)}
           conclusion="Leimauksista laskettu"
           tone="muted"
-          icon={<RfIcon name="clock" size={14} />}
+          icon={<RfIcon name="clock" size={17} />}
+          href="/admin/tyovuorot"
+          linkLabel="Vuorot"
         />
 
         <StatCard
           label="Bruttopalkat"
+          tileTone="violet"
           value={<CountUp to={summary.grossCents} format="money" />}
-          conclusion="Peruspalkka ja lisät"
-          hint="Ei sisällä vähennyksiä eikä työnantajan sivukuluja."
+          /*
+           * Varaus mahtuu johtopäätökseen.
+           *
+           * Erillisenä hint-rivinä se oli ainoa asia joka teki tästä
+           * kortista muita korkeamman, ja auto-rows-fr venytti koko
+           * rivin sen mukaan. Rajaus on silti kerrottava: bruttopalkka
+           * luetaan helposti työnantajan kokonaiskuluna.
+           */
+          conclusion="Peruspalkka ja lisät, ei vähennyksiä eikä sivukuluja"
           tone="muted"
-          icon={<RfIcon name="payroll" size={14} />}
+          icon={<RfIcon name="payroll" size={17} />}
         />
 
         <StatCard
           label="Tarkistettavat"
-          value={String(summary.needsReview)}
+          tileTone="blue"
+          value={<CountUp to={summary.needsReview} format="integer" />}
           conclusion={
             summary.needsReview === 0 ? "Ei huomautettavaa" : "Vaatii korjauksen"
           }
           tone={summary.needsReview > 0 ? "warn" : "muted"}
-          icon={<RfIcon name="alert" size={14} />}
+          icon={<RfIcon name="alert" size={17} />}
         />
       </section>
 
