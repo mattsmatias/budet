@@ -17,6 +17,7 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, MetricCard } from "@/components/restoflow/ui";
 import { CountUp } from "@/components/restoflow/count-up";
 import { DayPanel } from "./day-panel";
+import { DragStaff } from "./drag-staff";
 import { CopyRange, RecurringForm } from "./copy-controls";
 import { PublishBar } from "../publish-bar";
 
@@ -51,6 +52,16 @@ export default async function ShiftCalendarPage({
   const selectedDay =
     typeof params.paiva === "string" && ISO_DATE.test(params.paiva) ? params.paiva : null;
 
+  /*
+   * Kolme näkymää samasta aineistosta.
+   *
+   * Kuukausi on suunnittelun yleiskuva, viikko sen tarkennus ja päivä
+   * yhden illan miehitys. Valinta on osoitteessa: näkymän voi
+   * linkittää ja paluunappi toimii.
+   */
+  const view =
+    params.nakyma === "viikko" ? "viikko" : params.nakyma === "paiva" ? "paiva" : "kuukausi";
+
   const canManage = can(role, "shifts.manage");
   const showsRates = seesPayRates(role);
 
@@ -76,6 +87,19 @@ export default async function ShiftCalendarPage({
 
   const overBudget =
     labourBudget !== null && plan.labourCostCents > labourBudget.amountCents;
+
+  /*
+   * Mihin viikko- ja päivänäkymä kohdistuvat.
+   *
+   * Valittu päivä jos sellainen on, muuten tämä päivä jos se osuu
+   * kuukauteen, muuten kuukauden ensimmäinen. Ilman viimeistä ehtoa
+   * menneen kuukauden viikkonäkymä avautuisi tyhjänä.
+   */
+  const focusDate =
+    selectedDay ?? (today.startsWith(viewMonth) ? today : `${viewMonth}-01`);
+
+  const focusWeek =
+    weeks.find((week) => week.days.some((day) => day.date === focusDate)) ?? weeks[0];
 
   const monthStart = `${viewMonth}-01`;
   const monthEnd = weeks
@@ -227,70 +251,121 @@ export default async function ShiftCalendarPage({
         </p>
       ) : null}
 
-      <Card padded={false}>
-        <div className="px-5 pt-5">
-          <CardHeader
-            title={formatMonth(viewMonth)}
-            subtitle="Klikkaa päivää nähdäksesi ja muokataksesi sen vuorot"
-          />
-        </div>
+      {/*
+        Näkymän valinta linkkeinä eikä painikkeina.
 
-        <div className="-mt-1 overflow-x-auto px-2 pb-2">
-          <table className="rf-cal w-full">
-            <caption className="sr-only">
-              Työvuorokalenteri {formatMonth(viewMonth)}
-            </caption>
+        Valinta on osa osoitetta: viikon voi lähettää kollegalle ja
+        paluunappi vie edelliseen näkymään.
+      */}
+      <div
+        className="flex flex-wrap items-center gap-0.5 self-start p-0.5"
+        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      >
+        <ViewTab
+          href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}`}
+          label="Kuukausi"
+          active={view === "kuukausi"}
+        />
+        <ViewTab
+          href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}&nakyma=viikko&paiva=${focusDate}`}
+          label="Viikko"
+          active={view === "viikko"}
+        />
+        <ViewTab
+          href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}&nakyma=paiva&paiva=${focusDate}`}
+          label="Päivä"
+          active={view === "paiva"}
+        />
+      </div>
 
-            <thead>
-              <tr>
-                <th scope="col" className="rf-cal-week">
-                  Vk
-                </th>
-                {["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"].map((name) => (
-                  <th key={name} scope="col">
-                    {name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+      {canManage && view !== "paiva" ? <DragStaff users={users} /> : null}
 
-            <tbody>
-              {weeks.map((week) => (
-                <tr key={`${week.week}-${week.days[0].date}`}>
-                  <th scope="row" className="rf-cal-week">
-                    {week.week}
-                  </th>
-
-                  {week.days.map((day) => (
-                    <DayCell
-                      key={day.date}
-                      date={day.date}
-                      dayNumber={day.day}
-                      inMonth={day.inMonth}
-                      weekend={day.weekend}
-                      isToday={day.isToday}
-                      selected={day.date === selectedDay}
-                      shifts={shiftsOn(shifts, day.date)}
-                      users={users}
-                      month={viewMonth}
-                    />
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {selectedDay ? (
+      {view === "paiva" ? (
         <DayPanel
-          date={selectedDay}
+          date={focusDate}
           month={viewMonth}
           users={users}
-          shifts={shiftsOn(shifts, selectedDay)}
+          shifts={shiftsOn(shifts, focusDate)}
           canManage={canManage}
         />
-      ) : null}
+      ) : (
+        <>
+          <Card padded={false}>
+            <div className="px-5 pt-5">
+              <CardHeader
+                title={
+                  view === "viikko"
+                    ? `Viikko ${focusWeek?.week ?? ""} · ${formatMonth(viewMonth)}`
+                    : formatMonth(viewMonth)
+                }
+                subtitle={
+                  view === "viikko"
+                    ? "Kaikki päivän vuorot näkyvissä"
+                    : "Klikkaa päivää nähdäksesi ja muokataksesi sen vuorot"
+                }
+              />
+            </div>
+
+            <div className="-mt-1 overflow-x-auto px-2 pb-2">
+              <table className={`rf-cal w-full ${view === "viikko" ? "rf-cal-week-view" : ""}`}>
+                <caption className="sr-only">
+                  Työvuorokalenteri {formatMonth(viewMonth)}
+                </caption>
+
+                <thead>
+                  <tr>
+                    <th scope="col" className="rf-cal-week">
+                      Vk
+                    </th>
+                    {["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"].map((name) => (
+                      <th key={name} scope="col">
+                        {name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {(view === "viikko" && focusWeek ? [focusWeek] : weeks).map((week) => (
+                    <tr key={`${week.week}-${week.days[0].date}`}>
+                      <th scope="row" className="rf-cal-week">
+                        {week.week}
+                      </th>
+
+                      {week.days.map((day) => (
+                        <DayCell
+                          key={day.date}
+                          date={day.date}
+                          dayNumber={day.day}
+                          inMonth={day.inMonth}
+                          weekend={day.weekend}
+                          isToday={day.isToday}
+                          selected={day.date === selectedDay}
+                          shifts={shiftsOn(shifts, day.date)}
+                          users={users}
+                          month={viewMonth}
+                          view={view}
+                          limit={view === "viikko" ? Infinity : 3}
+                        />
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {selectedDay ? (
+            <DayPanel
+              date={selectedDay}
+              month={viewMonth}
+              users={users}
+              shifts={shiftsOn(shifts, selectedDay)}
+              canManage={canManage}
+            />
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -314,6 +389,8 @@ function DayCell({
   shifts,
   users,
   month,
+  view = "kuukausi",
+  limit = 3,
 }: {
   date: string;
   dayNumber: number;
@@ -324,14 +401,19 @@ function DayCell({
   shifts: Shift[];
   users: User[];
   month: string;
+  view?: string;
+  /** Montako vuoroa ruutuun mahtuu ennen ylivuotorivin. */
+  limit?: number;
 }) {
   const live = shifts.filter((shift) => shift.cancelledAt === null);
-  const shown = live.slice(0, 3);
+  const shown = Number.isFinite(limit) ? live.slice(0, limit) : live;
   const rest = live.length - shown.length;
 
   return (
     <td
       className="rf-cal-day"
+      /* Pudotusalue raahaukselle. Kuuntelijat ovat DragStaff-komponentissa. */
+      data-day={date}
       style={{
         background: selected
           ? "var(--rf-accent-bg)"
@@ -343,7 +425,7 @@ function DayCell({
       }}
     >
       <Link
-        href={`/admin/tyovuorot/kalenteri?kuukausi=${month}&paiva=${date}`}
+        href={`/admin/tyovuorot/kalenteri?kuukausi=${month}&paiva=${date}${view === "kuukausi" ? "" : `&nakyma=${view}`}`}
         scroll={false}
         className="block h-full w-full px-1.5 py-1.5"
       >
@@ -407,6 +489,38 @@ function DayCell({
         </span>
       </Link>
     </td>
+  );
+}
+
+/**
+ * Näkymän välilehti.
+ *
+ * Linkki eikä painike: valinta on osa osoitetta, joten näkymän voi
+ * linkittää ja paluunappi toimii.
+ */
+function ViewTab({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className="rf-press px-3.5 py-1.5 text-[12.5px] font-semibold"
+      style={{
+        background: active ? "var(--rf-card)" : "transparent",
+        color: active ? "var(--rf-text)" : "var(--rf-text-2)",
+        borderRadius: "calc(var(--rf-r-control) - 2px)",
+        boxShadow: active ? "var(--rf-shadow-sm)" : undefined,
+      }}
+    >
+      {label}
+    </Link>
   );
 }
 

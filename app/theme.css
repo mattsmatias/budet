@@ -999,3 +999,15 @@ details[open] .rf-summary-chevron {
 .rf-cal-day a {
   min-height: 5.5rem;
 }
+
+/*
+ * Viikkonäkymän ruutu on korkeampi.
+ *
+ * Kuukaudessa ruudun pitää olla matala, jotta kuusi viikkoa mahtuu
+ * ruudulle yhtaikaa. Viikossa rivejä on yksi, joten tilaa on — ja
+ * silloin kaikki vuorot näkyvät ilman ylivuotoriviä.
+ */
+.rf-cal-week-view .rf-cal-day,
+.rf-cal-week-view .rf-cal-day a {
+  min-height: 11rem;
+}

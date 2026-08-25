@@ -13,6 +13,8 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
+import { defaultShiftFor } from "@/lib/restoflow/shift-defaults";
+import { fetchShifts } from "@/lib/restoflow/queries";
 import type { StaffPosition } from "@/lib/restoflow/types";
 import type { AdminState } from "../actions";
 
@@ -103,6 +105,46 @@ export async function copyShiftNextWeek(formData: FormData): Promise<void> {
     p_from: date,
     p_to: date,
     p_offset: 7,
+  });
+
+  revalidatePath("/admin", "layout");
+}
+
+/**
+ * Vuoro raahaamalla: kuka ja mikä päivä, ajat päätellään.
+ *
+ * Kellonajat tulevat työntekijän viimeisimmästä vuorosta. Ravintolassa
+ * sama ihminen tekee lähes aina samaa vuoroa, joten arvaus osuu
+ * useimmiten — ja väärinkin osuessaan se on lähempänä kuin tyhjä
+ * lomake.
+ *
+ * Syntyy luonnoksena kuten kaikki muutkin vuorot, joten väärä aika ei
+ * mene kenellekään ennen julkaisua.
+ */
+export async function createShiftByDrop(formData: FormData): Promise<void> {
+  const userId = String(formData.get("userId") ?? "");
+  const date = String(formData.get("date") ?? "");
+
+  if (!userId || !ISO_DATE.test(date)) return;
+
+  const { restaurant, role } = await requireContext("/admin/tyovuorot");
+  if (!can(role, "shifts.manage")) return;
+
+  const shifts = await fetchShifts(restaurant.id);
+  const defaults = defaultShiftFor(userId, shifts);
+
+  const supabase = await createClient();
+  await supabase.rpc("upsert_shift", {
+    p_restaurant: restaurant.id,
+    p_shift: null,
+    p_user: userId,
+    p_date: date,
+    p_start: defaults.startTime,
+    p_end: defaults.endTime,
+    p_location: "",
+    p_position: null,
+    p_break: defaults.breakMinutes,
+    p_note: null,
   });
 
   revalidatePath("/admin", "layout");
