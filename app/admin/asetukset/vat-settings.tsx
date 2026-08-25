@@ -75,7 +75,7 @@ export function SalesGroups({
           </form>
 
           <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Ravintolamyynti 14 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
+            Ravintolamyynti 13,5 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
             Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Budet ei
             seuraa verokantojen muutoksia puolestasi.
           </p>
@@ -250,7 +250,7 @@ function GroupForm({
               }
               required
               inputMode="decimal"
-              placeholder="14"
+              placeholder="13,5"
               className={`${CONTROL} rf-tabular mt-1.5`}
               style={CONTROL_STYLE}
             />

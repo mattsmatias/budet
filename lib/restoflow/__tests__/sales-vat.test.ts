@@ -24,14 +24,21 @@ function line(
 }
 
 describe("lineFromGross", () => {
-  /* Tehtävänannon esimerkki: 1 135 € bruttona 13,5 %:lla on 1 000 € netto. */
-  it("laskee tehtävänannon esimerkin", () => {
+  /* Ravintolamyynnin kanta: 1 135 € bruttona 13,5 %:lla on 1 000 € netto. */
+  it("laskee ravintolamyynnin kannan 13,5 %", () => {
     const r = lineFromGross(113500, 0.135);
     expect(r.vatCents).toBe(13500);
     expect(r.netCents).toBe(100000);
   });
 
-  it("laskee Suomen ravintolakannan 14 %", () => {
+  /*
+   * Vanha kanta laskee yhä oikein.
+   *
+   * Ravintolaruoan kanta on laskenut 14 %:sta 13,5 %:iin, mutta ennen
+   * muutosta kirjatut päivät kantavat vanhaa kantaa eivätkä muutu.
+   * Laskennan on toimittava molemmilla.
+   */
+  it("laskee myös aiemman 14 %:n kannan", () => {
     const r = lineFromGross(114000, 0.14);
     expect(r.vatCents).toBe(14000);
     expect(r.netCents).toBe(100000);

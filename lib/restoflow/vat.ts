@@ -257,7 +257,7 @@ export interface VatRateTotal {
  *
  * SEKAKUITTIA EI PAKOTETA YHTEEN KANTAAN.
  *
- * Tukkukuitilla on ruokaa 14 %:lla ja siivousainetta 25,5 %:lla. Näiden
+ * Tukkukuitilla on ruokaa 13,5 %:lla ja siivousainetta 25,5 %:lla. Näiden
  * keskiarvo ei ole mikään verokanta, eikä kuitin kokonais-ALV kerro
  * kirjanpitäjälle sitä mitä hän tarvitsee: paljonko vähennettävää
  * veroa kummallakin kannalla on.

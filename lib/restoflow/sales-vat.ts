@@ -26,7 +26,7 @@ import { formatMoney, formatRate, vatFromGross, vatFromNet } from "@/lib/money";
 export interface SalesGroup {
   id: string;
   name: string;
-  /** Verokanta osuutena: 0.14 = 14 %. */
+  /** Verokanta osuutena: 0.135 = 13,5 %. */
   vatRate: number;
   active: boolean;
   isDefault: boolean;

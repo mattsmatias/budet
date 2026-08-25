@@ -114,21 +114,34 @@ export const CATEGORY_ORDER: ExpenseCategory[] = [
 /**
  * Odotetut ALV-kannat kategorioittain.
  *
- * DEMO-ARVOJA. Näitä ei ole validoitu virallista lähdettä vasten, ja niitä
- * käytetään VAIN poikkeamien tunnistukseen — ei koskaan verokannan
- * asettamiseen käyttäjän puolesta. Jos poimittu ALV ei vastaa odotettua,
- * kuitti merkitään tarkistettavaksi eikä arvoa muuteta.
+ * Näitä käytetään VAIN poikkeamien tunnistukseen — ei koskaan
+ * verokannan asettamiseen käyttäjän puolesta. Jos poimittu ALV ei
+ * vastaa odotettua, kuitti merkitään tarkistettavaksi eikä arvoa
+ * muuteta.
+ *
+ * MYYNNIN KANTA TULEE ASETUKSISTA, EI TÄSTÄ.
+ *
+ * Tämä taulukko koskee ostokuitteja. Ravintolan oman myynnin kannat
+ * ovat myyntiryhmien asetuksissa, ja vain ne vaikuttavat ALV-raporttiin
+ * ja kassan täsmäytykseen.
+ *
+ * VANHA KANTA JÄÄ LISTALLE.
+ *
+ * Ravintolaruoan kanta on laskenut 14 %:sta 13,5 %:iin. Vanhat kuitit
+ * ovat yhä 14 %:n kuitteja eivätkä ole virheellisiä, joten molemmat
+ * kelpaavat. Tämä on tarkistuslista eikä väite siitä mikä kanta on
+ * tänään voimassa.
  */
 export const EXPECTED_VAT_RATES: Record<ExpenseCategory, number[]> = {
-  food: [0.14],
+  food: [0.135, 0.14],
   alcohol: [0.255],
-  soft_drinks: [0.14, 0.255],
+  soft_drinks: [0.135, 0.14, 0.255],
   cleaning: [0.255],
   kitchen_supplies: [0.255],
   packaging: [0.255],
   staff: [0.255],
   transport: [0.255],
-  other: [0.14, 0.255],
+  other: [0.135, 0.14, 0.255],
 };
 
 export type PaymentMethod = "card" | "cash" | "invoice" | "unknown";

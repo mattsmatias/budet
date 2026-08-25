@@ -12,7 +12,7 @@
  *
  * PROSENTTI TULEE LOMAKKEESTA, OSUUS MENEE KANTAAN.
  *
- * Käyttäjä kirjoittaa "14" tai "25,5". Kanta tallentaa 0.14000 ja
+ * Käyttäjä kirjoittaa "13,5" tai "25,5". Kanta tallentaa 0.13500 ja
  * 0.25500. Muunnos on yhdessä paikassa, jottei jossain näkymässä
  * verrattaisi prosenttia osuuteen.
  */
@@ -47,7 +47,7 @@ export async function saveSalesGroup(
 
   const rate = parseRate(formData.get("rate"));
   if (rate === null) {
-    return { error: "Anna verokanta prosentteina, esimerkiksi 14 tai 25,5." };
+    return { error: "Anna verokanta prosentteina, esimerkiksi 13,5 tai 25,5." };
   }
 
   const id = String(formData.get("id") ?? "").trim();
