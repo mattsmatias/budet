@@ -79,7 +79,19 @@ export function clockInState(input: {
   const yesterday = addDays(today, -1);
 
   const mine = shifts.filter(
-    (s) => s.userId === userId && s.status !== "declined",
+    /*
+     * Sama sääntö kuin kannassa: leimaus vaatii julkaistun vuoron.
+     *
+     * Luonnos ei näy työntekijälle lainkaan, eikä peruttu vuoro ole
+     * enää voimassa. Näkymä kertoo saman kuin kanta ennakolta —
+     * muuten painike näyttäisi toimivalta ja virhe tulisi vasta
+     * painalluksesta.
+     */
+    (s) =>
+      s.userId === userId &&
+      s.status !== "declined" &&
+      s.publishedAt !== null &&
+      s.cancelledAt === null,
   );
 
   for (const shift of mine) {
@@ -137,7 +149,13 @@ export function nextShiftFrom(
   const nowMin = minutesOfDayIn(timezone, nowIso);
 
   const candidates = shifts
-    .filter((s) => s.status !== "declined" && s.date >= today)
+    .filter(
+      (s) =>
+        s.status !== "declined" &&
+        s.publishedAt !== null &&
+        s.cancelledAt === null &&
+        s.date >= today,
+    )
     .sort(
       (a, b) =>
         a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime),

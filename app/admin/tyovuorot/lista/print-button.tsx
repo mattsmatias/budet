@@ -18,6 +18,15 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
+      /*
+       * Sama painike tulostukseen ja PDF:ään.
+       *
+       * Selaimen tulostusikkunassa kohteeksi voi valita tulostimen tai
+       * "Tallenna PDF-tiedostona". Erillinen PDF-painike lupaisi eri
+       * tiedoston kuin mitä paperille tulee — ja juuri sitä lupausta
+       * ei voi pitää kahdella eri asettelumoottorilla.
+       */
+      title="Tulostusikkunasta voi valita myös Tallenna PDF-tiedostona"
       className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
       style={{
         background: "var(--rf-inset)",
@@ -27,7 +36,7 @@ export function PrintButton() {
       }}
     >
       <RfIcon name="download" size={15} />
-      Tulosta lista
+      Tulosta tai tallenna PDF
     </button>
   );
 }

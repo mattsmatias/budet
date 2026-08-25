@@ -271,3 +271,24 @@ describe("ikkunan avautumiseen jäävä aika", () => {
     expect(opensInMs(585, "2026-08-24T06:45:00.000Z", "UTC")).toBe(180 * 60_000);
   });
 });
+
+/*
+ * Leimaus vaatii julkaistun vuoron.
+ *
+ * Sama sääntö on kannassa. Näkymän tehtävä on kertoa se ennakolta,
+ * jottei painike näytä toimivalta ja virhe tule vasta painalluksesta.
+ */
+describe("julkaisu ja peruutus", () => {
+  it("ei avaa leimausta luonnokselle", () => {
+    expect(state([shift({ publishedAt: null })], "10:00").kind).toBe("no-shift");
+  });
+
+  it("ei avaa leimausta perutulle vuorolle", () => {
+    const peruttu = shift({ cancelledAt: "2026-08-23T10:00:00.000Z" });
+    expect(state([peruttu], "10:00").kind).toBe("no-shift");
+  });
+
+  it("avaa leimauksen julkaistulle vuorolle", () => {
+    expect(state([shift()], "10:00").kind).toBe("open");
+  });
+});

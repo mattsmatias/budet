@@ -17,6 +17,7 @@ import { ABSENCE_LABELS, POSITION_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState } from "@/components/restoflow/ui";
 import { PrintButton } from "./print-button";
+import { DayList } from "./day-list";
 
 export const metadata = { title: "Työvuorolista" };
 
@@ -58,6 +59,28 @@ export default async function RosterPage({
   const shiftCount = roster.rows.reduce((sum, row) => sum + row.shiftCount, 0);
   const openCount = roster.rows.find((row) => row.user === null)?.shiftCount ?? 0;
 
+  /*
+   * Kaksi tapaa lukea sama aineisto.
+   *
+   * Työntekijöittäin vastaa kysymykseen paljonko kukin tekee,
+   * päivittäin kysymykseen kuka on töissä huomenna. Molemmat
+   * tulostetaan, ja kumpikaan ei korvaa toista.
+   */
+  const view = params.nakyma === "paivat" ? "paivat" : "tyontekijat";
+
+  /*
+   * Tulostuspäivä paperille.
+   *
+   * Palvelimella muotoiltuna, jotta paperilla on ravintolan päivä
+   * eikä selaimen. Sekunnit jätetään pois: listaa ei tulosteta
+   * kahdesti minuutin sisällä.
+   */
+  const printedAt = new Date().toLocaleString("fi-FI", {
+    timeZone: restaurant.timezone,
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+
   const draftCount = shifts.filter(
     (shift) => shift.date.startsWith(viewMonth) && publicationOf(shift) === "draft",
   ).length;
@@ -80,7 +103,25 @@ export default async function RosterPage({
           Työvuorot
         </Link>
 
-        <PrintButton />
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="flex items-center gap-0.5 p-0.5"
+            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          >
+            <Valinta
+              href={`/admin/tyovuorot/lista?kuukausi=${viewMonth}`}
+              label="Työntekijöittäin"
+              active={view === "tyontekijat"}
+            />
+            <Valinta
+              href={`/admin/tyovuorot/lista?kuukausi=${viewMonth}&nakyma=paivat`}
+              label="Päivittäin"
+              active={view === "paivat"}
+            />
+          </div>
+
+          <PrintButton />
+        </div>
       </div>
 
       {/*
@@ -93,7 +134,7 @@ export default async function RosterPage({
       */}
       <div className="hidden print:block">
         <h1 className="text-[15px] font-bold">
-          Työvuorolista · {restaurant.name} · {formatMonth(viewMonth)}
+          {restaurant.name} · Työvuorolista · {formatMonth(viewMonth)}
         </h1>
       </div>
 
@@ -136,6 +177,13 @@ export default async function RosterPage({
             </p>
           ) : null}
 
+          {view === "paivat" ? (
+            <Card padded={false} className="rf-print-section">
+              <div className="overflow-x-auto print:overflow-visible">
+                <DayList roster={roster} />
+              </div>
+            </Card>
+          ) : (
           <Card padded={false} className="rf-print-section">
             <div className="overflow-x-auto print:overflow-visible">
               <table className="rf-roster w-full">
@@ -230,8 +278,23 @@ export default async function RosterPage({
               </table>
             </div>
           </Card>
+          )}
 
-          <p className="text-[11.5px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          {/*
+            Alatunniste vain paperille.
+
+            Seinällä olevasta listasta on voitava nähdä milloin se on
+            tulostettu: vanha lista näyttää samalta kuin uusi, ja
+            väärää listaa luetaan niin kauan kuin se roikkuu seinällä.
+          */}
+          <p
+            className="hidden text-[10px] print:block"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            Luotu Budetilla {printedAt}
+          </p>
+
+          <p className="text-[11.5px] leading-relaxed rf-no-print" style={{ color: "var(--rf-text-3)" }}>
             Suunniteltu työaika, ei toteutunut eikä palkka. Toteutunut aika
             lasketaan leimauksista.
             {usedAbsences.size > 0 ? (
@@ -252,6 +315,38 @@ export default async function RosterPage({
 }
 
 // ---------------------------------------------------------------------------
+
+/**
+ * Näkymän valinta linkkeinä.
+ *
+ * Ei painikkeita: valinta on osa osoitetta, joten tulostettavan
+ * näkymän voi lähettää eteenpäin ja paluunappi toimii.
+ */
+function Valinta({
+  href,
+  label,
+  active,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="rf-press px-3 py-1.5 text-[12.5px] font-semibold"
+      aria-current={active ? "page" : undefined}
+      style={{
+        background: active ? "var(--rf-card)" : "transparent",
+        color: active ? "var(--rf-text)" : "var(--rf-text-2)",
+        borderRadius: "calc(var(--rf-r-control) - 2px)",
+        boxShadow: active ? "var(--rf-shadow-sm)" : undefined,
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
 
 function DayHead({ day }: { day: RosterDay }) {
   return (
