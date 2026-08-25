@@ -8,7 +8,7 @@ import {
   variancePatterns,
 } from "@/lib/restoflow/shifts";
 import { formatDuration } from "@/lib/restoflow/timeclock";
-import { seesPayRates } from "@/lib/restoflow/permissions";
+import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import {
   ABSENCE_LABELS,
   POSITION_LABELS,
@@ -28,7 +28,15 @@ import {
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
+import {
+  findOverlaps,
+  formatPlanned,
+  planSummary,
+  publicationOf,
+} from "@/lib/restoflow/shift-planning";
+import { monthWord } from "@/lib/restoflow/expenses";
 import { cancelAbsence, markAbsenceCertificate } from "../actions";
+import { PublishBar } from "./publish-bar";
 import { EditShift, NewShiftButton } from "./shift-form";
 
 export const metadata = { title: "Työvuorot" };
@@ -36,6 +44,37 @@ export const metadata = { title: "Työvuorot" };
 export default async function AdminShiftsPage() {
   const { users, shifts, openShifts, clockEvents, absences, today, now, role, restaurant } =
     await adminContext("/admin/tyovuorot");
+
+  const canManage = can(role, "shifts.manage");
+
+  /*
+   * Julkaisu koskee kuukautta, ei "tulevaa".
+   *
+   * Kuukauden alkupuolen luonnos on yhtä julkaisematon kuin lopunkin,
+   * vaikka sen päivä olisi jo mennyt.
+   *
+   * Palkkeja on yksi per kuukausi jolla on luonnoksia. Pelkkä kuluva
+   * kuukausi jättäisi seuraavan kuun suunnitelman ilman
+   * julkaisupainiketta — ja juuri seuraavaa kuuta suunnitellaan.
+   */
+  const draftMonths = [
+    ...new Set(
+      shifts
+        .filter((shift) => publicationOf(shift) === "draft")
+        .map((shift) => shift.date.slice(0, 7)),
+    ),
+  ].sort();
+
+  /*
+   * Päällekkäisyydet koko tulevalta ajalta.
+   *
+   * Menneitä ei tutkita: niitä ei enää voi korjata, ja varoitus
+   * asiasta jolle ei voi tehdä mitään opettaa ohittamaan varoitukset.
+   */
+  const overlapping = findOverlaps(
+    shifts.filter((s) => s.date >= today),
+    users,
+  );
 
   const upcoming = shifts.filter((s) => s.date >= today);
   const past = shifts.filter((s) => s.date < today);
@@ -92,6 +131,77 @@ export default async function AdminShiftsPage() {
           <NewShiftButton users={users} defaultDate={today} />
         </div>
       </div>
+
+      {canManage
+        ? draftMonths.map((draftMonth) => {
+            const drafts = shifts.filter(
+              (shift) =>
+                shift.date.startsWith(draftMonth) && publicationOf(shift) === "draft",
+            );
+            const plan = planSummary({ shifts: drafts, users });
+
+            return (
+              <PublishBar
+                key={draftMonth}
+                month={draftMonth}
+                /*
+                 * Genetiivi: "syyskuun työvuorot".
+                 *
+                 * Jokainen suomen kuukausi päättyy sanaan kuu, joten
+                 * pääte on aina sama n. Erillistä taivutustaulukkoa ei
+                 * tarvita, eikä sellainen ehtisi vanhentua.
+                 */
+                monthLabel={`${monthWord(draftMonth)}n ${draftMonth.slice(0, 4)}`}
+                drafts={drafts.length}
+                people={plan.people}
+                hours={formatPlanned(plan.plannedMinutes)}
+              />
+            );
+          })
+        : null}
+
+      {/*
+        Päällekkäisyys on suunnitteluvirhe, ei tekijän ongelma.
+
+        Sitä ei estetä tallennuksessa: kaksoisvuoro voi olla tarkoitus
+        (lyhyt avaus ja pitkä ilta), ja este pakottaisi kiertotielle
+        joka jättäisi molemmat vuorot kirjaamatta. Varoitus riittää.
+      */}
+      {overlapping.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Päällekkäiset vuorot"
+            subtitle="Sama ihminen kahdessa paikassa samaan aikaan"
+          />
+          <ul className="space-y-3">
+            {overlapping.map((pair) => (
+              <li
+                key={`${pair.a.id}-${pair.b.id}`}
+                className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar initials={pair.user?.initials ?? "?"} size={36} />
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-medium">
+                      {pair.user?.name ?? "Tuntematon"}
+                    </p>
+                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {formatShortDate(pair.a.date)} {pair.a.startTime}–{pair.a.endTime}
+                      {" · "}
+                      {formatShortDate(pair.b.date)} {pair.b.startTime}–{pair.b.endTime}
+                    </p>
+                  </div>
+                </div>
+
+                <Pill tone="risk" dot>
+                  päällekkäin
+                </Pill>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
 
       {upcomingAbsences.length > 0 ? (
         <Card>

@@ -42,7 +42,7 @@ function shift(partial: Partial<Shift> = {}): Shift {
   return {
     id: "s1", restaurantId: "rest-1", userId: "u1", date: TODAY,
     startTime: "09:00", endTime: "17:00", location: "Sali",
-    status: "accepted", ...partial,
+    status: "accepted", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null, ...partial,
   };
 }
 

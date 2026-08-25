@@ -32,6 +32,10 @@ function at(hhmm: string): string {
 
 function shift(partial: Partial<Shift> = {}): Shift {
   return {
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
     id: "sh1",
     restaurantId: "r1",
     userId: "u1",

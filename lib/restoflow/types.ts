@@ -366,6 +366,28 @@ export interface Shift {
   status: ShiftStatus;
   previousStartTime?: string;
   previousEndTime?: string;
+
+  /**
+   * Suunniteltu tauko minuutteina.
+   *
+   * Vähennetään suunnitellusta työajasta. Erillään alku- ja
+   * loppuajasta: tauko ei ole vuoron reunoilla vaan sen sisällä.
+   */
+  breakMinutes: number;
+
+  /** Vapaa lisätieto: "avaus", "tilaisuus salissa". */
+  note: string | null;
+
+  /**
+   * Milloin vuoro tuli työntekijän näkyviin. Null = luonnos.
+   *
+   * Julkaisu on eri akseli kuin status. Status on työntekijän vastaus
+   * vuoroon; tämä on työnantajan lupaus siitä että vuoro on voimassa.
+   */
+  publishedAt: string | null;
+
+  /** Milloin vuoro peruttiin. Peruttu vuoro säilyy, jottei se katoa jäljettömiin. */
+  cancelledAt: string | null;
 }
 
 export interface OpenShift {

@@ -11,11 +11,11 @@
 import { revalidatePath } from "next/cache";
 import { lineVatCents } from "@/lib/restoflow/vat";
 import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
-import { ISO_DATE } from "@/lib/restoflow/dates";
+import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
-import { canAddReceipts } from "@/lib/restoflow/permissions";
+import { can, canAddReceipts } from "@/lib/restoflow/permissions";
 import { reviewReasonsForSave } from "@/lib/restoflow/receipt-ai";
 import {
   isAutoMatch,
@@ -283,6 +283,19 @@ export async function saveShift(
   const shiftId = String(formData.get("shiftId") ?? "");
   const position = String(formData.get("position") ?? "");
 
+  /*
+   * Tauko luetaan minuutteina.
+   *
+   * Kelvoton arvo on nolla eikä virhe: tauoton vuoro on kelvollinen
+   * vuoro, ja tyhjä kenttä tarkoittaa juuri sitä. Yläraja on kannassa,
+   * joka hylkää vuorokauden mittaisen tauon.
+   */
+  const breakRaw = Number(String(formData.get("break") ?? "0").trim() || "0");
+  const breakMinutes =
+    Number.isFinite(breakRaw) && breakRaw > 0 ? Math.round(breakRaw) : 0;
+
+  const note = String(formData.get("note") ?? "").trim().slice(0, 200);
+
   const supabase = await createClient();
   const { error } = await supabase.rpc("upsert_shift", {
     p_restaurant: restaurant.id,
@@ -293,6 +306,8 @@ export async function saveShift(
     p_end: parsed.data.end,
     p_location: parsed.data.location,
     p_position: position || null,
+    p_break: breakMinutes,
+    p_note: note || null,
   });
 
   if (error) return { error: explain(error, "Vuoron tallennus epäonnistui") };
@@ -303,10 +318,81 @@ export async function saveShift(
   return {
     notice: shiftId
       ? "Vuoro päivitetty."
-      : userId
-        ? "Vuoro luotu ja lähetetty hyväksyttäväksi."
-        : "Avoin vuoro luotu.",
+      : /*
+         * Uusi vuoro syntyy luonnoksena.
+         *
+         * Kuukauden suunnittelu on keskeneräistä siihen asti kun se
+         * julkaistaan, eikä keskeneräinen suunnitelma kuulu
+         * työntekijän kalenteriin. Viesti sanoo sen ääneen, jottei
+         * kukaan jää odottamaan että vuoro ilmestyisi itsestään.
+         */
+        "Vuoro luotu luonnoksena. Se näkyy työntekijälle vasta kun julkaiset.",
   };
+}
+
+/**
+ * Julkaisee kuukauden luonnokset.
+ *
+ * Aikaväli kerralla: kuukausi suunnitellaan kokonaisuutena ja se myös
+ * luvataan kokonaisuutena. Vuoro kerrallaan julkaiseminen jättäisi
+ * työntekijälle puolikkaan kuukauden, eikä hän tietäisi onko loppu
+ * tulossa.
+ */
+export async function publishShifts(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const { restaurant, role } = await requireContext("/admin/tyovuorot");
+  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta julkaista vuoroja." };
+
+  const month = String(formData.get("month") ?? "");
+  if (!ISO_MONTH.test(month)) return { error: "Tarkista kuukausi." };
+
+  const [year, m] = month.split("-").map(Number);
+  const from = `${month}-01`;
+  const to = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("publish_shifts", {
+    p_restaurant: restaurant.id,
+    p_from: from,
+    p_to: to,
+  });
+
+  if (error) return { error: explain(error, "Julkaisu epäonnistui") };
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+
+  const count = Number(data ?? 0);
+
+  return {
+    notice:
+      count === 0
+        ? "Ei julkaistavia luonnoksia."
+        : `${count} ${count === 1 ? "vuoro" : "vuoroa"} julkaistu. Ne näkyvät nyt työntekijöille.`,
+  };
+}
+
+/**
+ * Peruu julkaistun vuoron.
+ *
+ * Ei poista: poistettu rivi veisi mukanaan tiedon siitä että vuoro oli
+ * olemassa, ja juuri se tieto tarvitaan kun kysytään miksi joku ei
+ * ollut töissä.
+ */
+export async function cancelShift(formData: FormData): Promise<void> {
+  const id = String(formData.get("shiftId") ?? "");
+  if (!id) return;
+
+  const { role } = await requireContext("/admin/tyovuorot");
+  if (!can(role, "shifts.manage")) return;
+
+  const supabase = await createClient();
+  await supabase.rpc("cancel_shift", { p_shift: id });
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
 }
 
 export async function deleteShift(formData: FormData): Promise<void> {

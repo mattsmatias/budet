@@ -2,7 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { deleteShift, saveShift, type AdminState } from "../actions";
+import { cancelShift, deleteShift, saveShift, type AdminState } from "../actions";
+import { publicationOf } from "@/lib/restoflow/shift-planning";
 import {
   POSITION_LABELS,
   type Shift,
@@ -126,11 +127,38 @@ export function ShiftForm({
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        {/*
+          Tauko vähennetään suunnitellusta työajasta.
+
+          Erillään alku- ja loppuajasta, koska tauko ei ole vuoron
+          reunoilla vaan sen sisällä: 10–18 puolen tunnin tauolla on
+          yhä vuoro joka alkaa kymmeneltä. Palkkakulu lasketaan tauon
+          jälkeisestä ajasta, joten unohtunut tauko näkyy euroina.
+        */}
+        <Input
+          label="Tauko (min)"
+          name="break"
+          type="number"
+          min={0}
+          max={480}
+          step={5}
+          defaultValue={String(shift?.breakMinutes ?? 0)}
+        />
+
+        <Input
+          label="Paikka"
+          name="location"
+          defaultValue={shift?.location ?? ""}
+          placeholder="Sali"
+        />
+      </div>
+
       <Input
-        label="Paikka"
-        name="location"
-        defaultValue={shift?.location ?? ""}
-        placeholder="Sali"
+        label="Lisätieto"
+        name="note"
+        defaultValue={shift?.note ?? ""}
+        placeholder="Avaus, tilaisuus salissa…"
       />
 
       {state.error ? (
@@ -222,6 +250,10 @@ export function EditShift({
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
+  const tila = publicationOf(shift);
+  const julkaistu = tila === "published";
+  const peruttu = tila === "cancelled";
+
   if (!open) {
     return (
       <button
@@ -248,9 +280,22 @@ export function EditShift({
         onDone={() => setOpen(false)}
       />
 
+      {/*
+        JULKAISTUA VUOROA EI POISTETA VAAN PERUTAAN.
+
+        Poistettu rivi veisi mukanaan tiedon siitä että vuoro oli
+        olemassa, ja juuri se tieto tarvitaan kun kysytään miksi joku
+        ei ollut töissä. Luonnoksen saa poistaa: sitä ei ole luvattu
+        kenellekään.
+      */}
       <div className="mt-3">
-        {confirming ? (
-          <form action={deleteShift} className="flex items-center gap-2">
+        {peruttu ? (
+          <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+            Vuoro on peruttu. Se säilyy listalla, jotta peruutus näkyy myös
+            jälkikäteen.
+          </p>
+        ) : confirming ? (
+          <form action={julkaistu ? cancelShift : deleteShift} className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="shiftId" value={shift.id} />
             <button
               type="submit"
@@ -261,7 +306,7 @@ export function EditShift({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              Poista vuoro
+              {julkaistu ? "Peru vuoro" : "Poista luonnos"}
             </button>
             <button
               type="button"
@@ -271,6 +316,11 @@ export function EditShift({
             >
               Peruuta
             </button>
+            <span className="basis-full text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+              {julkaistu
+                ? "Työntekijä on jo nähnyt tämän vuoron. Peruutus jää näkyviin hänelle ja historiaan."
+                : "Luonnosta ei ole näytetty kenellekään."}
+            </span>
           </form>
         ) : (
           <button
@@ -279,7 +329,7 @@ export function EditShift({
             className="text-[13px] underline underline-offset-4"
             style={{ color: "var(--rf-red-text)" }}
           >
-            Poista vuoro
+            {julkaistu ? "Peru vuoro" : "Poista luonnos"}
           </button>
         )}
       </div>
@@ -296,6 +346,9 @@ function Input({
   defaultValue,
   placeholder,
   required,
+  min,
+  max,
+  step,
 }: {
   label: string;
   name: string;
@@ -303,6 +356,10 @@ function Input({
   defaultValue?: string;
   placeholder?: string;
   required?: boolean;
+  /** Lukukentän rajat. Selain estää mahdottoman arvon jo syöttäessä. */
+  min?: number;
+  max?: number;
+  step?: number;
 }) {
   const id = `sh-${name}`;
 
@@ -318,6 +375,9 @@ function Input({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
+        min={min}
+        max={max}
+        step={step}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
         style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
       />

@@ -38,6 +38,7 @@ function mine(partial: Partial<Shift> = {}): Shift {
     startTime: "10:00",
     endTime: "18:00",
     location: "Sali",
+    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
     status: "accepted",
     ...partial,
   };

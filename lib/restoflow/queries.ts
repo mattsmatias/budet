@@ -359,7 +359,7 @@ export async function fetchShifts(
   let query = supabase
     .from("shifts")
     .select(
-      "id, user_id, position, shift_date, start_time, end_time, location, status, previous_start_time, previous_end_time",
+      "id, user_id, position, shift_date, start_time, end_time, location, status, previous_start_time, previous_end_time, break_minutes, note, published_at, cancelled_at",
     )
     .eq("restaurant_id", restaurantId)
     .order("shift_date");
@@ -386,6 +386,10 @@ export async function fetchShifts(
       previousEndTime: row.previous_end_time
         ? hhmm(row.previous_end_time as string)
         : undefined,
+      breakMinutes: (row.break_minutes as number | null) ?? 0,
+      note: (row.note as string | null) ?? null,
+      publishedAt: (row.published_at as string | null) ?? null,
+      cancelledAt: (row.cancelled_at as string | null) ?? null,
     }));
 }
 

@@ -12,6 +12,7 @@ import {
   type RosterCell,
   type RosterDay,
 } from "@/lib/restoflow/roster";
+import { publicationOf } from "@/lib/restoflow/shift-planning";
 import { ABSENCE_LABELS, POSITION_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState } from "@/components/restoflow/ui";
@@ -56,6 +57,10 @@ export default async function RosterPage({
   const people = roster.rows.filter((row) => row.user !== null).length;
   const shiftCount = roster.rows.reduce((sum, row) => sum + row.shiftCount, 0);
   const openCount = roster.rows.find((row) => row.user === null)?.shiftCount ?? 0;
+
+  const draftCount = shifts.filter(
+    (shift) => shift.date.startsWith(viewMonth) && publicationOf(shift) === "draft",
+  ).length;
 
   const usedAbsences = new Set(
     roster.rows.flatMap((row) =>
@@ -105,6 +110,31 @@ export default async function RosterPage({
             {openCount > 0 ? ` · ${openCount} avointa` : ""} ·{" "}
             {formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa
           </p>
+
+          {/*
+            Julkaisematon lista on luonnos myös paperilla.
+
+            Seinälle päätyvä lista on lupaus. Jos osa vuoroista on
+            julkaisematta, työntekijä lukee seinältä vuoron jota ei näy
+            hänen omassa näkymässään — ja luottaa väärään lähteeseen.
+          */}
+          {draftCount > 0 ? (
+            <p
+              className="flex items-start gap-2 px-3.5 py-2.5 text-[12.5px] leading-relaxed"
+              style={{
+                background: "var(--rf-amber-bg)",
+                color: "var(--rf-amber-text)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <span className="mt-px shrink-0">
+                <RfIcon name="alert" size={15} />
+              </span>
+              {draftCount} {draftCount === 1 ? "vuoro on" : "vuoroa on"} yhä
+              luonnoksena eikä näy työntekijöille. Julkaise ne työvuorosivulla
+              ennen kuin tulostat listan.
+            </p>
+          ) : null}
 
           <Card padded={false} className="rf-print-section">
             <div className="overflow-x-auto print:overflow-visible">
