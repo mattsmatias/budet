@@ -945,3 +945,57 @@ details[open] .rf-summary-chevron {
   background: var(--rf-inset);
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------------------------
+ * Työvuorokalenteri
+ * -------------------------------------------------------------------------
+ *
+ * Kuukausiruudukko: viikot riveinä, päivät sarakkeina. Ruutu on
+ * tarkoituksella matala mutta ei kiinteä — kolme vuoroa mahtuu, ja
+ * neljäs lasketaan yhteen "+ N muuta" -riviksi.
+ */
+.rf-cal {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.rf-cal thead th {
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rf-text-3);
+}
+
+/*
+ * Viikkonumero omana kapeana sarakkeenaan.
+ *
+ * Ravintolassa puhutaan viikoista, joten numero kuuluu riville. Kapea
+ * sarake ei vie tilaa päiviltä, joissa se on kortilla.
+ */
+.rf-cal-week {
+  width: 2.25rem;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rf-text-3);
+  text-align: center;
+  vertical-align: top;
+  padding-top: 10px;
+}
+
+.rf-cal-day {
+  border: 1px solid var(--rf-line);
+  vertical-align: top;
+  height: 5.5rem;
+  padding: 0;
+  transition: background 140ms ease;
+}
+
+.rf-cal-day:hover {
+  background: var(--rf-card-hover);
+}
+
+.rf-cal-day a {
+  min-height: 5.5rem;
+}

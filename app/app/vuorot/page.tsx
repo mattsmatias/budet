@@ -33,7 +33,26 @@ const WEEKS_AHEAD = 4;
 export default async function ShiftsPage() {
   const { shifts, absences, claimable, today } = await employeeContext("/app/vuorot");
 
-  const byDate = new Map(shifts.map((s) => [s.date, s]));
+  /*
+   * Peruttu vuoro ei ole vuoro.
+   *
+   * Se ei kuulu viikkonäkymään työvuorona — sinne jäädessään se
+   * näyttäisi voimassa olevalta ja joku tulisi töihin turhaan. Peruutus
+   * kerrotaan omana ilmoituksenaan yläreunassa.
+   */
+  const live = shifts.filter((shift) => shift.cancelledAt === null);
+  const byDate = new Map(live.map((s) => [s.date, s]));
+
+  /*
+   * Perutut tulevat vuorot.
+   *
+   * Näytetään vaikka päivä on jo mennyt tästä eteenpäin: peruutus on
+   * tieto jonka työntekijä tarvitsee juuri siltä päivältä jolle hän
+   * oli varautunut.
+   */
+  const cancelled = shifts.filter(
+    (shift) => shift.cancelledAt !== null && shift.date >= today,
+  );
   const absenceDates = new Set(
     absences.flatMap((a) => datesInRange(a.date, a.endDate ?? a.date)),
   );
@@ -44,7 +63,7 @@ export default async function ShiftsPage() {
    * Muutos on ainoa asia tällä sivulla joka vaatii huomiota heti:
    * työntekijä on saattanut suunnitella päivänsä vanhan ajan mukaan.
    */
-  const changed = shifts.filter((s) => s.status === "changed" && s.date >= today);
+  const changed = live.filter((s) => s.status === "changed" && s.date >= today);
 
   const weeks = buildWeeks(today, WEEKS_AHEAD);
   const hasAny = weeks.some((week) => week.days.some((d) => byDate.has(d)));
@@ -74,6 +93,33 @@ export default async function ShiftsPage() {
                     <strong>
                       {shift.startTime}–{shift.endTime}
                     </strong>
+                  </p>
+                </div>
+              </div>
+            </Surface>
+          ))}
+        </div>
+      ) : null}
+
+      {cancelled.length > 0 ? (
+        <div className="space-y-2">
+          {cancelled.map((shift) => (
+            <Surface key={shift.id}>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-amber-text)" }}>
+                  <RfIcon name="alert" size={18} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[15px] font-medium">Työvuoro peruttu</p>
+                  <p className="rf-tabular mt-1 text-[14px]">
+                    <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
+                    <s style={{ color: "var(--rf-text-3)" }}>
+                      {shift.startTime}–{shift.endTime}
+                    </s>
+                  </p>
+                  <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                    Et ole tänä aikana töissä. Kysy esihenkilöltä jos tämä tuli
+                    yllätyksenä.
                   </p>
                 </div>
               </div>

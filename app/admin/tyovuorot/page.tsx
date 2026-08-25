@@ -8,6 +8,8 @@ import {
   variancePatterns,
 } from "@/lib/restoflow/shifts";
 import { formatDuration } from "@/lib/restoflow/timeclock";
+import { dayIn } from "@/lib/restoflow/clock-context";
+import { DEVIATION_LABELS, findDeviations } from "@/lib/restoflow/deviations";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import {
   ABSENCE_LABELS,
@@ -76,6 +78,25 @@ export default async function AdminShiftsPage() {
     users,
   );
 
+  /*
+   * Päivät joilta on työaikaa.
+   *
+   * Sisäänleimaus riittää: se tarkoittaa että joku oli töissä, ja
+   * juuri sen vertaaminen suunnitelmaan paljastaa puuttuvan vuoron.
+   * Päivä luetaan ravintolan aikavyöhykkeellä — UTC:stä poimittuna
+   * yövuoron leimaus kirjautuisi edelliselle päivälle.
+   */
+  const clockedDates = [
+    ...new Map(
+      clockEvents
+        .filter((event) => event.type === "in")
+        .map((event) => {
+          const date = dayIn(restaurant.timezone, event.at);
+          return [`${event.userId}|${date}`, { userId: event.userId, date }];
+        }),
+    ).values(),
+  ].filter((row) => row.date < today);
+
   const upcoming = shifts.filter((s) => s.date >= today);
   const past = shifts.filter((s) => s.date < today);
 
@@ -97,6 +118,14 @@ export default async function AdminShiftsPage() {
   // eikä sen pidä kadota listalta kesken jakson.
   const upcomingAbsences = absences.filter((absence) => absence.endDate >= today);
 
+  const deviations = findDeviations({
+    comparisons,
+    clockedDates,
+    shifts,
+    users,
+    timezone: restaurant.timezone,
+  });
+
   return (
     <div className="rf-enter space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -115,7 +144,7 @@ export default async function AdminShiftsPage() {
             se on oma sivunsa eikä välilehti tämän sisällä.
           */}
           <Link
-            href="/admin/tyovuorot/lista"
+            href="/admin/tyovuorot/kalenteri"
             className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
             style={{
               background: "var(--rf-inset)",
@@ -125,6 +154,20 @@ export default async function AdminShiftsPage() {
             }}
           >
             <RfIcon name="calendar" size={15} />
+            Kalenteri
+          </Link>
+
+          <Link
+            href="/admin/tyovuorot/lista"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text)",
+              border: "1px solid var(--rf-line-strong)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <RfIcon name="report" size={15} />
             Kuukauden lista
           </Link>
 
@@ -305,6 +348,61 @@ export default async function AdminShiftsPage() {
               );
             })}
           </ul>
+        </Card>
+      ) : null}
+
+      {/*
+        Poikkeamat yhtenä listana, §11.
+
+        Nämä ovat menneisyyttä: vuoro on jo ollut ja jokin meni
+        toisin. Vakavin ensin, koska lista luetaan ylhäältä ja se
+        katkeaa siihen mihin aika loppuu.
+      */}
+      {deviations.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Poikkeamat"
+            subtitle="Suunniteltu ja toteutunut eivät kohdanneet"
+          />
+          <ul className="space-y-3">
+            {deviations.slice(0, 12).map((poikkeama, index) => (
+              <li
+                key={`${poikkeama.kind}-${poikkeama.shiftId ?? poikkeama.date}-${index}`}
+                className="flex flex-wrap items-start justify-between gap-3 border-t pt-3 first:border-0 first:pt-0"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className="mt-0.5 shrink-0"
+                    style={{
+                      color:
+                        poikkeama.severity === "critical"
+                          ? "var(--rf-red-text)"
+                          : "var(--rf-amber-text)",
+                    }}
+                  >
+                    <RfIcon name="alert" size={16} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[14px] leading-relaxed">{poikkeama.text}</p>
+                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      {formatShortDate(poikkeama.date)}
+                    </p>
+                  </div>
+                </div>
+
+                <Pill tone={poikkeama.severity === "critical" ? "risk" : "warn"} dot>
+                  {DEVIATION_LABELS[poikkeama.kind].toLowerCase()}
+                </Pill>
+              </li>
+            ))}
+          </ul>
+
+          {deviations.length > 12 ? (
+            <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+              Näytetään 12 ensimmäistä {deviations.length} poikkeamasta.
+            </p>
+          ) : null}
         </Card>
       ) : null}
 
