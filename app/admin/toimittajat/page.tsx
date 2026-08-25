@@ -61,7 +61,7 @@ export default async function SuppliersPage() {
         />
         <MetricCard
           label="Kirjatut kulut"
-          icon={<RfIcon name="expenses" size={17} />}
+          icon={<RfIcon name="receipt" size={17} />}
           tileTone="green"
           value={formatMoney(grandTotal)}
           hint={receiptCountLabel(inMonth.length)}

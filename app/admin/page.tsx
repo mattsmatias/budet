@@ -349,7 +349,7 @@ export default async function AdminDashboard({
         <StatCard
           label="Kirjatut kulut"
           value={<CountUp to={totals.totalCents} format="money" />}
-          icon={<RfIcon name="expenses" size={17} />}
+          icon={<RfIcon name="receipt" size={17} />}
           /*
            * Laatan väri on tunniste eikä tila.
            *

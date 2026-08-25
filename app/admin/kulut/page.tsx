@@ -57,7 +57,7 @@ export default async function ExpensesPage({
       <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
         <MetricCard
           label="Kirjatut kulut"
-          icon={<RfIcon name="expenses" size={17} />}
+          icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
           value={formatMoney(current.totalCents)}
           trend={
