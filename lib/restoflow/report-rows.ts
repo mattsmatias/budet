@@ -7,10 +7,15 @@
  */
 
 import { can } from "@/lib/restoflow/permissions";
+import { formatRate } from "@/lib/money";
+import { summarise } from "./sales-vat";
 import {
   fetchBudgets,
   fetchClockEvents,
+  fetchDailySales,
   fetchReceipts,
+  fetchSalesGroups,
+  fetchSalesLines,
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import {
@@ -36,7 +41,8 @@ export type ReportKind =
   | "toimittajat"
   | "budjetit"
   | "tyoaika"
-  | "henkilostokulut";
+  | "henkilostokulut"
+  | "alv";
 
 export const REPORT_KINDS: ReportKind[] = [
   "kulut",
@@ -46,6 +52,7 @@ export const REPORT_KINDS: ReportKind[] = [
   "budjetit",
   "tyoaika",
   "henkilostokulut",
+  "alv",
 ];
 
 export async function buildReportRows(
@@ -57,6 +64,17 @@ export async function buildReportRows(
 ): Promise<string[][]> {
   // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
   const showsRates = can(role, "staff.rates.view");
+
+  /*
+   * ALV-raportti lukee myyntiä eikä kuitteja.
+   *
+   * Oma haaransa ennen kuittien hakua: kuukauden kuittien lataaminen
+   * ALV-raporttia varten olisi turhaa työtä, ja myynti tulee eri
+   * tauluista.
+   */
+  if (kind === "alv") {
+    return vatReportRows(restaurantId, month);
+  }
 
   if (kind === "tyoaika" || kind === "henkilostokulut") {
     const [users, events] = await Promise.all([
@@ -238,3 +256,104 @@ function money(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
 
+
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Myynnin ALV kannoittain.
+ *
+ * KANTA TULEE RIVILTÄ, EI ASETUKSESTA.
+ *
+ * Raportti kertoo mitä kuukaudessa tapahtui, ja tapahtumaan kuuluu se
+ * verokanta joka silloin oli voimassa. Nykyisestä asetuksesta laskettu
+ * raportti muuttuisi takautuvasti kun kantaa muutetaan — ja
+ * kirjanpitoon lähetetty kuukausi ei saa muuttua jälkikäteen.
+ *
+ * ERITTELEMÄTÖN PÄIVÄ EI HUKU SUMMIIN.
+ *
+ * Käsin kirjattu päivä on yksi luku jota ei voi jakaa kannoittain
+ * jälkikäteen tuntematta myynnin rakennetta. Se on omassa
+ * osiossaan, jottei kannoittainen summa väittäisi kattavansa koko
+ * kuukautta.
+ */
+async function vatReportRows(
+  restaurantId: string,
+  month: string,
+): Promise<string[][]> {
+  const [year, m] = month.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
+
+  const [sales, groups] = await Promise.all([
+    fetchDailySales(restaurantId, 400),
+    fetchSalesGroups(restaurantId),
+  ]);
+
+  const inMonth = sales
+    .filter((day) => day.date >= `${month}-01` && day.date <= lastDay)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Päivä ja sen rivit pysyvät yhdessä: rivillä ei ole omaa päivää.
+  const perDay = await Promise.all(
+    inMonth.map(async (day) => ({
+      day,
+      lines: await fetchSalesLines(restaurantId, day.date),
+    })),
+  );
+
+  const allLines = perDay.flatMap((entry) => entry.lines);
+  const summary = summarise(allLines);
+
+  const nameOf = (id: string) => groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+  const unspecified = perDay.filter((entry) => entry.lines.length === 0);
+
+  return [
+    ["Budet — ALV-raportti myynnistä"],
+    ["Kuukausi", month],
+    [
+      "Huom",
+      "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta menneitä rivejä.",
+    ],
+    [],
+
+    ["Verokanta", "Verollinen", "ALV", "Veroton"],
+    ...summary.byRate.map((rate) => [
+      formatRate(rate.vatRate),
+      money(rate.grossCents),
+      money(rate.vatCents),
+      money(rate.netCents),
+    ]),
+    [
+      "Yhteensä",
+      money(summary.grossCents),
+      money(summary.vatCents),
+      money(summary.netCents),
+    ],
+    [],
+
+    ["Päivä", "Myyntiryhmä", "Verokanta", "Verollinen", "ALV", "Veroton"],
+    ...perDay.flatMap((entry) =>
+      entry.lines.map((line) => [
+        entry.day.date,
+        nameOf(line.salesGroupId),
+        formatRate(line.vatRate),
+        money(line.grossCents),
+        money(line.vatCents),
+        money(line.netCents),
+      ]),
+    ),
+
+    ...(unspecified.length > 0
+      ? [
+          [],
+          ["Erittelemättömät päivät"],
+          [
+            "Huom",
+            "Käsin kirjattu päivä on yksi luku eikä sitä voi eritellä kannoittain. Nämä eivät ole mukana yllä olevissa summissa.",
+          ],
+          ["Päivä", "Veroton myynti"],
+          ...unspecified.map((entry) => [entry.day.date, money(entry.day.netCents)]),
+        ]
+      : []),
+  ];
+}

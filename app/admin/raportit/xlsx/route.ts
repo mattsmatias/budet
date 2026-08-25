@@ -29,6 +29,7 @@ const SHEET_NAMES: Record<ReportKind, string> = {
   budjetit: "Budjetit",
   tyoaika: "Työaika",
   henkilostokulut: "Henkilöstökulut",
+  alv: "ALV",
 };
 
 export async function GET(request: NextRequest) {

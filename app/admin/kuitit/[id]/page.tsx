@@ -12,7 +12,7 @@ import {
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
-import { checkVat, formatRate, isMixedReceipt } from "@/lib/restoflow/vat";
+import { checkVat, formatRate, isMixedReceipt, vatByRate } from "@/lib/restoflow/vat";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -101,6 +101,9 @@ export default async function AdminReceiptDetailPage({
   );
   const mixed = isMixedReceipt(receipt.items);
   const canReview = can(role, "receipts.edit");
+  /* Kannoittainen erittely riveiltä. Sekakuitti ei pakotu yhteen kantaan. */
+  const rateBreakdown = vatByRate(receipt.items);
+
 
   return (
     <div className="rf-enter mx-auto max-w-4xl space-y-4">
@@ -248,6 +251,55 @@ export default async function AdminReceiptDetailPage({
               <Row label="Lisännyt" value={addedBy?.name ?? "—"} />
               <Row label="Lisätty" value={formatDateTime(receipt.addedAt)} last />
             </dl>
+
+            {/*
+              ALV kannoittain kun kuitilla on useampi kanta.
+
+              Sekakuitilla kokonais-ALV ei kerro kirjanpitäjälle sitä
+              mitä hän tarvitsee: paljonko vähennettävää veroa on
+              kummallakin kannalla. Yhden kannan kuitilla erittely
+              toistaisi vain yllä olevan rivin.
+            */}
+            {rateBreakdown.length > 1 ? (
+              <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
+                <h3 className="text-[13.5px] font-bold">ALV verokannoittain</h3>
+
+                <table className="rf-table mt-2.5 w-full">
+                  <caption className="sr-only">ALV verokannoittain</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Kanta</th>
+                      <th scope="col" className="text-right">Verollinen</th>
+                      <th scope="col" className="text-right">ALV</th>
+                      <th scope="col" className="text-right">Veroton</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rateBreakdown.map((rate) => (
+                      <tr key={rate.rate ?? "tuntematon"} className="rf-row">
+                        <td className="font-semibold">
+                          {rate.rate === null ? "Ei kantaa" : formatRate(rate.rate)}
+                        </td>
+                        <td className="rf-tabular text-right">{formatMoney(rate.grossCents)}</td>
+                        <td className="rf-tabular text-right">
+                          {rate.rate === null ? "—" : formatMoney(rate.vatCents)}
+                        </td>
+                        <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                          {formatMoney(rate.netCents)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {rateBreakdown.some((r) => r.rate === null) ? (
+                  <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>
+                    Osalla riveistä ei ole verokantaa. Niiden veroa ei ole
+                    laskettu eikä oletettu — tarkista ne kuitista.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </Card>
 
           {receipt.items.length > 0 ? (

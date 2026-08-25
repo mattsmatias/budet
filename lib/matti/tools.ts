@@ -27,6 +27,7 @@ import {
   weekdayName,
 } from "@/lib/restoflow/lunch";
 import { DAILY_TOOLS } from "./tools-daily";
+import { VAT_TOOLS } from "./tools-vat";
 import {
   defineTool,
   dateSchema,
@@ -776,6 +777,7 @@ const proposePublishLunch = defineTool({
 
 export const TOOLS: ToolDefinition[] = [
   ...DAILY_TOOLS,
+  ...VAT_TOOLS,
   getDashboard,
   getExpensesByCategory,
   getSuppliers,

@@ -9,6 +9,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { lineVatCents } from "@/lib/restoflow/vat";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
@@ -451,7 +452,21 @@ function parseItems(raw: FormDataEntryValue | null): ItemInput[] {
         totalCents: Math.round(i.totalCents),
         category: (i.category ?? "other") as ExpenseCategory,
         vatRate: typeof i.vatRate === "number" ? i.vatRate : null,
-        vatCents: typeof i.vatCents === "number" ? Math.round(i.vatCents) : null,
+        /*
+         * RIVIN ALV LASKETAAN, EI POIMITA.
+         *
+         * Brutto kertaa kanta on tarkka laskutoimitus, eikä mallilta
+         * kannata kysyä lukua jonka voi johtaa. Poimittu luku voisi
+         * lisäksi olla ristiriidassa rivin oman kannan kanssa — ja
+         * sellaista ristiriitaa ei huomaisi kukaan.
+         *
+         * Selaimen lähettämään lukuun ei myöskään voi luottaa:
+         * lomakkeen sisällön voi kirjoittaa itse.
+         */
+        vatCents: lineVatCents(
+          Math.round(i.totalCents),
+          typeof i.vatRate === "number" ? i.vatRate : null,
+        ),
         productGroup: i.productGroup ? String(i.productGroup) : null,
       }));
   } catch {

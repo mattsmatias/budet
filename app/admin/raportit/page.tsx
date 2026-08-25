@@ -36,6 +36,12 @@ const REPORTS = [
       "Kaikki kuukauden kuitit riveittäin: toimittaja, kategoria, maksutapa, ALV ja tila.",
   },
   {
+    kind: "alv",
+    title: "ALV-raportti",
+    description:
+      "Myynnin ALV verokannoittain: verollinen, vero ja veroton. Kanta on se joka oli voimassa kun päivä kirjattiin.",
+  },
+  {
     kind: "tyoaika",
     title: "Työaikaraportti",
     description: "Työntekijöiden tehdyt tunnit kuukaudessa.",

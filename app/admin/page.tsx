@@ -45,6 +45,8 @@ import {
 } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
 import { shiftBounds } from "@/lib/restoflow/shift-window";
+import { fetchSalesLines } from "@/lib/restoflow/queries";
+import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
@@ -265,6 +267,26 @@ export default async function AdminDashboard({
   const flow = monthlyFlow(receipts, sales, viewMonth, chartMonths);
 
   /*
+   * Tämän päivän täsmäytys.
+   *
+   * Rivit vain tältä päivältä: yleiskuva kertoo mitä juuri nyt on
+   * tekemättä, ja eilisen täsmäyttämättömyys on eilisen sivun asia.
+   */
+  const todaySales = sales.find((s) => s.date === today) ?? null;
+  const todayLines = can(role, "sales.view")
+    ? await fetchSalesLines(restaurant.id, today)
+    : [];
+
+  const posCheck =
+    todaySales && todayLines.length > 0
+      ? reconcileSales({
+          posGrossCents: todaySales.posGrossCents,
+          posVatCents: todaySales.posVatCents,
+          lines: todayLines,
+        })
+      : null;
+
+  /*
    * Budjetti jäljellä.
    *
    * Vain niistä kategorioista joille budjetti on asetettu. Kategoria
@@ -412,27 +434,49 @@ export default async function AdminDashboard({
                   }
                 : undefined
             }
+            /*
+             * Täsmäytys voittaa vertailun.
+             *
+             * "8 % yli tavoitteen" on hyödytön tieto jos luku itsessään
+             * ei täsmää kassaan. Ero kassaan on korjattava ennen kuin
+             * lukua kannattaa verrata mihinkään.
+             */
             conclusion={
-              pulse.sales.cents === null
-                ? "Ei vielä kirjattu"
-                : pulse.sales.comparison.kind === "target"
-                  ? `Tavoite ${formatMoney(pulse.sales.comparison.targetCents)}`
-                  : pulse.sales.comparison.kind === "weekday"
-                    ? `${formatMoney(pulse.sales.comparison.averageCents)} saman viikonpäivän keskiarvo`
-                    : "Ei vertailukohtaa"
+              posCheck?.status === "mismatch"
+                ? `Ei täsmää kassaan · ero ${formatMoney(
+                    Math.abs(posCheck.total.diffCents ?? posCheck.vat.diffCents ?? 0),
+                  )}`
+                : posCheck?.status === "match"
+                  ? "Täsmää kassan päiväraporttiin"
+                  : pulse.sales.cents === null
+                    ? "Ei vielä kirjattu"
+                    : pulse.sales.comparison.kind === "target"
+                      ? `Tavoite ${formatMoney(pulse.sales.comparison.targetCents)}`
+                      : pulse.sales.comparison.kind === "weekday"
+                        ? `${formatMoney(pulse.sales.comparison.averageCents)} saman viikonpäivän keskiarvo`
+                        : "Ei vertailukohtaa"
             }
             tone={
-              pulse.sales.cents === null
-                ? "muted"
-                : pulse.sales.comparison.kind === "none"
-                  ? "neutral"
-                  : pulse.sales.comparison.ratio >= 1
-                    ? "down"
-                    : "warn"
+              posCheck?.status === "mismatch"
+                ? "bad"
+                : pulse.sales.cents === null
+                  ? "muted"
+                  : pulse.sales.comparison.kind === "none"
+                    ? "neutral"
+                    : pulse.sales.comparison.ratio >= 1
+                      ? "down"
+                      : "warn"
             }
             icon={<RfIcon name="trend" size={17} />}
-            href={can(role, "sales.view") ? "/admin/myynti" : undefined}
-            linkLabel="Myynti"
+            /* Ero vie suoraan päivään jossa se selitetään. */
+            href={
+              can(role, "sales.view")
+                ? posCheck
+                  ? `/admin/myynti/${today}`
+                  : "/admin/myynti"
+                : undefined
+            }
+            linkLabel={posCheck?.status === "mismatch" ? "Katso ero" : "Myynti"}
           />
         ) : (
           <StatCard

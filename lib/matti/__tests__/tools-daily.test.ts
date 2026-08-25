@@ -26,6 +26,7 @@ function emptyData(partial: Partial<RestaurantData> = {}): RestaurantData {
     receipts: [], openShifts: [], users: [], suppliers: [], budgets: [],
     shifts: [], clockEvents: [], absences: [], closedMonths: [],
     categories: [], merchants: [], merchantCategories: [], sales: [],
+    salesGroups: [], posMappings: [],
     ...partial,
   };
 }

@@ -63,7 +63,7 @@ export interface VatCheck {
 }
 
 /** Rivi sellaisena kuin ALV-tarkistus sen tarvitsee. */
-interface RatedLine {
+export interface RatedLine {
   totalCents: number;
   vatRate: number | null;
 }
@@ -237,4 +237,77 @@ export function dominantCategory(
 /** Onko kuitti sekakuitti — useampi kategoria riveillä? */
 export function isMixedReceipt(items: ReceiptItem[]): boolean {
   return new Set(items.map((i) => i.category)).size > 1;
+}
+
+// ---------------------------------------------------------------------------
+
+export interface VatRateTotal {
+  /** Verokanta osuutena. Null = rivillä ei ole kantaa. */
+  rate: number | null;
+  grossCents: number;
+  vatCents: number;
+  netCents: number;
+}
+
+/**
+ * Kuitin ALV verokannoittain.
+ *
+ * SEKAKUITTIA EI PAKOTETA YHTEEN KANTAAN.
+ *
+ * Tukkukuitilla on ruokaa 14 %:lla ja siivousainetta 25,5 %:lla. Näiden
+ * keskiarvo ei ole mikään verokanta, eikä kuitin kokonais-ALV kerro
+ * kirjanpitäjälle sitä mitä hän tarvitsee: paljonko vähennettävää
+ * veroa kummallakin kannalla on.
+ *
+ * RIVI ILMAN KANTAA ON OMA RYHMÄNSÄ.
+ *
+ * Sitä ei jaeta muille kannoille eikä oleteta yleiseen kantaan.
+ * Tuntematon on tulos sekin, ja sen näkeminen on ainoa tapa korjata
+ * se.
+ *
+ * Rivihinnat ovat verollisia, joten vero irrotetaan brutosta samalla
+ * keskitetyllä pyöristyssäännöllä kuin myynnissä.
+ */
+export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
+  const totals = new Map<number | null, VatRateTotal>();
+
+  for (const line of lines) {
+    const current = totals.get(line.vatRate) ?? {
+      rate: line.vatRate,
+      grossCents: 0,
+      vatCents: 0,
+      netCents: 0,
+    };
+
+    const vat =
+      line.vatRate === null
+        ? 0
+        : Math.round((line.totalCents * line.vatRate) / (1 + line.vatRate));
+
+    current.grossCents += line.totalCents;
+    current.vatCents += vat;
+    // Erotuksena: näin brutto = vero + veroton pitää joka ryhmässä.
+    current.netCents += line.totalCents - vat;
+
+    totals.set(line.vatRate, current);
+  }
+
+  return [...totals.values()].sort((a, b) => {
+    // Kannaton viimeiseksi: se on puute eikä kanta.
+    if (a.rate === null) return 1;
+    if (b.rate === null) return -1;
+    return b.rate - a.rate;
+  });
+}
+
+/**
+ * Rivin ALV sentteinä.
+ *
+ * Lasketaan eikä poimita: brutto kertaa kanta on tarkka laskutoimitus,
+ * eikä mallilta kannata kysyä lukua jonka voi johtaa. Poimittu luku
+ * voisi lisäksi olla ristiriidassa rivin oman kannan kanssa.
+ */
+export function lineVatCents(totalCents: number, vatRate: number | null): number | null {
+  if (vatRate === null) return null;
+  return Math.round((totalCents * vatRate) / (1 + vatRate));
 }
