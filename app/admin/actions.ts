@@ -523,7 +523,7 @@ async function linkSupplierToMerchant(
 // Asetukset
 // ---------------------------------------------------------------------------
 
-const settingsSchema = z.object({
+const restaurantSchema = z.object({
   name: z.string().trim().min(1, "Nimi puuttuu.").max(120),
   timezone: z.string().trim().min(1, "Valitse aikavyöhyke."),
 });
@@ -532,14 +532,22 @@ const settingsSchema = z.object({
  * Ravintolan nimi ja aikavyöhyke.
  *
  * Aikavyöhyke ei ole kosmeettinen: työaika, kuukausirajat ja vuorojen
- * päivät lasketaan siinä. Kanta tarkistaa vyöhykkeen olemassaolon, koska
- * kelvoton arvo ei kaataisi mitään heti vaan laskisi tunnit väärin.
+ * päivät lasketaan siinä. Palvelin käy UTC:ssä, joten väärä vyöhyke
+ * siirtäisi yövuoron väärälle päivälle.
+ *
+ * YKSI OSIO, YKSI LOMAKE, YKSI KUTSU.
+ *
+ * Asetussivu on jaettu osioihin, ja jokainen lähettää vain omat
+ * kenttänsä. Kanta tulkitsee nullin "älä koske" -merkiksi, joten
+ * nimen tallentaminen ei nollaa vuoroasetuksia. Aiemmin kaikki
+ * kentät kirjoitettiin joka kerta, ja se toimi vain niin kauan kuin
+ * lomakkeita oli yksi.
  */
-export async function updateSettings(
+export async function updateRestaurant(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
-  const parsed = settingsSchema.safeParse({
+  const parsed = restaurantSchema.safeParse({
     name: formData.get("name"),
     timezone: formData.get("timezone"),
   });
@@ -553,8 +561,6 @@ export async function updateSettings(
     p_restaurant: restaurant.id,
     p_name: parsed.data.name,
     p_timezone: parsed.data.timezone,
-    // Valintaruutu ei lähetä mitään kun se on pois päältä.
-    p_open_shift_claiming: formData.get("openShiftClaiming") === "on",
   });
 
   if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };
@@ -562,7 +568,45 @@ export async function updateSettings(
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
-  return { notice: "Asetukset tallennettu." };
+  return { notice: "Ravintolan tiedot tallennettu." };
+}
+
+/**
+ * Vuoro- ja leimaussäännöt.
+ *
+ * Leimausikkuna on ollut kannassa alusta asti mutta lukittuna
+ * kolmeenkymmeneen minuuttiin, koska sitä ei voinut muuttaa mistään.
+ * Ravintoloiden käytännöt eroavat: toisessa tullaan varttia ennen,
+ * toisessa tunti.
+ */
+export async function updateShiftRules(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const minutes = Number(formData.get("clockInEarlyMinutes"));
+
+  if (!Number.isInteger(minutes) || minutes < 0 || minutes > 240) {
+    return { error: "Leimausikkuna on 0–240 minuuttia." };
+  }
+
+  const { restaurant } = await requireContext("/admin/asetukset");
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("update_restaurant", {
+    p_restaurant: restaurant.id,
+    // Valintaruutu ei lähetä mitään kun se on pois päältä, joten
+    // arvoa ei voi lukea sen olemassaolosta — lomake on aina tämä,
+    // joten poissaolo tarkoittaa tässä varmasti "ei".
+    p_open_shift_claiming: formData.get("openShiftClaiming") === "on",
+    p_clock_in_early_minutes: minutes,
+  });
+
+  if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/app", "layout");
+
+  return { notice: "Vuoroasetukset tallennettu." };
 }
 
 // ---------------------------------------------------------------------------
