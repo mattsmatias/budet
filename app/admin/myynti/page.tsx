@@ -7,6 +7,9 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
 import { Panel, PanelEmpty } from "@/components/restoflow/dashboard-ui";
 import { SalesForm } from "./form";
+import { ReportCapture } from "./capture";
+import { averageCheckCents } from "@/lib/restoflow/sales-report";
+import { DeleteDay } from "./delete-day";
 
 export const metadata = { title: "Myynti" };
 
@@ -41,10 +44,34 @@ export default async function SalesPage() {
         </div>
       </header>
 
+      {/*
+        Kuvaaminen ensin, käsin kirjaus sen alla.
+
+        Päiväraportti on jo tulostettu illan päätteeksi, ja siinä lukee
+        enemmän kuin yksi luku. Käsin kirjaus jää siltä varalta ettei
+        raporttia ole tai poiminta ei osu — se on nopein tie yhteen
+        lukuun, muttei enää ainoa tie.
+      */}
       {canManage ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            {todayRow ? "Muuta tämän päivän myyntiä" : "Kirjaa päivän myynti"}
+            Kuvaa kassan päiväraportti
+          </h2>
+          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+            Poiminta lukee päivän, myynnin, ALV:n ja kuittien määrän. Tarkistat
+            luvut ennen tallennusta.
+          </p>
+
+          <div className="mt-3.5">
+            <ReportCapture today={today} />
+          </div>
+        </Card>
+      ) : null}
+
+      {canManage ? (
+        <Card>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            {todayRow ? "Muuta tämän päivän myyntiä" : "Kirjaa päivän myynti käsin"}
           </h2>
           <SalesForm
             defaultDate={today}
@@ -98,14 +125,23 @@ export default async function SalesPage() {
               <thead>
                 <tr>
                   <th>Päivä</th>
-                  <th className="text-right">Myynti</th>
+                  <th className="text-right">Veroton</th>
+                  <th className="text-right">Kuitteja</th>
+                  <th className="text-right">Keskiostos</th>
                   <th className="text-right">Tavoite</th>
                   <th>Vertailu</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {sales.slice(0, 30).map((row) => (
-                  <Row key={row.date} row={row} history={sales} today={today} />
+                  <Row
+                    key={row.date}
+                    row={row}
+                    history={sales}
+                    today={today}
+                    canManage={canManage}
+                  />
                 ))}
               </tbody>
             </table>
@@ -127,25 +163,62 @@ function Row({
   row,
   history,
   today,
+  canManage,
 }: {
   row: DailySales;
   history: DailySales[];
   today: string;
+  canManage: boolean;
 }) {
   const comparison = compareSales(row, history);
+  const average = averageCheckCents(row.grossCents, row.transactions);
 
   return (
     <tr className="border-b last:border-0" style={{ borderColor: "var(--rf-line)" }}>
       <td>
-        {formatDay(row.date)}
-        {row.date === today ? (
-          <span className="ml-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            tänään
+        <span className="flex items-center gap-2">
+          <span>{formatDay(row.date)}</span>
+
+          {/*
+            Raportista luettu päivä merkitään.
+
+            Käsin kirjattu ja raportista luettu ovat eri luotettavuutta,
+            ja ero on nähtävä jälkikäteen — muuten ei voi tietää
+            kannattaako lukua epäillä kun se ei täsmää kirjanpitoon.
+          */}
+          {row.source === "report" ? (
+            <span
+              aria-label="Luettu päiväraportista"
+              title="Luettu päiväraportista"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              <RfIcon name="camera" size={14} />
+            </span>
+          ) : null}
+
+          {row.date === today ? (
+            <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+              tänään
+            </span>
+          ) : null}
+        </span>
+      </td>
+
+      <td className="num">
+        {formatMoney(row.netCents)}
+        {row.grossCents !== null ? (
+          <span className="block text-[11.5px] font-normal" style={{ color: "var(--rf-text-3)" }}>
+            {formatMoney(row.grossCents)} verollinen
           </span>
         ) : null}
       </td>
-      <td className="num">
-        {formatMoney(row.netCents)}
+
+      <td className="num" style={{ color: "var(--rf-text-2)" }}>
+        {row.transactions ?? "—"}
+      </td>
+
+      <td className="num" style={{ color: "var(--rf-text-2)" }}>
+        {average === null ? "—" : formatMoney(average)}
       </td>
       <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-3)" }}>
         {row.targetCents ? formatMoney(row.targetCents) : "—"}
@@ -161,6 +234,10 @@ function Row({
             {comparison.kind === "target" ? "tavoitteesta" : "vs. sama viikonpäivä"}
           </Pill>
         )}
+      </td>
+
+      <td className="text-right">
+        {canManage ? <DeleteDay date={row.date} label={formatDay(row.date)} /> : null}
       </td>
     </tr>
   );

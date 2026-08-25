@@ -47,7 +47,16 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
 }
 
 function sale(date: string, netCents: number, targetCents: number | null = null): DailySales {
-  return { date, netCents, targetCents, note: null };
+  return {
+    date,
+    netCents,
+    targetCents,
+    note: null,
+    grossCents: null,
+    vatCents: null,
+    transactions: null,
+    source: "manual",
+  };
 }
 
 function receipt(date: string, totalCents: number): Receipt {

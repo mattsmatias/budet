@@ -1079,7 +1079,9 @@ export async function fetchDailySales(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("daily_sales")
-    .select("sales_date, net_sales_cents, target_cents, note")
+    .select(
+      "sales_date, net_sales_cents, gross_sales_cents, vat_cents, transactions, source, target_cents, note",
+    )
     .eq("restaurant_id", restaurantId)
     .order("sales_date", { ascending: false })
     .limit(limit);
@@ -1091,5 +1093,9 @@ export async function fetchDailySales(
     netCents: (row.net_sales_cents as number | null) ?? 0,
     targetCents: (row.target_cents as number | null) ?? null,
     note: (row.note as string | null) ?? null,
+    grossCents: (row.gross_sales_cents as number | null) ?? null,
+    vatCents: (row.vat_cents as number | null) ?? null,
+    transactions: (row.transactions as number | null) ?? null,
+    source: ((row.source as string | null) ?? "manual") as "manual" | "report",
   }));
 }

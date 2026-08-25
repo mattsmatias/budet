@@ -35,6 +35,17 @@ function parseEuros(value: FormDataEntryValue | null): number | null {
   return Math.round(amount * 100);
 }
 
+/** "128" → 128. Tyhjä tai kelvoton → null. */
+function parseCount(value: FormDataEntryValue | null): number | null {
+  const text = String(value ?? "").trim();
+  if (text === "") return null;
+
+  const count = Number(text);
+  if (!Number.isInteger(count) || count < 0) return null;
+
+  return count;
+}
+
 export async function saveDailySales(
   _prev: SalesState,
   formData: FormData,
@@ -51,12 +62,38 @@ export async function saveDailySales(
   const target = parseEuros(formData.get("target"));
   const note = String(formData.get("note") ?? "").trim() || null;
 
+  /*
+   * Päiväraportin lisätiedot.
+   *
+   * Kaikki vapaaehtoisia: käsin kirjattu päivä on yhä kelvollinen
+   * yhdellä luvulla. Nämä täyttyvät kun raportti on kuvattu.
+   */
+  const gross = parseEuros(formData.get("gross"));
+  const vat = parseEuros(formData.get("vat"));
+  const transactions = parseCount(formData.get("transactions"));
+  const fromReport = formData.get("source") === "report";
+
+  /*
+   * Verollinen ei voi olla verotonta pienempi.
+   *
+   * Kanta hylkäisi rivin rajoitteella, mutta virhe olisi silloin
+   * rajoitteen nimi eikä lause. Sama tarkistus tässä antaa
+   * käyttäjälle sen mitä hän voi korjata.
+   */
+  if (gross !== null && gross < net) {
+    return { error: "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut." };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.from("daily_sales").upsert(
     {
       restaurant_id: restaurant.id,
       sales_date: date,
       net_sales_cents: net,
+      gross_sales_cents: gross,
+      vat_cents: vat,
+      transactions,
+      source: fromReport ? "report" : "manual",
       target_cents: target,
       note,
       created_by: user.id,

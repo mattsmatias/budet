@@ -13,11 +13,27 @@
 
 export interface DailySales {
   date: string;
-  /** Veroton myynti sentteinä. */
+  /** Veroton myynti sentteinä. Ainoa pakollinen luku. */
   netCents: number;
   /** Päivän tavoite, jos asetettu. */
   targetCents: number | null;
   note: string | null;
+
+  /*
+   * Päiväraportin lisätiedot.
+   *
+   * Null kun päivä on kirjattu käsin yhtenä lukuna. Vanhat rivit ovat
+   * siis yhtä kelvollisia kuin uudet — raportin kuvaaminen täydentää
+   * mutta ei ole ehto.
+   */
+  /** Verollinen myynti sentteinä. */
+  grossCents: number | null;
+  /** ALV yhteensä sentteinä. */
+  vatCents: number | null;
+  /** Kuittien määrä. */
+  transactions: number | null;
+  /** Kirjattu käsin vai luettu raportista. */
+  source: "manual" | "report";
 }
 
 /** Montako saman viikonpäivän havaintoa tarvitaan vertailuun. */
