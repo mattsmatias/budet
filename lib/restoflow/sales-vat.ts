@@ -318,3 +318,29 @@ function explain(
 function sum<T>(items: T[], pick: (item: T) => number): number {
   return items.reduce((total, item) => total + pick(item), 0);
 }
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Käyttäjän kirjoittama prosentti osuudeksi.
+ *
+ * "25,5" → 0.255. Tyhjä tai kelvoton → null.
+ *
+ * Ylin sallittu on 100 %: sitä suurempi vero tekisi verottomasta
+ * summasta negatiivisen.
+ *
+ * Pyöristys viiteen desimaaliin kuten kannassa. Ilman sitä 25.5/100 on
+ * 0.255000000000000004, ja se häntä päätyisi verokannaksi.
+ */
+export function parseRate(input: unknown): number | null {
+  const text = String(input ?? "")
+    .replace(/[s% ]/g, "")
+    .replace(",", ".");
+
+  if (text === "") return null;
+
+  const percent = Number(text);
+  if (!Number.isFinite(percent) || percent < 0 || percent > 100) return null;
+
+  return Math.round((percent / 100) * 1e5) / 1e5;
+}

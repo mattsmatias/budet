@@ -3,6 +3,7 @@ import { formatMoney, formatRate } from "@/lib/money";
 import {
   lineFromGross,
   lineFromNet,
+  parseRate,
   reconcile,
   summarise,
   toleranceFor,
@@ -257,5 +258,40 @@ describe("historiallinen verokanta", () => {
     expect(s.byRate.map((r) => r.vatRate)).toEqual([0.14, 0.1]);
     expect(s.byRate[1].vatCents).toBe(10000);
     expect(s.byRate[0].vatCents).toBe(14000);
+  });
+});
+
+describe("parseRate", () => {
+  it("lukee kokonaisen ja desimaalisen prosentin", () => {
+    expect(parseRate("14")).toBe(0.14);
+    expect(parseRate("25,5")).toBe(0.255);
+    expect(parseRate("25.5")).toBe(0.255);
+  });
+
+  it("sietää prosenttimerkin ja välilyönnit", () => {
+    expect(parseRate(" 13,5 % ")).toBe(0.135);
+    expect(parseRate("25,5\u00a0%")).toBe(0.255);
+  });
+
+  it("hyväksyy nollakannan", () => {
+    expect(parseRate("0")).toBe(0);
+  });
+
+  /*
+   * 25.5/100 on liukulukuna 0.255000000000000004. Ilman pyöristystä se
+   * häntä päätyisi kantaan ja jokainen siihen perustuva vero olisi
+   * hiuksenhieno virhe joka kertaantuu.
+   */
+  it("ei päästä liukuluvun häntää läpi", () => {
+    expect(parseRate("25,5")!.toString()).toBe("0.255");
+    expect(parseRate("13,5")!.toString()).toBe("0.135");
+  });
+
+  it("hylkää mahdottoman kannan", () => {
+    expect(parseRate("101")).toBeNull();
+    expect(parseRate("-5")).toBeNull();
+    expect(parseRate("abc")).toBeNull();
+    expect(parseRate("")).toBeNull();
+    expect(parseRate(null)).toBeNull();
   });
 });

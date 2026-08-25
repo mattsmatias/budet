@@ -10,6 +10,8 @@ import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
 import { RestaurantForm, ShiftRulesForm } from "./forms";
 import { NameForm, PasswordForm } from "./profile-forms";
+import { SalesGroups, PosMappings } from "./vat-settings";
+import { fetchPosMappings, fetchSalesGroups } from "@/lib/restoflow/queries";
 import { SectionNav } from "./section-nav";
 import { sectionFor } from "./sections";
 
@@ -35,6 +37,20 @@ export default async function SettingsPage({
 
   const canEdit = can(role, "settings.edit");
   const section = sectionFor(params.osio);
+
+  /*
+   * Verotuksen aineisto haetaan vain kun sitä katsotaan.
+   *
+   * Kaksi kyselyä jokaisella asetussivun latauksella olisi kaksi
+   * kyselyä joita viisi osastoa kuudesta ei käytä.
+   */
+  const vat =
+    section.id === "verotus" && canEdit
+      ? {
+          groups: await fetchSalesGroups(restaurant.id),
+          mappings: await fetchPosMappings(restaurant.id),
+        }
+      : null;
 
   /*
    * Osasto jota ei saa nähdä putoaa omaan tunnukseen.
@@ -114,6 +130,37 @@ export default async function SettingsPage({
                 clockInEarlyMinutes={restaurant.clockInEarlyMinutes}
                 openShiftClaiming={restaurant.openShiftClaiming}
               />
+            ) : null}
+
+            {shown.id === "verotus" && vat ? (
+              <>
+                <p
+                  className="text-[13px] leading-relaxed"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  Myyntiryhmät ovat samat kuin kassajärjestelmäsi
+                  päiväraportissa. Kun ne täsmäävät, päivän myynti voidaan
+                  verrata raporttiin ryhmä ja verokanta kerrallaan — eikä vain
+                  loppusummana.
+                </p>
+
+                <div className="mt-4">
+                  <SalesGroups groups={vat.groups} />
+                </div>
+
+                <Divider />
+
+                <h3 className="text-[13.5px] font-bold">Kassajärjestelmän ryhmät</h3>
+                <p className="mt-1 text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+                  Kassa tuntee omat nimensä. Kerro mihin myyntiryhmään kukin
+                  niistä kuuluu, niin poiminta osaa kohdistaa raportin rivit
+                  oikeille verokannoille.
+                </p>
+
+                <div className="mt-3">
+                  <PosMappings mappings={vat.mappings} groups={vat.groups} />
+                </div>
+              </>
             ) : null}
 
             {shown.id === "kirjanpito" ? (

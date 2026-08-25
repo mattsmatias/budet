@@ -12,6 +12,7 @@
  */
 
 import type { PayComponent, TimeCorrection } from "./payroll";
+import type { PosMapping, SalesGroup, SalesLine } from "./sales-vat";
 import type { DailySales } from "./sales";
 import type { Merchant } from "./merchants";
 import type { AllergenType, DietType, LunchWeek } from "./lunch";
@@ -1097,5 +1098,97 @@ export async function fetchDailySales(
     vatCents: (row.vat_cents as number | null) ?? null,
     transactions: (row.transactions as number | null) ?? null,
     source: ((row.source as string | null) ?? "manual") as "manual" | "report",
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Myyntiryhmät ja verokannat
+// ---------------------------------------------------------------------------
+
+/**
+ * Ravintolan myyntiryhmät.
+ *
+ * Myös pois käytöstä otetut: vanhat myyntirivit viittaavat niihin, ja
+ * ilman nimeä rivi olisi historiassa nimetön summa. "Käytössä" rajaa
+ * vain sitä mitä uudelle riville voi valita.
+ */
+export async function fetchSalesGroups(restaurantId: string): Promise<SalesGroup[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("sales_groups")
+    .select("id, name, vat_rate, active, is_default, sort_order")
+    .eq("restaurant_id", restaurantId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    name: row.name as string,
+    // numeric tulee Supabasesta merkkijonona: Number tarvitaan, mutta
+    // vain esitykseen — laskenta tapahtuu sentteinä.
+    vatRate: Number(row.vat_rate),
+    active: row.active as boolean,
+    isDefault: row.is_default as boolean,
+    sortOrder: row.sort_order as number,
+  }));
+}
+
+/** Kassajärjestelmän ryhmänimien kohdistukset. */
+export async function fetchPosMappings(restaurantId: string): Promise<PosMapping[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("pos_sales_groups")
+    .select("id, pos_name, sales_group_id")
+    .eq("restaurant_id", restaurantId)
+    .order("pos_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    posName: row.pos_name as string,
+    salesGroupId: row.sales_group_id as string,
+  }));
+}
+
+/**
+ * Yhden päivän myyntirivit.
+ *
+ * Erillinen kysely eikä osa fetchDailySalesia: rivejä tarvitaan yhden
+ * päivän täsmäytykseen, ja sadan päivän rivien hakeminen listanäkymään
+ * olisi tuhat riviä jota kukaan ei katso.
+ */
+export async function fetchSalesLines(
+  restaurantId: string,
+  date: string,
+): Promise<SalesLine[]> {
+  const supabase = await createClient();
+
+  const { data: day } = await supabase
+    .from("daily_sales")
+    .select("id")
+    .eq("restaurant_id", restaurantId)
+    .eq("sales_date", date)
+    .maybeSingle();
+
+  if (!day) return [];
+
+  const { data, error } = await supabase
+    .from("daily_sales_lines")
+    .select("sales_group_id, vat_rate, gross_cents, vat_cents, net_cents, pos_name, pos_vat_cents")
+    .eq("daily_sales_id", day.id as string);
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    salesGroupId: row.sales_group_id as string,
+    vatRate: Number(row.vat_rate),
+    grossCents: row.gross_cents as number,
+    vatCents: row.vat_cents as number,
+    netCents: row.net_cents as number,
+    posName: (row.pos_name as string | null) ?? null,
+    posVatCents: (row.pos_vat_cents as number | null) ?? null,
   }));
 }

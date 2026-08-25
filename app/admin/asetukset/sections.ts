@@ -50,6 +50,13 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     ownerOnly: true,
   },
   {
+    id: "verotus",
+    label: "Verotus",
+    summary: "Myyntiryhmät, ALV-kannat ja kassan ryhmät",
+    icon: "report",
+    ownerOnly: true,
+  },
+  {
     id: "kirjanpito",
     label: "Kirjanpito",
     summary: "Kuukausien sulkeminen",
