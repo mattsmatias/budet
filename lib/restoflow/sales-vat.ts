@@ -40,6 +40,27 @@ export interface PosMapping {
   salesGroupId: string;
 }
 
+/**
+ * Kassan oma ALV-erittely yhdelle kannalle.
+ *
+ * Z-raportin ALV-taulukko sellaisenaan: kanta, vero, veroton ja
+ * verollinen. Nämä ovat kassan lukuja eikä niitä lasketa uudelleen —
+ * juuri ne ilmoitetaan kirjanpitoon.
+ *
+ * TÄMÄ EI OLE SAMA JAKO KUIN MYYNTIRIVIT.
+ *
+ * Myyntirivit jakavat päivän tuoteryhmiin ja johtavat veron ryhmän
+ * kannasta. Kassa jakaa saman päivän verokantoihin. Useimmiten jaot
+ * osuvat yksiin, mutta eivät aina: yksittäinen tuote tuoteryhmän
+ * sisällä voi olla eri kannalla. Silloin kassan taulukko on oikeassa.
+ */
+export interface PosVatRate {
+  vatRate: number;
+  grossCents: number;
+  vatCents: number;
+  netCents: number;
+}
+
 /** Päivän myyntirivi: yksi myyntiryhmä yhtenä päivänä. */
 export interface SalesLine {
   salesGroupId: string;
@@ -174,7 +195,18 @@ export function toleranceFor(rateCount: number): number {
   return 1 + rateCount;
 }
 
-export type MatchStatus = "match" | "mismatch" | "unknown";
+/**
+ * Vertailun tulos.
+ *
+ * NELJÄS TILA ON "HUOMIO", EI VIRHE.
+ *
+ * Kassan tuoteryhmäjako ja sen verokantajako eivät ole sama jako:
+ * yksittäinen tuote ryhmän sisällä voi olla eri kannalla kuin ryhmä.
+ * Silloin luvut eroavat, mutta mikään ei ole väärin — ei kassassa
+ * eikä asetuksissa. Punainen hälytys asiasta jota ei voi korjata
+ * opettaa ohittamaan hälytykset.
+ */
+export type MatchStatus = "match" | "note" | "mismatch" | "unknown";
 
 export interface Comparison {
   label: string;
@@ -197,6 +229,14 @@ export interface Reconciliation {
    * pielessä muttei mistä aloittaa. Tämä kertoo mitä katsoa.
    */
   explanation: string | null;
+
+  /**
+   * Huomio joka ei ole virhe.
+   *
+   * Kerrotaan silloinkin kun päivä täsmää: ilman selitystä lukija
+   * näkee taulukossa eron eikä tiedä saako sen jättää.
+   */
+  note: string | null;
 }
 
 /**
@@ -211,9 +251,21 @@ export interface Reconciliation {
 export function reconcile(input: {
   posGrossCents: number | null;
   posVatCents: number | null;
+  /**
+   * Kassan oma ALV-erittely, jos raportissa oli sellainen.
+   *
+   * Kun tämä on olemassa, se on päivän verotieto. Ryhmistä johdettu
+   * vero jää tarkistuslaskelmaksi, ja ero näiden välillä kertoo
+   * kantajaon ja ryhmäjaon erosta — ei siitä että jompikumpi olisi
+   * väärin.
+   */
+  posVatRates?: PosVatRate[];
   lines: SalesLine[];
 }): Reconciliation {
   const summary = summarise(input.lines);
+  const posRates = (input.posVatRates ?? [])
+    .slice()
+    .sort((a, b) => b.vatRate - a.vatRate);
   const tolerance = toleranceFor(summary.byRate.length);
 
   const total = compare(
@@ -223,13 +275,51 @@ export function reconcile(input: {
     tolerance,
   );
 
-  const vat = compare("ALV yhteensä", input.posVatCents, summary.vatCents, tolerance);
+  /*
+   * Kassan ALV on Budetin ALV kun erittely on luettu.
+   *
+   * Kassa on kirjanpidon lähde: sen ALV-taulukko on se luku joka
+   * ilmoitetaan verottajalle. Budetin oma laskelma on tarkistus eikä
+   * korvaava — ja kun tarkistus asetetaan lähteen tilalle,
+   * täsmäytyksestä tulee vertailu Budetin ja Budetin välillä.
+   */
+  const budetVat =
+    posRates.length > 0 ? sum(posRates, (r) => r.vatCents) : summary.vatCents;
 
-  const byRate = summary.byRate.map((rate) =>
-    compare(formatRate(rate.vatRate), rate.posVatCents, rate.vatCents, 1),
-  );
+  const vat = compare("ALV yhteensä", input.posVatCents, budetVat, tolerance);
+
+  /*
+   * Kantarivit vertaavat MYYNTIÄ, eivät veroa.
+   *
+   * Verojen ero on seuraus; myynnin ero on syy. Kun kassan 25,5 %:n
+   * myynti on 10,50 € ja ryhmistä johdettu 10,00 €, ero on 50 senttiä
+   * myyntiä — ja se on luku jonka voi etsiä raportista. Kymmenen
+   * sentin veroero ei kerro mistä etsiä.
+   */
+  const byRate =
+    posRates.length > 0
+      ? posRates.map((rate) => {
+          const own = summary.byRate.find((r) => r.vatRate === rate.vatRate);
+
+          return compare(
+            `Myynti ${formatRate(rate.vatRate)}`,
+            rate.grossCents,
+            own?.grossCents ?? 0,
+            tolerance,
+            wholeGroupFloor(input.lines),
+          );
+        })
+      : summary.byRate.map((rate) =>
+          compare(
+            `ALV ${formatRate(rate.vatRate)}`,
+            rate.posVatCents,
+            rate.vatCents,
+            1,
+          ),
+        );
 
   const off = [total, vat, ...byRate].filter((c) => c.status === "mismatch");
+  const noted = byRate.filter((c) => c.status === "note");
 
   const status: MatchStatus =
     off.length > 0
@@ -244,7 +334,51 @@ export function reconcile(input: {
     vat,
     byRate,
     explanation: status === "mismatch" ? explain(off, summary, input) : null,
+    note: noted.length > 0 ? describeSplit(noted) : null,
   };
+}
+
+/**
+ * Raja jonka yli ero on kokonainen ryhmä väärällä kannalla.
+ *
+ * Väärin kohdistettu ryhmä siirtää koko ryhmän myynnin toiselle
+ * kannalle, joten ero on silloin vähintään pienimmän kirjatun ryhmän
+ * kokoinen. Sitä pienempi ero ei voi olla kohdistusvirhe — se on
+ * yksittäinen tuote ryhmän sisällä.
+ *
+ * Raja tulee päivän omista riveistä eikä vakiosta: pieni lounaspaikka
+ * ja iso ravintola eivät jaa samaa käsitystä siitä mikä on pieni.
+ */
+function wholeGroupFloor(lines: SalesLine[]): number {
+  const grosses = lines.map((line) => line.grossCents).filter((cents) => cents > 0);
+  if (grosses.length === 0) return 0;
+
+  return Math.min(...grosses);
+}
+
+/**
+ * Ryhmäjaon ja kantajaon ero sanoiksi.
+ *
+ * Neuvo on tarkoituksella se mitä käyttäjä voi tehdä: ei mitään.
+ * Kassan luvut ovat oikein ja asetukset ovat oikein, joten kehotus
+ * tarkistaa ryhmien kohdistuksia veisi illan hukkaan.
+ */
+function describeSplit(noted: Comparison[]): string {
+  const biggest = noted.reduce((worst, c) =>
+    Math.abs(c.diffCents ?? 0) > Math.abs(worst.diffCents ?? 0) ? c : worst,
+  );
+
+  const size = formatMoney(Math.abs(biggest.diffCents ?? 0));
+  const rate = biggest.label.replace(/^Myynti /, "");
+
+  return (
+    `Kassan verokantajako eroaa tuoteryhmien jaosta ${size} ` +
+    `(${rate}). Ero on pienempi kuin yksikään kirjattu ryhmä, ` +
+    `joten kyse ei ole väärästä kohdistuksesta vaan yksittäisestä ` +
+    `tuotteesta ryhmän sisällä — pantti, pakkaus tai mukaan otettu ` +
+    `annos. Kirjanpitoon menevä ALV on kassan oma erittely, joten ` +
+    `luku on oikein.`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -254,20 +388,26 @@ function compare(
   posCents: number | null,
   budetCents: number,
   tolerance: number,
+  /**
+   * Raja jonka alapuolella ero on huomio eikä virhe.
+   *
+   * Oletuksena rajaa ei ole: kaikki toleranssin ylittävä on virhe.
+   * Kantariveillä raja on olemassa, koska siellä pieni ero on kassan
+   * raportin odotettava ominaisuus eikä vika.
+   */
+  noteBelow = 0,
 ): Comparison {
   if (posCents === null) {
     return { label, posCents: null, budetCents, diffCents: null, status: "unknown" };
   }
 
   const diffCents = posCents - budetCents;
+  const size = Math.abs(diffCents);
 
-  return {
-    label,
-    posCents,
-    budetCents,
-    diffCents,
-    status: Math.abs(diffCents) <= tolerance ? "match" : "mismatch",
-  };
+  const status: MatchStatus =
+    size <= tolerance ? "match" : size < noteBelow ? "note" : "mismatch";
+
+  return { label, posCents, budetCents, diffCents, status };
 }
 
 /**
@@ -292,6 +432,34 @@ function explain(
   const vatOff = off.some((c) => c.label === "ALV yhteensä" || c.label.includes("%"));
 
   if (!totalOff && vatOff) {
+    const vatDiff = Math.abs((input.posVatCents ?? 0) - summary.vatCents);
+    const swap = smallestRateSwapCents(summary);
+
+    /*
+     * PIENI EROTUS EI OLE VÄÄRÄ VEROKANTA.
+     *
+     * Väärä kanta siirtää koko ryhmän myynnin toiselle kannalle, ja
+     * pienimmälläkin ryhmällä se tarkoittaa euroja. Sentin erotus ei
+     * voi syntyä siitä. Kehotus tarkistaa kohdistuksia veisi illan
+     * hukkaan, ja neuvo joka ei johda mihinkään opettaa ohittamaan
+     * neuvot.
+     *
+     * Todellinen syy on silloin kassan sisäinen jako: yksittäinen
+     * tuote tuoteryhmän sisällä on eri kannalla kuin ryhmä. Sen näkee
+     * raportin ALV-taulukosta, ja kuvattu raportti tuo taulukon
+     * mukanaan — silloin tähän haaraan ei edes tulla.
+     */
+    if (swap !== null && vatDiff < swap) {
+      return (
+        `Myynti täsmää ja ALV eroaa ${formatMoney(vatDiff)}. Erotus on ` +
+        `liian pieni ollakseen väärä verokanta: pienimmänkin ryhmän ` +
+        `siirtyminen toiselle kannalle muuttaisi ALV:tä vähintään ` +
+        `${formatMoney(swap)}. Kyse on yksittäisestä tuotteesta ryhmän ` +
+        `sisällä. Kuvaa päiväraportti uudelleen, niin Budet lukee kassan ` +
+        `oman ALV-erittelyn eikä johda veroa ryhmistä.`
+      );
+    }
+
     const rates = summary.byRate.map((r) => formatRate(r.vatRate)).join(" ja ");
     return (
       `Myynnin loppusumma täsmää, mutta ALV ei. Tarkista onko jokin ` +
@@ -313,6 +481,35 @@ function explain(
     `${formatMoney(diff)} — tarkista että jokainen ryhmä on kirjattu ` +
     `raportin mukaisella summalla.`
   );
+}
+
+/**
+ * Pienin ALV-muutos jonka väärä kohdistus voisi aiheuttaa.
+ *
+ * Käydään läpi jokainen kanta ja lasketaan mitä sen myynnille
+ * tapahtuisi toisella päivän kannalla. Pienin näistä on alaraja: sitä
+ * pienempi erotus ei voi olla kohdistusvirhe.
+ *
+ * Palauttaa null kun päivässä on vain yksi kanta. Silloin ei ole
+ * toista kantaa johon verrata, eikä alarajaa voi väittää tietävänsä.
+ */
+function smallestRateSwapCents(summary: SalesSummary): number | null {
+  if (summary.byRate.length < 2) return null;
+
+  const swaps: number[] = [];
+
+  for (const own of summary.byRate) {
+    for (const other of summary.byRate) {
+      if (other.vatRate === own.vatRate) continue;
+
+      swaps.push(
+        Math.abs(vatFromGross(own.grossCents, other.vatRate) - own.vatCents),
+      );
+    }
+  }
+
+  const smallest = Math.min(...swaps);
+  return smallest > 0 ? smallest : null;
 }
 
 function sum<T>(items: T[], pick: (item: T) => number): number {

@@ -218,6 +218,7 @@ function ReviewForm({
   const check = reconcileWithPos({
     posGrossCents: amounts.grossCents,
     posVatCents: amounts.vatCents,
+    posVatRates: result.vatRates,
     lines: mapped.lines,
   });
 
@@ -245,6 +246,20 @@ function ReviewForm({
       />
       <input type="hidden" name="posGross" value={euros(amounts.grossCents)} />
       <input type="hidden" name="posVat" value={euros(amounts.vatCents)} />
+
+      {/*
+        Kassan ALV-erittely sellaisenaan.
+
+        Tämä on päivän verotieto eikä Budetin laskelma: juuri nämä
+        luvut menevät kirjanpitoon. Ne tallennetaan omaan tauluunsa,
+        jotta ryhmistä johdettua veroa voi verrata niihin sen sijaan
+        että se korvaisi ne.
+      */}
+      <input
+        type="hidden"
+        name="vatRates"
+        value={JSON.stringify(result.vatRates)}
+      />
 
       {result.imageQuality === "poor" ? (
         <Banner tone="warn">

@@ -238,9 +238,174 @@ describe("reconcile", () => {
     const lines = [line(0.14, 300000, 36842), line(0.255, 100000, 25000)];
     const r = reconcile({ posGrossCents: 400000, posVatCents: 61842, lines });
 
-    const alkoholi = r.byRate.find((c) => c.label === formatRate(0.255));
+    const alkoholi = r.byRate.find((c) => c.label === `ALV ${formatRate(0.255)}`);
     expect(alkoholi?.status).toBe("mismatch");
     expect(alkoholi?.posCents).toBe(25000);
+  });
+});
+
+/*
+ * Oikea Z-raportti 13.8.2026.
+ *
+ * Tuoteryhmät: ALKO 10,00 · RUOKA 1 178,20 · VEDET 148,50 = 1 336,70.
+ * Kassan ALV-taulukko: 25,5 % → 10,50 ja 13,5 % → 1 326,20.
+ *
+ * Jaot eivät osu yksiin: puoli euroa RUOKA/VEDET-ryhmien sisällä on
+ * verotettu yleisellä kannalla. Ryhmistä johdettu ALV oli 159,83 €,
+ * kassan oma 159,88 €, ja täsmäytys neuvoi korjaamaan ryhmien
+ * verokantoja — vaikka ryhmät olivat oikein.
+ */
+describe("kassan ALV-erittely", () => {
+  const posVatRates = [
+    { vatRate: 0.255, grossCents: 1050, vatCents: 213, netCents: 837 },
+    { vatRate: 0.135, grossCents: 132620, vatCents: 15774, netCents: 116846 },
+  ];
+
+  const lines: SalesLine[] = [
+    {
+      salesGroupId: "alko",
+      vatRate: 0.255,
+      posName: "ALKO",
+      posVatCents: null,
+      ...lineFromGross(1000, 0.255),
+    },
+    {
+      salesGroupId: "ruoka",
+      vatRate: 0.135,
+      posName: "RUOKA, VEDET",
+      posVatCents: null,
+      ...lineFromGross(132670, 0.135),
+    },
+  ];
+
+  it("käyttää kassan omaa ALV:tä eikä ryhmistä johdettua", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates,
+      lines,
+    });
+
+    // Ryhmistä johdettu olisi 159,83 €. Kirjanpitoon menee kassan luku.
+    expect(summarise(lines).vatCents).toBe(15983);
+    expect(r.vat.budetCents).toBe(15987);
+
+    /*
+     * Kassa itse heittää sentin.
+     *
+     * Raportin ALV-rivit ovat 2,13 ja 157,74 eli 159,87, mutta sen oma
+     * "TOTAL EUR ALV" on 159,88. Kassa pyöristää kantarivit ja
+     * loppusumman eri kohdassa. Sentin vara on juuri tätä varten —
+     * ilman sitä jokainen päivä olisi virheellinen.
+     */
+    expect(r.vat.posCents).toBe(15988);
+    expect(r.vat.status).toBe("match");
+    expect(r.total.status).toBe("match");
+  });
+
+  it("ei väitä päivää virheelliseksi", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates,
+      lines,
+    });
+
+    expect(r.status).toBe("match");
+    expect(r.explanation).toBeNull();
+  });
+
+  it("selittää kantajaon eron eikä neuvo korjaamaan kohdistuksia", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates,
+      lines,
+    });
+
+    expect(r.note).not.toBeNull();
+    expect(r.note).toContain(formatMoney(50));
+    expect(r.note).not.toContain("väärään verokantaan");
+  });
+
+  it("vertaa kantariveillä myyntiä eikä veroa", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates,
+      lines,
+    });
+
+    const yleinen = r.byRate.find((c) => c.label === `Myynti ${formatRate(0.255)}`);
+
+    // Kassa 10,50, ryhmistä 10,00 — ero on myyntiä, ei veroa.
+    expect(yleinen?.posCents).toBe(1050);
+    expect(yleinen?.budetCents).toBe(1000);
+    expect(yleinen?.status).toBe("note");
+  });
+
+  /*
+   * Kokonainen ryhmä väärällä kannalla on yhä virhe.
+   *
+   * Huomio ei saa niellä sitä mitä se on tarkoitettu erottamaan:
+   * kun ero on vähintään pienimmän ryhmän kokoinen, se voi olla koko
+   * ryhmä väärässä paikassa eikä yksittäinen tuote.
+   */
+  it("pitää kokonaisen ryhmän siirtymän virheenä", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates: [
+        { vatRate: 0.255, grossCents: 133670, vatCents: 27162, netCents: 106508 },
+      ],
+      lines,
+    });
+
+    expect(r.status).toBe("mismatch");
+  });
+
+  it("palaa ryhmistä johdettuun kun erittelyä ei ole", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates: [],
+      lines,
+    });
+
+    expect(r.vat.budetCents).toBe(15983);
+  });
+
+  /*
+   * Ilman erittelyä ero jää, mutta neuvo ei saa olla väärä.
+   *
+   * Ennen erittelyä tallennetut päivät näyttävät yhä viiden sentin
+   * eron. Se on totta ja se näytetään — mutta kehotus tarkistaa
+   * ryhmien kohdistuksia oli väärä neuvo, koska pienimmänkin ryhmän
+   * siirtyminen toiselle kannalle muuttaisi ALV:tä 84 senttiä.
+   */
+  it("ei syytä kohdistusta viiden sentin erosta", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      posVatCents: 15988,
+      posVatRates: [],
+      lines,
+    });
+
+    expect(r.status).toBe("mismatch");
+    expect(r.explanation).toContain("liian pieni ollakseen väärä verokanta");
+    expect(r.explanation).not.toContain("kohdistettu väärään verokantaan");
+  });
+
+  it("syyttää kohdistusta kun ero on kokonaisen ryhmän kokoinen", () => {
+    const r = reconcile({
+      posGrossCents: 133670,
+      // ALKO yleisellä kannalla alennetun sijaan: 27 162 − 15 983.
+      posVatCents: 27162,
+      posVatRates: [],
+      lines,
+    });
+
+    expect(r.explanation).toContain("kohdistettu väärään verokantaan");
   });
 });
 

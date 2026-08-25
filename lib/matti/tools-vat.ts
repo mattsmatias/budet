@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { formatMoney, formatRate } from "@/lib/money";
-import { fetchSalesLines } from "@/lib/restoflow/queries";
+import { fetchPosVatRates, fetchSalesLines } from "@/lib/restoflow/queries";
 import { reconcile, summarise } from "@/lib/restoflow/sales-vat";
 import { defineTool, dateSchema, type ToolDefinition } from "./tool-kit";
 
@@ -86,7 +86,10 @@ const getReconciliation = defineTool({
       };
     }
 
-    const lines = await fetchSalesLines(ctx.restaurantId, date);
+    const [lines, posVatRates] = await Promise.all([
+      fetchSalesLines(ctx.restaurantId, date),
+      fetchPosVatRates(ctx.restaurantId, date),
+    ]);
 
     /*
      * Ilman rivejä ei ole kannoittaista tietoa.
@@ -117,6 +120,7 @@ const getReconciliation = defineTool({
     const check = reconcile({
       posGrossCents: day.posGrossCents,
       posVatCents: day.posVatCents,
+      posVatRates,
       lines,
     });
 
@@ -131,16 +135,26 @@ const getReconciliation = defineTool({
           ? `EI TÄSMÄÄ. ${check.explanation ?? ""}`
           : "Kassan lukuja ei ole tallennettu, joten päivää ei ole täsmäytetty.";
 
+    /*
+     * Huomio kulkee vastauksen mukana myös kun päivä täsmää.
+     *
+     * Jos Matti kertoo vain "täsmää", hän jättää kertomatta miksi
+     * ryhmien summat ja kassan kantajako näyttävät eri luvut — ja
+     * juuri sitä kirjanpitäjä kysyy.
+     */
+    const noteSuffix = check.note === null ? "" : ` ${check.note}`;
+
     return {
       summary:
         `${date}: verollinen myynti ${formatMoney(summary.grossCents)}, ` +
         `ALV ${formatMoney(summary.vatCents)} (${rates}), ` +
-        `veroton myynti ${formatMoney(summary.netCents)}. ${verdict}`,
+        `veroton myynti ${formatMoney(summary.netCents)}. ${verdict}${noteSuffix}`,
       data: {
         date,
         recorded: true,
         status: check.status,
         explanation: check.explanation,
+        note: check.note,
         grossCents: summary.grossCents,
         vatCents: summary.vatCents,
         netCents: summary.netCents,

@@ -12,7 +12,7 @@
  */
 
 import type { PayComponent, TimeCorrection } from "./payroll";
-import type { PosMapping, SalesGroup, SalesLine } from "./sales-vat";
+import type { PosMapping, PosVatRate, SalesGroup, SalesLine } from "./sales-vat";
 import type { DailySales } from "./sales";
 import type { Merchant } from "./merchants";
 import type { AllergenType, DietType, LunchWeek } from "./lunch";
@@ -1246,6 +1246,44 @@ export async function fetchSalesLines(
     posName: (row.pos_name as string | null) ?? null,
     posVatCents: (row.pos_vat_cents as number | null) ?? null,
   }));
+}
+
+/**
+ * Kassan oma ALV-erittely yhdelle päivälle.
+ *
+ * Tyhjä lista tarkoittaa ettei raportissa ollut ALV-taulukkoa tai että
+ * päivä on kirjattu käsin. Silloin vero johdetaan myyntiriveistä.
+ */
+export async function fetchPosVatRates(
+  restaurantId: string,
+  date: string,
+): Promise<PosVatRate[]> {
+  const supabase = await createClient();
+
+  const { data: day } = await supabase
+    .from("daily_sales")
+    .select("id")
+    .eq("restaurant_id", restaurantId)
+    .eq("sales_date", date)
+    .maybeSingle();
+
+  if (!day) return [];
+
+  const { data, error } = await supabase
+    .from("daily_sales_vat")
+    .select("vat_rate, gross_cents, vat_cents, net_cents")
+    .eq("daily_sales_id", day.id as string);
+
+  if (error || !data) return [];
+
+  return data
+    .map((row) => ({
+      vatRate: Number(row.vat_rate),
+      grossCents: row.gross_cents as number,
+      vatCents: row.vat_cents as number,
+      netCents: row.net_cents as number,
+    }))
+    .sort((a, b) => b.vatRate - a.vatRate);
 }
 
 /**

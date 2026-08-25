@@ -56,6 +56,14 @@ const extraction = z.object({
       vatCents: z.number().int().nullable(),
     }),
   ),
+  vatRates: z.array(
+    z.object({
+      ratePercent: z.number(),
+      vatCents: z.number().int(),
+      netCents: z.number().int(),
+      grossCents: z.number().int(),
+    }),
+  ),
   imageQuality: z.enum(["good", "poor"]),
 });
 
@@ -82,6 +90,15 @@ vatCents: kyseisen ryhmän ALV sentteinä, jos raportti kertoo sen ryhmäkohtais
 Älä laske ryhmiä yhteen äläkä jaa niitä osiin. Älä keksi ryhmää jota raportissa ei ole. Jos raportti ei erittele myyntiä ryhmiin lainkaan, palauta tyhjä lista.
 
 Palautus-, alennus- ja mitätöintirivit eivät ole myyntiryhmiä. Maksutavat (Kortti, Käteinen) eivät ole myyntiryhmiä — ne kertovat miten maksettiin, eivät mitä myytiin.
+
+vatRates: raportin ALV-erittely verokannoittain. Lähes jokainen Z-raportti päättyy taulukkoon jossa on rivi kutakin verokantaa kohti: "ALV 25,5 %", "ALV 13,50 %", "ALV 10 %", "ALV 0 %". Riviltä löytyy kolme lukua: vero, veroton ja verollinen. Sarakkeet voivat olla otsikoitu "ALV / NE / TTC", "Vero / Veroton / Verollinen" tai "ALV / Netto / Brutto".
+
+ratePercent: verokanta prosenttilukuna sellaisena kuin se rivillä lukee. 25,5 % = 25.5. 13,50 % = 13.5. Ei osuutena.
+vatCents: rivin veron määrä sentteinä.
+netCents: rivin veroton myynti sentteinä.
+grossCents: rivin verollinen myynti sentteinä.
+
+Tämä taulukko on eri asia kuin myyntiryhmät. Ryhmät kertovat mitä myytiin, ALV-erittely millä kannalla. Palauta molemmat jos molemmat ovat raportissa. Jos jokin kolmesta luvusta puuttuu riviltä, jätä koko rivi pois — älä laske sitä muista.
 
 transactions: kuittien tai tapahtumien lukumäärä. Raportissa "Kuitteja", "Tapahtumia", "Asiakkaita", "Myyntitapahtumat". Ei euroja vaan kappaleita.
 
@@ -265,9 +282,40 @@ function sanitize(
       vatCents: g.vatCents,
     }));
 
+  /*
+   * ALV-rivi kelpaa vain kokonaisena.
+   *
+   * Vero plus veroton on verollinen. Jos ne eivät täsmää sentin
+   * sisällä, rivi on luettu väärin, eikä väärin luettua kassan lukua
+   * saa päästää kirjanpidon lähteeksi — se on juuri se luku johon
+   * kaikki muu verrataan.
+   */
+  const vatRates = parsed.vatRates
+    .filter((r) => {
+      const rate = r.ratePercent / 100;
+      return (
+        rate >= 0 &&
+        rate < 1 &&
+        r.vatCents >= 0 &&
+        r.netCents >= 0 &&
+        r.grossCents >= 0 &&
+        r.grossCents <= MAX_CENTS &&
+        Math.abs(r.vatCents + r.netCents - r.grossCents) <= 1
+      );
+    })
+    .map((r) => ({
+      // Prosentti sentin tarkkuudella: 13,5 % → 0,135. Pyöristys on
+      // tässä, koska 13.5/100 ei ole tarkka liukuluku.
+      vatRate: Math.round(r.ratePercent * 1000) / 100000,
+      vatCents: r.vatCents,
+      netCents: r.netCents,
+      grossCents: r.grossCents,
+    }));
+
   return {
     date,
     groups,
+    vatRates,
     grossCents: money(parsed.grossCents),
     vatCents: money(parsed.vatCents),
     netCents: money(parsed.netCents),

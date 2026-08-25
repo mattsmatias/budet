@@ -17,6 +17,13 @@ import type { Reconciliation } from "@/lib/restoflow/sales-vat";
  * Erotus kertoo että jokin on pielessä muttei mistä aloittaa. Selitys
  * tulee laskennasta ja kertoo mitä katsoa: onko ryhmä väärässä
  * kannassa, puuttuuko ryhmä, vai onko luku luettu väärin.
+ *
+ * HUOMIO EI OLE VIRHE.
+ *
+ * Kassan tuoteryhmäjako ja sen verokantajako eivät aina osu yksiin,
+ * jolloin kantarivit näyttävät eron vaikka päivä täsmää. Se
+ * selitetään omassa laatikossaan eikä punaisella otsikolla: hälytys
+ * asiasta jota ei voi korjata opettaa ohittamaan hälytykset.
  */
 export function ReconciliationPanel({ result }: { result: Reconciliation }) {
   if (result.status === "unknown") {
@@ -94,6 +101,28 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
       </div>
 
       {/*
+        Huomio erillään otsikosta.
+
+        Ero jonka lukija näkee taulukossa on selitettävä, mutta se ei
+        ole virhe — ja jos se näytettäisiin punaisella otsikkopalkilla,
+        se olisi virhe. Neutraali laatikko sanoo saman asian ilman
+        että päivä näyttää epäonnistuneelta.
+      */}
+      {result.note ? (
+        <div
+          className="mt-2.5 flex items-start gap-2.5 px-3.5 py-3"
+          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        >
+          <span className="mt-px shrink-0" style={{ color: "var(--rf-text-3)" }}>
+            <RfIcon name="info" size={15} />
+          </span>
+          <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+            {result.note}
+          </p>
+        </div>
+      ) : null}
+
+      {/*
         Rivit kertovat mitä verrattiin.
 
         Pelkkä "täsmää" pyytää uskomaan. Luvut vierekkäin antavat
@@ -135,9 +164,7 @@ function Row({
   return (
     <tr className="rf-row">
       <td style={{ paddingLeft: indent ? 32 : undefined }}>
-        <span className={strong ? "font-semibold" : ""}>
-          {indent ? `ALV ${label}` : label}
-        </span>
+        <span className={strong ? "font-semibold" : ""}>{label}</span>
       </td>
 
       <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
@@ -154,7 +181,7 @@ function Row({
               ? "var(--rf-red-text)"
               : status === "match"
                 ? "var(--rf-green-text)"
-                : "var(--rf-text-3)",
+                : "var(--rf-text-2)",
           fontWeight: status === "mismatch" ? 700 : 400,
         }}
       >

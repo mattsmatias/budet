@@ -7,6 +7,7 @@ import { formatMoney, formatRate } from "@/lib/money";
 import {
   fetchDailySales,
   fetchSalesGroups,
+  fetchPosVatRates,
   fetchSalesLines,
 } from "@/lib/restoflow/queries";
 import { averageCheckCents } from "@/lib/restoflow/sales-report";
@@ -41,10 +42,11 @@ export default async function SalesDayPage({
   const { restaurant, role } = await adminContext("/admin/myynti");
   if (!can(role, "sales.view")) notFound();
 
-  const [sales, lines, groups] = await Promise.all([
+  const [sales, lines, groups, posVatRates] = await Promise.all([
     fetchDailySales(restaurant.id),
     fetchSalesLines(restaurant.id, paiva),
     fetchSalesGroups(restaurant.id),
+    fetchPosVatRates(restaurant.id, paiva),
   ]);
 
   const day = sales.find((s) => s.date === paiva);
@@ -54,6 +56,7 @@ export default async function SalesDayPage({
   const check = reconcile({
     posGrossCents: day.posGrossCents,
     posVatCents: day.posVatCents,
+    posVatRates,
     lines,
   });
 

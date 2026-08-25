@@ -45,7 +45,7 @@ import {
 } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
 import { shiftBounds } from "@/lib/restoflow/shift-window";
-import { fetchSalesLines } from "@/lib/restoflow/queries";
+import { fetchPosVatRates, fetchSalesLines } from "@/lib/restoflow/queries";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
@@ -273,15 +273,19 @@ export default async function AdminDashboard({
    * tekemättä, ja eilisen täsmäyttämättömyys on eilisen sivun asia.
    */
   const todaySales = sales.find((s) => s.date === today) ?? null;
-  const todayLines = can(role, "sales.view")
-    ? await fetchSalesLines(restaurant.id, today)
-    : [];
+  const [todayLines, todayVatRates] = can(role, "sales.view")
+    ? await Promise.all([
+        fetchSalesLines(restaurant.id, today),
+        fetchPosVatRates(restaurant.id, today),
+      ])
+    : [[], []];
 
   const posCheck =
     todaySales && todayLines.length > 0
       ? reconcileSales({
           posGrossCents: todaySales.posGrossCents,
           posVatCents: todaySales.posVatCents,
+          posVatRates: todayVatRates,
           lines: todayLines,
         })
       : null;

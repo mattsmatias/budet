@@ -13,7 +13,11 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
-import { lineFromGross, type SalesLine } from "@/lib/restoflow/sales-vat";
+import {
+  lineFromGross,
+  type PosVatRate,
+  type SalesLine,
+} from "@/lib/restoflow/sales-vat";
 import { fetchSalesGroups } from "@/lib/restoflow/queries";
 
 export interface SalesState {
@@ -179,6 +183,36 @@ export async function saveDailySales(
     }
   }
 
+  /*
+   * Kassan ALV-erittely korvataan samoin kuin rivit.
+   *
+   * Erittely kuuluu siihen raporttiin josta se luettiin. Kun päivä
+   * kirjataan uudelleen käsin, vanha erittely ei saa jäädä: se
+   * väittäisi kertovansa päivän verot, vaikka päivän luvut ovat
+   * vaihtuneet sen alta.
+   */
+  {
+    await supabase.from("daily_sales_vat").delete().eq("daily_sales_id", saved.id);
+
+    const rates = parseVatRates(formData.get("vatRates"));
+
+    if (rates.length > 0) {
+      const { error: vatError } = await supabase.from("daily_sales_vat").insert(
+        rates.map((rate) => ({
+          daily_sales_id: saved.id as string,
+          vat_rate: rate.vatRate,
+          gross_cents: rate.grossCents,
+          vat_cents: rate.vatCents,
+          net_cents: rate.netCents,
+        })),
+      );
+
+      if (vatError) {
+        return { error: `ALV-erittelyn tallennus epäonnistui: ${vatError.message}` };
+      }
+    }
+  }
+
   // Myynti muuttaa yleiskuvan, raportit ja budjetin, joten koko
   // hallintapuoli on päivitettävä eikä vain tämä sivu.
   revalidatePath("/admin", "layout");
@@ -218,6 +252,64 @@ export async function deleteDailySales(formData: FormData): Promise<void> {
  * Palauttaa null jos syöte on rikki. Osittainen tallennus olisi
  * pahempi kuin epäonnistunut.
  */
+/**
+ * Kassan ALV-erittely lomakkeen piilokentästä.
+ *
+ * NÄITÄ EI LASKETA UUDELLEEN.
+ *
+ * Myyntirivien vero lasketaan palvelimella, koska selaimen lähettämään
+ * veroon ei voi luottaa. Tämä on eri asia: nämä ovat kassan omia
+ * lukuja, ja niiden koko tarkoitus on olla juuri sitä mitä raportissa
+ * luki. Uudelleen laskettuna ne olisivat Budetin laskelma ja
+ * täsmäytys vertaisi lukua itseensä.
+ *
+ * Tarkistus on siksi sisäinen: vero plus veroton on verollinen.
+ * Rikkinäinen rivi jätetään pois — päivä tallentuu ilman erittelyä ja
+ * vero johdetaan ryhmistä kuten ennen erittelyä.
+ */
+function parseVatRates(raw: FormDataEntryValue | null): PosVatRate[] {
+  if (!raw) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(String(raw));
+  } catch {
+    return [];
+  }
+
+  if (!Array.isArray(parsed)) return [];
+
+  const seen = new Set<number>();
+
+  return parsed
+    .filter(
+      (rate): rate is PosVatRate =>
+        typeof rate?.vatRate === "number" &&
+        rate.vatRate >= 0 &&
+        rate.vatRate < 1 &&
+        typeof rate.grossCents === "number" &&
+        typeof rate.vatCents === "number" &&
+        typeof rate.netCents === "number" &&
+        rate.grossCents >= 0 &&
+        rate.vatCents >= 0 &&
+        rate.netCents >= 0 &&
+        Math.abs(rate.vatCents + rate.netCents - rate.grossCents) <= 1,
+    )
+    .filter((rate) => {
+      // Sama kanta kahdesti on kaksi totuutta samasta rivistä, ja
+      // kanta on taulussa ainutkertainen — kanta hylkäisi koko lisäyksen.
+      if (seen.has(rate.vatRate)) return false;
+      seen.add(rate.vatRate);
+      return true;
+    })
+    .map((rate) => ({
+      vatRate: rate.vatRate,
+      grossCents: Math.round(rate.grossCents),
+      vatCents: Math.round(rate.vatCents),
+      netCents: Math.round(rate.netCents),
+    }));
+}
+
 /** Rivi sellaisena kuin lomake sen lähettää. Ilman verokantaa. */
 interface SubmittedLine {
   salesGroupId: string;

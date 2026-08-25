@@ -15,7 +15,7 @@
  */
 
 import { prepareForExtraction } from "./image-prep";
-import type { ReportGroup } from "./sales-vat";
+import type { PosVatRate, ReportGroup } from "./sales-vat";
 import type { Extracted } from "./types";
 
 export interface SalesExtraction {
@@ -37,6 +37,14 @@ export interface SalesExtraction {
    * tekee kannoittaisen täsmäytyksen mahdolliseksi.
    */
   groups: ReportGroup[];
+  /**
+   * Kassan ALV-erittely verokannoittain.
+   *
+   * Tämä on kassan oma verotieto eikä Budetin laskelma. Tyhjä lista
+   * tarkoittaa ettei raportissa ollut erittelyä — silloin vero
+   * johdetaan ryhmistä kuten ennenkin.
+   */
+  vatRates: PosVatRate[];
   /** Kuvan laatuarvio. Huono kuva nostaa tarkistustarpeen. */
   imageQuality: "good" | "poor";
   elapsedMs: number;
@@ -72,6 +80,7 @@ export function emptySalesExtraction(): SalesExtraction {
     netCents: unknown<number>(),
     transactions: unknown<number>(),
     groups: [],
+    vatRates: [],
     imageQuality: "poor",
     elapsedMs: 0,
   };
@@ -95,18 +104,28 @@ export class MockSalesExtractor implements SalesExtractor {
     for (const ch of input.fileName) hash = (hash * 31 + ch.charCodeAt(0)) % 100000;
 
     const grossCents = 180000 + (hash % 220) * 1000;
-    const vatCents = Math.round(grossCents * 0.14);
+
+    /*
+     * Jäljitelmä käyttää alennettua kantaa koko myyntiin.
+     *
+     * Se on ravintolan tavallisin tapaus, ja jäljitelmän tarkoitus on
+     * antaa kulku läpi eikä opettaa verotusta. Oikea erittely tulee
+     * raportista.
+     */
+    const netCents = Math.round(grossCents / 1.135);
+    const vatCents = grossCents - netCents;
 
     return {
       date: { value: null, confidence: "low" },
       grossCents: { value: grossCents, confidence: "high" },
       vatCents: { value: vatCents, confidence: "medium" },
-      netCents: { value: grossCents - vatCents, confidence: "high" },
+      netCents: { value: netCents, confidence: "high" },
       transactions: { value: 40 + (hash % 90), confidence: "medium" },
       groups: [
         { posName: "Ruoka", grossCents: Math.round(grossCents * 0.7), vatCents: null },
         { posName: "Juomat", grossCents: grossCents - Math.round(grossCents * 0.7), vatCents: null },
       ],
+      vatRates: [{ vatRate: 0.135, grossCents, vatCents, netCents }],
       imageQuality: "good",
       elapsedMs: Date.now() - started,
     };
