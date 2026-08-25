@@ -10,7 +10,9 @@ import {
 } from "@/lib/restoflow/dashboard";
 import { buildInsights } from "@/lib/restoflow/insights";
 import {
+  formatChange,
   formatMonth,
+  monthWord,
   monthlySeries,
   periodTotals,
   previousMonth,
@@ -403,7 +405,7 @@ export default async function AdminDashboard({
           }
           delta={
             totals.receiptCount > 0 && comparison.change !== null
-              ? { text: percent(comparison.change) }
+              ? { text: formatChange(comparison.change) }
               : undefined
           }
           conclusion={
@@ -433,7 +435,7 @@ export default async function AdminDashboard({
             delta={
               pulse.sales.cents !== null && pulse.sales.comparison.kind !== "none"
                 ? {
-                    text: percent(pulse.sales.comparison.ratio - 1),
+                    text: formatChange(pulse.sales.comparison.ratio - 1),
                     tone: pulse.sales.comparison.ratio >= 1 ? "down" : "warn",
                   }
                 : undefined
@@ -898,15 +900,6 @@ export default async function AdminDashboard({
 
 
 /** "+5,3 %" tai "−12,0 %". Ei koskaan ilman vertailujaksoa. */
-function percent(change: number): string {
-  const value = (Math.abs(change) * 100).toFixed(1).replace(".", ",");
-  return `${change >= 0 ? "+" : "−"}${value} %`;
-}
-
-/** "heinäkuu" — kuukauden nimi pienellä vertailulausetta varten. */
-function monthWord(month: string): string {
-  return formatMonth(month).split(" ")[0].toLowerCase();
-}
 
 /**
  * Päivä vuosiluvun kanssa.

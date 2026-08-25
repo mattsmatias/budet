@@ -143,6 +143,16 @@ export function changeTone(change: number | null): ChangeTone {
   return change > 0 ? "up" : "down";
 }
 
+/**
+ * "heinäkuu" — kuukauden nimi pienellä vertailulausetta varten.
+ *
+ * Yhdessä paikassa, koska sama lause on kahdella sivulla: yleiskuvan
+ * ja kulujen kulukortti kertovat molemmat edellisen kuun summan.
+ */
+export function monthWord(month: string): string {
+  return formatMonth(month).split(" ")[0].toLowerCase();
+}
+
 export function previousMonth(month: string): string {
   const [year, m] = month.split("-").map(Number);
   const date = new Date(Date.UTC(year, m - 1, 1));

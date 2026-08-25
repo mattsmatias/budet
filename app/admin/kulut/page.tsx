@@ -2,9 +2,9 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import { RfIcon } from "@/components/restoflow/icons";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import {
-  changeTone,
   formatChange,
   formatMonth,
+  monthWord,
   monthlySeries,
   periodTotals,
   previousMonth,
@@ -20,8 +20,9 @@ import {
   Card,
   CardHeader,
   MetricCard,
-  TrendBadge,
 } from "@/components/restoflow/ui";
+import { Sparkline } from "@/components/restoflow/dashboard-ui";
+import { CountUp } from "@/components/restoflow/count-up";
 
 export const metadata = { title: "Kulut" };
 
@@ -44,6 +45,16 @@ export default async function ExpensesPage({
   const categories = totalsByCategory(receiptsInMonth(receipts, viewMonth));
   const series = monthlySeries(receipts, viewMonth, 4);
 
+  /*
+   * Trendiviiva kuudelta kuukaudelta, kuten yleiskuvassa.
+   *
+   * Neljän kuukauden palkit alempana ovat eri asia: ne ovat luettava
+   * vertailu, viiva on silmäys suuntaan. Viiva piirretään vain jos
+   * kuukausia on kolme joissa on kuluja — kahdesta ei näe suuntaa.
+   */
+  const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
+  const hasTrend = trend.filter((value) => value > 0).length >= 3;
+
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
       {/*
@@ -53,40 +64,109 @@ export default async function ExpensesPage({
         edellinen/seuraava-kuukausinavi. Lause ei kertonut mitään mitä
         sivu ei näytä, ja navin vieressä yläpalkissa oli toinen säädin
         joka näytti samaa kuukautta — askellus siirtyi sinne.
+
+        SAMAT KORTIT KUIN YLEISKUVASSA.
+
+        Kortti oli sama komponentti mutta eri tavalla käytetty: luku ei
+        noussut paikalleen, muutos oli jalassa merkkinä eikä luvun
+        vieressä pillerinä, eikä ruudukko venyttänyt kortteja samaan
+        korkeuteen. Sama kortti kahdella sivulla kahdennäköisenä saa
+        saman luvun näyttämään kahdelta eri luvulta.
       */}
-      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
+      <section
+        aria-label="Avainluvut"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+      >
         <MetricCard
           label="Kirjatut kulut"
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
-          value={formatMoney(current.totalCents)}
-          trend={
-            <TrendBadge
-              text={`${formatChange(change)} edelliseen`}
-              direction={changeTone(change)}
-            />
+          value={<CountUp to={current.totalCents} format="money" />}
+          /*
+           * Tyhjä kuukausi ei ole lasku.
+           *
+           * Nolla kuittia tuottaa aina −100 % edelliseen kuuhun, ja
+           * alaspäin osoittava nuoli väittäisi kulujen pienentyneen.
+           */
+          tone={
+            current.receiptCount === 0 || change === null
+              ? "muted"
+              : change > 0
+                ? "up"
+                : change < 0
+                  ? "down"
+                  : "neutral"
           }
-          hint="Kuittien summa, ei pankkitili"
+          delta={
+            current.receiptCount > 0 && change !== null
+              ? { text: formatChange(change) }
+              : undefined
+          }
+          conclusion={
+            current.receiptCount === 0
+              ? "Ei kuitteja tässä kuussa"
+              : change === null
+                ? "Ei vertailukohtaa"
+                : `${formatMoney(previous.totalCents)} ${monthWord(previousMonth(viewMonth))}ssa`
+          }
+          /*
+           * Ei erillistä "kuittien summa, ei pankkitili" -riviä.
+           *
+           * Se oli ainoa asia joka teki tästä kortista muita
+           * korkeamman, ja auto-rows-fr venytti koko rivin sen mukaan.
+           * Otsikko sanoo saman: kirjatut kulut on kirjattujen
+           * kuittien summa, ja jalka kertoo vertailun.
+           */
+          trend={hasTrend ? <Sparkline values={trend} width={64} height={20} /> : undefined}
         />
+
         <MetricCard
           label="Kuitteja"
-          value={String(current.receiptCount)}
+          value={<CountUp to={current.receiptCount} format="integer" />}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="green"
+          tone="muted"
+          conclusion={
+            previous.receiptCount === 0
+              ? "Ei vertailukohtaa"
+              : `${receiptCountLabel(previous.receiptCount)} ${monthWord(previousMonth(viewMonth))}ssa`
+          }
+          href="/admin/kuitit"
+          linkLabel="Kuitit"
         />
+
         <MetricCard
           label="ALV yhteensä"
           icon={<RfIcon name="report" size={17} />}
           tileTone="violet"
-          value={formatMoney(current.vatCents)}
-          hint="Vain kuitit joissa ALV on tiedossa"
+          value={<CountUp to={current.vatCents} format="money" />}
+          tone="muted"
+          conclusion="Vain kuitit joissa ALV on tiedossa"
         />
+
         <MetricCard
           label="Tarkistettavia"
           icon={<RfIcon name="alert" size={17} />}
           tileTone="blue"
-          value={String(current.needsReviewCount)}
-          hint={current.needsReviewCount > 0 ? "Puuttuvia tai epävarmoja tietoja" : undefined}
+          value={<CountUp to={current.needsReviewCount} format="integer" />}
+          tone={current.needsReviewCount > 0 ? "warn" : "muted"}
+          conclusion={
+            current.needsReviewCount > 0
+              ? "Puuttuvia tai epävarmoja tietoja"
+              : "Kaikki kuitit tarkistettu"
+          }
+          /*
+           * Linkki vie suoraan suodatettuun listaan.
+           *
+           * "Tarkistettavia 3" ilman tietä niiden luo on luku jota
+           * katsotaan mutta jolle ei tehdä mitään.
+           */
+          href={
+            current.needsReviewCount > 0
+              ? "/admin/kuitit?suodatin=needs_review"
+              : undefined
+          }
+          linkLabel="Tarkista"
         />
       </section>
 
