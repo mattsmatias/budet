@@ -12,6 +12,8 @@
  */
 
 import { alertCounts, buildAlerts } from "./alerts";
+import type { IconName } from "@/components/restoflow/icons";
+import { alertIcon } from "./alert-icons";
 import { budgetProgress } from "./budgets";
 import { findDuplicates } from "./duplicates";
 import type { Insight } from "./insights";
@@ -311,6 +313,14 @@ export interface FocusItem {
   title: string;
   detail: string;
   href: string;
+  /**
+   * Aiheen ikoni.
+   *
+   * Vakavuus näkyy jo rivin värissä, joten ikoni kertoo mistä on kyse:
+   * kuitti, vuoro vai budjetti. Kolme huutomerkkiä allekkain oli kolme
+   * samanlaista riviä.
+   */
+  icon: IconName;
 }
 
 /**
@@ -334,6 +344,7 @@ export function focusItems(
     title: alert.title,
     detail: alert.detail,
     href: alert.href,
+    icon: alertIcon(alert.kind),
   }));
 
   // Vain seurattavat havainnot: "budjetit pysyvät tahdissa" on hyvä
@@ -346,6 +357,7 @@ export function focusItems(
       title: insight.title,
       detail: insight.detail,
       href: insight.href ?? "/admin/kulut",
+      icon: insight.icon,
     }));
 
   const order: Record<FocusSeverity, number> = {

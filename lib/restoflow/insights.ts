@@ -12,6 +12,7 @@
  */
 
 import { budgetProgress } from "./budgets";
+import type { IconName } from "@/components/restoflow/icons";
 import { formatMoney } from "../money";
 import {
   monthlySeries,
@@ -41,6 +42,15 @@ export interface Insight {
   /** Perustelu lukuineen. Ilman lukua havainto on mielipide. */
   detail: string;
   href?: string;
+  /**
+   * Aiheen ikoni.
+   *
+   * Pakollinen eikä oletusarvoinen: havainnot päätyvät yleiskuvan
+   * huomiolistaan hälytysten rinnalle, ja siellä ikoni kertoo mistä
+   * rivi on. Uusi havainto ei käänny ennen kuin joku on päättänyt
+   * onko se kuitti, vuoro vai kulusuunta.
+   */
+  icon: IconName;
 }
 
 export interface InsightContext {
@@ -86,6 +96,7 @@ function spendTrend(ctx: InsightContext): Insight[] {
     return [
       {
         id: "spend-flat",
+        icon: "trend",
         tone: "good",
         title: "Kulut pysyivät ennallaan",
         detail: `${formatMoney(current.totalCents)} tässä kuussa, ${formatMoney(before.totalCents)} edellisessä.`,
@@ -100,6 +111,7 @@ function spendTrend(ctx: InsightContext): Insight[] {
   return [
     {
       id: "spend-trend",
+        icon: "trend",
       tone: diff > 0 ? "watch" : "good",
       title: diff > 0 ? "Kulut nousivat" : "Kulut laskivat",
       detail:
@@ -135,6 +147,7 @@ function categoryShift(ctx: InsightContext): Insight[] {
   return [
     {
       id: `category-${biggest.category}`,
+      icon: "expenses",
       tone: biggest.diff > 0 ? "watch" : "good",
       title: `${CATEGORY_LABELS[biggest.category]} ${biggest.diff > 0 ? "kasvoi" : "pieneni"}`,
       detail:
@@ -155,6 +168,7 @@ function supplierConcentration(ctx: InsightContext): Insight[] {
   return [
     {
       id: "supplier-concentration",
+        icon: "suppliers",
       tone: "watch",
       title: "Yksi toimittaja hallitsee kuluja",
       detail:
@@ -188,6 +202,7 @@ function budgetPace(ctx: InsightContext): Insight[] {
     return [
       {
         id: "budget-pace-ok",
+        icon: "budget",
         tone: "good",
         title: "Budjetit pysyvät tahdissa",
         detail:
@@ -201,6 +216,7 @@ function budgetPace(ctx: InsightContext): Insight[] {
   return [
     {
       id: `budget-pace-${ahead.category}`,
+      icon: "budget",
       tone: "watch",
       title: `${CATEGORY_LABELS[ahead.category]} kuluu etuajassa`,
       detail:
@@ -228,6 +244,7 @@ function labourShare(ctx: InsightContext): Insight[] {
   return [
     {
       id: "labour-variance",
+        icon: "clock",
       tone: overtimeHours > 0 ? "watch" : "neutral",
       title:
         overtimeHours > 0
@@ -253,6 +270,7 @@ function reviewDiscipline(ctx: InsightContext): Insight[] {
     return [
       {
         id: "review-clean",
+        icon: "receipt",
         tone: "good",
         title: "Kaikki kuukauden kuitit on tarkistettu",
         detail: `${inMonth.length} kuittia, ei yhtään jonossa.`,
@@ -266,6 +284,7 @@ function reviewDiscipline(ctx: InsightContext): Insight[] {
   return [
     {
       id: "review-backlog",
+        icon: "receipt",
       tone: "watch",
       title: "Tarkistusjono kasvaa",
       detail:

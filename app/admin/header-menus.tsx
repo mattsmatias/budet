@@ -6,7 +6,8 @@ import { signOut } from "@/app/(auth)/actions";
 import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { personInitials } from "@/lib/restoflow/initials";
-import { severityColor, severityIcon } from "@/components/restoflow/ui";
+import { severityColor } from "@/components/restoflow/ui";
+import { alertIcon } from "@/lib/restoflow/alert-icons";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 
 /**
@@ -216,7 +217,7 @@ function NotificationMenu({
                       className="mt-px shrink-0"
                       style={{ color: severityColor(alert.severity) }}
                     >
-                      <RfIcon name={severityIcon(alert.severity)} size={15} />
+                      <RfIcon name={alertIcon(alert.kind)} size={15} />
                     </span>
 
                     <span className="min-w-0 flex-1">

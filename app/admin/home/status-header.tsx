@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
-import { severityColor, severityIcon } from "@/components/restoflow/ui";
+import { severityColor } from "@/components/restoflow/ui";
 import type { FocusItem } from "@/lib/restoflow/dashboard";
 import { FOCUS_LIMIT, type OverallStatus } from "@/lib/restoflow/status";
 
@@ -106,7 +106,7 @@ export function StatusHeader({
                   className="mt-px shrink-0"
                   style={{ color: severityColor(focus.severity) }}
                 >
-                  <RfIcon name={severityIcon(focus.severity)} size={15} />
+                  <RfIcon name={focus.icon} size={15} />
                 </span>
 
                 <span className="min-w-0 flex-1">

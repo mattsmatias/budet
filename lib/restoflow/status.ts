@@ -36,6 +36,16 @@ export function overallStatus(
     info: items.filter((i) => i.severity === "info").length,
   };
 
+  /*
+   * OTSIKON LUVUN ON VASTATTAVA LISTAA.
+   *
+   * Otsikko laski vain varoitukset ja jätti havainnot huomiotta,
+   * vaikka ne piirtyvät samaan listaan sen alle. Kaksi varoitusta ja
+   * yksi havainto tuotti otsikon "2 asiaa vaatii huomiota" kolmen
+   * rivin yllä, ja lukija joutui laskemaan kumpi on oikeassa.
+   */
+  const rest = counts.warning + counts.info;
+
   if (counts.critical > 0) {
     return {
       tone: "bad",
@@ -43,7 +53,15 @@ export function overallStatus(
         counts.critical === 1
           ? "1 kriittinen asia vaatii huomiota"
           : `${counts.critical} kriittistä asiaa vaatii huomiota`,
-      detail: counts.warning > 0 ? `Lisäksi ${counts.warning} huomautusta.` : null,
+      /*
+       * "Kriittistä" rajaa otsikon luvun, joten se ei väitä olevansa
+       * listan pituus — mutta loput on silti kerrottava, tai rivien
+       * määrä jää selittämättä.
+       */
+      detail:
+        rest > 0
+          ? `Lisäksi ${rest} ${rest === 1 ? "muu kohta" : "muuta kohtaa"}.`
+          : null,
       counts,
     };
   }
@@ -52,10 +70,12 @@ export function overallStatus(
     return {
       tone: "warn",
       headline:
-        counts.warning === 1
-          ? "1 asia vaatii huomiota"
-          : `${counts.warning} asiaa vaatii huomiota`,
-      detail: null,
+        rest === 1 ? "1 asia vaatii huomiota" : `${rest} asiaa vaatii huomiota`,
+      detail:
+        counts.info > 0
+          ? `${counts.warning} tarkistettavaa ja ${counts.info} ` +
+            `${counts.info === 1 ? "havainto" : "havaintoa"} seurattavaksi.`
+          : null,
       counts,
     };
   }
@@ -74,6 +94,11 @@ export function overallStatus(
   return {
     tone: "good",
     headline: "Kaikki näyttää hyvältä",
+    /*
+     * Havainto ei ole puute vaan suunta, joten otsikko pysyy
+     * vihreänä — mutta luku on silti kerrottava, koska havainnot
+     * piirtyvät riveiksi otsikon alle.
+     */
     detail:
       counts.info > 0
         ? `${counts.info} ${counts.info === 1 ? "havainto" : "havaintoa"} seurattavaksi.`

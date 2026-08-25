@@ -190,9 +190,9 @@ describe("havainnot", () => {
 
   it("järjestää seurattavat ensin", () => {
     const sorted = sortInsights([
-      { id: "a", tone: "good", title: "", detail: "" },
-      { id: "b", tone: "watch", title: "", detail: "" },
-      { id: "c", tone: "neutral", title: "", detail: "" },
+      { id: "a", tone: "good", icon: "trend", title: "", detail: "" },
+      { id: "b", tone: "watch", icon: "trend", title: "", detail: "" },
+      { id: "c", tone: "neutral", icon: "trend", title: "", detail: "" },
     ]);
 
     expect(sorted.map((i) => i.id)).toEqual(["b", "c", "a"]);

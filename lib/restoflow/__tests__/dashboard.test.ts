@@ -268,9 +268,9 @@ describe("yhdistetty huomiolista", () => {
   /** Hyvä uutinen ei kuulu listaan jonka otsikko on "vaatii huomiota". */
   it("ottaa mukaan vain seurattavat havainnot", () => {
     const items = focusItems(input(), [
-      { id: "hyva", tone: "good", title: "Hienoa", detail: "x", href: "/admin" },
-      { id: "seuraa", tone: "watch", title: "Kulut nousivat", detail: "y", href: "/admin/kulut" },
-      { id: "neutraali", tone: "neutral", title: "Tasan", detail: "z", href: "/admin" },
+      { id: "hyva", tone: "good", icon: "trend", title: "Hienoa", detail: "x", href: "/admin" },
+      { id: "seuraa", tone: "watch", icon: "trend", title: "Kulut nousivat", detail: "y", href: "/admin/kulut" },
+      { id: "neutraali", tone: "neutral", icon: "trend", title: "Tasan", detail: "z", href: "/admin" },
     ]);
 
     expect(items.map((i) => i.id)).toEqual(["seuraa"]);
@@ -291,7 +291,7 @@ describe("yhdistetty huomiolista", () => {
     });
 
     const items = focusItems(ctx, [
-      { id: "havainto", tone: "watch", title: "Suunta", detail: "x", href: "/admin/kulut" },
+      { id: "havainto", tone: "watch", icon: "trend", title: "Suunta", detail: "x", href: "/admin/kulut" },
     ]);
 
     expect(items.length).toBeGreaterThan(1);
@@ -301,7 +301,7 @@ describe("yhdistetty huomiolista", () => {
 
   it("antaa jokaiselle kohteelle polun", () => {
     const items = focusItems(input(), [
-      { id: "ilman", tone: "watch", title: "Ei polkua", detail: "x" },
+      { id: "ilman", tone: "watch", icon: "trend", title: "Ei polkua", detail: "x" },
     ]);
 
     expect(items[0].href).toBe("/admin/kulut");

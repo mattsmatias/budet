@@ -3,7 +3,7 @@ import { overallStatus } from "../status";
 import type { FocusItem, FocusSeverity } from "../dashboard";
 
 function item(severity: FocusSeverity, id: string = severity): FocusItem {
-  return { id, severity, title: "x", detail: "y", href: "/admin" };
+  return { id, severity, title: "x", detail: "y", href: "/admin", icon: "alert" };
 }
 
 describe("kokonaistila", () => {
@@ -11,7 +11,8 @@ describe("kokonaistila", () => {
     const s = overallStatus([item("info"), item("warning"), item("critical")], true);
     expect(s.tone).toBe("bad");
     expect(s.headline).toBe("1 kriittinen asia vaatii huomiota");
-    expect(s.detail).toContain("1 huomautusta");
+    /* Yksi varoitus ja yksi havainto: kaksi riviä otsikon lisäksi. */
+    expect(s.detail).toBe("Lisäksi 2 muuta kohtaa.");
   });
 
   it("taivuttaa monikon", () => {
@@ -19,10 +20,24 @@ describe("kokonaistila", () => {
     expect(s.headline).toBe("2 kriittistä asiaa vaatii huomiota");
   });
 
-  it("kertoo huomautuksista kun kriittisiä ei ole", () => {
+  /*
+   * Otsikon luku on listan pituus.
+   *
+   * Otsikko laski aiemmin vain varoitukset, joten kaksi varoitusta ja
+   * yksi havainto tuotti otsikon "2 asiaa vaatii huomiota" kolmen
+   * rivin yllä.
+   */
+  it("laskee otsikkoon myös havainnot", () => {
     const s = overallStatus([item("warning"), item("info")], true);
     expect(s.tone).toBe("warn");
-    expect(s.headline).toBe("1 asia vaatii huomiota");
+    expect(s.headline).toBe("2 asiaa vaatii huomiota");
+    expect(s.detail).toBe("1 tarkistettavaa ja 1 havainto seurattavaksi.");
+  });
+
+  it("jättää erittelyn pois kun havaintoja ei ole", () => {
+    const s = overallStatus([item("warning", "a"), item("warning", "b")], true);
+    expect(s.headline).toBe("2 asiaa vaatii huomiota");
+    expect(s.detail).toBeNull();
   });
 
   it("sanoo että kaikki on hyvin kun mitään ei ole", () => {
@@ -31,10 +46,17 @@ describe("kokonaistila", () => {
     expect(s.headline).toBe("Kaikki näyttää hyvältä");
   });
 
+  /*
+   * Havainto ei ole puute vaan suunta. Vihreä piste ja otsikko
+   * "vaatii huomiota" väittäisivät samassa kortissa eri asiaa, joten
+   * pelkkä havainto pitää tilan hyvänä — mutta luku kerrotaan, koska
+   * havainto piirtyy riviksi otsikon alle.
+   */
   it("mainitsee seurattavat havainnot hyvässäkin tilassa", () => {
     const s = overallStatus([item("info")], true);
     expect(s.tone).toBe("good");
-    expect(s.detail).toContain("1 havainto");
+    expect(s.headline).toBe("Kaikki näyttää hyvältä");
+    expect(s.detail).toBe("1 havainto seurattavaksi.");
   });
 
   /*
