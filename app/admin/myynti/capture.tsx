@@ -226,10 +226,10 @@ function ReviewForm({
       <input type="hidden" name="source" value="report" />
 
       {/*
-        Rivit menevät palvelimelle bruttoina ja kantoina. Vero
-        lasketaan siellä uudelleen samasta funktiosta — lomakkeen
-        sisällön voi kirjoittaa itse, eikä selaimen lähettämään veroon
-        voi luottaa.
+        Rivit menevät palvelimelle ryhminä ja bruttosummina. Verokanta
+        luetaan siellä ryhmän asetuksesta ja vero lasketaan siitä —
+        lomakkeen sisällön voi kirjoittaa itse, eikä selaimen
+        lähettämään kantaan voi luottaa.
       */}
       <input
         type="hidden"
@@ -237,7 +237,6 @@ function ReviewForm({
         value={JSON.stringify(
           mapped.lines.map((l) => ({
             salesGroupId: l.salesGroupId,
-            vatRate: l.vatRate,
             grossCents: l.grossCents,
             posName: l.posName,
             posVatCents: l.posVatCents,

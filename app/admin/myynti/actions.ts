@@ -14,6 +14,7 @@ import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import { lineFromGross, type SalesLine } from "@/lib/restoflow/sales-vat";
+import { fetchSalesGroups } from "@/lib/restoflow/queries";
 
 export interface SalesState {
   error?: string;
@@ -130,9 +131,18 @@ export async function saveDailySales(
    * täsmäisi omiin riveihinsä.
    */
   const linesJson = String(formData.get("lines") ?? "");
-  const lines = linesJson === "" ? [] : parseLines(linesJson);
+  const submitted = linesJson === "" ? [] : parseLines(linesJson);
 
-  if (lines === null) return { error: "Myyntirivit olivat virheellisiä." };
+  if (submitted === null) return { error: "Myyntirivit olivat virheellisiä." };
+
+  const lines =
+    submitted.length === 0
+      ? []
+      : resolveLines(submitted, await fetchSalesGroups(restaurant.id));
+
+  if (lines === null) {
+    return { error: "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen." };
+  }
 
   /*
    * PÄIVÄ ON YKSI TOTUUS.
@@ -208,7 +218,31 @@ export async function deleteDailySales(formData: FormData): Promise<void> {
  * Palauttaa null jos syöte on rikki. Osittainen tallennus olisi
  * pahempi kuin epäonnistunut.
  */
-function parseLines(json: string): SalesLine[] | null {
+/** Rivi sellaisena kuin lomake sen lähettää. Ilman verokantaa. */
+interface SubmittedLine {
+  salesGroupId: string;
+  grossCents: number;
+  posName: string | null;
+  posVatCents: number | null;
+}
+
+/**
+ * Myyntirivit lomakkeen piilokentästä.
+ *
+ * VEROKANTA EI TULE LOMAKKEESTA.
+ *
+ * Aiemmin se tuli, ja vain sen lukualue tarkistettiin. Lomakkeen
+ * sisällön voi kirjoittaa itse, joten ruokamyynnin olisi voinut
+ * tallentaa nollakannalla ja ALV olisi jäänyt kirjaamatta — juuri se
+ * mitä tehtävänannon §11 kieltää.
+ *
+ * Nyt lomake kertoo vain ryhmän ja bruttosumman. Kanta luetaan
+ * kannasta ryhmän mukaan, ja vero lasketaan siitä.
+ *
+ * Palauttaa null jos syöte on rikki. Osittainen tallennus olisi
+ * pahempi kuin epäonnistunut.
+ */
+function parseLines(json: string): SubmittedLine[] | null {
   let raw: unknown;
   try {
     raw = JSON.parse(json);
@@ -218,34 +252,62 @@ function parseLines(json: string): SalesLine[] | null {
 
   if (!Array.isArray(raw)) return null;
 
-  const lines: SalesLine[] = [];
+  const lines: SubmittedLine[] = [];
 
   for (const entry of raw) {
     if (typeof entry !== "object" || entry === null) return null;
 
     const row = entry as Record<string, unknown>;
     const salesGroupId = String(row.salesGroupId ?? "");
-    const vatRate = Number(row.vatRate);
     const grossCents = Number(row.grossCents);
 
     if (!salesGroupId) return null;
-    if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 1) return null;
     if (!Number.isInteger(grossCents) || grossCents < 0) return null;
 
-    const amounts = lineFromGross(grossCents, vatRate);
-
     const posVat = row.posVatCents;
-    const posVatCents =
-      typeof posVat === "number" && Number.isInteger(posVat) && posVat >= 0
-        ? posVat
-        : null;
 
     lines.push({
       salesGroupId,
-      vatRate,
-      ...amounts,
+      grossCents,
       posName: typeof row.posName === "string" ? row.posName.slice(0, 200) : null,
-      posVatCents,
+      posVatCents:
+        typeof posVat === "number" && Number.isInteger(posVat) && posVat >= 0
+          ? posVat
+          : null,
+    });
+  }
+
+  return lines;
+}
+
+/**
+ * Ryhmän kanta rivin kannaksi.
+ *
+ * Ryhmän on oltava tämän ravintolan oma: kannan RLS tarkistaa rivin
+ * oikeuden päivän kautta eikä ryhmän, joten ilman tätä väärennetty
+ * pyyntö voisi viitata toisen ravintolan ryhmään.
+ *
+ * Kanta on ryhmän NYKYINEN kanta. Tämä on uusi tapahtuma, joten siihen
+ * pätee nykyinen asetus — ja kun se on kerran kirjoitettu riville, se
+ * ei enää muutu.
+ */
+function resolveLines(
+  submitted: SubmittedLine[],
+  groups: { id: string; vatRate: number }[],
+): SalesLine[] | null {
+  const byId = new Map(groups.map((g) => [g.id, g]));
+  const lines: SalesLine[] = [];
+
+  for (const line of submitted) {
+    const group = byId.get(line.salesGroupId);
+    if (!group) return null;
+
+    lines.push({
+      salesGroupId: group.id,
+      vatRate: group.vatRate,
+      ...lineFromGross(line.grossCents, group.vatRate),
+      posName: line.posName,
+      posVatCents: line.posVatCents,
     });
   }
 

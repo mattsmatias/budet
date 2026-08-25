@@ -1209,3 +1209,52 @@ export async function fetchSalesLines(
     posVatCents: (row.pos_vat_cents as number | null) ?? null,
   }));
 }
+
+/**
+ * Aikavälin myyntirivit päivittäin ryhmiteltynä.
+ *
+ * YKSI KYSELY, EI KAHTA PER PÄIVÄ.
+ *
+ * ALV-raportti haki ensin päivän tunnuksen ja sitten sen rivit —
+ * kuukaudessa se on kuusikymmentäkaksi kyselyä, ja jokainen niistä
+ * odottaa edellistä. Sisäliitos tekee saman yhdellä.
+ */
+export async function fetchSalesLinesBetween(
+  restaurantId: string,
+  from: string,
+  to: string,
+): Promise<Map<string, SalesLine[]>> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("daily_sales_lines")
+    .select(
+      "sales_group_id, vat_rate, gross_cents, vat_cents, net_cents, pos_name, pos_vat_cents, daily_sales!inner(sales_date, restaurant_id)",
+    )
+    .eq("daily_sales.restaurant_id", restaurantId)
+    .gte("daily_sales.sales_date", from)
+    .lte("daily_sales.sales_date", to);
+
+  const byDate = new Map<string, SalesLine[]>();
+  if (error || !data) return byDate;
+
+  for (const row of data) {
+    // Sisäliitos palauttaa yhden rivin objektina, ei taulukkona.
+    const day = row.daily_sales as unknown as { sales_date: string };
+    const date = day.sales_date;
+
+    const lines = byDate.get(date) ?? [];
+    lines.push({
+      salesGroupId: row.sales_group_id as string,
+      vatRate: Number(row.vat_rate),
+      grossCents: row.gross_cents as number,
+      vatCents: row.vat_cents as number,
+      netCents: row.net_cents as number,
+      posName: (row.pos_name as string | null) ?? null,
+      posVatCents: (row.pos_vat_cents as number | null) ?? null,
+    });
+    byDate.set(date, lines);
+  }
+
+  return byDate;
+}

@@ -125,6 +125,33 @@ export async function deleteSalesGroup(
   if (!id) return {};
 
   const supabase = await createClient();
+
+  /*
+   * KÄYTTÖ TARKISTETAAN ENNEN POISTOA.
+   *
+   * Kanta estää poiston viite-eheydellä, mutta virhekoodin
+   * kiinniottaminen on hauras tapa saada se selville: koodi kulkee
+   * kolmen kerroksen läpi ja voi kadota matkalla. Esitarkistus antaa
+   * myös paremman viestin — käyttäjä näkee montako päivää estää
+   * poiston.
+   *
+   * Alla oleva virhekäsittely jää varalta: kahden käyttäjän kilpailu
+   * voi silti johtaa rikkomukseen.
+   */
+  const { count } = await supabase
+    .from("daily_sales_lines")
+    .select("id", { count: "exact", head: true })
+    .eq("sales_group_id", id);
+
+  if (count && count > 0) {
+    return {
+      error:
+        `Ryhmää ei voi poistaa: sitä on käytetty ${count} ` +
+        `${count === 1 ? "myyntirivillä" : "myyntirivillä"}. Ota se pois ` +
+        `käytöstä sen sijaan — vanhat rivit säilyttävät nimen ja kannan.`,
+    };
+  }
+
   const { error } = await supabase.from("sales_groups").delete().eq("id", id);
 
   /*

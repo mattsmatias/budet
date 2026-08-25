@@ -15,7 +15,7 @@ import {
   fetchDailySales,
   fetchReceipts,
   fetchSalesGroups,
-  fetchSalesLines,
+  fetchSalesLinesBetween,
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import {
@@ -293,13 +293,18 @@ async function vatReportRows(
     .filter((day) => day.date >= `${month}-01` && day.date <= lastDay)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // Päivä ja sen rivit pysyvät yhdessä: rivillä ei ole omaa päivää.
-  const perDay = await Promise.all(
-    inMonth.map(async (day) => ({
-      day,
-      lines: await fetchSalesLines(restaurantId, day.date),
-    })),
+  // Yksi kysely koko kuukaudelle. Päivä ja sen rivit pysyvät yhdessä:
+  // rivillä ei ole omaa päivää.
+  const linesByDate = await fetchSalesLinesBetween(
+    restaurantId,
+    `${month}-01`,
+    lastDay,
   );
+
+  const perDay = inMonth.map((day) => ({
+    day,
+    lines: linesByDate.get(day.date) ?? [],
+  }));
 
   const allLines = perDay.flatMap((entry) => entry.lines);
   const summary = summarise(allLines);
