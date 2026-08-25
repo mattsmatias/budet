@@ -42,6 +42,15 @@ export const maxDuration = 60;
 const MAX_BYTES = 20 * 1024 * 1024;
 
 /**
+ * Kaikkien sivujen yhteiskoko.
+ *
+ * Sivumäärää ei rajata — kuitissa on niin monta sivua kuin siinä on.
+ * Pyyntö ei silti voi olla mielivaltaisen suuri, joten raja on
+ * kokonaiskoossa ja siitä kerrotaan luettavalla lauseella.
+ */
+const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
+
+/**
  * Mallin näkemät kuvamuodot.
  *
  * HEIC ei ole listalla, koska rajapinta ei tue sitä — ja juuri sitä
@@ -102,47 +111,90 @@ export async function POST(request: Request) {
   }
 
   const form = await request.formData();
-  const file = form.get("file");
 
-  if (!(file instanceof File)) {
+  /*
+   * MONTA SIVUA, YKSI KUITTI.
+   *
+   * Tukkukuitti on usein kolme sivua, ja rivit jatkuvat sivulta
+   * toiselle. Ne on luettava yhdessä: erikseen luettuina loppusumma
+   * olisi vain viimeisellä sivulla eivätkä rivit summautuisi siihen.
+   *
+   * Vanha nimi "file" kelpaa yhä, jottei yksi vanha kutsu hajoa.
+   */
+  const files = [...form.getAll("pages"), ...form.getAll("file")].filter(
+    (entry): entry is File => entry instanceof File,
+  );
+
+  if (files.length === 0) {
     return NextResponse.json({ error: "Tiedosto puuttuu." }, { status: 400 });
   }
-  if (file.size > MAX_BYTES) {
+
+  let total = 0;
+
+  for (const file of files) {
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: "Yksi sivuista on liian suuri. Kuvaa se uudelleen." },
+        { status: 413 },
+      );
+    }
+
+    total += file.size;
+
+    if (!IMAGE_TYPES.has(file.type) && file.type !== PDF_TYPE) {
+      return NextResponse.json(
+        {
+          error:
+            file.type === "image/heic" || file.type === "image/heif"
+              ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
+              : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
+        },
+        { status: 415 },
+      );
+    }
+  }
+
+  /*
+   * Sivumäärää ei rajata, kokonaiskokoa rajataan.
+   *
+   * Raja on fysiikkaa eikä politiikkaa: rajapinnan pyyntö ei voi olla
+   * mielivaltaisen suuri. Sanotaan se selvästi sen sijaan että pyyntö
+   * epäonnistuisi tuntemattomaan virheeseen.
+   */
+  if (total > MAX_TOTAL_BYTES) {
     return NextResponse.json(
-      { error: "Tiedosto on liian suuri. Kuvaa kuitti uudelleen." },
+      {
+        error:
+          `Sivut ovat yhteensä liian suuria (${Math.round(total / 1024 / 1024)} MB). ` +
+          "Poista muutama sivu ja lisää ne omana kuittinaan, tai kuvaa ne pienemmällä tarkkuudella.",
+      },
       { status: 413 },
     );
   }
 
-  const isPdf = file.type === PDF_TYPE;
+  const sources = await Promise.all(
+    files.map(async (file) => {
+      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
 
-  if (!isPdf && !IMAGE_TYPES.has(file.type)) {
-    return NextResponse.json(
-      {
-        error:
-          file.type === "image/heic" || file.type === "image/heif"
-            ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
-            : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
-      },
-      { status: 415 },
-    );
-  }
-
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-
-  const source = isPdf
-    ? ({
-        type: "document" as const,
-        source: { type: "base64" as const, media_type: "application/pdf" as const, data: base64 },
-      })
-    : ({
-        type: "image" as const,
-        source: {
-          type: "base64" as const,
-          media_type: file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-          data: base64,
-        },
-      });
+      return file.type === PDF_TYPE
+        ? ({
+            type: "document" as const,
+            source: {
+              type: "base64" as const,
+              media_type: "application/pdf" as const,
+              data: base64,
+            },
+          })
+        : ({
+            type: "image" as const,
+            source: {
+              type: "base64" as const,
+              media_type: file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              data: base64,
+            },
+          });
+    }),
+  );
 
   const client = new Anthropic();
 
@@ -154,7 +206,19 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: [source, { type: "text", text: "Poimi tämän kuitin tiedot." }],
+          content: [
+            ...sources,
+            {
+              type: "text",
+              text:
+                files.length === 1
+                  ? "Poimi tämän kuitin tiedot."
+                  : `Poimi tämän kuitin tiedot. Kuitti on ${files.length} sivua ja ne ovat ` +
+                    "tässä järjestyksessä. Lue ne yhtenä kuittina: rivit jatkuvat sivulta " +
+                    "toiselle ja loppusumma on yleensä viimeisellä sivulla. Palauta rivit " +
+                    "kaikilta sivuilta yhtenä listana.",
+            },
+          ],
         },
       ],
       output_config: { format: zodOutputFormat(extraction) },

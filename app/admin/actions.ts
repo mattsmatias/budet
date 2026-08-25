@@ -10,6 +10,7 @@
 
 import { revalidatePath } from "next/cache";
 import { lineVatCents } from "@/lib/restoflow/vat";
+import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
@@ -409,6 +410,35 @@ export async function saveReceipt(
       };
     }
     return { error: explain(error, "Kuitin tallennus epäonnistui") };
+  }
+
+  /*
+   * Sivut kirjoitetaan omana askeleenaan kuitin jälkeen.
+   *
+   * Sivu viittaa kuittiin, joten kuitin on oltava olemassa ensin. Jos
+   * tämä epäonnistuu, kuitti on jo tallennettu eikä sitä peruta:
+   * ensimmäinen sivu on create_receipt-kutsun myötä jo kuitin kuvana,
+   * joten kuitti ei jää kuvattomaksi. Loput sivut voi liittää
+   * uudelleen — poistettu kuitti taas olisi kirjoitettava alusta.
+   */
+  const pages = parseReceiptPages(formData.get("pages"));
+
+  if (pages.length > 0) {
+    const { error: pageError } = await supabase.rpc("set_receipt_pages", {
+      p_receipt: data as string,
+      p_paths: pages.map((page) => page.path),
+      p_hashes: pages.map((page) => page.hash),
+    });
+
+    if (pageError) {
+      revalidatePath("/admin", "layout");
+      return {
+        notice:
+          `Kuitti tallennettu, mutta ${pages.length - 1} lisäsivua jäi ` +
+          "liittämättä. Avaa kuitti ja lisää sivut uudelleen.",
+        receiptId: data as string,
+      };
+    }
   }
 
   // Kaupan tunnistus tehdään tallennuksen jälkeen omana askeleenaan.

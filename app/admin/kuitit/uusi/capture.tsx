@@ -62,20 +62,33 @@ export function CaptureFlow({
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
   const [fileName, setFileName] = useState("");
-  const [imagePath, setImagePath] = useState<string | null>(null);
   const [fileHash, setFileHash] = useState<string | null>(null);
+  /**
+   * Kuitin sivut tallennuspolkuineen, kuvausjärjestyksessä.
+   *
+   * Ensimmäinen sivu on myös imagePath: se on peili jota listanäkymät
+   * lukevat. Sivujen määrää ei rajata — kuitissa on niin monta sivua
+   * kuin siinä on.
+   */
+  const [pages, setPages] = useState<{ path: string; hash: string }[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
 
   // Paikallinen esikatselu. Näytetään heti kuvauksen jälkeen, jotta
   // käyttäjä näkee mitä otti — ja tarkistusvaiheessa, jotta lukuja voi
   // verrata paperiin ilman että kuittia tarvitsee pitää kädessä.
-  const [preview, setPreview] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  // Yhteenvedon pikkukuva on aina ensimmäinen sivu. PDF:stä ei synny
+  // esikatselua, jolloin tämä on tyhjä merkkijono — sama kuin ennenkin.
+  const preview = previews[0] ?? null;
 
   // Yhteenveto ensin, kentät pyynnöstä. Kymmenen kenttää putkeen on
   // lomake; kolme lukua ja "Muokkaa" on tarkistus.
   const [editing, setEditing] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
+  // Suurennettuna näkyvän sivun numero, tai null kun mitään ei ole
+  // suurennettuna. Monisivuisessa kuitissa pitää tietää mikä sivu.
+  const [zoomed, setZoomed] = useState<number | null>(null);
 
   const [state, action] = useActionState(saveReceipt, initial);
 
@@ -89,32 +102,60 @@ export function CaptureFlow({
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const addRef = useRef<HTMLInputElement>(null);
+  const [adding, setAdding] = useState(false);
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
+  async function handleFile(selected: FileList | File[] | null | undefined) {
+    const chosen = [...(selected ?? [])];
+    if (chosen.length === 0) return;
 
-    setFileName(file.name);
+    const [file, ...rest] = chosen;
+
+    setFileName(
+      chosen.length === 1
+        ? file.name
+        : `${file.name} + ${rest.length} ${rest.length === 1 ? "sivu" : "sivua"}`,
+    );
     setUploadError(null);
     setExtractionError(null);
 
-    if (file.type !== "application/pdf") {
-      setPreview(URL.createObjectURL(file));
-    }
+    setPreviews(chosen.map(previewUrl));
     setPhase("analyzing");
 
     // Tiiviste ennen latausta: sama tiedosto tunnistetaan silloinkin kun
-    // se on nimetty uudelleen.
+    // se on nimetty uudelleen. Kuitin tiiviste on ensimmäisen sivun,
+    // koska kaksoiskappaleiden tunnistus vertaa sitä.
     const hash = await sha256(file);
     setFileHash(hash);
+
+    /*
+     * Sivut ladataan rinnakkain ja järjestys säilytetään.
+     *
+     * Promise.all palauttaa tulokset syötteen järjestyksessä riippumatta
+     * siitä missä järjestyksessä lataukset valmistuvat — sivujärjestys
+     * on osa kuitin sisältöä eikä saa riippua verkon nopeudesta.
+     */
+    const uploadPages = Promise.all(
+      chosen.map(async (page) => {
+        const pageHash = page === file ? hash : await sha256(page);
+        return { path: await uploadImage(page, restaurantId, pageHash), hash: pageHash };
+      }),
+    )
+      .then((saved) => {
+        setPages(saved);
+        return saved;
+      })
+      .catch((e: Error) => {
+        setUploadError(e.message);
+        return [] as { path: string; hash: string }[];
+      });
 
     // Ilman oikeaa poimintaa ei esitetä analyysiä. Pyörivä kehä ja sen
     // jälkeen "ei tunnistettu" joka kentässä antaa ymmärtää että kuvaa
     // yritettiin lukea ja se epäonnistui — käyttäjä kuvaa kuitin
     // uudelleen turhaan. Rehellisempää on avata tyhjä lomake heti.
     if (!extractionEnabled) {
-      uploadImage(file, restaurantId, hash)
-        .then(setImagePath)
-        .catch((e: Error) => setUploadError(e.message));
+      void uploadPages;
 
       setResult(emptyResult());
       setDate(new Date().toISOString().slice(0, 10));
@@ -124,9 +165,7 @@ export function CaptureFlow({
 
     // Lataus käynnistyy heti eikä odota poimintaa: kuva on arvokas
     // silloinkin kun luku epäonnistuu.
-    const upload = uploadImage(file, restaurantId, hash)
-      .then(setImagePath)
-      .catch((e: Error) => setUploadError(e.message));
+    const upload = uploadPages;
 
     let extraction: ExtractionResult;
 
@@ -137,6 +176,7 @@ export function CaptureFlow({
         sizeBytes: file.size,
         hash,
         file,
+        extraPages: rest,
       });
     } catch (error) {
       // Luku epäonnistui. Lomake avataan silti, mutta syy kerrotaan —
@@ -165,6 +205,56 @@ export function CaptureFlow({
     setPhase("review");
   }
 
+  /**
+   * Lisää sivuja kuittiin joka on jo kuvattu.
+   *
+   * Kolmisivuinen kuitti tulee harvoin kerralla oikein: yksi sivu jää
+   * pöydälle, toinen menee epätarkaksi. Lisääminen ei aloita alusta
+   * eikä lue lukuja uudelleen — poimitut luvut ovat käyttäjän
+   * tarkistamia, eikä niitä saa vaihtaa hänen selkänsä takana.
+   */
+  async function appendPages(selected: FileList | null) {
+    const chosen = [...(selected ?? [])];
+    if (chosen.length === 0) return;
+
+    setAdding(true);
+    setUploadError(null);
+
+    try {
+      const saved = await Promise.all(
+        chosen.map(async (page) => {
+          const pageHash = await sha256(page);
+          return {
+            path: await uploadImage(page, restaurantId, pageHash),
+            hash: pageHash,
+          };
+        }),
+      );
+
+      setPages((current) => [...current, ...saved]);
+      setPreviews((current) => [...current, ...chosen.map(previewUrl)]);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Sivun tallennus epäonnistui.",
+      );
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  /**
+   * Poistaa sivun ennen tallennusta.
+   *
+   * Vain listalta: tiedosto jää tallennustilaan. Poisto tallennustilasta
+   * veisi mukanaan myös sivun jonka toinen kuitti jakaa saman tiivisteen
+   * kautta, ja se olisi peruuttamatonta.
+   */
+  function removePage(index: number) {
+    setPages((current) => current.filter((_, i) => i !== index));
+    setPreviews((current) => current.filter((_, i) => i !== index));
+    setZoomed(null);
+  }
+
   if (state.notice && phase !== "saved") setPhase("saved");
 
   if (phase === "choose") {
@@ -175,15 +265,17 @@ export function CaptureFlow({
           type="file"
           accept="image/*"
           capture="environment"
+          multiple
           className="sr-only"
-          onChange={(e) => handleFile(e.target.files?.[0])}
+          onChange={(e) => handleFile(e.target.files)}
         />
         <input
           ref={fileRef}
           type="file"
           accept="image/*,application/pdf"
+          multiple
           className="sr-only"
-          onChange={(e) => handleFile(e.target.files?.[0])}
+          onChange={(e) => handleFile(e.target.files)}
         />
 
         <button
@@ -211,13 +303,18 @@ export function CaptureFlow({
           </span>
         </button>
 
-        <ChooseButton icon="image" label="Valitse kuva" onClick={() => fileRef.current?.click()} />
+        <ChooseButton icon="image" label="Valitse kuvat" onClick={() => fileRef.current?.click()} />
         <ChooseButton icon="file" label="Lataa tiedosto" onClick={() => fileRef.current?.click()} />
 
         <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
           {extractionEnabled
             ? "Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat muokattavissa ennen tallennusta ja epävarmat on merkitty."
             : "Kuvan luku ei ole käytössä tässä ympäristössä. Kuva tallentuu, mutta tiedot täytetään käsin — sovellus ei arvaa niitä puolestasi."}
+        </p>
+
+        <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Monisivuisesta kuitista voi kuvata tai valita kaikki sivut kerralla.
+          Sivuja voi lisätä myös tarkistusvaiheessa.
         </p>
       </div>
     );
@@ -255,7 +352,15 @@ export function CaptureFlow({
 
   return (
     <form action={action} className="rf-enter space-y-4">
-      <input type="hidden" name="imagePath" value={imagePath ?? ""} />
+      {/* Kuitin kuva on ensimmäinen sivu — ei oma tietonsa. */}
+      <input type="hidden" name="imagePath" value={pages[0]?.path ?? ""} />
+      {/*
+        Sivut menevät omana kenttänään. Palvelin kirjoittaa ne
+        set_receipt_pages-funktiolla, joka korvaa kuitin sivut
+        kokonaan — osittainen päivitys jättäisi poistetun sivun
+        roikkumaan.
+      */}
+      <input type="hidden" name="pages" value={JSON.stringify(pages)} />
       <input type="hidden" name="imageQuality" value={result.imageQuality} />
       <input type="hidden" name="fileHash" value={fileHash ?? ""} />
       <input type="hidden" name="items" value={JSON.stringify(result.items)} />
@@ -334,7 +439,7 @@ export function CaptureFlow({
           {preview ? (
             <button
               type="button"
-              onClick={() => setZoomed(true)}
+              onClick={() => setZoomed(0)}
               className="rf-press shrink-0 overflow-hidden"
               style={{ borderRadius: "var(--rf-r-control)" }}
               aria-label="Suurenna kuitin kuva"
@@ -413,17 +518,144 @@ export function CaptureFlow({
         </button>
       </Card>
 
-      {zoomed && preview ? (
+      {/*
+        Sivut näkyvät ennen tallennusta.
+
+        Monisivuisen kuitin sudenkuoppa on että sivu jää kuvaamatta ja
+        se huomataan vasta kirjanpidossa. Kun sivut näkyvät rivissä ja
+        niissä lukee numero, puuttuva sivu näkyy ennen tallennusta.
+      */}
+      <Card>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-[15px] font-medium">
+            {previews.length <= 1 ? "Kuitin kuva" : `Sivut · ${previews.length}`}
+          </p>
+
+          {adding ? (
+            <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              Tallennetaan…
+            </span>
+          ) : null}
+        </div>
+
+        <div className="-mx-1 mt-3 flex gap-2.5 overflow-x-auto px-1 pb-1">
+          {previews.map((url, index) => (
+            <div key={`${url}-${index}`} className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setZoomed(index)}
+                disabled={url === ""}
+                className="rf-press block h-24 w-[72px] overflow-hidden"
+                style={{
+                  borderRadius: "var(--rf-r-control)",
+                  background: "var(--rf-inset)",
+                }}
+                aria-label={`Suurenna sivu ${index + 1}`}
+              >
+                {url === "" ? (
+                  /* PDF:stä ei synny esikatselua selaimessa. */
+                  <span
+                    className="flex h-full w-full items-center justify-center"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    <RfIcon name="file" size={22} />
+                  </span>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={url}
+                    alt={`Sivu ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </button>
+
+              <span
+                className="rf-tabular pointer-events-none absolute bottom-1 left-1 px-1.5 py-0.5 text-[11px] font-medium"
+                style={{
+                  background: "rgba(0,0,0,0.62)",
+                  color: "#fff",
+                  borderRadius: "var(--rf-r-chip, 6px)",
+                }}
+              >
+                {index + 1}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => removePage(index)}
+                className="rf-press absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center"
+                style={{
+                  background: "var(--rf-surface)",
+                  color: "var(--rf-text-2)",
+                  borderRadius: "999px",
+                  boxShadow: "var(--rf-shadow-sm, 0 1px 3px rgba(0,0,0,0.2))",
+                }}
+                aria-label={`Poista sivu ${index + 1}`}
+              >
+                <RfIcon name="trash" size={13} />
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => addRef.current?.click()}
+            disabled={adding}
+            className="rf-press flex h-24 w-[72px] shrink-0 flex-col items-center justify-center gap-1.5"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text-2)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <RfIcon name="plus" size={18} />
+            <span className="text-[11px] font-medium">Lisää sivu</span>
+          </button>
+        </div>
+
+        <input
+          ref={addRef}
+          type="file"
+          accept="image/*,application/pdf"
+          multiple
+          className="sr-only"
+          onChange={(e) => {
+            void appendPages(e.target.files);
+            // Sama tiedosto pitää voida valita uudelleen, jos edellinen
+            // yritys epäonnistui. Ilman tyhjennystä onChange ei laukea.
+            e.target.value = "";
+          }}
+        />
+
+        <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Sivuja voi olla niin monta kuin kuitissa on. Jälkikäteen lisätty sivu
+          tallentuu kuittiin, mutta lukuja ei lueta uudelleen — tarkista summa
+          itse.
+        </p>
+      </Card>
+
+      {zoomed !== null && previews[zoomed] ? (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Kuitin kuva"
-          onClick={() => setZoomed(false)}
-          className="rf-z-modal fixed inset-0 flex items-center justify-center p-4"
+          onClick={() => setZoomed(null)}
+          className="rf-z-modal fixed inset-0 flex flex-col items-center justify-center gap-3 p-4"
           style={{ background: "rgba(0,0,0,0.82)" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="Kuitti" className="max-h-full max-w-full object-contain" />
+          <img
+            src={previews[zoomed]}
+            alt={`Kuitti, sivu ${zoomed + 1}`}
+            className="max-h-full max-w-full object-contain"
+          />
+
+          {previews.length > 1 ? (
+            <p className="rf-tabular text-[13px] text-white/80">
+              Sivu {zoomed + 1} / {previews.length}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -638,6 +870,17 @@ async function sha256(file: File): Promise<string> {
   return [...new Uint8Array(digest)]
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/**
+ * Selaimen esikatselu tiedostosta.
+ *
+ * PDF:stä ei synny kuvaa ilman erillistä piirtoa, joten se saa tyhjän
+ * merkkijonon: sivu on olemassa ja näkyy nauhassa, mutta ilman
+ * esikatselua. Tyhjä on tässä tarkoitettu arvo, ei puuttuva.
+ */
+function previewUrl(file: File): string {
+  return file.type === "application/pdf" ? "" : URL.createObjectURL(file);
 }
 
 function toEuros(cents: number | null): string {

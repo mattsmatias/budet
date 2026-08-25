@@ -69,7 +69,7 @@ function receipt(date: string, totalCents: number): Receipt {
     category: "food", paymentMethod: "card", receiptNumber: null,
     note: null, status: "confirmed", reviewReasons: [], items: [],
     addedByUserId: "u1", addedAt: `${date}T10:00:00.000Z`,
-    hasImage: true, imagePath: null, categoryId: null, imageQuality: "good",
+    hasImage: true, imagePath: null, pages: [], categoryId: null, imageQuality: "good",
   };
 }
 

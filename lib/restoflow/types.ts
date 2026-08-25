@@ -170,6 +170,19 @@ export interface Extracted<T> {
 }
 
 /**
+ * Kuitin sivu.
+ *
+ * Tukkulasku on usein monta sivua, ja rivit jatkuvat sivulta toiselle.
+ * Sivujärjestys on siksi osa kuitin sisältöä eikä esitystapa:
+ * loppusumma on tavallisesti viimeisellä sivulla.
+ */
+export interface ReceiptPage {
+  pageNumber: number;
+  storagePath: string;
+  fileHash: string | null;
+}
+
+/**
  * Kuitin rivi.
  *
  * Jokaisella rivillä on oma kategoriansa ja ALV-kantansa. Ilman tätä
@@ -229,8 +242,21 @@ export interface Receipt {
   addedByUserId: string;
   addedAt: string;
   hasImage: boolean;
-  /** Polku tallennuksessa. Kuvaa ei voi näyttää ilman tätä. */
+  /**
+   * Ensimmäisen sivun polku.
+   *
+   * Peili sivutaulusta, ei totuus. Lyhyt muoto listanäkymille jotka
+   * näyttävät yhden pikkukuvan eivätkä tarvitse koko sivustoa.
+   */
   imagePath: string | null;
+
+  /**
+   * Kuitin sivut järjestyksessä.
+   *
+   * Tukkukuitti on usein monta sivua, ja jokainen niistä on osa samaa
+   * tositetta. Tyhjä lista tarkoittaa kuittia ilman kuvaa.
+   */
+  pages: ReceiptPage[];
   /** Kuvan laatuarvio poiminnasta. Vaikuttaa tarkistustarpeeseen. */
   imageQuality: "good" | "poor" | null;
 }

@@ -53,6 +53,14 @@ export interface ExtractionInput {
   hash?: string;
   /** Itse tiedosto. Vain palvelinpoimija tarvitsee sen. */
   file?: File;
+  /**
+   * Kuitin muut sivut, ensimmäisen jälkeen.
+   *
+   * Tukkukuitti on usein monta sivua ja rivit jatkuvat sivulta
+   * toiselle. Ne lähetetään yhdessä, koska erikseen luettuina
+   * loppusumma olisi vain viimeisellä sivulla.
+   */
+  extraPages?: File[];
 }
 
 export interface ReceiptExtractor {
@@ -297,11 +305,17 @@ export class RemoteReceiptExtractor implements ReceiptExtractor {
     const started = Date.now();
 
     // Kuva valmistellaan ennen lähetystä: HEIC muuntuu JPEG:ksi ja
-    // kahdeksan megapikselin kuva pienenee luettavaan kokoon.
-    const { file } = await prepareForExtraction(input.file);
+    // kahdeksan megapikselin kuva pienenee luettavaan kokoon. Sama
+    // koskee jokaista sivua.
+    const all = [input.file, ...(input.extraPages ?? [])];
+    const prepared = await Promise.all(
+      all.map(async (file) => (await prepareForExtraction(file)).file),
+    );
 
     const body = new FormData();
-    body.set("file", file);
+    // Järjestys säilyy: FormData.getAll palauttaa lisäysjärjestyksessä,
+    // ja sivujärjestys on osa kuitin sisältöä.
+    for (const file of prepared) body.append("pages", file);
 
     let response: Response;
     try {

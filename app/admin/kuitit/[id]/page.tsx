@@ -6,7 +6,7 @@ import {
   fetchMerchantCategories,
   fetchMerchants,
   fetchReceipt,
-  fetchReceiptImageUrl,
+  fetchReceiptImageUrls,
   fetchReceipts,
   fetchSuppliers,
   fetchUsers,
@@ -50,10 +50,24 @@ export default async function AdminReceiptDetailPage({
   // kuitti olemassa toisessa ravintolassa.
   if (!receipt) notFound();
 
-  const [users, imageUrl, suppliers, merchants, merchantCategories, allReceipts] =
+  /*
+   * Sivut ovat totuus, image_path on peili.
+   *
+   * Sivutaulu on ensisijainen. Vanha sarake jää varalle niitä kuitteja
+   * varten joiden sivuja ei jostain syystä ole — silloin näkyy edes
+   * ensimmäinen sivu eikä tyhjä kortti.
+   */
+  const pagePaths =
+    receipt.pages.length > 0
+      ? receipt.pages.map((page) => page.storagePath)
+      : receipt.imagePath
+        ? [receipt.imagePath]
+        : [];
+
+  const [users, imageUrls, suppliers, merchants, merchantCategories, allReceipts] =
     await Promise.all([
       fetchUsers(restaurant.id),
-      fetchReceiptImageUrl(receipt.imagePath),
+      fetchReceiptImageUrls(pagePaths),
       fetchSuppliers(restaurant.id),
       fetchMerchants(),
       fetchMerchantCategories(),
@@ -346,10 +360,14 @@ export default async function AdminReceiptDetailPage({
 
         <aside className="space-y-4">
           <Card>
-            <p className="mb-3 text-[13px] font-semibold">Kuitin kuva</p>
+            <p className="mb-3 text-[13px] font-semibold">
+              {imageUrls.length > 1
+                ? `Kuitin sivut · ${imageUrls.length}`
+                : "Kuitin kuva"}
+            </p>
 
-            {imageUrl ? (
-              <ReceiptImage url={imageUrl} alt={`Kuitti: ${receipt.supplierName}`} />
+            {imageUrls.length > 0 ? (
+              <ReceiptImage urls={imageUrls} alt={`Kuitti: ${receipt.supplierName}`} />
             ) : (
               <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
                 {receipt.hasImage

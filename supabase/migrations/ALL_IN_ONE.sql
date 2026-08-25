@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 34 migraatiota:
+-- Sisältää 40 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -46,6 +46,12 @@
 --   0032_invitation_preview.sql
 --   0033_daily_sales.sql
 --   0034_claim_open_shift.sql
+--   0035_settings_partial_update.sql
+--   0036_sales_report.sql
+--   0037_sales_groups_vat.sql
+--   0038_default_sales_groups.sql
+--   0039_food_vat_rate.sql
+--   0040_receipt_pages.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -6966,4 +6972,866 @@ $$;
 
 revoke all on function update_restaurant from public;
 grant execute on function update_restaurant to authenticated;
+
+
+-- ===========================================================================
+-- 0035_settings_partial_update.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- Asetukset: osittainen päivitys ja leimausikkuna säädettäväksi
+-- ---------------------------------------------------------------------------
+--
+-- 1. OSITTAINEN PÄIVITYS
+--
+-- Asetussivu jakautuu osioihin, ja jokainen osio on oma lomakkeensa.
+-- Vanha funktio kirjoitti aina kaikki kentät, joten "Ravintolan nimi"
+-- -lomake olisi tyhjentänyt aikavyöhykkeen ja nollannut
+-- vuoroasetukset — kenttä jota lomake ei näytä ei saa muuttua sen
+-- lähettämisestä.
+--
+-- Null tarkoittaa nyt "älä koske". Jokainen parametri on
+-- oletusarvoltaan null, joten kutsuja lähettää vain sen mitä muuttaa.
+--
+-- 2. LEIMAUSIKKUNA
+--
+-- clock_in_early_minutes on ollut kannassa migraatiosta 0029 asti ja
+-- record_clock_event lukee sitä, mutta sitä ei ole voinut muuttaa
+-- mistään. Oletus 30 minuuttia on ollut siis lukittu arvo eikä
+-- asetus. Nyt se on asetus.
+--
+-- Uusi parametri vaatii pudotuksen: lisätty parametri ei korvaa vanhaa
+-- funktiota vaan luo ylikuormituksen, ja nimetty kutsu jäisi
+-- monitulkintaiseksi.
+
+drop function if exists update_restaurant(uuid, text, text, boolean);
+
+create or replace function update_restaurant(
+  p_restaurant uuid,
+  p_name text default null,
+  p_timezone text default null,
+  p_open_shift_claiming boolean default null,
+  p_clock_in_early_minutes smallint default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi muuttaa asetuksia';
+  end if;
+
+  -- Nimi saa puuttua (toinen lomake), muttei olla tyhjä.
+  if p_name is not null and trim(p_name) = '' then
+    raise exception 'Nimi ei voi olla tyhjä';
+  end if;
+
+  if p_timezone is not null
+     and not exists (select 1 from pg_timezone_names where name = p_timezone) then
+    raise exception 'Tuntematon aikavyöhyke';
+  end if;
+
+  -- Sama raja kuin sarakkeen check-ehdossa. Tarkistus on tässäkin,
+  -- jotta virhe on luettava lause eikä rajoitteen nimi.
+  if p_clock_in_early_minutes is not null
+     and (p_clock_in_early_minutes < 0 or p_clock_in_early_minutes > 240) then
+    raise exception 'Leimausikkuna on 0–240 minuuttia';
+  end if;
+
+  update restaurants
+  set name = coalesce(trim(p_name), name),
+      timezone = coalesce(p_timezone, timezone),
+      open_shift_claiming = coalesce(p_open_shift_claiming, open_shift_claiming),
+      clock_in_early_minutes =
+        coalesce(p_clock_in_early_minutes, clock_in_early_minutes),
+      updated_at = now()
+  where id = p_restaurant;
+end;
+$$;
+
+revoke all on function update_restaurant from public;
+grant execute on function update_restaurant to authenticated;
+
+
+-- ===========================================================================
+-- 0036_sales_report.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0036 — Kassan päiväraportti
+-- ---------------------------------------------------------------------------
+--
+-- Päivän myynti on kirjattu käsin yhtenä lukuna. Luku on oikea mutta
+-- sen ympäriltä on jäänyt pois kaikki mitä kassan päiväraportissa jo
+-- lukee: verollinen summa, ALV ja kuittien määrä.
+--
+-- Kuitti kuvataan ja poimitaan. Päiväraportti on sama paperi samasta
+-- tulostimesta, ja se on kirjattu käsin. Nyt sekin kuvataan.
+--
+-- MITÄ TALLENNETAAN
+--
+-- Vain se mitä raportissa lukee ja mitä joku katsoo:
+--
+--   veroton   — oli jo. Työvoiman osuus lasketaan tästä.
+--   verollinen — mitä asiakas maksoi.
+--   alv        — erotus, ja samalla tarkiste: netto + alv = brutto.
+--   tapahtumat — kuittien määrä. Antaa keskiostoksen.
+--
+-- Maksutapajakauma (kortti/käteinen) jää pois. Se on raportissa, mutta
+-- Budet ei tee siitä mitään: pankkiyhteyttä ei ole eikä kassan
+-- täsmäytystä. Kenttä jota kukaan ei lue on kenttä joka vanhenee.
+--
+-- KAIKKI UUDET SARAKKEET OVAT VAPAAEHTOISIA
+--
+-- Käsin kirjattu päivä on yhä kelvollinen: yksi luku riittää. Uudet
+-- kentät täyttyvät kun raportti kuvataan, eivätkä ne saa muuttua
+-- pakoksi vanhoille riveille.
+
+alter table daily_sales
+  add column if not exists gross_sales_cents integer;
+
+alter table daily_sales
+  add column if not exists vat_cents integer;
+
+alter table daily_sales
+  add column if not exists transactions integer;
+
+/*
+ * Mistä rivi on peräisin.
+ *
+ * "Kirjattu käsin" ja "luettu raportista" ovat eri luotettavuutta, ja
+ * ero on nähtävä myöhemmin — muuten ei voi tietää kannattaako lukua
+ * epäillä kun se ei täsmää kirjanpitoon.
+ */
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'sales_source') then
+    create type sales_source as enum ('manual', 'report');
+  end if;
+end
+$$;
+
+alter table daily_sales
+  add column if not exists source sales_source not null default 'manual';
+
+-- ---------------------------------------------------------------------------
+-- Rajoitteet
+-- ---------------------------------------------------------------------------
+
+alter table daily_sales drop constraint if exists daily_sales_gross_positive;
+alter table daily_sales add constraint daily_sales_gross_positive
+  check (gross_sales_cents is null or gross_sales_cents >= 0);
+
+alter table daily_sales drop constraint if exists daily_sales_vat_positive;
+alter table daily_sales add constraint daily_sales_vat_positive
+  check (vat_cents is null or vat_cents >= 0);
+
+alter table daily_sales drop constraint if exists daily_sales_transactions_positive;
+alter table daily_sales add constraint daily_sales_transactions_positive
+  check (transactions is null or transactions >= 0);
+
+/*
+ * Verollinen ei voi olla verotonta pienempi.
+ *
+ * Tämä on ainoa suhde joka on aina tosi ALV-kannasta riippumatta.
+ * Tarkempi ehto (netto + alv = brutto) jätetään sovellukseen, koska
+ * kassan pyöristykset tekevät siitä toisinaan sentin sivussa — ja
+ * sentin takia hylätty päiväraportti olisi huonompi kuin merkintä
+ * siitä että luvut eivät täsmää.
+ */
+alter table daily_sales drop constraint if exists daily_sales_gross_gte_net;
+alter table daily_sales add constraint daily_sales_gross_gte_net
+  check (gross_sales_cents is null or gross_sales_cents >= net_sales_cents);
+
+
+-- ===========================================================================
+-- 0037_sales_groups_vat.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0037 — Myyntiryhmät, verokannat ja kassaryhmien kohdistus
+-- ---------------------------------------------------------------------------
+--
+-- Päivän myynti on ollut yksi luku ja yksi ALV-summa. Kassan
+-- päiväraportti ei ole: siinä myynti on jaettu ryhmiin ja jokaisella
+-- ryhmällä on oma verokantansa. Ilman samaa jakoa Budet ei voi
+-- täsmäytyä raporttiin — se voi vain todeta että loppusumma on sama
+-- tai eri, eikä kertoa mistä ero syntyy.
+--
+-- YKSI YLEINEN "RAVINTOLAN ALV %" EI RIITÄ
+--
+-- Ravintolassa on samana päivänä kaksi tai kolme kantaa: ruoka,
+-- alkoholi ja mahdollinen nollakanta. Yksi kenttä pakottaisi
+-- keskiarvoon, joka ei ole mikään verokanta.
+--
+-- HISTORIALLINEN KANTA SÄILYY TAPAHTUMASSA
+--
+-- Verokanta muuttuu lainsäädännöllä. Jos rivi viittaisi vain
+-- ryhmään, ryhmän kannan muuttaminen kirjoittaisi menneisyyden
+-- uudelleen: viime vuoden raportti näyttäisi eri luvut kuin silloin
+-- kun se lähetettiin kirjanpitoon.
+--
+-- Siksi jokainen myyntirivi tallentaa käytetyn kannan lukuna. Ryhmän
+-- asetus kertoo mitä kantaa UUSI rivi käyttää; vanha rivi kantaa
+-- omansa mukanaan eikä muutu koskaan.
+
+-- ---------------------------------------------------------------------------
+-- 1. Myyntiryhmät
+-- ---------------------------------------------------------------------------
+
+create table if not exists sales_groups (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  name text not null check (length(trim(name)) > 0),
+
+  /*
+   * Verokanta osuutena: 0.14000 = 14 %.
+   *
+   * numeric eikä float. Liukuluku ei esitä 0,255:tä tarkasti, ja
+   * verolaskennan on oltava toistettavissa bitilleen samana.
+   *
+   * Viisi desimaalia riittää: 25,5 % on 0.25500 ja hienojakoisempaa
+   * kantaa ei ole olemassa.
+   */
+  vat_rate numeric(6, 5) not null check (vat_rate >= 0 and vat_rate <= 1),
+
+  /* Pois käytöstä otettu ryhmä ei katoa: vanhat rivit viittaavat siihen. */
+  active boolean not null default true,
+
+  /*
+   * Oletusryhmä.
+   *
+   * Kassaraportin ryhmä jota ei ole kohdistettu päätyy tänne, jottei
+   * myynti katoa kohdistamattomuuden takia. Osittainen kirjaus on
+   * pahempi kuin kohdistamaton: loppusumma ei enää täsmää.
+   */
+  is_default boolean not null default false,
+
+  sort_order integer not null default 0,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  unique (restaurant_id, name)
+);
+
+/*
+ * Yksi oletus per ravintola.
+ *
+ * Osittainen indeksi eikä check-ehto: ehto näkee vain oman rivinsä,
+ * eikä voi tietää onko toinen oletus jo olemassa.
+ */
+create unique index if not exists sales_groups_one_default
+  on sales_groups (restaurant_id)
+  where is_default;
+
+create index if not exists sales_groups_lookup
+  on sales_groups (restaurant_id, sort_order);
+
+-- ---------------------------------------------------------------------------
+-- 2. Kassajärjestelmän ryhmien kohdistus
+-- ---------------------------------------------------------------------------
+--
+-- Kassa tuntee omat nimensä: "Ruoka", "Viini", "Olut", "Take away".
+-- Budet tuntee myyntiryhmät. Kohdistus on ravintolakohtainen, koska
+-- kaksi ravintolaa nimeää samat asiat eri tavoin.
+
+create table if not exists pos_sales_groups (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  /* Nimi sellaisena kuin se lukee kassan raportissa. */
+  pos_name text not null check (length(trim(pos_name)) > 0),
+
+  sales_group_id uuid not null references sales_groups (id) on delete cascade,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  /*
+   * Sama kassaryhmä voi osoittaa vain yhteen myyntiryhmään.
+   *
+   * Kaksi kohdistusta samalle nimelle tarkoittaisi että myynnin
+   * verokanta riippuu siitä kumman kysely löytää ensin.
+   */
+  unique (restaurant_id, pos_name)
+);
+
+-- ---------------------------------------------------------------------------
+-- 3. Päivän myynti ryhmittäin
+-- ---------------------------------------------------------------------------
+--
+-- daily_sales pysyy päivän yhteenvetona. Rivit kertovat mistä se
+-- koostuu, ja vain rivit mahdollistavat täsmäytyksen kannoittain.
+
+create table if not exists daily_sales_lines (
+  id uuid primary key default gen_random_uuid(),
+
+  daily_sales_id uuid not null references daily_sales (id) on delete cascade,
+  sales_group_id uuid not null references sales_groups (id) on delete restrict,
+
+  /*
+   * Kannan luku tapahtumahetkellä.
+   *
+   * Tämä on rivin totuus. Ryhmän nykyinen kanta on vain oletus uusille
+   * riveille — vanhan rivin verokanta ei muutu ryhmää muokkaamalla.
+   */
+  vat_rate numeric(6, 5) not null check (vat_rate >= 0 and vat_rate <= 1),
+
+  /*
+   * Brutto on syöte, muut johdettuja.
+   *
+   * Kassaraportti antaa ryhmän myynnin verollisena. Vero ja veroton
+   * lasketaan siitä keskitetyllä pyöristyssäännöllä ja tallennetaan,
+   * jottei raportti laske niitä joka kerta uudelleen mahdollisesti
+   * eri tavalla.
+   */
+  gross_cents integer not null check (gross_cents >= 0),
+  vat_cents integer not null check (vat_cents >= 0),
+  net_cents integer not null check (net_cents >= 0),
+
+  /* Kassan oma ryhmänimi sellaisena kuin se raportissa luki. */
+  pos_name text,
+
+  created_at timestamptz not null default now(),
+
+  /* Yksi rivi per ryhmä per päivä. Kaksi tarkoittaisi kahta totuutta. */
+  unique (daily_sales_id, sales_group_id),
+
+  constraint daily_sales_lines_sum check (gross_cents = vat_cents + net_cents)
+);
+
+create index if not exists daily_sales_lines_lookup
+  on daily_sales_lines (daily_sales_id);
+
+-- ---------------------------------------------------------------------------
+-- 4. Kassan ilmoittamat luvut täsmäytystä varten
+-- ---------------------------------------------------------------------------
+--
+-- Täsmäytys vertaa kahta lukua: mitä kassa sanoo ja mitä Budetin rivit
+-- laskevat. Kassan luku on säilytettävä sellaisenaan — jos se
+-- korvattaisiin laskennalla, vertailu vertaisi lukua itseensä ja
+-- täsmäisi aina.
+
+alter table daily_sales
+  add column if not exists pos_gross_cents integer;
+
+alter table daily_sales
+  add column if not exists pos_vat_cents integer;
+
+alter table daily_sales drop constraint if exists daily_sales_pos_positive;
+alter table daily_sales add constraint daily_sales_pos_positive check (
+  (pos_gross_cents is null or pos_gross_cents >= 0)
+  and (pos_vat_cents is null or pos_vat_cents >= 0)
+);
+
+-- ---------------------------------------------------------------------------
+-- 5. Näkyvyys
+-- ---------------------------------------------------------------------------
+--
+-- Verokannat ovat liiketoiminta-asetuksia: sama rajaus kuin muullakin
+-- taloustiedolla. Lukeminen talousoikeudella, muuttaminen omistajalla.
+-- Myyntirivit seuraavat daily_salesin sääntöä.
+
+alter table sales_groups enable row level security;
+alter table pos_sales_groups enable row level security;
+alter table daily_sales_lines enable row level security;
+
+drop policy if exists sales_groups_read on sales_groups;
+create policy sales_groups_read on sales_groups
+  for select to authenticated
+  using (can_read_finance(restaurant_id));
+
+drop policy if exists sales_groups_write on sales_groups;
+create policy sales_groups_write on sales_groups
+  for all to authenticated
+  using (is_owner(restaurant_id))
+  with check (is_owner(restaurant_id));
+
+drop policy if exists pos_sales_groups_read on pos_sales_groups;
+create policy pos_sales_groups_read on pos_sales_groups
+  for select to authenticated
+  using (can_read_finance(restaurant_id));
+
+drop policy if exists pos_sales_groups_write on pos_sales_groups;
+create policy pos_sales_groups_write on pos_sales_groups
+  for all to authenticated
+  using (is_owner(restaurant_id))
+  with check (is_owner(restaurant_id));
+
+/*
+ * Rivin oikeus tulee päivästä johon se kuuluu.
+ *
+ * Rivillä ei ole omaa restaurant_id:tä: kaksi lähdettä samalle
+ * totuudelle ajautuisi erilleen, ja väärin päivitetty rivi näkyisi
+ * väärälle ravintolalle.
+ */
+drop policy if exists daily_sales_lines_read on daily_sales_lines;
+create policy daily_sales_lines_read on daily_sales_lines
+  for select to authenticated
+  using (
+    exists (
+      select 1 from daily_sales d
+      where d.id = daily_sales_id and can_read_finance(d.restaurant_id)
+    )
+  );
+
+drop policy if exists daily_sales_lines_write on daily_sales_lines;
+create policy daily_sales_lines_write on daily_sales_lines
+  for all to authenticated
+  using (
+    exists (
+      select 1 from daily_sales d
+      where d.id = daily_sales_id and is_manager(d.restaurant_id)
+    )
+  )
+  with check (
+    exists (
+      select 1 from daily_sales d
+      where d.id = daily_sales_id and is_manager(d.restaurant_id)
+    )
+  );
+
+drop trigger if exists sales_groups_touch on sales_groups;
+create trigger sales_groups_touch before update on sales_groups
+  for each row execute function touch_updated_at();
+
+drop trigger if exists pos_sales_groups_touch on pos_sales_groups;
+create trigger pos_sales_groups_touch before update on pos_sales_groups
+  for each row execute function touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- 6. Kassan ilmoittama ALV rivillä
+-- ---------------------------------------------------------------------------
+--
+-- Täsmäytys vertaa kannoittain: mitä kassa sanoi tästä kannasta ja
+-- mitä Budet laskee samasta bruttosummasta. Ilman kassan omaa lukua
+-- vertailu vertaisi laskentaa itseensä ja täsmäisi aina.
+--
+-- Vapaaehtoinen, koska kaikki raportit eivät erittele ALV:tä
+-- kannoittain — silloin täsmäytys tehdään vain loppusummasta.
+
+alter table daily_sales_lines add column if not exists pos_vat_cents integer;
+
+alter table daily_sales_lines drop constraint if exists daily_sales_lines_pos_vat_positive;
+alter table daily_sales_lines add constraint daily_sales_lines_pos_vat_positive
+  check (pos_vat_cents is null or pos_vat_cents >= 0);
+
+
+-- ===========================================================================
+-- 0038_default_sales_groups.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0038 — Myyntiryhmien oletuspohja
+-- ---------------------------------------------------------------------------
+--
+-- Suomessa ravintolan verokannat ovat samat joka ravintolalle:
+-- ravintola- ja ateriapalvelu alennetulla kannalla, alkoholi ja muu
+-- myynti yleisellä. Jokaisen ravintolan ei tarvitse keksiä niitä
+-- itse — tyhjä verotusnäkymä on este jonka takana koko täsmäytys on.
+--
+-- POHJA EI OLE KOVAKOODATTU KANTA.
+--
+-- Ero on olennainen. Kovakoodattu kanta on luku jota ei voi muuttaa;
+-- pohja on rivi joka luodaan kerran ja jota ravintola muokkaa vapaasti.
+-- Verokanta muuttuu lainsäädännöllä, ja silloin pohja muuttuu UUSILLE
+-- ravintoloille — vanhat pitävät omansa, ja vanhat myyntirivit
+-- pitävät sen kannan joka niihin kirjattiin.
+--
+-- POHJA EI KIRJOITA PÄÄLLE.
+--
+-- Funktio ei tee mitään jos ryhmiä on jo yksikin. Ravintola joka on
+-- määrittänyt omat ryhmänsä ei saa löytää niiden joukosta kolmea
+-- uutta, eikä muokattu kanta saa palautua alkuperäiseksi.
+
+create or replace function seed_default_sales_groups(p_restaurant uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_added integer := 0;
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi lisätä myyntiryhmiä';
+  end if;
+
+  -- Yksikin olemassa oleva ryhmä tarkoittaa että ravintola on jo
+  -- päättänyt jäsennyksensä. Silloin pohja olisi häiriö eikä apu.
+  if exists (select 1 from sales_groups where restaurant_id = p_restaurant) then
+    return 0;
+  end if;
+
+  insert into sales_groups (restaurant_id, name, vat_rate, is_default, sort_order)
+  values
+    (p_restaurant, 'Ravintolamyynti', 0.14000, true, 0),
+    (p_restaurant, 'Alkoholimyynti', 0.25500, false, 1),
+    (p_restaurant, 'Muut myynnit', 0.25500, false, 2);
+
+  get diagnostics v_added = row_count;
+  return v_added;
+end;
+$$;
+
+revoke all on function seed_default_sales_groups from public;
+grant execute on function seed_default_sales_groups to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Uusi ravintola saa pohjan heti
+-- ---------------------------------------------------------------------------
+--
+-- Rivit kirjoitetaan suoraan eikä seed-funktion kautta: funktio vaatii
+-- omistajuuden, ja jäsenyys on juuri kirjoitettu samassa
+-- transaktiossa — is_owner voisi lukea vanhaa tilaa riippuen siitä
+-- milloin se näkee rivin.
+
+create or replace function create_restaurant(
+  p_name text,
+  p_timezone text default 'Europe/Helsinki'
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'Kirjautuminen vaaditaan';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Ravintolan nimi puuttuu';
+  end if;
+
+  insert into profiles (id) values (v_user) on conflict (id) do nothing;
+
+  insert into restaurants (name, timezone)
+  values (trim(p_name), coalesce(nullif(trim(p_timezone), ''), 'Europe/Helsinki'))
+  returning id into v_id;
+
+  insert into memberships (restaurant_id, user_id, role, position, hourly_rate_cents)
+  values (v_id, v_user, 'owner', 'manager', null);
+
+  /*
+   * Myyntiryhmien pohja.
+   *
+   * Uusi ravintola pystyy täsmäyttämään päiväraportin heti
+   * ensimmäisestä päivästä. Ilman pohjaa verotusnäkymä olisi tyhjä, ja
+   * tyhjä näkymä on este jota kukaan ei ohita illan päätteeksi.
+   *
+   * Kannat ovat lähtökohta jonka ravintola tarkistaa — asetusnäkymä
+   * sanoo sen ääneen.
+   */
+  insert into sales_groups (restaurant_id, name, vat_rate, is_default, sort_order)
+  values
+    (v_id, 'Ravintolamyynti', 0.14000, true, 0),
+    (v_id, 'Alkoholimyynti', 0.25500, false, 1),
+    (v_id, 'Muut myynnit', 0.25500, false, 2);
+
+  return v_id;
+end;
+$$;
+
+revoke all on function create_restaurant from public;
+grant execute on function create_restaurant to authenticated;
+
+
+-- ===========================================================================
+-- 0039_food_vat_rate.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0039 — Ravintolamyynnin kanta 13,5 %
+-- ---------------------------------------------------------------------------
+--
+-- Ravintola- ja ateriapalvelun arvonlisävero on laskenut 14 %:sta
+-- 13,5 %:iin. Uuden ravintolan pohja käyttää nyt voimassa olevaa
+-- kantaa.
+--
+-- VANHAT RIVIT EIVÄT MUUTU.
+--
+-- Tämä koskee vain pohjaa jonka uusi ravintola saa. Olemassa olevien
+-- ravintoloiden ryhmiä ei kosketa: kanta on ravintolan oma asetus, ja
+-- sen muuttaminen puolesta olisi juuri se takautuva muutos jota
+-- migraatio 0037 varoi.
+--
+-- Kirjatut myyntirivit kantavat oman kantansa eivätkä muutu
+-- kummassakaan tapauksessa — vanha päivä on kirjattu vanhalla
+-- kannalla, ja niin sen kuuluu pysyä.
+
+create or replace function seed_default_sales_groups(p_restaurant uuid)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_added integer := 0;
+begin
+  if not is_owner(p_restaurant) then
+    raise exception 'Vain omistaja voi lisätä myyntiryhmiä';
+  end if;
+
+  if exists (select 1 from sales_groups where restaurant_id = p_restaurant) then
+    return 0;
+  end if;
+
+  insert into sales_groups (restaurant_id, name, vat_rate, is_default, sort_order)
+  values
+    (p_restaurant, 'Ravintolamyynti', 0.13500, true, 0),
+    (p_restaurant, 'Alkoholimyynti', 0.25500, false, 1),
+    (p_restaurant, 'Muut myynnit', 0.25500, false, 2);
+
+  get diagnostics v_added = row_count;
+  return v_added;
+end;
+$$;
+
+revoke all on function seed_default_sales_groups from public;
+grant execute on function seed_default_sales_groups to authenticated;
+
+create or replace function create_restaurant(
+  p_name text,
+  p_timezone text default 'Europe/Helsinki'
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'Kirjautuminen vaaditaan';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Ravintolan nimi puuttuu';
+  end if;
+
+  insert into profiles (id) values (v_user) on conflict (id) do nothing;
+
+  insert into restaurants (name, timezone)
+  values (trim(p_name), coalesce(nullif(trim(p_timezone), ''), 'Europe/Helsinki'))
+  returning id into v_id;
+
+  insert into memberships (restaurant_id, user_id, role, position, hourly_rate_cents)
+  values (v_id, v_user, 'owner', 'manager', null);
+
+  insert into sales_groups (restaurant_id, name, vat_rate, is_default, sort_order)
+  values
+    (v_id, 'Ravintolamyynti', 0.13500, true, 0),
+    (v_id, 'Alkoholimyynti', 0.25500, false, 1),
+    (v_id, 'Muut myynnit', 0.25500, false, 2);
+
+  return v_id;
+end;
+$$;
+
+revoke all on function create_restaurant from public;
+grant execute on function create_restaurant to authenticated;
+
+
+-- ===========================================================================
+-- 0040_receipt_pages.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0040 — Monisivuinen kuitti
+-- ---------------------------------------------------------------------------
+--
+-- Kuitilla on ollut yksi kuva. Tukkukuitti on kolme sivua, ja
+-- ainoa tapa saada se sisään oli skannata sivut yhdeksi PDF:ksi —
+-- ylimääräinen työvaihe juuri siinä kohtaa jossa ollaan kiireisiä.
+--
+-- Nyt sivuja voi olla niin monta kuin kuitissa on.
+--
+-- SIVUTAULU ON TOTUUS, image_path ON PEILI.
+--
+-- Vanha sarake jää paikalleen ja osoittaa ensimmäiseen sivuun. Sitä ei
+-- pudoteta: pudotettu sarake on peruuttamaton, ja vanhat kyselyt
+-- lukevat sitä yhä. Peiliä kirjoittaa vain set_receipt_pages, joten
+-- kahta kirjoittajaa ei ole eivätkä ne voi ajautua erilleen.
+
+create table if not exists receipt_pages (
+  id uuid primary key default gen_random_uuid(),
+  receipt_id uuid not null references receipts (id) on delete cascade,
+
+  /* Sivujärjestys sellaisena kuin käyttäjä kuvasi ne. 1, 2, 3… */
+  page_number integer not null check (page_number >= 1),
+
+  storage_path text not null,
+
+  /*
+   * Tiedoston tiiviste.
+   *
+   * Sama sivu kahdesti ei vie tilaa kahdesti, ja tiiviste on myös
+   * ainoa tapa huomata jos sama sivu on kuvattu kahteen kertaan.
+   */
+  file_hash text,
+
+  created_at timestamptz not null default now(),
+
+  /* Kaksi sivua samalla numerolla tarkoittaisi kahta järjestystä. */
+  unique (receipt_id, page_number)
+);
+
+create index if not exists receipt_pages_lookup
+  on receipt_pages (receipt_id, page_number);
+
+-- ---------------------------------------------------------------------------
+-- Vanhat kuitit sivutauluun
+-- ---------------------------------------------------------------------------
+--
+-- Jokainen olemassa oleva kuva on kuitin ensimmäinen sivu. Ilman tätä
+-- vanhat kuitit näyttäisivät kuvattomilta heti kun näkymä alkaa lukea
+-- sivutaulua.
+
+insert into receipt_pages (receipt_id, page_number, storage_path, file_hash)
+select r.id, 1, r.image_path, r.file_hash
+from receipts r
+where r.image_path is not null
+  and not exists (select 1 from receipt_pages p where p.receipt_id = r.id)
+on conflict (receipt_id, page_number) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Näkyvyys
+-- ---------------------------------------------------------------------------
+--
+-- Sivun oikeus tulee kuitista johon se kuuluu, ja on täsmälleen sama
+-- kuin kuitin oma sääntö: luku talousoikeudella tai omalla kuitilla,
+-- kirjoitus vuoropäälliköllä.
+--
+-- Sivulla ei ole omaa restaurant_id:tä: kaksi lähdettä samalle
+-- totuudelle ajautuisi erilleen, ja väärin päivitetty sivu näkyisi
+-- väärälle ravintolalle.
+
+alter table receipt_pages enable row level security;
+
+drop policy if exists receipt_pages_read on receipt_pages;
+create policy receipt_pages_read on receipt_pages
+  for select to authenticated
+  using (
+    exists (
+      select 1 from receipts r
+      where r.id = receipt_id
+        and (
+          can_read_finance(r.restaurant_id)
+          or (r.restaurant_id in (select my_restaurant_ids()) and r.added_by = auth.uid())
+        )
+    )
+  );
+
+drop policy if exists receipt_pages_write on receipt_pages;
+create policy receipt_pages_write on receipt_pages
+  for all to authenticated
+  using (
+    exists (
+      select 1 from receipts r
+      where r.id = receipt_id and is_manager(r.restaurant_id)
+    )
+  )
+  with check (
+    exists (
+      select 1 from receipts r
+      where r.id = receipt_id and is_manager(r.restaurant_id)
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- Sivujen kirjoitus
+-- ---------------------------------------------------------------------------
+--
+-- Yksi funktio joka korvaa kuitin sivut kokonaan. Osittainen päivitys
+-- jättäisi poistetun sivun roikkumaan, ja kuitti näyttäisi sivun jota
+-- ei enää ole.
+--
+-- Suljettu kuukausi estää muutoksen samalla säännöllä kuin kuitinkin:
+-- kirjanpitoon lähetetyn kuitin sivut eivät saa vaihtua.
+
+create or replace function set_receipt_pages(
+  p_receipt uuid,
+  p_paths text[],
+  p_hashes text[] default null
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_date date;
+  v_count integer;
+begin
+  select restaurant_id, receipt_date into v_restaurant, v_date
+  from receipts where id = p_receipt;
+
+  if v_restaurant is null then
+    raise exception 'Kuittia ei löytynyt';
+  end if;
+
+  /*
+   * Sivujen liittäminen on osa kuitin lisäämistä.
+   *
+   * Kuitin saa lisätä myös työntekijä, joten sivujen kirjoitusta ei voi
+   * rajata vuoropäälliköihin — muuten oma kuitti jäisi sivuttomaksi.
+   * Funktio on security definer ja rajaa itse: omaan kuittiin saa
+   * koskea, muiden kuitteihin vain vuoropäällikkö.
+   */
+  if not (
+    is_manager(v_restaurant)
+    or exists (select 1 from receipts where id = p_receipt and added_by = auth.uid())
+  ) then
+    raise exception 'Ei oikeutta tähän kuittiin';
+  end if;
+
+  if exists (
+    select 1 from closed_months
+    where restaurant_id = v_restaurant
+      and month = date_trunc('month', v_date)::date
+  ) then
+    raise exception 'Kuukausi on suljettu kirjanpitoon';
+  end if;
+
+  delete from receipt_pages where receipt_id = p_receipt;
+
+  if p_paths is null or array_length(p_paths, 1) is null then
+    update receipts set image_path = null where id = p_receipt;
+    return 0;
+  end if;
+
+  insert into receipt_pages (receipt_id, page_number, storage_path, file_hash)
+  select
+    p_receipt,
+    ordinality::integer,
+    path,
+    case
+      when p_hashes is null then null
+      else p_hashes[ordinality]
+    end
+  from unnest(p_paths) with ordinality as t(path, ordinality)
+  where coalesce(trim(path), '') <> '';
+
+  get diagnostics v_count = row_count;
+
+  -- Peili ensimmäiseen sivuun. Ainoa kirjoittaja on tämä funktio.
+  update receipts set image_path = p_paths[1] where id = p_receipt;
+
+  return v_count;
+end;
+$$;
+
+revoke all on function set_receipt_pages from public;
+grant execute on function set_receipt_pages to authenticated;
 

@@ -42,6 +42,7 @@ const RECEIPT_COLUMNS = `
   id, restaurant_id, supplier_id, supplier_name, receipt_date, total_cents,
   vat_cents, category, payment_method, receipt_number, note, status,
   review_reasons, image_path, image_quality, added_by, created_at, category_id,
+  receipt_pages ( page_number, storage_path, file_hash ),
   receipt_items (
     id, line_number, description, quantity, unit, total_cents, category,
     vat_rate, vat_cents, product_group
@@ -63,6 +64,7 @@ interface ReceiptRow {
   status: string;
   review_reasons: string[] | null;
   image_path: string | null;
+  receipt_pages?: { page_number: number; storage_path: string; file_hash: string | null }[];
   category_id: string | null;
   image_quality: string | null;
   added_by: string;
@@ -121,8 +123,24 @@ function toReceipt(row: ReceiptRow): Receipt {
       .map(toItem),
     addedByUserId: row.added_by,
     addedAt: row.created_at,
-    hasImage: Boolean(row.image_path),
+    /*
+     * Kuvallisuus tulee sivuista.
+     *
+     * image_path on peili ensimmäiseen sivuun; jos ne joskus eroaisivat,
+     * sivut ovat oikeassa. Vanhat kuitit siirrettiin sivutauluun
+     * migraatiossa 0040, joten tyhjä lista tarkoittaa oikeasti
+     * kuvatonta kuittia.
+     */
+    hasImage: (row.receipt_pages ?? []).length > 0 || Boolean(row.image_path),
     imagePath: row.image_path,
+    pages: (row.receipt_pages ?? [])
+      .slice()
+      .sort((a, b) => a.page_number - b.page_number)
+      .map((page) => ({
+        pageNumber: page.page_number,
+        storagePath: page.storage_path,
+        fileHash: page.file_hash,
+      })),
     categoryId: row.category_id,
     imageQuality: (row.image_quality as "good" | "poor" | null) ?? null,
   };
@@ -163,25 +181,45 @@ export async function fetchReceipt(id: string): Promise<Receipt | null> {
 }
 
 /**
- * Lyhytikäinen osoite kuitin kuvalle.
+ * Lyhytikäiset osoitteet kuitin sivuille.
  *
  * Bucket on yksityinen, joten suora osoite ei toimi. Allekirjoitus
  * vanhenee tunnissa: linkki joka päätyy vahingossa eteenpäin ei jää
  * auki loputtomiin. RLS ratkaisee pääsyn, joten toisen ravintolan
  * kuvalle ei saa allekirjoitusta.
+ *
+ * SIVUJÄRJESTYS SÄILYY.
+ *
+ * Allekirjoitukset haetaan yhdellä kutsulla ja järjestetään takaisin
+ * annettuun järjestykseen. Rajapinta ei lupaa palauttavansa rivejä
+ * samassa järjestyksessä, ja sivujärjestys on osa kuitin sisältöä —
+ * kolmisivuisen laskun sivu 3 ei saa näkyä ensimmäisenä.
+ *
+ * Yksi epäonnistunut sivu ei kaada muita: se jää pois listalta, ja
+ * loput näkyvät.
  */
-export async function fetchReceiptImageUrl(
-  imagePath: string | null,
-): Promise<string | null> {
-  if (!imagePath) return null;
+export async function fetchReceiptImageUrls(
+  paths: string[],
+): Promise<string[]> {
+  const wanted = paths.filter((path) => path.trim() !== "");
+  if (wanted.length === 0) return [];
 
   const supabase = await createClient();
   const { data, error } = await supabase.storage
     .from("receipts")
-    .createSignedUrl(imagePath, 3600);
+    .createSignedUrls(wanted, 3600);
 
-  if (error || !data) return null;
-  return data.signedUrl;
+  if (error || !data) return [];
+
+  const byPath = new Map(
+    data
+      .filter((row) => row.signedUrl)
+      .map((row) => [row.path ?? "", row.signedUrl]),
+  );
+
+  return wanted
+    .map((path) => byPath.get(path))
+    .filter((url): url is string => Boolean(url));
 }
 
 // ---------------------------------------------------------------------------
