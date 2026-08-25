@@ -21,6 +21,7 @@ import {
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
+import { CountUp } from "@/components/restoflow/count-up";
 
 export const metadata = { title: "Toimittajat" };
 
@@ -52,30 +53,78 @@ export default async function SuppliersPage() {
 
       <ScopeNotice />
 
-      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3 md:gap-4">
+      {/*
+        Samat kortit kuin yleiskuvassa, kuluissa ja palkoissa.
+
+        Kolme korttia neljän sijaan, joten sarakkeita on kolme — muuten
+        kokoonpano on sama: laatan väri paikkansa mukaan, luku nousee
+        paikalleen ja jalka kertoo mitä luku tarkoittaa.
+
+        Katkaisukohdat ovat samat kuin muilla sivuilla: yksi sarake
+        puhelimessa, kaksi siitä ylöspäin ja kaikki kolme vasta
+        leveällä ruudulla. Kolmijako heti kahden jälkeen jättäisi
+        toimittajan nimelle reilut kaksisataa pikseliä, ja nimi on
+        tässä se mitä luetaan.
+      */}
+      <section
+        aria-label="Avainluvut"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
+      >
         <MetricCard
           label="Toimittajia"
-          value={String(totals.length)}
+          value={<CountUp to={totals.length} format="integer" />}
           icon={<RfIcon name="suppliers" size={17} />}
           tileTone="brand"
+          tone="muted"
+          conclusion={
+            totals.length === 0
+              ? "Toimittajat syntyvät kuiteista"
+              : "Joilta on kirjattu kuitteja"
+          }
         />
+
         <MetricCard
           label="Kirjatut kulut"
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="green"
-          value={formatMoney(grandTotal)}
-          hint={receiptCountLabel(inMonth.length)}
+          value={<CountUp to={grandTotal} format="money" />}
+          tone="muted"
+          conclusion={receiptCountLabel(inMonth.length)}
+          href="/admin/kulut"
+          linkLabel="Kulut"
         />
+
         <MetricCard
           label="Suurin toimittaja"
           icon={<RfIcon name="trend" size={17} />}
           tileTone="violet"
-          value={biggest?.name ?? "—"}
-          hint={
-            biggest
-              ? `${formatMoney(biggest.totalCents)} · ${Math.round(biggest.share * 100)} % kaikista kuluista`
-              : undefined
+          /*
+           * Nimi katkaistaan yhdelle riville.
+           *
+           * Muiden korttien arvo on luku ja mahtuu aina. Pitkä
+           * toimittajanimi kietoutuisi kahdelle riville, ja
+           * auto-rows-fr venyttäisi koko rivin sen mukaan — yksi
+           * pitkänimien toimittaja tekisi kaikista korteista
+           * korkeampia. Koko nimi on rivin otsikkona ja alla olevassa
+           * listassa.
+           */
+          value={
+            biggest ? (
+              <span className="block truncate" title={biggest.name}>
+                {biggest.name}
+              </span>
+            ) : (
+              "—"
+            )
           }
+          tone="muted"
+          conclusion={
+            biggest
+              ? `${formatMoney(biggest.totalCents)} · ${Math.round(biggest.share * 100)} % kuluista`
+              : "Ei kuitteja tässä kuussa"
+          }
+          href={biggest ? `/admin/toimittajat/${biggest.supplierId}` : undefined}
+          linkLabel="Avaa"
         />
       </section>
 

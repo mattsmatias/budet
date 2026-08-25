@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/money";
 import { revokeInvitation } from "../actions";
 import { Avatar, Card, MetricCard, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
+import { CountUp } from "@/components/restoflow/count-up";
 import { InviteForm, MemberForm } from "./forms";
 
 export const metadata = { title: "Työntekijät" };
@@ -47,35 +48,48 @@ export default async function StaffPage() {
         </p>
       </div>
 
-      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-3">
+      {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
+      <section
+        aria-label="Avainluvut"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
+      >
         <MetricCard
           label="Työtunnit"
           icon={<RfIcon name="clock" size={17} />}
           tileTone="brand"
-          value={`${Math.round(totalHours)} h`}
-          hint="Kuluva kuukausi"
+          tone="muted"
+          value={<CountUp to={totalHours} format="hours" />}
+          conclusion="Kuluva kuukausi"
         />
+
         {showsRates ? (
           <MetricCard
             label="Henkilöstökulut"
             icon={<RfIcon name="payroll" size={17} />}
-          tileTone="green"
-            value={formatMoney(totalCost)}
-            hint={
+            tileTone="green"
+            value={<CountUp to={totalCost} format="money" />}
+            tone={missingRates > 0 ? "warn" : "muted"}
+            conclusion={
               missingRates > 0
                 ? `${missingRates} ilman tuntipalkkaa`
                 : "Tunnit × tuntipalkka"
             }
           />
         ) : null}
+
         <MetricCard
           label="Keskimäärin"
           icon={<RfIcon name="staff" size={17} />}
           tileTone="violet"
+          tone="muted"
           value={
-            users.length === 0 ? "0 h" : `${Math.round(totalHours / users.length)} h`
+            users.length === 0 ? (
+              "0 h"
+            ) : (
+              <CountUp to={totalHours / users.length} format="hours" />
+            )
           }
-          hint="Käyttäjää kohti"
+          conclusion="Käyttäjää kohti"
         />
       </section>
 

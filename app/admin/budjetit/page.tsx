@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
+import { CountUp } from "@/components/restoflow/count-up";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   budgetProgress,
@@ -64,39 +65,47 @@ export default async function BudgetsPage() {
         </p>
       </div>
 
+      {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
       {budgeted.length > 0 ? (
-        <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section
+          aria-label="Avainluvut"
+          className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+        >
           <MetricCard
             label="Budjetoitu"
             icon={<RfIcon name="budget" size={17} />}
             tileTone="brand"
-            value={formatMoney(summary.totalBudgetCents)}
-            hint="Kuukausibudjetit yhteensä"
+            tone="muted"
+            value={<CountUp to={summary.totalBudgetCents} format="money" />}
+            conclusion="Kuukausibudjetit yhteensä"
           />
           <MetricCard
             label="Käytetty"
             icon={<RfIcon name="expenses" size={17} />}
             tileTone="green"
-            value={formatMoney(summary.totalSpentCents)}
-            hint={
+            tone="muted"
+            value={<CountUp to={summary.totalSpentCents} format="money" />}
+            conclusion={
               summary.totalBudgetCents > 0
                 ? `${Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100)} % kokonaisbudjetista`
-                : undefined
+                : "Budjetteja ei ole asetettu"
             }
           />
           <MetricCard
             label="Ylitetty"
             icon={<RfIcon name="alert" size={17} />}
             tileTone="violet"
-            value={String(summary.exceededCount)}
-            hint={summary.exceededCount > 0 ? "Kategoriaa yli rajan" : "Ei ylityksiä"}
+            value={<CountUp to={summary.exceededCount} format="integer" />}
+            tone={summary.exceededCount > 0 ? "bad" : "muted"}
+            conclusion={summary.exceededCount > 0 ? "Kategoriaa yli rajan" : "Ei ylityksiä"}
           />
           <MetricCard
             label="Lähestyy rajaa"
             icon={<RfIcon name="trend" size={17} />}
             tileTone="blue"
-            value={String(summary.warningCount)}
-            hint={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
+            value={<CountUp to={summary.warningCount} format="integer" />}
+            tone={summary.warningCount > 0 ? "warn" : "muted"}
+            conclusion={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
           />
         </section>
       ) : null}

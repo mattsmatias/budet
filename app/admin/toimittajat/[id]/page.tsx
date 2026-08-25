@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
+import { CountUp } from "@/components/restoflow/count-up";
 import { notFound } from "next/navigation";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
@@ -70,32 +71,46 @@ export default async function SupplierDetailPage({
         </div>
       </div>
 
-      <section aria-label="Yhteenveto" className="grid gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
+      {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
+      <section
+        aria-label="Avainluvut"
+        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+      >
         <MetricCard
           label="Kuitteja"
-          value={String(inMonth.length)}
+          value={<CountUp to={inMonth.length} format="integer" />}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
-          hint={formatMonth(month)}
+          tone="muted"
+          conclusion={formatMonth(month)}
         />
         <MetricCard
           label="Yhteensä"
-          value={formatMoney(monthTotal)}
+          value={<CountUp to={monthTotal} format="money" />}
           icon={<RfIcon name="expenses" size={17} />}
           tileTone="green"
+          tone="muted"
+          conclusion="Kuittien summa tässä kuussa"
         />
         <MetricCard
           label="Keskimääräinen kuitti"
-          value={formatMoney(average)}
+          value={<CountUp to={average} format="money" />}
           icon={<RfIcon name="budget" size={17} />}
           tileTone="violet"
+          tone="muted"
+          conclusion="Yhteensä jaettuna kuittien määrällä"
         />
         <MetricCard
           label="Muutos"
           icon={<RfIcon name="trend" size={17} />}
           tileTone="blue"
+          /*
+           * Prosenttiluku ei nouse paikalleen: CountUp osaa euroja,
+           * kokonaislukuja ja tunteja, ei prosentteja.
+           */
           value={trend?.change === null || !trend ? "—" : formatChange(trend.change)}
-          hint={
+          tone="muted"
+          conclusion={
             trend && trend.change !== null
               ? `${formatMoney(trend.previousCents)} → ${formatMoney(trend.currentCents)}`
               : "Ei vertailukohtaa edelliseltä kuukaudelta"
