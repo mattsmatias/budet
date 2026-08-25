@@ -14,7 +14,6 @@ import { formatMoney } from "@/lib/money";
 import {
   Card,
   CardHeader,
-  ScopeNotice,
   EmptyState,
   Icon,
   ICONS,
@@ -50,8 +49,6 @@ export default async function SuppliersPage() {
           Kenelle rahamme menevät? · {formatMonth(month)}
         </p>
       </div>
-
-      <ScopeNotice />
 
       {/*
         Samat kortit kuin yleiskuvassa, kuluissa ja palkoissa.

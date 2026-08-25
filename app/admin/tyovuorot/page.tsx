@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { RfIcon } from "@/components/restoflow/icons";
 import {
@@ -66,7 +67,30 @@ export default async function AdminShiftsPage() {
             {openShifts.length > 0 ? ` · ${openShifts.length} avointa` : ""}
           </p>
         </div>
-        <NewShiftButton users={users} defaultDate={today} />
+        <div className="flex flex-wrap items-center gap-2">
+          {/*
+            Kuukauden lista on eri kysymys kuin tämä sivu.
+
+            Tämä sivu kertoo mitä seuraavaksi; lista kertoo kuka on
+            töissä milloin. Jälkimmäinen tulostetaan seinälle, joten
+            se on oma sivunsa eikä välilehti tämän sisällä.
+          */}
+          <Link
+            href="/admin/tyovuorot/lista"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text)",
+              border: "1px solid var(--rf-line-strong)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <RfIcon name="calendar" size={15} />
+            Kuukauden lista
+          </Link>
+
+          <NewShiftButton users={users} defaultDate={today} />
+        </div>
       </div>
 
       {upcomingAbsences.length > 0 ? (

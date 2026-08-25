@@ -23,6 +23,8 @@ const MONTHLY = [
   "/admin/kulut",
   "/admin/palkat",
   "/admin/raportit",
+  /* Vain vuorolista lukee kuukauden, ei koko työvuorosivu. */
+  "/admin/tyovuorot/lista",
 ];
 
 export function MonthScope({ value, months }: { value: string; months: string[] }) {

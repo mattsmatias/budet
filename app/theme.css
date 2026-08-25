@@ -872,3 +872,76 @@ details[open] .rf-summary-chevron {
     break-inside: avoid;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Työvuorolista
+ * -------------------------------------------------------------------------
+ *
+ * Oma taulukkotyyli eikä .rf-table: siinä on 16 pikselin vaakapehmuste,
+ * ja kolmellakymmenelläyhdellä sarakkeella se tarkoittaisi tuhatta
+ * pikseliä pelkkää tyhjää. Vuorolistassa ruutu on pieni ja tiheä —
+ * juuri siksi koko kuukausi mahtuu yhteen silmäykseen.
+ */
+.rf-roster {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.rf-roster th,
+.rf-roster td {
+  border: 1px solid var(--rf-line);
+  text-align: center;
+  vertical-align: middle;
+}
+
+/*
+ * Nimisarake pysyy paikallaan kun ruudukkoa vieritetään.
+ *
+ * Ilman tätä sivuttain vieritettäessä katoaa se tieto jonka takia
+ * riviä luetaan: kenen rivi se on.
+ */
+.rf-roster-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--rf-card);
+  text-align: left;
+  padding: 6px 10px;
+  min-width: 8.5rem;
+  max-width: 8.5rem;
+  font-size: 12.5px;
+}
+
+.rf-roster thead .rf-roster-name,
+.rf-roster tfoot .rf-roster-name {
+  background: var(--rf-inset);
+}
+
+.rf-roster-cell {
+  padding: 5px 2px;
+  min-width: 2.6rem;
+  line-height: 1.35;
+}
+
+.rf-roster thead .rf-roster-cell {
+  padding: 5px 2px;
+  background: var(--rf-inset);
+}
+
+.rf-roster-sum {
+  padding: 6px 10px;
+  min-width: 4.25rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rf-roster thead .rf-roster-sum,
+.rf-roster tfoot .rf-roster-sum {
+  background: var(--rf-inset);
+}
+
+.rf-roster tfoot td,
+.rf-roster tfoot th {
+  background: var(--rf-inset);
+  font-weight: 600;
+}

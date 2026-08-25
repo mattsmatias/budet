@@ -130,4 +130,80 @@ input[type="month"] {
   a[href]::after {
     content: none !important;
   }
+
+  /*
+   * Työvuorolista vaakasuuntaan.
+   *
+   * Kuukaudessa on 31 saraketta, ja pystysuuntaiselle A4:lle ne
+   * mahtuvat vain lukukelvottoman kapeina. Nimetty sivu koskee vain
+   * tätä listaa — raportit ja kuitit pysyvät pystyssä.
+   */
+  @page roster {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  .rf-roster-page {
+    page: roster;
+  }
+
+  /*
+   * Kiinteä sarakejako: lista mahtuu paperille aina.
+   *
+   * Automaattinen leveys kasvaa sisällön mukaan, ja täysi kuukausi
+   * minuutilleen merkittyjä vuoroja ("17.50–22") venyttää taulukon
+   * paperin yli. Silloin selain joko kutistaa koko sivun
+   * lukukelvottomaksi tai katkaisee listan kahdelle arkille kesken
+   * kuukauden.
+   *
+   * Kiinteällä jaolla sarakkeet jakavat leveyden tasan ja pitkä
+   * merkintä kietoutuu ruudussa kahdelle riville. Kietoutunut aika on
+   * luettava; puolikas kuukausi ei ole.
+   */
+  .rf-roster {
+    font-size: 8px;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .rf-roster th,
+  .rf-roster td {
+    padding: 2px 1px;
+    overflow-wrap: anywhere;
+  }
+
+  /* Nimi ja summa saavat kiinteän osuutensa, päivät jakavat lopun. */
+  .rf-roster-name {
+    width: 15%;
+    min-width: 0;
+    max-width: none;
+    font-size: 8px;
+    padding: 2px 4px;
+  }
+
+  .rf-roster-sum {
+    width: 6%;
+    min-width: 0;
+    padding: 2px 3px;
+  }
+
+  .rf-roster-cell {
+    min-width: 0;
+  }
+
+  /*
+   * Viivat näkyviin paperilla.
+   *
+   * Näytöllä ruudukkoa jäsentää väri ja väljyys. Mustavalkoisella
+   * paperilla molemmat katoavat, ja jäljelle jää lukujen meri jossa
+   * sormi eksyy riviltä toiselle.
+   */
+  .rf-roster th,
+  .rf-roster td {
+    border: 1px solid #d4d4d8;
+  }
+
+  .rf-roster tbody tr {
+    break-inside: avoid;
+  }
 }
