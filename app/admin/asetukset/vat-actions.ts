@@ -114,17 +114,41 @@ export async function setDefaultSalesGroup(formData: FormData): Promise<void> {
  * veisi mukanaan päivän myynnin. Käytössä oleva ryhmä otetaan pois
  * käytöstä eikä poisteta.
  */
-export async function deleteSalesGroup(formData: FormData): Promise<void> {
+export async function deleteSalesGroup(
+  _prev: VatState,
+  formData: FormData,
+): Promise<VatState> {
   const { role } = await requireContext(PATH);
-  if (!can(role, "settings.edit")) return;
+  if (!can(role, "settings.edit")) return { error: "Ei oikeutta muuttaa asetuksia." };
 
   const id = String(formData.get("id") ?? "").trim();
-  if (!id) return;
+  if (!id) return {};
 
   const supabase = await createClient();
-  await supabase.from("sales_groups").delete().eq("id", id);
+  const { error } = await supabase.from("sales_groups").delete().eq("id", id);
+
+  /*
+   * Epäonnistuminen on kerrottava.
+   *
+   * Kanta estää käytössä olevan ryhmän poiston viite-eheydellä, ja
+   * ilman virheilmoitusta nappi näytti tekevän jotain muttei tehnyt
+   * mitään. Vaiettu epäonnistuminen on pahempi kuin estetty
+   * toiminto: käyttäjä painaa uudestaan ja päättelee sovelluksen
+   * olevan rikki.
+   *
+   * 23503 on viite-eheysrikkomus.
+   */
+  if (error) {
+    return {
+      error:
+        error.code === "23503"
+          ? "Ryhmää ei voi poistaa, koska sitä on käytetty myyntipäivillä. Ota se pois käytöstä sen sijaan — vanhat rivit säilyttävät nimen."
+          : `Poisto epäonnistui: ${error.message}`,
+    };
+  }
 
   revalidatePath("/admin", "layout");
+  return { notice: "Myyntiryhmä poistettu." };
 }
 
 // ---------------------------------------------------------------------------

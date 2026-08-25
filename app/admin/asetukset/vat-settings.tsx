@@ -30,7 +30,14 @@ const initial: VatState = {};
  * asetus, koska verokannat muuttuvat lainsäädännöllä ja Budet toimii
  * myös muissa maissa.
  */
-export function SalesGroups({ groups }: { groups: SalesGroup[] }) {
+export function SalesGroups({
+  groups,
+  mappings,
+}: {
+  groups: SalesGroup[];
+  /* Kohdistukset tarvitaan poiston varoitukseen, ei näyttämiseen. */
+  mappings: PosMapping[];
+}) {
   const [state, action] = useActionState(saveSalesGroup, initial);
   const [editing, setEditing] = useState<string | null>(null);
 
@@ -80,6 +87,9 @@ export function SalesGroups({ groups }: { groups: SalesGroup[] }) {
               <li key={group.id}>
                 <GroupForm
                   group={group}
+                  mappedNames={mappings
+                    .filter((m) => m.salesGroupId === group.id)
+                    .map((m) => m.posName)}
                   action={action}
                   state={state}
                   onClose={() => setEditing(null)}
@@ -194,11 +204,13 @@ function GroupRow({ group, onEdit }: { group: SalesGroup; onEdit: () => void }) 
  */
 function GroupForm({
   group,
+  mappedNames = [],
   action,
   state,
   onClose,
 }: {
   group?: SalesGroup;
+  mappedNames?: string[];
   action: (formData: FormData) => void;
   state: VatState;
   onClose: () => void;
@@ -279,15 +291,35 @@ function GroupForm({
 
       {group ? (
         <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
-          <DeleteGroup id={group.id} name={group.name} />
+          <DeleteGroup id={group.id} name={group.name} mappedNames={mappedNames} />
         </div>
       ) : null}
     </div>
   );
 }
 
-function DeleteGroup({ id, name }: { id: string; name: string }) {
+/**
+ * Ryhmän poisto.
+ *
+ * POISTO VIE MUKANAAN KOHDISTUKSET.
+ *
+ * Kassaryhmien kohdistukset viittaavat ryhmään, ja kanta poistaa ne
+ * mukana. Se on oikein — kohdistus poistettuun ryhmään ei tarkoita
+ * mitään — mutta se on kerrottava etukäteen. Ilman varoitusta
+ * ravintola menettää asetuksensa nimeämättä, ja huomaa sen vasta kun
+ * seuraava päiväraportti kohdistuu väärin.
+ */
+function DeleteGroup({
+  id,
+  name,
+  mappedNames,
+}: {
+  id: string;
+  name: string;
+  mappedNames: string[];
+}) {
   const [confirming, setConfirming] = useState(false);
+  const [state, action] = useActionState(deleteSalesGroup, initial);
 
   if (!confirming) {
     return (
@@ -304,12 +336,21 @@ function DeleteGroup({ id, name }: { id: string; name: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <p className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
         Poistetaanko {name}? Onnistuu vain jos ryhmää ei ole käytetty
         yhdelläkään myyntipäivällä.
+        {mappedNames.length > 0 ? (
+          <>
+            {" "}
+            <strong className="font-bold" style={{ color: "var(--rf-amber-text)" }}>
+              Mukana poistuu {mappedNames.length === 1 ? "kohdistus" : "kohdistukset"}{" "}
+              {mappedNames.join(", ")}.
+            </strong>
+          </>
+        ) : null}
       </p>
 
-      <form action={deleteSalesGroup}>
+      <form action={action}>
         <input type="hidden" name="id" value={id} />
         <button
           type="submit"
@@ -332,6 +373,8 @@ function DeleteGroup({ id, name }: { id: string; name: string }) {
       >
         Peruuta
       </button>
+
+      <Feedback state={state} />
     </div>
   );
 }

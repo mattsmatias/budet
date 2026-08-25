@@ -11,6 +11,7 @@
  * lähdettä vasten.
  */
 
+import { vatFromGross } from "@/lib/money";
 import {
   EXPECTED_VAT_RATES,
   type ExpenseCategory,
@@ -76,8 +77,10 @@ export interface RatedLine {
  * summauduttava loppusummaan, sillä muuten ne eivät kuvaa koko kuittia
  * eivätkä voi todistaa siitä mitään.
  *
- * Rivihinnat ovat verollisia, joten vero irrotetaan brutosta:
- * brutto × kanta / (1 + kanta).
+ * Rivihinnat ovat verollisia, joten vero irrotetaan brutosta.
+ * Pyöristys tulee lib/money.ts:stä — sama sääntö kuin myynnin
+ * puolella, jottei kahden näkymän välille synny senttieroa jota ei
+ * voi selittää.
  */
 function vatFromLines(
   lines: RatedLine[],
@@ -90,7 +93,7 @@ function vatFromLines(
   if (Math.abs(sum - totalCents) > SUM_TOLERANCE_CENTS) return null;
 
   const cents = lines.reduce(
-    (s, line) => s + Math.round((line.totalCents * line.vatRate!) / (1 + line.vatRate!)),
+    (s, line) => s + vatFromGross(line.totalCents, line.vatRate!),
     0,
   );
 
@@ -265,8 +268,7 @@ export interface VatRateTotal {
  * Tuntematon on tulos sekin, ja sen näkeminen on ainoa tapa korjata
  * se.
  *
- * Rivihinnat ovat verollisia, joten vero irrotetaan brutosta samalla
- * keskitetyllä pyöristyssäännöllä kuin myynnissä.
+ * Vero irrotetaan brutosta lib/money.ts:n keskitetyllä säännöllä.
  */
 export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
   const totals = new Map<number | null, VatRateTotal>();
@@ -282,7 +284,7 @@ export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
     const vat =
       line.vatRate === null
         ? 0
-        : Math.round((line.totalCents * line.vatRate) / (1 + line.vatRate));
+        : vatFromGross(line.totalCents, line.vatRate);
 
     current.grossCents += line.totalCents;
     current.vatCents += vat;
@@ -306,8 +308,12 @@ export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
  * Lasketaan eikä poimita: brutto kertaa kanta on tarkka laskutoimitus,
  * eikä mallilta kannata kysyä lukua jonka voi johtaa. Poimittu luku
  * voisi lisäksi olla ristiriidassa rivin oman kannan kanssa.
+ *
+ * Pyöristys tulee lib/money.ts:stä. Sama kaava oli hetken neljässä
+ * paikassa, ja neljä kopiota yhdestä säännöstä on kolme mahdollisuutta
+ * eriytyä.
  */
 export function lineVatCents(totalCents: number, vatRate: number | null): number | null {
   if (vatRate === null) return null;
-  return Math.round((totalCents * vatRate) / (1 + vatRate));
+  return vatFromGross(totalCents, vatRate);
 }

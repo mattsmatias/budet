@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { vatFromGross } from "@/lib/money";
 import { lineVatCents, vatByRate } from "../vat";
 
 
@@ -80,5 +81,41 @@ describe("lineVatCents", () => {
   /* Tuntematon kanta ei tuota nollaa vaan tuntemattoman. */
   it("palauttaa null ilman kantaa", () => {
     expect(lineVatCents(5000, null)).toBeNull();
+  });
+});
+
+describe("pyöristys tulee yhdestä paikasta", () => {
+  /*
+   * TEHTÄVÄNANNON §11.
+   *
+   * Sama kaava oli hetken neljässä paikassa: money.ts:ssä, myynnin
+   * rivilaskennassa ja kahdesti kuittien puolella. Neljä kopiota
+   * yhdestä säännöstä on kolme mahdollisuutta eriytyä, ja eriytynyt
+   * pyöristys näkyisi täsmäytyksessä senttierona jota ei voi selittää.
+   *
+   * Tämä testi kaatuu jos joku kirjoittaa kaavan uudestaan käsin.
+   */
+  it("kuittirivin ALV on sama kuin money.ts laskee", () => {
+    for (const rate of [0, 0.1, 0.135, 0.14, 0.255]) {
+      for (let gross = 1; gross <= 500; gross += 1) {
+        expect(lineVatCents(gross, rate)).toBe(vatFromGross(gross, rate));
+      }
+    }
+  });
+
+  it("kannoittainen erittely summautuu samaan kuin rivikohtainen", () => {
+    const lines = [
+      { totalCents: 3333, vatRate: 0.14 },
+      { totalCents: 777, vatRate: 0.14 },
+      { totalCents: 1234, vatRate: 0.255 },
+    ];
+
+    const byRate = vatByRate(lines);
+    const perLine = lines.reduce(
+      (sum, line) => sum + (lineVatCents(line.totalCents, line.vatRate) ?? 0),
+      0,
+    );
+
+    expect(byRate.reduce((s, r) => s + r.vatCents, 0)).toBe(perLine);
   });
 });

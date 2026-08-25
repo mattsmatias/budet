@@ -21,7 +21,7 @@
  * jota ei voi selittää, ja täsmäytys on juuri erojen selittämistä.
  */
 
-import { formatMoney, formatRate, vatFromGross } from "@/lib/money";
+import { formatMoney, formatRate, vatFromGross, vatFromNet } from "@/lib/money";
 
 export interface SalesGroup {
   id: string;
@@ -81,7 +81,7 @@ export function lineFromNet(
   netCents: number,
   vatRate: number,
 ): { grossCents: number; vatCents: number; netCents: number } {
-  const vatCents = Math.round(netCents * vatRate);
+  const vatCents = vatFromNet(netCents, vatRate);
   return { grossCents: netCents + vatCents, vatCents, netCents };
 }
 

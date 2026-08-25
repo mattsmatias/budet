@@ -130,11 +130,23 @@ export async function saveDailySales(
    * täsmäisi omiin riveihinsä.
    */
   const linesJson = String(formData.get("lines") ?? "");
+  const lines = linesJson === "" ? [] : parseLines(linesJson);
 
-  if (linesJson !== "") {
-    const lines = parseLines(linesJson);
-    if (lines === null) return { error: "Myyntirivit olivat virheellisiä." };
+  if (lines === null) return { error: "Myyntirivit olivat virheellisiä." };
 
+  /*
+   * PÄIVÄ ON YKSI TOTUUS.
+   *
+   * Vanhat rivit poistetaan aina, myös kun uusia ei ole. Aiemmin
+   * poisto oli ehdon sisällä, ja silloin raportista kuvattu päivä
+   * säilytti rivinsä kun se tallennettiin uudelleen käsin: otsikko
+   * kertoi yhden summan ja rivit toisen, ja täsmäytys vertasi
+   * vanhentuneita rivejä.
+   *
+   * Käsin tallennus on tietoinen korvaus. Jos se korvaa päivän
+   * summan, sen on korvattava myös erittely.
+   */
+  {
     await supabase.from("daily_sales_lines").delete().eq("daily_sales_id", saved.id);
 
     if (lines.length > 0) {

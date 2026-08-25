@@ -145,7 +145,7 @@ export default async function SettingsPage({
                 </p>
 
                 <div className="mt-4">
-                  <SalesGroups groups={vat.groups} />
+                  <SalesGroups groups={vat.groups} mappings={vat.mappings} />
                 </div>
 
                 <Divider />
