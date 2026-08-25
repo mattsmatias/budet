@@ -37,6 +37,7 @@ import {
   publicationOf,
 } from "@/lib/restoflow/shift-planning";
 import { monthWord } from "@/lib/restoflow/expenses";
+import { openAsShift } from "@/lib/restoflow/open-shifts";
 import { cancelAbsence, markAbsenceCertificate } from "../actions";
 import { PublishBar } from "./publish-bar";
 import { EditShift, NewShiftButton } from "./shift-form";
@@ -497,9 +498,23 @@ export default async function AdminShiftsPage() {
                     </p>
                   </div>
                 </div>
-                <Pill tone="risk" dot>
-                  ei tekijää
-                </Pill>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Pill tone="risk" dot>
+                    ei tekijää
+                  </Pill>
+
+                  {/*
+                    Avoin vuoro on poistettavissa.
+
+                    Väärään päivään tehty avoin vuoro jäi aiemmin
+                    listalle pysyvästi: sitä ei voinut muokata eikä
+                    poistaa mistään. Nyt sillä on sama muokkaus kuin
+                    nimetyllä vuorolla — myös tekijän lisääminen.
+                  */}
+                  {canManage ? (
+                    <EditShift users={users} shift={openAsShift(open)} />
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>

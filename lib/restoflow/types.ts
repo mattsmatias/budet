@@ -397,6 +397,20 @@ export interface OpenShift {
   startTime: string;
   endTime: string;
   position: StaffPosition;
+
+  /*
+   * Avoin vuoro on vuoro.
+   *
+   * Se elää samaa elinkaarta kuin nimetty vuoro: luonnos, julkaistu,
+   * peruttu. Ilman näitä kenttiä julkaisematon avoin vuoro olisi
+   * tarjolla työntekijöille ja peruttu jäisi listalle — kumpikin
+   * lupaus jota ei ole tarkoitettu.
+   */
+  status: ShiftStatus;
+  breakMinutes: number;
+  note: string | null;
+  publishedAt: string | null;
+  cancelledAt: string | null;
 }
 
 export type ClockEventType = "in" | "break_start" | "break_end" | "out";

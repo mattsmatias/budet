@@ -257,6 +257,11 @@ describe("buildRoster", () => {
           startTime: "16:00",
           endTime: "23:00",
           position: "waiter",
+          status: "draft" as const,
+          breakMinutes: 0,
+          note: null,
+          publishedAt: "2026-08-01T00:00:00.000Z",
+          cancelledAt: null,
         },
       ],
     });
@@ -286,6 +291,11 @@ describe("buildRoster", () => {
           startTime: "16:00",
           endTime: "23:00",
           position: "waiter",
+          status: "draft" as const,
+          breakMinutes: 0,
+          note: null,
+          publishedAt: "2026-08-01T00:00:00.000Z",
+          cancelledAt: null,
         },
       ],
     });

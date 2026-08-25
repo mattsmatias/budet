@@ -54,6 +54,14 @@ export function claimableShifts(input: {
   const horizon = addDays(today, OPEN_SHIFT_HORIZON_DAYS);
 
   return openShifts
+    /*
+     * Vain voimassa oleva vuoro on tarjolla.
+     *
+     * Luonnosta ei ole luvattu kenellekään, ja peruttu vuoro on
+     * nimenomaan sellainen jota ei tehdä. Kumpikin tarjolla olevana
+     * olisi lupaus jota ei ole tarkoitettu.
+     */
+    .filter((open) => open.publishedAt !== null && open.cancelledAt === null)
     .filter((open) => open.position === position)
     .filter((open) => open.date >= today && open.date <= horizon)
     .filter((open) => open.date > today || shiftBounds(open).endMin > nowMin)
@@ -107,4 +115,35 @@ function addDays(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Avoin vuoro näytettäväksi vuorona.
+ *
+ * AVOIN VUORO ON VUORO.
+ *
+ * Se on sama rivi samassa taulussa; ainoa ero on ettei sillä ole
+ * tekijää. Kalenteri, päivänäkymä ja muokkauslomake käsittelevät
+ * vuoroja, joten avoin vuoro on käännettävä samaan muotoon — muuten
+ * se jäisi näkymättä juuri siitä näkymästä jossa sille etsitään
+ * tekijää.
+ *
+ * Tyhjä userId eikä null: koodi vertaa tekijää merkkijonona, ja null
+ * pakottaisi jokaisen vertailun tarkistamaan sen erikseen.
+ */
+export function openAsShift(open: OpenShift): Shift {
+  return {
+    id: open.id,
+    restaurantId: open.restaurantId,
+    userId: "",
+    date: open.date,
+    startTime: open.startTime,
+    endTime: open.endTime,
+    location: "",
+    status: open.status,
+    breakMinutes: open.breakMinutes,
+    note: open.note,
+    publishedAt: open.publishedAt,
+    cancelledAt: open.cancelledAt,
+  };
 }

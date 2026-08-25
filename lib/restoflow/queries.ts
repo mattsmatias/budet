@@ -401,7 +401,9 @@ export async function fetchOpenShifts(
   const supabase = await createClient();
   let query = supabase
     .from("shifts")
-    .select("id, position, shift_date, start_time, end_time")
+    .select(
+      "id, position, shift_date, start_time, end_time, status, break_minutes, note, published_at, cancelled_at",
+    )
     .eq("restaurant_id", restaurantId)
     .is("user_id", null)
     .order("shift_date");
@@ -418,6 +420,11 @@ export async function fetchOpenShifts(
     startTime: hhmm(row.start_time as string),
     endTime: hhmm(row.end_time as string),
     position: (row.position as "waiter" | "kitchen" | "manager" | "cleaning") ?? "waiter",
+    status: row.status as OpenShift["status"],
+    breakMinutes: (row.break_minutes as number | null) ?? 0,
+    note: (row.note as string | null) ?? null,
+    publishedAt: (row.published_at as string | null) ?? null,
+    cancelledAt: (row.cancelled_at as string | null) ?? null,
   }));
 }
 

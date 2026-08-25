@@ -4,6 +4,7 @@ import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
 import { formatMonth, monthWord } from "@/lib/restoflow/expenses";
 import { monthCalendar, shiftsOn } from "@/lib/restoflow/calendar";
+import { openAsShift } from "@/lib/restoflow/open-shifts";
 import {
   findOverlaps,
   formatPlanned,
@@ -40,8 +41,17 @@ export const metadata = { title: "Työvuorokalenteri" };
 export default async function ShiftCalendarPage({
   searchParams,
 }: PageProps<"/admin/tyovuorot/kalenteri">) {
-  const { users, shifts, budgets, month, today, role } =
+  const { users, shifts: assigned, openShifts, budgets, month, today, role } =
     await adminContext("/admin/tyovuorot");
+
+  /*
+   * Avoimet vuorot mukaan kalenteriin.
+   *
+   * Avoin vuoro on vuoro jolla ei ole vielä tekijää — juuri se jonka
+   * takia kalenteria katsotaan. Erillisenä listana se olisi näkymättä
+   * siitä ruudusta jossa tekijää etsitään.
+   */
+  const shifts = [...assigned, ...openShifts.map(openAsShift)];
 
   if (!can(role, "shifts.view.all")) return null;
 

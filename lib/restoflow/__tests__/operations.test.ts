@@ -179,6 +179,11 @@ describe("tekijätön vuoro", () => {
   const open = (date: string) => ({
     id: `o-${date}`, restaurantId: "rest-1", date,
     startTime: "10:00", endTime: "18:00", position: "waiter" as const,
+    status: "draft" as const,
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
   });
 
   it("huomauttaa kolmen päivän sisällä olevasta", () => {
