@@ -13,6 +13,7 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
+import { lineFromGross, type SalesLine } from "@/lib/restoflow/sales-vat";
 
 export interface SalesState {
   error?: string;
@@ -84,25 +85,76 @@ export async function saveDailySales(
     return { error: "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut." };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("daily_sales").upsert(
-    {
-      restaurant_id: restaurant.id,
-      sales_date: date,
-      net_sales_cents: net,
-      gross_sales_cents: gross,
-      vat_cents: vat,
-      transactions,
-      source: fromReport ? "report" : "manual",
-      target_cents: target,
-      note,
-      created_by: user.id,
-    },
-    { onConflict: "restaurant_id,sales_date" },
-  );
+  /*
+   * Kassan ilmoittamat luvut säilytetään erillään laskennasta.
+   *
+   * Jos ne korvattaisiin Budetin omalla laskelmalla, täsmäytys
+   * vertaisi lukua itseensä ja täsmäisi aina.
+   */
+  const posGross = parseEuros(formData.get("posGross"));
+  const posVat = parseEuros(formData.get("posVat"));
 
-  if (error) {
-    return { error: `Myynnin tallennus epäonnistui: ${error.message}` };
+  const supabase = await createClient();
+  const { data: saved, error } = await supabase
+    .from("daily_sales")
+    .upsert(
+      {
+        restaurant_id: restaurant.id,
+        sales_date: date,
+        net_sales_cents: net,
+        gross_sales_cents: gross,
+        vat_cents: vat,
+        transactions,
+        source: fromReport ? "report" : "manual",
+        pos_gross_cents: posGross,
+        pos_vat_cents: posVat,
+        target_cents: target,
+        note,
+        created_by: user.id,
+      },
+      { onConflict: "restaurant_id,sales_date" },
+    )
+    .select("id")
+    .single();
+
+  if (error || !saved) {
+    return { error: `Myynnin tallennus epäonnistui: ${error?.message ?? ""}` };
+  }
+
+  /*
+   * Myyntirivit korvataan kokonaan.
+   *
+   * Päivä on yksi kokonaisuus: raportti kuvataan uudelleen kun siinä
+   * oli virhe, ja silloin vanhojen rivien pitää kadota. Osittainen
+   * päivitys jättäisi poistetun ryhmän riville ja loppusumma ei enää
+   * täsmäisi omiin riveihinsä.
+   */
+  const linesJson = String(formData.get("lines") ?? "");
+
+  if (linesJson !== "") {
+    const lines = parseLines(linesJson);
+    if (lines === null) return { error: "Myyntirivit olivat virheellisiä." };
+
+    await supabase.from("daily_sales_lines").delete().eq("daily_sales_id", saved.id);
+
+    if (lines.length > 0) {
+      const { error: lineError } = await supabase.from("daily_sales_lines").insert(
+        lines.map((line) => ({
+          daily_sales_id: saved.id as string,
+          sales_group_id: line.salesGroupId,
+          vat_rate: line.vatRate,
+          gross_cents: line.grossCents,
+          vat_cents: line.vatCents,
+          net_cents: line.netCents,
+          pos_name: line.posName,
+          pos_vat_cents: line.posVatCents,
+        })),
+      );
+
+      if (lineError) {
+        return { error: `Myyntirivien tallennus epäonnistui: ${lineError.message}` };
+      }
+    }
   }
 
   // Myynti muuttaa yleiskuvan, raportit ja budjetin, joten koko
@@ -127,4 +179,63 @@ export async function deleteDailySales(formData: FormData): Promise<void> {
     .eq("sales_date", date);
 
   revalidatePath("/admin", "layout");
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Myyntirivit lomakkeen piilokentästä.
+ *
+ * VEROT LASKETAAN UUDELLEEN PALVELIMELLA.
+ *
+ * Selain lähettää ryhmän, kannan ja bruttosumman. Vero ja veroton
+ * lasketaan tässä samasta funktiosta jota kaikki muukin käyttää —
+ * selaimen lähettämään veroon ei luoteta, koska lomakkeen sisällön voi
+ * kirjoittaa itse ja väärä vero päätyisi kirjanpitoon.
+ *
+ * Palauttaa null jos syöte on rikki. Osittainen tallennus olisi
+ * pahempi kuin epäonnistunut.
+ */
+function parseLines(json: string): SalesLine[] | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(raw)) return null;
+
+  const lines: SalesLine[] = [];
+
+  for (const entry of raw) {
+    if (typeof entry !== "object" || entry === null) return null;
+
+    const row = entry as Record<string, unknown>;
+    const salesGroupId = String(row.salesGroupId ?? "");
+    const vatRate = Number(row.vatRate);
+    const grossCents = Number(row.grossCents);
+
+    if (!salesGroupId) return null;
+    if (!Number.isFinite(vatRate) || vatRate < 0 || vatRate > 1) return null;
+    if (!Number.isInteger(grossCents) || grossCents < 0) return null;
+
+    const amounts = lineFromGross(grossCents, vatRate);
+
+    const posVat = row.posVatCents;
+    const posVatCents =
+      typeof posVat === "number" && Number.isInteger(posVat) && posVat >= 0
+        ? posVat
+        : null;
+
+    lines.push({
+      salesGroupId,
+      vatRate,
+      ...amounts,
+      posName: typeof row.posName === "string" ? row.posName.slice(0, 200) : null,
+      posVatCents,
+    });
+  }
+
+  return lines;
 }

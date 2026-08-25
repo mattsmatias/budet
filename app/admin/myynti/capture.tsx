@@ -10,6 +10,14 @@ import {
   type SalesExtraction,
 } from "@/lib/restoflow/sales-ai";
 import { averageCheckCents, reconcile } from "@/lib/restoflow/sales-report";
+import {
+  mapReportGroups,
+  reconcile as reconcileWithPos,
+  type PosMapping,
+  type SalesGroup,
+} from "@/lib/restoflow/sales-vat";
+import { formatRate } from "@/lib/money";
+import { ReconciliationPanel } from "./reconciliation";
 import { saveDailySales, type SalesState } from "./actions";
 
 /**
@@ -35,7 +43,15 @@ type Phase =
 
 const initial: SalesState = {};
 
-export function ReportCapture({ today }: { today: string }) {
+export function ReportCapture({
+  today,
+  groups,
+  mappings,
+}: {
+  today: string;
+  groups: SalesGroup[];
+  mappings: PosMapping[];
+}) {
   const [phase, setPhase] = useState<Phase>({ at: "idle" });
   const camera = useRef<HTMLInputElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -65,6 +81,8 @@ export function ReportCapture({ today }: { today: string }) {
       <ReviewForm
         result={phase.result}
         today={today}
+        groups={groups}
+        mappings={mappings}
         onDiscard={() => setPhase({ at: "idle" })}
       />
     );
@@ -162,10 +180,14 @@ export function ReportCapture({ today }: { today: string }) {
 function ReviewForm({
   result,
   today,
+  groups,
+  mappings,
   onDiscard,
 }: {
   result: SalesExtraction;
   today: string;
+  groups: SalesGroup[];
+  mappings: PosMapping[];
   onDiscard: () => void;
 }) {
   const [state, action] = useActionState(saveDailySales, initial);
@@ -178,9 +200,52 @@ function ReviewForm({
 
   const average = averageCheckCents(amounts.grossCents, result.transactions.value);
 
+  /*
+   * Ryhmät kohdistetaan heti eikä vasta tallennuksessa.
+   *
+   * Kohdistuksen tulos on osa sitä mitä käyttäjä tarkistaa: väärään
+   * kantaan menevä ryhmä on juuri se virhe jonka täsmäytys myöhemmin
+   * löytäisi, ja se on halvempi korjata nyt.
+   */
+  const mapped = mapReportGroups(result.groups, mappings, groups);
+
+  /*
+   * Täsmäytys lasketaan kassan omista luvuista.
+   *
+   * Loppusumma tulee raportista, ei riveistä. Jos se laskettaisiin
+   * riveistä, vertailu vertaisi lukua itseensä ja täsmäisi aina.
+   */
+  const check = reconcileWithPos({
+    posGrossCents: amounts.grossCents,
+    posVatCents: amounts.vatCents,
+    lines: mapped.lines,
+  });
+
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="source" value="report" />
+
+      {/*
+        Rivit menevät palvelimelle bruttoina ja kantoina. Vero
+        lasketaan siellä uudelleen samasta funktiosta — lomakkeen
+        sisällön voi kirjoittaa itse, eikä selaimen lähettämään veroon
+        voi luottaa.
+      */}
+      <input
+        type="hidden"
+        name="lines"
+        value={JSON.stringify(
+          mapped.lines.map((l) => ({
+            salesGroupId: l.salesGroupId,
+            vatRate: l.vatRate,
+            grossCents: l.grossCents,
+            posName: l.posName,
+            posVatCents: l.posVatCents,
+          })),
+        )}
+      />
+      <input type="hidden" name="posGross" value={euros(amounts.grossCents)} />
+      <input type="hidden" name="posVat" value={euros(amounts.vatCents)} />
 
       {result.imageQuality === "poor" ? (
         <Banner tone="warn">
@@ -253,6 +318,68 @@ function ReviewForm({
         />
       </div>
 
+      {mapped.lines.length > 0 ? (
+        <div>
+          <h3 className="text-[13.5px] font-bold">Myynti ryhmittäin</h3>
+          <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            Verokanta tulee myyntiryhmän asetuksesta. Rivi tallentaa käytetyn
+            kannan, joten myöhempi asetusmuutos ei muuta tätä päivää.
+          </p>
+
+          <table className="rf-table mt-2.5 w-full">
+            <caption className="sr-only">Myynti ryhmittäin</caption>
+            <thead>
+              <tr>
+                <th scope="col">Ryhmä</th>
+                <th scope="col">Kassan nimi</th>
+                <th scope="col" className="text-right">ALV %</th>
+                <th scope="col" className="text-right">Verollinen</th>
+                <th scope="col" className="text-right">ALV</th>
+                <th scope="col" className="text-right">Veroton</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mapped.lines.map((l) => (
+                <tr key={l.salesGroupId} className="rf-row">
+                  <td className="font-semibold">{nameOf(groups, l.salesGroupId)}</td>
+                  <td style={{ color: "var(--rf-text-2)" }}>{l.posName ?? "—"}</td>
+                  <td className="rf-tabular text-right">{formatRate(l.vatRate)}</td>
+                  <td className="rf-tabular text-right font-semibold">
+                    {formatMoney(l.grossCents)}
+                  </td>
+                  <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                    {formatMoney(l.vatCents)}
+                  </td>
+                  <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                    {formatMoney(l.netCents)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {mapped.unmapped.length > 0 ? (
+            <Banner tone="warn">
+              Kohdistamaton kassaryhmä: {mapped.unmapped.join(", ")}. Myynti meni
+              oletusryhmään, joten summa täsmää — mutta verokanta on arvattu.
+              Lisää kohdistus asetuksista.
+            </Banner>
+          ) : null}
+
+          {mapped.dropped.length > 0 ? (
+            <Banner tone="warn">
+              Ryhmää {mapped.dropped.join(", ")} ei voitu kirjata: kohdistusta ei
+              ole eikä oletusryhmää ole määritetty. Päivän summa jää tältä osin
+              vajaaksi.
+            </Banner>
+          ) : null}
+
+          <div className="mt-4">
+            <ReconciliationPanel result={check} />
+          </div>
+        </div>
+      ) : null}
+
       {state.error ? (
         <p role="alert" className="text-[12.5px] font-semibold" style={{ color: "var(--rf-red-text)" }}>
           {state.error}
@@ -282,6 +409,11 @@ function ReviewForm({
 }
 
 // ---------------------------------------------------------------------------
+
+/** Myyntiryhmän nimi tunnuksesta. */
+function nameOf(groups: SalesGroup[], id: string): string {
+  return groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+}
 
 /** Sentit lomakkeen euromuotoon. Tyhjä pysyy tyhjänä. */
 function euros(cents: number | null): string {

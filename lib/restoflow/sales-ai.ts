@@ -15,6 +15,7 @@
  */
 
 import { prepareForExtraction } from "./image-prep";
+import type { ReportGroup } from "./sales-vat";
 import type { Extracted } from "./types";
 
 export interface SalesExtraction {
@@ -28,6 +29,14 @@ export interface SalesExtraction {
   netCents: Extracted<number>;
   /** Kuittien eli tapahtumien määrä. */
   transactions: Extracted<number>;
+  /**
+   * Myyntiryhmät sellaisina kuin ne raportissa lukivat.
+   *
+   * Tyhjä lista tarkoittaa ettei raportti erittele ryhmiä — silloin
+   * päivä kirjataan yhtenä summana kuten ennenkin. Erittely on se mikä
+   * tekee kannoittaisen täsmäytyksen mahdolliseksi.
+   */
+  groups: ReportGroup[];
   /** Kuvan laatuarvio. Huono kuva nostaa tarkistustarpeen. */
   imageQuality: "good" | "poor";
   elapsedMs: number;
@@ -62,6 +71,7 @@ export function emptySalesExtraction(): SalesExtraction {
     vatCents: unknown<number>(),
     netCents: unknown<number>(),
     transactions: unknown<number>(),
+    groups: [],
     imageQuality: "poor",
     elapsedMs: 0,
   };
@@ -93,6 +103,10 @@ export class MockSalesExtractor implements SalesExtractor {
       vatCents: { value: vatCents, confidence: "medium" },
       netCents: { value: grossCents - vatCents, confidence: "high" },
       transactions: { value: 40 + (hash % 90), confidence: "medium" },
+      groups: [
+        { posName: "Ruoka", grossCents: Math.round(grossCents * 0.7), vatCents: null },
+        { posName: "Juomat", grossCents: grossCents - Math.round(grossCents * 0.7), vatCents: null },
+      ],
       imageQuality: "good",
       elapsedMs: Date.now() - started,
     };

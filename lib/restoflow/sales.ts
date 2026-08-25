@@ -34,6 +34,16 @@ export interface DailySales {
   transactions: number | null;
   /** Kirjattu käsin vai luettu raportista. */
   source: "manual" | "report";
+
+  /*
+   * Kassan ilmoittamat luvut sellaisenaan.
+   *
+   * Erillään Budetin omasta laskelmasta: täsmäytys vertaa näitä
+   * riveiltä laskettuihin. Jos ne korvattaisiin laskennalla, vertailu
+   * vertaisi lukua itseensä ja täsmäisi aina.
+   */
+  posGrossCents: number | null;
+  posVatCents: number | null;
 }
 
 /** Montako saman viikonpäivän havaintoa tarvitaan vertailuun. */

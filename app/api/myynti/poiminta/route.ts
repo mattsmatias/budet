@@ -49,6 +49,13 @@ const extraction = z.object({
   vatCents: z.object({ value: z.number().int().nullable(), confidence }),
   netCents: z.object({ value: z.number().int().nullable(), confidence }),
   transactions: z.object({ value: z.number().int().nullable(), confidence }),
+  groups: z.array(
+    z.object({
+      posName: z.string(),
+      grossCents: z.number().int(),
+      vatCents: z.number().int().nullable(),
+    }),
+  ),
   imageQuality: z.enum(["good", "poor"]),
 });
 
@@ -65,6 +72,16 @@ grossCents: verollinen myynti yhteensä sentteinä. Raportissa "Myynti yhteensä
 vatCents: arvonlisävero yhteensä sentteinä. Raportissa "ALV yhteensä" tai ALV-erittelyn rivien summa. Jos erittelyssä on useita kantoja (14 %, 25,5 %, 10 %, 0 %), laske veron osuudet yhteen — älä palauta yhtä riviä.
 
 netCents: veroton myynti sentteinä. Raportissa "Veroton", "ALV 0 %", "Netto", "Verollinen myynti ilman ALV". Huomaa: "ALV 0 %" ALV-erittelyn rivinä tarkoittaa nollaverokannan myyntiä eikä koko verotonta summaa — älä sekoita niitä.
+
+groups: myyntiryhmien erittely. Kassan päiväraportissa myynti on lähes aina jaettu ryhmiin: "Ruoka", "Juomat", "Viini", "Olut", "Take away", "Kahvi". Palauta jokainen ryhmä omana alkionaan.
+
+posName: ryhmän nimi täsmälleen sellaisena kuin se raportissa lukee.
+grossCents: ryhmän myynti verollisena sentteinä.
+vatCents: kyseisen ryhmän ALV sentteinä, jos raportti kertoo sen ryhmäkohtaisesti. Jos ALV on eritelty vain verokannoittain eikä ryhmittäin, palauta null.
+
+Älä laske ryhmiä yhteen äläkä jaa niitä osiin. Älä keksi ryhmää jota raportissa ei ole. Jos raportti ei erittele myyntiä ryhmiin lainkaan, palauta tyhjä lista.
+
+Palautus-, alennus- ja mitätöintirivit eivät ole myyntiryhmiä. Maksutavat (Kortti, Käteinen) eivät ole myyntiryhmiä — ne kertovat miten maksettiin, eivät mitä myytiin.
 
 transactions: kuittien tai tapahtumien lukumäärä. Raportissa "Kuitteja", "Tapahtumia", "Asiakkaita", "Myyntitapahtumat". Ei euroja vaan kappaleita.
 
@@ -227,8 +244,30 @@ function sanitize(
       ? parsed.transactions
       : { value: null, confidence: "low" as const };
 
+  /*
+   * Mahdoton ryhmä pudotetaan, ei koko erittelyä.
+   *
+   * Yksi väärin luettu rivi ei saa hävittää muita — vajaa erittely
+   * näkyy täsmäytyksessä erona, ja se on parempi kuin erittelyn
+   * puuttuminen kokonaan.
+   */
+  const groups = parsed.groups
+    .filter(
+      (g) =>
+        g.posName.trim() !== "" &&
+        g.grossCents >= 0 &&
+        g.grossCents <= MAX_CENTS &&
+        (g.vatCents === null || (g.vatCents >= 0 && g.vatCents <= g.grossCents)),
+    )
+    .map((g) => ({
+      posName: g.posName.trim().slice(0, 80),
+      grossCents: g.grossCents,
+      vatCents: g.vatCents,
+    }));
+
   return {
     date,
+    groups,
     grossCents: money(parsed.grossCents),
     vatCents: money(parsed.vatCents),
     netCents: money(parsed.netCents),

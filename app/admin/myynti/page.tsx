@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchDailySales } from "@/lib/restoflow/queries";
@@ -10,6 +11,13 @@ import { SalesForm } from "./form";
 import { ReportCapture } from "./capture";
 import { averageCheckCents } from "@/lib/restoflow/sales-report";
 import { DeleteDay } from "./delete-day";
+import { ReconciliationPanel } from "./reconciliation";
+import { reconcile as reconcileWithPos } from "@/lib/restoflow/sales-vat";
+import {
+  fetchPosMappings,
+  fetchSalesGroups,
+  fetchSalesLines,
+} from "@/lib/restoflow/queries";
 
 export const metadata = { title: "Myynti" };
 
@@ -28,6 +36,18 @@ export default async function SalesPage() {
   const { restaurant, role, today } = await adminContext("/admin/myynti");
 
   const sales = await fetchDailySales(restaurant.id);
+
+  /*
+   * Verotusasetukset ja tämän päivän rivit.
+   *
+   * Rivit vain yhdeltä päivältä: sadan päivän rivit olisi tuhat riviä
+   * jota kukaan ei katso, ja täsmäytys koskee aina yhtä päivää.
+   */
+  const [groups, mappings, todayLines] = await Promise.all([
+    fetchSalesGroups(restaurant.id),
+    fetchPosMappings(restaurant.id),
+    fetchSalesLines(restaurant.id, today),
+  ]);
   const canManage = can(role, "sales.manage");
 
   const todayRow = sales.find((s) => s.date === today);
@@ -63,7 +83,7 @@ export default async function SalesPage() {
           </p>
 
           <div className="mt-3.5">
-            <ReportCapture today={today} />
+            <ReportCapture today={today} groups={groups} mappings={mappings} />
           </div>
         </Card>
       ) : null}
@@ -80,6 +100,34 @@ export default async function SalesPage() {
               todayRow?.targetCents ? centsToInput(todayRow.targetCents) : ""
             }
           />
+        </Card>
+      ) : null}
+
+      {/*
+        Täsmäytys näkyy vain kun päivä on kirjattu raportista.
+
+        Käsin kirjatulla päivällä ei ole rivejä eikä kassan lukuja,
+        joten vertailulla ei olisi kahta osapuolta — ja "täsmää" ilman
+        vertailukohtaa tarkoittaisi vain ettei mitään ole verrattu.
+      */}
+      {todayLines.length > 0 && todayRow ? (
+        <Card>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            Täsmäytys kassaan
+          </h2>
+          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+            {formatDay(today)} · kassan päiväraportti vs. Budetin laskelma
+          </p>
+
+          <div className="mt-3.5">
+            <ReconciliationPanel
+              result={reconcileWithPos({
+                posGrossCents: todayRow.posGrossCents,
+                posVatCents: todayRow.posVatCents,
+                lines: todayLines,
+              })}
+            />
+          </div>
         </Card>
       ) : null}
 
@@ -237,7 +285,25 @@ function Row({
       </td>
 
       <td className="text-right">
-        {canManage ? <DeleteDay date={row.date} label={formatDay(row.date)} /> : null}
+        <span className="flex items-center justify-end gap-1">
+          {/*
+            Rivi vie päivän omaan näkymään.
+
+            Täsmäytys ei mahdu riville eikä kuulu sinne: se on se
+            näkymä johon palataan kun kirjanpitäjä kysyy, ja siihen on
+            voitava linkittää.
+          */}
+          <Link
+            href={`/admin/myynti/${row.date}`}
+            aria-label={`Avaa ${formatDay(row.date)}`}
+            className="rf-press flex h-7 w-7 items-center justify-center"
+            style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
+          >
+            <RfIcon name="chevron" size={15} />
+          </Link>
+
+          {canManage ? <DeleteDay date={row.date} label={formatDay(row.date)} /> : null}
+        </span>
       </td>
     </tr>
   );

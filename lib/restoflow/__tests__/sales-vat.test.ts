@@ -3,10 +3,13 @@ import { formatMoney, formatRate } from "@/lib/money";
 import {
   lineFromGross,
   lineFromNet,
+  mapReportGroups,
   parseRate,
   reconcile,
   summarise,
   toleranceFor,
+  type PosMapping,
+  type SalesGroup,
   type SalesLine,
 } from "../sales-vat";
 
@@ -293,5 +296,197 @@ describe("parseRate", () => {
     expect(parseRate("abc")).toBeNull();
     expect(parseRate("")).toBeNull();
     expect(parseRate(null)).toBeNull();
+  });
+});
+
+describe("mapReportGroups", () => {
+  const ravintola: SalesGroup = {
+    id: "g-ravintola",
+    name: "Ravintolamyynti",
+    vatRate: 0.14,
+    active: true,
+    isDefault: true,
+    sortOrder: 0,
+  };
+
+  const alkoholi: SalesGroup = {
+    id: "g-alkoholi",
+    name: "Alkoholimyynti",
+    vatRate: 0.255,
+    active: true,
+    isDefault: false,
+    sortOrder: 1,
+  };
+
+  const groups = [ravintola, alkoholi];
+
+  const mappings: PosMapping[] = [
+    { id: "m1", posName: "Ruoka", salesGroupId: ravintola.id },
+    { id: "m2", posName: "Take away", salesGroupId: ravintola.id },
+    { id: "m3", posName: "Viini", salesGroupId: alkoholi.id },
+    { id: "m4", posName: "Olut", salesGroupId: alkoholi.id },
+  ];
+
+  it("kohdistaa tehtävänannon esimerkin", () => {
+    const r = mapReportGroups(
+      [
+        { posName: "Ruoka", grossCents: 200000, vatCents: null },
+        { posName: "Viini", grossCents: 60000, vatCents: null },
+        { posName: "Olut", grossCents: 40000, vatCents: null },
+        { posName: "Take away", grossCents: 50000, vatCents: null },
+      ],
+      mappings,
+      groups,
+    );
+
+    expect(r.unmapped).toEqual([]);
+    expect(r.dropped).toEqual([]);
+    expect(r.lines).toHaveLength(2);
+  });
+
+  /*
+   * Kaksi kassaryhmää, yksi myyntiryhmä.
+   *
+   * Viini ja olut ovat molemmat alkoholimyyntiä. Päivällä voi olla vain
+   * yksi rivi per myyntiryhmä — kaksi olisi kaksi totuutta samasta
+   * luvusta, ja kannan yksikäsitteisyysehto hylkäisi jälkimmäisen.
+   */
+  it("yhdistää saman myyntiryhmän kassaryhmät", () => {
+    const r = mapReportGroups(
+      [
+        { posName: "Viini", grossCents: 60000, vatCents: null },
+        { posName: "Olut", grossCents: 40000, vatCents: null },
+      ],
+      mappings,
+      groups,
+    );
+
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].grossCents).toBe(100000);
+    expect(r.lines[0].posName).toBe("Viini, Olut");
+  });
+
+  it("laskee veron ryhmän kannalla", () => {
+    const r = mapReportGroups(
+      [{ posName: "Ruoka", grossCents: 114000, vatCents: null }],
+      mappings,
+      groups,
+    );
+
+    expect(r.lines[0].vatRate).toBe(0.14);
+    expect(r.lines[0].vatCents).toBe(14000);
+    expect(r.lines[0].netCents).toBe(100000);
+  });
+
+  it("löytää kohdistuksen kirjainkoosta riippumatta", () => {
+    const r = mapReportGroups(
+      [{ posName: "  RUOKA ", grossCents: 100000, vatCents: null }],
+      mappings,
+      groups,
+    );
+
+    expect(r.unmapped).toEqual([]);
+    expect(r.lines[0].salesGroupId).toBe(ravintola.id);
+  });
+
+  /*
+   * Kohdistamaton ryhmä ei katoa.
+   *
+   * Osittainen kirjaus on pahempi kuin kohdistamaton: silloin päivän
+   * loppusumma ei enää täsmää raporttiin, eikä käyttäjä näe miksi.
+   * Myynti menee oletusryhmään ja nimi kerrotaan.
+   */
+  it("ohjaa kohdistamattoman oletusryhmään ja kertoo siitä", () => {
+    const r = mapReportGroups(
+      [{ posName: "Lahjakortti", grossCents: 5000, vatCents: null }],
+      mappings,
+      groups,
+    );
+
+    expect(r.unmapped).toEqual(["Lahjakortti"]);
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].salesGroupId).toBe(ravintola.id);
+    expect(r.dropped).toEqual([]);
+  });
+
+  it("pudottaa ryhmän vain jos oletusta ei ole", () => {
+    const ilmanOletusta = [{ ...ravintola, isDefault: false }, alkoholi];
+
+    const r = mapReportGroups(
+      [{ posName: "Lahjakortti", grossCents: 5000, vatCents: null }],
+      mappings,
+      ilmanOletusta,
+    );
+
+    expect(r.dropped).toEqual(["Lahjakortti"]);
+    expect(r.lines).toEqual([]);
+  });
+
+  it("ei käytä oletuksena ryhmää joka ei ole käytössä", () => {
+    const poissa = [{ ...ravintola, active: false }, alkoholi];
+
+    const r = mapReportGroups(
+      [{ posName: "Tuntematon", grossCents: 5000, vatCents: null }],
+      [],
+      poissa,
+    );
+
+    expect(r.dropped).toEqual(["Tuntematon"]);
+  });
+
+  it("summaa kassan ALV:n kun se on kaikilla yhdistyvillä", () => {
+    const r = mapReportGroups(
+      [
+        { posName: "Viini", grossCents: 60000, vatCents: 12191 },
+        { posName: "Olut", grossCents: 40000, vatCents: 8127 },
+      ],
+      mappings,
+      groups,
+    );
+
+    expect(r.lines[0].posVatCents).toBe(20318);
+  });
+
+  it("hylkää kassan ALV:n jos se puuttuu yhdeltä yhdistyvältä", () => {
+    const r = mapReportGroups(
+      [
+        { posName: "Viini", grossCents: 60000, vatCents: 12191 },
+        { posName: "Olut", grossCents: 40000, vatCents: null },
+      ],
+      mappings,
+      groups,
+    );
+
+    expect(r.lines[0].posVatCents).toBeNull();
+  });
+
+  /*
+   * KOKO KETJU: raportti → rivit → täsmäytys.
+   *
+   * Tämä on se mitä ominaisuus lupaa. Jos tämä menee läpi, kassan
+   * päiväraportti täsmää Budetin laskelmaan.
+   */
+  it("tuottaa täsmäävän tuloksen kokonaisesta raportista", () => {
+    const raportti = [
+      { posName: "Ruoka", grossCents: 200000, vatCents: 24561 },
+      { posName: "Take away", grossCents: 50000, vatCents: 6140 },
+      { posName: "Viini", grossCents: 60000, vatCents: 12191 },
+      { posName: "Olut", grossCents: 40000, vatCents: 8127 },
+    ];
+
+    const kassaBrutto = raportti.reduce((s, g) => s + g.grossCents, 0);
+    const kassaAlv = raportti.reduce((s, g) => s + (g.vatCents ?? 0), 0);
+
+    const { lines } = mapReportGroups(raportti, mappings, groups);
+
+    const r = reconcile({
+      posGrossCents: kassaBrutto,
+      posVatCents: kassaAlv,
+      lines,
+    });
+
+    expect(r.status).toBe("match");
+    expect(r.byRate).toHaveLength(2);
+    expect(r.total.budetCents).toBe(350000);
   });
 });

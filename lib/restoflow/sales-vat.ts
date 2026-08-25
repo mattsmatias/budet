@@ -344,3 +344,132 @@ export function parseRate(input: unknown): number | null {
 
   return Math.round((percent / 100) * 1e5) / 1e5;
 }
+
+// ---------------------------------------------------------------------------
+// Kassaraportin ryhmien kohdistus
+// ---------------------------------------------------------------------------
+
+/** Ryhmä sellaisena kuin se luettiin kassan päiväraportista. */
+export interface ReportGroup {
+  /** Nimi kassan raportissa: "Ruoka", "Viini", "Take away". */
+  posName: string;
+  /** Ryhmän myynti verollisena. */
+  grossCents: number;
+  /** Kassan ilmoittama ALV tälle ryhmälle, jos raportti eritteli sen. */
+  vatCents: number | null;
+}
+
+export interface MappedReport {
+  lines: SalesLine[];
+  /**
+   * Kassaryhmät joille ei löytynyt kohdistusta.
+   *
+   * Ne ovat riveillä oletusryhmässä — myynti ei katoa — mutta
+   * verokanta on arvattu, ja käyttäjän on nähtävä mitkä.
+   */
+  unmapped: string[];
+  /**
+   * Ryhmät jotka jäivät kokonaan pois.
+   *
+   * Vain jos oletusryhmää ei ole määritetty. Silloin summa ei täsmää,
+   * ja täsmäytys kertoo sen — mutta syy on parempi sanoa suoraan.
+   */
+  dropped: string[];
+}
+
+/**
+ * Kassaraportin ryhmät Budetin myyntiriveiksi.
+ *
+ * KAKSI KASSARYHMÄÄ VOI OLLA YKSI MYYNTIRYHMÄ.
+ *
+ * "Viini" ja "Olut" ovat molemmat alkoholimyyntiä. Ne yhdistyvät
+ * yhdeksi riviksi, koska päivällä voi olla vain yksi rivi per
+ * myyntiryhmä — kaksi olisi kaksi totuutta samasta luvusta.
+ *
+ * VEROKANTA ON RYHMÄN NYKYINEN.
+ *
+ * Tämä on uusi tapahtuma, joten siihen pätee nykyinen asetus. Vanhat
+ * rivit kantavat oman kantansa eikä tämä koske niitä.
+ */
+export function mapReportGroups(
+  reportGroups: ReportGroup[],
+  mappings: PosMapping[],
+  groups: SalesGroup[],
+): MappedReport {
+  const byName = new Map(
+    mappings.map((m) => [normalise(m.posName), m.salesGroupId]),
+  );
+  const byId = new Map(groups.map((g) => [g.id, g]));
+  const fallback = groups.find((g) => g.isDefault && g.active) ?? null;
+
+  const merged = new Map<
+    string,
+    { group: SalesGroup; grossCents: number; posVatCents: number | null; names: string[] }
+  >();
+
+  const unmapped: string[] = [];
+  const dropped: string[] = [];
+
+  for (const reported of reportGroups) {
+    const mappedId = byName.get(normalise(reported.posName));
+    const group = mappedId ? byId.get(mappedId) : undefined;
+
+    const target = group ?? fallback;
+
+    if (!target) {
+      dropped.push(reported.posName);
+      continue;
+    }
+
+    if (!group) unmapped.push(reported.posName);
+
+    const current = merged.get(target.id) ?? {
+      group: target,
+      grossCents: 0,
+      posVatCents: null,
+      names: [],
+    };
+
+    current.grossCents += reported.grossCents;
+    current.names.push(reported.posName);
+
+    /*
+     * Kassan ALV summautuu vain jos se on kaikilla yhdistyvillä
+     * ryhmillä. Yhden puuttuminen tekisi summasta vajaan, ja vajaa
+     * summa näyttäisi täsmäytyksessä erolta joka ei ole ero.
+     */
+    if (reported.vatCents !== null) {
+      current.posVatCents = (current.posVatCents ?? 0) + reported.vatCents;
+    } else {
+      current.posVatCents = null;
+    }
+
+    merged.set(target.id, current);
+  }
+
+  const lines: SalesLine[] = [...merged.values()].map((entry) => {
+    const amounts = lineFromGross(entry.grossCents, entry.group.vatRate);
+
+    return {
+      salesGroupId: entry.group.id,
+      vatRate: entry.group.vatRate,
+      grossCents: amounts.grossCents,
+      vatCents: amounts.vatCents,
+      netCents: amounts.netCents,
+      posName: entry.names.join(", "),
+      posVatCents: entry.posVatCents,
+    };
+  });
+
+  return { lines, unmapped, dropped };
+}
+
+/**
+ * Nimien vertailu.
+ *
+ * Kassa kirjoittaa "RUOKA", "Ruoka" ja "ruoka " eri raporteissa. Ne
+ * ovat sama ryhmä, ja kohdistuksen pitäisi löytyä kaikilla.
+ */
+function normalise(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}

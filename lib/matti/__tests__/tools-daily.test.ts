@@ -56,6 +56,8 @@ function sale(date: string, netCents: number, targetCents: number | null = null)
     vatCents: null,
     transactions: null,
     source: "manual",
+    posGrossCents: null,
+    posVatCents: null,
   };
 }
 
