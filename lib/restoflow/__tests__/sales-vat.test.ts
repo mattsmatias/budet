@@ -152,8 +152,9 @@ describe("reconcile", () => {
     const r = reconcile({
       posGrossCents: 400000,
       posVatCents: s.vatCents,
+      posVatRates: [],
       lines,
-    });
+      });
 
     expect(r.status).toBe("match");
     expect(r.explanation).toBeNull();
@@ -168,15 +169,16 @@ describe("reconcile", () => {
     const r = reconcile({
       posGrossCents: s.grossCents + 1,
       posVatCents: s.vatCents - 1,
+      posVatRates: [],
       lines,
-    });
+      });
 
     expect(r.status).toBe("match");
   });
 
   it("löytää eron loppusummasta", () => {
     const lines = [line(0.14, 479150)];
-    const r = reconcile({ posGrossCents: 482150, posVatCents: null, lines });
+    const r = reconcile({ posGrossCents: 482150, posVatCents: null, posVatRates: [], lines });
 
     expect(r.status).toBe("mismatch");
     expect(r.total.diffCents).toBe(3000);
@@ -193,8 +195,9 @@ describe("reconcile", () => {
     const r = reconcile({
       posGrossCents: s.grossCents,
       posVatCents: 36842,
+      posVatRates: [],
       lines,
-    });
+      });
 
     expect(r.status).toBe("mismatch");
     expect(r.explanation).toContain("verokantaan");
@@ -209,8 +212,9 @@ describe("reconcile", () => {
     const r = reconcile({
       posGrossCents: 400000,
       posVatCents: s.vatCents,
+      posVatRates: [],
       lines,
-    });
+      });
 
     expect(r.explanation).toContain("puuttuu riveiltä");
     expect(r.explanation).toContain(formatMoney(100000));
@@ -226,6 +230,7 @@ describe("reconcile", () => {
     const r = reconcile({
       posGrossCents: null,
       posVatCents: null,
+      posVatRates: [],
       lines: [line(0.14, 300000)],
     });
 
@@ -236,7 +241,7 @@ describe("reconcile", () => {
 
   it("vertaa kannoittain", () => {
     const lines = [line(0.14, 300000, 36842), line(0.255, 100000, 25000)];
-    const r = reconcile({ posGrossCents: 400000, posVatCents: 61842, lines });
+    const r = reconcile({ posGrossCents: 400000, posVatCents: 61842, posVatRates: [], lines });
 
     const alkoholi = r.byRate.find((c) => c.label === `ALV ${formatRate(0.255)}`);
     expect(alkoholi?.status).toBe("mismatch");
@@ -697,8 +702,9 @@ describe("mapReportGroups", () => {
     const r = reconcile({
       posGrossCents: kassaBrutto,
       posVatCents: kassaAlv,
+      posVatRates: [],
       lines,
-    });
+      });
 
     expect(r.status).toBe("match");
     expect(r.byRate).toHaveLength(2);

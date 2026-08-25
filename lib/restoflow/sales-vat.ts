@@ -261,18 +261,26 @@ export function reconcile(input: {
   posGrossCents: number | null;
   posVatCents: number | null;
   /**
-   * Kassan oma ALV-erittely, jos raportissa oli sellainen.
+   * Kassan oma ALV-erittely, tai tyhjä lista kun sitä ei ole.
    *
-   * Kun tämä on olemassa, se on päivän verotieto. Ryhmistä johdettu
+   * Kun erittely on olemassa, se on päivän verotieto. Ryhmistä johdettu
    * vero jää tarkistuslaskelmaksi, ja ero näiden välillä kertoo
    * kantajaon ja ryhmäjaon erosta — ei siitä että jompikumpi olisi
    * väärin.
+   *
+   * PAKOLLINEN, EI VALINNAINEN.
+   *
+   * Kenttä oli valinnainen, ja yksi näkymä jäi päivittämättä: se
+   * käännettiin ja ajettiin ilman virhettä, mutta näytti vanhaa
+   * varoitusta päivästä joka täsmäsi. Pakollisena kääntäjä pakottaa
+   * jokaisen kutsupaikan päättämään, ja tyhjä lista on tietoinen
+   * "erittelyä ei ole" eikä unohdus.
    */
-  posVatRates?: PosVatRate[];
+  posVatRates: PosVatRate[];
   lines: SalesLine[];
 }): Reconciliation {
   const summary = summarise(input.lines);
-  const posRates = (input.posVatRates ?? [])
+  const posRates = input.posVatRates
     .slice()
     .sort((a, b) => b.vatRate - a.vatRate);
   const tolerance = toleranceFor(summary.byRate.length);

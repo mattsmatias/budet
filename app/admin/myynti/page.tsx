@@ -16,6 +16,7 @@ import { reconcile as reconcileWithPos } from "@/lib/restoflow/sales-vat";
 import {
   fetchPosMappings,
   fetchSalesGroups,
+  fetchPosVatRates,
   fetchSalesLines,
 } from "@/lib/restoflow/queries";
 
@@ -27,10 +28,8 @@ export const metadata = { title: "Myynti" };
  * Yksi luku päivässä, ja se on kaiken myyntiin liittyvän lähde:
  * yleiskuvan vertailu, työvoiman osuus, karkea tulos ja raportit.
  *
- * Sivu ei ole valikossa. Myynti kirjataan illan päätteeksi, ja tie
- * tänne on yleiskuvan kortti joka huomauttaa puuttuvasta päivästä —
- * valikkokohta muistuttaisi joka kerta myös silloin kun ei ole mitään
- * kirjattavaa.
+ * Sivu on valikon talousosaston ensimmäinen kohta: kassan päiväraportti
+ * kirjataan joka ilta, ja päivittäinen tehtävä kuuluu valikkoon.
  */
 export default async function SalesPage() {
   const { restaurant, role, today } = await adminContext("/admin/myynti");
@@ -43,10 +42,11 @@ export default async function SalesPage() {
    * Rivit vain yhdeltä päivältä: sadan päivän rivit olisi tuhat riviä
    * jota kukaan ei katso, ja täsmäytys koskee aina yhtä päivää.
    */
-  const [groups, mappings, todayLines] = await Promise.all([
+  const [groups, mappings, todayLines, todayVatRates] = await Promise.all([
     fetchSalesGroups(restaurant.id),
     fetchPosMappings(restaurant.id),
     fetchSalesLines(restaurant.id, today),
+    fetchPosVatRates(restaurant.id, today),
   ]);
   const canManage = can(role, "sales.manage");
 
@@ -124,6 +124,7 @@ export default async function SalesPage() {
               result={reconcileWithPos({
                 posGrossCents: todayRow.posGrossCents,
                 posVatCents: todayRow.posVatCents,
+                posVatRates: todayVatRates,
                 lines: todayLines,
               })}
             />

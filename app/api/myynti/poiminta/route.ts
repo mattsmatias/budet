@@ -107,6 +107,8 @@ Tämä taulukko on eri asia kuin myyntiryhmät. Ryhmät kertovat mitä myytiin, 
 
 transactions: kuittien tai tapahtumien lukumäärä. Raportissa "Kuitteja", "Tapahtumia", "Asiakkaita", "Myyntitapahtumat". Ei euroja vaan kappaleita.
 
+Jos raportti ei kerro kuittien määrää, palauta null. Älä johda sitä muualta: maksutapojen kappalemäärät ("45 MAKSUPÄÄTE", "15 E-PASSI") kertovat maksutapahtumista eivät kuiteista, ja tuoteryhmien kappalemäärät ("83 RUOKA") kertovat myydyistä annoksista. Väärästä kuittimäärästä lasketaan keskiostos, ja väärä keskiostos näyttää oikealta luvulta.
+
 TÄRKEÄÄ
 
 Älä laske puuttuvaa lukua muista luvuista. Jos veroton ei lue raportissa, palauta null — laskeminen tehdään muualla ja sen on näyttävä lasketulta.
