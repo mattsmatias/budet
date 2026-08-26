@@ -7,12 +7,8 @@ import {
   previousMonth,
 } from "@/lib/restoflow/expenses";
 import { formatMoney } from "@/lib/money";
-import {
-  Card,
-  Icon,
-  ICONS,
-  Avatar,
-} from "@/components/restoflow/ui";
+import { Avatar, Card } from "@/components/restoflow/ui";
+import { RfIcon } from "@/components/restoflow/icons";
 import { SendToAccountant } from "./send-to-accountant";
 
 export const metadata = { title: "Raportointi" };
@@ -81,14 +77,36 @@ export default async function ReportsPage({
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      <div className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
-            {formatMoney(totals.totalCents)} kirjattuja kuluja
-          </p>
-        </div>
+      <div className="rf-z-page relative flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
+          {formatMoney(totals.totalCents)} kirjattuja kuluja
+        </p>
 
+        {/*
+          Kuukausiraportti on yksi raportti, ei kuusi.
+
+          PDF-painike oli jokaisessa kortissa, mutta tulostettava sivu
+          ei lue raporttityyppiä lainkaan: Työaikaraportin PDF antoi
+          saman kuluraportin kuin ALV-raportin. Kuusi painiketta lupasi
+          kuutta eri tiedostoa ja tuotti yhden.
+
+          Nyt se on siellä missä se on totta: sivun tasolla, omalla
+          nimellään.
+        */}
+        <Link
+          href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
+          className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            border: "1px solid var(--rf-line-strong)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <RfIcon name="report" size={15} />
+          Kuukausiraportti
+        </Link>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
@@ -104,60 +122,28 @@ export default async function ReportsPage({
                   {report.description}
                 </p>
               </div>
-              <span style={{ color: "var(--rf-text-3)" }}>
-                <Icon path={ICONS.file} size={22} />
+              <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                <RfIcon name="report" size={20} />
               </span>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2.5">
-              <a
+            {/*
+              Kaksi samanarvoista muotoa, samannäköisinä.
+
+              Painikkeet olivat kolmea eri kokoa ja painoa saman kortin
+              sisällä, vaikka ne tekevät saman asian eri tiedostotyypillä.
+              Korostusväri jäi pois molemmilta: kun kaikki on
+              korostettu, mikään ei ole.
+            */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Lataus
                 href={`/admin/raportit/csv?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
-                /*
-                 * Latauspainike ei ole punainen.
-                 *
-                 * Kortteja on viisi, ja punaisia painikkeita oli
-                 * yhtä monta plus yläpalkin "Lisää kuitti". Kun
-                 * kaikki on korostettu, mikään ei ole — ja
-                 * korostettu oli tässä väärä: raportin lataus on
-                 * viiden samanarvoisen vaihtoehdon yksi.
-                 */
-                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[13px] font-bold"
-                style={{
-                  background: "var(--rf-inset)",
-                  color: "var(--rf-text)",
-                  border: "1px solid var(--rf-line-strong)",
-                  borderRadius: "var(--rf-r-control)",
-                }}
-              >
-                <Icon path={ICONS.download} size={16} />
-                Lataa CSV
-              </a>
-
-              <a
+                label="CSV"
+              />
+              <Lataus
                 href={`/admin/raportit/xlsx?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
-                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
-                style={{
-                  background: "var(--rf-inset)",
-                  color: "var(--rf-text)",
-                  borderRadius: "var(--rf-r-control)",
-                }}
-              >
-                <Icon path={ICONS.download} size={16} />
-                Excel
-              </a>
-
-              <Link
-                href={`/admin/raportit/tulosta?kuukausi=${viewMonth}`}
-                className="rf-press inline-flex items-center gap-2 px-3.5 py-2 text-[14px] font-semibold"
-                style={{
-                  background: "var(--rf-inset)",
-                  color: "var(--rf-text)",
-                  borderRadius: "var(--rf-r-control)",
-                }}
-              >
-                <Icon path={ICONS.file} size={16} />
-                PDF
-              </Link>
+                label="Excel"
+              />
             </div>
           </Card>
         ))}
@@ -218,24 +204,26 @@ export default async function ReportsPage({
         <div className="mt-4 flex flex-wrap gap-2">
           <a
             href={`/admin/raportit/xlsx?kuukausi=${viewMonth}`}
-            className="rf-press inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
             style={{
               background: "var(--rf-accent)",
               color: "var(--rf-on-accent)",
+              border: "1px solid transparent",
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <Icon path={ICONS.download} size={16} />
+            <RfIcon name="download" size={15} />
             Lataa koko kuukausi Excelinä
           </a>
 
           {accountants.length === 0 ? (
             <Link
               href="/admin/tyontekijat"
-              className="rf-press inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
+              className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
               style={{
                 background: "var(--rf-inset)",
                 color: "var(--rf-text)",
+                border: "1px solid var(--rf-line-strong)",
                 borderRadius: "var(--rf-r-control)",
               }}
             >
@@ -252,5 +240,29 @@ export default async function ReportsPage({
         />
       </Card>
     </div>
+  );
+}
+
+/**
+ * Latauspainike.
+ *
+ * Kaikki raporttien latauspainikkeet samasta paikasta: kolme eri
+ * kokoa saman kortin sisällä oli sattumaa, ei valintaa.
+ */
+function Lataus({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+      style={{
+        background: "var(--rf-inset)",
+        color: "var(--rf-text)",
+        border: "1px solid var(--rf-line-strong)",
+        borderRadius: "var(--rf-r-control)",
+      }}
+    >
+      <RfIcon name="download" size={15} />
+      {label}
+    </a>
   );
 }
