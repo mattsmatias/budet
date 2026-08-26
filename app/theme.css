@@ -519,6 +519,38 @@
   font-weight: 600;
 }
 
+/*
+ * Summarivi.
+ *
+ * JALKA JÄI TYYLITTELEMÄTTÄ.
+ *
+ * thead ja tbody saivat täytteen ja reunat, tfoot ei mitään. Solut
+ * olivat siis ilman täytettä: summarivi alkoi kortin reunasta eivätkä
+ * sarakkeet osuneet yläpuolisten rivien lukuihin. Se näytti siltä
+ * kuin rivi kuuluisi eri taulukkoon.
+ *
+ * Sama täyte ja samat pystyviivat kuin rungossa, jotta sarakkeet
+ * jatkuvat suorina loppuun asti. Vahvempi yläviiva erottaa summan
+ * riveistä joista se lasketaan.
+ */
+.rf-table tfoot td {
+  border-top: 1px solid var(--rf-line-strong);
+  border-right: 1px solid var(--rf-line);
+  background: var(--rf-inset);
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rf-table tfoot td:last-child {
+  border-right: 0;
+}
+
+/* .num on kahden luokan verran tarkempi, joten paino toistetaan. */
+.rf-table tfoot .num {
+  font-weight: 700;
+}
+
 .rf-card-lift {
   transition:
     border-color 180ms ease,

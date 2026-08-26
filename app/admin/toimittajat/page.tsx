@@ -208,7 +208,25 @@ export default async function SuppliersPage() {
             </li>
           </ul>
 
-          <div className="hidden overflow-x-auto md:block">
+          {/*
+            Alakulmat pyöreiksi tässä eikä kortissa.
+
+            Summarivillä on tausta, ja se on kortin alin asia. Card ei
+            leikkaa lapsiaan — overflow: hidden siellä leikkaisi myös
+            avautuvat valikot ja kohdistusreunukset muilla sivuilla —
+            joten neliskulmainen rivi maalasi kortin pyöristetyn
+            alareunan yli.
+
+            Tämä kääre on jo vierityskonteksti overflow-x:n takia,
+            joten pelkkä kulmasäde riittää.
+          */}
+          <div
+            className="hidden overflow-x-auto md:block"
+            style={{
+              borderBottomLeftRadius: "var(--rf-r-card)",
+              borderBottomRightRadius: "var(--rf-r-card)",
+            }}
+          >
             <table className="rf-table w-full min-w-[52rem] text-[14px]">
               <caption className="sr-only">Toimittajat ja kulut</caption>
               <thead>
@@ -294,10 +312,7 @@ export default async function SuppliersPage() {
                 })}
               </tbody>
               <tfoot>
-                <tr
-                  className="border-t-2 font-semibold"
-                  style={{ borderColor: "var(--rf-line-strong)" }}
-                >
+                <tr>
                   <td>Yhteensä</td>
                   <td />
                   <td className="num">{inMonth.length}</td>
