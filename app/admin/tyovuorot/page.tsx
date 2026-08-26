@@ -29,8 +29,6 @@ import {
   Card,
   CardHeader,
   EmptyState,
-  Icon,
-  ICONS,
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
@@ -338,7 +336,7 @@ export default async function AdminShiftsPage() {
                           }
                         >
                           {absence.certificateSeenAt ? (
-                            <Icon path={ICONS.check} size={14} />
+                            <RfIcon name="check" size={14} />
                           ) : null}
                           {absence.certificateSeenAt
                             ? "Todistus nähty"

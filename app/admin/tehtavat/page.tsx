@@ -9,7 +9,7 @@ import {
   type Task,
 } from "@/lib/restoflow/tasks";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Card } from "@/components/restoflow/ui";
+import { MetricCard } from "@/components/restoflow/ui";
 import { NewTask } from "./new-task";
 import { TaskList } from "./task-list";
 import { TaskCalendar } from "./task-calendar";
@@ -228,6 +228,19 @@ function matchesSearch(task: Task, search: string): boolean {
   );
 }
 
+/**
+ * Tehtävien avainluku.
+ *
+ * SAMA KORTTI KUIN MUUALLA.
+ *
+ * Tämä oli oma kappaleensa: MetricCardin typografia kopioituna
+ * tavallisen Cardin sisään. Reunus, kulmasäde ja varjo tulivat siis
+ * eri lähteestä kuin Kuluilla ja Palkoilla, ja ero näkyi sivua
+ * vaihtaessa.
+ *
+ * Väri kertoo edelleen tilan, mutta samalla tavalla kuin muualla:
+ * ikonilaatta ja jalkateksti, ei itse luku.
+ */
 function Luku({
   label,
   value,
@@ -241,12 +254,6 @@ function Luku({
   hint: string;
   href: string;
 }) {
-  const colors = {
-    risk: { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" },
-    warn: { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" },
-    info: { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" },
-  }[tone];
-
   /*
    * Väri vain kun luku on nollaa suurempi.
    *
@@ -254,40 +261,23 @@ function Luku({
    * hälytyksenä. Väri kertoo tilasta, ei kortin tunnisteesta.
    */
   const active = value > 0;
+  const sävy = tone === "risk" ? "bad" : tone === "warn" ? "warn" : "blue";
 
   return (
-    <Link href={href} className="rf-press block">
-      <Card>
-        <div className="flex items-start gap-3">
-          <span
-            aria-hidden="true"
-            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center"
-            style={{
-              background: active ? colors.bg : "var(--rf-inset)",
-              color: active ? colors.fg : "var(--rf-text-3)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            <RfIcon name={tone === "risk" ? "alert" : tone === "warn" ? "clock" : "calendar"} size={17} />
-          </span>
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-              {label}
-            </p>
-            <p
-              className="rf-tabular mt-[3px] text-[22px] font-bold leading-[1.4] tracking-[-0.03em]"
-              style={{ color: active ? colors.fg : undefined }}
-            >
-              {value}
-            </p>
-            <p className="mt-1 text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
-              {hint}
-            </p>
-          </div>
-        </div>
-      </Card>
-    </Link>
+    <MetricCard
+      label={label}
+      value={value}
+      hint={hint}
+      href={href}
+      tone={active ? sävy : "neutral"}
+      tileTone={active ? sävy : "muted"}
+      icon={
+        <RfIcon
+          name={tone === "risk" ? "alert" : tone === "warn" ? "clock" : "calendar"}
+          size={17}
+        />
+      }
+    />
   );
 }
 

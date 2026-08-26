@@ -21,8 +21,6 @@ import { formatMoney } from "@/lib/money";
 import {
   Card,
   CardHeader,
-  Icon,
-  ICONS,
   MetricCard,
   SeverityDot,
 } from "@/components/restoflow/ui";
@@ -57,7 +55,7 @@ export default async function SupplierDetailPage({
           className="rf-press -ml-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
-          <Icon path={ICONS.back} size={22} />
+          <RfIcon name="back" size={22} />
         </Link>
         <div>
           <h2 className="text-[20px] font-bold tracking-[-0.02em]">{supplier.name}</h2>

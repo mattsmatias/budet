@@ -15,8 +15,6 @@ import {
   Card,
   CardHeader,
   EmptyState,
-  Icon,
-  ICONS,
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
@@ -194,7 +192,7 @@ export default async function SuppliersPage() {
                     </span>
 
                     <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
-                      <Icon path={ICONS.chevron} size={16} />
+                      <RfIcon name="chevron" size={16} />
                     </span>
                   </Link>
                 </li>
@@ -288,7 +286,7 @@ export default async function SuppliersPage() {
                           aria-label={`Avaa ${s.name}`}
                           style={{ color: "var(--rf-text-3)" }}
                         >
-                          <Icon path={ICONS.chevron} size={16} />
+                          <RfIcon name="chevron" size={16} />
                         </Link>
                       </td>
                     </tr>

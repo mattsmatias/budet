@@ -11,8 +11,8 @@ import {
   summarise,
   type AuditEvent,
 } from "@/lib/restoflow/audit";
-import { RfIcon } from "@/components/restoflow/icons";
-import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
+import { RfIcon, type IconName } from "@/components/restoflow/icons";
+import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Toimintaloki" };
 
@@ -94,10 +94,10 @@ export default async function AuditLogPage({
         aria-label="Yhteenveto"
         className="grid auto-rows-fr grid-cols-2 gap-3.5 sm:grid-cols-4"
       >
-        <Luku label="Tapahtumia" value={summary.total} />
-        <Luku label="Lisäyksiä" value={summary.created} tone="ok" />
-        <Luku label="Muutoksia" value={summary.updated} tone="info" />
-        <Luku label="Poistoja" value={summary.deleted} tone="risk" />
+        <Luku label="Tapahtumia" value={summary.total} icon="report" />
+        <Luku label="Lisäyksiä" value={summary.created} tone="ok" icon="plus" />
+        <Luku label="Muutoksia" value={summary.updated} tone="info" icon="settings" />
+        <Luku label="Poistoja" value={summary.deleted} tone="risk" icon="trash" />
       </section>
 
       {summary.latestCritical ? (
@@ -329,36 +329,48 @@ function Tapahtuma({ event, timezone }: { event: AuditEvent; timezone: string })
   );
 }
 
+/**
+ * Lokin avainluku.
+ *
+ * SAMA KORTTI KUIN MUUALLA.
+ *
+ * Luvut olivat MetricCardin typografia kopioituna tavallisen Cardin
+ * sisään, joten reunus ja kulmasäde erosivat muiden sivujen
+ * avainluvuista. Nyt kortti tulee samasta lähteestä, ja sävy näkyy
+ * ikonilaatassa kuten Kuluilla ja Tehtävillä.
+ */
 function Luku({
   label,
   value,
   tone,
+  icon,
 }: {
   label: string;
   value: number;
   tone?: "ok" | "info" | "risk";
+  icon: IconName;
 }) {
-  const color =
-    tone === "ok"
-      ? "var(--rf-green-text)"
-      : tone === "risk"
-        ? "var(--rf-red-text)"
-        : tone === "info"
-          ? "var(--rf-blue-text)"
-          : undefined;
+  /*
+   * Väri vain kun jotain tapahtui.
+   *
+   * Nolla poistoa on tavallinen tulos eikä ansaitse punaista laattaa.
+   */
+  const sävy =
+    value === 0 || tone === undefined
+      ? "muted"
+      : tone === "ok"
+        ? "green"
+        : tone === "risk"
+          ? "bad"
+          : "blue";
 
   return (
-    <Card>
-      <p className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-        {label}
-      </p>
-      <p
-        className="rf-tabular mt-[3px] text-[22px] font-bold leading-[1.4] tracking-[-0.03em]"
-        style={{ color: value > 0 ? color : undefined }}
-      >
-        {value}
-      </p>
-    </Card>
+    <MetricCard
+      label={label}
+      value={value}
+      tileTone={sävy}
+      icon={<RfIcon name={icon} size={17} />}
+    />
   );
 }
 

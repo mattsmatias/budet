@@ -578,60 +578,6 @@ export function Avatar({ initials, size = 36 }: { initials: string; size?: numbe
 }
 
 /** Ohut ikoni. Yhtenäinen viivanpaksuus koko sovelluksessa. */
-export function Icon({
-  path,
-  size = 20,
-  label,
-}: {
-  path: string;
-  size?: number;
-  label?: string;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden={label ? undefined : true}
-      aria-label={label}
-      role={label ? "img" : undefined}
-    >
-      <path d={path} />
-    </svg>
-  );
-}
-
-export const ICONS = {
-  home: "M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5",
-  receipt: "M6 3v18l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4V3zM9 8h6M9 12h6M9 16h3",
-  calendar: "M3 8h18M7 3v3M17 3v3M4 6h16v15H4zM8 12h2M14 12h2M8 16h2",
-  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2",
-  more: "M5 12h.01M12 12h.01M19 12h.01",
-  chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
-  users: "M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM21 20v-1.5a4 4 0 0 0-3-3.87M16 3.6a4 4 0 0 1 0 7.75",
-  bell: "M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7M13.7 20a2 2 0 0 1-3.4 0",
-  settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM19.4 14a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V20a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z",
-  camera: "M4 7h3l1.5-2h7L17 7h3v13H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
-  image: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M9 9.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z",
-  file: "M14 3v5h5M14 3H6v18h12V8zM9 13h6M9 17h4",
-  plus: "M12 5v14M5 12h14",
-  search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4",
-  chevron: "m9 6 6 6-6 6",
-  back: "m14 6-6 6 6 6",
-  download: "M12 3v12M8 11l4 4 4-4M4 21h16",
-  logout: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
-  check: "m5 13 4 4L19 7",
-  alert: "M12 8v5M12 17h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
-  truck: "M3 7h10v9H3zM13 10h4l3 3v3h-7zM7.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6ZM17.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z",
-  target: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
-  trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
-} as const;
-
 // ---------------------------------------------------------------------------
 // Kategoriat
 // ---------------------------------------------------------------------------
