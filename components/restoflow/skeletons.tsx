@@ -115,3 +115,68 @@ export function CalendarSkeleton() {
     </div>
   );
 }
+
+/**
+ * Yksityiskohtasivu: leveä sisältö ja kapea sivupalsta.
+ *
+ * Kuitin sivu on `lg:grid-cols-[1fr_20rem]`, joten luurangon on
+ * jaettava ruutu samassa suhteessa. Tasaleveä jako lupaisi väärän
+ * asettelun ja sisältö hyppäisi saapuessaan.
+ */
+export function DetailSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Ladataan…</span>
+
+      <div className="rf-skeleton-block h-5 w-56" />
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
+        <div className="space-y-4">
+          <Rivi height="h-64" />
+          <Rivi height="h-80" />
+        </div>
+        <Rivi height="h-[420px]" />
+      </div>
+    </div>
+  );
+}
+
+/** Päällekkäiset kortit: myyntipäivä ja työntekijän palkkasivu. */
+export function StackSkeleton({ cards = 3 }: { cards?: number }) {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Ladataan…</span>
+
+      <div className="rf-skeleton-block h-5 w-56" />
+
+      {Array.from({ length: cards }, (_, i) => (
+        <Rivi key={i} height={i === 0 ? "h-56" : "h-44"} />
+      ))}
+    </div>
+  );
+}
+
+/** Yksi leveä taulukko: kuukauden työvuorolista. */
+export function TableSkeleton() {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Ladataan…</span>
+
+      <Otsikko />
+      <Rivi height="h-[620px]" />
+    </div>
+  );
+}
+
+/** Kapea lomake keskellä: uusi kuitti. */
+export function NarrowSkeleton() {
+  return (
+    <div className="mx-auto max-w-lg space-y-5" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Ladataan…</span>
+
+      <div className="rf-skeleton-block h-5 w-40" />
+      <Rivi height="h-72" />
+      <Rivi height="h-24" />
+    </div>
+  );
+}
