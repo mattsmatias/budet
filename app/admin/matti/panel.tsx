@@ -14,6 +14,7 @@ import {
 import { RfIcon } from "@/components/restoflow/icons";
 import { Button } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
+import type { Briefing } from "@/lib/matti/briefing";
 
 /**
  * Matti-paneeli.
@@ -65,8 +66,13 @@ interface Turn {
 export function MattiPanel({
   enabled,
   compact,
+  briefing,
+  greeting,
 }: {
   enabled: boolean;
+  /** Tilannekatsaus palvelimelta — samasta lähteestä kuin hälytykset. */
+  briefing: Briefing;
+  greeting: string;
   /** Yläpalkin pyöreä ikonipainike sivupalkin rivin sijaan. */
   compact?: boolean;
 }) {
@@ -115,7 +121,15 @@ export function MattiPanel({
           <RfIcon name="sparkle" size={17} />
         </button>
 
-        {open ? <Overlay container={container} pathname={pathname} close={close} /> : null}
+        {open ? (
+        <Overlay
+          container={container}
+          pathname={pathname}
+          close={close}
+          briefing={briefing}
+          greeting={greeting}
+        />
+      ) : null}
       </>
     );
   }
@@ -157,7 +171,15 @@ export function MattiPanel({
         </kbd>
       </button>
 
-      {open ? <Overlay container={container} pathname={pathname} close={close} /> : null}
+      {open ? (
+        <Overlay
+          container={container}
+          pathname={pathname}
+          close={close}
+          briefing={briefing}
+          greeting={greeting}
+        />
+      ) : null}
     </>
   );
 }
@@ -180,10 +202,14 @@ function Overlay({
   container,
   pathname,
   close,
+  briefing,
+  greeting,
 }: {
   container: React.RefObject<HTMLDivElement | null>;
   pathname: string;
   close: () => void;
+  briefing: Briefing;
+  greeting: string;
 }) {
   if (typeof document === "undefined") return null;
 
@@ -206,7 +232,12 @@ function Overlay({
           boxShadow: "var(--rf-shadow-lg)",
         }}
       >
-        <Conversation currentPage={pathname} onClose={close} />
+        <Conversation
+          currentPage={pathname}
+          onClose={close}
+          briefing={briefing}
+          greeting={greeting}
+        />
       </div>
     </>,
     document.body,
@@ -226,7 +257,11 @@ function Overlay({
 function Conversation({
   currentPage,
   onClose,
+  briefing,
+  greeting,
 }: {
+  briefing: Briefing;
+  greeting: string;
   currentPage: string;
   onClose: () => void;
 }) {
@@ -341,7 +376,12 @@ function Conversation({
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         {turns.length === 0 ? (
-          <Welcome currentPage={currentPage} onPick={send} />
+          <Welcome
+            currentPage={currentPage}
+            onPick={send}
+            briefing={briefing}
+            greeting={greeting}
+          />
         ) : (
           <div className="space-y-6">
             {turns.map((turn, index) => (
@@ -404,91 +444,307 @@ function Working() {
 // ---------------------------------------------------------------------------
 
 /**
- * Pikatoiminnot sen mukaan missä käyttäjä on.
+ * Ehdotukset sen mukaan missä käyttäjä on.
  *
- * Lounassivulla lounas on ensimmäisenä. Se ei ole älykkyyttä vaan
- * kohteliaisuutta: jos ihminen katsoo lounaslistaa, hän ei ensimmäisenä
- * halua tarkistaa budjettia.
+ * SIVU KERTOO MITÄ IHMINEN ON TEKEMÄSSÄ.
+ *
+ * Sama viisi nappia joka sivulla on lista jonka lukemisen lopettaa
+ * kolmannella kerralla. Kuittisivulla oleva ei ensimmäisenä halua
+ * tehdä lounaslistaa, ja budjettisivulla oleva kysyy budjetista.
+ *
+ * Ehdotukset ovat kysymyksiä eivätkä komentoja. "Miksi työvoimakulut
+ * ovat yli budjetin" johtaa vastaukseen jota voi käyttää; "tarkista
+ * budjetit" johtaa lukuun jonka näkee jo ruudulta.
  */
 function quickActions(currentPage: string): { label: string; prompt: string }[] {
-  const lunch = {
-    label: "Tee ensi viikon lounaslista",
-    prompt: "Tee ensi viikon lounaslista.",
-  };
-  const expenses = {
-    label: "Analysoi tämän kuun kulut",
-    prompt: "Analysoi tämän kuun kulut.",
-  };
-  const budgets = { label: "Tarkista budjetit", prompt: "Tarkista budjettien tilanne." };
-  const receipts = {
-    label: "Käsittele kuitit",
-    prompt: "Onko käsittelemättömiä kuitteja?",
-  };
-  const report = {
-    label: "Tee kuukausiraportti",
-    prompt: "Tiivistä tämän kuukauden talous.",
+  const yleiset = [
+    {
+      label: "Mitä minun pitää hoitaa tänään?",
+      prompt: "Mitä minun pitää hoitaa tänään?",
+    },
+    {
+      label: "Mitä on mennyt pieleen tällä viikolla?",
+      prompt: "Mitä on mennyt pieleen tällä viikolla?",
+    },
+    { label: "Analysoi tämän kuun kannattavuus", prompt: "Analysoi tämän kuun kannattavuus." },
+  ];
+
+  const sivukohtaiset: Record<string, { label: string; prompt: string }[]> = {
+    "/admin/budjetit": [
+      {
+        label: "Miksi kulut ovat yli budjetin?",
+        prompt: "Miksi kulut ovat yli budjetin? Erittele kategorioittain.",
+      },
+      { label: "Mihin budjetti riittää loppukuussa?", prompt: "Mihin budjetti riittää loppukuussa?" },
+    ],
+    "/admin/kuitit": [
+      {
+        label: "Etsi tämän kuukauden suurimmat kulut",
+        prompt: "Etsi tämän kuukauden suurimmat kulut.",
+      },
+      { label: "Onko käsittelemättömiä kuitteja?", prompt: "Onko käsittelemättömiä kuitteja?" },
+    ],
+    "/admin/kulut": [
+      { label: "Mikä kuluerä kasvoi eniten?", prompt: "Mikä kuluerä kasvoi eniten viime kuuhun verrattuna?" },
+      { label: "Analysoi tämän kuun kulut", prompt: "Analysoi tämän kuun kulut." },
+    ],
+    "/admin/tyovuorot": [
+      {
+        label: "Onko ensi viikon vuorosuunnitelma liian kallis?",
+        prompt: "Onko ensi viikon työvuorosuunnitelma liian kallis?",
+      },
+      { label: "Onko vuoroja ilman tekijää?", prompt: "Onko ensi viikolla vuoroja ilman tekijää?" },
+    ],
+    "/admin/lounas": [
+      { label: "Tee ensi viikon lounaslista", prompt: "Tee ensi viikon lounaslista." },
+      { label: "Mitä lounaita on ollut eniten?", prompt: "Mitä lounasruokia on ollut eniten tarjolla?" },
+    ],
+    "/admin/myynti": [
+      { label: "Miten myynti kehittyi tässä kuussa?", prompt: "Miten myynti kehittyi tässä kuussa?" },
+      { label: "Osuuko myynti tavoitteeseen?", prompt: "Osuuko myynti tavoitteeseen tässä kuussa?" },
+    ],
+    "/admin/palkat": [
+      { label: "Paljonko työvoima maksoi tässä kuussa?", prompt: "Paljonko työvoima maksoi tässä kuussa?" },
+    ],
+    "/admin/tehtavat": [
+      { label: "Mitkä tehtävät ovat myöhässä?", prompt: "Mitkä tehtävät ovat myöhässä?" },
+    ],
+    "/admin/raportit": [
+      { label: "Tiivistä tämän kuukauden talous", prompt: "Tiivistä tämän kuukauden talous." },
+    ],
   };
 
-  if (currentPage.startsWith("/admin/lounas")) {
-    return [lunch, expenses, budgets, receipts];
-  }
-  if (currentPage.startsWith("/admin/kuitit")) {
-    return [receipts, expenses, budgets, lunch];
-  }
-  if (currentPage.startsWith("/admin/budjetit")) {
-    return [budgets, expenses, report, lunch];
-  }
-  if (currentPage.startsWith("/admin/raportit")) {
-    return [report, expenses, budgets, lunch];
-  }
+  const osuma = Object.keys(sivukohtaiset).find((polku) => currentPage.startsWith(polku));
+  const omat = osuma ? sivukohtaiset[osuma] : [];
 
-  return [expenses, budgets, lunch, receipts, report];
+  // Sivukohtaiset ensin, yleiset perään — ja enintään viisi riviä.
+  const kaikki = [...omat, ...yleiset];
+  const nahdyt = new Set<string>();
+
+  return kaikki
+    .filter((a) => {
+      if (nahdyt.has(a.prompt)) return false;
+      nahdyt.add(a.prompt);
+      return true;
+    })
+    .slice(0, 5);
 }
 
+/**
+ * Aloitusnäkymä.
+ *
+ * MATTI KERTOO HETI MIKSI SE ON AUKI.
+ *
+ * Tässä luki aiemmin "BUDet AI -työkaveri" ja kappale siitä että Matti
+ * voi auttaa hoitamaan asioita. Se vei neljänneksen ruudusta eikä
+ * kertonut ravintolasta mitään — teksti oli sama tyhjänä päivänä ja
+ * silloin kun kaksi asiaa oli pielessä.
+ *
+ * Nyt ensimmäisenä on tilanne. Se on johdettu samasta buildAlerts-
+ * kutsusta kuin kellon merkki ja Ilmoitukset, joten Matti ei voi
+ * kertoa eri tilannetta kuin muu sovellus.
+ */
 function Welcome({
   currentPage,
   onPick,
+  briefing,
+  greeting,
 }: {
   currentPage: string;
   onPick: (prompt: string) => void;
+  briefing: Briefing;
+  greeting: string;
 }) {
+  const { critical, warnings, observations } = briefing;
+  const kaikkiKunnossa = critical.length === 0 && warnings.length === 0;
+
   return (
-    <div className="pt-6">
-      <span style={{ color: "var(--rf-accent)" }}>
-        <RfIcon name="sparkle" size={26} />
-      </span>
+    <div className="space-y-6 pt-2">
+      <div>
+        <div className="flex items-center gap-2">
+          <span style={{ color: "var(--rf-accent)" }}>
+            <RfIcon name="sparkle" size={20} />
+          </span>
+          <h2 className="text-[17px] font-semibold tracking-tight">Matti</h2>
+        </div>
 
-      <h2 className="mt-3 text-[19px] font-semibold tracking-tight">Matti</h2>
-      <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-        BUDet AI -työkaveri
-      </p>
+        <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+          AI-työkaverisi ravintolan arkeen
+        </p>
 
-      <p className="mt-3 max-w-sm text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-        Voin auttaa sinua hoitamaan BUDetissa asioita. Muutokset näytän
-        sinulle ennen kuin mitään tapahtuu.
-      </p>
-
-      <div className="mt-6 space-y-1.5">
-        {quickActions(currentPage).map((action) => (
-          <button
-            key={action.prompt}
-            type="button"
-            onClick={() => onPick(action.prompt)}
-            className="rf-press flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-medium"
-            style={{
-              background: "var(--rf-card)",
-              border: "1px solid var(--rf-line)",
-              color: "var(--rf-text)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            {action.label}
-            <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
-              <RfIcon name="chevron" size={14} />
-            </span>
-          </button>
-        ))}
+        <p className="mt-3 text-[14px] leading-relaxed">
+          {greeting} 👋{" "}
+          {kaikkiKunnossa
+            ? "Tällä hetkellä ei ole mitään huomautettavaa."
+            : "Tässä tämän hetken tärkeimmät asiat."}
+        </p>
       </div>
+
+      {/*
+        Tilanne kolmessa tasossa.
+
+        Kiireelliset ensin, koska lista luetaan ylhäältä ja se katkeaa
+        siihen mihin aika loppuu.
+      */}
+      {critical.length > 0 ? (
+        <Tilanne
+          tone="risk"
+          title={`${critical.length} ${critical.length === 1 ? "asia vaatii" : "asiaa vaatii"} huomiota`}
+          alerts={critical}
+        />
+      ) : null}
+
+      {warnings.length > 0 ? (
+        <Tilanne
+          tone="warn"
+          title={`${warnings.length} ${warnings.length === 1 ? "asia kannattaa" : "asiaa kannattaa"} tarkistaa`}
+          alerts={warnings}
+        />
+      ) : null}
+
+      {kaikkiKunnossa ? (
+        <p className="flex items-center gap-2 text-[13.5px]" style={{ color: "var(--rf-green-text)" }}>
+          <span
+            aria-hidden="true"
+            className="inline-block h-2 w-2 shrink-0"
+            style={{ background: "var(--rf-green-text)", borderRadius: 999 }}
+          />
+          Kaikki näyttää hyvältä
+        </p>
+      ) : null}
+
+      {/*
+        Havainnot.
+
+        Nämä eivät ole hälytyksiä vaan poikkeamia joita kukaan ei ole
+        pyytänyt etsimään. Jokainen on laskettu Budetin datasta ja
+        jokaisella on kynnys — kolmen prosentin heilahdus ei ole
+        havainto vaan kohinaa.
+      */}
+      {observations.map((havainto) => (
+        <div
+          key={havainto.id}
+          className="px-3.5 py-3"
+          style={{
+            background: "var(--rf-inset)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <p
+            className="flex items-center gap-1.5 text-[12px] font-bold uppercase"
+            style={{ color: "var(--rf-accent)", letterSpacing: "0.06em" }}
+          >
+            <RfIcon name="sparkle" size={13} />
+            Matti huomasi
+          </p>
+
+          <p className="mt-1.5 text-[13.5px] leading-relaxed">{havainto.text}</p>
+
+          <button
+            type="button"
+            onClick={() => onPick(`${havainto.text} Mistä se johtuu?`)}
+            className="rf-press mt-2 text-[12.5px] font-bold"
+            style={{ color: "var(--rf-accent)" }}
+          >
+            Selvitä miksi →
+          </button>
+        </div>
+      ))}
+
+      <div>
+        <p className="text-[12.5px] font-semibold" style={{ color: "var(--rf-text-2)" }}>
+          Mitä haluat tehdä?
+        </p>
+
+        <div className="mt-2 space-y-1.5">
+          {quickActions(currentPage).map((action) => (
+            <button
+              key={action.prompt}
+              type="button"
+              onClick={() => onPick(action.prompt)}
+              className="rf-press flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-medium"
+              style={{
+                background: "var(--rf-card)",
+                border: "1px solid var(--rf-line)",
+                color: "var(--rf-text)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              {action.label}
+              <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                <RfIcon name="chevron" size={14} />
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        Muutokset näytän sinulle ennen kuin mitään tapahtuu.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Yksi tilanneryhmä.
+ *
+ * Enintään kolme riviä ja loput lukumääränä. Paneeli on kapea, ja
+ * kymmenen riviä työntäisi ehdotukset näkymän ulkopuolelle — juuri ne
+ * joiden takia Matti avattiin.
+ */
+function Tilanne({
+  tone,
+  title,
+  alerts,
+}: {
+  tone: "risk" | "warn";
+  title: string;
+  alerts: { id: string; title: string; detail: string; href: string }[];
+}) {
+  const nayta = alerts.slice(0, 3);
+  const loput = alerts.length - nayta.length;
+
+  const vari = tone === "risk" ? "var(--rf-red-text)" : "var(--rf-amber-text)";
+
+  return (
+    <div>
+      <p className="flex items-center gap-2 text-[13.5px] font-semibold" style={{ color: vari }}>
+        <span
+          aria-hidden="true"
+          className="inline-block h-2 w-2 shrink-0"
+          style={{ background: vari, borderRadius: 999 }}
+        />
+        {title}
+      </p>
+
+      <ul className="mt-2 space-y-1.5">
+        {nayta.map((alert) => (
+          <li key={alert.id}>
+            <Link
+              href={alert.href}
+              className="rf-press block px-3.5 py-2.5"
+              style={{
+                background: "var(--rf-card)",
+                border: "1px solid var(--rf-line)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              <span className="block text-[13.5px] font-medium">{alert.title}</span>
+              <span className="mt-0.5 block text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                {alert.detail}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      {loput > 0 ? (
+        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          ja {loput} muuta
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -839,7 +1095,7 @@ function Composer({
         }}
       >
         <label htmlFor="matti-input" className="sr-only">
-          Kysy Matilta tai pyydä tekemään jotain
+          Mitä haluat hoitaa? Kysy Matilta tai pyydä tekemään jotain.
         </label>
 
         <textarea
@@ -856,7 +1112,7 @@ function Composer({
               submit();
             }
           }}
-          placeholder="Kysy Matilta tai pyydä tekemään jotain…"
+          placeholder="Mitä haluat hoitaa?"
           className="max-h-32 min-h-[2rem] w-full resize-none bg-transparent py-1 text-[15px] outline-none"
         />
 

@@ -12,6 +12,7 @@ import {
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MattiPanel } from "./matti/panel";
+import type { Briefing } from "@/lib/matti/briefing";
 
 /**
  * Hallintanavigaatio.
@@ -26,8 +27,13 @@ import { MattiPanel } from "./matti/panel";
 export function AdminNav({
   role,
   counts,
+  briefing,
+  greeting,
 }: {
   role: Role;
+  /** Matin tilannekatsaus — johdettu samasta aineistosta kuin hälytykset. */
+  briefing: Briefing;
+  greeting: string;
   /**
    * Lukumäärät valikon kohtiin, avaimena polku.
    *
@@ -42,7 +48,13 @@ export function AdminNav({
 
   return (
     <>
-      <DesktopSidebar sections={sections} counts={counts} matti={can(role, "matti.use")} />
+      <DesktopSidebar
+        sections={sections}
+        counts={counts}
+        matti={can(role, "matti.use")}
+        briefing={briefing}
+        greeting={greeting}
+      />
       <MobileBar items={primary} />
     </>
   );
@@ -62,7 +74,11 @@ function DesktopSidebar({
   sections,
   counts,
   matti,
+  briefing,
+  greeting,
 }: {
+  briefing: Briefing;
+  greeting: string;
   sections: ReturnType<typeof adminNavSectionsFor>;
   counts: Record<string, number>;
   /** Onko roolilla oikeus Mattiin. */
@@ -136,7 +152,7 @@ function DesktopSidebar({
       */}
       {matti ? (
         <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
-          <MattiPanel enabled />
+          <MattiPanel enabled briefing={briefing} greeting={greeting} />
         </div>
       ) : null}
 

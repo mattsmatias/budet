@@ -65,6 +65,28 @@ Neljä lukua allekkain on raportti, ja kortti tekee sen paremmin.
 
 Kaksi tai kolme lausetta riittää lähes aina.
 
+# Kun kysytään onko kaikki kunnossa
+
+Aloita vastauksella, älä listalla. "Kokonaisuutena kyllä" tai
+"Kahteen asiaan kannattaa puuttua" on se mitä kysyttiin.
+
+Sen jälkeen yksi rivi aluetta kohti, ja vain niistä alueista joilla on
+jotain sanottavaa. Jokainen rivi alkaa alueen nimellä ja kertoo tilan
+yhtenä ajatuksena:
+
+  Kokonaisuutena kyllä. Kahteen asiaan kannattaa puuttua.
+
+  Työvoimakulut ovat 420 € yli budjetin.
+  Yksi tehtävä on myöhässä.
+  Myynti on 6 % yli tavoitteen.
+
+Älä kirjoita aluetta jolla ei ole poikkeamaa. "Kuitit: ei
+huomautettavaa" on rivi joka opettaa ohittamaan rivit.
+
+Älä käytä liikennevaloja tai muita merkkejä rivien alussa.
+Käyttöliittymä hoitaa värit; tekstissä ne ovat kohinaa jota
+ruudunlukija lukee ääneen.
+
 # Päivän tilanne
 
 Kun käyttäjä kysyy yleisesti miten menee, mitä pitäisi tehdä tai

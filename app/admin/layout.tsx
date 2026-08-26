@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
+import { buildBriefing, greeting } from "@/lib/matti/briefing";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
@@ -42,6 +43,22 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     openShifts: data.openShifts,
     sales: data.sales,
     tasks: data.tasks,
+  });
+
+  /*
+   * Matin tilannekatsaus.
+   *
+   * Samasta buildAlerts-tuloksesta kuin kellon merkki ja Ilmoitukset,
+   * joten Matti ei voi kertoa eri tilannetta kuin muu sovellus.
+   * Havainnot lasketaan tässä eikä selaimessa: koko aineisto on jo
+   * palvelimella, eikä sitä kannata lähettää mukana.
+   */
+  const briefing = buildBriefing({
+    alerts,
+    receipts: data.receipts,
+    sales: data.sales,
+    shifts: data.shifts,
+    today,
   });
 
   const userName = user.fullName ?? user.email ?? "Käyttäjä";
@@ -93,7 +110,12 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
      */
     <div className="min-h-screen">
       <div className="flex min-h-screen">
-        <AdminNav role={role} counts={counts} />
+        <AdminNav
+          role={role}
+          counts={counts}
+          briefing={briefing}
+          greeting={greeting(new Date(now), restaurant.timezone)}
+        />
 
         <div className="flex min-w-0 flex-1 flex-col">
         {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
