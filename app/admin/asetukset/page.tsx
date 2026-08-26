@@ -3,7 +3,6 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { previousMonth } from "@/lib/restoflow/expenses";
 import { CATEGORY_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
-import { extractorName, isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { Pill, ScopeNotice } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MonthClosing } from "./settings-form";
@@ -236,47 +235,6 @@ export default async function SettingsPage({
               </div>
             ) : null}
 
-            {shown.id === "tietoja" ? (
-              <>
-                <h3 className="text-[13.5px] font-bold">Kuittien poiminta</h3>
-                <Facts
-                  rows={[
-                    { label: "Poimija", value: extractorName() },
-                    { label: "Tuetut muodot", value: "JPG, PNG, HEIC, PDF" },
-                    {
-                      label: "Epävarma tieto",
-                      value: "Merkitään, ei tallenneta faktana",
-                    },
-                  ]}
-                  note={
-                    isRealExtractor()
-                      ? "Poiminta lukee kuitin kuvasta. Jokainen kenttä on silti tarkistettavissa ennen tallennusta — kone ehdottaa, ihminen vahvistaa."
-                      : "Poiminta on paikallinen jäljitelmä: tiedostonimi ratkaisee tuloksen, ei kuitin sisältö. Oikea palvelu kytketään ympäristömuuttujilla ilman koodimuutosta."
-                  }
-                />
-
-                <Divider />
-
-                <h3 className="text-[13.5px] font-bold">Mitä Budet ei tee</h3>
-                <ul
-                  className="mt-2.5 space-y-1.5 text-[13px] leading-relaxed"
-                  style={{ color: "var(--rf-text-2)" }}
-                >
-                  <li>Ei lue kassajärjestelmää eikä myyntiä automaattisesti</li>
-                  <li>Ei yhteyttä pankkitiliin</li>
-                  <li>Ei varastonhallintaa eikä tilauksia</li>
-                  <li>Ei asiakasvarauksia, kanta-asiakkuuksia eikä CRM:ää</li>
-                </ul>
-                <p
-                  className="mt-3 text-[12px] leading-relaxed"
-                  style={{ color: "var(--rf-text-3)" }}
-                >
-                  Rajaus on tarkoituksellinen. Yleiskatsauksen luvut tarkoittavat
-                  aina järjestelmään kirjattuja kuluja, eivät ravintolan
-                  taloudellista tulosta.
-                </p>
-              </>
-            ) : null}
           </Panel>
         </div>
       </div>

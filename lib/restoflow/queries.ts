@@ -802,9 +802,34 @@ export interface RestaurantData {
  * Rinnakkain: kyselyt eivät riipu toisistaan, ja peräkkäin ajettuna
  * sivunlataus kestäisi yhdeksän kyselyn verran.
  */
+/**
+ * Kuinka kauas taaksepäin jaettu aineisto ulottuu.
+ *
+ * Kolmetoista kuukautta on sama ikkuna kuin yläpalkin
+ * kuukausivalitsimessa: kaikki mihin näkymistä pääsee, mutta ei
+ * enempää. Ilman rajaa leimaukset ja vuorot ladattiin ensimmäisestä
+ * päivästä lähtien jokaisella sivunlatauksella — vuoden päästä se on
+ * kymmeniä tuhansia rivejä joita yksikään näkymä ei lue.
+ *
+ * Rajaus on tässä eikä kutsupaikoissa, koska jaettu aineisto on yksi
+ * asia: kaksi eri ikkunaa samalle taululle tarkoittaisi kahta eri
+ * käsitystä siitä mitä "kaikki vuorot" tarkoittaa.
+ */
+const SHARED_WINDOW_MONTHS = 13;
+
+function sharedWindowStart(): string {
+  const start = new Date();
+  start.setUTCMonth(start.getUTCMonth() - SHARED_WINDOW_MONTHS, 1);
+  start.setUTCHours(0, 0, 0, 0);
+  return start.toISOString();
+}
+
 export async function fetchRestaurantData(
   restaurantId: string,
 ): Promise<RestaurantData> {
+  const since = sharedWindowStart();
+  const sinceDate = since.slice(0, 10);
+
   const [
     receipts,
     users,
@@ -827,9 +852,9 @@ export async function fetchRestaurantData(
     fetchUsers(restaurantId),
     fetchSuppliers(restaurantId),
     fetchBudgets(restaurantId),
-    fetchShifts(restaurantId),
+    fetchShifts(restaurantId, sinceDate),
     fetchOpenShifts(restaurantId),
-    fetchClockEvents(restaurantId),
+    fetchClockEvents(restaurantId, since),
     fetchAbsences(restaurantId),
     fetchClosedMonths(restaurantId),
     fetchExpenseCategories(restaurantId),

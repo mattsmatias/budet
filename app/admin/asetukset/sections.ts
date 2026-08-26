@@ -14,8 +14,9 @@ import type { IconName } from "@/components/restoflow/icons";
  *
  * EI OSASTOA ILMAN ASETUSTA.
  *
- * Jokainen kohta tässä listassa muuttaa jotain — paitsi viimeinen,
- * joka on nimetty rehellisesti tiedoksi eikä asetuksiksi.
+ * Jokainen kohta tässä listassa muuttaa jotain. Poikkeus on
+ * Toimintaloki, joka ei muuta mitään vaan kertoo mitä on muutettu —
+ * sitä etsitään samasta paikasta kuin muutakin hallintaa.
  */
 export interface SettingsSection {
   id: string;
@@ -83,13 +84,6 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     summary: "Kuka teki mitä ja milloin",
     icon: "clock",
     ownerOnly: true,
-  },
-  {
-    id: "tietoja",
-    label: "Tietoja",
-    summary: "Kuittien poiminta ja rajaukset",
-    icon: "info",
-    ownerOnly: false,
   },
 ];
 
