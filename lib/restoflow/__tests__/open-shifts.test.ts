@@ -26,6 +26,7 @@ function open(partial: Partial<OpenShift> = {}): OpenShift {
     endTime: "18:00",
     position: "waiter",
     status: "draft", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    createdAt: "2026-08-01T00:00:00.000Z",
     ...partial,
   };
 }
@@ -39,7 +40,7 @@ function mine(partial: Partial<Shift> = {}): Shift {
     startTime: "10:00",
     endTime: "18:00",
     location: "Sali",
-    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
     status: "accepted",
     ...partial,
   };

@@ -379,6 +379,18 @@ export interface Shift {
   note: string | null;
 
   /**
+   * Milloin vuoro kirjattiin.
+   *
+   * JÄLKIKÄTEEN LISÄTTY VUORO EI VOI ODOTTAA LEIMAUSTA.
+   *
+   * Kuukauden vuorot lisätään usein jälkikäteen: kirjanpitoa varten,
+   * tai kun suunnittelu otetaan käyttöön kesken kuun. Sellaiseen
+   * vuoroon ei ole voinut leimata sisään, koska sitä ei ollut
+   * olemassa silloin kun työ olisi tehty.
+   */
+  createdAt: string;
+
+  /**
    * Milloin vuoro tuli työntekijän näkyviin. Null = luonnos.
    *
    * Julkaisu on eri akseli kuin status. Status on työntekijän vastaus
@@ -411,6 +423,7 @@ export interface OpenShift {
   note: string | null;
   publishedAt: string | null;
   cancelledAt: string | null;
+  createdAt: string;
 }
 
 export type ClockEventType = "in" | "break_start" | "break_end" | "out";

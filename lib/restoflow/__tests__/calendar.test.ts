@@ -15,6 +15,7 @@ function shift(partial: Partial<Shift> = {}): Shift {
     breakMinutes: 0,
     note: null,
     publishedAt: "2026-08-20T10:00:00.000Z",
+    createdAt: "2026-08-20T10:00:00.000Z",
     cancelledAt: null,
     ...partial,
   };

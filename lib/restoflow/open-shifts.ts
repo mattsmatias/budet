@@ -145,5 +145,6 @@ export function openAsShift(open: OpenShift): Shift {
     note: open.note,
     publishedAt: open.publishedAt,
     cancelledAt: open.cancelledAt,
+    createdAt: open.createdAt,
   };
 }

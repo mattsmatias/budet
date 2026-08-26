@@ -481,7 +481,7 @@ describe("työvuoro vs. toteutunut", () => {
   const shift: Shift = {
     id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-20",
     startTime: "14:00", endTime: "22:00", location: "Sali", status: "accepted",
-    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
   };
 
   const ZONE = "Europe/Helsinki";
@@ -870,7 +870,7 @@ describe("poikkeamat", () => {
     const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
       budgets: [],
-      shifts: [{ id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-25", startTime: "14:00", endTime: "22:00", location: "Sali", status: "pending", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null, }],
+      shifts: [{ id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-25", startTime: "14:00", endTime: "22:00", location: "Sali", status: "pending", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null, }],
       users, clockEvents: [],
       absences: [],
       month: "2026-08", today: "2026-08-20",

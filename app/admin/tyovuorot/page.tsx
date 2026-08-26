@@ -9,7 +9,11 @@ import {
 } from "@/lib/restoflow/shifts";
 import { formatDuration } from "@/lib/restoflow/timeclock";
 import { dayIn } from "@/lib/restoflow/clock-context";
-import { DEVIATION_LABELS, findDeviations } from "@/lib/restoflow/deviations";
+import {
+  DEVIATION_LABELS,
+  findDeviations,
+  isRetroactive,
+} from "@/lib/restoflow/deviations";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import {
   ABSENCE_LABELS,
@@ -103,9 +107,22 @@ export default async function AdminShiftsPage() {
 
   const declined = upcoming.filter((s) => s.status === "declined");
 
-  // Suunniteltu vs. toteutunut vain menneistä vuoroista: tulevassa
-  // vuorossa ei ole toteutunutta, ja nolla näyttäisi alitukselta.
-  const comparisons = compareShifts(past, users, clockEvents, now, restaurant.timezone);
+  /*
+   * Suunniteltu vs. toteutunut vain menneistä vuoroista: tulevassa
+   * vuorossa ei ole toteutunutta, ja nolla näyttäisi alitukselta.
+   *
+   * JÄLKIKÄTEEN KIRJATTU VUORO EI OLLUT SUUNNITELMA.
+   *
+   * Kuukauden vuorot lisätään usein jälkikäteen, ja niissä toteutunut
+   * on nolla — kukaan ei ole voinut leimata vuoroon jota ei ollut
+   * olemassa. Mukaan laskettuna ne näyttäisivät sadan tunnin
+   * alitukselta, vaikka mitään ei jäänyt tekemättä.
+   */
+  const planned = past.filter(
+    (shift) => !isRetroactive(shift, restaurant.timezone),
+  );
+
+  const comparisons = compareShifts(planned, users, clockEvents, now, restaurant.timezone);
   const labour = labourSummary(comparisons);
   const showsRates = seesPayRates(role);
 

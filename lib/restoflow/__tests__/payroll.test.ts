@@ -59,6 +59,7 @@ const shift: Shift = {
   note: null,
   publishedAt: "2026-08-01T00:00:00.000Z",
   cancelledAt: null,
+  createdAt: "2026-08-01T00:00:00.000Z",
   id: "sh1",
   restaurantId: "r1",
   userId: "u1",

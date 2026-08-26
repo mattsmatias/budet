@@ -20,6 +20,7 @@
 
 import { shiftDurationMinutes, type ShiftComparison } from "./shifts";
 import { publicationOf } from "./shift-planning";
+import { dayIn } from "./clock-context";
 import type { Shift, User } from "./types";
 
 export type DeviationKind =
@@ -97,6 +98,23 @@ export function findDeviations(input: {
 
     if (shift.cancelledAt !== null) continue;
     if (publicationOf(shift) === "draft") continue;
+
+    /*
+     * JÄLKIKÄTEEN LISÄTTY VUORO EI VOI ODOTTAA LEIMAUSTA.
+     *
+     * Kuukauden vuorot lisätään usein jälkikäteen: kirjanpitoa varten,
+     * tai kun suunnittelu otetaan käyttöön kesken kuun. Kukaan ei ole
+     * voinut leimata sisään vuoroon jota ei ollut olemassa silloin kun
+     * työ olisi tehty.
+     *
+     * Ilman tätä yksi toistuvien vuorojen luonti tuottaa yhtä monta
+     * "ei leimausta" -poikkeamaa kuin menneitä päiviä osui jaksoon —
+     * ja ne työntävät todelliset poikkeamat listan ulkopuolelle.
+     *
+     * Päällekkäisyydet tarkistetaan silti: ne ovat suunnitteluvirheitä
+     * eivätkä riipu siitä milloin rivi kirjattiin.
+     */
+    if (isRetroactive(shift, input.timezone)) continue;
 
     /*
      * Ei leimausta lainkaan.
@@ -204,3 +222,15 @@ export const DEVIATION_LABELS: Record<DeviationKind, string> = {
   shift_missing: "Työvuoro puuttuu",
   overlap: "Päällekkäinen vuoro",
 };
+
+/**
+ * Kirjattiinko vuoro vasta sen päivän jälkeen?
+ *
+ * Vertailu tehdään päivän tarkkuudella ravintolan aikavyöhykkeellä.
+ * Saman päivän aikana lisätty vuoro ei ole jälkikäteinen: illan
+ * vuoro voidaan hyvinkin kirjata aamulla, ja siihen leimataan
+ * normaalisti.
+ */
+export function isRetroactive(shift: Shift, timezone: string): boolean {
+  return dayIn(timezone, shift.createdAt) > shift.date;
+}

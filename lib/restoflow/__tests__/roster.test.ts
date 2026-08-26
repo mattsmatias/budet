@@ -42,6 +42,7 @@ function shift(
     note: null,
     publishedAt: "2026-08-01T00:00:00.000Z",
     cancelledAt: null,
+    createdAt: "2026-08-01T00:00:00.000Z",
   };
 }
 
@@ -262,6 +263,7 @@ describe("buildRoster", () => {
           note: null,
           publishedAt: "2026-08-01T00:00:00.000Z",
           cancelledAt: null,
+    createdAt: "2026-08-01T00:00:00.000Z",
         },
       ],
     });
@@ -296,6 +298,7 @@ describe("buildRoster", () => {
           note: null,
           publishedAt: "2026-08-01T00:00:00.000Z",
           cancelledAt: null,
+    createdAt: "2026-08-01T00:00:00.000Z",
         },
       ],
     });

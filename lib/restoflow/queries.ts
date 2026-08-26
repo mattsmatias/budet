@@ -359,7 +359,7 @@ export async function fetchShifts(
   let query = supabase
     .from("shifts")
     .select(
-      "id, user_id, position, shift_date, start_time, end_time, location, status, previous_start_time, previous_end_time, break_minutes, note, published_at, cancelled_at",
+      "id, user_id, position, shift_date, start_time, end_time, location, status, previous_start_time, previous_end_time, break_minutes, note, published_at, cancelled_at, created_at",
     )
     .eq("restaurant_id", restaurantId)
     .order("shift_date");
@@ -390,6 +390,7 @@ export async function fetchShifts(
       note: (row.note as string | null) ?? null,
       publishedAt: (row.published_at as string | null) ?? null,
       cancelledAt: (row.cancelled_at as string | null) ?? null,
+      createdAt: row.created_at as string,
     }));
 }
 
@@ -402,7 +403,7 @@ export async function fetchOpenShifts(
   let query = supabase
     .from("shifts")
     .select(
-      "id, position, shift_date, start_time, end_time, status, break_minutes, note, published_at, cancelled_at",
+      "id, position, shift_date, start_time, end_time, status, break_minutes, note, published_at, cancelled_at, created_at",
     )
     .eq("restaurant_id", restaurantId)
     .is("user_id", null)
@@ -425,6 +426,7 @@ export async function fetchOpenShifts(
     note: (row.note as string | null) ?? null,
     publishedAt: (row.published_at as string | null) ?? null,
     cancelledAt: (row.cancelled_at as string | null) ?? null,
+    createdAt: row.created_at as string,
   }));
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   findDeviations,
+  isRetroactive,
   LATE_TOLERANCE_MINUTES,
   OVERRUN_TOLERANCE_MINUTES,
 } from "../deviations";
@@ -37,6 +38,7 @@ function shift(partial: Partial<Shift> = {}): Shift {
     breakMinutes: 0,
     note: null,
     publishedAt: "2026-08-20T10:00:00.000Z",
+    createdAt: "2026-08-20T10:00:00.000Z",
     cancelledAt: null,
     ...partial,
   };
@@ -220,5 +222,98 @@ describe("findDeviations", () => {
 
     expect(d[0].severity).toBe("critical");
     expect(d[1].severity).toBe("warning");
+  });
+});
+
+/*
+ * Jälkikäteen lisätty vuoro ei voi odottaa leimausta.
+ *
+ * Kuukauden vuorot lisätään usein jälkikäteen: kirjanpitoa varten, tai
+ * kun suunnittelu otetaan käyttöön kesken kuun. Kukaan ei ole voinut
+ * leimata sisään vuoroon jota ei ollut olemassa silloin kun työ olisi
+ * tehty.
+ */
+describe("jälkikäteen kirjattu vuoro", () => {
+
+  function vertailu(s: Shift): ShiftComparison {
+    return {
+      shift: s,
+      user: ali,
+      plannedMs: 8 * 3600000,
+      actualMs: 0,
+      varianceMs: 0,
+      actualStart: null,
+      actualEnd: null,
+      plannedCostCents: 0,
+      actualCostCents: 0,
+    };
+  }
+
+  it("ei nosta ei-leimausta vuorosta joka kirjattiin päivän jälkeen", () => {
+    const s = shift({
+      date: "2026-08-10",
+      createdAt: "2026-08-26T07:31:00.000Z",
+    });
+
+    const found = findDeviations({
+      comparisons: [vertailu(s)],
+      clockedDates: [],
+      shifts: [s],
+      users: [ali],
+      timezone: TZ,
+    });
+
+    expect(found).toEqual([]);
+  });
+
+  it("nostaa ei-leimauksen kun vuoro oli olemassa etukäteen", () => {
+    const s = shift({
+      date: "2026-08-10",
+      createdAt: "2026-08-01T07:00:00.000Z",
+    });
+
+    const found = findDeviations({
+      comparisons: [vertailu(s)],
+      clockedDates: [],
+      shifts: [s],
+      users: [ali],
+      timezone: TZ,
+    });
+
+    expect(found.map((d) => d.kind)).toEqual(["no_clock_in"]);
+  });
+
+  /*
+   * Saman päivän aikana lisätty vuoro ei ole jälkikäteinen.
+   *
+   * Illan vuoro kirjataan hyvinkin aamulla, ja siihen leimataan
+   * normaalisti.
+   */
+  it("pitää saman päivän kirjauksen tavallisena vuorona", () => {
+    const s = shift({
+      date: "2026-08-10",
+      createdAt: "2026-08-10T05:00:00.000Z",
+    });
+
+    const found = findDeviations({
+      comparisons: [vertailu(s)],
+      clockedDates: [],
+      shifts: [s],
+      users: [ali],
+      timezone: TZ,
+    });
+
+    expect(found.map((d) => d.kind)).toEqual(["no_clock_in"]);
+  });
+
+  it("lukee päivän ravintolan aikavyöhykkeellä", () => {
+    // 2026-08-10T21:30Z on Helsingissä jo 11.8. — siis jälkikäteinen.
+    const s = shift({
+      date: "2026-08-10",
+      createdAt: "2026-08-10T21:30:00.000Z",
+    });
+
+    expect(isRetroactive(s, TZ)).toBe(true);
+    expect(isRetroactive(s, "UTC")).toBe(false);
   });
 });
