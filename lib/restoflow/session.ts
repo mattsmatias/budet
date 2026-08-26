@@ -21,6 +21,22 @@ export interface SessionUser {
   id: string;
   email: string | null;
   fullName: string | null;
+  /**
+   * Järjestelmätason ylläpitäjä.
+   *
+   * ERI ASIA KUIN RAVINTOLAN ROOLI.
+   *
+   * Ravintolan roolit (owner, manager, employee, accountant) kertovat
+   * mitä käyttäjä saa tehdä yhdessä ravintolassa. Tämä lippu on
+   * profiilissa eikä jäsenyydessä, koska se ei koske yhtä ravintolaa
+   * vaan koko järjestelmää. Omistajuus ei anna sitä eikä se anna
+   * omistajuutta.
+   *
+   * Tämä on vain käyttöliittymää varten. Pääsyn ratkaisee kanta:
+   * jokainen sa_-funktio tarkistaa oikeuden itse, joten väärä arvo
+   * täällä ei avaa mitään.
+   */
+  isSuperAdmin: boolean;
 }
 
 export interface RestaurantMembership {
@@ -53,7 +69,7 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, is_super_admin")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -61,6 +77,7 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
       id: user.id,
       email: user.email,
       fullName: profile?.full_name ?? null,
+      isSuperAdmin: profile?.is_super_admin === true,
     };
   } catch {
     return null;
@@ -146,5 +163,32 @@ export async function requireContext(returnTo = "/admin"): Promise<Context> {
 export async function requireUser(returnTo = "/admin"): Promise<SessionUser> {
   const user = await getUser();
   if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
+  return user;
+}
+
+// ---------------------------------------------------------------------------
+// Järjestelmän ylläpitäjä
+// ---------------------------------------------------------------------------
+
+/**
+ * Konteksti Developer Consolen sivuille.
+ *
+ * PIILOTTAMINEN EI OLE PÄÄSYNHALLINTAA.
+ *
+ * Tämä tarkistus ohjaa pois sivulta, mutta se ei ole se mikä suojaa
+ * tietoja. Suojan tekee kanta: konsolin jokainen kysely kulkee
+ * sa_-funktion läpi, ja ne tarkistavat oikeuden itse. Jos tämä
+ * tarkistus poistettaisiin kokonaan, sivu latautuisi tyhjänä ja
+ * jokainen kutsu kaatuisi virheeseen — ei vuotaisi riviäkään.
+ *
+ * Ohjaus menee etusivulle eikä kirjautumiseen, jos käyttäjä on
+ * kirjautunut mutta ilman oikeutta: kirjautumissivu vihjaisi että
+ * toisilla tunnuksilla pääsisi, ja konsolin olemassaoloa ei ole
+ * syytä kertoa.
+ */
+export async function requireSuperAdmin(returnTo = "/kehittaja"): Promise<SessionUser> {
+  const user = await getUser();
+  if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
+  if (!user.isSuperAdmin) redirect("/admin");
   return user;
 }
