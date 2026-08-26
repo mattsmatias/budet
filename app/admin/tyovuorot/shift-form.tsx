@@ -218,14 +218,30 @@ export function NewShiftButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rf-press flex w-full items-center justify-center gap-2 py-3 text-[15px] font-semibold md:w-auto md:px-5"
+        /*
+         * Samat mitat kuin viereisellä "Kuukauden lista" -painikkeella.
+         *
+         * Painikkeet ovat samalla rivillä, ja eri korkuisina ne
+         * näyttivät siltä että toinen olisi jotenkin toista
+         * tärkeämpi tai eri paikkaan kuuluva. Ero tehdään värillä:
+         * tämä on korostusvärinen päätoiminto, viereinen ei.
+         */
+        className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
         style={{
           background: "var(--rf-accent)",
           color: "var(--rf-on-accent)",
+          /*
+           * Läpinäkyvä reunus, jotta laatikkomalli on sama.
+           *
+           * Viereisellä painikkeella on yhden pikselin reunus. Ilman
+           * tätä tämä jäisi pikselin matalammaksi — ero jota ei
+           * huomaa katsomalla mutta joka näkyy rivin epätasaisuutena.
+           */
+          border: "1px solid transparent",
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        <RfIcon name="plus" size={17} />
+        <RfIcon name="plus" size={15} />
         Uusi työvuoro
       </button>
     );
