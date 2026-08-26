@@ -7,7 +7,6 @@
  * laskisi kuukauden väärin.
  */
 
-import { cache } from "react";
 import { redirect } from "next/navigation";
 import { monthIn, todayIn, weekStart, windowStartIso } from "./clock-context";
 import { can, capabilityForPath, landingFor } from "./permissions";
@@ -37,15 +36,6 @@ export interface AdminContext extends Context, RestaurantData {
   monthlyHours: Record<string, number>;
 }
 
-/**
- * cache(): sama pyyntö saa saman tuloksen, joten layout ja sivu eivät
- * hae aineistoa kahdesti.
- */
-const loadData = cache(
-  async (restaurantId: string): Promise<RestaurantData> =>
-    fetchRestaurantData(restaurantId),
-);
-
 export async function adminContext(returnTo: string): Promise<AdminContext> {
   const ctx = await requireContext(returnTo);
 
@@ -56,7 +46,7 @@ export async function adminContext(returnTo: string): Promise<AdminContext> {
   if (required !== null && !can(ctx.role, required)) {
     redirect(landingFor(ctx.role));
   }
-  const data = await loadData(ctx.restaurant.id);
+  const data = await fetchRestaurantData(ctx.restaurant.id);
 
   const month = monthIn(ctx.restaurant.timezone);
   const today = todayIn(ctx.restaurant.timezone);
@@ -96,7 +86,6 @@ function hoursByUser(
   }
   return out;
 }
-
 
 // ---------------------------------------------------------------------------
 // Työntekijän näkymä

@@ -1,4 +1,4 @@
-import { cache } from "react";
+
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchLunchWeek, fetchRestaurantData } from "@/lib/restoflow/queries";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
@@ -38,22 +38,12 @@ export interface MattiContext {
   lunchWeek: (weekStart: string) => Promise<LunchWeek | null>;
 }
 
-/**
- * cache(): sama pyyntö hakee aineiston kerran, vaikka malli kutsuisi
- * useaa työkalua peräkkäin. Ilman tätä kolmen työkalun ketju tekisi
- * kolme identtistä kierrosta kantaan.
- */
-const loadData = cache(
-  async (restaurantId: string): Promise<RestaurantData> =>
-    fetchRestaurantData(restaurantId),
-);
-
 export async function mattiContext(
   currentPage: string | null,
 ): Promise<MattiContext> {
   const ctx = await requireContext("/admin");
 
-  const data = await loadData(ctx.restaurant.id);
+  const data = await fetchRestaurantData(ctx.restaurant.id);
 
   const weekCache = new Map<string, Promise<LunchWeek | null>>();
 

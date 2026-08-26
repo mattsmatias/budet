@@ -11,6 +11,8 @@
  * tietokannan pitäisi skannata kaikki rivit joihin käyttäjällä on oikeus.
  */
 
+import { cache } from "react";
+
 import type { PayComponent, TimeCorrection } from "./payroll";
 import type { PosMapping, PosVatRate, SalesGroup, SalesLine } from "./sales-vat";
 import type { DailySales } from "./sales";
@@ -824,7 +826,22 @@ function sharedWindowStart(): string {
   return start.toISOString();
 }
 
-export async function fetchRestaurantData(
+/**
+ * Koko ravintolan aineisto yhdellä kutsulla.
+ *
+ * YKSI HAKU PYYNTÖÄ KOHTI.
+ *
+ * cache() on tässä eikä kutsujissa. Kääre oli aiemmin sivukontekstissa,
+ * mutta hallinnan layout kutsui tätä funktiota suoraan — se meni kääreen
+ * ohi, ja layout ja sivu hakivat saman aineiston erikseen. Mitattuna se
+ * oli 32 kyselyä kuudentoista sijaan jokaisella sivunvaihdolla.
+ *
+ * Kun kääre on lähteessä, uusi kutsuja ei voi vahingossa jäädä sen
+ * ulkopuolelle.
+ */
+export const fetchRestaurantData = cache(loadRestaurantData);
+
+async function loadRestaurantData(
   restaurantId: string,
 ): Promise<RestaurantData> {
   const since = sharedWindowStart();
