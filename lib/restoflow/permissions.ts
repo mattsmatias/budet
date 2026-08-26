@@ -40,6 +40,16 @@ export type Capability =
   | "lunch.view"
   | "lunch.manage"
   | "matti.use"
+  /*
+   * Tehtävät kahtena oikeutena.
+   *
+   * Työntekijä näkee omat tehtävänsä ja kuittaa ne tehdyiksi, muttei
+   * luo eikä siirrä määräaikoja. Kanta rajaa saman: merkintä tehdyksi
+   * kulkee funktion kautta, muokkaus vaatii esihenkilön.
+   */
+  | "tasks.view"
+  | "tasks.manage"
+  | "audit.view"
   | "settings.view"
   | "settings.edit";
 
@@ -55,6 +65,15 @@ const OWNER: Capability[] = [
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
+  "tasks.view", "tasks.manage",
+  /*
+   * Toimintaloki on omistajan näkymä.
+   *
+   * Se sisältää palkkamuutokset, käyttöoikeudet ja verokannat.
+   * Vuoropäällikkö näkee oman työnsä jäljet kohteiden omista
+   * näkymistä; koko yrityksen loki on omistajan.
+   */
+  "audit.view",
   "alerts.view", "settings.view", "settings.edit",
 ];
 
@@ -70,6 +89,7 @@ const MANAGER: Capability[] = [
   "reports.view", "reports.export",
   "lunch.view", "lunch.manage",
   "matti.use",
+  "tasks.view", "tasks.manage",
   "alerts.view", "settings.view",
 ];
 
@@ -84,6 +104,9 @@ const MANAGER: Capability[] = [
 const EMPLOYEE: Capability[] = [
   "shifts.view.own",
   "time.track.own",
+  // Omat tehtävät ja niiden kuittaus. Rivikäytäntö rajaa mitkä
+  // tehtävät hän näkee — oikeus ei avaa talous- eikä hallintotehtäviä.
+  "tasks.view",
   // Oma palkkakertymä, ei muiden. Työntekijän on nähtävä mitä hänelle
   // kertyy; muiden palkka ei kuulu hänelle.
   "payroll.view.own",
@@ -170,6 +193,8 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/toimittajat", requires: "suppliers.view" },
   { href: "/admin/budjetit", requires: "budgets.view" },
   { href: "/admin/tyovuorot", requires: "shifts.view.all" },
+  { href: "/admin/tehtavat", requires: "tasks.manage" },
+  { href: "/admin/loki", requires: "audit.view" },
   { href: "/admin/tyontekijat", requires: "staff.view" },
   { href: "/admin/palkat", requires: "payroll.view" },
   { href: "/admin/myynti", requires: "sales.view" },
@@ -257,6 +282,20 @@ export const ADMIN_NAV: NavEntry[] = [
    * menee", ja se on kysymys jota ei osaa esittää linkin kautta.
    */
   { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view", section: "finance" },
+
+  /*
+   * Tehtävät ovat päivittäinen kohta, ei arkisto.
+   *
+   * Ravintoloitsija avaa Budetin kysyäkseen mitä pitää tehdä. Tehtävä
+   * jonka määräaika lähestyy on juuri se vastaus, joten se kuuluu
+   * valikkoon eikä asetusten taakse.
+   *
+   * Vaatii tasks.manage eikä tasks.view: työntekijällä on tasks.view
+   * omia tehtäviään varten, mutta hänen näkymänsä on /app eikä
+   * hallinta. Ilman tätä eroa työntekijä ohjautuisi kirjautuessaan
+   * hallinnan tehtäväsivulle.
+   */
+  { href: "/admin/tehtavat", label: "Tehtävät", icon: "check", requires: "tasks.manage", section: "main" },
 
   { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
   { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },

@@ -35,6 +35,7 @@ import type {
   User,
 } from "./types";
 import type { DailySales } from "./sales";
+import type { Task } from "./tasks";
 
 export interface DashboardInput {
   receipts: Receipt[];
@@ -54,6 +55,8 @@ export interface DashboardInput {
   now: string;
   timezone: string;
   openShifts?: OpenShift[];
+  /* Tehtävät kulkevat samassa paketissa: yksi kysymys, yksi lista. */
+  tasks?: Task[];
   sales?: DailySales[];
 }
 
@@ -119,6 +122,7 @@ export function attention(input: DashboardInput): Attention {
     timezone: input.timezone,
     openShifts: input.openShifts,
     sales: input.sales,
+    tasks: input.tasks,
   });
 
   const counts = alertCounts(alerts);

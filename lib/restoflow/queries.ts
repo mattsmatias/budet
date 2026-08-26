@@ -14,6 +14,8 @@
 import type { PayComponent, TimeCorrection } from "./payroll";
 import type { PosMapping, PosVatRate, SalesGroup, SalesLine } from "./sales-vat";
 import type { DailySales } from "./sales";
+import type { Task } from "./tasks";
+import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
 import type { AllergenType, DietType, LunchWeek } from "./lunch";
 import { createClient } from "@/utils/supabase/server";
@@ -790,6 +792,8 @@ export interface RestaurantData {
    */
   salesGroups: SalesGroup[];
   posMappings: PosMapping[];
+  /* Tehtävät samassa paketissa: yksi lähde, monta näkymää. */
+  tasks: Task[];
 }
 
 /**
@@ -817,6 +821,7 @@ export async function fetchRestaurantData(
     sales,
     salesGroups,
     posMappings,
+    tasks,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
     fetchUsers(restaurantId),
@@ -833,6 +838,7 @@ export async function fetchRestaurantData(
     fetchDailySales(restaurantId),
     fetchSalesGroups(restaurantId),
     fetchPosMappings(restaurantId),
+    fetchTasks(restaurantId),
   ]);
 
   return {
@@ -851,6 +857,7 @@ export async function fetchRestaurantData(
     sales,
     salesGroups,
     posMappings,
+    tasks,
   };
 }
 
@@ -1348,4 +1355,138 @@ export async function fetchSalesLinesBetween(
   }
 
   return byDate;
+}
+
+// ---------------------------------------------------------------------------
+// Tehtävät
+// ---------------------------------------------------------------------------
+
+/**
+ * Ravintolan tehtävät.
+ *
+ * Rivikäytäntö rajaa näkyvyyden: työntekijä saa omat ja koko
+ * henkilöstölle merkityt, esihenkilö kaikki. Suodatus ei ole täällä,
+ * koska sen voi ohittaa — kanta ratkaisee.
+ */
+export async function fetchTasks(restaurantId: string): Promise<Task[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(
+      "id, restaurant_id, title, description, due_on, due_time, priority, visibility, assigned_to, completed_at, completed_by, cancelled_at, cancelled_by, recurrence, parent_task_id, remind_days_before, remind_on_due, remind_when_overdue, created_by, created_at",
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("due_on");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    restaurantId: row.restaurant_id as string,
+    title: row.title as string,
+    description: (row.description as string | null) ?? null,
+    dueOn: row.due_on as string,
+    // time palautuu muodossa "15:00:00"; näytöllä ja vertailussa riittää tunti ja minuutti.
+    dueTime: row.due_time ? String(row.due_time).slice(0, 5) : null,
+    priority: row.priority as Task["priority"],
+    visibility: row.visibility as Task["visibility"],
+    assignedTo: (row.assigned_to as string | null) ?? null,
+    completedAt: (row.completed_at as string | null) ?? null,
+    completedBy: (row.completed_by as string | null) ?? null,
+    cancelledAt: (row.cancelled_at as string | null) ?? null,
+    cancelledBy: (row.cancelled_by as string | null) ?? null,
+    recurrence: row.recurrence as Task["recurrence"],
+    parentTaskId: (row.parent_task_id as string | null) ?? null,
+    remindDaysBefore: ((row.remind_days_before as number[] | null) ?? []).map(Number),
+    remindOnDue: Boolean(row.remind_on_due),
+    remindWhenOverdue: Boolean(row.remind_when_overdue),
+    createdBy: row.created_by as string,
+    createdAt: row.created_at as string,
+  }));
+}
+
+export async function fetchTask(id: string): Promise<Task | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("tasks").select("restaurant_id").eq("id", id).maybeSingle();
+  if (!data) return null;
+
+  const all = await fetchTasks(data.restaurant_id as string);
+  return all.find((task) => task.id === id) ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Toimintaloki
+// ---------------------------------------------------------------------------
+
+/**
+ * Lokitapahtumat sivuittain.
+ *
+ * Loki kasvaa nopeasti, joten koko historiaa ei ladata kerralla.
+ * Suodatus ja haku tehdään kannassa: selaimessa suodattaminen vaatisi
+ * kaiken lataamista ensin, mikä on juuri se mitä yritetään välttää.
+ */
+export async function fetchAuditLog(
+  restaurantId: string,
+  options: {
+    entityType?: string;
+    action?: string;
+    actorId?: string;
+    search?: string;
+    since?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<{ events: AuditEvent[]; hasMore: boolean }> {
+  const supabase = await createClient();
+  const limit = options.limit ?? 50;
+  const offset = options.offset ?? 0;
+
+  let query = supabase
+    .from("audit_log")
+    .select(
+      "id, actor_id, actor_name, actor_role, action, entity_type, entity_id, entity_name, summary, before_data, after_data, critical, created_at",
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("created_at", { ascending: false })
+    // Yksi yli sivun: kertoo onko seuraavaa sivua ilman erillistä laskentaa.
+    .range(offset, offset + limit);
+
+  if (options.entityType) query = query.eq("entity_type", options.entityType);
+  if (options.action) query = query.eq("action", options.action);
+  if (options.actorId) query = query.eq("actor_id", options.actorId);
+  if (options.since) query = query.gte("created_at", options.since);
+
+  if (options.search) {
+    const term = options.search.replace(/[%,()]/g, " ").trim();
+    if (term !== "") {
+      query = query.or(
+        `summary.ilike.%${term}%,actor_name.ilike.%${term}%,entity_name.ilike.%${term}%`,
+      );
+    }
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return { events: [], hasMore: false };
+
+  const rows = data.slice(0, limit);
+
+  return {
+    hasMore: data.length > limit,
+    events: rows.map((row) => ({
+      id: row.id as string,
+      actorId: (row.actor_id as string | null) ?? null,
+      actorName: row.actor_name as string,
+      actorRole: (row.actor_role as string | null) ?? null,
+      action: row.action as string,
+      entityType: row.entity_type as string,
+      entityId: (row.entity_id as string | null) ?? null,
+      entityName: (row.entity_name as string | null) ?? null,
+      summary: row.summary as string,
+      beforeData: (row.before_data as Record<string, unknown> | null) ?? null,
+      afterData: (row.after_data as Record<string, unknown> | null) ?? null,
+      critical: Boolean(row.critical),
+      createdAt: row.created_at as string,
+    })),
+  };
 }

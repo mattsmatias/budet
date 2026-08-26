@@ -40,6 +40,11 @@ const ICONS: Record<AlertKind, IconName> = {
   shift_overrun: "clock",
   unclosed_shift: "clock",
   shift_variance: "clock",
+
+  // Tehtävä on rasti ruutuun, myöhässä oleva huutomerkki: sama
+  // asia kahdessa tilassa, ja tila on se mitä listasta luetaan.
+  task_due: "check",
+  task_overdue: "alert",
 };
 
 export function alertIcon(kind: AlertKind): IconName {

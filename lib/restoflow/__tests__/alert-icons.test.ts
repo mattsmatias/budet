@@ -9,7 +9,7 @@ describe("alertIcon", () => {
    * sisään ilman ikonipäätöstä.
    */
   it("kattaa kaikki huomiotyypit", () => {
-    expect(ALERT_KINDS).toHaveLength(16);
+    expect(ALERT_KINDS).toHaveLength(18);
   });
 
   it("antaa jokaiselle ikonin", () => {

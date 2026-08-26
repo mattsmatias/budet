@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  startOfDayIso,
   ISO_DATE,
   ISO_MONTH,
   isIsoDate,
@@ -104,5 +105,37 @@ describe("pickedMonth", () => {
 
   it("hylkää listan ulkopuolisen kuukauden", () => {
     expect(pickedMonth("2019-01", "2026-08", months)).toBe("2026-08");
+  });
+});
+
+describe("startOfDayIso", () => {
+  /*
+   * Suomen kesäaika on UTC+3.
+   *
+   * Paikallinen keskiyö on siis edellisen päivän 21:00 UTC. Pelkkä
+   * päivämäärä suodattimena leikkaisi kolme ensimmäistä tuntia pois.
+   */
+  it("antaa paikallisen keskiyön kesäaikana", () => {
+    expect(startOfDayIso("2026-08-26", "Europe/Helsinki")).toBe(
+      "2026-08-25T21:00:00.000Z",
+    );
+  });
+
+  it("antaa paikallisen keskiyön talviaikana", () => {
+    // Talvella UTC+2.
+    expect(startOfDayIso("2026-01-15", "Europe/Helsinki")).toBe(
+      "2026-01-14T22:00:00.000Z",
+    );
+  });
+
+  it("on sama hetki UTC-vyöhykkeellä", () => {
+    expect(startOfDayIso("2026-08-26", "UTC")).toBe("2026-08-26T00:00:00.000Z");
+  });
+
+  it("kestää kellonsiirtoyön", () => {
+    // Kesäaika alkaa 29.3.2026: kello siirtyy 03:00 → 04:00.
+    expect(startOfDayIso("2026-03-29", "Europe/Helsinki")).toBe(
+      "2026-03-28T22:00:00.000Z",
+    );
   });
 });

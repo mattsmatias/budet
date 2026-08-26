@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 49 migraatiota:
+-- Sisältää 53 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -61,6 +61,10 @@
 --   0047_clock_in_published_shift.sql
 --   0048_delete_open_shift.sql
 --   0049_bulk_remove_shifts.sql
+--   0050_tasks.sql
+--   0051_audit_log.sql
+--   0052_task_functions.sql
+--   0053_audit_triggers.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -9381,4 +9385,1107 @@ $$;
 
 revoke all on function bulk_remove_shifts from public;
 grant execute on function bulk_remove_shifts to authenticated;
+
+
+-- ===========================================================================
+-- 0050_tasks.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0050 — Tehtävät ja määräajat
+-- ---------------------------------------------------------------------------
+--
+-- Ravintoloitsijan päivä on täynnä asioita jotka on pakko muistaa:
+-- vuokra, sähkölasku, kirjanpitoaineisto, ensi viikon vuorot. Budet
+-- tietää jo myynnistä, kuluista ja työvuoroista — tämä on se osa jota
+-- se ei vielä tiennyt.
+--
+-- TÄMÄ EI OLE TODO-LISTA.
+--
+-- Tehtävän arvo on määräajassa. Ilman eräpäivää tehtävä on muistilappu
+-- jonka voi ohittaa; eräpäivän kanssa Budet voi kertoa etukäteen, sanoa
+-- eräpäivänä ja nostaa myöhästyneen esiin kunnes se on hoidettu.
+--
+-- ---------------------------------------------------------------------------
+-- Miksi oma taulu eikä olemassa oleva
+-- ---------------------------------------------------------------------------
+--
+-- Tässä kannassa on jo audit_events ja notifications, mutta ne
+-- kuuluvat toiselle sovellukselle: molemmat on sidottu org_id:llä
+-- organizations-tauluun vierasavaimella. Budetin vuokralainen on
+-- ravintola, eikä ravintolaa voi kirjoittaa sarakkeeseen joka viittaa
+-- organisaatioon.
+--
+-- Budetin ilmoitukset johdetaan tilasta eikä tallenneta riveiksi
+-- ("ilmoitus joka ei vastaa todellista tilaa jäisi roikkumaan senkin
+-- jälkeen kun asia on hoidettu"). Tehtävien muistutukset noudattavat
+-- samaa linjaa: ne lasketaan eräpäivästä ja asetuksista, jolloin
+-- kaksoisilmoitus on rakenteellisesti mahdoton.
+
+create type task_priority as enum ('normal', 'important', 'critical');
+
+/*
+ * Näkyvyys on tehtävän oma ominaisuus.
+ *
+ * "Maksa vuokra" ei kuulu tarjoilijalle, "Sulje ravintola" kuuluu.
+ * Ilman tätä kenttää tehtävälista olisi joko kaikille avoin tai vain
+ * omistajalle — ja kumpikaan ei ole se mitä ravintolassa tarvitaan.
+ */
+create type task_visibility as enum (
+  'owner_only',
+  'managers',
+  'assigned_user',
+  'all_staff'
+);
+
+create type task_recurrence as enum (
+  'none',
+  'daily',
+  'weekly',
+  'monthly',
+  'yearly'
+);
+
+create table if not exists tasks (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  title text not null check (length(trim(title)) between 1 and 200),
+  description text check (description is null or length(description) <= 2000),
+
+  /*
+   * Eräpäivä ja valinnainen kellonaika erikseen.
+   *
+   * Sama ratkaisu kuin työvuoroilla: päivä on päivä ravintolan
+   * aikavyöhykkeellä, eikä se saa liukua kesäajan mukana. Yhtenä
+   * timestamptz-arvona "26.8." tarkoittaisi eri päivää eri
+   * vyöhykkeillä.
+   *
+   * Kellonaika on valinnainen, koska useimmilla tehtävillä sitä ei
+   * ole: lasku on maksettava sinä päivänä, ei kello 15.
+   */
+  due_on date not null,
+  due_time time,
+
+  priority task_priority not null default 'normal',
+  visibility task_visibility not null default 'managers',
+
+  assigned_to uuid references profiles (id) on delete set null,
+
+  /*
+   * Tila johdetaan, sitä ei tallenneta.
+   *
+   * Myöhässä oleva tehtävä ei muutu myöhässä olevaksi minkään
+   * tapahtuman seurauksena vaan siksi että aika kului. Tallennettu
+   * status olisi väärässä siitä hetkestä kunnes joku ajaisi
+   * päivityksen — ja juuri myöhästymisen pitää olla oikein ilman
+   * että kukaan tekee mitään.
+   *
+   * Tallennetaan siis vain se mitä ihminen teki: milloin merkittiin
+   * tehdyksi ja milloin peruttiin.
+   */
+  completed_at timestamptz,
+  completed_by uuid references profiles (id) on delete set null,
+  cancelled_at timestamptz,
+  cancelled_by uuid references profiles (id) on delete set null,
+
+  recurrence task_recurrence not null default 'none',
+
+  /*
+   * Toistuvan tehtävän ketju.
+   *
+   * Jokainen esiintymä on oma rivinsä omalla tilallaan: elokuun
+   * vuokra voi olla maksettu ja syyskuun myöhässä. Yksi rivi jossa
+   * eräpäivä siirtyy hukkaisi historian.
+   */
+  parent_task_id uuid references tasks (id) on delete set null,
+
+  /*
+   * Muistutukset päivinä ennen eräpäivää.
+   *
+   * Taulukko eikä erillisiä rivejä: muistutus ei ole tapahtuma vaan
+   * asetus. Lähetetyt muistutukset eivät tarvitse omaa kirjanpitoa,
+   * koska ne johdetaan päivästä — sama päivä tuottaa saman
+   * muistutuksen eikä kahta.
+   */
+  remind_days_before smallint[] not null default '{1}',
+  remind_on_due boolean not null default true,
+  remind_when_overdue boolean not null default true,
+
+  created_by uuid not null references profiles (id) on delete restrict,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  /* Tehtävä ei voi olla sekä tehty että peruttu. */
+  constraint tasks_one_outcome check (
+    completed_at is null or cancelled_at is null
+  ),
+
+  /* Toistuva tehtävä ei voi olla peruttu ketjun juurena. */
+  constraint tasks_recurrence_needs_due check (
+    recurrence = 'none' or due_on is not null
+  )
+);
+
+create index if not exists tasks_restaurant_due on tasks (restaurant_id, due_on);
+create index if not exists tasks_assigned on tasks (assigned_to) where assigned_to is not null;
+create index if not exists tasks_open
+  on tasks (restaurant_id, due_on)
+  where completed_at is null and cancelled_at is null;
+
+-- ---------------------------------------------------------------------------
+-- Näkyvyys
+-- ---------------------------------------------------------------------------
+--
+-- Työntekijä näkee omat tehtävänsä ja koko henkilöstölle merkityt.
+-- Talous- ja hallintotehtävät eivät kuulu hänelle, eikä suodatus voi
+-- olla käyttöliittymässä: osoitteen voi kirjoittaa itse ja rajapinnan
+-- voi kutsua suoraan.
+
+alter table tasks enable row level security;
+
+drop policy if exists tasks_read on tasks;
+create policy tasks_read on tasks
+  for select to authenticated
+  using (
+    restaurant_id in (select my_restaurant_ids())
+    and (
+      case visibility
+        when 'owner_only' then is_owner(restaurant_id)
+        when 'managers' then is_manager(restaurant_id)
+        when 'assigned_user' then (assigned_to = auth.uid() or is_manager(restaurant_id))
+        else true
+      end
+    )
+  );
+
+/*
+ * Kirjoitus on esihenkilön oikeus.
+ *
+ * Työntekijä merkitsee oman tehtävänsä tehdyksi funktion kautta, ei
+ * suoralla päivityksellä: muuten hän voisi myös siirtää eräpäivää tai
+ * vaihtaa vastuuhenkilön.
+ */
+drop policy if exists tasks_write on tasks;
+create policy tasks_write on tasks
+  for all to authenticated
+  using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+drop trigger if exists tasks_touch on tasks;
+create trigger tasks_touch before update on tasks
+  for each row execute function touch_updated_at();
+
+
+-- ===========================================================================
+-- 0051_audit_log.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0051 — Toimintaloki
+-- ---------------------------------------------------------------------------
+--
+-- Kun myöhemmin kysytään "kuka muutti tämän ja mikä se oli ennen",
+-- Budetin on pystyttävä vastaamaan. Palkkatieto, työaikakorjaus,
+-- verokanta ja käyttöoikeus ovat asioita joissa muistikuva ei riitä.
+--
+-- ---------------------------------------------------------------------------
+-- Miksi oma taulu eikä audit_events
+-- ---------------------------------------------------------------------------
+--
+-- Kannassa on jo audit_events, mutta se kuuluu toiselle sovellukselle:
+-- sen org_id on vierasavain organizations-tauluun ja user_id
+-- profiles-tauluun. Budetin vuokralainen on ravintola, eikä ravintolan
+-- tunnistetta voi kirjoittaa sarakkeeseen joka viittaa organisaatioon.
+-- Saman taulun jakaminen vaatisi toisen sovelluksen rivikäytäntöjen
+-- muuttamista, eikä sitä voi tehdä testaamatta sitä sovellusta.
+--
+-- ---------------------------------------------------------------------------
+-- Loki on liittymätön kohteestaan
+-- ---------------------------------------------------------------------------
+--
+-- entity_id on pelkkä uuid ilman vierasavainta, ja tekijän nimi
+-- tallennetaan tekstinä. Syy on se että loki on todiste tapahtumasta:
+-- se ei saa kadota kun kohde poistetaan. Vierasavain joko estäisi
+-- poiston tai veisi lokirivin mukanaan — kummassakin tapauksessa
+-- "kuka poisti työntekijän" jäisi vastaamatta.
+
+create table if not exists audit_log (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  /*
+   * Tekijä sekä viitteenä että nimenä.
+   *
+   * Viite katkeaa jos käyttäjä poistetaan; nimi jää. Loki jonka
+   * tekijää ei voi enää tunnistaa ei ole todiste mistään.
+   */
+  actor_id uuid references profiles (id) on delete set null,
+  actor_name text not null default 'Tuntematon',
+  actor_role text,
+
+  action text not null,
+  entity_type text not null,
+  entity_id uuid,
+  entity_name text,
+
+  /* Yksi lause suomeksi. Lista luetaan tästä, ei JSON-kentistä. */
+  summary text not null,
+
+  /*
+   * Muuttuneet kentät, ei koko riviä.
+   *
+   * Koko rivin tallentaminen veisi lokiin myös sellaista mitä siellä
+   * ei tarvita, ja osa siitä on arkaluontoista. Vain se mikä muuttui.
+   */
+  before_data jsonb,
+  after_data jsonb,
+
+  /*
+   * Kriittinen tapahtuma nostetaan omaksi ryhmäkseen.
+   *
+   * Palkka, käyttöoikeus, työaikakorjaus ja verokanta ovat niitä
+   * joiden takia lokia luetaan. Ilman merkintää ne hukkuvat
+   * tavallisten muutosten sekaan.
+   */
+  critical boolean not null default false,
+
+  created_at timestamptz not null default now()
+);
+
+create index if not exists audit_log_lookup
+  on audit_log (restaurant_id, created_at desc);
+create index if not exists audit_log_entity
+  on audit_log (restaurant_id, entity_type, entity_id);
+create index if not exists audit_log_actor
+  on audit_log (restaurant_id, actor_id);
+
+-- ---------------------------------------------------------------------------
+-- Loki on vain luettava ja vain omistajalle
+-- ---------------------------------------------------------------------------
+--
+-- LISÄYSKÄYTÄNTÖÄ EI OLE, EIKÄ MUUTOS- TAI POISTOKÄYTÄNTÖÄ.
+--
+-- Rivikäytäntö joka puuttuu tarkoittaa että toiminto on kielletty.
+-- Kirjaukset syntyvät liipaisimista ja security definer -funktioista,
+-- jotka ajetaan taulun omistajan oikeuksin — käyttäjä ei voi
+-- kirjoittaa lokiin suoraan, eikä siis myöskään väärentää tekijää.
+--
+-- Loki sisältää palkkamuutokset ja asetukset, joten se on omistajan
+-- näkymä. Vuoropäällikkö näkee oman työnsä jäljet kohteiden omista
+-- näkymistä.
+
+alter table audit_log enable row level security;
+
+drop policy if exists audit_log_read on audit_log;
+create policy audit_log_read on audit_log
+  for select to authenticated
+  using (is_owner(restaurant_id));
+
+revoke insert, update, delete on audit_log from authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Kirjaus
+-- ---------------------------------------------------------------------------
+--
+-- Tekijä luetaan istunnosta eikä parametrista. Parametrina se olisi
+-- kutsujan kerrottavissa, ja loki jonka tekijän voi valita itse ei ole
+-- todiste.
+
+create or replace function write_audit(
+  p_restaurant uuid,
+  p_action text,
+  p_entity_type text,
+  p_entity_id uuid,
+  p_entity_name text,
+  p_summary text,
+  p_before jsonb default null,
+  p_after jsonb default null,
+  p_critical boolean default false
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_actor uuid := auth.uid();
+  v_name text;
+  v_role text;
+begin
+  if p_restaurant is null then return; end if;
+
+  select coalesce(nullif(trim(p.full_name), ''), 'Tuntematon')
+  into v_name
+  from profiles p
+  where p.id = v_actor;
+
+  select m.role::text into v_role
+  from memberships m
+  where m.restaurant_id = p_restaurant and m.user_id = v_actor;
+
+  insert into audit_log (
+    restaurant_id, actor_id, actor_name, actor_role,
+    action, entity_type, entity_id, entity_name, summary,
+    before_data, after_data, critical
+  )
+  values (
+    p_restaurant, v_actor, coalesce(v_name, 'Järjestelmä'), v_role,
+    p_action, p_entity_type, p_entity_id, p_entity_name, p_summary,
+    p_before, p_after, p_critical
+  );
+end;
+$$;
+
+revoke all on function write_audit from public;
+
+
+-- ===========================================================================
+-- 0052_task_functions.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0052 — Tehtävien toiminnot
+-- ---------------------------------------------------------------------------
+--
+-- Merkintä tehdyksi kulkee funktion kautta eikä suorana päivityksenä.
+-- Vastuuhenkilö saa kuitata oman tehtävänsä, muttei siirtää eräpäivää
+-- eikä vaihtaa vastuuhenkilöä — rivikäytäntö ei pysty erottamaan
+-- näitä toisistaan, funktio pystyy.
+--
+-- JOKAINEN TOISTO ON OMA TEHTÄVÄNSÄ.
+--
+-- Kun elokuun vuokra merkitään maksetuksi, syyskuun tehtävä syntyy
+-- omana rivinään. Yksi rivi jonka eräpäivä siirtyy hukkaisi
+-- historian: silloin ei voisi enää sanoa maksettiinko elokuun vuokra
+-- ajallaan.
+--
+-- Seuraava eräpäivä lasketaan eräpäivästä eikä tästä päivästä. "Joka
+-- kuukauden viides" pysyy viidentenä vaikka tehtävä kuitattaisiin
+-- kahdeksantena.
+
+create or replace function next_task_due(p_due date, p_rule task_recurrence)
+returns date
+language sql
+immutable
+as $$
+  select case p_rule
+    when 'daily' then p_due + 1
+    when 'weekly' then p_due + 7
+    when 'monthly' then (p_due + interval '1 month')::date
+    when 'yearly' then (p_due + interval '1 year')::date
+    else null
+  end;
+$$;
+
+create or replace function complete_task(p_task uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_task tasks;
+  v_next date;
+  v_new uuid;
+begin
+  select * into v_task from tasks where id = p_task;
+  if v_task.id is null then
+    raise exception 'Tehtävää ei löytynyt';
+  end if;
+
+  /*
+   * Vastuuhenkilö saa kuitata omansa.
+   *
+   * Ilman tätä työntekijä ei voisi merkitä tehtäväänsä tehdyksi
+   * lainkaan, koska kirjoitusoikeus tauluun on esihenkilöllä.
+   */
+  if not (
+    is_manager(v_task.restaurant_id)
+    or (v_task.assigned_to = auth.uid()
+        and v_task.restaurant_id in (select my_restaurant_ids()))
+  ) then
+    raise exception 'Ei oikeutta tähän tehtävään';
+  end if;
+
+  -- Jo tehty on jo tehty. Ei virhe eikä uutta toistoa.
+  if v_task.completed_at is not null then
+    return null;
+  end if;
+
+  if v_task.cancelled_at is not null then
+    raise exception 'Peruttua tehtävää ei voi merkitä tehdyksi';
+  end if;
+
+  update tasks
+  set completed_at = now(), completed_by = auth.uid()
+  where id = p_task;
+
+  if v_task.recurrence = 'none' then
+    return null;
+  end if;
+
+  v_next := next_task_due(v_task.due_on, v_task.recurrence);
+  if v_next is null then
+    return null;
+  end if;
+
+  /*
+   * Sama toisto ei synny kahdesti.
+   *
+   * Kaksi nopeaa kuittausta tuottaisi muuten kaksi syyskuun vuokraa.
+   * Ketju tunnistetaan juuresta, joten tarkistus kestää myös pitkän
+   * sarjan.
+   */
+  if exists (
+    select 1 from tasks
+    where parent_task_id = coalesce(v_task.parent_task_id, v_task.id)
+      and due_on = v_next
+  ) then
+    return null;
+  end if;
+
+  insert into tasks (
+    restaurant_id, title, description, due_on, due_time,
+    priority, visibility, assigned_to, recurrence, parent_task_id,
+    remind_days_before, remind_on_due, remind_when_overdue, created_by
+  )
+  values (
+    v_task.restaurant_id, v_task.title, v_task.description, v_next, v_task.due_time,
+    v_task.priority, v_task.visibility, v_task.assigned_to, v_task.recurrence,
+    coalesce(v_task.parent_task_id, v_task.id),
+    v_task.remind_days_before, v_task.remind_on_due, v_task.remind_when_overdue,
+    coalesce(auth.uid(), v_task.created_by)
+  )
+  returning id into v_new;
+
+  return v_new;
+end;
+$$;
+
+revoke all on function complete_task from public;
+grant execute on function complete_task to authenticated;
+
+/** Väärin kuitattu takaisin auki. Vain esihenkilö. */
+create or replace function reopen_task(p_task uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_task tasks;
+begin
+  select * into v_task from tasks where id = p_task;
+  if v_task.id is null then return; end if;
+
+  if not is_manager(v_task.restaurant_id) then
+    raise exception 'Vain esihenkilö voi avata tehtävän uudelleen';
+  end if;
+
+  update tasks
+  set completed_at = null, completed_by = null,
+      cancelled_at = null, cancelled_by = null
+  where id = p_task;
+end;
+$$;
+
+revoke all on function reopen_task from public;
+grant execute on function reopen_task to authenticated;
+
+/**
+ * Peruutus, ei poisto.
+ *
+ * Peruttu tehtävä säilyy: se kertoo että asia oli suunnitteilla ja
+ * siitä luovuttiin. Poistettu tehtävä ei kerro kummastakaan.
+ */
+create or replace function cancel_task(p_task uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_task tasks;
+begin
+  select * into v_task from tasks where id = p_task;
+  if v_task.id is null then return; end if;
+
+  if not is_manager(v_task.restaurant_id) then
+    raise exception 'Vain esihenkilö voi perua tehtävän';
+  end if;
+
+  if v_task.completed_at is not null then
+    raise exception 'Tehty tehtävä on jo hoidettu — sitä ei voi perua';
+  end if;
+
+  update tasks
+  set cancelled_at = now(), cancelled_by = auth.uid()
+  where id = p_task and cancelled_at is null;
+end;
+$$;
+
+revoke all on function cancel_task from public;
+grant execute on function cancel_task to authenticated;
+
+
+-- ===========================================================================
+-- 0053_audit_triggers.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0053 — Toimintalokin liipaisimet
+-- ---------------------------------------------------------------------------
+--
+-- LOKI SYNTYY KANNASSA, EI SOVELLUKSESSA.
+--
+-- Sovelluskoodista kirjattu loki jää kirjaamatta joka kerta kun joku
+-- kutsuu rajapintaa suoraan tai kun uusi kirjoituspolku unohdetaan.
+-- Liipaisin näkee jokaisen muutoksen riippumatta siitä mistä se tuli.
+--
+-- YKSI MUUTOS, YKSI RIVI KENTTÄÄ KOHTI.
+--
+-- Jokainen liipaisin vertaa kenttiä erikseen ja kirjaa vain ne jotka
+-- muuttuivat. Koko rivin tallentaminen veisi lokiin myös sen mikä
+-- pysyi samana, ja muutoksen löytäminen olisi lukijan työtä.
+--
+-- KRIITTISET MERKITÄÄN.
+--
+-- Palkka, rooli, käyttöoikeus, työaikakorjaus, ALV-kanta ja kuitin
+-- summa ovat niitä joiden takia lokia luetaan. Ilman merkintää ne
+-- hukkuisivat tavallisten muutosten sekaan.
+
+-- ---------------------------------------------------------------------------
+-- Apufunktiot
+-- ---------------------------------------------------------------------------
+
+/*
+ * Nimi tekstinä, ei viitteenä.
+ *
+ * Loki on todiste tapahtumasta eikä saa kadota kun kohde poistetaan.
+ * Poistetun työntekijän nimi jää riville, jotta "kuka poistettiin" on
+ * myöhemminkin vastattavissa.
+ */
+create or replace function audit_person_name(p_user uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(nullif(trim(full_name), ''), 'Tuntematon')
+  from profiles where id = p_user;
+$$;
+
+/* Sentit euroina. Loki luetaan samoilla yksiköillä kuin näkymät. */
+create or replace function audit_euros(p_cents integer)
+returns text
+language sql
+immutable
+as $$
+  select case
+    when p_cents is null then '—'
+    else to_char(p_cents / 100.0, 'FM999G999G990D00') || ' €'
+  end;
+$$;
+
+create or replace function audit_shift_label(p_user uuid, p_date date, p_start time, p_end time)
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case when p_user is null then 'Avoin vuoro' else audit_person_name(p_user) end
+    || ' ' || to_char(p_date, 'DD.MM.YYYY') || ' '
+    || to_char(p_start, 'HH24:MI') || '–' || to_char(p_end, 'HH24:MI');
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Työntekijät: palkka, rooli ja käyttöoikeus ovat kriittisiä
+-- ---------------------------------------------------------------------------
+
+create or replace function audit_memberships()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text;
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'member', new.user_id,
+      audit_person_name(new.user_id),
+      audit_person_name(new.user_id) || ' lisättiin ravintolaan roolilla ' || new.role::text || '.',
+      null, jsonb_build_object('role', new.role, 'position', new.position), true
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'member', old.user_id,
+      audit_person_name(old.user_id),
+      audit_person_name(old.user_id) || ' poistettiin ravintolasta.',
+      jsonb_build_object('role', old.role, 'position', old.position), null, true
+    );
+    return old;
+  end if;
+
+  v_name := audit_person_name(new.user_id);
+
+  if new.role is distinct from old.role then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'member', new.user_id, v_name,
+      v_name || ': rooli ' || old.role::text || ' → ' || new.role::text || '.',
+      jsonb_build_object('role', old.role), jsonb_build_object('role', new.role), true
+    );
+  end if;
+
+  if new.hourly_rate_cents is distinct from old.hourly_rate_cents then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'member', new.user_id, v_name,
+      v_name || ': tuntipalkka ' || audit_euros(old.hourly_rate_cents)
+        || ' → ' || audit_euros(new.hourly_rate_cents) || '.',
+      jsonb_build_object('hourly_rate_cents', old.hourly_rate_cents),
+      jsonb_build_object('hourly_rate_cents', new.hourly_rate_cents), true
+    );
+  end if;
+
+  if new.monthly_salary_cents is distinct from old.monthly_salary_cents then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'member', new.user_id, v_name,
+      v_name || ': kuukausipalkka ' || audit_euros(old.monthly_salary_cents)
+        || ' → ' || audit_euros(new.monthly_salary_cents) || '.',
+      jsonb_build_object('monthly_salary_cents', old.monthly_salary_cents),
+      jsonb_build_object('monthly_salary_cents', new.monthly_salary_cents), true
+    );
+  end if;
+
+  if new.position is distinct from old.position then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'member', new.user_id, v_name,
+      v_name || ': tehtävä ' || coalesce(old.position::text, '—')
+        || ' → ' || coalesce(new.position::text, '—') || '.',
+      jsonb_build_object('position', old.position),
+      jsonb_build_object('position', new.position), false
+    );
+  end if;
+
+  if new.active is distinct from old.active then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'member', new.user_id, v_name,
+      v_name || (case when new.active then ' aktivoitiin.' else ' poistettiin käytöstä.' end),
+      jsonb_build_object('active', old.active),
+      jsonb_build_object('active', new.active), true
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists memberships_audit on memberships;
+create trigger memberships_audit
+  after insert or update or delete on memberships
+  for each row execute function audit_memberships();
+
+-- ---------------------------------------------------------------------------
+-- Verotus ja budjetit
+-- ---------------------------------------------------------------------------
+
+create or replace function audit_sales_groups()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'sales_group', new.id, new.name,
+      'Myyntiryhmä ' || new.name || ' lisättiin kannalla '
+        || to_char(new.vat_rate * 100, 'FM990D0') || ' %.',
+      null, jsonb_build_object('name', new.name, 'vat_rate', new.vat_rate), false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'sales_group', old.id, old.name,
+      'Myyntiryhmä ' || old.name || ' poistettiin.',
+      jsonb_build_object('name', old.name, 'vat_rate', old.vat_rate), null, true
+    );
+    return old;
+  end if;
+
+  if new.vat_rate is distinct from old.vat_rate then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'sales_group', new.id, new.name,
+      new.name || ': ALV-kanta ' || to_char(old.vat_rate * 100, 'FM990D0')
+        || ' % → ' || to_char(new.vat_rate * 100, 'FM990D0') || ' %.',
+      jsonb_build_object('vat_rate', old.vat_rate),
+      jsonb_build_object('vat_rate', new.vat_rate), true
+    );
+  end if;
+
+  if new.name is distinct from old.name then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'sales_group', new.id, new.name,
+      'Myyntiryhmän nimi ' || old.name || ' → ' || new.name || '.',
+      jsonb_build_object('name', old.name), jsonb_build_object('name', new.name), false
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists sales_groups_audit on sales_groups;
+create trigger sales_groups_audit
+  after insert or update or delete on sales_groups
+  for each row execute function audit_sales_groups();
+
+create or replace function audit_budgets()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'budget', new.id, new.category::text,
+      'Budjetti ' || new.category::text || ' ' || to_char(new.month, 'MM/YYYY')
+        || ': ' || audit_euros(new.amount_cents) || '.',
+      null, jsonb_build_object('amount_cents', new.amount_cents), false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'budget', old.id, old.category::text,
+      'Budjetti ' || old.category::text || ' ' || to_char(old.month, 'MM/YYYY') || ' poistettiin.',
+      jsonb_build_object('amount_cents', old.amount_cents), null, false
+    );
+    return old;
+  end if;
+
+  if new.amount_cents is distinct from old.amount_cents then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'budget', new.id, new.category::text,
+      'Budjetti ' || new.category::text || ': ' || audit_euros(old.amount_cents)
+        || ' → ' || audit_euros(new.amount_cents) || '.',
+      jsonb_build_object('amount_cents', old.amount_cents),
+      jsonb_build_object('amount_cents', new.amount_cents), false
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists budgets_audit on budgets;
+create trigger budgets_audit
+  after insert or update or delete on budgets
+  for each row execute function audit_budgets();
+
+-- ---------------------------------------------------------------------------
+-- Työajan korjaus: aina kriittinen
+-- ---------------------------------------------------------------------------
+--
+-- Käsin korjattu työaika vaikuttaa suoraan palkkaan. Korjaus on aina
+-- uusi rivi, joten pelkkä insert riittää: vanha ja uusi aika ovat
+-- molemmat samalla rivillä.
+
+create or replace function audit_time_corrections()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_name text := audit_person_name(new.user_id);
+begin
+  perform write_audit(
+    new.restaurant_id, 'updated', 'time_correction', new.id, v_name,
+    v_name || ': työaika ' || to_char(new.work_date, 'DD.MM.YYYY') || ' korjattiin.',
+    jsonb_build_object(
+      'in', new.original_in, 'out', new.original_out,
+      'break_minutes', new.original_break_minutes
+    ),
+    jsonb_build_object(
+      'in', new.corrected_in, 'out', new.corrected_out,
+      'break_minutes', new.corrected_break_minutes, 'reason', new.reason
+    ),
+    true
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists time_corrections_audit on time_corrections;
+create trigger time_corrections_audit
+  after insert on time_corrections
+  for each row execute function audit_time_corrections();
+
+-- ---------------------------------------------------------------------------
+-- Työvuorot
+-- ---------------------------------------------------------------------------
+--
+-- Julkaisu ja peruutus ovat omia tapahtumiaan eivätkä pelkkiä
+-- kenttämuutoksia: ne ovat lupaus työntekijälle ja sen peruminen.
+
+create or replace function audit_shifts()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_label text;
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'shift', new.id,
+      audit_shift_label(new.user_id, new.shift_date, new.start_time, new.end_time),
+      'Työvuoro luotiin: '
+        || audit_shift_label(new.user_id, new.shift_date, new.start_time, new.end_time) || '.',
+      null,
+      jsonb_build_object('date', new.shift_date, 'start', new.start_time, 'end', new.end_time),
+      false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'shift', old.id,
+      audit_shift_label(old.user_id, old.shift_date, old.start_time, old.end_time),
+      'Työvuoro poistettiin: '
+        || audit_shift_label(old.user_id, old.shift_date, old.start_time, old.end_time) || '.',
+      jsonb_build_object('date', old.shift_date, 'start', old.start_time, 'end', old.end_time),
+      null, false
+    );
+    return old;
+  end if;
+
+  v_label := audit_shift_label(new.user_id, new.shift_date, new.start_time, new.end_time);
+
+  if old.published_at is null and new.published_at is not null then
+    perform write_audit(
+      new.restaurant_id, 'published', 'shift', new.id, v_label,
+      'Työvuoro julkaistiin: ' || v_label || '.', null, null, false
+    );
+  end if;
+
+  if old.cancelled_at is null and new.cancelled_at is not null then
+    perform write_audit(
+      new.restaurant_id, 'cancelled', 'shift', new.id, v_label,
+      'Työvuoro peruttiin: ' || v_label || '.', null, null, false
+    );
+  end if;
+
+  if new.start_time is distinct from old.start_time
+     or new.end_time is distinct from old.end_time
+     or new.shift_date is distinct from old.shift_date then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'shift', new.id, v_label,
+      'Työvuoro muuttui: '
+        || audit_shift_label(old.user_id, old.shift_date, old.start_time, old.end_time)
+        || ' → ' || v_label || '.',
+      jsonb_build_object('date', old.shift_date, 'start', old.start_time, 'end', old.end_time),
+      jsonb_build_object('date', new.shift_date, 'start', new.start_time, 'end', new.end_time),
+      false
+    );
+  end if;
+
+  if new.user_id is distinct from old.user_id then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'shift', new.id, v_label,
+      'Työvuoron tekijä vaihtui: '
+        || coalesce(audit_person_name(old.user_id), 'Avoin vuoro') || ' → '
+        || coalesce(audit_person_name(new.user_id), 'Avoin vuoro') || '.',
+      jsonb_build_object('user_id', old.user_id),
+      jsonb_build_object('user_id', new.user_id), false
+    );
+  end if;
+
+  if new.break_minutes is distinct from old.break_minutes then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'shift', new.id, v_label,
+      'Työvuoron tauko ' || old.break_minutes || ' min → ' || new.break_minutes || ' min.',
+      jsonb_build_object('break_minutes', old.break_minutes),
+      jsonb_build_object('break_minutes', new.break_minutes), false
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists shifts_audit on shifts;
+create trigger shifts_audit
+  after insert or update or delete on shifts
+  for each row execute function audit_shifts();
+
+-- ---------------------------------------------------------------------------
+-- Kuitit: summa ja ALV ovat kriittisiä
+-- ---------------------------------------------------------------------------
+
+create or replace function audit_receipts()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'receipt', new.id, new.supplier_name,
+      'Kuitti lisättiin: ' || new.supplier_name || ' '
+        || audit_euros(new.total_cents) || '.',
+      null, jsonb_build_object('total_cents', new.total_cents, 'category', new.category), false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'receipt', old.id, old.supplier_name,
+      'Kuitti poistettiin: ' || old.supplier_name || ' '
+        || audit_euros(old.total_cents) || '.',
+      jsonb_build_object('total_cents', old.total_cents, 'category', old.category),
+      null, true
+    );
+    return old;
+  end if;
+
+  if new.total_cents is distinct from old.total_cents then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'receipt', new.id, new.supplier_name,
+      'Kuitin summa ' || audit_euros(old.total_cents) || ' → '
+        || audit_euros(new.total_cents) || '.',
+      jsonb_build_object('total_cents', old.total_cents),
+      jsonb_build_object('total_cents', new.total_cents), true
+    );
+  end if;
+
+  if new.vat_cents is distinct from old.vat_cents then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'receipt', new.id, new.supplier_name,
+      'Kuitin ALV ' || audit_euros(old.vat_cents) || ' → '
+        || audit_euros(new.vat_cents) || '.',
+      jsonb_build_object('vat_cents', old.vat_cents),
+      jsonb_build_object('vat_cents', new.vat_cents), true
+    );
+  end if;
+
+  if new.category is distinct from old.category then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'receipt', new.id, new.supplier_name,
+      'Kuitin kategoria ' || old.category::text || ' → ' || new.category::text || '.',
+      jsonb_build_object('category', old.category),
+      jsonb_build_object('category', new.category), false
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists receipts_audit on receipts;
+create trigger receipts_audit
+  after insert or update or delete on receipts
+  for each row execute function audit_receipts();
+
+-- ---------------------------------------------------------------------------
+-- Tehtävät
+-- ---------------------------------------------------------------------------
+--
+-- Eräpäivän siirto on oma tapahtumansa vanhoine ja uusine päivineen:
+-- juuri se on kysymys johon myöhemmin halutaan vastaus.
+
+create or replace function audit_tasks()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      new.restaurant_id, 'created', 'task', new.id, new.title,
+      'Tehtävä luotiin: ' || new.title || ' (eräpäivä '
+        || to_char(new.due_on, 'DD.MM.YYYY') || ').',
+      null, jsonb_build_object('due_on', new.due_on, 'priority', new.priority), false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      old.restaurant_id, 'deleted', 'task', old.id, old.title,
+      'Tehtävä poistettiin: ' || old.title || '.',
+      jsonb_build_object('due_on', old.due_on), null, false
+    );
+    return old;
+  end if;
+
+  if old.completed_at is null and new.completed_at is not null then
+    perform write_audit(
+      new.restaurant_id, 'completed', 'task', new.id, new.title,
+      'Tehtävä merkittiin tehdyksi: ' || new.title || '.', null, null, false
+    );
+  end if;
+
+  if old.cancelled_at is null and new.cancelled_at is not null then
+    perform write_audit(
+      new.restaurant_id, 'cancelled', 'task', new.id, new.title,
+      'Tehtävä peruttiin: ' || new.title || '.', null, null, false
+    );
+  end if;
+
+  if new.due_on is distinct from old.due_on then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'task', new.id, new.title,
+      new.title || ': eräpäivä ' || to_char(old.due_on, 'DD.MM.YYYY')
+        || ' → ' || to_char(new.due_on, 'DD.MM.YYYY') || '.',
+      jsonb_build_object('due_on', old.due_on),
+      jsonb_build_object('due_on', new.due_on), false
+    );
+  end if;
+
+  if new.assigned_to is distinct from old.assigned_to then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'task', new.id, new.title,
+      new.title || ': vastuuhenkilö '
+        || coalesce(audit_person_name(old.assigned_to), 'ei kukaan') || ' → '
+        || coalesce(audit_person_name(new.assigned_to), 'ei kukaan') || '.',
+      jsonb_build_object('assigned_to', old.assigned_to),
+      jsonb_build_object('assigned_to', new.assigned_to), false
+    );
+  end if;
+
+  if new.priority is distinct from old.priority then
+    perform write_audit(
+      new.restaurant_id, 'updated', 'task', new.id, new.title,
+      new.title || ': prioriteetti ' || old.priority::text || ' → ' || new.priority::text || '.',
+      jsonb_build_object('priority', old.priority),
+      jsonb_build_object('priority', new.priority), false
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists tasks_audit on tasks;
+create trigger tasks_audit
+  after insert or update or delete on tasks
+  for each row execute function audit_tasks();
 

@@ -506,7 +506,10 @@ export type AlertKind =
   | "shift_overrun"
   | "unassigned_shift"
   | "sales_shortfall"
-  | "receipt_gap";
+  | "receipt_gap"
+  // Määräaika: tehtävä joka erääntyy tänään tai on jo myöhässä.
+  | "task_due"
+  | "task_overdue";
 
 /**
  * Poikkeama.

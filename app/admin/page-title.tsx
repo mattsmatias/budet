@@ -29,6 +29,8 @@ const EXTRA: { href: string; label: string }[] = [
    * sivu ei enää kirjoita omaa otsikkoaan.
    */
   { href: "/admin/kuitit/uusi", label: "Uusi kuitti" },
+  /* Toimintaloki ei ole valikossa: se löytyy asetuksista. */
+  { href: "/admin/loki", label: "Toimintaloki" },
 ];
 
 export function PageTitle({ fallback }: { fallback: string }) {

@@ -16,6 +16,7 @@ import {
   fetchAbsences,
   fetchClockEvents,
   fetchOpenShifts,
+  fetchTasks,
   fetchRestaurantData,
   fetchShifts,
   type RestaurantData,
@@ -23,6 +24,7 @@ import {
 import { requireContext, type Context } from "./session";
 import { claimableShifts } from "./open-shifts";
 import type { Absence, ClockEvent, OpenShift, Shift } from "./types";
+import type { Task } from "./tasks";
 
 export interface AdminContext extends Context, RestaurantData {
   /** Kuluva kuukausi "2026-08" ravintolan aikavyöhykkeellä. */
@@ -118,6 +120,14 @@ export interface EmployeeContext extends Context {
    * silloin kun ravintola on kytkenyt ottamisen pois.
    */
   claimable: OpenShift[];
+  /*
+   * Omat tehtävät.
+   *
+   * Rivikäytäntö rajaa: omat ja koko henkilöstölle merkityt. Talous-
+   * ja hallintotehtävät eivät tule tänne asti, eikä suodatusta
+   * tarvitse tehdä täällä.
+   */
+  tasks: Task[];
 }
 
 /**
@@ -145,6 +155,8 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
       : Promise.resolve([]),
   ]);
 
+  const myTasks = await fetchTasks(ctx.restaurant.id);
+
   const myShifts = allShifts.filter((s) => s.userId === ctx.user.id);
 
   return {
@@ -155,6 +167,7 @@ export async function employeeContext(returnTo: string): Promise<EmployeeContext
     clockEvents: allEvents.filter((e) => e.userId === ctx.user.id),
     shifts: myShifts,
     absences: allAbsences.filter((a) => a.userId === ctx.user.id),
+    tasks: myTasks,
     claimable: claimableShifts({
       openShifts,
       myShifts,

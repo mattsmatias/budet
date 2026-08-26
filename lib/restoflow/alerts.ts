@@ -16,6 +16,7 @@ import { formatMoney } from "../money";
 import { needsReview, receiptsInMonth } from "./expenses";
 import { supplierTrends } from "./suppliers";
 import { checkVat } from "./vat";
+import type { Task } from "./tasks";
 import {
   CATEGORY_LABELS,
   REVIEW_REASON_LABELS,
@@ -63,6 +64,14 @@ export interface AlertContext {
   timezone: string;
   openShifts?: OpenShift[];
   sales?: DailySales[];
+  /*
+   * Tehtävät samassa paketissa muiden kanssa.
+   *
+   * "Onko jotain hoitamatta" on yksi kysymys. Erillinen tehtävälista
+   * yleiskuvassa tarkoittaisi kahta paikkaa joista molemmat pitää
+   * muistaa katsoa.
+   */
+  tasks?: Task[];
 }
 
 /**
@@ -87,6 +96,7 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
       clockEvents: ctx.clockEvents,
       receipts: ctx.receipts,
       sales: ctx.sales ?? [],
+      tasks: ctx.tasks ?? [],
       today: ctx.today,
       now: ctx.now,
       timezone: ctx.timezone,

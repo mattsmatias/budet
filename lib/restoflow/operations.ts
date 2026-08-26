@@ -22,6 +22,7 @@ import { compareSales, type DailySales } from "./sales";
 import { shiftBounds } from "./shift-window";
 import { currentState, eventsOnDate } from "./timeclock";
 import type { Alert, ClockEvent, OpenShift, Receipt, Shift, User } from "./types";
+import { daysLate, statusOf, type Task } from "./tasks";
 
 /** Vuoron alusta tämän jälkeen puuttuva sisäänleimaus on poikkeama. */
 const LATE_CLOCK_IN_MINUTES = 20;
@@ -45,6 +46,14 @@ export interface OperationsContext {
   clockEvents: ClockEvent[];
   receipts: Receipt[];
   sales: DailySales[];
+  /*
+   * Tehtävät ovat osa samaa kysymystä kuin muut poikkeamat.
+   *
+   * "Onko jotain hoitamatta" on yksi kysymys, ei kaksi. Erillinen
+   * tehtävälista yleiskuvassa tarkoittaisi kahta paikkaa joista
+   * molemmat pitää muistaa katsoa.
+   */
+  tasks?: Task[];
   today: string;
   now: string;
   timezone: string;
@@ -57,7 +66,60 @@ export function operationalAlerts(ctx: OperationsContext): Alert[] {
     ...unassignedShifts(ctx),
     ...salesShortfall(ctx),
     ...receiptGap(ctx),
+    ...taskDeadlines(ctx),
   ];
+}
+
+/**
+ * Määräaika tänään tai jo mennyt.
+ *
+ * Myöhässä oleva on kriittinen: eräpäivä on ohi eikä kukaan ole
+ * tehnyt mitään. Tänään erääntyvä on huomautus — päivä on vielä
+ * edessä.
+ *
+ * Tulevat eivät ole hälytyksiä. Tehtävä jonka eräpäivä on ensi
+ * viikolla ei vaadi tänään mitään, ja hälytys siitä opettaisi
+ * ohittamaan hälytykset.
+ */
+function taskDeadlines(ctx: OperationsContext): Alert[] {
+  const tasks = ctx.tasks ?? [];
+  const alerts: Alert[] = [];
+
+  for (const task of tasks) {
+    const status = statusOf(task, ctx.today);
+
+    if (status === "overdue") {
+      const late = daysLate(task, ctx.today);
+
+      alerts.push({
+        id: `task-overdue-${task.id}`,
+        kind: "task_overdue",
+        severity: "critical",
+        title: task.title,
+        detail:
+          late === 0
+            ? `Eräpäivä oli tänään klo ${task.dueTime}.`
+            : `Myöhässä ${late} ${late === 1 ? "päivän" : "päivää"}.`,
+        href: "/admin/tehtavat?suodatin=myohassa",
+        entityId: task.id,
+      });
+      continue;
+    }
+
+    if (status === "due_today") {
+      alerts.push({
+        id: `task-due-${task.id}`,
+        kind: "task_due",
+        severity: task.priority === "critical" ? "critical" : "warning",
+        title: task.title,
+        detail: task.dueTime ? `Erääntyy tänään klo ${task.dueTime}.` : "Erääntyy tänään.",
+        href: "/admin/tehtavat?suodatin=tanaan",
+        entityId: task.id,
+      });
+    }
+  }
+
+  return alerts;
 }
 
 // ---------------------------------------------------------------------------

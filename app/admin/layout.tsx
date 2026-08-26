@@ -5,6 +5,7 @@ import { buildAlerts } from "@/lib/restoflow/alerts";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
+import { countTasks } from "@/lib/restoflow/tasks";
 import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
@@ -40,6 +41,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     timezone: restaurant.timezone,
     openShifts: data.openShifts,
     sales: data.sales,
+    tasks: data.tasks,
   });
 
   const userName = user.fullName ?? user.email ?? "Käyttäjä";
@@ -68,9 +70,17 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
    * tähän: se ei vaadi mitään, ja luku joka ei vaadi mitään opettaa
    * ohittamaan myös ne jotka vaativat.
    */
+  /*
+   * Tehtävien merkki kertoo vain huomiota vaativista.
+   *
+   * Myöhässä olevat ja tänään erääntyvät. Tulevien määrä ei kuulu
+   * merkkiin: se ei vaadi tänään mitään, ja luku joka ei vaadi
+   * mitään opettaa ohittamaan myös ne jotka vaativat.
+   */
   const counts: Record<string, number> = {
     "/admin/kuitit": needsReview(data.receipts).length,
     "/admin/tyovuorot": data.openShifts.filter((s) => s.date >= today).length,
+    "/admin/tehtavat": countTasks(data.tasks, today).needsAttention,
   };
 
   return (

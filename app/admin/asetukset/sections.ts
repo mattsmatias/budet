@@ -70,6 +70,20 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     icon: "expenses",
     ownerOnly: true,
   },
+  /*
+   * Toimintaloki on asetuksissa muttei asetus.
+   *
+   * Se ei muuta mitään: se kertoo mitä on muutettu. Paikka on silti
+   * oikea — sitä etsitään sieltä mistä muutkin hallinnan asiat, ja
+   * omistaja on ainoa joka sen näkee.
+   */
+  {
+    id: "loki",
+    label: "Toimintaloki",
+    summary: "Kuka teki mitä ja milloin",
+    icon: "clock",
+    ownerOnly: true,
+  },
   {
     id: "tietoja",
     label: "Tietoja",

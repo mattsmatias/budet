@@ -5,6 +5,7 @@ import { birthdaysToday } from "@/lib/restoflow/workplace";
 import { daySummaries, eventsOnDate, workedBetween } from "@/lib/restoflow/timeclock";
 import { ClockCard } from "./home/clock-card";
 import { NextShift } from "./home/next-shift";
+import { MyTasks } from "./my-tasks";
 import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
 import { Workplace } from "./home/workplace";
@@ -33,7 +34,7 @@ const RECENT_DAYS = 3;
  * työajan laskenta tulee samasta moottorista kuin esihenkilön puolella.
  */
 export default async function EmployeeHome() {
-  const { user, restaurant, clockEvents, shifts, today, now } =
+  const { user, restaurant, clockEvents, shifts, tasks, today, now } =
     await employeeContext("/app");
 
   const zone = restaurant.timezone;
@@ -126,6 +127,15 @@ export default async function EmployeeHome() {
           </Surface>
         </div>
       </div>
+
+      {/*
+        Omat tehtävät heti vuoron jälkeen.
+
+        Työntekijä katsoo puhelinta kesken vuoron ja kysyy mitä pitää
+        tehdä. Tehtävät ovat vastaus siihen, joten ne ovat ennen
+        työyhteisöä ja historiaa.
+      */}
+      <MyTasks tasks={tasks} today={today} />
 
       <Workplace colleagues={colleagues} birthdays={birthdays} />
 

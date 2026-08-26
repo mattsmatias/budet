@@ -68,3 +68,76 @@ export function pickedMonth(
     ? param
     : fallback;
 }
+
+/**
+ * Päivien laskenta ISO-päivämäärillä.
+ *
+ * UTC-keskipäivä välivaiheena: keskiyöstä laskettuna kesäajan vaihdos
+ * siirtäisi tuloksen päivän verran niinä kahtena yönä vuodessa joina
+ * kello siirtyy. Keskipäivällä siirtymä on aina saman päivän sisällä.
+ */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function noon(isoDate: string): Date {
+  return new Date(`${isoDate}T12:00:00Z`);
+}
+
+export function addDays(isoDate: string, days: number): string {
+  return new Date(noon(isoDate).getTime() + days * DAY_MS)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** Kokonaisia päiviä ensimmäisestä toiseen. Negatiivinen jos toinen on aiemmin. */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((noon(to).getTime() - noon(from).getTime()) / DAY_MS);
+}
+
+/**
+ * Paikallisen päivän alku UTC-hetkenä.
+ *
+ * Loki tallentaa aikaleimat UTC:nä mutta "tänään" on ravintolan päivä.
+ * Suodatus pelkällä päivämäärällä leikkaisi Suomessa kesäaikaan kolme
+ * ensimmäistä tuntia pois: paikallinen keskiyö on UTC:ssä edellisen
+ * päivän puolella.
+ *
+ * Siirtymä luetaan Intl:ltä eikä lasketa käsin, jolloin kesä- ja
+ * talviaika hoituvat samalla säännöllä.
+ */
+export function startOfDayIso(isoDate: string, timezone: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  // Arvaus: paikallinen keskiyö olisi sama hetki UTC:ssä.
+  const guess = Date.UTC(year, month - 1, day);
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(new Date(guess));
+
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+
+  /*
+   * Ero arvauksen ja sen paikallisen esityksen välillä on vyöhykkeen
+   * siirtymä. Vähentämällä se arvauksesta saadaan hetki jonka
+   * paikallinen esitys on tasan keskiyö.
+   */
+  const asLocal = Date.UTC(
+    value("year"),
+    value("month") - 1,
+    value("day"),
+    // Intl esittää keskiyön muodossa 24 osassa vyöhykkeitä.
+    value("hour") % 24,
+    value("minute"),
+    value("second"),
+  );
+
+  return new Date(guess - (asLocal - guess)).toISOString();
+}

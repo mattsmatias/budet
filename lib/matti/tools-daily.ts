@@ -42,6 +42,7 @@ function dashboardInput(ctx: MattiContext, month: string) {
     absences: ctx.data.absences,
     openShifts: ctx.data.openShifts,
     sales: ctx.data.sales,
+    tasks: ctx.data.tasks,
     month,
     today: ctx.today,
     now: ctx.now,

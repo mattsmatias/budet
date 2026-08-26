@@ -679,12 +679,11 @@ describe("oikeudet", () => {
    * Valikon koko on tuotepäätös, ei sattuma.
    *
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
-   * Yhdestoista kohta on Myynti: kassan päiväraportti kirjataan joka
-   * ilta, ja päivittäinen tehtävä kuuluu valikkoon eikä yhden kortin
-   * taakse yleiskuvaan.
+   * Kahdestoista kohta on Tehtävät: määräaika on päivittäinen asia, ja
+   * juuri sen takia Budet avataan aamulla.
    */
-  it("pitää päävalikon yhdessätoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(11);
+  it("pitää päävalikon kahdessatoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(12);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 

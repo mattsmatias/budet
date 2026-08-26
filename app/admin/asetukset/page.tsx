@@ -206,6 +206,36 @@ export default async function SettingsPage({
               </>
             ) : null}
 
+            {shown.id === "loki" ? (
+              <div className="space-y-3">
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                  Toimintaloki kertoo kuka teki muutoksen, mihin se kohdistui ja
+                  mikä arvo oli ennen. Palkkamuutokset, työaikakorjaukset,
+                  verokannat ja käyttöoikeudet kirjataan aina.
+                </p>
+
+                <Link
+                  href="/admin/loki"
+                  className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+                  style={{
+                    background: "var(--rf-inset)",
+                    color: "var(--rf-text)",
+                    border: "1px solid var(--rf-line-strong)",
+                    borderRadius: "var(--rf-r-control)",
+                  }}
+                >
+                  <RfIcon name="clock" size={15} />
+                  Avaa toimintaloki
+                </Link>
+
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+                  Lokia ei voi muokata eikä poistaa. Merkinnät syntyvät
+                  tietokannassa, joten ne kirjautuvat myös silloin kun muutos
+                  tehdään käyttöliittymän ohi.
+                </p>
+              </div>
+            ) : null}
+
             {shown.id === "tietoja" ? (
               <>
                 <h3 className="text-[13.5px] font-bold">Kuittien poiminta</h3>
