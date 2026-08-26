@@ -8,7 +8,7 @@ import {
   type ReceiptFilter,
 } from "@/lib/restoflow/expenses";
 import { duplicateIds, findDuplicates } from "@/lib/restoflow/duplicates";
-import { can, canAddReceipts } from "@/lib/restoflow/permissions";
+import { can } from "@/lib/restoflow/permissions";
 import {
   CATEGORY_LABELS,
   PAYMENT_LABELS,
@@ -109,7 +109,6 @@ export default async function AdminReceiptsPage({
   const duplicates = duplicateIds(receipts);
   const duplicateGroups = findDuplicates(receipts);
   const canReview = can(role, "receipts.edit");
-  const canAdd = canAddReceipts(role);
 
   return (
     <div className="rf-enter space-y-5">
@@ -121,25 +120,17 @@ export default async function AdminReceiptsPage({
           </p>
         </div>
 
-        <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-          {canAdd ? (
-            <Link
-              href="/admin/kuitit/uusi"
-              className="rf-press flex items-center justify-center gap-2 py-3 text-[15px] font-semibold md:order-2 md:px-5 md:py-2.5 md:text-[14px]"
-              style={{
-                background: "var(--rf-accent)",
-                color: "var(--rf-on-accent)",
-                borderRadius: "var(--rf-r-control)",
-              }}
-            >
-              <RfIcon name="plus" size={17} />
-              Uusi kuitti
-            </Link>
-          ) : null}
+        {/*
+          Vain haku.
 
-          <div className="w-full md:order-1 md:w-auto">
-            <ReceiptSearch initial={query} />
-          </div>
+          Tässä oli myös "Uusi kuitti", ja yläpalkissa on "Lisää kuitti"
+          joka vie samaan osoitteeseen. Kaksi eri nimistä painiketta
+          samalle toiminnolle vierekkäin saa etsimään eroa jota ei ole.
+          Yläpalkin painike jää, koska se on jokaisella sivulla — tämä
+          oli vain kuittisivulla.
+        */}
+        <div className="w-full md:w-auto">
+          <ReceiptSearch initial={query} />
         </div>
       </div>
 
