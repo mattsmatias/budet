@@ -4,7 +4,13 @@ import { STATUS_LABELS, healthOf, statusTone } from "@/lib/kehittaja/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Yleiskatsaus" };
+/*
+ * absolute, koska title.template koskee lapsisegmenttejä eikä
+ * segmentin omaa sivua: ilman tätä juurisivu perisi juurilayoutin
+ * mallin ja lukisi "Yleiskatsaus · Budet" kuten ravintolan oma
+ * yleiskatsaus.
+ */
+export const metadata = { title: { absolute: "Budet Developer Console" } };
 
 /**
  * Järjestelmän yleiskatsaus.
