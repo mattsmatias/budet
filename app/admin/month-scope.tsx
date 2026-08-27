@@ -26,6 +26,16 @@ const MONTHLY = [
   /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
   "/admin/kirjanpito",
   /*
+   * Kuitit ja Myynti näyttivät koko historian.
+   *
+   * Kuittilista oli yksi pino kaikesta, myyntilista viimeiset
+   * kolmekymmentä päivää. Kumpikin vastaa kysymykseen "mitä tässä
+   * kuussa tapahtui", ja sitä kysytään useammin kuin yhden vanhan
+   * rivin etsimistä.
+   */
+  "/admin/kuitit",
+  "/admin/myynti",
+  /*
    * Toimittajat, Budjetit ja Havainnot lukivat vain kuluvan kuukauden.
    *
    * Ne kaikki vastaavat kysymykseen "miten tässä kuussa meni" — kenelle

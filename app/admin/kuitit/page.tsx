@@ -2,11 +2,14 @@ import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   filterReceipts,
+  formatMonth,
   needsReview,
+  receiptsInMonth,
   searchReceipts,
   sortByDateDesc,
   type ReceiptFilter,
 } from "@/lib/restoflow/expenses";
+import { monthFromParams } from "@/lib/restoflow/dates";
 import { duplicateIds, findDuplicates } from "@/lib/restoflow/duplicates";
 import { can } from "@/lib/restoflow/permissions";
 import {
@@ -41,8 +44,10 @@ export default async function AdminReceiptsPage({
   searchParams,
 }: PageProps<"/admin/kuitit">) {
   const params = await searchParams;
-  const { receipts, users, role, suppliers, merchants, merchantCategories } =
+  const { receipts, users, role, suppliers, merchants, merchantCategories, month: nykyinen } =
     await adminContext("/admin/kuitit");
+
+  const month = monthFromParams(params, nykyinen);
 
   /*
    * Kaupan tiedot kuitille.
@@ -102,10 +107,29 @@ export default async function AdminReceiptsPage({
           return [...hits.values()];
         })();
 
-  const visible = sortByDateDesc(filterReceipts(searched, filter));
+  /*
+   * Kuukausi rajaa listan.
+   *
+   * Kuittilista oli koko historia yhtenä pinona. Se on oikea vastaus
+   * silloin kun etsitään yhtä kuittia, mutta väärä silloin kun
+   * kysytään "mitä elokuussa ostettiin" — ja jälkimmäistä kysytään
+   * useammin. Muut talouden sivut on rajattu kuukauteen jo ennestään.
+   */
+  const monthly = receiptsInMonth(searched, month);
+  const visible = sortByDateDesc(filterReceipts(monthly, filter));
+
+  /*
+   * HAKU EI SAA HÄVITÄ RAJAUKSEEN.
+   *
+   * Vanhaa kuittia etsivä kirjoittaa nimen eikä muista kuukautta. Jos
+   * lista vain tyhjenisi, hän päättelisi ettei kuittia ole — vaikka se
+   * on kahden klikkauksen päässä. Osumat muualta lasketaan siksi
+   * erikseen ja kerrotaan ääneen.
+   */
+  const elsewhere = q === "" ? 0 : searched.length - monthly.length;
 
   const total = visible.reduce((s, r) => s + r.totalCents, 0);
-  const reviewCount = needsReview(receipts).length;
+  const reviewCount = needsReview(receiptsInMonth(receipts, month)).length;
   const duplicates = duplicateIds(receipts);
   const duplicateGroups = findDuplicates(receipts);
   const canReview = can(role, "receipts.edit");
@@ -115,9 +139,17 @@ export default async function AdminReceiptsPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {visible.length} kuittia · {formatMoney(total)}
+            {formatMonth(month)} · {visible.length} kuittia ·{" "}
+            {formatMoney(total)}
             {reviewCount > 0 && filter === "all" ? ` · ${reviewCount} tarkistettavaa` : ""}
           </p>
+
+          {elsewhere > 0 ? (
+            <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+              {elsewhere} {elsewhere === 1 ? "osuma" : "osumaa"} muilta
+              kuukausilta — vaihda kuukautta nähdäksesi ne.
+            </p>
+          ) : null}
         </div>
 
         {/*
@@ -212,13 +244,37 @@ export default async function AdminReceiptsPage({
         </ul>
       </nav>
 
+      {/*
+        Tyhjä tila ei saa olla eri mieltä kuin ylärivi.
+
+        "Kokeile toista hakusanaa" oli väärä neuvo silloin kun osumia on
+        toisessa kuukaudessa: hakusana oli oikea, kuukausi väärä. Väärä
+        neuvo lopettaa etsimisen — ja kuitti oli kahden klikkauksen
+        päässä.
+      */}
       {visible.length === 0 ? (
         <EmptyState
-          title={query ? "Ei osumia" : "Ei kuitteja"}
+          /*
+           * Kuukauden nimi ei taivu tässä.
+           *
+           * "Ei osumia heinäkuu 2026" on väärin ja "heinäkuussa"
+           * vaatisi taivutustaulukon jota ei kannata kirjoittaa yhtä
+           * otsikkoa varten. Kuukausi lukee joka tapauksessa
+           * yläpalkissa ja sivun ylärivillä.
+           */
+          title={
+            elsewhere > 0
+              ? "Ei osumia tältä kuukaudelta"
+              : query
+                ? "Ei osumia"
+                : "Ei kuitteja tältä kuukaudelta"
+          }
           description={
-            query
-              ? "Kokeile toista hakusanaa."
-              : "Lisää ensimmäinen kuitti yllä olevasta painikkeesta."
+            elsewhere > 0
+              ? `Hakusana löytyy muualta: ${elsewhere} ${elsewhere === 1 ? "kuitti" : "kuittia"} muilta kuukausilta. Vaihda kuukautta yläpalkista.`
+              : query
+                ? "Kokeile toista hakusanaa."
+                : "Lisää ensimmäinen kuitti yllä olevasta painikkeesta."
           }
         />
       ) : (

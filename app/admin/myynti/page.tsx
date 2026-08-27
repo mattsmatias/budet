@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { monthFromParams } from "@/lib/restoflow/dates";
+import { formatMonth } from "@/lib/restoflow/expenses";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchDailySales } from "@/lib/restoflow/queries";
@@ -31,8 +33,23 @@ export const metadata = { title: "Myynti" };
  * Sivu on valikon talousosaston ensimmäinen kohta: kassan päiväraportti
  * kirjataan joka ilta, ja päivittäinen tehtävä kuuluu valikkoon.
  */
-export default async function SalesPage() {
-  const { restaurant, role, today } = await adminContext("/admin/myynti");
+export default async function SalesPage({
+  searchParams,
+}: PageProps<"/admin/myynti">) {
+  const { restaurant, role, today, month: nykyinen } = await adminContext("/admin/myynti");
+
+  const month = monthFromParams(await searchParams, nykyinen);
+
+  /*
+   * Kirjaus koskee aina tata paivaa.
+   *
+   * Kuvaus ja kasin kirjaus ovat toimintoja eivatka kuukauden nakyma,
+   * ja niiden otsikoissa lukee "taman paivan". Heinakuun listan
+   * ylapuolella ne lukisivat vaarin. Menneessa kuussa sivu on siis
+   * katselua; kirjaaminen loytyy kuluvasta kuusta, ja lomakkeen
+   * paivakentalla voi yha taydentaa menneen paivan.
+   */
+  const kuluva = month === nykyinen;
 
   const sales = await fetchDailySales(restaurant.id);
 
@@ -54,6 +71,9 @@ export default async function SalesPage() {
   const yesterday = addDays(today, -1);
   const missingYesterday = !sales.some((s) => s.date === yesterday);
 
+  // Lista rajataan kuukauteen; vertailut lukevat yha koko historiaa.
+  const inMonth = sales.filter((row) => row.date.startsWith(month));
+
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -72,7 +92,7 @@ export default async function SalesPage() {
         raporttia ole tai poiminta ei osu — se on nopein tie yhteen
         lukuun, muttei enää ainoa tie.
       */}
-      {canManage ? (
+      {canManage && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             Kuvaa kassan päiväraportti
@@ -88,7 +108,7 @@ export default async function SalesPage() {
         </Card>
       ) : null}
 
-      {canManage ? (
+      {canManage && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             {todayRow ? "Muuta tämän päivän myyntiä" : "Kirjaa päivän myynti käsin"}
@@ -110,7 +130,7 @@ export default async function SalesPage() {
         joten vertailulla ei olisi kahta osapuolta — ja "täsmää" ilman
         vertailukohtaa tarkoittaisi vain ettei mitään ole verrattu.
       */}
-      {todayLines.length > 0 && todayRow ? (
+      {todayLines.length > 0 && todayRow && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             Täsmäytys kassaan
@@ -164,9 +184,15 @@ export default async function SalesPage() {
         ensimmäinen rivi, ja kaksi eri tapaa nimetä osio saa saman
         sivun näyttämään kahdesta eri sovelluksesta kootulta.
       */}
-      <Panel title="Kirjatut päivät" subtitle={`${sales.length} päivää`}>
-        {sales.length === 0 ? (
-          <PanelEmpty text="Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Budet alkaa verrata päiviä toisiinsa." />
+      <Panel title="Kirjatut päivät" subtitle={`${formatMonth(month)} · ${inMonth.length} ${inMonth.length === 1 ? "päivä" : "päivää"}`}>
+        {inMonth.length === 0 ? (
+          <PanelEmpty
+            text={
+              sales.length === 0
+                ? "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Budet alkaa verrata päiviä toisiinsa."
+                : `Tältä kuukaudelta ei ole kirjattua myyntiä. Muilta kuukausilta löytyy ${sales.length} päivää.`
+            }
+          />
         ) : (
           /* Taulukko kortin reunoihin, kuten Viimeisimmät kuitit. */
           <div className="-mx-[18px] -mb-4 mt-[14px] overflow-x-auto rounded-b-[var(--rf-r-card)]">
@@ -183,7 +209,7 @@ export default async function SalesPage() {
                 </tr>
               </thead>
               <tbody>
-                {sales.slice(0, 30).map((row) => (
+                {inMonth.map((row) => (
                   <Row
                     key={row.date}
                     row={row}
