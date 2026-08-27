@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CountUp } from "@/components/restoflow/count-up";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -39,8 +40,12 @@ export const metadata = { title: "Budjetit" };
  * jakaudu tasaisesti kuukaudelle, ja tasaiseen tahtiin perustuva ennuste
  * hälyttäisi turhaan heti ison tukkulaskun jälkeen.
  */
-export default async function BudgetsPage() {
-  const { receipts, budgets, month, role } = await adminContext("/admin/budjetit");
+export default async function BudgetsPage({
+  searchParams,
+}: PageProps<"/admin/budjetit">) {
+  const { receipts, budgets, month: nykyinen, role } = await adminContext("/admin/budjetit");
+
+  const month = monthFromParams(await searchParams, nykyinen);
 
   const progress = budgetProgress(receipts, budgets, month);
   const summary = budgetSummary(progress);

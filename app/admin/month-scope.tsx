@@ -25,24 +25,77 @@ const MONTHLY = [
   "/admin/raportit",
   /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
   "/admin/kirjanpito",
+  /*
+   * Toimittajat, Budjetit ja Havainnot lukivat vain kuluvan kuukauden.
+   *
+   * Ne kaikki vastaavat kysymykseen "miten tässä kuussa meni" — kenelle
+   * raha meni, riittikö budjetti, mikä poikkesi. Kysymys on yhtä
+   * mielekäs elokuusta kuin kuluvasta kuusta, mutta vastausta ei
+   * päässyt katsomaan.
+   */
+  "/admin/toimittajat",
+  "/admin/budjetit",
+  "/admin/havainnot",
   /* Vain lista ja kalenteri lukevat kuukauden, ei koko työvuorosivu. */
   "/admin/tyovuorot/lista",
   "/admin/tyovuorot/kalenteri",
 ];
 
-export function MonthScope({ value, months }: { value: string; months: string[] }) {
+/**
+ * Lukeeko tämä sivu kuukauden?
+ *
+ * Tarkka osuma tai alipolku. Ilman alipolkua /admin/raportit/tulosta
+ * menettäisi valitsimen vaikka se lukee kuukauden, ja /admin saisi sen
+ * jokaisella sivulla — se on kaikkien etuliite.
+ */
+function useMonthly(): boolean {
   const pathname = usePathname();
 
-  /*
-   * Tarkka osuma tai alipolku. Ilman alipolkua /admin/raportit/tulosta
-   * menettäisi valitsimen vaikka se lukee kuukauden, ja /admin saisi
-   * sen jokaisella sivulla — se on kaikkien etuliite.
-   */
-  const shown = MONTHLY.some((route) =>
+  return MONTHLY.some((route) =>
     route === "/admin" ? pathname === "/admin" : pathname.startsWith(route),
   );
+}
 
-  if (!shown) return null;
+/** Työpöydän yläpalkkiin. */
+export function MonthScope({ value, months }: { value: string; months: string[] }) {
+  if (!useMonthly()) return null;
 
   return <MonthPicker value={value} months={months} />;
+}
+
+/**
+ * Puhelimen oma rivi.
+ *
+ * KOLME PAINIKETTA EI MAHDU OTSIKKOPALKKIIN.
+ *
+ * Puhelimen palkissa on ravintolan nimi, käyttäjä, kello ja tunnus.
+ * Valitsin sinne ahdettuna olisi puristanut nimen muutamaan merkkiin.
+ * Omalla rivillään se saa täyden leveyden eikä vie mitään muuta pois.
+ *
+ * Rivi ei ole tarttuva. Kuukauden vaihtaminen on kerran katsomisen
+ * aikana tehtävä valinta, ei jatkuvasti käsillä oleva säädin — ja
+ * tarttuva rivi söisi pystytilaa juuri siltä sisällöltä jota
+ * katsotaan.
+ *
+ * Ilman tätä kuukautta ei voinut vaihtaa puhelimessa lainkaan:
+ * yläpalkki on md:flex, joten valitsin katosi kapealla ruudulla
+ * kokonaan kaikilta kuukausisivuilta.
+ */
+export function MobileMonthBar({
+  value,
+  months,
+}: {
+  value: string;
+  months: string[];
+}) {
+  if (!useMonthly()) return null;
+
+  return (
+    <div
+      className="rf-no-print flex justify-center border-b px-4 py-2.5 md:hidden"
+      style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
+    >
+      <MonthPicker value={value} months={months} />
+    </div>
+  );
 }

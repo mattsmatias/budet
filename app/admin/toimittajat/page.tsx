@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import Link from "next/link";
 import {
@@ -28,10 +29,14 @@ export const metadata = { title: "Toimittajat" };
  * Kategoriajakauma kertoo mihin rahat menevät, tämä kenelle. Ne ovat eri
  * kysymyksiä — ja neuvotteluvoima syntyy jälkimmäisestä.
  */
-export default async function SuppliersPage() {
+export default async function SuppliersPage({
+  searchParams,
+}: PageProps<"/admin/toimittajat">) {
   const {
-    receipts, month,
+    receipts, month: nykyinen,
   } = await adminContext("/admin/toimittajat");
+
+  const month = monthFromParams(await searchParams, nykyinen);
 
   const totals = supplierTotalsInMonth(receipts, month);
   const trends = new Map(supplierTrends(receipts, month).map((t) => [t.supplierId, t]));

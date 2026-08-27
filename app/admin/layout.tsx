@@ -11,6 +11,7 @@ import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
+import { MobileMonthBar } from "./month-scope";
 import type { SearchItem } from "./search";
 import type { StaffPosition } from "@/lib/restoflow/types";
 
@@ -142,6 +143,17 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             canOpenSettings={can(role, "settings.view")}
           />
         </header>
+
+        {/*
+          Kuukausi puhelimessa.
+
+          Työpöydän yläpalkki on md:flex, joten sen valitsin katosi
+          kapealla ruudulla kokonaan — kuukautta ei päässyt vaihtamaan
+          Kuluilla, Palkoilla, Raportoinnissa eikä millään muullakaan
+          kuukausisivulla. Oma rivi näkyy vain niillä sivuilla joilla
+          valitsin oikeasti tekee jotain.
+        */}
+        <MobileMonthBar value={month} months={months} />
 
         {/*
           Työpöydän yläpalkki.

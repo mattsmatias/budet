@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { monthFromParams } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { buildInsights, insightSeries, sortInsights, type Insight } from "@/lib/restoflow/insights";
 import { formatMonth } from "@/lib/restoflow/expenses";
@@ -15,9 +16,13 @@ export const metadata = { title: "Havainnot" };
  * sanoo mihin lukuun se perustuu, koska ilman lukua se on mielipide
  * eikä sen perusteella muuteta mitään.
  */
-export default async function InsightsPage() {
-  const { receipts, budgets, shifts, users, clockEvents, month, today, now, restaurant } =
+export default async function InsightsPage({
+  searchParams,
+}: PageProps<"/admin/havainnot">) {
+  const { receipts, budgets, shifts, users, clockEvents, month: nykyinen, today, now, restaurant } =
     await adminContext("/admin/havainnot");
+
+  const month = monthFromParams(await searchParams, nykyinen);
 
   const insights = sortInsights(
     buildInsights({

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ISO_DATE } from "@/lib/restoflow/dates";
+import { ISO_DATE, monthFromParams } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { monthPeriod } from "@/lib/restoflow/payroll";
@@ -31,7 +31,18 @@ export default async function PayslipPage({
   const query = await searchParams;
   const { restaurant, role, month, now, users } = await adminContext("/admin/palkat");
 
-  const fallback = monthPeriod(month);
+  /*
+   * Kuukausi kelpaa varaksi jaksolle.
+   *
+   * Yläpalkin valitsin näkyy myös tällä sivulla, koska se näkyy kaikilla
+   * /admin/palkat-alkuisilla. Se asettaa ?kuukausi-parametrin, jota tämä
+   * sivu ei aiemmin lukenut lainkaan: kuukauden vaihtaminen muutti
+   * osoitteen muttei palkkalaskelmaa.
+   *
+   * Tarkka jakso voittaa yhä. Palkkakausi ei aina ole kalenterikuukausi,
+   * ja ?alkaa/?paattyy on silloin se mitä käyttäjä on valinnut.
+   */
+  const fallback = monthPeriod(monthFromParams(query, month));
   const startsOn =
     typeof query.alkaa === "string" && ISO_DATE.test(query.alkaa)
       ? query.alkaa

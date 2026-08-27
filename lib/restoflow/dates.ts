@@ -141,3 +141,30 @@ export function startOfDayIso(isoDate: string, timezone: string): string {
 
   return new Date(guess - (asLocal - guess)).toISOString();
 }
+
+/**
+ * Katseltava kuukausi sivun hakuparametreista.
+ *
+ * Tuntematon tai virheellinen arvo putoaa kuluvaan kuukauteen. Sivu ei
+ * siis voi kaatua osoitteeseen jonka joku kirjoitti käsin.
+ *
+ * EI KORVAA VANHOJA KOPIOITA.
+ *
+ * Sama kuvio on kirjoitettu erikseen Kuluilla, Palkoilla,
+ * Raportoinnissa ja neljällä muulla sivulla. Niitä ei ole yhdistetty
+ * tähän kahdesta syystä: osa rajaa tulevaisuuden pois ja osa ei —
+ * työvuorokalenteri katsoo tarkoituksella eteenpäin — ja kaikissa
+ * seitsemässä paikallinen muuttuja on jo nimeltään viewMonth, joten
+ * tuonti varjostaisi sen.
+ *
+ * Uudet sivut käyttävät tätä. Vanhat kannattaa siirtää tähän vasta jos
+ * rajaussääntö joskus yhtenäistyy.
+ */
+export function monthFromParams(
+  params: { kuukausi?: string | string[] },
+  fallback: string,
+): string {
+  const raw = params.kuukausi;
+  const value = typeof raw === 'string' ? raw : fallback;
+  return isIsoMonth(value) ? value : fallback;
+}

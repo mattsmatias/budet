@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CountUp } from "@/components/restoflow/count-up";
 import { notFound } from "next/navigation";
@@ -29,9 +30,12 @@ export const metadata = { title: "Toimittaja" };
 
 export default async function SupplierDetailPage({
   params,
+  searchParams,
 }: PageProps<"/admin/toimittajat/[id]">) {
   const { id } = await params;
-  const { receipts, suppliers, month } = await adminContext("/admin/toimittajat");
+  const { receipts, suppliers, month: nykyinen } = await adminContext("/admin/toimittajat");
+
+  const month = monthFromParams(await searchParams, nykyinen);
 
   const supplier = suppliers.find((s) => s.id === id);
   if (!supplier) notFound();
