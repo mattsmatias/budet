@@ -1,0 +1,21 @@
+-- 0060 — Veroasioiden ohjeet
+--
+-- Ajettu tuotantoon migraationa tax_guides.
+--
+-- OHJE ON DATAA, EI KOODIA.
+--
+-- Viranomaisohje muuttuu, ja komponenttiin kirjoitettuna se vaatisi
+-- julkaisun joka kerta. Taulussa se on paivitettavissa, ja
+-- effective_from / effective_until kertovat milloin ohje patee.
+-- Vanhentunut ohje jaa historiaksi muttei nay: vaara ohje on pahempi
+-- kuin puuttuva.
+--
+-- BUDET EI LAHETA MITAAN.
+--
+-- Ohjeet kertovat mita kayttajan pitaa tehda OmaVerossa. Budet laskee
+-- luvut ja kertoo milloin, mutta ilmoituksen tekee ihminen. Vaite
+-- lahetetysta ilmoituksesta olisi vaara ja vaarallinen, ja siksi se
+-- lukee kayttoliittymassa ylimpana.
+--
+-- Taulu: tax_guides. Luku kaikille kirjautuneille (ohjeet eivat
+-- sisalla ravintolan tietoja), kirjoitus vain yllapitajalle.

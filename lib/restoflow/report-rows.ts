@@ -42,7 +42,19 @@ export type ReportKind =
   | "budjetit"
   | "tyoaika"
   | "henkilostokulut"
-  | "alv";
+  | "alv"
+  /*
+   * Kirjanpidon raportit samaan koneistoon.
+   *
+   * Nama tulevat kirjanpidon tauluista eivatka kuiteista, mutta ne
+   * viedaan samalla CSV- ja Excel-reitilla. Oma vientireitti olisi
+   * tarkoittanut toista puolipiste- ja BOM-kasittelya joka ehtii
+   * ajautua erilleen tasta.
+   */
+  | "paivakirja"
+  | "paakirja"
+  | "tuloslaskelma"
+  | "tase";
 
 export const REPORT_KINDS: ReportKind[] = [
   "kulut",
@@ -53,6 +65,18 @@ export const REPORT_KINDS: ReportKind[] = [
   "tyoaika",
   "henkilostokulut",
   "alv",
+  "paivakirja",
+  "paakirja",
+  "tuloslaskelma",
+  "tase",
+];
+
+/** Kirjanpidon raportit vaativat oman oikeutensa. */
+export const ACCOUNTING_KINDS: ReportKind[] = [
+  "paivakirja",
+  "paakirja",
+  "tuloslaskelma",
+  "tase",
 ];
 
 export async function buildReportRows(
@@ -74,6 +98,10 @@ export async function buildReportRows(
    */
   if (kind === "alv") {
     return vatReportRows(restaurantId, month);
+  }
+
+  if (ACCOUNTING_KINDS.includes(kind)) {
+    return accountingReportRows(kind, restaurantId, month);
   }
 
   if (kind === "tyoaika" || kind === "henkilostokulut") {
@@ -360,5 +388,107 @@ async function vatReportRows(
           ...unspecified.map((entry) => [entry.day.date, money(entry.day.netCents)]),
         ]
       : []),
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Kirjanpidon raportit
+// ---------------------------------------------------------------------------
+
+/**
+ * Päiväkirja, pääkirja, tuloslaskelma ja tase riveinä.
+ *
+ * LUVUT TULEVAT KANNASTA SELLAISINAAN.
+ *
+ * Nämä eivät laske mitään uudelleen: ne pyytävät saman funktion jonka
+ * käyttöliittymäkin näyttää. Jos vienti laskisi omansa, tiedosto ja
+ * ruutu voisivat erota — ja tiedosto on se joka menee kirjanpitäjälle.
+ *
+ * VIENTI NÄYTTÄÄ VAIN KIRJATUT.
+ *
+ * Kirjausesitys ei ole kirjanpitoa. Tiedosto joka lähtee ulos ei saa
+ * sisältää rivejä joita kukaan ei ole hyväksynyt.
+ */
+async function accountingReportRows(
+  kind: ReportKind,
+  restaurantId: string,
+  month: string,
+): Promise<string[][]> {
+  const {
+    fetchBalanceSheet,
+    fetchGeneralLedger,
+    fetchIncomeStatement,
+    fetchJournal,
+  } = await import("./accounting-queries");
+
+  if (kind === "paivakirja") {
+    const entries = await fetchJournal(restaurantId, month, false);
+
+    return [
+      ["Päivä", "Tosite", "Selite", "Tili", "Tilin nimi", "Debet", "Kredit", "ALV %", "Lähde"],
+      ...entries.flatMap((entry) =>
+        entry.lines.map((line) => [
+          entry.entryDate,
+          String(entry.entryNumber),
+          entry.description,
+          line.accountNumber,
+          line.accountName,
+          line.debitCents > 0 ? money(line.debitCents) : "",
+          line.creditCents > 0 ? money(line.creditCents) : "",
+          line.vatRate !== null ? String(line.vatRate * 100) : "",
+          entry.sourceType,
+        ]),
+      ),
+    ];
+  }
+
+  if (kind === "paakirja") {
+    const accounts = await fetchGeneralLedger(restaurantId, month, false);
+
+    return [
+      ["Tili", "Nimi", "Laji", "Päivä", "Tosite", "Selite", "Debet", "Kredit"],
+      ...accounts
+        .filter((a) => a.lineCount > 0)
+        .flatMap((account) =>
+          account.lines.map((line) => [
+            account.number,
+            account.name,
+            account.type,
+            line.date,
+            String(line.entryNumber),
+            line.description,
+            line.debitCents > 0 ? money(line.debitCents) : "",
+            line.creditCents > 0 ? money(line.creditCents) : "",
+          ]),
+        ),
+    ];
+  }
+
+  if (kind === "tuloslaskelma") {
+    const income = await fetchIncomeStatement(restaurantId, month, false);
+    if (!income) return [["Tuloslaskelma"], ["Ei tietoja"]];
+
+    return [
+      ["Erä", "Tili", "Nimi", "Summa"],
+      ...income.revenue.map((r) => ["Tuotot", r.number, r.name, money(r.amountCents)]),
+      ["Tuotot yhteensä", "", "", money(income.revenueTotalCents)],
+      ...income.expenses.map((r) => ["Kulut", r.number, r.name, money(r.amountCents)]),
+      ["Kulut yhteensä", "", "", money(income.expenseTotalCents)],
+      ["Tulos", "", "", money(income.resultCents)],
+    ];
+  }
+
+  // tase
+  const balance = await fetchBalanceSheet(restaurantId, month, false);
+  if (!balance) return [["Tase"], ["Ei tietoja"]];
+
+  return [
+    ["Erä", "Tili", "Nimi", "Summa"],
+    ...balance.assets.map((r) => ["Vastaavaa", r.number, r.name, money(r.amountCents)]),
+    ["Vastaavaa yhteensä", "", "", money(balance.assetsTotalCents)],
+    ...balance.liabilities.map((r) => ["Vastattavaa", r.number, r.name, money(r.amountCents)]),
+    ["Tilikauden tulos", "", "", money(balance.resultCents)],
+    ["Vastattavaa yhteensä", "", "", money(balance.balancesTotalCents)],
+    ["Täsmää", "", "", balance.balanced ? "kyllä" : "ei"],
   ];
 }

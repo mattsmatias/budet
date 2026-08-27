@@ -17,6 +17,7 @@ import {
   fetchIncomeStatement,
   fetchJournal,
   fetchMonthState,
+  fetchTaxGuides,
 } from "@/lib/restoflow/accounting-queries";
 import { RfIcon } from "@/components/restoflow/icons";
 import {
@@ -27,7 +28,7 @@ import {
   Pill,
 } from "@/components/restoflow/ui";
 import { CloseMonthForm, PostAllButton, SyncButton } from "./controls";
-import { Alv, Paakirja, Paivakirja, Raportit, Tilikartta } from "./views";
+import { Alv, Paakirja, Paivakirja, Raportit, Tilikartta, Veroasiat } from "./views";
 
 export const metadata = { title: "Kirjanpito" };
 
@@ -38,6 +39,7 @@ const TABS = [
   { key: "tilikartta", label: "Tilikartta" },
   { key: "alv", label: "ALV" },
   { key: "raportit", label: "Raportit" },
+  { key: "veroasiat", label: "Veroasiat" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -173,6 +175,10 @@ export default async function AccountingPage({
       ) : null}
 
       {tab === "alv" ? <Alv vat={state.vat} /> : null}
+
+      {tab === "veroasiat" ? (
+        <Veroasiat guides={await fetchTaxGuides()} vat={state.vat} month={month} />
+      ) : null}
 
       {tab === "raportit" ? (
         <Raportit

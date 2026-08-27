@@ -16,6 +16,7 @@ import { can } from "@/lib/restoflow/permissions";
 import { monthIn } from "@/lib/restoflow/clock-context";
 import {
   buildReportRows,
+  ACCOUNTING_KINDS,
   REPORT_KINDS,
   type ReportKind,
 } from "@/lib/restoflow/report-rows";
@@ -30,6 +31,10 @@ const SHEET_NAMES: Record<ReportKind, string> = {
   tyoaika: "Työaika",
   henkilostokulut: "Henkilöstökulut",
   alv: "ALV",
+  paivakirja: "Päiväkirja",
+  paakirja: "Pääkirja",
+  tuloslaskelma: "Tuloslaskelma",
+  tase: "Tase",
 };
 
 export async function GET(request: NextRequest) {
@@ -75,8 +80,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  /*
+   * Kirjanpito vaatii oman oikeutensa.
+   *
+   * reports.export riittää kuluraporttiin, mutta kirjanpito on eri
+   * asia: se sisältää tilikartan ja tositteet.
+   *
+   * PYYDETTY KIRJANPITO ON VIRHE, KOKO KUUKAUSI EI.
+   *
+   * Ilman tyyppiä pyydetään koko kuukauden työkirja. Se ei ole pyyntö
+   * kirjanpidosta, joten oikea vastaus on jättää ne välilehdet pois
+   * eikä hylätä koko latausta. Nimenomaan kirjanpitoa pyytänyt sen
+   * sijaan saa tietää ettei häneltä riitä oikeus.
+   */
+  const naytaKirjanpito = can(restaurant.role, "accounting.view");
+
+  if (single !== null && ACCOUNTING_KINDS.includes(single) && !naytaKirjanpito) {
+    return NextResponse.json(
+      { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
+      { status: 403 },
+    );
+  }
+
+  const sallitut = naytaKirjanpito
+    ? kinds
+    : kinds.filter((k) => !ACCOUNTING_KINDS.includes(k));
+
   const sheets = [];
-  for (const kind of kinds) {
+  for (const kind of sallitut) {
     const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role, restaurant.timezone);
     sheets.push({ name: SHEET_NAMES[kind], rows: rows.map(toCells) });
   }

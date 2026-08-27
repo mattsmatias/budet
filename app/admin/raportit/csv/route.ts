@@ -16,6 +16,7 @@ import { can } from "@/lib/restoflow/permissions";
 import { monthIn } from "@/lib/restoflow/clock-context";
 import {
   buildReportRows,
+  ACCOUNTING_KINDS,
   REPORT_KINDS,
   type ReportKind,
 } from "@/lib/restoflow/report-rows";
@@ -50,6 +51,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: "Tuntematon raporttityyppi.", allowed: REPORT_KINDS },
       { status: 400 },
+    );
+  }
+
+  /*
+   * Kirjanpito vaatii oman oikeutensa.
+   *
+   * reports.export riittää kuluraporttiin, mutta kirjanpito on eri
+   * asia: se sisältää tilikartan ja tositteet. Ilman tätä
+   * osoitteen arvaaminen antaisi ne kenelle tahansa jolla on
+   * raporttien vienti-oikeus.
+   */
+  if (ACCOUNTING_KINDS.includes(kind) && !can(restaurant.role, "accounting.view")) {
+    return NextResponse.json(
+      { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
+      { status: 403 },
     );
   }
 

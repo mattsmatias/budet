@@ -269,3 +269,88 @@ function monthRange(month: string): { from: string; to: string } {
     to: `${month}-${String(last.getUTCDate()).padStart(2, "0")}`,
   };
 }
+
+/**
+ * Yhden lähdetapahtuman kirjanpitotila.
+ *
+ * Kuitin sivu kysyy "onko tämä kirjanpidossa". Vastaus on yksi rivi,
+ * joten sitä ei haeta koko kuukauden päiväkirjan kautta.
+ *
+ * Palauttaa myös tositenumeron: "kirjattu" ilman numeroa ei auta
+ * ketään joka etsii tositetta kirjanpidosta.
+ */
+export interface SourceLink {
+  state: "unprocessed" | "proposed" | "posted" | "rejected";
+  entryNumber: number | null;
+  entryId: string | null;
+  entryDate: string | null;
+}
+
+export async function fetchSourceLink(
+  restaurantId: string,
+  sourceType: "receipt" | "daily_sales",
+  sourceId: string,
+): Promise<SourceLink> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("ledger_entries")
+    .select("id, entry_number, entry_date, status")
+    .eq("restaurant_id", restaurantId)
+    .eq("source_type", sourceType)
+    .eq("source_id", sourceId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return { state: "unprocessed", entryNumber: null, entryId: null, entryDate: null };
+  }
+
+  return {
+    state: data.status as SourceLink["state"],
+    entryNumber: Number(data.entry_number),
+    entryId: String(data.id),
+    entryDate: String(data.entry_date),
+  };
+}
+
+/**
+ * Veroasioiden ohjeet.
+ *
+ * Voimassa olevat: alkanut ja ei päättynyt. Vanhentunut ohje jää
+ * tauluun historiaksi muttei näy — väärä ohje on pahempi kuin
+ * puuttuva.
+ */
+export interface TaxGuide {
+  key: string;
+  taxType: string;
+  title: string;
+  summary: string;
+  steps: string[];
+  source: string | null;
+  sourceUrl: string | null;
+}
+
+export async function fetchTaxGuides(): Promise<TaxGuide[]> {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("tax_guides")
+    .select("key, tax_type, title, summary, steps, source, source_url, effective_until")
+    .lte("effective_from", today)
+    .order("sort_order");
+
+  if (error || !data) return [];
+
+  return data
+    .filter((row) => !row.effective_until || String(row.effective_until) >= today)
+    .map((row) => ({
+      key: String(row.key),
+      taxType: String(row.tax_type),
+      title: String(row.title),
+      summary: String(row.summary),
+      steps: (row.steps ?? []) as string[],
+      source: row.source ? String(row.source) : null,
+      sourceUrl: row.source_url ? String(row.source_url) : null,
+    }));
+}

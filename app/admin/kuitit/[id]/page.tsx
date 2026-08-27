@@ -11,6 +11,7 @@ import {
   fetchSuppliers,
   fetchUsers,
 } from "@/lib/restoflow/queries";
+import { fetchSourceLink } from "@/lib/restoflow/accounting-queries";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
 import { checkVat, formatRate, isMixedReceipt, vatByRate } from "@/lib/restoflow/vat";
 import {
@@ -64,7 +65,7 @@ export default async function AdminReceiptDetailPage({
         ? [receipt.imagePath]
         : [];
 
-  const [users, imageUrls, suppliers, merchants, merchantCategories, allReceipts] =
+  const [users, imageUrls, suppliers, merchants, merchantCategories, allReceipts, ledger] =
     await Promise.all([
       fetchUsers(restaurant.id),
       fetchReceiptImageUrls(pagePaths),
@@ -72,6 +73,7 @@ export default async function AdminReceiptDetailPage({
       fetchMerchants(),
       fetchMerchantCategories(),
       fetchReceipts(restaurant.id),
+      fetchSourceLink(restaurant.id, "receipt", id),
     ]);
 
   const supplier = suppliers.find((row) => row.id === receipt.supplierId) ?? null;
@@ -228,6 +230,35 @@ export default async function AdminReceiptDetailPage({
                   Tarkistettu
                 </Pill>
               )}
+
+              {/*
+                Kirjanpidon tila samalla rivillä kuin tarkistuksen tila.
+                Ne ovat saman kuitin kaksi eri elinkaarta: ensin se
+                tarkistetaan, sitten se kirjataan. Erillisenä korttina
+                jälkimmäinen jäisi huomaamatta.
+              */}
+              {can(role, "accounting.view") ? (
+                <Pill
+                  tone={
+                    ledger.state === "posted"
+                      ? "ok"
+                      : ledger.state === "proposed"
+                        ? "warn"
+                        : ledger.state === "rejected"
+                          ? "risk"
+                          : "info"
+                  }
+                  dot
+                >
+                  {ledger.state === "posted"
+                    ? `Kirjattu · tosite ${ledger.entryNumber}`
+                    : ledger.state === "proposed"
+                      ? "Odottaa kirjausta"
+                      : ledger.state === "rejected"
+                        ? "Ei kirjata"
+                        : "Ei kirjanpidossa"}
+                </Pill>
+              ) : null}
             </div>
 
             {canReview && receipt.status === "needs_review" ? (

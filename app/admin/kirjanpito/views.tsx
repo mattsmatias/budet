@@ -15,6 +15,7 @@ import type {
   GeneralLedgerAccount,
   IncomeStatement,
   LedgerAccount,
+  TaxGuide,
 } from "@/lib/restoflow/accounting-queries";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
@@ -591,6 +592,47 @@ export function Raportit({
 }) {
   return (
     <div className="space-y-4">
+      {/*
+        Lataukset ylimpänä.
+
+        Raportti katsotaan ruudulta kerran ja ladataan kirjanpitäjälle
+        joka kuukausi. Jälkimmäinen on se toistuva työ, joten se ei saa
+        olla sivun alalaidassa.
+
+        Tiedostot sisältävät vain kirjatut tositteet, ruutu myös
+        esitykset — siksi ero on sanottu ääneen eikä jätetty
+        pääteltäväksi.
+      */}
+      <Card>
+        <CardHeader
+          title="Lataa kirjanpito"
+          subtitle="Tiedostoissa vain kirjatut tositteet, ei kirjausesityksiä"
+        />
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {[
+            { kind: "paivakirja", label: "Päiväkirja" },
+            { kind: "paakirja", label: "Pääkirja" },
+            { kind: "tuloslaskelma", label: "Tuloslaskelma" },
+            { kind: "tase", label: "Tase" },
+          ].map((r) => (
+            <div key={r.kind} className="flex flex-wrap items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">
+                {r.label}
+              </span>
+              <Lataus
+                href={`/admin/raportit/csv?tyyppi=${r.kind}&kuukausi=${month}`}
+                label="CSV"
+              />
+              <Lataus
+                href={`/admin/raportit/xlsx?tyyppi=${r.kind}&kuukausi=${month}`}
+                label="Excel"
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
       {income ? (
         <Card padded={false}>
           <div className="px-5 pt-4">
@@ -710,4 +752,156 @@ function Summa({
 function suomiPvm(iso: string): string {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
+}
+
+/**
+ * Latauspainike.
+ *
+ * Sama mitta ja paino kuin Raportointi-sivulla: kaksi samanarvoista
+ * tiedostomuotoa näyttävät samalta, koska ne tekevät saman asian.
+ */
+function Lataus({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      className="rf-press inline-flex shrink-0 items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+      style={{
+        background: "var(--rf-inset)",
+        color: "var(--rf-text)",
+        border: "1px solid var(--rf-line-strong)",
+        borderRadius: "var(--rf-r-control)",
+      }}
+    >
+      <RfIcon name="download" size={15} />
+      {label}
+    </a>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Veroasiat
+// ---------------------------------------------------------------------------
+
+/**
+ * Veroasiat ja OmaVero.
+ *
+ * BUDET EI LÄHETÄ MITÄÄN.
+ *
+ * Tämä on tärkein asia koko välilehdellä ja siksi se lukee ylimpänä.
+ * Budet laskee luvut kirjanpidosta ja kertoo mitä niillä tehdään,
+ * mutta ilmoituksen tekee ihminen OmaVerossa. Vihje siitä että
+ * ohjelma olisi hoitanut asian olisi väärä ja vaarallinen.
+ *
+ * Ohjeet tulevat taulusta eivätkä tästä tiedostosta: viranomaisohje
+ * muuttuu, eikä sen muuttaminen saa vaatia julkaisua.
+ */
+export function Veroasiat({
+  guides,
+  vat,
+  month,
+}: {
+  guides: TaxGuide[];
+  vat: VatSummary;
+  month: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div
+        className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
+        style={{
+          background: "var(--rf-amber-bg)",
+          color: "var(--rf-amber-text)",
+          borderRadius: "var(--rf-r-control)",
+        }}
+      >
+        <span aria-hidden="true" className="mt-0.5 shrink-0">
+          <RfIcon name="alert" size={16} />
+        </span>
+        <p>
+          Budet ei lähetä veroilmoituksia. Se laskee luvut kirjanpidosta ja
+          kertoo mitä niillä tehdään — ilmoituksen teet itse OmaVerossa.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader
+          title="Mitä Budet on laskenut"
+          subtitle={`${monthLabel(month)} · luvut kirjanpidosta`}
+        />
+
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Luku label="Myynnin ALV" value={formatMoney(vat.salesVatLedger)} />
+          <Luku label="Vähennettävä ALV" value={formatMoney(vat.purchaseVatLedger)} />
+          <Luku label="Maksettava" value={formatMoney(vat.payableCents)} korosta />
+        </dl>
+
+        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          Luvut ovat kirjatuista tositteista. Jos kuukaudessa on
+          hyväksymättömiä kirjausesityksiä tai täsmäytys ei mene läpi, nämä
+          eivät ole vielä lopulliset — yhteenveto kertoo kumpi on kyseessä.
+        </p>
+      </Card>
+
+      {guides.length === 0 ? (
+        <EmptyState
+          title="Ohjeita ei ole saatavilla"
+          description="Veroasioiden ohjeet päivitetään erikseen. Tarkista tiedot Verohallinnon sivuilta."
+        />
+      ) : (
+        guides.map((guide) => (
+          <Card key={guide.key} padded={false}>
+            <div className="px-5 pt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Pill tone="info">{guide.taxType}</Pill>
+              </div>
+              <div className="mt-2">
+                <CardHeader title={guide.title} subtitle={guide.summary} />
+              </div>
+            </div>
+
+            <ol className="space-y-0 divide-y" style={{ borderColor: "var(--rf-line)" }}>
+              {guide.steps.map((step, i) => (
+                <li key={i} className="flex items-start gap-3 px-5 py-2.5 text-[13.5px]">
+                  <span
+                    aria-hidden="true"
+                    className="rf-tabular mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-bold"
+                    style={{
+                      background: "var(--rf-inset)",
+                      color: "var(--rf-text-2)",
+                      borderRadius: "50%",
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ol>
+
+            {guide.source ? (
+              <p
+                className="px-5 pb-4 pt-3 text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                Lähde: {guide.source}
+                {guide.sourceUrl ? (
+                  <>
+                    {" · "}
+                    <a
+                      href={guide.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "var(--rf-accent)" }}
+                    >
+                      {guide.sourceUrl.replace(/^https?:\/\//, "")}
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
+          </Card>
+        ))
+      )}
+    </div>
+  );
 }
