@@ -251,10 +251,19 @@ async function Yhteenveto({
           tileTone={state.proposed > 0 ? "warn" : "muted"}
           tone={state.proposed > 0 ? "warn" : "neutral"}
           value={state.posted + state.proposed}
+          /*
+           * Nolla ei ole "kaikki kirjattu".
+           *
+           * Tyhjä kuukausi näytti samalta kuin valmis kuukausi: molemmissa
+           * luki "Kaikki kirjattu". Ensimmäisessä ei ole kirjattu mitään,
+           * eikä sitä saa kehua valmiiksi.
+           */
           hint={
-            state.proposed > 0
-              ? `${state.proposed} odottaa hyväksyntää`
-              : "Kaikki kirjattu"
+            state.posted + state.proposed === 0
+              ? "Ei vielä kirjanpidossa"
+              : state.proposed > 0
+                ? `${state.proposed} odottaa hyväksyntää`
+                : "Kaikki kirjattu"
           }
         />
       </section>

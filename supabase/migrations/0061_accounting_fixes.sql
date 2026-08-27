@@ -1,0 +1,39 @@
+-- 0061 — Ääkköset, pyöristystili ja ALV kassan taulusta
+--
+-- Ajettu tuotantoon migraatioina tax_guides_finnish_text,
+-- accounting_finnish_text, accounting_finnish_messages,
+-- accounting_finnish_seed_and_errors, accounting_rounding_account ja
+-- accounting_vat_from_pos_table.
+--
+-- ÄÄKKÖSET
+--
+-- Kirjoitin kannan tekstit alun perin ilman ääkkösiä varmuuden
+-- vuoksi. Ne näkyvät käyttäjälle sellaisinaan, ja sivulla luki
+-- "Myynti ei tasmaa" ja "6 kuittia ei ole viela kirjanpidossa".
+-- Migraatiotyökalu käsittelee UTF-8:n oikein, joten varmuus oli
+-- turha ja vika näkyvä.
+--
+-- ALV KIRJATAAN KASSAN OMASTA TAULUSTA
+--
+-- Löytyi ajamalla oikealla datalla: täsmäytys näytti neljä senttiä
+-- eroa jota kukaan ei voinut selittää.
+--
+-- Syy oli kaksi eri jakoa samasta brutosta. Myyntiryhmien rivit
+-- (daily_sales_lines) jakavat päivän tuotteiden mukaan, kassan
+-- ALV-taulu (daily_sales_vat) verokantojen mukaan. Molemmat
+-- summautuvat samaan bruttoon mutta pyöristyvät eri tavalla:
+-- 25.08. rivit sanoivat ALV 15983, kassa 15987.
+--
+-- Verokannoittainen jako on se joka menee veroilmoitukselle, joten
+-- ALV kirjataan siitä. Myyntiryhmät kertovat mistä tuotoista on
+-- kyse, joten liikevaihto kirjataan niistä.
+--
+-- PYÖRISTYS OMALLE TILILLEEN (3900)
+--
+-- Aiemmin ALV kirjattiin erotuksena bruttoon, jotta tosite täsmää
+-- varmasti. Se toimi mutta siirsi eron ALV-tilille — juuri sinne
+-- missä se on vaikeinta huomata. Nyt jäännös menee pyöristystilille
+-- ja ALV-täsmäytys menee tasan.
+--
+-- Todennettu selaimessa oikealla datalla: tila vaihtui "Vaatii
+-- tarkistusta" -> "Avoin", ja tase täsmää 504,29 = 504,29.
