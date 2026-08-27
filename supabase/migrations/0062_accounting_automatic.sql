@@ -1,0 +1,41 @@
+-- 0062 — Kirjanpito syntyy itsestaan
+--
+-- Ajettu tuotantoon migraatioina accounting_automatic_at_source ja
+-- accounting_close_posts_proposals.
+--
+-- AUTOMATIIKKA KUULUU LAHTEELLE, EI SIVUN LATAUKSELLE.
+--
+-- "Hae tapahtumat" -painike oli vaara ratkaisu kahdesta syysta.
+-- Ravintoloitsijan piti muistaa painaa sita, ja jos han unohti,
+-- kirjanpito oli tyhja vaikka kaikki data oli tallessa. Sivun
+-- lataukseen sidottuna se taas olisi kirjoittanut kantaan joka kerta
+-- kun joku vain katsoo sivua - myos linkin esihaun yhteydessa.
+--
+-- Nyt kirjaus syntyy silla hetkella kun lahde tallennetaan.
+-- Liipaisimet: receipts, daily_sales, daily_sales_lines,
+-- daily_sales_vat. Uusi ravintola saa tilikartan ja kohdistukset
+-- heti, ja uusi myyntiryhma oman kohdistuksensa.
+--
+-- ESITYS SEURAA LAHDETTA.
+--
+-- Kuitin kategorian muutos muodostaa esityksen uudelleen. Kirjattuun
+-- ei kosketa: siihen tehdaan korjaustosite.
+--
+-- KIRJANPITO EI SAA ESTAA TYOTA.
+--
+-- Liipaisin nielee virheen. Jos kirjaus epaonnistuu, kuitin tallennus
+-- onnistuu silti ja kuukauden tila kertoo etta se ei ole viela
+-- kirjanpidossa. Lahdedata on tarkeampaa kuin siita johdettu kirjaus.
+--
+-- YKSI PAINALLUS KUUKAUDESSA, EI KAHTA.
+--
+-- Sulku kieltaytyi aiemmin jos esityksia oli hyvaksymatta, joten piti
+-- painaa ensin "Kirjaa kaikki" ja sitten "Sulje kuukausi".
+-- Ensimmainen oli pelkka esiehto toiselle, eika esiehto ansaitse omaa
+-- painiketta. Nyt sulku kirjaa esitykset itse. Tasmaytys estaa yha -
+-- se ei ole esiehto vaan syy olla sulkematta.
+--
+-- TODENNETTU peruutettavassa transaktiossa: kuitti kirjautui
+-- itsestaan, tosite tasapainossa, oikea kulutili, kategorian muutos
+-- muodosti esityksen uudelleen, ei duplikaattia, tarkistamaton kuitti
+-- ei kirjaudu.

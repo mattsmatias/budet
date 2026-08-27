@@ -27,7 +27,7 @@ import {
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
-import { CloseMonthForm, PostAllButton, SyncButton } from "./controls";
+import { CloseMonthForm, SyncButton } from "./controls";
 import { Alv, Paakirja, Paivakirja, Raportit, Tilikartta, Veroasiat } from "./views";
 
 export const metadata = { title: "Kirjanpito" };
@@ -49,9 +49,13 @@ type TabKey = (typeof TABS)[number]["key"];
  *
  * EI KYSY MITÄÄN MITÄ BUDET JO TIETÄÄ.
  *
- * Sivu ei ota vastaan myyntejä, kuitteja eikä kuluja. Ne ovat jo
- * kannassa, ja "Hae tapahtumat" lukee ne sieltä. Käyttäjän työ on
- * tarkistaa poikkeamat, ei kopioida rivejä.
+ * Sivu ei ota vastaan myyntejä, kuitteja eikä kuluja, eikä se pyydä
+ * hakemaan niitä. Kirjaus syntyy sillä hetkellä kun lähde
+ * tallennetaan: kuitti tarkistetaan, ja se on kirjanpidossa.
+ *
+ * Tämä sivu on siis näkymä eikä työvaihe. Käyttäjän työ on tarkistaa
+ * poikkeamat ja sulkea kuukausi — ei kopioida rivejä eikä painaa
+ * painiketta joka tekee sen mikä on jo tehty.
  *
  * VÄLILEHTI ON OSOITE, EI TILA.
  *
@@ -217,6 +221,9 @@ async function Yhteenveto({
   const income = await fetchIncomeStatement(restaurantId, month, true);
   const issues = sortIssues(state.issues);
 
+  // Lahteet jotka eivat viela ole kirjanpidossa.
+  const jaljessa = state.receiptsMissing + state.salesDaysMissing;
+
   return (
     <div className="space-y-5 md:space-y-6">
       <section
@@ -339,50 +346,84 @@ async function Yhteenveto({
       </Card>
 
       {/* Toiminnot */}
-      {saaKirjata ? (
+      {/*
+        PAINIKE VAIN KUN SITÄ TARVITAAN.
+
+        Kirjaus syntyy nyt sillä hetkellä kun kuitti tai päivän myynti
+        tallennetaan, joten tavallisessa käytössä täällä ei ole mitään
+        painettavaa. Painike joka ei tee mitään uutta opettaa
+        painamaan sitä varmuuden vuoksi.
+
+        Jäljessä olevat tapahtumat ovat poikkeus: kannassa oli dataa jo
+        ennen automatiikkaa, ja tilikartan puuttuminen voi jättää
+        yksittäisen tapahtuman odottamaan. Silloin painike on
+        paikallaan ja se kertoo montako on kyseessä.
+      */}
+      {saaKirjata && jaljessa > 0 ? (
         <Card>
+          {/*
+            Syytä ei väitetä.
+
+            Tapahtuma voi olla jäljessä kahdesta syystä: se on kirjattu
+            ennen kuin kirjanpito otettiin käyttöön, tai siltä puuttuu
+            tietoja. Kortti ei tiedä kumpi, joten se ei arvaa — "Mitä
+            sinun pitää tehdä" kertoo sen tarkasti.
+          */}
           <CardHeader
-            title="Hae ja kirjaa"
-            subtitle="Budet lukee kuukauden kuitit ja myyntipäivät ja muodostaa kirjausesitykset"
+            title="Osa tapahtumista ei ole vielä kirjanpidossa"
+            subtitle={`${jaljessa} ${jaljessa === 1 ? "tapahtuma odottaa" : "tapahtumaa odottaa"} · yritä hakea ne uudelleen`}
           />
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-4">
             <SyncButton month={month} />
-            <PostAllButton month={month} count={state.proposed} />
           </div>
 
           <p
             className="mt-4 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Haun voi tehdä niin monta kertaa kuin haluaa: sama tapahtuma ei
-            kirjaudu kahdesti. Kesken oleva kuitti ja myyntipäivä jolta puuttuu
-            tietoja jäävät odottamaan — Budet kertoo kumpi on kyseessä eikä
-            arvaa puuttuvaa.
+            Tavallisesti tätä ei tarvita: kirjaus syntyy itsestään kun
+            tallennat kuitin tai päivän myynnin. Jos tapahtuma jää tähän
+            haun jälkeenkin, siltä puuttuu tietoja — yllä lukee mitä.
           </p>
         </Card>
-      ) : (
+      ) : null}
+
+      {!saaKirjata ? (
         <Card>
           <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
             Näet kirjanpidon mutta et voi kirjata. Kirjaaminen on omistajan ja
             vuoropäällikön oikeus.
           </p>
         </Card>
-      )}
+      ) : null}
 
       {/* Kuukauden sulku */}
       {onOmistaja && state.status !== "locked" ? (
         <Card>
           <CardHeader
             title="Sulje kuukausi"
-            subtitle="Suljettuun kuukauteen ei voi kirjata ilman korjaustositetta"
+            subtitle={
+              state.proposed > 0
+                ? `Kirjaa ${state.proposed} ${state.proposed === 1 ? "tositteen" : "tositetta"} ja lukitsee kuukauden`
+                : "Suljettuun kuukauteen ei voi kirjata ilman korjaustositetta"
+            }
           />
           <div className="mt-4">
             <CloseMonthForm month={month} />
           </div>
+          {/*
+            Sulku kirjaa itse.
+
+            Aiemmin sulku kieltäytyi jos esityksiä oli hyväksymättä, joten
+            piti painaa ensin "Kirjaa kaikki" ja sitten "Sulje kuukausi".
+            Ensimmäinen oli pelkkä esiehto toiselle, eikä esiehto ansaitse
+            omaa painiketta. Täsmäytys estää yhä — se ei ole esiehto vaan
+            syy olla sulkematta.
+          */}
           <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Sulkeminen ei onnistu jos täsmäytys ei mene läpi tai kirjausesityksiä
-            on hyväksymättä. Painike kertoo kumpi estää.
+            Sulkeminen kirjaa kuukauden tositteet ja lukitsee ne. Se ei onnistu
+            jos täsmäytys ei mene läpi — painike kertoo silloin mikä estää.
           </p>
         </Card>
       ) : null}
