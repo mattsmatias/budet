@@ -1,0 +1,37 @@
+-- 0058 — ALV, tasmaytys, lukitus, korjaukset ja jaljitettavyys
+--
+-- Sisalto on ajettu tuotantoon migraationa accounting_vat_lock_audit.
+-- Tama tiedosto pitaa repositorion ja kannan samassa linjassa.
+--
+-- KIRJATTUA EI MUUTETA
+--
+-- Rivien lukko oli jo 0056:ssa. Tama suojaa itse tositteen: summat ovat
+-- riveilla, mutta paivamaaran tai tilikauden vaihtaminen siirtaisi
+-- kirjatun tapahtuman toiseen kauteen hiljaa.
+--
+-- KORJAUS ON PEILIKUVA
+--
+-- Alkuperainen sailyy koskemattomana. Korjaustosite kaantaa debetin ja
+-- kreditin, jolloin kirjaus kumoutuu ja molemmat jaavat nakyviin.
+-- Korjaus vaatii syyn.
+--
+-- SULKU EI OHITA TASMAYTYSTA
+--
+-- Vaatimus 19: kuukautta ei merkita valmiiksi jos kriittinen tasmaytys
+-- epaonnistuu. Tarkistus on ledger_close_monthissa eika
+-- kayttoliittymassa, joten sita ei voi kiertaa.
+--
+-- JALJITETTAVYYS RAVINTOLAN OMAAN LOKIIN
+--
+-- Kirjataan audit_logiin eika omaan tauluun: kayttajalla on jo yksi
+-- toimintaloki, ja toinen rinnakkainen tarkoittaisi kahta paikkaa
+-- joista etsia.
+--
+-- Funktiot: ledger_entry_lukko, ledger_audit, ledger_post,
+-- ledger_reject, ledger_correct, ledger_vat_summary,
+-- ledger_month_status, ledger_close_month.
+--
+-- TODENNETTU peruutettavassa transaktiossa: kirjaus toimii, kirjattua
+-- ei voi poistaa eika siirtaa, korjaus on tasapainossa ja linkitetty,
+-- alkuperainen sailyy, syy vaaditaan, ALV-yhteenveto ja kuukauden tila
+-- palautuvat, sulku estyi tasmaytyksen takia, loki sai 9 rivia.
