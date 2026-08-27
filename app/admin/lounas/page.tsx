@@ -10,11 +10,13 @@ import {
 } from "@/lib/restoflow/queries";
 import {
   DEFAULT_PRICE_NAME,
+  EXTRA_PRICE_NAMES,
   LUNCH_STATUS_LABELS,
   formatDayShort,
   formatWeekRange,
   hasContent,
   hasUnpublishedChanges,
+  needsPublish,
   includedSentence,
   isWeekend,
   isoWeekNumber,
@@ -100,7 +102,6 @@ export default async function LunchPage({
   const shareText = publicWeek ? weekAsText(publicWeek, publicUrl) : "";
 
   const dirty = week ? hasUnpublishedChanges(week) : false;
-  const publishable = week !== null && hasContent(week);
 
   return (
     <div className="rf-enter space-y-5">
@@ -131,11 +132,21 @@ export default async function LunchPage({
             Esikatsele
           </Link>
 
-          {canManage ? (
+          {/*
+            Painike vain kun sillä on tekemistä.
+
+            Aiemmin ehto oli "viikossa on ruokaa", joten painike näkyi
+            myös julkaistulla viikolla johon ei ollut koskettu. Se
+            lupasi muutosta jota ei ollut, ja sen näkeminen sai
+            luulemaan että jotain on tallentamatta.
+
+            Tila kerrotaan yhä alempana: pilleri ja "Viimeksi julkaistu"
+            -aikaleima vastaavat kysymykseen "onko tämä ovessa".
+          */}
+          {canManage && needsPublish(week) ? (
             <PublishWeek
               menuId={week?.id ?? null}
               weekLabel={formatWeekRange(weekStart)}
-              disabled={!publishable}
               label={dirty ? "Julkaise muutokset" : "Julkaise"}
             />
           ) : null}
@@ -184,7 +195,37 @@ export default async function LunchPage({
               </p>
             ) : null}
 
-            {week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME).length > 0 ? (
+            {/*
+              Alennushinnat olivat vain luettavissa.
+
+              Kanta on tukenut useaa nimettyä hintaa alusta asti ja
+              julkinen sivu on osannut listata ne, mutta niitä ei
+              päässyt syöttämään mistään — kenttä puuttui kokonaan.
+              Näkymä siis lupasi tiedon jota ei voinut antaa.
+
+              Tyhjä kenttä ei julkaise mitään: hinta ilman lukua ei
+              päädy asiakkaan sivulle.
+            */}
+            {canManage ? (
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+                {EXTRA_PRICE_NAMES.map((name) => (
+                  <div key={name}>
+                    <p
+                      className="text-[11px] font-medium uppercase"
+                      style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+                    >
+                      {name}
+                    </p>
+                    <LunchPriceField
+                      menuId={week.id}
+                      name={name}
+                      compact
+                      cents={week.prices.find((p) => p.name === name)?.cents ?? null}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME).length > 0 ? (
               <dl className="flex flex-wrap gap-x-5 gap-y-1">
                 {week.prices
                   .filter((p) => p.name !== DEFAULT_PRICE_NAME)

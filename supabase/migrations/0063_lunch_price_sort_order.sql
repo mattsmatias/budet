@@ -1,0 +1,25 @@
+-- 0063 — Lounashintojen järjestys
+--
+-- Ajettu tuotantoon migraationa lunch_price_sort_order.
+--
+-- set_lunch_price ei asettanut sort_orderia lainkaan, joten jokainen
+-- hinta sai oletuksen. Yhden hinnan aikaan sillä ei ollut väliä, mutta
+-- opiskelija-, lapsi- ja eläkeläishintojen kanssa järjestys putoaisi
+-- aakkosiin: Eläkeläinen, Lapsi, Lounas, Opiskelija. Päähinta olisi
+-- listan kolmas.
+--
+-- Järjestys tulee nyt sovelluksesta (priceSortOrder). Nimet ja niiden
+-- järjestys ovat samaa tuotesanastoa, ja se asuu samassa paikassa kuin
+-- näkyvät tekstit — ei kahdessa.
+--
+-- Parametrin lisääminen tekee ylikuormituksen, joten vanha versio
+-- pudotetaan ensin.
+--
+-- VAROITUS SEURAAVALLE
+--
+-- Olemassa olevien rivien täydennys laukaisi lunch_prices_touch
+-- -liipaisimen ja merkitsi julkaistut viikot muuttuneiksi, vaikka
+-- asiakkaalle ei muuttunut mitään. Sisältötauluja koskeva
+-- massapäivitys on tehtävä niin että content_updated_at palautetaan
+-- jälkikäteen — muuten jokainen huoltotoimi näyttää
+-- ravintoloitsijalle julkaisemattomalta muutokselta.

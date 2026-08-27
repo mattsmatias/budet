@@ -64,12 +64,10 @@ function Notice({ state }: { state: LunchState }) {
 export function PublishWeek({
   menuId,
   weekLabel,
-  disabled,
   label,
 }: {
   menuId: string | null;
   weekLabel: string;
-  disabled: boolean;
   label: string;
 }) {
   const [state, action] = useActionState(publishLunchWeek, initial);
@@ -83,7 +81,6 @@ export function PublishWeek({
         <Button
           type="button"
           tone="primary"
-          disabled={disabled}
           onClick={() => setAsking(true)}
           icon={<RfIcon name="check" size={16} />}
         >

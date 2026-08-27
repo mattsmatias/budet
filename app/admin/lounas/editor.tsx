@@ -450,10 +450,13 @@ export function LunchPriceField({
   menuId,
   name,
   cents,
+  compact,
 }: {
   menuId: string;
   name: string;
   cents: number | null;
+  /** Alennushinta: pienempi kirjasin, sama toiminta. */
+  compact?: boolean;
 }) {
   const [state, action] = useActionState(setLunchPrice, initial);
   const form = useRef<HTMLFormElement>(null);
@@ -467,17 +470,27 @@ export function LunchPriceField({
     setValue(saved);
   }
 
+  /*
+   * Tunniste sisältää hinnan nimen.
+   *
+   * Se oli pelkkä menuId, ja se riitti niin kauan kuin hintoja oli
+   * yksi. Neljä kenttää samalla id:llä tarkoittaisi neljää samaa
+   * tunnistetta samalla sivulla: ruudunlukija lukisi jokaiselle saman
+   * selitteen, eikä label osoittaisi oikeaan kenttään.
+   */
+  const id = `price-${menuId}-${name.toLowerCase().replace(/[^a-z]/g, "")}`;
+
   return (
     <form ref={form} action={action} className="flex items-baseline gap-1.5">
       <input type="hidden" name="menuId" value={menuId} />
       <input type="hidden" name="priceName" value={name} />
 
-      <label htmlFor={`price-${menuId}`} className="sr-only">
+      <label htmlFor={id} className="sr-only">
         {`${name}, hinta euroina koko viikolle`}
       </label>
 
       <input
-        id={`price-${menuId}`}
+        id={id}
         name="price"
         inputMode="decimal"
         value={value}
@@ -486,11 +499,17 @@ export function LunchPriceField({
           if (value !== saved) form.current?.requestSubmit();
         }}
         placeholder="0,00"
-        className="w-[6rem] bg-transparent text-[24px] font-semibold outline-none"
+        className={
+          compact
+            ? "w-[4.5rem] bg-transparent text-[17px] font-semibold outline-none"
+            : "w-[6rem] bg-transparent text-[24px] font-semibold outline-none"
+        }
         style={{ color: "var(--rf-text)" }}
       />
 
-      <span className="text-[18px] font-semibold">€</span>
+      <span className={compact ? "text-[13px] font-semibold" : "text-[18px] font-semibold"}>
+        €
+      </span>
 
       {state.error ? (
         <span role="alert" className="text-[12px]" style={{ color: "var(--rf-red-text)" }}>

@@ -214,6 +214,59 @@ export const LUNCH_STATUS_LABELS: Record<LunchStatus, string> = {
 export const DEFAULT_PRICE_NAME = "Lounas";
 
 /**
+ * Alennushinnat ja niiden järjestys.
+ *
+ * NIMET OVAT SOPIMUS, EIVÄT VAPAATA TEKSTIÄ.
+ *
+ * Hinta tunnistetaan nimellä sekä kannassa että näytöllä, joten
+ * "Opiskelija" ja "opiskelijahinta" olisivat kaksi eri hintaa. Lista on
+ * siksi tässä yhdessä paikassa ja järjestysnumero luetaan siitä.
+ *
+ * Järjestys on sama kuin ravintolan hinnastossa: täysi hinta ensin,
+ * alennukset sen jälkeen suuruusjärjestyksessä. Aakkosjärjestys olisi
+ * nostanut eläkeläishinnan ensimmäiseksi.
+ */
+export const EXTRA_PRICE_NAMES = ["Opiskelija", "Lapsi", "Eläkeläinen"] as const;
+
+export type ExtraPriceName = (typeof EXTRA_PRICE_NAMES)[number];
+
+/** Kaikki hinnat siinä järjestyksessä kuin ne näytetään. */
+export const PRICE_ORDER: string[] = [DEFAULT_PRICE_NAME, ...EXTRA_PRICE_NAMES];
+
+/**
+ * Hinnan järjestysnumero kannalle.
+ *
+ * Tuntematon nimi menee loppuun. Ravintola voi lisätä oman hintansa
+ * suoraan kantaan, eikä sen kuulu sekoittua vakiohintojen väliin.
+ */
+export function priceSortOrder(name: string): number {
+  const index = PRICE_ORDER.indexOf(name);
+  return index === -1 ? 9 : index;
+}
+
+/**
+ * Onko viikossa jotain julkaistavaa?
+ *
+ * PAINIKE VAIN KUN SILLÄ ON TEKEMISTÄ.
+ *
+ * "Julkaise" näkyi aina kun viikossa oli ruokaa — myös silloin kun
+ * viikko oli jo julkaistu eikä siihen ollut koskettu. Painike lupasi
+ * siis muutosta jota ei ollut, ja sen näkeminen sai luulemaan että
+ * jotain on tallentamatta.
+ *
+ * Julkaistavaa on kolmessa tapauksessa: luonnoksessa on ruokaa,
+ * julkaistuun on tehty muutoksia, tai kumpaakaan ei ole eikä painiketta
+ * tarvita. Arkistoitua ei julkaista uudelleen.
+ */
+export function needsPublish(week: LunchWeek | null): boolean {
+  if (week === null) return false;
+  if (week.status === "archived") return false;
+  if (!hasContent(week)) return false;
+  if (week.status === "draft") return true;
+  return hasUnpublishedChanges(week);
+}
+
+/**
  * Mitä hintaan sisältyy, luettavana listana.
  *
  * Asiakas kysyy tämän tiskillä joka päivä, eikä sitä voi päätellä

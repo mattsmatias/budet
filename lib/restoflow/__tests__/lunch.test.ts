@@ -5,6 +5,8 @@ import {
   formatWeekRange,
   hasContent,
   hasUnpublishedChanges,
+  needsPublish,
+  priceSortOrder,
   includedExtras,
   includedSentence,
   inheritedIncludes,
@@ -273,5 +275,101 @@ describe("jälkiruoan ja kahvin periytyminen", () => {
       includesDessert: false,
       includesCoffee: true,
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Julkaisupainikkeen näkyvyys.
+ *
+ * Painike näkyi aina kun viikossa oli ruokaa — myös julkaistulla
+ * viikolla johon ei ollut koskettu. Se lupasi muutosta jota ei ollut,
+ * ja sai luulemaan että jotain on tallentamatta.
+ */
+describe("onko julkaistavaa", () => {
+  const ruoka = {
+    id: "d1",
+    date: "2026-08-24",
+    items: [
+      {
+        id: "i1",
+        name: "Lohikeitto",
+        description: null,
+        sortOrder: 0,
+        diets: [],
+        allergens: [],
+      },
+    ],
+  };
+
+  it("luonnos jossa on ruokaa on julkaistava", () => {
+    expect(needsPublish(week({ status: "draft", days: [ruoka] }))).toBe(true);
+  });
+
+  it("tyhjää luonnosta ei julkaista", () => {
+    expect(needsPublish(week({ status: "draft", days: [] }))).toBe(false);
+  });
+
+  // Tämä on se vika jonka takia painike oli aina näkyvissä.
+  it("julkaistu ilman muutoksia ei tarvitse painiketta", () => {
+    expect(
+      needsPublish(
+        week({
+          status: "published",
+          days: [ruoka],
+          publishedAt: "2026-08-24T12:00:00.000Z",
+          contentUpdatedAt: "2026-08-24T11:59:00.000Z",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("julkaistu jossa on muutoksia on julkaistava", () => {
+    expect(
+      needsPublish(
+        week({
+          status: "published",
+          days: [ruoka],
+          publishedAt: "2026-08-24T12:00:00.000Z",
+          contentUpdatedAt: "2026-08-24T12:05:00.000Z",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("arkistoitua ei julkaista uudelleen", () => {
+    expect(
+      needsPublish(
+        week({
+          status: "archived",
+          days: [ruoka],
+          publishedAt: "2026-08-24T12:00:00.000Z",
+          contentUpdatedAt: "2026-08-24T12:05:00.000Z",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("olematon viikko ei ole julkaistava", () => {
+    expect(needsPublish(null)).toBe(false);
+  });
+});
+
+describe("hintojen järjestys", () => {
+  it("pitää täyden hinnan ensimmäisenä", () => {
+    expect(priceSortOrder("Lounas")).toBe(0);
+  });
+
+  // Aakkosjärjestys olisi nostanut eläkeläishinnan ensimmäiseksi.
+  it("järjestää alennukset hinnaston mukaan eikä aakkosittain", () => {
+    expect(priceSortOrder("Opiskelija")).toBeLessThan(priceSortOrder("Lapsi"));
+    expect(priceSortOrder("Lapsi")).toBeLessThan(priceSortOrder("Eläkeläinen"));
+  });
+
+  it("siirtää oman hinnan loppuun", () => {
+    expect(priceSortOrder("Annos mukaan")).toBeGreaterThan(
+      priceSortOrder("Eläkeläinen"),
+    );
   });
 });

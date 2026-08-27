@@ -14,7 +14,7 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
-import { weekStartOf } from "@/lib/restoflow/lunch";
+import { weekStartOf, priceSortOrder } from "@/lib/restoflow/lunch";
 import { isLunchTheme } from "@/lib/restoflow/lunch-themes";
 
 export interface LunchState {
@@ -364,6 +364,9 @@ export async function setLunchPrice(
     p_menu: menuId,
     p_name: name,
     p_cents: cents,
+    // Jarjestys tulee sanastosta eika kannasta: nimet ja niiden
+    // jarjestys ovat sama tuotepaatos ja asuvat samassa paikassa.
+    p_sort: priceSortOrder(name),
   });
 
   if (error) return { error: explain(error, "Hinnan tallennus epäonnistui.") };
