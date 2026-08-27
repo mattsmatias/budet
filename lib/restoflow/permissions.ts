@@ -49,6 +49,17 @@ export type Capability =
    */
   | "tasks.view"
   | "tasks.manage"
+  /*
+   * Kirjanpito kahtena oikeutena.
+   *
+   * Kirjanpitaja lukee mutta ei kirjaa. Se ei ole tuotepaatos vaan
+   * kannan linja: is_manager kattaa omistajan ja vuoropaallikon, ja
+   * samaa funktiota kayttaa kolmisenkymmenta muuta kaytantoa. Jos
+   * kirjanpitajan halutaan kirjaavan, se on oma tarkoituksellinen
+   * muutoksensa eika sivuvaikutus.
+   */
+  | "accounting.view"
+  | "accounting.manage"
   | "audit.view"
   | "settings.view"
   | "settings.edit";
@@ -66,6 +77,7 @@ const OWNER: Capability[] = [
   "lunch.view", "lunch.manage",
   "matti.use",
   "tasks.view", "tasks.manage",
+  "accounting.view", "accounting.manage",
   /*
    * Toimintaloki on omistajan näkymä.
    *
@@ -90,6 +102,7 @@ const MANAGER: Capability[] = [
   "lunch.view", "lunch.manage",
   "matti.use",
   "tasks.view", "tasks.manage",
+  "accounting.view", "accounting.manage",
   "alerts.view", "settings.view",
 ];
 
@@ -127,6 +140,15 @@ const ACCOUNTANT: Capability[] = [
   "time.view.all",
   // Kirjanpitäjä lukee myynnin raportteja varten muttei kirjaa sitä.
   "sales.view",
+  /*
+   * Kirjanpito näkyy muttei aukea muokattavaksi.
+   *
+   * Kirjanpitäjä on juuri se joka kirjanpidon tekisi, mutta kannan
+   * is_manager ei kata häntä eikä sitä muuteta ohimennen: samaa
+   * funktiota käyttää kolmisenkymmentä muuta käytäntöä. Näkymä ja
+   * kanta ovat siis samaa mieltä siitä mitä hän saa tehdä.
+   */
+  "accounting.view",
   "alerts.view",
 ];
 
@@ -198,6 +220,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/tyontekijat", requires: "staff.view" },
   { href: "/admin/palkat", requires: "payroll.view" },
   { href: "/admin/myynti", requires: "sales.view" },
+  { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/lounas", requires: "lunch.view" },
   { href: "/admin/raportit", requires: "reports.view" },
@@ -282,6 +305,18 @@ export const ADMIN_NAV: NavEntry[] = [
    * menee", ja se on kysymys jota ei osaa esittää linkin kautta.
    */
   { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view", section: "finance" },
+
+  /*
+   * Kirjanpito on talouden viimeinen kohta.
+   *
+   * Järjestys kertoo kulun: myynti tuli, kuitit ja kulut menivät,
+   * budjetti kertoo paljonko sai mennä, toimittajat kenelle meni —
+   * ja kirjanpito on se mihin kaikki edellinen päätyy.
+   *
+   * Se on omalla sivullaan muttei oma tietosiilonsa: sivu ei kysy
+   * käyttäjältä mitään mitä Budet jo tietää.
+   */
+  { href: "/admin/kirjanpito", label: "Kirjanpito", icon: "report", requires: "accounting.view", section: "finance" },
 
   /*
    * Tehtävät ovat päivittäinen kohta, ei arkisto.

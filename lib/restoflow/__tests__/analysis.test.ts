@@ -681,9 +681,13 @@ describe("oikeudet", () => {
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
    * Kahdestoista kohta on Tehtävät: määräaika on päivittäinen asia, ja
    * juuri sen takia Budet avataan aamulla.
+   *
+   * Kolmastoista on Kirjanpito. Se on oma työtilansa eikä analyysiä
+   * muusta, joten sitä ei voi tavoittaa toisen sivun osiosta niin
+   * kuin Toimittajia tai Havaintoja.
    */
-  it("pitää päävalikon kahdessatoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(12);
+  it("pitää päävalikon kolmessatoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(13);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 
@@ -731,6 +735,8 @@ describe("oikeudet", () => {
       "/admin/kulut",
       "/admin/budjetit",
       "/admin/toimittajat",
+      // Kirjanpito viimeisenä: se on se mihin kaikki edellinen päätyy.
+      "/admin/kirjanpito",
     ]);
   });
 
