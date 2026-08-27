@@ -77,18 +77,6 @@ export default async function AccountingPage({
   const state = await fetchMonthState(restaurant.id, month);
   const saaKirjata = can(role, "accounting.manage");
 
-  // Kaksitoista kuukautta taaksepäin, kuten raportoinnissa.
-  const valittavat: string[] = [];
-  {
-    let cursor = nykyinen;
-    for (let i = 0; i < 13; i++) {
-      valittavat.push(cursor);
-      const [y, m] = cursor.split("-").map(Number);
-      const edellinen = new Date(Date.UTC(y, m - 2, 1));
-      cursor = `${edellinen.getUTCFullYear()}-${String(edellinen.getUTCMonth() + 1).padStart(2, "0")}`;
-    }
-  }
-
   if (!state) {
     return (
       <div className="rf-enter space-y-5">
@@ -102,12 +90,21 @@ export default async function AccountingPage({
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      {/* Otsikkorivi: tilikausi, kuukausi ja tila */}
+      {/*
+        Kuukausi on yläpalkissa eikä tässä.
+
+        Sivulla oli oma valitsimensa ja yläpalkissa toinen — kaksi
+        säädintä jotka näyttivät samaa kuukautta. Yläpalkin valitsin on
+        jokaisella kuukausisivulla sama, joten se on oikea paikka; sivun
+        oma olisi ollut poikkeus vain tällä sivulla.
+
+        Tämä rivi kertoo siis vain määrät. Kuukauden nimen toistaminen
+        säätimen alapuolella olisi ollut sama tieto kahdesti.
+      */}
       <div className="rf-z-page relative flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {monthLabel(month)} · {state.posted} kirjattua ·{" "}
-            {state.proposed} odottaa
+            {state.posted} kirjattua · {state.proposed} odottaa
           </p>
         </div>
 
@@ -124,8 +121,6 @@ export default async function AccountingPage({
           >
             {MONTH_STATUS_LABELS[state.status]}
           </Pill>
-
-          <KuukausiValitsin month={month} tab={tab} months={valittavat} />
         </div>
       </div>
 
@@ -442,73 +437,5 @@ async function Yhteenveto({
         </Card>
       ) : null}
     </div>
-  );
-}
-
-/**
- * Kuukauden valinta.
- *
- * Linkkejä eikä pudotusvalikkoa: valikko vaatisi JavaScriptin ja
- * lomakkeen lähetyksen, ja tässä riittää osoite.
- */
-function KuukausiValitsin({
-  month,
-  tab,
-  months,
-}: {
-  month: string;
-  tab: string;
-  months: string[];
-}) {
-  const nykyinenIndeksi = months.indexOf(month);
-  const edellinen = months[nykyinenIndeksi + 1];
-  const seuraava = nykyinenIndeksi > 0 ? months[nykyinenIndeksi - 1] : undefined;
-
-  return (
-    <div
-      className="inline-flex items-center gap-1"
-      style={{
-        background: "var(--rf-inset)",
-        border: "1px solid var(--rf-line-strong)",
-        borderRadius: "var(--rf-r-control)",
-      }}
-    >
-      <Siirto href={edellinen ? `/admin/kirjanpito?nakyma=${tab}&kuukausi=${edellinen}` : null} icon="back" label="Edellinen kuukausi" />
-      <span className="rf-tabular px-2 text-[13px] font-semibold">{monthLabel(month)}</span>
-      <Siirto href={seuraava ? `/admin/kirjanpito?nakyma=${tab}&kuukausi=${seuraava}` : null} icon="chevron" label="Seuraava kuukausi" />
-    </div>
-  );
-}
-
-function Siirto({
-  href,
-  icon,
-  label,
-}: {
-  href: string | null;
-  icon: "back" | "chevron";
-  label: string;
-}) {
-  if (!href) {
-    return (
-      <span
-        aria-hidden="true"
-        className="flex h-8 w-8 items-center justify-center"
-        style={{ color: "var(--rf-text-3)", opacity: 0.35 }}
-      >
-        <RfIcon name={icon} size={15} />
-      </span>
-    );
-  }
-
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      className="rf-press flex h-8 w-8 items-center justify-center"
-      style={{ color: "var(--rf-text-2)" }}
-    >
-      <RfIcon name={icon} size={15} />
-    </Link>
   );
 }

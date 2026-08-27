@@ -23,6 +23,8 @@ const MONTHLY = [
   "/admin/kulut",
   "/admin/palkat",
   "/admin/raportit",
+  /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
+  "/admin/kirjanpito",
   /* Vain lista ja kalenteri lukevat kuukauden, ei koko työvuorosivu. */
   "/admin/tyovuorot/lista",
   "/admin/tyovuorot/kalenteri",
