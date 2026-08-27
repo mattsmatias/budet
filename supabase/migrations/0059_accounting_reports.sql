@@ -1,0 +1,28 @@
+-- 0059 — Raportit
+--
+-- Ajettu tuotantoon migraatioina accounting_reports ja
+-- fix_balance_sheet_result. Tama tiedosto pitaa repositorion ja kannan
+-- samassa linjassa.
+--
+-- KAIKKI LASKETAAN KIRJANPIDON TAULUISTA.
+--
+-- Frontend ei laske summia irrallisesta datasta: silloin raportti ja
+-- kirjanpito voisivat erota, ja kumpi olisi oikeassa?
+--
+-- ESITYS EI NAY VIRALLISESSA RAPORTISSA.
+--
+-- Oletuksena mukaan vain kirjatut tositteet. Parametri sallii
+-- esitysten mukaanoton kesken kuukauden tarkastelua varten, ja
+-- raportti kertoo itse kumpaa se nayttaa (includesProposed).
+--
+-- TILIKAUDEN TULOS ON TASEESSA OMANA RIVINAAN.
+--
+-- Tuotto- ja kulutilit eivat ole vastaavaa eivatka vastattavaa, joten
+-- ilman sita puolet eivat tasmaa.
+--
+-- Funktiot: ledger_journal, ledger_general, ledger_income_statement,
+-- ledger_balance_sheet.
+--
+-- TODENNETTU peruutettavassa transaktiossa oikealla datalla:
+-- paivakirja 7 tositetta, paakirja 19 tilia, tuloslaskelma tasmaa
+-- (117687 - 83241 = 34446) ja tase tasmaa (50429 = 50429).
