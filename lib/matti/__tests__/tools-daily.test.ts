@@ -42,6 +42,7 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
     now: `${TODAY}T09:00:00Z`,
     timezone: TZ,
     currentPage: null,
+  locale: "fi" as const,
     data: emptyData(partial),
     lunchWeek: async () => null,
   };

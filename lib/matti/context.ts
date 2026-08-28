@@ -5,6 +5,8 @@ import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import type { RestaurantData } from "@/lib/restoflow/queries";
 import type { LunchWeek } from "@/lib/restoflow/lunch";
 import type { Role } from "@/lib/restoflow/types";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { resolveLocale } from "@/lib/i18n/resolve";
 
 /**
  * Matin ajokonteksti.
@@ -33,6 +35,13 @@ export interface MattiContext {
   timezone: string;
   /** Missä käyttäjä on sovelluksessa. Vihje, ei valtuutus. */
   currentPage: string | null;
+  /**
+   * Käyttäjän sovelluskieli.
+   *
+   * Oletus vastauksen kielelle, ei pakko: jos käyttäjä kirjoittaa
+   * muulla kielellä, Matti vastaa sillä. Ks. prompt.ts.
+   */
+  locale: AppLocale;
   data: RestaurantData;
   /** Lounasviikko haetaan erikseen: sitä ei tarvita joka kysymykseen. */
   lunchWeek: (weekStart: string) => Promise<LunchWeek | null>;
@@ -57,6 +66,8 @@ export async function mattiContext(
     now: nowIso(),
     timezone: ctx.restaurant.timezone,
     currentPage,
+    // Kieli ratkaistaan samalla ketjulla kuin muualla sovelluksessa.
+    locale: await resolveLocale(),
     data,
     lunchWeek(weekStart) {
       const existing = weekCache.get(weekStart);

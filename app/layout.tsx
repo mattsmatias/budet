@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { localeInfo } from "@/lib/i18n/app-locales";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import "./globals.css";
 import "./theme.css";
 
@@ -66,9 +68,22 @@ export const viewport: Viewport = {
   themeColor: "#f5f5f7",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  /*
+   * Kieli ja kirjoitussuunta juuressa.
+   *
+   * <html> on ainoa paikka jossa dir voi olla: se periytyy koko
+   * puuhun, ja RTL tarkoittaa muutakin kuin tekstin tasausta -
+   * sivupalkki, nuolet ja marginaalit kaantyvat sen mukana.
+   *
+   * Ratkaisu tehdaan samalla ketjulla kuin muualla: kayttajan valinta,
+   * ravintolan oletus, selaimen toive, suomi.
+   */
+  const locale = await resolveLocale();
+  const { tag, dir } = localeInfo(locale);
+
   return (
-    <html lang="fi" className={`${jakarta.variable} ${mono.variable} h-full`}>
+    <html lang={tag} dir={dir} className={`${jakarta.variable} ${mono.variable} h-full`}>
       <body className="restoflow min-h-full" suppressHydrationWarning>
         {/*
           Teema ennen ensimmäistä piirtoa.

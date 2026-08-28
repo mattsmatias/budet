@@ -1,6 +1,8 @@
 import { HeaderMenus } from "./header-menus";
 import { PageTitle } from "./page-title";
 import { MonthScope } from "./month-scope";
+import { LanguagePicker } from "@/components/i18n/language-picker";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { Search, type SearchItem } from "./search";
 import { ButtonLink } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -38,6 +40,7 @@ export function TopBar({
   canOpenSettings,
   months,
   month,
+  locale,
 }: {
   restaurantName: string;
   /** "MA 24.08.2026" — ravintolan ajassa. */
@@ -53,6 +56,8 @@ export function TopBar({
   months: string[];
   /** Kuluva kuukausi — valinta luetaan osoitteesta. */
   month: string;
+  /** Kayttajan kieli kielivalitsinta varten. */
+  locale: AppLocale;
 }) {
   return (
     <header
@@ -86,6 +91,9 @@ export function TopBar({
         palkkiin kuin haku.
       */}
       <MonthScope value={month} months={months} />
+
+      {/* Kieli tunnusvalikon vieressa: se on tilin asetus. */}
+      <LanguagePicker current={locale} />
 
       {canAddReceipt ? (
         <ButtonLink

@@ -12,6 +12,7 @@ import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
 import { MobileMonthBar } from "./month-scope";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import type { SearchItem } from "./search";
 import type { StaffPosition } from "@/lib/restoflow/types";
 
@@ -173,6 +174,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           canOpenSettings={can(role, "settings.view")}
           months={months}
           month={month}
+          locale={await resolveLocale()}
         />
 
         <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">

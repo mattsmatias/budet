@@ -1,0 +1,25 @@
+-- 0064 — Kielituki
+--
+-- Ajettu tuotantoon migraationa locale_support_v2.
+--
+-- KÄYTTÄJÄN KIELI OLI JO OLEMASSA.
+--
+-- profiles.locale on ollut kannassa alusta asti (text, arvo 'fi').
+-- Uutta saraketta ei tarvittu; se sai enum-tyypin, oletuksen ja
+-- not null -rajoitteen. Vanha tekstioletus piti pudottaa ensin:
+-- sitä ei voi muuntaa automaattisesti enum-tyyppiin.
+--
+-- RAVINTOLAN OLETUSKIELI ON ERI ASIA KUIN KÄYTTÄJÄN KIELI.
+--
+-- restaurants.default_locale on oletus uudelle käyttäjälle ja
+-- järjestelmän lähettämille viesteille. Jokainen käyttäjä voi silti
+-- valita omansa: keittiössä voi olla kuusi kieltä eikä yksi niistä
+-- ole väärin.
+--
+-- Funktiot set_my_locale ja set_restaurant_locale suoran päivityksen
+-- sijaan: käyttäjä saa vaihtaa vain oman kielensä, ja ravintolan
+-- oletuksen vain omistaja.
+--
+-- app_locale-enum sisältää samat 30 kieltä kuin
+-- lib/i18n/app-locales.ts. Testi varmistaa että sovelluksen lista
+-- kelpaa Intlille; kannan enum estää kelvottoman arvon.
