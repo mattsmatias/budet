@@ -12,12 +12,7 @@ export default function Loading() {
         {[0, 1].map((box) => (
           <div
             key={box}
-            className="px-4 py-3.5"
-            style={{
-              background: "var(--rf-card)",
-              border: "1px solid var(--rf-line)",
-              borderRadius: 14,
-            }}
+            className="bd-app-card px-4 py-3.5"
           >
             <div className="rf-skeleton-block h-3.5 w-24" />
             <div className="rf-skeleton-block mt-2 h-6 w-20" />

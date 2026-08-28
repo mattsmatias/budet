@@ -26,12 +26,8 @@ export function Workplace({
     <div className="space-y-3">
       {birthdays.length > 0 ? (
         <div
-          className="flex items-center gap-3.5 px-4 py-3.5"
-          style={{
-            background: "var(--rf-amber-bg)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: 14,
-          }}
+          className="bd-app-card flex items-center gap-3.5 px-4 py-3.5"
+          style={{ background: "var(--rf-amber-bg)" }}
         >
           <span aria-hidden="true" className="text-[24px] leading-none">
             🎂
@@ -43,14 +39,7 @@ export function Workplace({
       ) : null}
 
       <Link href="/app/tyoyhteiso" className="rf-press block">
-        <div
-          className="flex items-center gap-3 px-4 py-3"
-          style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: 14,
-          }}
-        >
+        <div className="bd-app-card bd-app-lift flex items-center gap-3 px-4 py-3.5">
           {/*
             Kolme ensimmäistä kasvoa riittää vihjeeksi siitä mitä linkin
             takana on. Koko henkilöstö tässä olisi lista listan edessä.

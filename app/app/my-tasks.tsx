@@ -38,8 +38,8 @@ export function MyTasks({ tasks, today }: { tasks: Task[]; today: string }) {
                 style={{
                   background: "var(--rf-card)",
                   border: "1px solid var(--rf-line)",
-                  borderRadius: "var(--rf-r-card)",
-                  boxShadow: "var(--rf-shadow-sm)",
+                  borderRadius: "var(--bd-app-r)",
+                  boxShadow: "var(--bd-app-shadow)",
                 }}
               >
                 {/*

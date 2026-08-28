@@ -1,0 +1,315 @@
+/*
+ * Työntekijänäkymän pinta.
+ *
+ * SAMA KIELI KUIN ETUSIVULLA, ERI MITTAKAAVA.
+ *
+ * Etusivu (landing.css) ja hallintanäkymä (theme.css) käyttävät samoja
+ * värejä mutta eri mittoja: hallintanäkymä on tiheä työpöytätaulukko,
+ * etusivu on ilmava ja syvä. Työntekijänäkymä on lähempänä etusivua —
+ * se on puhelinsovellus, jossa on neljä sivua ja yksi tärkeä painike,
+ * ei taulukkonäkymä.
+ *
+ * Ero etusivuun ei ole väreissä vaan neljässä asiassa: pyöristys,
+ * varjo, liike ja tila. Siksi tämä tiedosto ei määrittele yhtään
+ * uutta väriä. Uusi punainen tarkoittaisi kahta punaista, ja ne
+ * ajautuvat erilleen.
+ *
+ * Rajattu .bd-app-luokan alle, jotta hallintanäkymä pysyy
+ * koskemattomana. Tokenit luetaan silti --rf-*-arvoista, joten tumma
+ * teema toimii ilman että sitä ylläpidetään täällä uudelleen.
+ */
+
+.bd-app {
+  /*
+   * Pyöristykset.
+   *
+   * Hallintanäkymässä kortti on 14 pikseliä, etusivulla 20. Puhelin on
+   * lähempänä etusivua: kortteja on vähän ja ne ovat isoja, jolloin
+   * tiukka kulma näyttää lomakkeelta eikä sovellukselta.
+   */
+  --bd-app-r: 18px;
+  --bd-app-r-lg: 22px;
+  --bd-app-r-btn: 13px;
+
+  /*
+   * Varjot.
+   *
+   * Tämä on suurin yksittäinen ero. Hallintanäkymän varjo on
+   * 0 1px 2px — käytännössä viiva, koska tiheässä taulukossa
+   * kohoavat kortit tekevät näkymästä levottoman. Työntekijänäkymässä
+   * kortteja on neljä ruudulla, ja silloin syvyys erottaa ne toisistaan
+   * paremmin kuin reunaviiva.
+   *
+   * Kaksi kerrosta: tiukka varjo pitää reunan terävänä, laaja ja hyvin
+   * läpinäkyvä nostaa kortin pinnasta.
+   */
+  --bd-app-shadow:
+    0 1px 2px rgba(15, 23, 41, 0.04),
+    0 6px 20px -8px rgba(15, 23, 41, 0.1);
+  --bd-app-shadow-lift:
+    0 2px 4px rgba(15, 23, 41, 0.05),
+    0 16px 36px -14px rgba(15, 23, 41, 0.16);
+
+  /*
+   * Hehku otsikon takana.
+   *
+   * Sama ajatus kuin etusivun herossa: valkoinen sivu alkaa muuten
+   * tyhjyydestä. Arvot ovat etusivun hehkusta laimennettuina — siellä
+   * se täyttää 620 pikseliä, tässä se on tervehdyksen kokoinen.
+   */
+  --bd-app-glow-1: rgba(209, 56, 49, 0.07);
+  --bd-app-glow-2: rgba(123, 118, 232, 0.06);
+}
+
+/*
+ * Tumma teema.
+ *
+ * Vain varjot ja hehku, koska muuta ei täällä määritelläkään. Musta
+ * varjo vaalealle pinnalle laskettuna katoaa tummalla täysin, joten
+ * peittävyys nousee — syvyys tulee tummassa varjon tummuudesta eikä
+ * sen laajuudesta.
+ *
+ * Kolme tilaa kuten theme.css:ssä: leimaamaton (vain
+ * käyttöjärjestelmä), nimenomainen tumma, ja nimenomainen vaalea joka
+ * voittaa käyttöjärjestelmän.
+ */
+@media (prefers-color-scheme: dark) {
+  .restoflow:not([data-theme="light"]) .bd-app {
+    --bd-app-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 6px 20px -8px rgba(0, 0, 0, 0.6);
+    --bd-app-shadow-lift:
+      0 2px 4px rgba(0, 0, 0, 0.5),
+      0 16px 36px -14px rgba(0, 0, 0, 0.7);
+
+    --bd-app-glow-1: rgba(244, 99, 91, 0.1);
+    --bd-app-glow-2: rgba(154, 149, 240, 0.08);
+  }
+}
+
+.restoflow[data-theme="dark"] .bd-app {
+  --bd-app-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 6px 20px -8px rgba(0, 0, 0, 0.6);
+  --bd-app-shadow-lift:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 16px 36px -14px rgba(0, 0, 0, 0.7);
+
+  --bd-app-glow-1: rgba(244, 99, 91, 0.1);
+  --bd-app-glow-2: rgba(154, 149, 240, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
+   Hehku
+   ---------------------------------------------------------------------------
+   Sijoitetaan sisältöpalstan yläreunaan tervehdyksen taakse. Ei
+   osoitinta eikä ruudunlukijaa varten mitään: tämä on valoa, ei
+   sisältöä.
+*/
+
+.bd-app-glow {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 340px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(70% 60% at 50% 0%, var(--bd-app-glow-1), transparent 70%),
+    radial-gradient(50% 55% at 85% 8%, var(--bd-app-glow-2), transparent 70%);
+}
+
+/* ---------------------------------------------------------------------------
+   Pinnat
+   ---------------------------------------------------------------------------
+   Yksi luokka korvaa kolme paikkaa joissa sama reuna ja pyöristys
+   ennen kirjoitettiin käsin style-määreenä. Ne olivat jo ajautuneet
+   erilleen: osa käytti 14 pikseliä, osa 12.
+*/
+
+.bd-app-card {
+  background: var(--rf-card);
+  border: 1px solid var(--rf-line);
+  border-radius: var(--bd-app-r);
+  box-shadow: var(--bd-app-shadow);
+}
+
+/*
+ * Nostettava kortti.
+ *
+ * Vain osoittimella ja vain silloin kun laite osaa leijua. Puhelimessa
+ * hover jää päälle kosketuksen jälkeen, ja kortti jäisi ylös kunnes
+ * käyttäjä koskee johonkin muuhun.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .bd-app-lift {
+    transition:
+      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 220ms ease,
+      border-color 220ms ease;
+  }
+
+  .bd-app-lift:hover {
+    transform: translateY(-2px);
+    border-color: var(--rf-line-strong);
+    box-shadow: var(--bd-app-shadow-lift);
+  }
+}
+
+/*
+ * Rivilista kortin sisällä.
+ *
+ * Pyöristys peritään kortilta ja sisältö rajataan siihen, jotta rivin
+ * osoitustausta ei työnnä neliötä kortin pyöreään kulmaan. Ilman tätä
+ * ensimmäisen ja viimeisen rivin kulmat näyttäisivät rikkinäisiltä
+ * juuri silloin kun niitä osoitetaan.
+ */
+.bd-app-list {
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/*
+ * Painettava rivi.
+ *
+ * Kortti nousee, rivi ei: nouseva rivi listan keskellä irrottaisi
+ * itsensä naapureistaan ja rikkoisi erottimet. Tässä riittää tausta.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .bd-app-row {
+    transition: background 160ms ease;
+  }
+
+  .bd-app-row:hover {
+    background: var(--rf-card-hover);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Liike
+   ---------------------------------------------------------------------------
+   Sama kaari ja sama kesto kuin etusivun bd-rise-animaatiossa. Matka
+   on lyhyempi (10 px vs 14 px), koska puhelimen ruudulla sama matka
+   näyttää suhteessa pidemmältä.
+*/
+
+@keyframes bd-app-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bd-app-rise {
+  animation: bd-app-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+ * Porrastus.
+ *
+ * Neljä askelta riittää: sivulla on tervehdys, leimauskortti, vuoro ja
+ * loput. Viides viive tarkoittaisi että jokin osio tulee näkyviin
+ * puoli sekuntia sivun jälkeen, ja se luetaan hitaudeksi eikä
+ * huolellisuudeksi.
+ */
+.bd-app-d1 { animation-delay: 60ms; }
+.bd-app-d2 { animation-delay: 120ms; }
+.bd-app-d3 { animation-delay: 180ms; }
+.bd-app-d4 { animation-delay: 240ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-app-rise {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .bd-app-lift,
+  .bd-app-lift:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Leimauspainike
+   ---------------------------------------------------------------------------
+   MITATTU: "Lopeta työvuoro" oli tummassa teemassa valkoinen valkoisella.
+
+   Painike käytti taustanaan --rf-text-arvoa ja tekstinään kovakoodattua
+   valkoista. Vaaleassa teemassa se on lähes musta pohja ja valkoinen
+   teksti, mutta tummassa --rf-text on itse lähes valkoinen — jolloin
+   näkymän tärkein painike katosi kokonaan.
+
+   Teksti otetaan nyt pinnasta eikä vakiosta, jolloin se kääntyy teeman
+   mukana samaan tahtiin kuin tausta. Merkkivärinen pinta ei
+   käänny samalla tavalla, joten sille on oma sävynsä per teema:
+   valkoinen riittää tummalla punaisella (4,9:1), muttei tumman teeman
+   vaalealla punaisella, jossa teksti on tummennettava (5,5:1).
+*/
+
+.bd-app-stop {
+  background: var(--rf-text);
+  color: var(--rf-card);
+}
+
+.bd-app-accent {
+  background: var(--rf-accent);
+  color: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .restoflow:not([data-theme="light"]) .bd-app-accent {
+    color: #1b1010;
+  }
+}
+
+.restoflow[data-theme="dark"] .bd-app-accent {
+  color: #1b1010;
+}
+
+/* ---------------------------------------------------------------------------
+   Alapalkki
+   ---------------------------------------------------------------------------
+   Kelluva palkki eikä sivun pohjaan liimattu reuna. Etusivun kieli on
+   pyöristetty ja kohoava, ja alapalkki on ainoa asia joka on ruudulla
+   koko ajan — jos jokin kantaa sen kielen, niin tämä.
+
+   Palkki on oma pintansa, joten sisällön pitää loppua ennen sitä.
+   Siitä huolehtii sisältöpalstan alapehmuste layoutissa.
+*/
+
+.bd-app-bar {
+  border: 1px solid var(--rf-line);
+  border-radius: 20px;
+  background: var(--rf-card);
+  box-shadow: var(--bd-app-shadow-lift);
+}
+
+/*
+ * Sumennus on lisä, ei perusta.
+ *
+ * MITATTU: 82 % läpinäkyvyys ilman sumennusta on lukukelvoton.
+ *
+ * Ensimmäinen versio luotti @supports-ehtoon ja jätti palkin 82
+ * prosenttiin. Selaimessa mitattuna backdrop-filter oli silti "none":
+ * käännösvaihe (Lightning CSS) pudotti standardin ominaisuuden ja
+ * jätti vain -webkit-etuliitteisen, joka ei tehnyt mitään. Lopputulos
+ * oli läpikuultava palkki ilman sumennusta, ja sen alta paistoi
+ * osaston otsikko terävänä.
+ *
+ * Siksi kaksi asiaa: peittävyys nostettiin tasolle jolla palkki on
+ * luettava myös täysin ilman sumennusta, ja standardi ominaisuus
+ * kirjoitetaan viimeisenä jotta se selviää käännöksestä. Sumennus
+ * parantaa ulkonäköä kun se toimii, muttei ole enää luettavuuden ehto.
+ */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bd-app-bar {
+    background: color-mix(in srgb, var(--rf-card) 94%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+}

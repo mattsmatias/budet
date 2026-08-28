@@ -76,7 +76,7 @@ export default async function MorePage() {
             background: "var(--rf-card)",
             color: "var(--rf-red-text)",
             border: "1px solid var(--rf-line)",
-            borderRadius: 14,
+            borderRadius: "var(--bd-app-r)",
           }}
         >
           <RfIcon name="logout" size={17} />

@@ -21,17 +21,13 @@ export default function Loading() {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
         <div
-          className="px-5 py-6 sm:px-7 sm:py-7"
-          style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: 20,
-          }}
+          className="bd-app-card px-5 py-6 sm:px-7 sm:py-7"
+          style={{ borderRadius: "var(--bd-app-r-lg)" }}
         >
           <div className="rf-skeleton-block h-3.5 w-32" />
           <div className="rf-skeleton-block mt-3 h-3 w-20" />
           <div className="rf-skeleton-block mt-5 h-12 w-52" />
-          <div className="rf-skeleton-block mt-6 h-[60px] w-full" style={{ borderRadius: 14 }} />
+          <div className="rf-skeleton-block mt-6 h-[60px] w-full" style={{ borderRadius: "var(--bd-app-r-btn)" }} />
         </div>
 
         <div className="space-y-4">
@@ -68,14 +64,7 @@ export default function Loading() {
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="px-4 py-3.5"
-      style={{
-        background: "var(--rf-card)",
-        border: "1px solid var(--rf-line)",
-        borderRadius: 14,
-      }}
-    >
+    <div className="bd-app-card px-4 py-4">
       {children}
     </div>
   );

@@ -113,74 +113,88 @@ function DesktopSidebar({
 /**
  * Alapalkki puhelimeen.
  *
- * Viisi kohtaa, ei enempää. Kuudes kohta tarkoittaisi että jokin niistä ei
+ * Neljä kohtaa, ei enempää. Viides kohta tarkoittaisi että jokin niistä ei
  * ansaitse paikkaansa, ja kosketuskohteista tulisi liian kapeita.
+ *
+ * KELLUVA PALKKI, EI POHJAAN LIIMATTU REUNA.
+ *
+ * Etusivun kieli on pyöristetty ja kohoava, ja tämä on ainoa asia joka on
+ * ruudulla koko ajan — jos jokin kantaa sen kielen, niin tämä. Sisältö
+ * vierii palkin alta läpi, mikä on myös syy sumennukseen: umpinainen
+ * palkki katkaisisi listan kesken rivin.
+ *
+ * Palkki pysyy sticky-elementtinä, joten se varaa oman tilansa
+ * pystysuunnassa eikä peitä viimeistä riviä.
  */
 function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
   const isActive = useActive();
 
   return (
-    <nav
-      aria-label="Päänavigaatio"
-      className="sticky bottom-0 z-20 border-t lg:hidden"
-      style={{
-        borderColor: "var(--rf-line)",
-        background: "rgba(255,255,255,0.82)",
-        backdropFilter: "saturate(180%) blur(20px)",
-        WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
+    <div
+      className="sticky bottom-0 z-20 px-3 pt-2 pb-3 lg:hidden"
+      style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
     >
-      <ul className="mx-auto flex max-w-md">
-        {tabs.map((tab) => {
-          const active = isActive(tab.href);
+      <nav aria-label="Päänavigaatio" className="bd-app-bar mx-auto max-w-md">
+        <ul className="flex">
+          {tabs.map((tab) => {
+            const active = isActive(tab.href);
 
-          return (
-            <li key={tab.href} className="flex-1">
-              <Link
-                href={tab.href}
-                aria-current={active ? "page" : undefined}
-                className="rf-press flex flex-col items-center gap-1 pt-2 pb-2.5"
-                style={{ color: active ? "var(--rf-blue)" : "var(--rf-text-3)" }}
-              >
-                {/*
-                  Aktiivinen kohta saa taustan ikonin taakse.
-                  Pelkkä värivaihdos on puhelimessa liian hiljainen: sitä
-                  ei erota vilkaisulla eikä kirkkaassa ulkovalossa.
-                */}
-                <span
-                  className="flex items-center justify-center px-4 py-1"
+            return (
+              <li key={tab.href} className="flex-1">
+                <Link
+                  href={tab.href}
+                  aria-current={active ? "page" : undefined}
+                  className="rf-press flex flex-col items-center gap-1 pt-2 pb-2"
                   style={{
-                    background: active ? "var(--rf-accent-bg)" : "transparent",
-                    borderRadius: 10,
+                    color: active ? "var(--rf-accent-strong)" : "var(--rf-text-3)",
                   }}
                 >
-                  <RfIcon name={tab.icon} size={21} />
-                </span>
-                <span
-                  className="text-[10px]"
-                  style={{ fontWeight: active ? 600 : 500 }}
-                >
-                  {tab.label}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+                  {/*
+                    Aktiivinen kohta saa taustan ikonin taakse.
+                    Pelkkä värivaihdos on puhelimessa liian hiljainen: sitä
+                    ei erota vilkaisulla eikä kirkkaassa ulkovalossa.
+
+                    Ikonin ja tekstin väri on sama kuin taustan: ennen ikoni
+                    oli sininen punertavalla pohjalla, mikä oli kahden eri
+                    merkityksen sekoitus samassa napissa.
+                  */}
+                  <span
+                    className="flex items-center justify-center px-4 py-1"
+                    style={{
+                      background: active ? "var(--rf-accent-bg)" : "transparent",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <RfIcon name={tab.icon} size={21} />
+                  </span>
+                  <span
+                    className="text-[10px]"
+                    style={{ fontWeight: active ? 600 : 500 }}
+                  >
+                    {tab.label}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
   );
 }
 
 function Logo() {
   return (
+    /*
+      Sama merkkivärin tekstisävy kuin leimauspainikkeessa.
+
+      --rf-on-accent on valkoinen molemmissa teemoissa, mutta tumman
+      teeman punainen on vaalea — valkoinen kirjain jäi siinä lähes
+      näkymättömäksi.
+    */
     <span
-      className="flex h-7 w-7 items-center justify-center text-[13px] font-bold"
-      style={{
-        background: "var(--rf-accent)",
-        color: "var(--rf-on-accent)",
-        borderRadius: 8,
-      }}
+      className="bd-app-accent flex h-7 w-7 items-center justify-center text-[13px] font-bold"
+      style={{ borderRadius: 8 }}
     >
       B
     </span>

@@ -1,5 +1,6 @@
 import { requireContext } from "@/lib/restoflow/session";
 import { AppBottomNav, AppSidebar } from "./nav";
+import "../worker.css";
 
 /**
  * Työntekijän kuori.
@@ -14,19 +15,33 @@ import { AppBottomNav, AppSidebar } from "./nav";
  * ruutua, eikä näkymää voinut kunnolla edes kokeilla koneella. Leveys
  * kasvaa nyt vain sen verran kuin sisältö tarvitsee: teksti ei veny
  * lukukelvottoman pitkäksi riviksi.
+ *
+ * ULKOASU TULEE ETUSIVUN KIELESTÄ.
+ *
+ * .bd-app tuo worker.css:n mitat: isommat pyöristykset, oikeat varjot
+ * ja sisääntuloliike. Värit tulevat yhä theme.css:stä, joten tumma
+ * teema toimii eikä punaista ole kahta.
  */
 export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
   const { user } = await requireContext("/app");
 
   return (
-    <div className="flex min-h-screen justify-center lg:justify-start">
+    <div className="bd-app flex min-h-screen justify-center lg:justify-start">
       <AppSidebar userName={user.fullName ?? user.email ?? "Käyttäjä"} />
 
       <div
-        className="flex min-h-screen w-full max-w-md flex-col lg:max-w-none"
+        className="relative flex min-h-screen w-full max-w-md flex-col lg:max-w-none"
         style={{ background: "var(--rf-bg)" }}
       >
-        <main className="flex-1 px-4 pb-6 pt-3 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-9">
+        {/*
+          Hehku sisällön takana.
+
+          Ennen sisältöä puussa ja z-indeksittä, jotta se jää alle
+          ilman että jokaiselle osiolle pitää antaa oma kerroksensa.
+        */}
+        <div className="bd-app-glow" aria-hidden="true" />
+
+        <main className="relative flex-1 px-4 pb-6 pt-3 lg:mx-auto lg:w-full lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-9">
           {children}
         </main>
 

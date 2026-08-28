@@ -28,9 +28,19 @@ export function PageHeader({
   return (
     <header className="flex flex-wrap items-end justify-between gap-3 px-1 pt-1">
       <div className="min-w-0">
-        <h1 className="text-[26px] font-semibold tracking-tight">{title}</h1>
+        {/*
+          Otsikko on suurempi ja tiukempi kuin hallintanäkymässä.
+          Etusivun typografia kantaa sivun, ja puhelimessa on tilaa vain
+          yhdelle otsikolle kerrallaan — silloin se saa olla otsikko.
+        */}
+        <h1
+          className="text-[28px] font-semibold"
+          style={{ letterSpacing: "-0.025em" }}
+        >
+          {title}
+        </h1>
         {subtitle ? (
-          <p className="mt-0.5 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
             {subtitle}
           </p>
         ) : null}
@@ -64,8 +74,15 @@ export function SectionTitle({
 /**
  * Kevyt pinta.
  *
- * Ohut reuna, ei varjoa. Varjo on varattu Koti-sivun leimauskortille:
- * jos jokainen pinta kohoaa, mikään ei kohoa.
+ * Ohut reuna ja hienovarainen varjo. Aiemmin varjoa ei ollut lainkaan
+ * ja se oli varattu leimauskortille, mutta puhelimen ruudulla kortteja
+ * on kerrallaan neljä eikä neljääkymmentä: silloin syvyys erottaa ne
+ * toisistaan paremmin kuin pelkkä viiva, eikä näkymä muutu levottomaksi.
+ * Leimauskortti erottuu yhä, koska sen varjo on isompi.
+ *
+ * Mitat tulevat worker.css:stä yhtenä luokkana. Ennen sama reuna ja
+ * pyöristys kirjoitettiin käsin neljään paikkaan, ja ne olivat jo
+ * ajautuneet erilleen.
  */
 export function Surface({
   children,
@@ -77,14 +94,7 @@ export function Surface({
   padded?: boolean;
 }) {
   return (
-    <div
-      className={`${padded ? "px-4 py-3.5" : ""} ${className}`}
-      style={{
-        background: "var(--rf-card)",
-        border: "1px solid var(--rf-line)",
-        borderRadius: 14,
-      }}
-    >
+    <div className={`bd-app-card ${padded ? "px-4 py-4" : ""} ${className}`}>
       {children}
     </div>
   );
@@ -159,7 +169,7 @@ export function Row({
   );
 
   return href ? (
-    <Link href={href} className="rf-press block">
+    <Link href={href} className="rf-press bd-app-row block">
       {body}
     </Link>
   ) : (
@@ -171,7 +181,7 @@ export function Row({
 export function List({ children }: { children: ReactNode }) {
   return (
     <Surface padded={false}>
-      <div className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+      <div className="bd-app-list divide-y" style={{ borderColor: "var(--rf-line)" }}>
         {children}
       </div>
     </Surface>
@@ -263,12 +273,7 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, row) => (
         <div
           key={row}
-          className="flex items-center justify-between gap-4 px-4 py-3.5"
-          style={{
-            background: "var(--rf-card)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: 14,
-          }}
+          className="bd-app-card flex items-center justify-between gap-4 px-4 py-3.5"
         >
           <div className="space-y-1.5">
             <div className="rf-skeleton-block h-4 w-24" />

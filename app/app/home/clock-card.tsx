@@ -220,9 +220,21 @@ export function ClockCard({
 
       {/* suppressHydrationWarning: palvelin ja selain laskevat eri
           hetkestä. Se on tarkoitus eikä virhe. */}
+      {/*
+        Luku sovitetaan leveyteen.
+
+        MITATTU: kiinteä 56 pikseliä katkaisi "03 h 07 min" kahdelle
+        riville 375 pikselin ruudulla — kortin sisäleveys on siellä 302
+        pikseliä ja luku tarvitsi noin 340. Kahdelle riville katkennut
+        kello on tämän näkymän tärkein luku ja näytti rikkinäiseltä.
+
+        clamp pitää sen yhdellä rivillä kapeimmallakin puhelimella ja
+        antaa täyden koon heti kun tilaa on. Yläraja on sama 56 kuin
+        ennenkin, joten työpöydällä mikään ei muutu.
+      */}
       <p
-        className="rf-tabular mt-4 text-[56px] font-semibold leading-none"
-        style={{ letterSpacing: "-0.035em" }}
+        className="rf-tabular mt-4 font-semibold leading-none"
+        style={{ fontSize: "clamp(40px, 12vw, 56px)", letterSpacing: "-0.035em" }}
         suppressHydrationWarning
       >
         {formatHoursMinutes(worked.workedMs)}
@@ -307,8 +319,15 @@ function Surface({ active, children }: { active: boolean; children: React.ReactN
           ? "linear-gradient(180deg, var(--rf-green-bg) 0%, var(--rf-card) 55%)"
           : "var(--rf-card)",
         border: `1px solid ${active ? "var(--rf-green-line, var(--rf-line))" : "var(--rf-line)"}`,
-        borderRadius: 20,
-        boxShadow: "0 1px 2px rgba(16,24,40,0.04), 0 8px 24px -12px rgba(16,24,40,0.10)",
+        borderRadius: "var(--bd-app-r-lg)",
+        /*
+         * Isompi varjo kuin muilla pinnoilla.
+         *
+         * Muut kortit saivat varjon vasta tässä muutoksessa, joten
+         * leimauskortin oma varjo nostetaan samassa suhteessa — muuten
+         * pääasia olisi yhtä korkealla kuin naapurinsa.
+         */
+        boxShadow: "var(--bd-app-shadow-lift)",
       }}
     >
       {children}
@@ -400,16 +419,21 @@ function PrimaryAction({
       name="type"
       value={working ? "out" : "in"}
       disabled={pending || blocked}
-      className="rf-press flex w-full items-center justify-center gap-2.5 text-[17px] font-semibold disabled:opacity-40"
+      className={`rf-press flex w-full items-center justify-center gap-2.5 text-[17px] font-semibold disabled:opacity-40 ${
+        blocked ? "" : working ? "bd-app-stop" : "bd-app-accent"
+      }`}
       style={{
         minHeight: 60,
-        background: blocked
-          ? "var(--rf-inset)"
-          : working
-            ? "var(--rf-text)"
-            : "var(--rf-accent)",
-        color: blocked ? "var(--rf-text-3)" : "#fff",
-        borderRadius: 14,
+        /*
+          Estetty tila on ainoa joka pysyy tässä: sen molemmat sävyt
+          kääntyvät teeman mukana valmiiksi. Kaksi muuta ovat
+          worker.css:ssä, koska niiden tekstiväri ei ole sama
+          molemmissa teemoissa eikä sitä voi ilmaista tässä.
+        */
+        ...(blocked
+          ? { background: "var(--rf-inset)", color: "var(--rf-text-3)" }
+          : null),
+        borderRadius: "var(--bd-app-r-btn)",
       }}
     >
       {pending ? (
@@ -438,7 +462,7 @@ function SecondaryAction({ type, label }: { type: ClockEventType; label: string 
         minHeight: 48,
         background: "var(--rf-inset)",
         color: "var(--rf-text)",
-        borderRadius: 12,
+        borderRadius: "var(--bd-app-r-btn)",
       }}
     >
       {label}

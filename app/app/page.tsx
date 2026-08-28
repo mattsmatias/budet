@@ -102,12 +102,20 @@ export default async function EmployeeHome() {
           };
 
   return (
-    <div className="rf-enter space-y-6">
-      <header className="px-1 pt-1">
-        <h1 className="text-[26px] font-semibold tracking-tight">
+    /*
+      Osiot tulevat näkyviin porrastettuna ylhäältä alas.
+
+      Aiemmin koko sivu tuli yhtenä palana (rf-enter). Porrastus on
+      etusivulta: se lukee sivun samassa järjestyksessä kuin silmä, ja
+      tekee latauksesta liikkeen eikä välähdyksen. Viiveet loppuvat
+      neljänteen, joten mikään ei ilmesty puolta sekuntia myöhässä.
+    */
+    <div className="space-y-6">
+      <header className="bd-app-rise px-1 pt-1">
+        <h1 className="text-[30px] font-semibold" style={{ letterSpacing: "-0.03em" }}>
           Hei{firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
         </h1>
-        <p className="mt-0.5 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+        <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
         </p>
       </header>
@@ -116,7 +124,7 @@ export default async function EmployeeHome() {
         Työpöydällä leimaus ja vuoro rinnakkain, puhelimessa allekkain.
         Leimaus on leveämpi myös rinnakkain: se on pääasia eikä puolikas.
       */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
+      <div className="bd-app-rise bd-app-d1 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
         <ClockCard todayEvents={todayEvents} timezone={zone} clockIn={clockInProps} />
 
         <div className="space-y-4">
@@ -135,11 +143,17 @@ export default async function EmployeeHome() {
         tehdä. Tehtävät ovat vastaus siihen, joten ne ovat ennen
         työyhteisöä ja historiaa.
       */}
-      <MyTasks tasks={tasks} today={today} />
+      <div className="bd-app-rise bd-app-d2">
+        <MyTasks tasks={tasks} today={today} />
+      </div>
 
-      <Workplace colleagues={colleagues} birthdays={birthdays} />
+      <div className="bd-app-rise bd-app-d3">
+        <Workplace colleagues={colleagues} birthdays={birthdays} />
+      </div>
 
-      <RecentDays days={recent} timezone={zone} today={today} />
+      <div className="bd-app-rise bd-app-d4">
+        <RecentDays days={recent} timezone={zone} today={today} />
+      </div>
     </div>
   );
 }
