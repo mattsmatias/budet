@@ -29,6 +29,36 @@
   --bd-accent-strong: #a82a24;
   --bd-accent-bg: #fdecea;
 
+  /*
+   * Lämmin oranssi.
+   *
+   * YKSI PINTA, EI TEEMA.
+   *
+   * Sovelluksen tunnusväri on punainen (--bd-accent), ja se on
+   * painikkeissa ja linkeissä. Tämä oranssi on Meistä-sivun
+   * loppuosion pinta eikä toinen tunnusväri: jos sitä alkaa esiintyä
+   * painikkeissa, sivulla on kaksi väriä jotka kilpailevat samasta
+   * merkityksestä.
+   *
+   * Määritelty tässä eikä komponentissa, jotta arvo on yhdessä
+   * paikassa jos se joskus siirtyy muuallekin.
+   */
+  --bd-orange: #c2410c;
+  --bd-orange-strong: #9a3412;
+  /*
+   * Leipäteksti oranssilla.
+   *
+   * Mitattu selaimessa: #fbe3d6 antoi 4,21:1 ja AA vaatii 4,5:1
+   * leipätekstille. Sävy on siis vaaleampi kuin miltä se
+   * suunnitelmassa näytti — lämpimyys ei ole luettavuuden hinnan
+   * arvoinen.
+   *
+   * Ero otsikon valkoiseen on pieni, ja hierarkia tulee koosta ja
+   * painosta. Se on oikea järjestys: väri erottaa tilaa, koko
+   * erottaa tärkeyttä.
+   */
+  --bd-orange-text: #fdeee6;
+
   --bd-green: #17803d;
   --bd-green-bg: #e8f6ed;
   --bd-amber: #9a5b06;

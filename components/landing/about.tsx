@@ -292,10 +292,14 @@ function Beliefs({ t }: { t: Dictionary }) {
 // ---------------------------------------------------------------------------
 
 /**
- * Tumma loppuosio.
+ * Värillinen loppuosio.
  *
- * Sivun ainoa tumma pinta. Yksi per sivu riittää: kaksi tekisi siitä
- * raidan eikä päätöstä.
+ * Sivun ainoa täysvärinen pinta. Yksi per sivu riittää: kaksi tekisi
+ * siitä raidan eikä päätöstä.
+ *
+ * Oranssi eikä tunnusvärinen punainen: punainen on painikkeiden ja
+ * linkkien väri, ja kokonaisena pintana se veisi huomion siltä
+ * painikkeelta joka osion sisällä on.
  */
 function Cta({
   appHref,
@@ -311,7 +315,7 @@ function Cta({
       <Reveal>
         <div
           className="mx-auto max-w-5xl overflow-hidden px-6 py-16 text-center sm:px-10 sm:py-20"
-          style={{ background: "#0f1729", borderRadius: 26 }}
+          style={{ background: "var(--bd-orange)", borderRadius: 26 }}
         >
           <h2
             className="mx-auto max-w-2xl text-[clamp(1.6rem,4vw,2.4rem)] font-extrabold leading-[1.12] tracking-[-0.035em]"
@@ -322,7 +326,7 @@ function Cta({
 
           <p
             className="mx-auto mt-4 max-w-md text-[15.5px] leading-relaxed"
-            style={{ color: "#a8b3c7" }}
+            style={{ color: "var(--bd-orange-text)" }}
           >
             {t.about.ctaBody}
           </p>
@@ -331,7 +335,7 @@ function Cta({
             <Link
               href={appHref ?? pathFor(locale, "home")}
               className="bd-btn"
-              style={{ background: "#fff", color: "#0f1729" }}
+              style={{ background: "#fff", color: "var(--bd-orange-strong)" }}
             >
               {appHref !== null ? t.nav.openApp : t.about.cta}
               <span className="bd-arrow" aria-hidden="true">→</span>
