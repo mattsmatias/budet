@@ -29,8 +29,11 @@ export function AdminNav({
   counts,
   briefing,
   greeting,
+  restaurantName,
 }: {
   role: Role;
+  /** Näkyy kiskon tunnuslohkon alarivillä, kuten konsolissa. */
+  restaurantName: string;
   /** Matin tilannekatsaus — johdettu samasta aineistosta kuin hälytykset. */
   briefing: Briefing;
   greeting: string;
@@ -51,6 +54,7 @@ export function AdminNav({
       <DesktopSidebar
         sections={sections}
         counts={counts}
+        restaurantName={restaurantName}
         matti={can(role, "matti.use")}
         briefing={briefing}
         greeting={greeting}
@@ -76,9 +80,11 @@ function DesktopSidebar({
   matti,
   briefing,
   greeting,
+  restaurantName,
 }: {
   briefing: Briefing;
   greeting: string;
+  restaurantName: string;
   sections: ReturnType<typeof adminNavSectionsFor>;
   counts: Record<string, number>;
   /** Onko roolilla oikeus Mattiin. */
@@ -89,10 +95,31 @@ function DesktopSidebar({
       className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
+      {/*
+        Tunnuslohko.
+
+        SAMA LOCKUP KUIN KONSOLISSA.
+
+        Kiskon linkit olivat jo pikselintarkasti samat molemmissa
+        näkymissä — mitattuna 13,5 px, paino 500, rivin korkeus 38,3 px
+        ja väli 2 px. Ainoa ero oli tässä: konsolissa on kaksirivinen
+        tekstilockup ja hallinnassa oli logomerkki ja yksi sana.
+
+        Alarivi kertoo missä ollaan, kuten konsolin "Developer Console".
+        Hallinnassa se on ravintolan nimi: se on sama tieto ja hyödyllinen
+        heti kun ravintoloita on enemmän kuin yksi.
+      */}
       <div className="px-[18px] pb-4 pt-[18px]">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Logo />
-          <span className="text-[16px] font-extrabold tracking-[-0.02em]">Budet</span>
+        <Link href="/" className="block">
+          <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
+            Budet
+          </span>
+          <span
+            className="mt-0.5 block truncate text-[10.5px] font-bold uppercase"
+            style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
+          >
+            {restaurantName}
+          </span>
         </Link>
       </div>
 
@@ -274,19 +301,3 @@ function MobileBar({ items }: { items: NavItems }) {
 }
 
 
-
-function Logo() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      <rect width="28" height="28" rx="7.5" fill="#1d1d1f" />
-      <path
-        d="M9 19V9.6c0-.3.3-.6.6-.6h4.6a3 3 0 0 1 0 6H11"
-        stroke="#fff"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="m14.4 15 4.6 4" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" />
-    </svg>
-  );
-}

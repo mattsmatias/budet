@@ -115,6 +115,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <AdminNav
           role={role}
           counts={counts}
+          restaurantName={restaurant.name}
           briefing={briefing}
           greeting={greeting(new Date(now), restaurant.timezone)}
         />
