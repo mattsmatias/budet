@@ -563,25 +563,25 @@ function Welcome({
 
   return (
     <div className="space-y-6 pt-2">
-      <div>
-        <div className="flex items-center gap-2">
-          <span style={{ color: "var(--rf-accent)" }}>
-            <RfIcon name="sparkle" size={20} />
-          </span>
-          <h2 className="text-[17px] font-semibold tracking-tight">Matti</h2>
-        </div>
+      {/*
+        Tervehdys aloittaa, ei nimi.
 
-        <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-          AI-työkaverisi ravintolan arkeen
-        </p>
+        Tässä oli oma otsikkonsa: sama kipinäikoni ja sama sana "Matti"
+        kuin paneelin kiinteässä yläpalkissa kolmenkymmenen pikselin
+        päässä, ja alla rivi "AI-työkaverisi ravintolan arkeen".
+        Nimi kahdesti samalla ruudulla ei kerro toisella kerralla
+        mitään, ja kuvausrivi oli sama joka päivä — myös silloin kun
+        kaksi asiaa oli pielessä.
 
-        <p className="mt-3 text-[14px] leading-relaxed">
-          {greeting} 👋{" "}
-          {kaikkiKunnossa
-            ? "Tällä hetkellä ei ole mitään huomautettavaa."
-            : "Tässä tämän hetken tärkeimmät asiat."}
-        </p>
-      </div>
+        Sama perustelu kuin sille tekstille joka poistettiin täältä
+        aiemmin: ensimmäisenä on tilanne.
+      */}
+      <p className="text-[14px] leading-relaxed">
+        {greeting} 👋{" "}
+        {kaikkiKunnossa
+          ? "Tällä hetkellä ei ole mitään huomautettavaa."
+          : "Tässä tämän hetken tärkeimmät asiat."}
+      </p>
 
       {/*
         Tilanne kolmessa tasossa.
