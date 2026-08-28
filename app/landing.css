@@ -274,3 +274,95 @@
 .bd [id] {
   scroll-margin-top: 96px;
 }
+
+/* ---------------------------------------------------------------------------
+   Navigaation linkit
+   ---------------------------------------------------------------------------
+   Väri vaihtuu luokalla eikä JavaScript-tapahtumalla. Aiemmin
+   onMouseEnter kirjoitti tyylin suoraan elementtiin, mikä toimi
+   hiirellä muttei näppäimistöllä — kohdistus ei vaihtanut väriä
+   lainkaan.
+*/
+
+.bd-navlink {
+  color: var(--bd-text-2);
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.bd-navlink:hover,
+.bd-navlink:focus-visible {
+  color: var(--bd-text);
+  background: var(--bd-bg-2);
+}
+
+/* Kielivalikko aukeaa ilman hyppyä. */
+@keyframes bd-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bd-menu {
+  animation: bd-menu-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-menu {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Kuvapaikat
+   ---------------------------------------------------------------------------
+   Kuvasuhde varataan ennen kuin kuva on olemassa, joten sivu ei hyppää
+   kun tiimikuvat lisätään. Sama suhde myös silloin kun kuvaa ei vielä
+   ole: paikka näyttää siltä miltä lopputuloskin.
+*/
+
+.bd-photo {
+  position: relative;
+  overflow: hidden;
+  background: var(--bd-bg-2);
+  border: 1px solid var(--bd-line);
+  border-radius: var(--bd-r-lg);
+}
+
+.bd-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bd-photo-wide {
+  aspect-ratio: 16 / 9;
+  border-radius: 24px;
+}
+
+.bd-photo-person {
+  aspect-ratio: 4 / 5;
+}
+
+/*
+ * Tyhjä paikka.
+ *
+ * Hienovarainen viivoitus kertoo että tähän tulee kuva, muttei
+ * teeskentele olevansa kuva. Harmaa laatikko ilman merkintää
+ * näyttäisi rikkinäiseltä latauksesta.
+ */
+.bd-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--bd-bg-2) 0 10px,
+    #eef1f6 10px 20px
+  );
+}

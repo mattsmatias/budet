@@ -15,6 +15,8 @@
  * olevansa esimerkki.
  */
 
+import type { Dictionary } from "@/lib/i18n/dictionary";
+
 function Euro({ value }: { value: string }) {
   return (
     <span className="bd-num">
@@ -60,7 +62,7 @@ function Metric({
 }
 
 /** Kehys: selainikkuna jossa sovellus on. */
-function Frame({ children }: { children: React.ReactNode }) {
+function Frame({ children, title }: { children: React.ReactNode; title: string }) {
   return (
     <div
       className="overflow-hidden rounded-[16px]"
@@ -84,7 +86,7 @@ function Frame({ children }: { children: React.ReactNode }) {
           className="ml-1 truncate text-[10.5px] font-medium"
           style={{ color: "var(--bd-text-3)" }}
         >
-          Budet · Yleiskatsaus
+          {title}
         </span>
       </div>
 
@@ -94,14 +96,14 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 /** Sivupalkki. Näkyy vasta kun tilaa on. */
-function Rail() {
+function Rail({ t }: { t: Dictionary }) {
   const items = [
-    "Yleiskatsaus",
-    "Myynti",
-    "Kuitit",
-    "Kulut",
-    "Kirjanpito",
-    "Työvuorot",
+    t.preview.railOverview,
+    t.preview.railSales,
+    t.preview.railReceipts,
+    t.preview.railExpenses,
+    t.preview.railLedger,
+    t.preview.railShifts,
   ];
 
   return (
@@ -133,15 +135,15 @@ function Rail() {
  * Viisi lukua ja yksi tila. Enempää ei mahdu luettavaksi tässä koossa,
  * eikä enempää tarvita kertomaan mistä on kyse.
  */
-export function HeroPreview() {
+export function HeroPreview({ t }: { t: Dictionary }) {
   return (
-    <Frame>
+    <Frame title={t.preview.overview}>
       <div className="flex">
-        <Rail />
+        <Rail t={t} />
 
         <div className="min-w-0 flex-1 p-3.5 sm:p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[12.5px] font-bold tracking-[-0.01em]">Tämän päivän tilanne</p>
+            <p className="text-[12.5px] font-bold tracking-[-0.01em]">{t.preview.today}</p>
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[10px] font-semibold"
               style={{ background: "var(--bd-green-bg)", color: "var(--bd-green)" }}
@@ -151,20 +153,20 @@ export function HeroPreview() {
                 style={{ background: "currentColor" }}
                 aria-hidden="true"
               />
-              Kirjanpito synkronoitu
+              {t.preview.synced}
             </span>
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <Metric label="Myynti" value={<Euro value="5 240" />} hint="Kassan päiväraportti" />
-            <Metric label="Kulut" value={<Euro value="1 820" />} hint="Kirjatut kulut" />
+            <Metric label={t.preview.sales} value={<Euro value="5 240" />} hint={t.preview.salesHint} />
+            <Metric label={t.preview.expenses} value={<Euro value="1 820" />} hint={t.preview.expensesHint} />
             <Metric
-              label="Tulos"
+              label={t.preview.result}
               value={<Euro value="3 420" />}
-              hint="Myynti miinus kulut"
+              hint={t.preview.resultHint}
               tone="good"
             />
-            <Metric label="Kuitit" value={<span className="bd-num">24</span>} hint="Kaikki käsitelty" />
+            <Metric label={t.preview.receipts} value={<span className="bd-num">24</span>} hint={t.preview.receiptsHint} />
           </div>
 
           {/* Viivakaavio. SVG eikä kirjasto: yksi polku ei tarvitse kolmeasataa kilotavua. */}
@@ -173,7 +175,7 @@ export function HeroPreview() {
             style={{ background: "#fff", border: "1px solid var(--bd-line)" }}
           >
             <p className="text-[10.5px] font-medium" style={{ color: "var(--bd-text-2)" }}>
-              Myynti · viikko
+              {t.preview.salesWeek}
             </p>
             <svg
               viewBox="0 0 320 64"
@@ -214,18 +216,18 @@ export function HeroPreview() {
  * Sama kehys, eri kysymys: hero vastaa "miten tänään meni", tämä
  * "miten kuukausi menee".
  */
-export function MonthPreview() {
+export function MonthPreview({ t }: { t: Dictionary }) {
   const rows = [
-    { name: "Ravintolamyynti", value: "48 900", share: 84 },
-    { name: "Alkoholimyynti", value: "7 120", share: 12 },
-    { name: "Muu myynti", value: "2 400", share: 4 },
+    { name: t.preview.groupFood, value: "48 900", share: 84 },
+    { name: t.preview.groupAlcohol, value: "7 120", share: 12 },
+    { name: t.preview.groupOther, value: "2 400", share: 4 },
   ];
 
   return (
-    <Frame>
+    <Frame title={t.preview.overview}>
       <div className="p-3.5 sm:p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="text-[12.5px] font-bold tracking-[-0.01em]">Elokuu 2026</p>
+          <p className="text-[12.5px] font-bold tracking-[-0.01em]">{t.preview.month}</p>
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[10px] font-semibold"
             style={{ background: "var(--bd-green-bg)", color: "var(--bd-green)" }}
@@ -235,20 +237,20 @@ export function MonthPreview() {
               style={{ background: "currentColor" }}
               aria-hidden="true"
             />
-            Kirjanpito valmis
+            {t.preview.ready}
           </span>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
-          <Metric label="Myynti" value={<Euro value="58 420" />} hint="Kirjanpidon tuotot" />
-          <Metric label="Kulut" value={<Euro value="41 840" />} hint="Kirjanpidon kulut" />
+          <Metric label={t.preview.sales} value={<Euro value="58 420" />} hint={t.preview.ledgerRevenue} />
+          <Metric label={t.preview.expenses} value={<Euro value="41 840" />} hint={t.preview.ledgerExpenses} />
           <Metric
-            label="Tulos"
+            label={t.preview.result}
             value={<Euro value="16 580" />}
-            hint="Tuotot miinus kulut"
+            hint={t.preview.resultHint}
             tone="good"
           />
-          <Metric label="ALV" value={<Euro value="5 240" />} hint="Maksettava" />
+          <Metric label={t.preview.vat} value={<Euro value="5 240" />} hint={t.preview.vatHint} />
         </div>
 
         <div
@@ -256,7 +258,7 @@ export function MonthPreview() {
           style={{ background: "#fff", border: "1px solid var(--bd-line)" }}
         >
           <p className="text-[10.5px] font-medium" style={{ color: "var(--bd-text-2)" }}>
-            Myynti ryhmittäin
+            {t.preview.salesByGroup}
           </p>
 
           <ul className="mt-2 space-y-2">
@@ -292,11 +294,11 @@ export function MonthPreview() {
  * Sovelluksen oma osio sellaisenaan. Se on Budetin selkein yksittäinen
  * lupaus: ravintoloitsijan ei tarvitse muistaa mitä on kesken.
  */
-export function TodoPreview() {
+export function TodoPreview({ t }: { t: Dictionary }) {
   const items = [
-    { tone: "red" as const, text: "3 kuittia ei ole kirjanpidossa" },
-    { tone: "amber" as const, text: "ALV-täsmäytys tarkistettavana" },
-    { tone: "amber" as const, text: "1 kirjausesitys odottaa hyväksyntää" },
+    { tone: "red" as const, text: t.todo.item1 },
+    { tone: "amber" as const, text: t.todo.item2 },
+    { tone: "amber" as const, text: t.todo.item3 },
   ];
 
   return (
@@ -309,7 +311,7 @@ export function TodoPreview() {
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-[14px] font-bold tracking-[-0.01em]">Mitä sinun pitää tehdä</p>
+        <p className="text-[14px] font-bold tracking-[-0.01em]">{t.todo.cardTitle}</p>
         <span className="bd-num text-[12px] font-bold" style={{ color: "var(--bd-accent)" }}>
           3
         </span>
@@ -333,8 +335,7 @@ export function TodoPreview() {
       </ul>
 
       <p className="mt-3 text-[11.5px]" style={{ color: "var(--bd-text-3)" }}>
-        Budet laskee nämä aineistosta joka latauksella. Kun asia on hoidettu,
-        rivi katoaa itsestään.
+        {t.todo.cardNote}
       </p>
     </div>
   );
