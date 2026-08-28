@@ -22,7 +22,26 @@
 
   --bd-text: #0f1729;
   --bd-text-2: #5a6a85;
-  --bd-text-3: #8b97ac;
+  /*
+   * Kolmas tekstitaso.
+   *
+   * MITATTU: #8b97ac antoi valkoisella 2,95:1, ja AA vaatii 4,5:1.
+   *
+   * Selaimessa laskettuna sävy oli 21 tekstielementissä, koot 10–12,5
+   * pikseliä. Mukana oli oikeaa sivutekstiä eikä pelkkää esikatselukuvan
+   * sisältöä: "Ravintolan talous. Yhdessä paikassa." ja "Budetin
+   * käyttöliittymä. Luvut ovat esimerkkejä."
+   *
+   * Sovelluspuolella sama ongelma oli jo ratkaistu — theme.css kertoo
+   * miten #667490 mitattiin 4,35:1 ja tummennettiin tähän arvoon.
+   * Etusivu ei ollut saanut samaa korjausta. Nyt sillä on sama sävy ja
+   * sama 5,53:1.
+   *
+   * Ero toiseen tasoon kaventuu lähes olemattomiin, ja se on tietoinen:
+   * hierarkia tulee koosta ja painosta niin kuin oranssin leipätekstin
+   * kohdalla alempana. Väri erottaa tilaa, koko erottaa tärkeyttä.
+   */
+  --bd-text-3: #5c6a83;
 
   /* Sama punainen kuin sovelluksessa. */
   --bd-accent: #d13831;
@@ -59,10 +78,22 @@
    */
   --bd-orange-text: #fdeee6;
 
-  --bd-green: #17803d;
-  --bd-green-bg: #e8f6ed;
-  --bd-amber: #9a5b06;
-  --bd-amber-bg: #fdf1dd;
+  /*
+   * Tilavärit sovelluksen arvoista.
+   *
+   * Nämä olivat ajautuneet erilleen juuri niin kuin tiedoston
+   * alkukommentti pelkäsi: vihreä oli #17803d vastaan #0f7248, oranssi
+   * #9a5b06 vastaan #8f5405 ja oranssi pohja erosi yhden numeron
+   * verran. Punainen oli pysynyt samana, koska sitä katsotaan usein;
+   * näitä ei.
+   *
+   * Nyt samat kuin theme.css:ssä. Arvot on siellä mitattu omia
+   * taustojaan vasten eikä valkoista, joten ne ovat myös oikeammat.
+   */
+  --bd-green: #0f7248;
+  --bd-green-bg: #e6f6ee;
+  --bd-amber: #8f5405;
+  --bd-amber-bg: #fdf1de;
 
   --bd-shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
   --bd-shadow: 0 2px 4px rgba(15, 23, 41, 0.04), 0 8px 24px rgba(15, 23, 41, 0.06);
