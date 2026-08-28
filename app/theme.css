@@ -1043,3 +1043,33 @@ details[open] .rf-summary-chevron {
 .rf-cal-week-view .rf-cal-day a {
   min-height: 11rem;
 }
+
+/* ---------------------------------------------------------------------------
+   MATALA RUUTU
+
+   MITATTU: hallinnan kisko tarvitsi 781,8 px, ja 700 pikselin ikkunassa
+   siitä puuttui 78 px — valikko vieritti.
+
+   Tila haettiin ensin kaikkialta muualta kuin riviltä itseltään:
+   tunnuslohkon ja Matin pehmusteista, osastootsikoista ja rivien
+   välistä. Se toi tarpeen 699 pikseliin, mikä riittää 700:aan muttei
+   1366×768 -kannettavaan, jossa näkyvää korkeutta on noin 640.
+
+   Loppu haetaan riviltä, mutta vain silloin kun ruutu on matala.
+   Kiinteä pienempi rivi olisi tehnyt kaikista näytöistä ahtaita
+   yhden näyttökoon takia; tämä pitää väljän mitan siellä missä tilaa
+   on ja tiivistää vain kun sitä ei ole.
+
+   Rajaksi 760 px: sen yläpuolella kisko mahtuu jo ilman tiivistystä.
+   --------------------------------------------------------------------------- */
+
+@media (max-height: 760px) {
+  .restoflow .rf-rail-link {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .restoflow .rf-rail-head {
+    padding-top: 2px;
+  }
+}

@@ -109,7 +109,7 @@ function DesktopSidebar({
         Hallinnassa se on ravintolan nimi: se on sama tieto ja hyödyllinen
         heti kun ravintoloita on enemmän kuin yksi.
       */}
-      <div className="px-[18px] pb-4 pt-[18px]">
+      <div className="px-[18px] pb-3 pt-[14px]">
         <Link href="/" className="block">
           <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
             Budet
@@ -125,7 +125,7 @@ function DesktopSidebar({
 
       <nav
         aria-label="Hallintanavigaatio"
-        className="flex-1 overflow-y-auto px-3 pb-3"
+        className="flex-1 overflow-y-auto px-3 pb-2"
       >
         {/*
           Ryhmän nimi rivien yläpuolella.
@@ -147,7 +147,7 @@ function DesktopSidebar({
             {section.id === "main" ? null : (
               <p
                 id={`rf-nav-${section.id}`}
-                className="px-[11px] pb-0.5 pt-2.5 text-[10.5px] font-bold uppercase"
+                className="rf-rail-head px-[11px] pb-0.5 pt-1.5 text-[10.5px] font-bold uppercase"
                 style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
               >
                 {section.label}
@@ -178,7 +178,7 @@ function DesktopSidebar({
         kuulu mihinkään osastoon vaan omalle rivilleen viivan alle.
       */}
       {matti ? (
-        <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: "var(--rf-line)" }}>
+        <div className="border-t px-3 pb-2 pt-2" style={{ borderColor: "var(--rf-line)" }}>
           <MattiPanel enabled briefing={briefing} greeting={greeting} />
         </div>
       ) : null}
@@ -204,7 +204,7 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
          * ennen kuin ehtii lukea. Valinta on täytetty pinta eikä
          * pelkkä lihavointi, jotta se erottuu myös vilkaisulla.
          */
-        className="rf-press mb-0.5 flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] leading-[1.5] tracking-[-0.0083em]"
+        className="rf-rail-link rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] leading-[1.5] tracking-[-0.0083em]"
         style={{
           background: active ? "var(--rf-inset)" : "transparent",
           color: active ? "var(--rf-text)" : "var(--rf-text-2)",

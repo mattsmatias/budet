@@ -147,20 +147,23 @@ export function MattiPanel({
          * siitä irrallisen: rivi oli leveämpi ja teksti isompi kuin
          * yhdelläkään sen yläpuolella.
          */
-        className="rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px]"
+        className="rf-rail-link rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px]"
         style={{ color: "var(--rf-text-2)" }}
       >
         <span style={{ color: "var(--rf-accent)" }}>
           <RfIcon name="sparkle" size={17} />
         </span>
 
-        <span className="min-w-0 flex-1">
-          <span className="block font-bold" style={{ color: "var(--rf-text)" }}>
-            Matti
-          </span>
-          <span className="block text-[11px] font-medium" style={{ color: "var(--rf-text-3)" }}>
-            BUDet AI
-          </span>
+        {/*
+          Yksi rivi, ei kahta.
+
+          Alarivi "BUDet AI" toisti sen minka ikoni ja nimi jo kertovat,
+          ja se teki kiskon pohjasta 84 pikselia korkean — mika oli
+          yksi syy siihen etta valikko vieritti lyhyella ruudulla.
+          Nyt rivi on saman korkuinen kuin kaikki muutkin.
+        */}
+        <span className="min-w-0 flex-1 font-bold" style={{ color: "var(--rf-text)" }}>
+          Matti
         </span>
 
         <kbd

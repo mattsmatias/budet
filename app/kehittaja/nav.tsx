@@ -25,7 +25,7 @@ export function DevNav() {
       className="rf-no-print sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
-      <div className="px-[18px] pb-4 pt-[18px]">
+      <div className="px-[18px] pb-3 pt-[14px]">
         <Link href="/kehittaja" className="block">
           <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
             Budet
@@ -39,13 +39,13 @@ export function DevNav() {
         </Link>
       </div>
 
-      <nav aria-label="Konsolin navigaatio" className="flex-1 overflow-y-auto px-3 pb-3">
+      <nav aria-label="Konsolin navigaatio" className="flex-1 overflow-y-auto px-3 pb-2">
         {DEV_NAV.map((section) => (
           <div key={section.id}>
             {section.id === "main" ? null : (
               <p
                 id={`dev-nav-${section.id}`}
-                className="px-[11px] pb-0.5 pt-2.5 text-[10.5px] font-bold uppercase"
+                className="rf-rail-head px-[11px] pb-0.5 pt-1.5 text-[10.5px] font-bold uppercase"
                 style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
               >
                 {section.label}
@@ -63,7 +63,7 @@ export function DevNav() {
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className="rf-press mb-0.5 flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] leading-[1.5] tracking-[-0.0083em]"
+                      className="rf-rail-link rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13.5px] leading-[1.5] tracking-[-0.0083em]"
                       style={{
                         background: active ? "var(--rf-inset)" : "transparent",
                         color: active ? "var(--rf-text)" : "var(--rf-text-2)",
@@ -87,10 +87,10 @@ export function DevNav() {
         Ylläpitäjä on myös tavallinen käyttäjä. Ilman tätä riviä
         konsolista pääsee pois vain kirjoittamalla osoitteen käsin.
       */}
-      <div className="border-t px-3 py-3" style={{ borderColor: "var(--rf-line)" }}>
+      <div className="border-t px-3 py-2" style={{ borderColor: "var(--rf-line)" }}>
         <Link
           href="/admin"
-          className="rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13px] font-medium"
+          className="rf-rail-link rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={16} strokeWidth={1.8} />
