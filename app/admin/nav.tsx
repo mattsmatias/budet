@@ -147,7 +147,7 @@ function DesktopSidebar({
             {section.id === "main" ? null : (
               <p
                 id={`rf-nav-${section.id}`}
-                className="rf-rail-head px-[11px] pb-0.5 pt-1.5 text-[10.5px] font-bold uppercase"
+                className="rf-rail-head px-[11px] pb-1 pt-3 text-[10.5px] font-bold uppercase"
                 style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
               >
                 {section.label}

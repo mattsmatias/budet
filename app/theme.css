@@ -1069,7 +1069,15 @@ details[open] .rf-summary-chevron {
     padding-bottom: 6px;
   }
 
+  /*
+   * Osastootsikko saa valin myos matalalla ruudulla.
+   *
+   * Ensin tama oli 2 px, ja silloin otsikko liimautui edellisen
+   * osaston viimeiseen riviin: ryhma ei enaa nayttanyt alkavan
+   * mistaan. Vali on se mika tekee ryhmasta ryhman, joten se on
+   * viimeinen paikka josta tilaa kannattaa hakea.
+   */
   .restoflow .rf-rail-head {
-    padding-top: 2px;
+    padding-top: 7px;
   }
 }
