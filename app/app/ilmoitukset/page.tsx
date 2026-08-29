@@ -26,7 +26,11 @@ export default async function EmployeeAlertsPage() {
     await employeeContext("/app/ilmoitukset");
 
   const alerts = buildEmployeeAlerts({
-    shifts, clockEvents, absences, today, now,
+    shifts,
+    clockEvents,
+    absences,
+    today,
+    now,
     timezone: restaurant.timezone,
   });
   const actionable = alerts.filter((alert) => alert.severity === "action");
@@ -35,7 +39,9 @@ export default async function EmployeeAlertsPage() {
   return (
     <div className="rf-enter space-y-4">
       <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">{t.ilmoitukset.title}</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight">
+          {t.ilmoitukset.title}
+        </h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {alerts.length === 0
             ? t.ilmoitukset.emptyTitle
@@ -90,7 +96,10 @@ export default async function EmployeeAlertsPage() {
                       </p>
                     </div>
 
-                    <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      className="mt-1 shrink-0"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       <RfIcon name="chevron" size={16} />
                     </span>
                   </div>
@@ -101,7 +110,10 @@ export default async function EmployeeAlertsPage() {
         </ul>
       )}
 
-      <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="px-1 text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {t.lisatiedot.noticesNote}
       </p>
     </div>

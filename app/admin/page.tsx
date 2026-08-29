@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -25,14 +26,10 @@ import {
 } from "@/lib/restoflow/expenses";
 import { currentState } from "@/lib/restoflow/timeclock";
 import { can } from "@/lib/restoflow/permissions";
-import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { initials } from "@/lib/restoflow/initials";
 import { CountUp } from "@/components/restoflow/count-up";
-import {
-  CategoryBubble,
-  Pill,
-} from "@/components/restoflow/ui";
+import { CategoryBubble, Pill } from "@/components/restoflow/ui";
 import {
   Panel,
   PanelEmpty,
@@ -56,7 +53,11 @@ import { labourCost } from "@/lib/restoflow/payroll-data";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
-import { dayIn, minutesOfDayIn, monthStartDate } from "@/lib/restoflow/clock-context";
+import {
+  dayIn,
+  minutesOfDayIn,
+  monthStartDate,
+} from "@/lib/restoflow/clock-context";
 import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
 
 export const metadata = { title: "Yleiskatsaus" };
@@ -80,14 +81,30 @@ export default async function AdminDashboard({
 }: PageProps<"/admin">) {
   const params = await searchParams;
   const {
-    receipts, users, budgets, shifts, clockEvents, absences,
-    openShifts, sales,
-    month, today, now, monthlyHours, restaurant, role, categories: customCategories,
+    receipts,
+    users,
+    budgets,
+    shifts,
+    clockEvents,
+    absences,
+    openShifts,
+    sales,
+    month,
+    today,
+    now,
+    monthlyHours,
+    restaurant,
+    role,
+    categories: customCategories,
   } = await adminContext("/admin");
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
-  const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const viewMonth =
+    ISO_MONTH.test(requested) && requested <= month ? requested : month;
   const isCurrentMonth = viewMonth === month;
 
   /*
@@ -123,8 +140,12 @@ export default async function AdminDashboard({
   const categories = totalsByCustomCategory(
     receiptsInMonth(receipts, viewMonth),
     customCategories,
+    locale,
   );
-  const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(0, 5);
+  const recent = sortByDateDesc(receiptsInMonth(receipts, viewMonth)).slice(
+    0,
+    5,
+  );
 
   /**
    * Viimeisin kuitti tarkasteltavan kuukauden ulkopuolelta.
@@ -144,9 +165,9 @@ export default async function AdminDashboard({
   const emptyForMonth = elsewhere
     ? {
         text:
-          `${fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth) })} ` +
+          `${fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth, locale) })} ` +
           `Viimeisin kirjattu kuitti on ${formatFullDate(elsewhere.date)}.`,
-        cta: `Avaa ${formatMonth(elsewhere.date.slice(0, 7)).toLowerCase()}`,
+        cta: `Avaa ${formatMonth(elsewhere.date.slice(0, 7), locale).toLowerCase()}`,
         href: `/admin?kuukausi=${elsewhere.date.slice(0, 7)}`,
       }
     : null;
@@ -160,7 +181,11 @@ export default async function AdminDashboard({
    * ovat nyt ensimmäisessä paneelissa; loput toteavat vain tyhjyyden.
    */
   const emptyShort = elsewhere
-    ? { text: fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth) }) }
+    ? {
+        text: fill(t.yleiskatsaus.monthNoReceipts, {
+          kuukausi: formatMonth(viewMonth, locale),
+        }),
+      }
     : null;
 
   /*
@@ -173,12 +198,20 @@ export default async function AdminDashboard({
   const emptyMonthOnly = totals.receiptCount === 0 && elsewhere !== undefined;
 
   const dashboardInput = {
-    receipts, budgets, shifts, users, clockEvents, absences,
-    openShifts, sales,
-    month: viewMonth, today, now,
+    receipts,
+    budgets,
+    shifts,
+    users,
+    clockEvents,
+    absences,
+    openShifts,
+    sales,
+    month: viewMonth,
+    today,
+    now,
     timezone: restaurant.timezone,
+    locale,
   };
-
 
   // Havainnot syötetään samaan listaan. Käyttäjän kannalta ero
   // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
@@ -188,6 +221,7 @@ export default async function AdminDashboard({
     ...dashboardInput,
     now,
     timezone: restaurant.timezone,
+    locale,
   });
   const items = focusItems(dashboardInput, insights);
 
@@ -200,8 +234,6 @@ export default async function AdminDashboard({
     ? Object.values(monthlyHours).reduce((sum, hours) => sum + hours, 0)
     : null;
 
-
-
   /*
    * "Työaika tänään" laski tässä ketkä ovat sisällä.
    *
@@ -210,8 +242,6 @@ export default async function AdminDashboard({
    * seitsemäs kerta samaa virhettä — since.slice(11, 16) luki UTC-ajan,
    * joten kesällä sisäänleimaus 13.55 näkyi muodossa 10.55.
    */
-
-
 
   /*
    * Kärjen tiedot.
@@ -225,7 +255,13 @@ export default async function AdminDashboard({
   const [labourToday, labourMonth] = isCurrentMonth
     ? await Promise.all([
         labourCost(restaurant.id, restaurant.timezone, today, today, now),
-        labourCost(restaurant.id, restaurant.timezone, monthStartDate(month), today, now),
+        labourCost(
+          restaurant.id,
+          restaurant.timezone,
+          monthStartDate(month),
+          today,
+          now,
+        ),
       ])
     : [null, null];
 
@@ -259,7 +295,9 @@ export default async function AdminDashboard({
 
   // Trendiviiva vain jos historiaa on. Kahden pisteen viiva näyttäisi
   // suunnalta olematta sellainen.
-  const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
+  const trend = monthlySeries(receipts, viewMonth, 6).map(
+    (point) => point.totalCents,
+  );
   const hasTrend = trend.filter((value) => value > 0).length >= 3;
 
   /*
@@ -318,7 +356,8 @@ export default async function AdminDashboard({
   const onDuty = isCurrentMonth
     ? users.filter((u) => {
         const mine = clockEvents.filter(
-          (e) => e.userId === u.id && dayIn(restaurant.timezone, e.at) === today,
+          (e) =>
+            e.userId === u.id && dayIn(restaurant.timezone, e.at) === today,
         );
         return currentState(mine) !== "off";
       }).length
@@ -335,7 +374,10 @@ export default async function AdminDashboard({
   const nextToday = shifts
     .filter((sh) => sh.date === today && sh.status !== "declined")
     .map((sh) => ({ sh, bounds: shiftBounds(sh) }))
-    .filter(({ bounds }) => bounds.startMin > minutesOfDayIn(restaurant.timezone, now))
+    .filter(
+      ({ bounds }) =>
+        bounds.startMin > minutesOfDayIn(restaurant.timezone, now),
+    )
     .sort((a, b) => a.bounds.startMin - b.bounds.startMin)[0];
 
   const upcomingToday = shifts.filter(
@@ -419,25 +461,34 @@ export default async function AdminDashboard({
                 ? t.yleiskatsaus.addFirstReceipt
                 : comparison.baseMonth === null
                   ? t.yleiskatsaus.noComparison
-                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
+                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth, locale)}ssa`
           }
-          trend={hasTrend ? <Sparkline values={trend} width={64} height={20} /> : undefined}
+          trend={
+            hasTrend ? (
+              <Sparkline values={trend} width={64} height={20} />
+            ) : undefined
+          }
           href="/admin/kulut"
         />
 
-{pulse ? (
+        {pulse ? (
           <StatCard
             label={t.yleiskatsaus.salesToday}
             tileTone="green"
             value={
-              pulse.sales.cents === null ? "—" : <CountUp to={pulse.sales.cents} format="money" />
+              pulse.sales.cents === null ? (
+                "—"
+              ) : (
+                <CountUp to={pulse.sales.cents} format="money" />
+              )
             }
             /*
              * Puuttuva myynti ei ole nolla. "—" ja t.yleiskatsaus.notRecordedYet
              * kertovat sen; nolla väittäisi ettei tänään myyty mitään.
              */
             delta={
-              pulse.sales.cents !== null && pulse.sales.comparison.kind !== "none"
+              pulse.sales.cents !== null &&
+              pulse.sales.comparison.kind !== "none"
                 ? {
                     text: formatChange(pulse.sales.comparison.ratio - 1),
                     tone: pulse.sales.comparison.ratio >= 1 ? "down" : "warn",
@@ -454,7 +505,9 @@ export default async function AdminDashboard({
             conclusion={
               posCheck?.status === "mismatch"
                 ? `Ei täsmää kassaan · ero ${formatMoney(
-                    Math.abs(posCheck.total.diffCents ?? posCheck.vat.diffCents ?? 0),
+                    Math.abs(
+                      posCheck.total.diffCents ?? posCheck.vat.diffCents ?? 0,
+                    ),
                   )}`
                 : posCheck?.status === "match"
                   ? t.yleiskatsaus.matchesDailyReport
@@ -464,8 +517,10 @@ export default async function AdminDashboard({
                       ? `Tavoite ${formatMoney(pulse.sales.comparison.targetCents)}`
                       : pulse.sales.comparison.kind === "weekday"
                         ? fill(t.yleiskatsaus.weekdayAverage, {
-              summa: formatMoney(pulse.sales.comparison.averageCents),
-            })
+                            summa: formatMoney(
+                              pulse.sales.comparison.averageCents,
+                            ),
+                          })
                         : t.yleiskatsaus.noComparison
             }
             tone={
@@ -488,7 +543,9 @@ export default async function AdminDashboard({
                   : "/admin/myynti"
                 : undefined
             }
-            linkLabel={posCheck?.status === "mismatch" ? "Katso ero" : t.sanat.sales}
+            linkLabel={
+              posCheck?.status === "mismatch" ? "Katso ero" : t.sanat.sales
+            }
           />
         ) : (
           <StatCard
@@ -496,9 +553,15 @@ export default async function AdminDashboard({
             tileTone="green"
             value={<CountUp to={receipts_.total} format="integer" />}
             delta={
-              receipts_.pending > 0 ? { text: `${receipts_.pending} kesken` } : undefined
+              receipts_.pending > 0
+                ? { text: `${receipts_.pending} kesken` }
+                : undefined
             }
-            conclusion={emptyMonthOnly ? t.yleiskatsaus.noReceiptsThisMonth : receipts_.label}
+            conclusion={
+              emptyMonthOnly
+                ? t.yleiskatsaus.noReceiptsThisMonth
+                : receipts_.label
+            }
             tone={receipts_.pending > 0 ? "warn" : "neutral"}
             icon={<RfIcon name="receipt" size={17} />}
             href="/admin/kuitit"
@@ -509,13 +572,20 @@ export default async function AdminDashboard({
         <StatCard
           label={t.yleiskatsaus.budgetLeft}
           tileTone="violet"
-          value={budgetTotal === 0 ? "—" : <CountUp to={budgetLeft} format="money" />}
+          value={
+            budgetTotal === 0 ? "—" : <CountUp to={budgetLeft} format="money" />
+          }
           delta={
             budgetUsed === null
               ? undefined
               : {
                   text: `${Math.round(budgetUsed * 100)} %`,
-                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "neutral",
+                  tone:
+                    budgetUsed > 1
+                      ? "bad"
+                      : budgetUsed > 0.9
+                        ? "warn"
+                        : "neutral",
                 }
           }
           bar={
@@ -528,7 +598,12 @@ export default async function AdminDashboard({
                    * kunnossa. Palkki kuuluu korttiin eikä ole
                    * hälytys ennen kuin raja lähestyy.
                    */
-                  tone: budgetUsed > 1 ? "bad" : budgetUsed > 0.9 ? "warn" : "violet",
+                  tone:
+                    budgetUsed > 1
+                      ? "bad"
+                      : budgetUsed > 0.9
+                        ? "warn"
+                        : "violet",
                 }
           }
           conclusion={
@@ -555,7 +630,11 @@ export default async function AdminDashboard({
             label={t.yleiskatsaus.atWorkNow}
             tileTone="blue"
             value={`${onDuty} / ${staffTotal}`}
-            delta={upcomingToday > 0 ? { text: `${upcomingToday} tulossa` } : undefined}
+            delta={
+              upcomingToday > 0
+                ? { text: `${upcomingToday} tulossa` }
+                : undefined
+            }
             conclusion={
               nextToday
                 ? `Seuraava: ${users.find((u) => u.id === nextToday.sh.userId)?.name ?? "vuoro"} ${nextToday.sh.startTime}`
@@ -572,16 +651,23 @@ export default async function AdminDashboard({
           <StatCard
             label={t.yleiskatsaus.hours}
             tileTone="blue"
-            value={totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />}
+            value={
+              totalHours === null ? (
+                "—"
+              ) : (
+                <CountUp to={totalHours} format="hours" />
+              )
+            }
             conclusion={
-              totalHours === null ? "Vain kuluvalta kuukaudelta" : "Leimauksista laskettu"
+              totalHours === null
+                ? "Vain kuluvalta kuukaudelta"
+                : "Leimauksista laskettu"
             }
             tone="muted"
             icon={<RfIcon name="clock" size={17} />}
             href="/admin/tyovuorot"
           />
         )}
-
       </section>
 
       {/*
@@ -621,21 +707,30 @@ export default async function AdminDashboard({
                   share: row.share,
                 }))}
                 total={formatMoney(totals.totalCents)}
-                caption={monthWord(viewMonth)}
+                caption={monthWord(viewMonth, locale)}
               />
 
               <ul className="mt-3.5 grid w-full grid-cols-2 gap-x-3.5 gap-y-1.5">
                 {categories.slice(0, 5).map((row, index) => (
-                  <li key={row.key} className="flex items-center gap-[7px] text-[12px]">
+                  <li
+                    key={row.key}
+                    className="flex items-center gap-[7px] text-[12px]"
+                  >
                     <span
                       aria-hidden="true"
                       className="h-[9px] w-[9px] shrink-0 rounded-[2px]"
                       style={{ background: seriesColor(index) }}
                     />
-                    <span className="min-w-0 flex-1 truncate" style={{ color: "var(--rf-text-2)" }}>
+                    <span
+                      className="min-w-0 flex-1 truncate"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {row.name}
                     </span>
-                    <span className="rf-tabular shrink-0 text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      className="rf-tabular shrink-0 text-[11.5px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {Math.round(row.share * 100)} %
                     </span>
                   </li>
@@ -684,8 +779,16 @@ export default async function AdminDashboard({
               <AreaChart
                 labels={flow.labels}
                 series={[
-                  { label: t.sanat.sales, color: SALES_COLOR, points: flow.sales },
-                  { label: t.sanat.expenses, color: COST_COLOR, points: flow.costs },
+                  {
+                    label: t.sanat.sales,
+                    color: SALES_COLOR,
+                    points: flow.sales,
+                  },
+                  {
+                    label: t.sanat.expenses,
+                    color: COST_COLOR,
+                    points: flow.costs,
+                  },
                 ]}
                 format={(value) => `${Math.round(value / 100000)} k`}
               />
@@ -696,15 +799,21 @@ export default async function AdminDashboard({
                     aria-hidden="true"
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: SALES_COLOR }}
-                  />{t.sanat.sales}</li>
+                  />
+                  {t.sanat.sales}
+                </li>
                 <li className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: COST_COLOR }}
-                  />{t.sanat.expenses}</li>
+                  />
+                  {t.sanat.expenses}
+                </li>
                 {flow.salesMissing ? (
-                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>{t.yleiskatsaus.salesGapNote}</li>
+                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
+                    {t.yleiskatsaus.salesGapNote}
+                  </li>
                 ) : null}
               </ul>
             </>
@@ -740,7 +849,7 @@ export default async function AdminDashboard({
       {/* 9. Viimeisimmät kuitit */}
       <Panel
         title={t.yleiskatsaus.latestReceipts}
-        subtitle={formatMonth(viewMonth)}
+        subtitle={formatMonth(viewMonth, locale)}
         href="/admin/kuitit"
         linkLabel={t.yleiskatsaus.showAllReceipts}
       >
@@ -774,7 +883,9 @@ export default async function AdminDashboard({
             */}
             <div className="-mx-[18px] -mb-4 mt-[14px] hidden overflow-hidden rounded-b-[var(--rf-r-card)] md:block">
               <table className="rf-table w-full">
-                <caption className="sr-only">{t.yleiskatsaus.latestReceipts}</caption>
+                <caption className="sr-only">
+                  {t.yleiskatsaus.latestReceipts}
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">{t.sanat.supplier}</th>
@@ -813,12 +924,14 @@ export default async function AdminDashboard({
                           >
                             {initials(receipt.supplierName)}
                           </span>
-                          <span className="min-w-0 truncate">{receipt.supplierName}</span>
+                          <span className="min-w-0 truncate">
+                            {receipt.supplierName}
+                          </span>
                         </Link>
                       </td>
 
                       <td style={{ color: "var(--rf-text-2)" }}>
-                        {CATEGORY_LABELS[receipt.category]}
+                        {nimet.categories[receipt.category]}
                       </td>
 
                       {/*
@@ -828,19 +941,27 @@ export default async function AdminDashboard({
                         sarake näyttäisi myöhemmin samalta kuin
                         myyntirivi, ja luku olisi luettava otsikosta.
                       */}
-                      <td className="rf-tabular font-semibold" style={{ color: "var(--rf-red-text)" }}>
+                      <td
+                        className="rf-tabular font-semibold"
+                        style={{ color: "var(--rf-red-text)" }}
+                      >
                         −{formatMoney(receipt.totalCents)}
                       </td>
 
                       <td>
                         {receipt.status === "needs_review" ? (
-                          <StatusChip tone="warn">{t.sanat.toBeChecked}</StatusChip>
+                          <StatusChip tone="warn">
+                            {t.sanat.toBeChecked}
+                          </StatusChip>
                         ) : (
                           <StatusChip tone="ok">{t.sanat.checked}</StatusChip>
                         )}
                       </td>
 
-                      <td className="rf-tabular whitespace-nowrap" style={{ color: "var(--rf-text-2)" }}>
+                      <td
+                        className="rf-tabular whitespace-nowrap"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
                         {formatDate(receipt.date)}
                       </td>
                     </tr>
@@ -863,8 +984,12 @@ export default async function AdminDashboard({
                       <span className="block truncate text-[14px] font-medium">
                         {receipt.supplierName}
                       </span>
-                      <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                        {CATEGORY_LABELS[receipt.category]} · {formatDate(receipt.date)}
+                      <span
+                        className="block text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
+                        {nimet.categories[receipt.category]} ·{" "}
+                        {formatDate(receipt.date)}
                       </span>
                     </span>
 
@@ -874,9 +999,13 @@ export default async function AdminDashboard({
                       </span>
                       <span className="mt-1 block">
                         {receipt.status === "needs_review" ? (
-                          <Pill tone="warn" dot>{t.sanat.toBeChecked}</Pill>
+                          <Pill tone="warn" dot>
+                            {t.sanat.toBeChecked}
+                          </Pill>
                         ) : (
-                          <Pill tone="ok" dot>{t.sanat.checked}</Pill>
+                          <Pill tone="ok" dot>
+                            {t.sanat.checked}
+                          </Pill>
                         )}
                       </span>
                     </span>
@@ -887,13 +1016,11 @@ export default async function AdminDashboard({
           </>
         )}
       </Panel>
-
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-
 
 /** "+5,3 %" tai "−12,0 %". Ei koskaan ilman vertailujaksoa. */
 
@@ -914,7 +1041,6 @@ function formatDate(isoDate: string): string {
   return `${Number(d)}.${Number(m)}.`;
 }
 
-
 // ---------------------------------------------------------------------------
 
 /**
@@ -924,7 +1050,13 @@ function formatDate(isoDate: string): string {
  * yleinen pilleri kasvatti rivin korkeutta kahdella pikselillä
  * jokaisella rivillä.
  */
-function StatusChip({ tone, children }: { tone: "ok" | "warn"; children: ReactNode }) {
+function StatusChip({
+  tone,
+  children,
+}: {
+  tone: "ok" | "warn";
+  children: ReactNode;
+}) {
   const ok = tone === "ok";
   return (
     <span

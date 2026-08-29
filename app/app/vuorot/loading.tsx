@@ -12,7 +12,10 @@ export default function Loading() {
         <div className="rf-skeleton-block mx-1 h-3 w-24" />
 
         <div className="bd-app-card">
-          <div className="bd-app-list divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <div
+            className="bd-app-list divide-y"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
             {Array.from({ length: 7 }, (_, row) => (
               <div key={row} className="flex items-center gap-3 px-4 py-3">
                 <div className="w-[3.25rem] shrink-0 space-y-1">

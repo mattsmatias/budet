@@ -74,7 +74,8 @@ export function totalsBySupplier(receipts: Receipt[]): SupplierTotals[] {
       name: entry.name,
       totalCents: entry.cents,
       receiptCount: entry.count,
-      averageCents: entry.count === 0 ? 0 : Math.round(entry.cents / entry.count),
+      averageCents:
+        entry.count === 0 ? 0 : Math.round(entry.cents / entry.count),
       share: grand === 0 ? 0 : entry.cents / grand,
       categories: [...entry.categories.entries()]
         .map(([category, cents]) => ({ category, cents }))
@@ -135,7 +136,9 @@ export function supplierTrends(
         currentCents,
         previousCents,
         change:
-          previousCents === 0 ? null : (currentCents - previousCents) / previousCents,
+          previousCents === 0
+            ? null
+            : (currentCents - previousCents) / previousCents,
       };
     })
     .sort((a, b) => b.currentCents - a.currentCents);

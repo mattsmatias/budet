@@ -61,7 +61,9 @@ export const LOCALE_TAGS: Record<Locale, string> = {
 };
 
 export function isLocale(value: unknown): value is Locale {
-  return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
+  return (
+    typeof value === "string" && (LOCALES as readonly string[]).includes(value)
+  );
 }
 
 /**

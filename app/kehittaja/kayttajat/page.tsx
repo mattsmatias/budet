@@ -41,7 +41,8 @@ export default async function DevUsersPage({
   const all = await fetchUsers();
 
   const suodatin = typeof params.rooli === "string" ? params.rooli : "kaikki";
-  const haku = typeof params.haku === "string" ? params.haku.trim().toLowerCase() : "";
+  const haku =
+    typeof params.haku === "string" ? params.haku.trim().toLowerCase() : "";
 
   const rows = all.filter((u) => {
     if (suodatin === "ei-kaytossa") {
@@ -71,7 +72,9 @@ export default async function DevUsersPage({
       </header>
 
       <form method="get" className="flex flex-wrap gap-2">
-        {suodatin !== "kaikki" ? <input type="hidden" name="rooli" value={suodatin} /> : null}
+        {suodatin !== "kaikki" ? (
+          <input type="hidden" name="rooli" value={suodatin} />
+        ) : null}
 
         <input
           name="haku"
@@ -112,11 +115,17 @@ export default async function DevUsersPage({
           return (
             <Link
               key={s.key}
-              href={qs === "" ? "/kehittaja/kayttajat" : `/kehittaja/kayttajat?${qs}`}
+              href={
+                qs === ""
+                  ? "/kehittaja/kayttajat"
+                  : `/kehittaja/kayttajat?${qs}`
+              }
               aria-current={active ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px]"
               style={{
-                background: active ? "var(--rf-accent-soft)" : "var(--rf-inset)",
+                background: active
+                  ? "var(--rf-accent-soft)"
+                  : "var(--rf-inset)",
                 color: active ? "var(--rf-accent)" : "var(--rf-text-2)",
                 fontWeight: active ? 700 : 500,
                 borderRadius: 980,
@@ -130,7 +139,10 @@ export default async function DevUsersPage({
 
       {rows.length === 0 ? (
         <Card>
-          <EmptyState title="Ei osumia" description="Yksikään käyttäjä ei vastaa hakua." />
+          <EmptyState
+            title="Ei osumia"
+            description="Yksikään käyttäjä ei vastaa hakua."
+          />
         </Card>
       ) : (
         <Card padded={false}>
@@ -143,7 +155,9 @@ export default async function DevUsersPage({
                   <th className="px-4 py-3 text-left">Ravintola</th>
                   <th className="px-4 py-3 text-left">Rooli</th>
                   <th className="px-4 py-3 text-left">Tila</th>
-                  <th className="px-5 py-3 text-left">Viimeisin kirjautuminen</th>
+                  <th className="px-5 py-3 text-left">
+                    Viimeisin kirjautuminen
+                  </th>
                 </tr>
               </thead>
 
@@ -159,7 +173,10 @@ export default async function DevUsersPage({
                       ) : null}
                     </td>
 
-                    <td className="px-4 py-3 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                    <td
+                      className="px-4 py-3 text-[13px]"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {u.email ?? "—"}
                     </td>
 
@@ -177,7 +194,9 @@ export default async function DevUsersPage({
                       ) : null}
                     </td>
 
-                    <td className="px-4 py-3 text-[13px]">{ROOLIT[u.role] ?? u.role}</td>
+                    <td className="px-4 py-3 text-[13px]">
+                      {ROOLIT[u.role] ?? u.role}
+                    </td>
 
                     <td className="px-4 py-3">
                       <Pill tone={u.active ? "ok" : "warn"} dot>

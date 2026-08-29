@@ -21,7 +21,10 @@ export function CodeForm({ t }: { t: AuthText }) {
   return (
     <form action={action} className="mt-6 space-y-3">
       <label className="block">
-        <span className="block text-[13px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+        <span
+          className="block text-[13px] font-medium"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {t.liity.codeLabel}
         </span>
         <input

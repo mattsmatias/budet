@@ -12,12 +12,7 @@
 
 import { receiptsInMonth } from "./expenses";
 import { itemsTotalCents } from "./vat";
-import type {
-  Budget,
-  BudgetStatus,
-  ExpenseCategory,
-  Receipt,
-} from "./types";
+import type { Budget, BudgetStatus, ExpenseCategory, Receipt } from "./types";
 
 /** Osuus jonka jälkeen budjetti varoittaa. */
 export const WARNING_THRESHOLD = 0.8;
@@ -107,7 +102,9 @@ export function budgetProgress(
       const spentCents = spend.get(category) ?? 0;
       const budgetCents = budget?.amountCents ?? null;
       const ratio =
-        budgetCents === null || budgetCents === 0 ? null : spentCents / budgetCents;
+        budgetCents === null || budgetCents === 0
+          ? null
+          : spentCents / budgetCents;
 
       return {
         category,

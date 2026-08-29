@@ -12,7 +12,13 @@ import { SETTINGS_SECTIONS } from "./sections";
  *
  * Linkkejä eikä painikkeita, koska valinta on osoitteessa.
  */
-export function SectionNav({ current, canEdit }: { current: string; canEdit: boolean }) {
+export function SectionNav({
+  current,
+  canEdit,
+}: {
+  current: string;
+  canEdit: boolean;
+}) {
   const sections = SETTINGS_SECTIONS.filter((s) => canEdit || !s.ownerOnly);
 
   return (
@@ -23,7 +29,10 @@ export function SectionNav({ current, canEdit }: { current: string; canEdit: boo
      * vierivä pillerilista levitti koko sivun 805 pikselin levyiseksi
      * puhelimessa. Vieritys kuuluu listaan, ei sivuun.
      */
-    <nav aria-label="Asetusten osastot" className="min-w-0 lg:sticky lg:top-[76px]">
+    <nav
+      aria-label="Asetusten osastot"
+      className="min-w-0 lg:sticky lg:top-[76px]"
+    >
       {/* Puhelin: vaakarivi joka vierii. */}
       <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:hidden">
         {sections.map((section) => (
@@ -34,9 +43,13 @@ export function SectionNav({ current, canEdit }: { current: string; canEdit: boo
               className="rf-press flex items-center gap-2 whitespace-nowrap px-3.5 py-2 text-[13px] font-bold"
               style={{
                 background:
-                  section.id === current ? "var(--rf-accent-bg)" : "var(--rf-card)",
+                  section.id === current
+                    ? "var(--rf-accent-bg)"
+                    : "var(--rf-card)",
                 color:
-                  section.id === current ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+                  section.id === current
+                    ? "var(--rf-accent-strong)"
+                    : "var(--rf-text-2)",
                 border: "1px solid var(--rf-line)",
                 borderRadius: 999,
               }}
@@ -69,7 +82,9 @@ export function SectionNav({ current, canEdit }: { current: string; canEdit: boo
                 <span
                   aria-hidden="true"
                   className="mt-px shrink-0"
-                  style={{ color: active ? "var(--rf-accent)" : "var(--rf-text-3)" }}
+                  style={{
+                    color: active ? "var(--rf-accent)" : "var(--rf-text-3)",
+                  }}
                 >
                   <RfIcon name={section.icon} size={17} strokeWidth={1.8} />
                 </span>

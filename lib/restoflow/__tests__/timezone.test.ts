@@ -77,8 +77,12 @@ describe("viikonpäivä ja minuutit", () => {
   });
 
   it("laskee minuutit keskiyöstä paikallisesti", () => {
-    expect(minutesOfDayIn(HELSINKI, "2026-08-21T07:02:00.000Z")).toBe(10 * 60 + 2);
-    expect(minutesOfDayIn(HELSINKI, "2026-08-21T23:15:00.000Z")).toBe(2 * 60 + 15);
+    expect(minutesOfDayIn(HELSINKI, "2026-08-21T07:02:00.000Z")).toBe(
+      10 * 60 + 2,
+    );
+    expect(minutesOfDayIn(HELSINKI, "2026-08-21T23:15:00.000Z")).toBe(
+      2 * 60 + 15,
+    );
   });
 });
 
@@ -89,15 +93,15 @@ describe("tapahtumien päiväkohtainen rajaus", () => {
   ];
 
   it("poimii illan leimauksen oikealle päivälle", () => {
-    expect(eventsOnDate(events, "2026-08-21", HELSINKI).map((e) => e.type)).toEqual([
-      "in",
-    ]);
+    expect(
+      eventsOnDate(events, "2026-08-21", HELSINKI).map((e) => e.type),
+    ).toEqual(["in"]);
   });
 
   it("poimii yöleimauksen seuraavalle päivälle", () => {
-    expect(eventsOnDate(events, "2026-08-22", HELSINKI).map((e) => e.type)).toEqual([
-      "out",
-    ]);
+    expect(
+      eventsOnDate(events, "2026-08-22", HELSINKI).map((e) => e.type),
+    ).toEqual(["out"]);
   });
 
   /*
@@ -108,7 +112,12 @@ describe("tapahtumien päiväkohtainen rajaus", () => {
    * ei yksittäiseltä päivältä.
    */
   it("ei laske ulos-leimausta edellisen päivän tunteihin", () => {
-    const worked = workedOnDate(events, "2026-08-21", "2026-08-22T06:00:00.000Z", HELSINKI);
+    const worked = workedOnDate(
+      events,
+      "2026-08-21",
+      "2026-08-22T06:00:00.000Z",
+      HELSINKI,
+    );
     // Vain sisäänleimaus osuu 21. päivälle, joten jakso jää auki.
     expect(worked.workedMs).toBeGreaterThan(0);
   });
@@ -147,6 +156,8 @@ describe("muu vyöhyke", () => {
   it("noudattaa annettua vyöhykettä", () => {
     expect(dayIn("UTC", "2026-08-21T23:15:00.000Z")).toBe("2026-08-21");
     expect(timeIn("UTC", "2026-08-21T23:15:00.000Z")).toBe("23:15");
-    expect(dayIn("America/New_York", "2026-08-21T03:15:00.000Z")).toBe("2026-08-20");
+    expect(dayIn("America/New_York", "2026-08-21T03:15:00.000Z")).toBe(
+      "2026-08-20",
+    );
   });
 });

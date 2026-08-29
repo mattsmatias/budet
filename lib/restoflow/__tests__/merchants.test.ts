@@ -33,7 +33,10 @@ function merchant(
 
 const catalogue: Merchant[] = [
   merchant("k-market", "K-Market", ["K-Market", "K Market", "KMarket"]),
-  merchant("k-supermarket", "K-Supermarket", ["K-Supermarket", "K Supermarket"]),
+  merchant("k-supermarket", "K-Supermarket", [
+    "K-Supermarket",
+    "K Supermarket",
+  ]),
   merchant("k-citymarket", "K-Citymarket", ["K-Citymarket", "Citymarket"]),
   merchant("alepa", "Alepa", ["Alepa"]),
   merchant("s-market", "S-market", ["S-market", "S market"]),
@@ -70,7 +73,9 @@ describe("nimen normalisointi", () => {
 describe("Y-tunnus", () => {
   it("lukee kelvollisen tunnuksen", () => {
     expect(parseBusinessId("Y-tunnus: 1523846-8")).toBe("1523846-8");
-    expect(parseBusinessId("ALV-numero FI15238468 Y 1523846 - 8")).toBe("1523846-8");
+    expect(parseBusinessId("ALV-numero FI15238468 Y 1523846 - 8")).toBe(
+      "1523846-8",
+    );
   });
 
   // Tarkiste on koko tunnuksen tarkoitus: väärin luettu numero jää
@@ -88,15 +93,20 @@ describe("Y-tunnus", () => {
 
 describe("kaupan tunnistus", () => {
   it("yhdistää eri kirjoitusasut samaan brändiin", () => {
-    for (const raw of ["K-MARKET MALMI", "K-Market Malmi", "K-MARKET", "K Market"]) {
+    for (const raw of [
+      "K-MARKET MALMI",
+      "K-Market Malmi",
+      "K-MARKET",
+      "K Market",
+    ]) {
       expect(matchMerchant(raw, null, catalogue)?.merchantId).toBe("k-market");
     }
   });
 
   it("erottaa saman ketjun eri muodot", () => {
-    expect(matchMerchant("K-SUPERMARKET MALMI", null, catalogue)?.merchantId).toBe(
-      "k-supermarket",
-    );
+    expect(
+      matchMerchant("K-SUPERMARKET MALMI", null, catalogue)?.merchantId,
+    ).toBe("k-supermarket");
     expect(matchMerchant("K-CITYMARKET", null, catalogue)?.merchantId).toBe(
       "k-citymarket",
     );
@@ -106,7 +116,11 @@ describe("kaupan tunnistus", () => {
   });
 
   it("tunnistaa verkkokaupan kirjoitusasusta riippumatta", () => {
-    for (const raw of ["VERKKOKAUPPA.COM", "VERKKOKAUPPA COM", "Verkkokauppa.com Oy"]) {
+    for (const raw of [
+      "VERKKOKAUPPA.COM",
+      "VERKKOKAUPPA COM",
+      "Verkkokauppa.com Oy",
+    ]) {
       expect(matchMerchant(raw, null, catalogue)?.merchantId).toBe(
         "verkkokauppa-com",
       );

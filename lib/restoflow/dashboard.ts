@@ -12,6 +12,7 @@
  */
 
 import { alertCounts, buildAlerts } from "./alerts";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { IconName } from "@/components/restoflow/icons";
 import { alertIcon } from "./alert-icons";
 import { budgetProgress } from "./budgets";
@@ -58,6 +59,8 @@ export interface DashboardInput {
   /* Tehtävät kulkevat samassa paketissa: yksi kysymys, yksi lista. */
   tasks?: Task[];
   sales?: DailySales[];
+  /** Käyttöliittymän kieli. */
+  locale: AppLocale;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +121,7 @@ export function attention(input: DashboardInput): Attention {
     absences: input.absences,
     month: input.month,
     today: input.today,
+    locale: input.locale,
     now: input.now,
     timezone: input.timezone,
     openShifts: input.openShifts,
@@ -295,7 +299,9 @@ export function budgetLines(
  */
 export function hasChartHistory(receipts: Receipt[], month: string): boolean {
   const months = new Set(
-    receipts.map((receipt) => receipt.date.slice(0, 7)).filter((m) => m <= month),
+    receipts
+      .map((receipt) => receipt.date.slice(0, 7))
+      .filter((m) => m <= month),
   );
   return months.size >= 3;
 }

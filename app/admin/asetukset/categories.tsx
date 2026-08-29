@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteCategory, saveCategory, type AdminState } from "../actions";
 import {
-  CATEGORY_LABELS,
   type CustomCategory,
   type ExpenseCategory,
 } from "@/lib/restoflow/types";
@@ -12,8 +12,6 @@ import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { Pill } from "@/components/restoflow/ui";
 
 const initial: AdminState = {};
-
-const BASES = Object.entries(CATEGORY_LABELS) as [ExpenseCategory, string][];
 
 /**
  * Omien kulukategorioiden hallinta.
@@ -23,13 +21,22 @@ const BASES = Object.entries(CATEGORY_LABELS) as [ExpenseCategory, string][];
  * ole niihin vaikutusta. Se sanotaan tässä ääneen, jottei kukaan luule
  * budjetoivansa "Viinit"-riviä erikseen.
  */
-export function CategoryManager({ categories }: { categories: CustomCategory[] }) {
+export function CategoryManager({
+  categories,
+  nimet,
+}: {
+  categories: CustomCategory[];
+  nimet: Labels;
+}) {
   const [adding, setAdding] = useState(false);
 
   return (
     <div className="mt-4 space-y-3">
       {categories.length === 0 ? (
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           Omia kategorioita ei ole. Ilman niitä kuitit näkyvät yhdeksällä
           perusluokalla.
         </p>
@@ -37,7 +44,7 @@ export function CategoryManager({ categories }: { categories: CustomCategory[] }
         <ul className="space-y-2">
           {categories.map((category) => (
             <li key={category.id}>
-              <CategoryRow category={category} />
+              <CategoryRow nimet={nimet} category={category} />
             </li>
           ))}
         </ul>
@@ -46,10 +53,13 @@ export function CategoryManager({ categories }: { categories: CustomCategory[] }
       {adding ? (
         <div
           className="px-3.5 py-3"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <p className="mb-2 text-[13px] font-semibold">Uusi kategoria</p>
-          <CategoryForm onDone={() => setAdding(false)} />
+          <CategoryForm nimet={nimet} onDone={() => setAdding(false)} />
         </div>
       ) : (
         <button
@@ -67,11 +77,14 @@ export function CategoryManager({ categories }: { categories: CustomCategory[] }
         </button>
       )}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         Oma kategoria on tarkennus perusluokkaan, ei sen korvaaja. ALV-tarkistus
         ja budjetit toimivat perusluokalla, koska keksitylle luokalle ei ole
-        odotettua ALV-kantaa. Kategorian poisto ei poista kuitteja — ne
-        palaavat perusluokkaan.
+        odotettua ALV-kantaa. Kategorian poisto ei poista kuitteja — ne palaavat
+        perusluokkaan.
       </p>
     </div>
   );
@@ -79,7 +92,13 @@ export function CategoryManager({ categories }: { categories: CustomCategory[] }
 
 // ---------------------------------------------------------------------------
 
-function CategoryRow({ category }: { category: CustomCategory }) {
+function CategoryRow({
+  nimet,
+  category,
+}: {
+  nimet: Labels;
+  category: CustomCategory;
+}) {
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
@@ -87,18 +106,32 @@ function CategoryRow({ category }: { category: CustomCategory }) {
     return (
       <div
         className="px-3.5 py-3"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
-        <CategoryForm category={category} onDone={() => setEditing(false)} />
+        <CategoryForm
+          nimet={nimet}
+          category={category}
+          onDone={() => setEditing(false)}
+        />
 
-        <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
+        <div
+          className="mt-3 border-t pt-3"
+          style={{ borderColor: "var(--rf-line)" }}
+        >
           {confirming ? (
             <form action={deleteCategory} className="flex items-center gap-2">
               <input type="hidden" name="categoryId" value={category.id} />
               <button
                 type="submit"
                 className="rf-press px-3 py-1.5 text-[13px] font-semibold"
-                style={{ background: "var(--rf-red)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+                style={{
+                  background: "var(--rf-red)",
+                  color: "var(--rf-on-accent)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
               >
                 Poista kategoria
               </button>
@@ -129,7 +162,10 @@ function CategoryRow({ category }: { category: CustomCategory }) {
   return (
     <div
       className="flex items-center justify-between gap-3 px-3.5 py-2.5"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       <span className="flex min-w-0 items-center gap-2.5">
         <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
@@ -139,8 +175,11 @@ function CategoryRow({ category }: { category: CustomCategory }) {
           <span className="block truncate text-[14px] font-medium">
             {category.name}
           </span>
-          <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            {CATEGORY_LABELS[category.baseCategory]}
+          <span
+            className="block text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {nimet.categories[category.baseCategory]}
           </span>
         </span>
       </span>
@@ -165,9 +204,11 @@ function CategoryRow({ category }: { category: CustomCategory }) {
 }
 
 function CategoryForm({
+  nimet,
   category,
   onDone,
 }: {
+  nimet: Labels;
   category?: CustomCategory;
   onDone: () => void;
 }) {
@@ -196,7 +237,10 @@ function CategoryForm({
       ) : null}
 
       <div>
-        <label htmlFor={`c-name-${category?.id ?? "new"}`} className="block text-[13px] font-medium">
+        <label
+          htmlFor={`c-name-${category?.id ?? "new"}`}
+          className="block text-[13px] font-medium"
+        >
           Nimi
         </label>
         <input
@@ -207,12 +251,18 @@ function CategoryForm({
           required
           maxLength={60}
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-          style={{ background: "var(--rf-card)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-card)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         />
       </div>
 
       <div>
-        <label htmlFor={`c-base-${category?.id ?? "new"}`} className="block text-[13px] font-medium">
+        <label
+          htmlFor={`c-base-${category?.id ?? "new"}`}
+          className="block text-[13px] font-medium"
+        >
           Kuuluu perusluokkaan
         </label>
         <select
@@ -220,15 +270,23 @@ function CategoryForm({
           name="base"
           defaultValue={category?.baseCategory ?? "food"}
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-          style={{ background: "var(--rf-card)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-card)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
-          {BASES.map(([value, label]) => (
+          {(
+            Object.entries(nimet.categories) as [ExpenseCategory, string][]
+          ).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
           ))}
         </select>
-        <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-1 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           Perusluokka ratkaisee ALV-odotuksen ja budjetin.
         </p>
       </div>
@@ -284,7 +342,11 @@ function Save() {
       type="submit"
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-accent)",
+        color: "var(--rf-on-accent)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       {pending ? "Tallennetaan…" : "Tallenna"}
     </button>

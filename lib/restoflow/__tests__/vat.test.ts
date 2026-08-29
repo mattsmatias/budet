@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { vatFromGross } from "@/lib/money";
 import { lineVatCents, vatByRate } from "../vat";
 
-
 describe("vatByRate", () => {
   /*
    * TEHTÄVÄNANNON §6.

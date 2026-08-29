@@ -1,11 +1,19 @@
 import { employeeContext } from "@/lib/restoflow/page-context";
+import { labels, type Labels } from "@/lib/i18n/labels";
 import { weekEnd, weekStart } from "@/lib/restoflow/clock-context";
 import { datesInRange } from "@/lib/restoflow/timeclock";
-import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
+import { type Shift } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { AbsenceReporter } from "./absence";
 import { OpenShifts } from "./open-shifts";
-import { Empty, PageHeader, SectionTitle, Surface, Tag, shortDate } from "../ui";
+import {
+  Empty,
+  PageHeader,
+  SectionTitle,
+  Surface,
+  Tag,
+  shortDate,
+} from "../ui";
 
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { workerText } from "@/lib/i18n/worker-text";
@@ -38,9 +46,11 @@ const WEEKS_AHEAD = 4;
  * vuoron kiistäminen.
  */
 export default async function ShiftsPage() {
-  const { shifts, absences, claimable, today } = await employeeContext("/app/vuorot");
+  const { shifts, absences, claimable, today } =
+    await employeeContext("/app/vuorot");
   const locale = await resolveLocale();
   const t = workerText(locale);
+  const nimet = labels(locale);
 
   /*
    * Peruttu vuoro ei ole vuoro.
@@ -86,17 +96,25 @@ export default async function ShiftsPage() {
           {changed.map((shift) => (
             <Surface key={shift.id}>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-blue)" }}>
+                <span
+                  className="mt-0.5 shrink-0"
+                  style={{ color: "var(--rf-blue)" }}
+                >
                   <RfIcon name="alert" size={18} />
                 </span>
                 <div className="min-w-0">
                   <p className="text-[15px] font-medium">{t.vuorot.changed}</p>
                   <p className="rf-tabular mt-1 text-[14px]">
-                    <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
+                    <span style={{ color: "var(--rf-text-3)" }}>
+                      {shortDate(shift.date)}{" "}
+                    </span>
                     <s style={{ color: "var(--rf-text-3)" }}>
                       {shift.previousStartTime}–{shift.previousEndTime}
                     </s>
-                    <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      aria-hidden="true"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {" → "}
                     </span>
                     <strong>
@@ -115,18 +133,28 @@ export default async function ShiftsPage() {
           {cancelled.map((shift) => (
             <Surface key={shift.id}>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-amber-text)" }}>
+                <span
+                  className="mt-0.5 shrink-0"
+                  style={{ color: "var(--rf-amber-text)" }}
+                >
                   <RfIcon name="alert" size={18} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-medium">{t.vuorot.cancelled}</p>
+                  <p className="text-[15px] font-medium">
+                    {t.vuorot.cancelled}
+                  </p>
                   <p className="rf-tabular mt-1 text-[14px]">
-                    <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
+                    <span style={{ color: "var(--rf-text-3)" }}>
+                      {shortDate(shift.date)}{" "}
+                    </span>
                     <s style={{ color: "var(--rf-text-3)" }}>
                       {shift.startTime}–{shift.endTime}
                     </s>
                   </p>
-                  <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                  <p
+                    className="mt-1 text-[13px] leading-relaxed"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     Et ole tänä aikana töissä. Kysy esihenkilöltä jos tämä tuli
                     yllätyksenä.
                   </p>
@@ -140,10 +168,7 @@ export default async function ShiftsPage() {
       <OpenShifts shifts={claimable} t={t} locale={locale} />
 
       {!hasAny ? (
-        <Empty
-          title={t.vuorot.emptyTitle}
-          description={t.vuorot.emptyBody}
-        />
+        <Empty title={t.vuorot.emptyTitle} description={t.vuorot.emptyBody} />
       ) : (
         weeks.map((week) => {
           const shiftsThisWeek = week.days.filter((d) => byDate.has(d)).length;
@@ -158,9 +183,13 @@ export default async function ShiftsPage() {
               </SectionTitle>
 
               <Surface padded={false}>
-                <div className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                <div
+                  className="divide-y"
+                  style={{ borderColor: "var(--rf-line)" }}
+                >
                   {week.days.map((date) => (
                     <DayLine
+                      nimet={nimet}
                       key={date}
                       date={date}
                       shift={byDate.get(date)}
@@ -177,7 +206,12 @@ export default async function ShiftsPage() {
 
       <section className="space-y-2">
         <SectionTitle>Poissaolot</SectionTitle>
-        <AbsenceReporter defaultDate={today} absences={absences} t={t} />
+        <AbsenceReporter
+          nimet={nimet}
+          defaultDate={today}
+          absences={absences}
+          t={t}
+        />
       </section>
     </div>
   );
@@ -188,11 +222,13 @@ export default async function ShiftsPage() {
 const WEEKDAYS = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
 
 function DayLine({
+  nimet,
   date,
   shift,
   today,
   absent,
 }: {
+  nimet: Labels;
   date: string;
   shift: Shift | undefined;
   today: string;
@@ -218,7 +254,10 @@ function DayLine({
         >
           {WEEKDAYS[d.getUTCDay()]}
         </p>
-        <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="rf-tabular text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {shortDate(date)}
         </p>
       </div>
@@ -230,7 +269,10 @@ function DayLine({
               {shift.startTime}–{shift.endTime}
             </p>
             {shift.location ? (
-              <p className="mt-0.5 truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              <p
+                className="mt-0.5 truncate text-[13px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 {shift.location}
               </p>
             ) : null}
@@ -246,7 +288,7 @@ function DayLine({
               </Tag>
             ) : (
               <Tag tone={shift.status === "changed" ? "info" : "neutral"}>
-                {SHIFT_STATUS_LABELS[shift.status]}
+                {nimet.shiftStatus[shift.status]}
               </Tag>
             )}
           </div>

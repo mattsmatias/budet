@@ -24,7 +24,10 @@ export function ResetRequestForm({ t }: { t: AuthText }) {
 
       <Submit idle={t.unohtui.idle} busy={t.unohtui.busy} />
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {t.unohtui.privacyNote}
       </p>
     </form>

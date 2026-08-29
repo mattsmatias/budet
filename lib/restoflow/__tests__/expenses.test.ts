@@ -15,7 +15,12 @@ import {
   sortByDateDesc,
   totalsByCategory,
 } from "../expenses";
-import type { ExpenseCategory, Receipt, ReceiptItem, ReviewReason } from "../types";
+import type {
+  ExpenseCategory,
+  Receipt,
+  ReceiptItem,
+  ReviewReason,
+} from "../types";
 import { productGlyph, supplierGlyph } from "../glyphs";
 
 let n = 0;
@@ -37,7 +42,7 @@ function receipt(
     note: null,
     status: "confirmed",
     reviewReasons: [],
-        addedByUserId: "u1",
+    addedByUserId: "u1",
     addedAt: `${partial.date}T12:00:00.000Z`,
     hasImage: true,
     imagePath: null,
@@ -55,7 +60,11 @@ describe("totalsByCategory", () => {
       receipt({ date: "2026-08-03", totalCents: 2000, category: "food" }),
     ]);
 
-    expect(totals[0]).toMatchObject({ category: "food", totalCents: 3000, receiptCount: 2 });
+    expect(totals[0]).toMatchObject({
+      category: "food",
+      totalCents: 3000,
+      receiptCount: 2,
+    });
     expect(totals[1]).toMatchObject({ category: "alcohol", totalCents: 3000 });
     expect(totals).toHaveLength(2);
   });
@@ -84,7 +93,13 @@ describe("totalsByCategory", () => {
 describe("periodTotals", () => {
   const receipts = [
     receipt({ date: "2026-08-01", totalCents: 1000, vatCents: 135 }),
-    receipt({ date: "2026-08-31", totalCents: 2000, vatCents: 270, status: "needs_review", reviewReasons: ["vat_uncertain"] }),
+    receipt({
+      date: "2026-08-31",
+      totalCents: 2000,
+      vatCents: 270,
+      status: "needs_review",
+      reviewReasons: ["vat_uncertain"],
+    }),
     receipt({ date: "2026-07-15", totalCents: 5000, vatCents: 675 }),
   ];
 
@@ -97,7 +112,10 @@ describe("periodTotals", () => {
   });
 
   it("käsittelee puuttuvan ALV:n nollana summassa", () => {
-    const t = periodTotals([receipt({ date: "2026-08-01", totalCents: 1000 })], "2026-08");
+    const t = periodTotals(
+      [receipt({ date: "2026-08-01", totalCents: 1000 })],
+      "2026-08",
+    );
     expect(t.vatCents).toBe(0);
   });
 
@@ -139,8 +157,10 @@ describe("kuukausiaritmetiikka", () => {
     expect(nextMonth("2026-12")).toBe("2027-01");
   });
 
-  it("muotoilee kuukauden suomeksi", () => {
-    expect(formatMonth("2026-08")).toBe("Elokuu 2026");
+  it("muotoilee kuukauden valitulla kielella", () => {
+    expect(formatMonth("2026-08", "fi")).toBe("Elokuu 2026");
+    expect(formatMonth("2026-08", "en")).toBe("August 2026");
+    expect(formatMonth("2026-08", "sv")).toBe("Augusti 2026");
   });
 
   it("tuottaa sarjan vanhin ensin", () => {
@@ -156,8 +176,18 @@ describe("kuukausiaritmetiikka", () => {
 
 describe("tarkistettavat", () => {
   const receipts = [
-    receipt({ date: "2026-08-01", totalCents: 100, status: "needs_review", reviewReasons: ["vat_missing"] }),
-    receipt({ date: "2026-08-05", totalCents: 200, status: "needs_review", reviewReasons: ["vat_missing", "category_missing"] }),
+    receipt({
+      date: "2026-08-01",
+      totalCents: 100,
+      status: "needs_review",
+      reviewReasons: ["vat_missing"],
+    }),
+    receipt({
+      date: "2026-08-05",
+      totalCents: 200,
+      status: "needs_review",
+      reviewReasons: ["vat_missing", "category_missing"],
+    }),
     receipt({ date: "2026-08-03", totalCents: 300 }),
   ];
 
@@ -169,8 +199,14 @@ describe("tarkistettavat", () => {
 
   it("laskee syyt yleisyysjärjestyksessä", () => {
     const counts = reviewReasonCounts(receipts);
-    expect(counts[0]).toEqual({ reason: "vat_missing" as ReviewReason, count: 2 });
-    expect(counts[1]).toEqual({ reason: "category_missing" as ReviewReason, count: 1 });
+    expect(counts[0]).toEqual({
+      reason: "vat_missing" as ReviewReason,
+      count: 2,
+    });
+    expect(counts[1]).toEqual({
+      reason: "category_missing" as ReviewReason,
+      count: 1,
+    });
   });
 });
 
@@ -232,7 +268,10 @@ describe("haku ja suodatus riveiltä", () => {
     totalCents: 3144,
     supplierName: "S-Market Kajaani",
     category: "food",
-    items: [item("Täysmaito", "food", 149), item("Muovikassi SM harmaa", "packaging", 59)],
+    items: [
+      item("Täysmaito", "food", 149),
+      item("Muovikassi SM harmaa", "packaging", 59),
+    ],
   });
 
   // Kuitin nimi on "S-Market", mutta se mitä etsitään on "maito".
@@ -253,8 +292,18 @@ describe("haku ja suodatus riveiltä", () => {
 
 describe("searchReceipts", () => {
   const receipts = [
-    receipt({ date: "2026-08-20", totalCents: 18690, supplierName: "Metro Tukku", receiptNumber: "A-1234" }),
-    receipt({ date: "2026-08-19", totalCents: 31250, supplierName: "Kespro", note: "Viikonlopun tilaus" }),
+    receipt({
+      date: "2026-08-20",
+      totalCents: 18690,
+      supplierName: "Metro Tukku",
+      receiptNumber: "A-1234",
+    }),
+    receipt({
+      date: "2026-08-19",
+      totalCents: 31250,
+      supplierName: "Kespro",
+      note: "Viikonlopun tilaus",
+    }),
   ];
 
   it("löytää toimittajan nimellä isoista ja pienistä kirjaimista riippumatta", () => {
@@ -263,8 +312,12 @@ describe("searchReceipts", () => {
   });
 
   it("löytää kuittinumerolla ja muistiinpanolla", () => {
-    expect(searchReceipts(receipts, "A-1234")[0].supplierName).toBe("Metro Tukku");
-    expect(searchReceipts(receipts, "viikonlopun")[0].supplierName).toBe("Kespro");
+    expect(searchReceipts(receipts, "A-1234")[0].supplierName).toBe(
+      "Metro Tukku",
+    );
+    expect(searchReceipts(receipts, "viikonlopun")[0].supplierName).toBe(
+      "Kespro",
+    );
   });
 
   it("löytää summalla pilkulla kirjoitettuna", () => {
@@ -284,7 +337,13 @@ describe("searchReceipts", () => {
 describe("filterReceipts", () => {
   const receipts = [
     receipt({ date: "2026-08-20", totalCents: 100, category: "food" }),
-    receipt({ date: "2026-08-19", totalCents: 200, category: "kitchen_supplies", status: "needs_review", reviewReasons: ["vat_missing"] }),
+    receipt({
+      date: "2026-08-19",
+      totalCents: 200,
+      category: "kitchen_supplies",
+      status: "needs_review",
+      reviewReasons: ["vat_missing"],
+    }),
   ];
 
   it("suodattaa kategorialla", () => {

@@ -76,11 +76,7 @@ export function integer(value: number, locale: AppLocale): string {
 }
 
 /** Desimaaliluku, oletuksena yksi desimaali (tunnit). */
-export function decimal(
-  value: number,
-  locale: AppLocale,
-  digits = 1,
-): string {
+export function decimal(value: number, locale: AppLocale, digits = 1): string {
   return numberFormat(locale, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
@@ -94,11 +90,7 @@ export function decimal(
  * kertoo sadalla itse, ja kaksi eri tapaa antaa prosentti johtaisi
  * ennen pitkää sataakertaiseen virheeseen.
  */
-export function percent(
-  ratio: number,
-  locale: AppLocale,
-  digits = 1,
-): string {
+export function percent(ratio: number, locale: AppLocale, digits = 1): string {
   return numberFormat(locale, {
     style: "percent",
     minimumFractionDigits: digits,

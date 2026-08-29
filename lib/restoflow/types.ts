@@ -39,21 +39,7 @@ export interface Restaurant {
  */
 export type Role = "owner" | "manager" | "employee" | "accountant";
 
-export const ROLE_LABELS: Record<Role, string> = {
-  owner: "Omistaja",
-  manager: "Manager",
-  employee: "Työntekijä",
-  accountant: "Kirjanpitäjä",
-};
-
 export type StaffPosition = "waiter" | "kitchen" | "manager" | "cleaning";
-
-export const POSITION_LABELS: Record<StaffPosition, string> = {
-  waiter: "Tarjoilija",
-  kitchen: "Keittiö",
-  manager: "Vuoropäällikkö",
-  cleaning: "Siivous",
-};
 
 export interface User {
   id: string;
@@ -81,18 +67,6 @@ export type ExpenseCategory =
   | "staff"
   | "transport"
   | "other";
-
-export const CATEGORY_LABELS: Record<ExpenseCategory, string> = {
-  food: "Ruoka",
-  alcohol: "Alkoholi",
-  soft_drinks: "Alkoholittomat",
-  cleaning: "Siivous",
-  kitchen_supplies: "Keittiötarvikkeet",
-  packaging: "Pakkausmateriaalit",
-  staff: "Henkilöstö",
-  transport: "Kuljetus",
-  other: "Muut",
-};
 
 /** Kategoriat esitysjärjestyksessä. */
 export const CATEGORY_ORDER: ExpenseCategory[] = [
@@ -146,12 +120,13 @@ export const EXPECTED_VAT_RATES: Record<ExpenseCategory, number[]> = {
 
 export type PaymentMethod = "card" | "cash" | "invoice" | "unknown";
 
-export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  card: "Kortti",
-  cash: "Käteinen",
-  invoice: "Lasku",
-  unknown: "Ei tiedossa",
-};
+/** Maksutavat esitysjarjestyksessa. */
+export const PAYMENT_ORDER: PaymentMethod[] = [
+  "card",
+  "cash",
+  "invoice",
+  "unknown",
+];
 
 // ---------------------------------------------------------------------------
 // Kuitit
@@ -274,20 +249,6 @@ export type ReviewReason =
   | "poor_image"
   | "items_dont_sum";
 
-export const REVIEW_REASON_LABELS: Record<ReviewReason, string> = {
-  vat_missing: "ALV puuttuu",
-  vat_uncertain: "ALV epävarma",
-  vat_mismatch: "ALV ei vastaa kategorian verokantaa",
-  category_missing: "Kategoria puuttuu",
-  total_uncertain: "Tunnistettu summa epävarma",
-  supplier_uncertain: "Toimittaja epävarma",
-  date_uncertain: "Päivämäärä epävarma",
-  payment_missing: "Maksutapa puuttuu",
-  duplicate_suspected: "Mahdollinen kaksoiskappale",
-  poor_image: "Kuittikuva epäselvä",
-  items_dont_sum: "Rivien summa ei täsmää loppusummaan",
-};
-
 // ---------------------------------------------------------------------------
 // Toimittajat
 // ---------------------------------------------------------------------------
@@ -322,7 +283,11 @@ export interface Supplier {
    * Managerin tekemät kategoriakorjaukset. Kun sama korjaus toistuu,
    * sitä ehdotetaan jatkossa — tämä on "oppiminen", ei mallin koulutus.
    */
-  categoryOverrides: { from: ExpenseCategory; to: ExpenseCategory; count: number }[];
+  categoryOverrides: {
+    from: ExpenseCategory;
+    to: ExpenseCategory;
+    count: number;
+  }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -344,15 +309,8 @@ export type BudgetStatus = "ok" | "warning" | "exceeded" | "none";
 // Työvuorot ja työaika
 // ---------------------------------------------------------------------------
 
-export type ShiftStatus = "draft" | "pending" | "accepted" | "declined" | "changed";
-
-export const SHIFT_STATUS_LABELS: Record<ShiftStatus, string> = {
-  draft: "Luonnos",
-  pending: "Odottaa vastausta",
-  accepted: "Vahvistettu",
-  declined: "Ei pääse",
-  changed: "Muuttunut",
-};
+export type ShiftStatus =
+  "draft" | "pending" | "accepted" | "declined" | "changed";
 
 export interface Shift {
   id: string;
@@ -428,13 +386,6 @@ export interface OpenShift {
 
 export type ClockEventType = "in" | "break_start" | "break_end" | "out";
 
-export const CLOCK_EVENT_LABELS: Record<ClockEventType, string> = {
-  in: "Sisään",
-  break_start: "Tauko",
-  break_end: "Takaisin töihin",
-  out: "Ulos",
-};
-
 /** Yksittäinen leimaus. Työaika johdetaan näistä, ei tallenneta erikseen. */
 export interface ClockEvent {
   id: string;
@@ -445,23 +396,11 @@ export interface ClockEvent {
 
 export type ClockState = "off" | "working" | "on_break";
 
-export const CLOCK_STATE_LABELS: Record<ClockState, string> = {
-  off: "Et ole tällä hetkellä töissä",
-  working: "Olet nyt töissä",
-  on_break: "Olet tauolla",
-};
-
 // ---------------------------------------------------------------------------
 // Poissaolot
 // ---------------------------------------------------------------------------
 
 export type AbsenceKind = "sick" | "other" | "cannot_attend";
-
-export const ABSENCE_LABELS: Record<AbsenceKind, string> = {
-  sick: "Sairaus",
-  other: "Muu poissaolo",
-  cannot_attend: "En pääse vuoroon",
-};
 
 export interface Absence {
   id: string;

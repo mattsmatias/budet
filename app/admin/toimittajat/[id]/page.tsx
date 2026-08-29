@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { labels } from "@/lib/i18n/labels";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -16,7 +18,6 @@ import {
   supplierTotalsInMonth,
   supplierTrends,
 } from "@/lib/restoflow/suppliers";
-import { CATEGORY_LABELS, PAYMENT_LABELS } from "@/lib/restoflow/types";
 import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
@@ -32,8 +33,14 @@ export default async function SupplierDetailPage({
   params,
   searchParams,
 }: PageProps<"/admin/toimittajat/[id]">) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const { id } = await params;
-  const { receipts, suppliers, month: nykyinen } = await adminContext("/admin/toimittajat");
+  const {
+    receipts,
+    suppliers,
+    month: nykyinen,
+  } = await adminContext("/admin/toimittajat");
 
   const month = monthFromParams(await searchParams, nykyinen);
 
@@ -42,13 +49,18 @@ export default async function SupplierDetailPage({
   const all = receiptsForSupplier(receipts, id);
   const inMonth = receiptsInMonth(all, month);
 
-  const totals = supplierTotalsInMonth(receipts, month).find((s) => s.supplierId === id);
-  const trend = supplierTrends(receipts, month).find((t) => t.supplierId === id);
+  const totals = supplierTotalsInMonth(receipts, month).find(
+    (s) => s.supplierId === id,
+  );
+  const trend = supplierTrends(receipts, month).find(
+    (t) => t.supplierId === id,
+  );
   const series = supplierMonthlySeries(receipts, id, month, 4);
 
   const maxCents = Math.max(...series.map((s) => s.totalCents), 1);
   const monthTotal = inMonth.reduce((s, r) => s + r.totalCents, 0);
-  const average = inMonth.length === 0 ? 0 : Math.round(monthTotal / inMonth.length);
+  const average =
+    inMonth.length === 0 ? 0 : Math.round(monthTotal / inMonth.length);
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
@@ -62,13 +74,18 @@ export default async function SupplierDetailPage({
           <RfIcon name="back" size={22} />
         </Link>
         <div>
-          <h2 className="text-[20px] font-bold tracking-[-0.02em]">{supplier.name}</h2>
-          <p className="mt-0.5 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
+          <h2 className="text-[20px] font-bold tracking-[-0.02em]">
+            {supplier.name}
+          </h2>
+          <p
+            className="mt-0.5 text-[15px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             <span className="inline-flex items-center gap-1.5 align-middle">
               <CategoryIcon category={supplier.defaultCategory} size={15} />
-              {CATEGORY_LABELS[supplier.defaultCategory]}
+              {nimet.categories[supplier.defaultCategory]}
             </span>{" "}
-            · {formatMonth(month)}
+            · {formatMonth(month, locale)}
           </p>
         </div>
       </div>
@@ -84,7 +101,7 @@ export default async function SupplierDetailPage({
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
           tone="muted"
-          conclusion={formatMonth(month)}
+          conclusion={formatMonth(month, locale)}
         />
         <MetricCard
           label="Yhteensä"
@@ -110,7 +127,9 @@ export default async function SupplierDetailPage({
            * Prosenttiluku ei nouse paikalleen: CountUp osaa euroja,
            * kokonaislukuja ja tunteja, ei prosentteja.
            */
-          value={trend?.change === null || !trend ? "—" : formatChange(trend.change)}
+          value={
+            trend?.change === null || !trend ? "—" : formatChange(trend.change)
+          }
           tone="muted"
           conclusion={
             trend && trend.change !== null
@@ -122,13 +141,19 @@ export default async function SupplierDetailPage({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Kulut kuukausittain" subtitle="Neljä viimeisintä kuukautta" />
+          <CardHeader
+            title="Kulut kuukausittain"
+            subtitle="Neljä viimeisintä kuukautta"
+          />
           <ul className="space-y-3">
             {series.map((point) => (
               <li key={point.month}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-                    {formatMonth(point.month)}
+                  <span
+                    className="text-[14px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
+                    {formatMonth(point.month, locale)}
                   </span>
                   <span className="rf-tabular text-[14px] font-semibold">
                     {formatMoney(point.totalCents)}
@@ -138,20 +163,25 @@ export default async function SupplierDetailPage({
                   className="mt-1.5 h-1.5 w-full overflow-hidden"
                   style={{ background: "var(--rf-inset)", borderRadius: 999 }}
                   role="img"
-                  aria-label={`${formatMonth(point.month)}: ${formatMoney(point.totalCents)}`}
+                  aria-label={`${formatMonth(point.month, locale)}: ${formatMoney(point.totalCents)}`}
                 >
                   <div
                     className="h-full"
                     style={{
                       width: `${Math.max(2, (point.totalCents / maxCents) * 100)}%`,
                       background:
-                        point.month === month ? "var(--rf-text)" : "var(--rf-line-strong)",
+                        point.month === month
+                          ? "var(--rf-text)"
+                          : "var(--rf-line-strong)",
                       borderRadius: 999,
                     }}
                   />
                 </div>
-                <p className="rf-tabular mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                  {receiptCountLabel(point.receiptCount)}
+                <p
+                  className="rf-tabular mt-1 text-[12px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {receiptCountLabel(point.receiptCount, locale)}
                 </p>
               </li>
             ))}
@@ -159,17 +189,23 @@ export default async function SupplierDetailPage({
         </Card>
 
         <Card>
-          <CardHeader title="Mihin tämän toimittajan rahat menevät" subtitle="Rivikohtaisesti" />
+          <CardHeader
+            title="Mihin tämän toimittajan rahat menevät"
+            subtitle="Rivikohtaisesti"
+          />
           {totals && totals.categories.length > 0 ? (
             <ul className="space-y-3">
               {totals.categories.map((c) => (
-                <li key={c.category} className="flex items-baseline justify-between gap-3">
+                <li
+                  key={c.category}
+                  className="flex items-baseline justify-between gap-3"
+                >
                   <span className="text-[14px]">
                     <span className="inline-flex items-center gap-2">
                       <span style={{ color: "var(--rf-text-2)" }}>
                         <CategoryIcon category={c.category} size={16} />
                       </span>
-                      {CATEGORY_LABELS[c.category]}
+                      {nimet.categories[c.category]}
                     </span>
                   </span>
                   <span className="rf-tabular text-[14px] font-semibold">
@@ -195,8 +231,10 @@ export default async function SupplierDetailPage({
             >
               Olet korjannut tämän toimittajan kategorian{" "}
               {supplier.categoryOverrides[0].count} kertaa muotoon{" "}
-              <strong>{CATEGORY_LABELS[supplier.categoryOverrides[0].to]}</strong>.
-              Kate ehdottaa sitä jatkossa automaattisesti.
+              <strong>
+                {nimet.categories[supplier.categoryOverrides[0].to]}
+              </strong>
+              . Kate ehdottaa sitä jatkossa automaattisesti.
             </div>
           ) : null}
         </Card>
@@ -214,26 +252,41 @@ export default async function SupplierDetailPage({
                 <th scope="col">Päivä</th>
                 <th scope="col">Kuittinumero</th>
                 <th scope="col">Maksutapa</th>
-                <th scope="col" className="text-right">Rivejä</th>
-                <th scope="col" className="text-right">Yhteensä</th>
+                <th scope="col" className="text-right">
+                  Rivejä
+                </th>
+                <th scope="col" className="text-right">
+                  Yhteensä
+                </th>
               </tr>
             </thead>
             <tbody>
               {all.slice(0, 25).map((r) => (
                 <tr key={r.id}>
                   <td className="rf-tabular">{formatDate(r.date)}</td>
-                  <td className="px-5 py-3 font-mono text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+                  <td
+                    className="px-5 py-3 font-mono text-[12px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {r.receiptNumber ?? "—"}
                   </td>
-                  <td className="px-5 py-3" style={{ color: "var(--rf-text-2)" }}>
-                    {PAYMENT_LABELS[r.paymentMethod]}
+                  <td
+                    className="px-5 py-3"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
+                    {nimet.payments[r.paymentMethod]}
                   </td>
-                  <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
+                  <td
+                    className="rf-tabular px-5 py-3 text-right"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {r.items.length || "—"}
                   </td>
                   <td className="num">
                     <span className="inline-flex items-center gap-2">
-                      {r.status === "needs_review" ? <SeverityDot severity="warning" /> : null}
+                      {r.status === "needs_review" ? (
+                        <SeverityDot severity="warning" />
+                      ) : null}
                       <span className="rf-tabular font-semibold">
                         {formatMoney(r.totalCents)}
                       </span>
@@ -245,7 +298,10 @@ export default async function SupplierDetailPage({
           </table>
         </div>
         {all.length > 25 ? (
-          <p className="px-5 pb-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="px-5 pb-4 text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Näytetään 25 uusinta {all.length} kuitista.
           </p>
         ) : null}

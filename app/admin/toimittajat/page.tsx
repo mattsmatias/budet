@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -11,8 +12,10 @@ import {
   receiptCountLabel,
   receiptsInMonth,
 } from "@/lib/restoflow/expenses";
-import { supplierTotalsInMonth, supplierTrends } from "@/lib/restoflow/suppliers";
-import { CATEGORY_LABELS } from "@/lib/restoflow/types";
+import {
+  supplierTotalsInMonth,
+  supplierTrends,
+} from "@/lib/restoflow/suppliers";
 import { CategoryIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 import {
@@ -35,15 +38,18 @@ export const metadata = { title: "Toimittajat" };
 export default async function SuppliersPage({
   searchParams,
 }: PageProps<"/admin/toimittajat">) {
-  const {
-    receipts, month: nykyinen,
-  } = await adminContext("/admin/toimittajat");
-  const t = adminText(await resolveLocale());
+  const { receipts, month: nykyinen } =
+    await adminContext("/admin/toimittajat");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const month = monthFromParams(await searchParams, nykyinen);
 
   const totals = supplierTotalsInMonth(receipts, month);
-  const trends = new Map(supplierTrends(receipts, month).map((t) => [t.supplierId, t]));
+  const trends = new Map(
+    supplierTrends(receipts, month).map((t) => [t.supplierId, t]),
+  );
 
   const grandTotal = totals.reduce((s, t) => s + t.totalCents, 0);
   const inMonth = receiptsInMonth(receipts, month);
@@ -53,7 +59,7 @@ export default async function SuppliersPage({
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Kenelle rahamme menevät? · {formatMonth(month)}
+          Kenelle rahamme menevät? · {formatMonth(month, locale)}
         </p>
       </div>
 
@@ -93,7 +99,7 @@ export default async function SuppliersPage({
           tileTone="green"
           value={<CountUp to={grandTotal} format="money" />}
           tone="muted"
-          conclusion={receiptCountLabel(inMonth.length)}
+          conclusion={receiptCountLabel(inMonth.length, locale)}
           href="/admin/kulut"
           linkLabel="Kulut"
         />
@@ -125,12 +131,14 @@ export default async function SuppliersPage({
           conclusion={
             biggest
               ? fill(t.toimittajat.shareOfExpenses, {
-                summa: formatMoney(biggest.totalCents),
-                osuus: String(Math.round(biggest.share * 100)),
-              })
+                  summa: formatMoney(biggest.totalCents),
+                  osuus: String(Math.round(biggest.share * 100)),
+                })
               : "Ei kuitteja tässä kuussa"
           }
-          href={biggest ? `/admin/toimittajat/${biggest.supplierId}` : undefined}
+          href={
+            biggest ? `/admin/toimittajat/${biggest.supplierId}` : undefined
+          }
           linkLabel="Avaa"
         />
       </section>
@@ -151,7 +159,8 @@ export default async function SuppliersPage({
           <ul className="space-y-3 px-5 pb-5 md:hidden">
             {totals.map((s) => {
               const trend = trends.get(s.supplierId);
-              const spike = trend?.change !== null && (trend?.change ?? 0) >= 0.25;
+              const spike =
+                trend?.change !== null && (trend?.change ?? 0) >= 0.25;
 
               return (
                 <li key={s.supplierId}>
@@ -161,7 +170,9 @@ export default async function SuppliersPage({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-[15px] font-semibold">{s.name}</span>
+                        <span className="truncate text-[15px] font-semibold">
+                          {s.name}
+                        </span>
                         <span className="rf-tabular shrink-0 text-[16px] font-semibold">
                           {formatMoney(s.totalCents)}
                         </span>
@@ -171,8 +182,9 @@ export default async function SuppliersPage({
                         className="rf-tabular mt-0.5 block text-[12px]"
                         style={{ color: "var(--rf-text-3)" }}
                       >
-                        {receiptCountLabel(s.receiptCount)} · ka.{" "}
-                        {formatMoney(s.averageCents)} · {Math.round(s.share * 100)} %
+                        {receiptCountLabel(s.receiptCount, locale)} · ka.{" "}
+                        {formatMoney(s.averageCents)} ·{" "}
+                        {Math.round(s.share * 100)} %
                       </span>
 
                       <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -183,12 +195,15 @@ export default async function SuppliersPage({
                             style={{ color: "var(--rf-text-2)" }}
                           >
                             <CategoryIcon category={c.category} size={13} />
-                            {CATEGORY_LABELS[c.category]}
+                            {nimet.categories[c.category]}
                           </span>
                         ))}
 
                         {trend?.change === null || trend === undefined ? (
-                          <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                          <span
+                            className="text-[12px]"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
                             uusi
                           </span>
                         ) : spike ? (
@@ -196,14 +211,20 @@ export default async function SuppliersPage({
                             {formatChange(trend.change)}
                           </Pill>
                         ) : (
-                          <span className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+                          <span
+                            className="text-[12px]"
+                            style={{ color: "var(--rf-text-2)" }}
+                          >
                             {formatChange(trend.change)}
                           </span>
                         )}
                       </span>
                     </span>
 
-                    <span className="mt-1 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      className="mt-1 shrink-0"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       <RfIcon name="chevron" size={16} />
                     </span>
                   </Link>
@@ -245,17 +266,26 @@ export default async function SuppliersPage({
                 <tr>
                   <th scope="col">{t.sanat.supplier}</th>
                   <th scope="col">{t.toimittajat.categories}</th>
-                  <th scope="col" className="text-right">{t.sanat.receiptCount}</th>
-                  <th scope="col" className="text-right">{t.toimittajat.average}</th>
-                  <th scope="col" className="text-right">{t.toimittajat.change}</th>
-                  <th scope="col" className="text-right">{t.kuitit.total}</th>
+                  <th scope="col" className="text-right">
+                    {t.sanat.receiptCount}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.toimittajat.average}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.toimittajat.change}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.kuitit.total}
+                  </th>
                   <th scope="col" />
                 </tr>
               </thead>
               <tbody>
                 {totals.map((s) => {
                   const trend = trends.get(s.supplierId);
-                  const spike = trend?.change !== null && (trend?.change ?? 0) >= 0.25;
+                  const spike =
+                    trend?.change !== null && (trend?.change ?? 0) >= 0.25;
 
                   return (
                     <tr key={s.supplierId}>
@@ -266,7 +296,10 @@ export default async function SuppliersPage({
                         >
                           {s.name}
                         </Link>
-                        <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                        <p
+                          className="rf-tabular text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
                           {Math.round(s.share * 100)} % kaikista kuluista
                         </p>
                       </td>
@@ -277,11 +310,11 @@ export default async function SuppliersPage({
                               key={c.category}
                               className="text-[12px]"
                               style={{ color: "var(--rf-text-2)" }}
-                              title={CATEGORY_LABELS[c.category]}
+                              title={nimet.categories[c.category]}
                             >
                               <span className="inline-flex items-center gap-1.5">
                                 <CategoryIcon category={c.category} size={14} />
-                                {CATEGORY_LABELS[c.category]}
+                                {nimet.categories[c.category]}
                               </span>
                             </span>
                           ))}
@@ -296,7 +329,9 @@ export default async function SuppliersPage({
                       </td>
                       <td className="num">
                         {trend?.change === null || trend === undefined ? (
-                          <span style={{ color: "var(--rf-text-3)" }}>uusi</span>
+                          <span style={{ color: "var(--rf-text-3)" }}>
+                            uusi
+                          </span>
                         ) : spike ? (
                           <Pill tone="warn" dot>
                             {formatChange(trend.change)}
@@ -307,13 +342,13 @@ export default async function SuppliersPage({
                           </span>
                         )}
                       </td>
-                      <td className="num">
-                        {formatMoney(s.totalCents)}
-                      </td>
+                      <td className="num">{formatMoney(s.totalCents)}</td>
                       <td className="num">
                         <Link
                           href={`/admin/toimittajat/${s.supplierId}`}
-                          aria-label={fill(t.toimittajat.openSupplier, { nimi: s.name })}
+                          aria-label={fill(t.toimittajat.openSupplier, {
+                            nimi: s.name,
+                          })}
                           style={{ color: "var(--rf-text-3)" }}
                         >
                           <RfIcon name="chevron" size={16} />

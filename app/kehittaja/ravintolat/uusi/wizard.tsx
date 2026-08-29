@@ -52,28 +52,67 @@ export function Wizard() {
           />
 
           <div className="mt-4 space-y-3.5">
-            <Kentta label="Ravintolan nimi" name="name" required placeholder="Ravintola ABC" />
+            <Kentta
+              label="Ravintolan nimi"
+              name="name"
+              required
+              placeholder="Ravintola ABC"
+            />
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Kentta label="Virallinen yrityksen nimi" name="legalName" placeholder="Ravintola ABC Oy" />
-              <Kentta label="Y-tunnus" name="businessId" placeholder="1234567-8" />
+              <Kentta
+                label="Virallinen yrityksen nimi"
+                name="legalName"
+                placeholder="Ravintola ABC Oy"
+              />
+              <Kentta
+                label="Y-tunnus"
+                name="businessId"
+                placeholder="1234567-8"
+              />
             </div>
 
-            <Kentta label="Osoite" name="address" placeholder="Mannerheimintie 1" />
+            <Kentta
+              label="Osoite"
+              name="address"
+              placeholder="Mannerheimintie 1"
+            />
 
             <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
-              <Kentta label="Postinumero" name="postalCode" placeholder="00100" />
+              <Kentta
+                label="Postinumero"
+                name="postalCode"
+                placeholder="00100"
+              />
               <Kentta label="Kaupunki" name="city" placeholder="Helsinki" />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Kentta label="Puhelinnumero" name="phone" type="tel" placeholder="+358 40 123 4567" />
-              <Kentta label="Sähköposti" name="email" type="email" placeholder="info@ravintola.fi" />
+              <Kentta
+                label="Puhelinnumero"
+                name="phone"
+                type="tel"
+                placeholder="+358 40 123 4567"
+              />
+              <Kentta
+                label="Sähköposti"
+                name="email"
+                type="email"
+                placeholder="info@ravintola.fi"
+              />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Kentta label="Verkkosivu" name="website" placeholder="https://ravintola.fi" />
-              <Kentta label="Toimiala" name="industry" placeholder="Ravintola" />
+              <Kentta
+                label="Verkkosivu"
+                name="website"
+                placeholder="https://ravintola.fi"
+              />
+              <Kentta
+                label="Toimiala"
+                name="industry"
+                placeholder="Ravintola"
+              />
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -91,7 +130,12 @@ export function Wizard() {
                 label="Paketti"
                 name="plan"
                 defaultValue="free"
-                options={{ free: "Free", pro: "Pro", business: "Business", enterprise: "Enterprise" }}
+                options={{
+                  free: "Free",
+                  pro: "Pro",
+                  business: "Business",
+                  enterprise: "Enterprise",
+                }}
               />
             </div>
 
@@ -133,7 +177,10 @@ export function Wizard() {
               <input type="checkbox" name="isTest" className="mt-0.5 h-4 w-4" />
               <span>
                 Testiravintola
-                <span className="mt-0.5 block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="mt-0.5 block text-[12px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   Jätetään pois asiakasluvuista.
                 </span>
               </span>
@@ -260,7 +307,12 @@ function Askelmerkit({ vaihe }: { vaihe: 1 | 2 }) {
             >
               {s.n}
             </span>
-            <span style={{ color: active ? "var(--rf-text)" : "var(--rf-text-3)", fontWeight: active ? 700 : 500 }}>
+            <span
+              style={{
+                color: active ? "var(--rf-text)" : "var(--rf-text-3)",
+                fontWeight: active ? 700 : 500,
+              }}
+            >
               {s.label}
             </span>
           </li>
@@ -288,8 +340,13 @@ function Valmis({ state }: { state: DevState }) {
           </span>
 
           <div className="min-w-0">
-            <h2 className="text-[16px] font-bold tracking-[-0.01em]">Ravintola luotu</h2>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <h2 className="text-[16px] font-bold tracking-[-0.01em]">
+              Ravintola luotu
+            </h2>
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {state.notice}
             </p>
           </div>
@@ -317,15 +374,21 @@ function Valmis({ state }: { state: DevState }) {
               sulkee lukematta koodia, sitä ei saa takaisin — silloin
               on luotava uusi kutsu.
             */}
-            <p className="mt-2 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+            <p
+              className="mt-2 text-[12px]"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
               Kopioi koodi nyt. Sitä ei voi hakea myöhemmin, koska kannassa on
               vain tiiviste. Kadonneen tilalle luodaan uusi kutsu.
             </p>
 
-            <p className="mt-2 text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-              Omistaja rekisteröityy osoitteessa <strong>/rekisteroidy</strong> ja
-              lunastaa koodin kohdassa <strong>/liity</strong>. Salasana jää vain
-              hänen tietoonsa.
+            <p
+              className="mt-2 text-[12.5px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              Omistaja rekisteröityy osoitteessa <strong>/rekisteroidy</strong>{" "}
+              ja lunastaa koodin kohdassa <strong>/liity</strong>. Salasana jää
+              vain hänen tietoonsa.
             </p>
           </div>
         ) : null}
@@ -407,7 +470,10 @@ function Kentta({
       <span className="block text-[12.5px] font-semibold">
         {label}
         {required ? null : (
-          <span className="ml-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+          <span
+            className="ml-1 font-normal"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             valinnainen
           </span>
         )}

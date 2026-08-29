@@ -51,7 +51,10 @@ export function formatMoney(
 }
 
 /** Muotoilee verokannan: 0.1350 → "13,5 %". */
-export function formatRate(rate: number | null | undefined, locale = "fi-FI"): string {
+export function formatRate(
+  rate: number | null | undefined,
+  locale = "fi-FI",
+): string {
   if (rate === null || rate === undefined) return "—";
   return new Intl.NumberFormat(locale, {
     style: "percent",
@@ -69,12 +72,16 @@ export function parseAmountToCents(input: string): number | null {
 
 function assertInteger(value: number, name: string): void {
   if (!Number.isInteger(value)) {
-    throw new TypeError(`${name} on oltava kokonaisluku (senttejä), sai: ${value}`);
+    throw new TypeError(
+      `${name} on oltava kokonaisluku (senttejä), sai: ${value}`,
+    );
   }
 }
 
 function assertRate(rate: number): void {
   if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
-    throw new RangeError(`Verokanta on annettava osuutena välillä 0–1, sai: ${rate}`);
+    throw new RangeError(
+      `Verokanta on annettava osuutena välillä 0–1, sai: ${rate}`,
+    );
   }
 }

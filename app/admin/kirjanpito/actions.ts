@@ -156,7 +156,8 @@ export async function postAll(
   let kirjattu = 0;
   for (const row of rows) {
     const { error } = await supabase.rpc("ledger_post", { p_entry: row.id });
-    if (error) return { error: `${kirjattu} kirjattu, sitten: ${error.message}` };
+    if (error)
+      return { error: `${kirjattu} kirjattu, sitten: ${error.message}` };
     kirjattu += 1;
   }
 

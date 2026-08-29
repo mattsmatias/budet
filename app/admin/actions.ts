@@ -44,7 +44,10 @@ export interface AdminState {
 
 /** "14,50" tai "14.50" → 1450. Tyhjä → null. */
 function parseEuros(value: FormDataEntryValue | null): number | null {
-  const raw = String(value ?? "").trim().replace(",", ".").replace(/\s/g, "");
+  const raw = String(value ?? "")
+    .trim()
+    .replace(",", ".")
+    .replace(/\s/g, "");
   if (raw === "") return null;
   const parsed = Number.parseFloat(raw);
   if (!Number.isFinite(parsed) || parsed < 0) return null;
@@ -109,7 +112,9 @@ export async function acceptInvitation(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  const code = String(formData.get("code") ?? "")
+    .trim()
+    .toUpperCase();
   if (code.length < 4) return { error: t.toiminnot.enterCode };
 
   const supabase = await createClient();
@@ -117,9 +122,12 @@ export async function acceptInvitation(
 
   if (error) {
     const message = error.message ?? "";
-    if (message.includes(t.toiminnot.notFound)) return { error: t.toiminnot.codeNotFound };
-    if (message.includes(t.toiminnot.alreadyUsed)) return { error: t.toiminnot.codeUsed };
-    if (message.includes("vanhentunut")) return { error: t.toiminnot.codeExpired };
+    if (message.includes(t.toiminnot.notFound))
+      return { error: t.toiminnot.codeNotFound };
+    if (message.includes(t.toiminnot.alreadyUsed))
+      return { error: t.toiminnot.codeUsed };
+    if (message.includes("vanhentunut"))
+      return { error: t.toiminnot.codeExpired };
     return { error: explain(error, t.toiminnot.joinFailed, t) };
   }
 
@@ -168,8 +176,7 @@ export async function updateMembership(
   if (error) {
     if (error.message?.includes(t.toiminnot.needOwner)) {
       return {
-        error:
-          t.toiminnot.needOwnerBody,
+        error: t.toiminnot.needOwnerBody,
       };
     }
     return { error: explain(error, t.toiminnot.saveFailed, t) };
@@ -262,11 +269,11 @@ export async function deleteReceipt(formData: FormData): Promise<void> {
 
 const shiftSchema = (t: AdminText) =>
   z.object({
-  date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
-  start: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkStart),
-  end: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkEnd),
-  location: z.string().trim().max(80),
-});
+    date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
+    start: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkStart),
+    end: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkEnd),
+    location: z.string().trim().max(80),
+  });
 
 export async function saveShift(
   _prev: AdminState,
@@ -303,7 +310,9 @@ export async function saveShift(
   const breakMinutes =
     Number.isFinite(breakRaw) && breakRaw > 0 ? Math.round(breakRaw) : 0;
 
-  const note = String(formData.get("note") ?? "").trim().slice(0, 200);
+  const note = String(formData.get("note") ?? "")
+    .trim()
+    .slice(0, 200);
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("upsert_shift", {
@@ -426,15 +435,15 @@ export async function deleteShift(formData: FormData): Promise<void> {
 
 const receiptSchema = (t: AdminText) =>
   z.object({
-  supplier: z.string().trim().min(1, t.toiminnot.supplierMissing).max(160),
-  date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
-  totalCents: z.number().int().min(0, t.toiminnot.totalMissing),
-  vatCents: z.number().int().min(0).nullable(),
-  category: z.string().min(1, t.toiminnot.chooseCategory),
-  payment: z.string().min(1),
-  receiptNumber: z.string().trim().max(64).nullable(),
-  note: z.string().trim().max(500).nullable(),
-});
+    supplier: z.string().trim().min(1, t.toiminnot.supplierMissing).max(160),
+    date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
+    totalCents: z.number().int().min(0, t.toiminnot.totalMissing),
+    vatCents: z.number().int().min(0).nullable(),
+    category: z.string().min(1, t.toiminnot.chooseCategory),
+    payment: z.string().min(1),
+    receiptNumber: z.string().trim().max(64).nullable(),
+    note: z.string().trim().max(500).nullable(),
+  });
 
 /**
  * Tallentaa kuitin riveineen.
@@ -503,10 +512,12 @@ export async function saveReceipt(
   });
 
   if (error) {
-    if (error.code === "23505" || error.message?.includes("receipts_hash_unique")) {
+    if (
+      error.code === "23505" ||
+      error.message?.includes("receipts_hash_unique")
+    ) {
       return {
-        error:
-          t.toiminnot.duplicateFile,
+        error: t.toiminnot.duplicateFile,
       };
     }
     return { error: explain(error, t.toiminnot.receiptSaveFailed, t) };
@@ -533,10 +544,9 @@ export async function saveReceipt(
     if (pageError) {
       revalidatePath("/admin", "layout");
       return {
-        notice:
-          fill(t.toiminnot.extraPagesLost, {
-            maara: String(pages.length - 1),
-          }),
+        notice: fill(t.toiminnot.extraPagesLost, {
+          maara: String(pages.length - 1),
+        }),
         receiptId: data as string,
       };
     }
@@ -671,9 +681,9 @@ async function linkSupplierToMerchant(
 
 const restaurantSchema = (t: AdminText) =>
   z.object({
-  name: z.string().trim().min(1, t.toiminnot.nameMissing).max(120),
-  timezone: z.string().trim().min(1, t.toiminnot.chooseTimezone),
-});
+    name: z.string().trim().min(1, t.toiminnot.nameMissing).max(120),
+    timezone: z.string().trim().min(1, t.toiminnot.chooseTimezone),
+  });
 
 /**
  * Ravintolan nimi ja aikavyöhyke.
@@ -711,7 +721,8 @@ export async function updateRestaurant(
     p_timezone: parsed.data.timezone,
   });
 
-  if (error) return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
+  if (error)
+    return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
@@ -750,7 +761,8 @@ export async function updateShiftRules(
     p_clock_in_early_minutes: minutes,
   });
 
-  if (error) return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
+  if (error)
+    return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
@@ -838,7 +850,9 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
  * on nähty ja mille ajalle poissaolo on ilmoitettu — se mitä
  * palkanmaksuun tarvitaan.
  */
-export async function markAbsenceCertificate(formData: FormData): Promise<void> {
+export async function markAbsenceCertificate(
+  formData: FormData,
+): Promise<void> {
   const id = String(formData.get("absenceId") ?? "");
   if (!id) return;
 
@@ -863,14 +877,21 @@ export async function markAbsenceCertificate(formData: FormData): Promise<void> 
 
 const categorySchema = (t: AdminText) =>
   z.object({
-  id: z.string().uuid().nullable(),
-  name: z.string().trim().min(1, t.toiminnot.nameMissing).max(60),
-  base: z.enum([
-    "food", "alcohol", "soft_drinks", "cleaning", "kitchen_supplies",
-    "packaging", "staff", "transport", "other",
-  ]),
-  active: z.boolean(),
-});
+    id: z.string().uuid().nullable(),
+    name: z.string().trim().min(1, t.toiminnot.nameMissing).max(60),
+    base: z.enum([
+      "food",
+      "alcohol",
+      "soft_drinks",
+      "cleaning",
+      "kitchen_supplies",
+      "packaging",
+      "staff",
+      "transport",
+      "other",
+    ]),
+    active: z.boolean(),
+  });
 
 /**
  * Luo tai muokkaa ravintolan omaa kategoriaa.

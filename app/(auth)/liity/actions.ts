@@ -22,7 +22,10 @@ import {
 } from "./invite";
 
 /** Lukee tallennetun koodin. Palauttaa myös kutsun tiedot jos se on yhä voimassa. */
-export async function readInvite(): Promise<{ code: string; preview: InvitePreview } | null> {
+export async function readInvite(): Promise<{
+  code: string;
+  preview: InvitePreview;
+} | null> {
   const store = await cookies();
   const code = store.get(INVITE_COOKIE)?.value;
   if (!code) return null;
@@ -33,7 +36,9 @@ export async function readInvite(): Promise<{ code: string; preview: InvitePrevi
 
 async function lookup(code: string): Promise<InvitePreview | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("preview_invitation", { p_code: code });
+  const { data, error } = await supabase.rpc("preview_invitation", {
+    p_code: code,
+  });
 
   if (error || !Array.isArray(data) || data.length === 0) return null;
 
@@ -63,7 +68,9 @@ export async function checkInvite(
 ): Promise<InviteState> {
   const t = authText(await resolveLocale());
 
-  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  const code = String(formData.get("code") ?? "")
+    .trim()
+    .toUpperCase();
   if (code.length < 4) return { error: t.virheet.enterCode };
 
   const preview = await lookup(code);

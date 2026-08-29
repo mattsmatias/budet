@@ -1,10 +1,22 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
-import { buildInsights, insightSeries, sortInsights, type Insight } from "@/lib/restoflow/insights";
+import {
+  buildInsights,
+  insightSeries,
+  sortInsights,
+  type Insight,
+} from "@/lib/restoflow/insights";
 import { formatMonth } from "@/lib/restoflow/expenses";
 import { RfIcon } from "@/components/restoflow/icons";
-import { BarRow, Card, CardHeader, EmptyState, ScopeNotice } from "@/components/restoflow/ui";
+import {
+  BarRow,
+  Card,
+  CardHeader,
+  EmptyState,
+  ScopeNotice,
+} from "@/components/restoflow/ui";
 
 export const metadata = { title: "Havainnot" };
 
@@ -19,15 +31,33 @@ export const metadata = { title: "Havainnot" };
 export default async function InsightsPage({
   searchParams,
 }: PageProps<"/admin/havainnot">) {
-  const { receipts, budgets, shifts, users, clockEvents, month: nykyinen, today, now, restaurant } =
-    await adminContext("/admin/havainnot");
+  const locale = await resolveLocale();
+  const {
+    receipts,
+    budgets,
+    shifts,
+    users,
+    clockEvents,
+    month: nykyinen,
+    today,
+    now,
+    restaurant,
+  } = await adminContext("/admin/havainnot");
 
   const month = monthFromParams(await searchParams, nykyinen);
 
   const insights = sortInsights(
     buildInsights({
-      receipts, budgets, shifts, users, clockEvents, month, today, now,
+      receipts,
+      budgets,
+      shifts,
+      users,
+      clockEvents,
+      month,
+      today,
+      now,
       timezone: restaurant.timezone,
+      locale,
     }),
   );
 
@@ -40,7 +70,7 @@ export default async function InsightsPage({
     <div className="rf-enter space-y-5 md:space-y-6">
       <div>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonth(month)} ·{" "}
+          {formatMonth(month, locale)} ·{" "}
           {watch.length === 0
             ? "ei seurattavaa"
             : `${watch.length} asiaa seurattavana`}
@@ -49,8 +79,7 @@ export default async function InsightsPage({
 
       <ScopeNotice>
         Havainnot lasketaan aineistosta joka latauksella. Ne eivät ole
-        ennusteita eivätkä neuvoja — ne kertovat mitä luvuissa on jo
-        tapahtunut.
+        ennusteita eivätkä neuvoja — ne kertovat mitä luvuissa on jo tapahtunut.
       </ScopeNotice>
 
       {insights.length === 0 ? (
@@ -78,7 +107,7 @@ export default async function InsightsPage({
             {series.map((point) => (
               <BarRow
                 key={point.month}
-                label={formatMonth(point.month)}
+                label={formatMonth(point.month, locale)}
                 valueCents={point.totalCents}
                 share={point.totalCents / peak}
                 meta={`${point.receiptCount} kuittia`}
@@ -87,7 +116,10 @@ export default async function InsightsPage({
               />
             ))}
           </div>
-          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-4 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Palkin pituus on suhteessa kuuden kuukauden suurimpaan, ei
             budjettiin. Kuluva kuukausi on kesken, joten sen palkki kasvaa
             vielä.
@@ -103,10 +135,22 @@ export default async function InsightsPage({
 function InsightCard({ insight }: { insight: Insight }) {
   const tone =
     insight.tone === "watch"
-      ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)", icon: "alert" as const }
+      ? {
+          bg: "var(--rf-amber-bg)",
+          fg: "var(--rf-amber-text)",
+          icon: "alert" as const,
+        }
       : insight.tone === "good"
-        ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)", icon: "check" as const }
-        : { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)", icon: "info" as const };
+        ? {
+            bg: "var(--rf-green-bg)",
+            fg: "var(--rf-green-text)",
+            icon: "check" as const,
+          }
+        : {
+            bg: "var(--rf-blue-bg)",
+            fg: "var(--rf-blue-text)",
+            icon: "info" as const,
+          };
 
   const body = (
     <Card className="h-full">
@@ -121,7 +165,10 @@ function InsightCard({ insight }: { insight: Insight }) {
 
         <div className="min-w-0">
           <p className="text-[15px] font-semibold">{insight.title}</p>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-1 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {insight.detail}
           </p>
         </div>

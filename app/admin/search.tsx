@@ -219,7 +219,10 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
           </div>
 
           {results.length === 0 ? (
-            <p className="px-4 py-5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="px-4 py-5 text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {query.trim() === ""
                 ? t.kuori.searchHint
                 : `Ei osumaa haulle “${query.trim()}”.`}
@@ -234,10 +237,14 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
                     onMouseEnter={() => setActive(index)}
                     className="flex items-center gap-3 px-4 py-2.5"
                     style={{
-                      background: index === active ? "var(--rf-inset)" : "transparent",
+                      background:
+                        index === active ? "var(--rf-inset)" : "transparent",
                     }}
                   >
-                    <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      className="shrink-0"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       <RfIcon name={item.icon} size={16} />
                     </span>
 
@@ -255,7 +262,10 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
 
                     <span
                       className="shrink-0 text-[11px] font-medium uppercase"
-                      style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+                      style={{
+                        color: "var(--rf-text-3)",
+                        letterSpacing: "0.05em",
+                      }}
                     >
                       {item.group}
                     </span>
@@ -291,10 +301,15 @@ function match(items: SearchItem[], query: string): SearchItem[] {
 
   return items
     .map((item) => ({ item, at: item.label.toLowerCase().indexOf(needle) }))
-    .filter(({ item, at }) => at >= 0 || item.detail.toLowerCase().includes(needle))
+    .filter(
+      ({ item, at }) => at >= 0 || item.detail.toLowerCase().includes(needle),
+    )
     .sort((a, b) => {
       const rank = (at: number) => (at === 0 ? 0 : at > 0 ? 1 : 2);
-      return rank(a.at) - rank(b.at) || a.item.label.localeCompare(b.item.label, "fi");
+      return (
+        rank(a.at) - rank(b.at) ||
+        a.item.label.localeCompare(b.item.label, "fi")
+      );
     })
     .slice(0, LIMIT)
     .map(({ item }) => item);

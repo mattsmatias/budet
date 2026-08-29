@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { previousMonth } from "@/lib/restoflow/expenses";
-import { CATEGORY_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { Pill, ScopeNotice } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MonthClosing } from "./settings-form";
@@ -30,6 +31,8 @@ export default async function SettingsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const params = await searchParams;
   const { restaurant, role, user, users, closedMonths, categories, month } =
     await adminContext("/admin/asetukset");
@@ -58,7 +61,8 @@ export default async function SettingsPage({
    * kirjoittaa itse — ja tyhjä osio olisi hämmentävämpi kuin se että
    * näkyy jotain mitä oikeasti saa muuttaa.
    */
-  const shown = section.ownerOnly && !canEdit ? sectionFor("profiili") : section;
+  const shown =
+    section.ownerOnly && !canEdit ? sectionFor("profiili") : section;
 
   return (
     <div className="rf-enter space-y-4">
@@ -76,7 +80,10 @@ export default async function SettingsPage({
           <Panel title={shown.label} summary={shown.summary}>
             {shown.id === "ravintola" ? (
               <>
-                <RestaurantForm name={restaurant.name} timezone={restaurant.timezone} />
+                <RestaurantForm
+                  name={restaurant.name}
+                  timezone={restaurant.timezone}
+                />
 
                 <Divider />
 
@@ -117,7 +124,7 @@ export default async function SettingsPage({
                 <Facts
                   rows={[
                     { label: "Sähköposti", value: user.email ?? "—" },
-                    { label: "Rooli", value: ROLE_LABELS[role] },
+                    { label: "Rooli", value: nimet.roles[role] },
                   ]}
                   note="Sähköposti on kirjautumistunnuksesi eikä sitä voi vaihtaa täältä. Roolin asettaa ravintolan omistaja."
                 />
@@ -149,8 +156,13 @@ export default async function SettingsPage({
 
                 <Divider />
 
-                <h3 className="text-[13.5px] font-bold">Kassajärjestelmän ryhmät</h3>
-                <p className="mt-1 text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+                <h3 className="text-[13.5px] font-bold">
+                  Kassajärjestelmän ryhmät
+                </h3>
+                <p
+                  className="mt-1 text-[12.5px] leading-relaxed"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   Kassa tuntee omat nimensä. Kerro mihin myyntiryhmään kukin
                   niistä kuuluu, niin poiminta osaa kohdistaa raportin rivit
                   oikeille verokannoille.
@@ -175,6 +187,7 @@ export default async function SettingsPage({
                 </p>
 
                 <MonthClosing
+                  locale={locale}
                   closedMonths={closedMonths}
                   selectableMonths={closableMonths(month)}
                 />
@@ -184,11 +197,14 @@ export default async function SettingsPage({
             {shown.id === "kategoriat" ? (
               <>
                 <h3 className="text-[13.5px] font-bold">Vakiokategoriat</h3>
-                <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                <p
+                  className="mt-1 text-[12.5px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   Aina käytettävissä eikä poistettavissa.
                 </p>
                 <ul className="mt-2.5 flex flex-wrap gap-2">
-                  {Object.values(CATEGORY_LABELS).map((label) => (
+                  {Object.values(nimet.categories).map((label) => (
                     <li key={label}>
                       <Pill>{label}</Pill>
                     </li>
@@ -198,16 +214,22 @@ export default async function SettingsPage({
                 <Divider />
 
                 <h3 className="text-[13.5px] font-bold">Omat kategoriat</h3>
-                <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                <p
+                  className="mt-1 text-[12.5px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   Lisää oma kategoria jos vakiot eivät riitä.
                 </p>
-                <CategoryManager categories={categories} />
+                <CategoryManager categories={categories} nimet={nimet} />
               </>
             ) : null}
 
             {shown.id === "loki" ? (
               <div className="space-y-3">
-                <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+                <p
+                  className="text-[13px] leading-relaxed"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
                   Toimintaloki kertoo kuka teki muutoksen, mihin se kohdistui ja
                   mikä arvo oli ennen. Palkkamuutokset, työaikakorjaukset,
                   verokannat ja käyttöoikeudet kirjataan aina.
@@ -227,14 +249,16 @@ export default async function SettingsPage({
                   Avaa toimintaloki
                 </Link>
 
-                <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+                <p
+                  className="text-[12px] leading-relaxed"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   Lokia ei voi muokata eikä poistaa. Merkinnät syntyvät
                   tietokannassa, joten ne kirjautuvat myös silloin kun muutos
                   tehdään käyttöliittymän ohi.
                 </p>
               </div>
             ) : null}
-
           </Panel>
         </div>
       </div>
@@ -283,7 +307,10 @@ function Panel({
       }}
     >
       <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{title}</h2>
-      <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="mt-[3px] text-[12.5px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {summary}
       </p>
 
@@ -293,7 +320,12 @@ function Panel({
 }
 
 function Divider() {
-  return <hr className="my-5 border-0" style={{ borderTop: "1px solid var(--rf-line)" }} />;
+  return (
+    <hr
+      className="my-5 border-0"
+      style={{ borderTop: "1px solid var(--rf-line)" }}
+    />
+  );
 }
 
 /**
@@ -317,7 +349,9 @@ function Facts({
           <div
             key={row.label}
             className="flex items-baseline justify-between gap-4 py-2.5"
-            style={{ borderTop: index === 0 ? "none" : "1px solid var(--rf-line)" }}
+            style={{
+              borderTop: index === 0 ? "none" : "1px solid var(--rf-line)",
+            }}
           >
             <dt className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               {row.label}
@@ -343,7 +377,10 @@ function Facts({
       </dl>
 
       {note ? (
-        <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-3 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {note}
         </p>
       ) : null}

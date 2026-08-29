@@ -49,7 +49,9 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
       }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-[15px] font-bold tracking-[-0.0075em]">Kulurytmi</h3>
+        <h3 className="text-[15px] font-bold tracking-[-0.0075em]">
+          Kulurytmi
+        </h3>
 
         {/*
           Kuukausi ja ostopäivät samalla rivillä.
@@ -73,7 +75,12 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
       */}
       <ol className="mt-[14px] flex h-[84px] items-end gap-[3px]">
         {rhythm.days.map((day, index) => (
-          <Column key={day.date} day={day} max={rhythm.maxCents} index={index} />
+          <Column
+            key={day.date}
+            day={day}
+            max={rhythm.maxCents}
+            index={index}
+          />
         ))}
       </ol>
 
@@ -103,7 +110,8 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
             <strong className="font-bold" style={{ color: "var(--rf-text)" }}>
               {Math.round(rhythm.peakWeekday.share * 100)} %
             </strong>{" "}
-            kuluista osuu {WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "la" ||
+            kuluista osuu{" "}
+            {WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "la" ||
             WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "su"
               ? "viikonlopulle"
               : `${rhythm.peakWeekday.label}sin`}
@@ -158,7 +166,10 @@ function Column({
     : `${day.day}. ${formatMoney(day.cents)}${day.receipts > 0 ? ` · ${day.receipts} kuittia` : ""}`;
 
   return (
-    <li className="relative flex h-full min-w-0 flex-1 flex-col justify-end" title={label}>
+    <li
+      className="relative flex h-full min-w-0 flex-1 flex-col justify-end"
+      title={label}
+    >
       {/* Tuleva päivä on ääriviiva: siltä ei puutu mitään, se ei ole tullut. */}
       {day.isFuture ? (
         <span
@@ -210,8 +221,18 @@ function Column({
 // ---------------------------------------------------------------------------
 
 const MONTHS = [
-  "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-  "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
+  "Tammikuu",
+  "Helmikuu",
+  "Maaliskuu",
+  "Huhtikuu",
+  "Toukokuu",
+  "Kesäkuu",
+  "Heinäkuu",
+  "Elokuu",
+  "Syyskuu",
+  "Lokakuu",
+  "Marraskuu",
+  "Joulukuu",
 ];
 
 /** Kuukauden nimi rytmin ensimmäisestä päivästä. */

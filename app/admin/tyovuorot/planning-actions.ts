@@ -61,7 +61,8 @@ export async function copyShiftRange(
   formData: FormData,
 ): Promise<AdminState> {
   const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta kopioida vuoroja." };
+  if (!can(role, "shifts.manage"))
+    return { error: "Ei oikeutta kopioida vuoroja." };
 
   const from = String(formData.get("from") ?? "");
   const to = String(formData.get("to") ?? "");
@@ -174,7 +175,8 @@ export async function removeShifts(
   formData: FormData,
 ): Promise<AdminState> {
   const { role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta poistaa vuoroja." };
+  if (!can(role, "shifts.manage"))
+    return { error: "Ei oikeutta poistaa vuoroja." };
 
   const ids = formData
     .getAll("id")
@@ -184,12 +186,18 @@ export async function removeShifts(
   if (ids.length === 0) return { error: "Valitse vähintään yksi vuoro." };
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("bulk_remove_shifts", { p_ids: ids });
+  const { data, error } = await supabase.rpc("bulk_remove_shifts", {
+    p_ids: ids,
+  });
 
   if (error) return { error: error.message ?? "Poisto epäonnistui." };
 
   const row = Array.isArray(data) ? data[0] : data;
-  const result = (row ?? {}) as { removed?: number; cancelled?: number; blocked?: number };
+  const result = (row ?? {}) as {
+    removed?: number;
+    cancelled?: number;
+    blocked?: number;
+  };
 
   const removed = Number(result.removed ?? 0);
   const cancelled = Number(result.cancelled ?? 0);
@@ -225,7 +233,8 @@ export async function createRecurringShifts(
   formData: FormData,
 ): Promise<AdminState> {
   const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta luoda vuoroja." };
+  if (!can(role, "shifts.manage"))
+    return { error: "Ei oikeutta luoda vuoroja." };
 
   const from = String(formData.get("from") ?? "");
   const to = String(formData.get("to") ?? "");
@@ -247,7 +256,8 @@ export async function createRecurringShifts(
     .map((value) => Number(value))
     .filter((value) => Number.isInteger(value) && value >= 1 && value <= 7);
 
-  if (weekdays.length === 0) return { error: "Valitse vähintään yksi viikonpäivä." };
+  if (weekdays.length === 0)
+    return { error: "Valitse vähintään yksi viikonpäivä." };
 
   const breakRaw = Number(String(formData.get("break") ?? "0").trim() || "0");
   const position = String(formData.get("position") ?? "");
@@ -261,7 +271,8 @@ export async function createRecurringShifts(
     p_end: end,
     p_from: from,
     p_to: to,
-    p_break: Number.isFinite(breakRaw) && breakRaw > 0 ? Math.round(breakRaw) : 0,
+    p_break:
+      Number.isFinite(breakRaw) && breakRaw > 0 ? Math.round(breakRaw) : 0,
     p_position: (position || null) as StaffPosition | null,
     p_location: String(formData.get("location") ?? ""),
     p_note: String(formData.get("note") ?? "") || null,

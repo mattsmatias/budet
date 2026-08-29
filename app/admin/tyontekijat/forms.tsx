@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import {
   createInvitation,
@@ -8,8 +9,6 @@ import {
   type AdminState,
 } from "../actions";
 import {
-  POSITION_LABELS,
-  ROLE_LABELS,
   type Role,
   type StaffPosition,
   type User,
@@ -32,13 +31,13 @@ const POSITIONS: StaffPosition[] = ["waiter", "kitchen", "manager", "cleaning"];
  * Koodi näytetään kerran. Kannassa on vain tiiviste, joten sitä ei voi
  * hakea myöhemmin — kadonnut koodi mitätöidään ja luodaan uusi.
  */
-export function InviteForm() {
+export function InviteForm({ nimet }: { nimet: Labels }) {
   const [state, action] = useActionState(createInvitation, initial);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<Role>("employee");
 
   if (state.code) {
-    return <InviteCode code={state.code} role={role} />;
+    return <InviteCode nimet={nimet} code={state.code} role={role} />;
   }
 
   if (!open) {
@@ -72,15 +71,23 @@ export function InviteForm() {
       <form action={action} className="space-y-4">
         <p className="text-[15px] font-semibold">Kutsu käyttäjä</p>
 
-        <Select label="Rooli" name="role" value={role} onChange={(v) => setRole(v as Role)}>
+        <Select
+          label="Rooli"
+          name="role"
+          value={role}
+          onChange={(v) => setRole(v as Role)}
+        >
           {ROLES.map((r) => (
             <option key={r} value={r}>
-              {ROLE_LABELS[r]}
+              {nimet.roles[r]}
             </option>
           ))}
         </Select>
 
-        <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {ROLE_HINTS[role]}
         </p>
 
@@ -89,7 +96,7 @@ export function InviteForm() {
             <Select label="Tehtävä" name="position" defaultValue="waiter">
               {POSITIONS.map((p) => (
                 <option key={p} value={p}>
-                  {POSITION_LABELS[p]}
+                  {nimet.positions[p]}
                 </option>
               ))}
             </Select>
@@ -140,14 +147,15 @@ const ROLE_HINTS: Record<Role, string> = {
   owner: "Näkee ja muokkaa kaiken, mukaan lukien budjetit ja käyttäjät.",
   manager: "Näkee kaiken ja hallitsee vuoroja ja kuitteja, muttei budjetteja.",
   employee: "Näkee vain omat vuoronsa, oman työaikansa ja lisäämänsä kuitit.",
-  accountant: "Näkee kulut, ALV:t ja raportit — ei tuntipalkkoja eikä työvuoroja.",
+  accountant:
+    "Näkee kulut, ALV:t ja raportit — ei tuntipalkkoja eikä työvuoroja.",
 };
 
 // ---------------------------------------------------------------------------
 // Jäsenen muokkaus
 // ---------------------------------------------------------------------------
 
-export function MemberForm({ user }: { user: User }) {
+export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
   const [state, action] = useActionState(updateMembership, initial);
   const [open, setOpen] = useState(false);
 
@@ -169,22 +177,30 @@ export function MemberForm({ user }: { user: User }) {
   }
 
   return (
-    <form action={action} className="mt-3 space-y-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
+    <form
+      action={action}
+      className="mt-3 space-y-3 border-t pt-3"
+      style={{ borderColor: "var(--rf-line)" }}
+    >
       <input type="hidden" name="userId" value={user.id} />
 
       <Select label="Rooli" name="role" defaultValue={user.role}>
         {ROLES.map((r) => (
           <option key={r} value={r}>
-            {ROLE_LABELS[r]}
+            {nimet.roles[r]}
           </option>
         ))}
       </Select>
 
-      <Select label="Tehtävä" name="position" defaultValue={user.position ?? ""}>
+      <Select
+        label="Tehtävä"
+        name="position"
+        defaultValue={user.position ?? ""}
+      >
         <option value="">—</option>
         {POSITIONS.map((p) => (
           <option key={p} value={p}>
-            {POSITION_LABELS[p]}
+            {nimet.positions[p]}
           </option>
         ))}
       </Select>
@@ -275,7 +291,10 @@ export function Input({
           }}
         />
         {suffix ? (
-          <span className="shrink-0 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          <span
+            className="shrink-0 text-[14px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {suffix}
           </span>
         ) : null}
@@ -318,7 +337,10 @@ export function Select({
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
         {children}
       </select>
@@ -361,10 +383,18 @@ export function Submit({ label, busy }: { label: string; busy: string }) {
   );
 }
 
-export function StatusPill({ role }: { role: Role }) {
+export function StatusPill({ nimet, role }: { nimet: Labels; role: Role }) {
   return (
-    <Pill tone={role === "owner" ? "info" : role === "accountant" ? "neutral" : "neutral"}>
-      {ROLE_LABELS[role]}
+    <Pill
+      tone={
+        role === "owner"
+          ? "info"
+          : role === "accountant"
+            ? "neutral"
+            : "neutral"
+      }
+    >
+      {nimet.roles[role]}
     </Pill>
   );
 }
@@ -382,14 +412,22 @@ export function StatusPill({ role }: { role: Role }) {
  * Osoite luetaan selaimesta eikä asetuksista: se on aina se osoite
  * jossa omistaja oikeasti on, myös testiympäristössä.
  */
-function InviteCode({ code, role }: { code: string; role: Role }) {
+function InviteCode({
+  nimet,
+  code,
+  role,
+}: {
+  nimet: Labels;
+  code: string;
+  role: Role;
+}) {
   const [copied, setCopied] = useState<"code" | "message" | null>(null);
   const [failed, setFailed] = useState(false);
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const message =
-    `Sinut on kutsuttu Kateen (${ROLE_LABELS[role].toLowerCase()}).
+    `Sinut on kutsuttu Kateen (${nimet.roles[role].toLowerCase()}).
 
 ` +
     `1. Mene osoitteeseen ${origin}/rekisteroidy?tila=liity
@@ -424,8 +462,8 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
         className="mt-1.5 text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Koodi näytetään vain nyt. Kannassa on siitä vain tiiviste, joten
-        sitä ei voi hakea myöhemmin.
+        Koodi näytetään vain nyt. Kannassa on siitä vain tiiviste, joten sitä ei
+        voi hakea myöhemmin.
       </p>
 
       <p
@@ -467,7 +505,10 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
       </div>
 
       {failed ? (
-        <p className="mt-2 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+        <p
+          className="mt-2 text-[12px]"
+          style={{ color: "var(--rf-amber-text)" }}
+        >
           Kopiointi ei onnistunut tässä selaimessa. Valitse teksti ja kopioi
           käsin.
         </p>
@@ -493,7 +534,10 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
             </>,
             <>Syöttää koodin ja hyväksyy kutsun</>,
           ].map((step, index) => (
-            <li key={index} className="flex gap-2.5 text-[13px] leading-relaxed">
+            <li
+              key={index}
+              className="flex gap-2.5 text-[13px] leading-relaxed"
+            >
               <span
                 aria-hidden="true"
                 className="rf-tabular flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-semibold"
@@ -510,9 +554,12 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
           ))}
         </ol>
 
-        <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Kate ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa
-          14 päivää, yksi käyttökerta.
+        <p
+          className="mt-3 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          Kate ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa 14
+          päivää, yksi käyttökerta.
         </p>
       </div>
 

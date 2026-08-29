@@ -53,7 +53,9 @@ export interface Reconciled extends ReportAmounts {
  */
 export function reconcile(input: ReportAmounts): Reconciled {
   const { grossCents, vatCents, netCents } = input;
-  const known = [grossCents, vatCents, netCents].filter((v) => v !== null).length;
+  const known = [grossCents, vatCents, netCents].filter(
+    (v) => v !== null,
+  ).length;
 
   if (known < 2) {
     return { ...input, derived: [], mismatch: null };
@@ -116,7 +118,8 @@ export function averageCheckCents(
   grossCents: number | null,
   transactions: number | null,
 ): number | null {
-  if (grossCents === null || transactions === null || transactions <= 0) return null;
+  if (grossCents === null || transactions === null || transactions <= 0)
+    return null;
   return Math.round(grossCents / transactions);
 }
 

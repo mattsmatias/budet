@@ -88,7 +88,9 @@ describe("selite", () => {
       days: [
         {
           date: "2026-08-24",
-          items: [{ name: "Keitto", description: null, diets: [], allergens: [] }],
+          items: [
+            { name: "Keitto", description: null, diets: [], allergens: [] },
+          ],
         },
       ],
     });
@@ -129,7 +131,9 @@ describe("lista tekstinä", () => {
   it("selittää lyhenteet ja päättyy osoitteeseen", () => {
     expect(text).toContain("VE = Vegaaninen");
     expect(text).toContain("G = Gluteeniton");
-    expect(text.trimEnd().endsWith("https://budet.fi/lounas/cafe-monami")).toBe(true);
+    expect(text.trimEnd().endsWith("https://budet.fi/lounas/cafe-monami")).toBe(
+      true,
+    );
   });
 
   /*

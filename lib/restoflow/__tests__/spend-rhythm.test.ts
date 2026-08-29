@@ -16,12 +16,27 @@ let n = 0;
 function receipt(date: string, totalCents: number): Receipt {
   n += 1;
   return {
-    id: `r${n}`, restaurantId: "rest-1", date, totalCents,
-    supplierId: "s-1", supplierName: "Tukku", vatCents: null,
-    category: "food", paymentMethod: "card", receiptNumber: null,
-    note: null, status: "confirmed", reviewReasons: [], items: [],
-    addedByUserId: "u1", addedAt: `${date}T10:00:00.000Z`,
-    hasImage: true, imagePath: null, pages: [], categoryId: null, imageQuality: "good",
+    id: `r${n}`,
+    restaurantId: "rest-1",
+    date,
+    totalCents,
+    supplierId: "s-1",
+    supplierName: "Tukku",
+    vatCents: null,
+    category: "food",
+    paymentMethod: "card",
+    receiptNumber: null,
+    note: null,
+    status: "confirmed",
+    reviewReasons: [],
+    items: [],
+    addedByUserId: "u1",
+    addedAt: `${date}T10:00:00.000Z`,
+    hasImage: true,
+    imagePath: null,
+    pages: [],
+    categoryId: null,
+    imageQuality: "good",
   };
 }
 
@@ -39,7 +54,10 @@ describe("päivät", () => {
   });
 
   it("laskee päivän kulut ja kuittimäärän", () => {
-    const result = rhythm([receipt("2026-08-06", 10_000), receipt("2026-08-06", 5_000)]);
+    const result = rhythm([
+      receipt("2026-08-06", 10_000),
+      receipt("2026-08-06", 5_000),
+    ]);
     const day = result.days.find((d) => d.date === "2026-08-06")!;
 
     expect(day.cents).toBe(15_000);
@@ -54,8 +72,12 @@ describe("päivät", () => {
   it("erottaa tulevan päivän kuluttomasta", () => {
     const result = rhythm([]);
 
-    expect(result.days.find((d) => d.date === "2026-08-20")!.isFuture).toBe(false);
-    expect(result.days.find((d) => d.date === "2026-08-25")!.isFuture).toBe(true);
+    expect(result.days.find((d) => d.date === "2026-08-20")!.isFuture).toBe(
+      false,
+    );
+    expect(result.days.find((d) => d.date === "2026-08-25")!.isFuture).toBe(
+      true,
+    );
     expect(result.days.find((d) => d.date === TODAY)!.isToday).toBe(true);
   });
 

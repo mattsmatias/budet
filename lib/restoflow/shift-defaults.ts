@@ -45,7 +45,10 @@ export const FALLBACK_SHIFT: ShiftDefaults = {
  * Peruttuja ei käytetä mallina: peruttu vuoro on nimenomaan sellainen
  * jota ei tehty, eikä sitä kannata toistaa.
  */
-export function defaultShiftFor(userId: string, shifts: Shift[]): ShiftDefaults {
+export function defaultShiftFor(
+  userId: string,
+  shifts: Shift[],
+): ShiftDefaults {
   const own = shifts
     .filter((shift) => shift.userId === userId && shift.cancelledAt === null)
     .sort((a, b) => b.date.localeCompare(a.date));

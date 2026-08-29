@@ -105,10 +105,12 @@ function workbookXml(sheets: Sheet[]): string {
 }
 
 function workbookRelsXml(count: number): string {
-  const entries = Array.from({ length: count }, (_, i) =>
-    `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${
-      i + 1
-    }.xml"/>`,
+  const entries = Array.from(
+    { length: count },
+    (_, i) =>
+      `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${
+        i + 1
+      }.xml"/>`,
   ).join("");
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -116,10 +118,12 @@ function workbookRelsXml(count: number): string {
 }
 
 function contentTypesXml(count: number): string {
-  const sheets = Array.from({ length: count }, (_, i) =>
-    `<Override PartName="/xl/worksheets/sheet${
-      i + 1
-    }.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
+  const sheets = Array.from(
+    { length: count },
+    (_, i) =>
+      `<Override PartName="/xl/worksheets/sheet${
+        i + 1
+      }.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
   ).join("");
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -256,10 +260,16 @@ export function buildXlsx(sheets: Sheet[]): Uint8Array {
   const encoder = new TextEncoder();
 
   const entries: Entry[] = [
-    { name: "[Content_Types].xml", data: encoder.encode(contentTypesXml(sheets.length)) },
+    {
+      name: "[Content_Types].xml",
+      data: encoder.encode(contentTypesXml(sheets.length)),
+    },
     { name: "_rels/.rels", data: encoder.encode(ROOT_RELS) },
     { name: "xl/workbook.xml", data: encoder.encode(workbookXml(sheets)) },
-    { name: "xl/_rels/workbook.xml.rels", data: encoder.encode(workbookRelsXml(sheets.length)) },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      data: encoder.encode(workbookRelsXml(sheets.length)),
+    },
     { name: "xl/styles.xml", data: encoder.encode(STYLES) },
     ...sheets.map((sheet, index) => ({
       name: `xl/worksheets/sheet${index + 1}.xml`,

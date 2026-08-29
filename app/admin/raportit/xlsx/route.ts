@@ -10,6 +10,7 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
@@ -38,14 +39,21 @@ const SHEET_NAMES: Record<ReportKind, string> = {
 };
 
 export async function GET(request: NextRequest) {
+  const locale = await resolveLocale();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Kirjautuminen vaaditaan." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Kirjautuminen vaaditaan." },
+      { status: 401 },
+    );
   }
 
   const restaurant = await getActiveRestaurant();
   if (!restaurant) {
-    return NextResponse.json({ error: "Ravintolaa ei löytynyt." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Ravintolaa ei löytynyt." },
+      { status: 404 },
+    );
   }
 
   if (!can(restaurant.role, "reports.export")) {
@@ -95,7 +103,11 @@ export async function GET(request: NextRequest) {
    */
   const naytaKirjanpito = can(restaurant.role, "accounting.view");
 
-  if (single !== null && ACCOUNTING_KINDS.includes(single) && !naytaKirjanpito) {
+  if (
+    single !== null &&
+    ACCOUNTING_KINDS.includes(single) &&
+    !naytaKirjanpito
+  ) {
     return NextResponse.json(
       { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
       { status: 403 },
@@ -108,7 +120,14 @@ export async function GET(request: NextRequest) {
 
   const sheets = [];
   for (const kind of sallitut) {
-    const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role, restaurant.timezone);
+    const rows = await buildReportRows(
+      kind,
+      restaurant.id,
+      month,
+      restaurant.role,
+      restaurant.timezone,
+      locale,
+    );
     sheets.push({ name: SHEET_NAMES[kind], rows: rows.map(toCells) });
   }
 
@@ -149,10 +168,7 @@ function parseFinnishNumber(text: string): number | null {
   // Alkunollat ovat tunniste, ei luku.
   if (/^0\d/.test(text)) return null;
 
-  const cleaned = text
-    .replace(/\s| /g, "")
-    .replace(/€/g, "")
-    .replace(/%$/, "");
+  const cleaned = text.replace(/\s| /g, "").replace(/€/g, "").replace(/%$/, "");
 
   if (cleaned === "" || !/^-?\d+(?:,\d+)?$/.test(cleaned)) return null;
 

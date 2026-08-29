@@ -40,7 +40,8 @@ export async function saveSalesGroup(
   formData: FormData,
 ): Promise<VatState> {
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "settings.edit")) return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit"))
+    return { error: "Ei oikeutta muuttaa asetuksia." };
 
   const parsed = groupSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
@@ -68,9 +69,10 @@ export async function saveSalesGroup(
 
   if (error) {
     return {
-      error: error.code === "23505"
-        ? "Samanniminen myyntiryhmä on jo olemassa."
-        : `Tallennus epäonnistui: ${error.message}`,
+      error:
+        error.code === "23505"
+          ? "Samanniminen myyntiryhmä on jo olemassa."
+          : `Tallennus epäonnistui: ${error.message}`,
     };
   }
 
@@ -119,7 +121,8 @@ export async function deleteSalesGroup(
   formData: FormData,
 ): Promise<VatState> {
   const { role } = await requireContext(PATH);
-  if (!can(role, "settings.edit")) return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit"))
+    return { error: "Ei oikeutta muuttaa asetuksia." };
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return {};
@@ -192,7 +195,8 @@ export async function savePosMapping(
   formData: FormData,
 ): Promise<VatState> {
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "settings.edit")) return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit"))
+    return { error: "Ei oikeutta muuttaa asetuksia." };
 
   const parsed = mappingSchema.safeParse({
     posName: formData.get("posName"),
@@ -220,7 +224,8 @@ export async function savePosMapping(
     { onConflict: "restaurant_id,pos_name" },
   );
 
-  if (error) return { error: `Kohdistuksen tallennus epäonnistui: ${error.message}` };
+  if (error)
+    return { error: `Kohdistuksen tallennus epäonnistui: ${error.message}` };
 
   revalidatePath("/admin", "layout");
   return { notice: "Kohdistus tallennettu." };
@@ -251,7 +256,9 @@ export async function seedDefaultSalesGroups(): Promise<void> {
   if (!can(role, "settings.edit")) return;
 
   const supabase = await createClient();
-  await supabase.rpc("seed_default_sales_groups", { p_restaurant: restaurant.id });
+  await supabase.rpc("seed_default_sales_groups", {
+    p_restaurant: restaurant.id,
+  });
 
   revalidatePath("/admin", "layout");
 }
@@ -273,7 +280,9 @@ export async function seedDefaultPosMappings(): Promise<void> {
   if (!can(role, "settings.edit")) return;
 
   const supabase = await createClient();
-  await supabase.rpc("seed_default_pos_mappings", { p_restaurant: restaurant.id });
+  await supabase.rpc("seed_default_pos_mappings", {
+    p_restaurant: restaurant.id,
+  });
 
   revalidatePath("/admin", "layout");
 }

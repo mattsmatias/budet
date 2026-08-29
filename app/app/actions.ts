@@ -95,7 +95,6 @@ const kuittaukset = (v: WorkerErrors): Record<ClockEventType, string> => ({
 // Poissaolot
 // ---------------------------------------------------------------------------
 
-
 /**
  * Loppupäivä on vapaaehtoinen ja tarkoittaa tyhjänä samaa päivää.
  *
@@ -163,7 +162,6 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
   revalidatePath("/admin", "layout");
 }
 
-
 // ---------------------------------------------------------------------------
 // Oma profiili
 // ---------------------------------------------------------------------------
@@ -186,7 +184,9 @@ export async function updateProfile(
 ): Promise<ActionState> {
   const v = workerErrors(await resolveLocale());
 
-  const parsed = nameSchema(v).safeParse({ fullName: formData.get("fullName") });
+  const parsed = nameSchema(v).safeParse({
+    fullName: formData.get("fullName"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { user } = await requireContext("/app/asetukset");
@@ -373,7 +373,9 @@ export async function claimOpenShift(
   await requireContext("/app/vuorot");
   const supabase = await createClient();
 
-  const { error } = await supabase.rpc("claim_open_shift", { p_shift: shiftId });
+  const { error } = await supabase.rpc("claim_open_shift", {
+    p_shift: shiftId,
+  });
 
   if (error) {
     const message = error.message ?? "";
@@ -408,5 +410,4 @@ export async function claimOpenShift(
 }
 
 /** Tunniste tulee lomakkeelta, joten muoto tarkistetaan ennen kantaa. */
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

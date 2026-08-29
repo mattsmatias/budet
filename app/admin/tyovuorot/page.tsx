@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels, type Labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -19,13 +20,7 @@ import {
   isRetroactive,
 } from "@/lib/restoflow/deviations";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
-import {
-  ABSENCE_LABELS,
-  POSITION_LABELS,
-  SHIFT_STATUS_LABELS,
-  type Shift,
-  type User,
-} from "@/lib/restoflow/types";
+import { type Shift, type User } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { ShiftStatusIcon } from "@/components/restoflow/icons";
 import {
@@ -42,7 +37,6 @@ import {
   planSummary,
   publicationOf,
 } from "@/lib/restoflow/shift-planning";
-import { monthWord } from "@/lib/restoflow/expenses";
 import { openAsShift } from "@/lib/restoflow/open-shifts";
 import { cancelAbsence, markAbsenceCertificate } from "../actions";
 import { PublishBar } from "./publish-bar";
@@ -54,10 +48,20 @@ export async function generateMetadata() {
 }
 
 export default async function AdminShiftsPage() {
-  const { users, shifts, openShifts, clockEvents, absences, today, now, role, restaurant } =
-    await adminContext("/admin/tyovuorot");
+  const {
+    users,
+    shifts,
+    openShifts,
+    clockEvents,
+    absences,
+    today,
+    now,
+    role,
+    restaurant,
+  } = await adminContext("/admin/tyovuorot");
   const locale = await resolveLocale();
   const t = adminText(locale);
+  const nimet = labels(locale);
 
   const canManage = can(role, "shifts.manage");
 
@@ -129,7 +133,13 @@ export default async function AdminShiftsPage() {
     (shift) => !isRetroactive(shift, restaurant.timezone),
   );
 
-  const comparisons = compareShifts(planned, users, clockEvents, now, restaurant.timezone);
+  const comparisons = compareShifts(
+    planned,
+    users,
+    clockEvents,
+    now,
+    restaurant.timezone,
+  );
   const labour = labourSummary(comparisons);
   const showsRates = seesPayRates(role);
 
@@ -141,7 +151,9 @@ export default async function AdminShiftsPage() {
 
   // Loppupäivä ratkaisee: eilen alkanut sairausloma on yhä voimassa,
   // eikä sen pidä kadota listalta kesken jakson.
-  const upcomingAbsences = absences.filter((absence) => absence.endDate >= today);
+  const upcomingAbsences = absences.filter(
+    (absence) => absence.endDate >= today,
+  );
 
   const deviations = findDeviations({
     comparisons,
@@ -157,7 +169,9 @@ export default async function AdminShiftsPage() {
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {upcoming.length} tulevaa
-            {openShifts.length > 0 ? fill(t.lauseet.openSuffix, { maara: String(openShifts.length) }) : ""}
+            {openShifts.length > 0
+              ? fill(t.lauseet.openSuffix, { maara: String(openShifts.length) })
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -178,7 +192,9 @@ export default async function AdminShiftsPage() {
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <RfIcon name="calendar" size={15} />{t.sanat.calendar}</Link>
+            <RfIcon name="calendar" size={15} />
+            {t.sanat.calendar}
+          </Link>
 
           <Link
             href="/admin/tyovuorot/lista"
@@ -190,9 +206,11 @@ export default async function AdminShiftsPage() {
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <RfIcon name="report" size={15} />{t.vuorot2.monthList}</Link>
+            <RfIcon name="report" size={15} />
+            {t.vuorot2.monthList}
+          </Link>
 
-          <NewShiftButton users={users} defaultDate={today} />
+          <NewShiftButton nimet={nimet} users={users} defaultDate={today} />
         </div>
       </div>
 
@@ -200,7 +218,8 @@ export default async function AdminShiftsPage() {
         ? draftMonths.map((draftMonth) => {
             const drafts = shifts.filter(
               (shift) =>
-                shift.date.startsWith(draftMonth) && publicationOf(shift) === "draft",
+                shift.date.startsWith(draftMonth) &&
+                publicationOf(shift) === "draft",
             );
             const plan = planSummary({ shifts: drafts, users });
 
@@ -253,15 +272,22 @@ export default async function AdminShiftsPage() {
                     <p className="truncate text-[14px] font-medium">
                       {pair.user?.name ?? "Tuntematon"}
                     </p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {formatShortDate(pair.a.date)} {pair.a.startTime}–{pair.a.endTime}
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {formatShortDate(pair.a.date)} {pair.a.startTime}–
+                      {pair.a.endTime}
                       {" · "}
-                      {formatShortDate(pair.b.date)} {pair.b.startTime}–{pair.b.endTime}
+                      {formatShortDate(pair.b.date)} {pair.b.startTime}–
+                      {pair.b.endTime}
                     </p>
                   </div>
                 </div>
 
-                <Pill tone="risk" dot>{t.vuorot.overlap}</Pill>
+                <Pill tone="risk" dot>
+                  {t.vuorot.overlap}
+                </Pill>
               </li>
             ))}
           </ul>
@@ -298,11 +324,19 @@ export default async function AdminShiftsPage() {
                       <p className="truncate text-[14px] font-medium">
                         {user?.name ?? "Tuntematon"}
                       </p>
-                      <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      <p
+                        className="rf-tabular text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         {absence.date === absence.endDate
                           ? formatShortDate(absence.date)
                           : `${formatShortDate(absence.date)}–${formatShortDate(absence.endDate)}`}
-                        {shift ? fill(t.lauseet.shiftSuffix, { alku: shift.startTime, loppu: shift.endTime }) : " · ei vuoroa"}
+                        {shift
+                          ? fill(t.lauseet.shiftSuffix, {
+                              alku: shift.startTime,
+                              loppu: shift.endTime,
+                            })
+                          : " · ei vuoroa"}
                         {absence.note ? ` · ${absence.note}` : ""}
                       </p>
                     </div>
@@ -310,7 +344,7 @@ export default async function AdminShiftsPage() {
 
                   <div className="flex items-center gap-2">
                     <Pill tone="warn" dot>
-                      {ABSENCE_LABELS[absence.kind]}
+                      {nimet.absences[absence.kind]}
                     </Pill>
 
                     {/* Vain sairaudessa. Todistusta ei tallenneta
@@ -318,7 +352,11 @@ export default async function AdminShiftsPage() {
                         nähty, ja se on se mitä palkanmaksuun tarvitaan. */}
                     {absence.kind === "sick" ? (
                       <form action={markAbsenceCertificate}>
-                        <input type="hidden" name="absenceId" value={absence.id} />
+                        <input
+                          type="hidden"
+                          name="absenceId"
+                          value={absence.id}
+                        />
                         <input
                           type="hidden"
                           name="seen"
@@ -352,7 +390,11 @@ export default async function AdminShiftsPage() {
                     ) : null}
 
                     <form action={cancelAbsence}>
-                      <input type="hidden" name="absenceId" value={absence.id} />
+                      <input
+                        type="hidden"
+                        name="absenceId"
+                        value={absence.id}
+                      />
                       <button
                         type="submit"
                         className="rf-press px-3 py-1.5 text-[13px] font-medium"
@@ -361,7 +403,9 @@ export default async function AdminShiftsPage() {
                           color: "var(--rf-text-2)",
                           borderRadius: "var(--rf-r-control)",
                         }}
-                      >{t.vuorot2.acknowledge}</button>
+                      >
+                        {t.vuorot2.acknowledge}
+                      </button>
                     </form>
                   </div>
                 </li>
@@ -404,14 +448,22 @@ export default async function AdminShiftsPage() {
                     <RfIcon name="alert" size={16} />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[14px] leading-relaxed">{poikkeama.text}</p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p className="text-[14px] leading-relaxed">
+                      {poikkeama.text}
+                    </p>
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {formatShortDate(poikkeama.date)}
                     </p>
                   </div>
                 </div>
 
-                <Pill tone={poikkeama.severity === "critical" ? "risk" : "warn"} dot>
+                <Pill
+                  tone={poikkeama.severity === "critical" ? "risk" : "warn"}
+                  dot
+                >
                   {DEVIATION_LABELS[poikkeama.kind].toLowerCase()}
                 </Pill>
               </li>
@@ -419,7 +471,10 @@ export default async function AdminShiftsPage() {
           </ul>
 
           {deviations.length > 12 ? (
-            <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="mt-3 text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               Näytetään 12 ensimmäistä {deviations.length} poikkeamasta.
             </p>
           ) : null}
@@ -434,7 +489,13 @@ export default async function AdminShiftsPage() {
           />
           <ul className="space-y-3">
             {declined.map((shift) => (
-              <ShiftRow key={shift.id} shift={shift} users={users} showEdit />
+              <ShiftRow
+                nimet={nimet}
+                key={shift.id}
+                shift={shift}
+                users={users}
+                showEdit
+              />
             ))}
           </ul>
         </Card>
@@ -448,14 +509,18 @@ export default async function AdminShiftsPage() {
               icon={<RfIcon name="calendar" size={17} />}
               tileTone="brand"
               value={formatDuration(labour.plannedMs)}
-              hint={fill(t.lauseet.pastShifts, { maara: String(labour.shiftCount) })}
+              hint={fill(t.lauseet.pastShifts, {
+                maara: String(labour.shiftCount),
+              })}
             />
             <MetricCard
               label={t.vuorot2.actual}
               icon={<RfIcon name="clock" size={17} />}
               tileTone="green"
               value={formatDuration(labour.actualMs)}
-              hint={fill(t.lauseet.varianceToPlan, { ero: formatVariance(labour.varianceMs) })}
+              hint={fill(t.lauseet.varianceToPlan, {
+                ero: formatVariance(labour.varianceMs),
+              })}
             />
             {showsRates ? (
               <MetricCard
@@ -467,13 +532,18 @@ export default async function AdminShiftsPage() {
                   labour.varianceCostCents === 0
                     ? "Suunnitelman mukainen"
                     : fill(t.lauseet.varianceToPlan, {
-                    ero: `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))}`,
-                  })
+                        ero: `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))}`,
+                      })
                 }
               />
             ) : null}
           </div>
-          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.vuorot.estimateNote}</p>
+          <p
+            className="px-1 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.vuorot.estimateNote}
+          </p>
         </section>
       ) : null}
 
@@ -484,10 +554,19 @@ export default async function AdminShiftsPage() {
         />
       ) : (
         <Card>
-          <CardHeader title={t.vuorot2.upcoming} subtitle={t.vuorot.chronological} />
+          <CardHeader
+            title={t.vuorot2.upcoming}
+            subtitle={t.vuorot.chronological}
+          />
           <ul className="space-y-3">
             {upcoming.map((shift) => (
-              <ShiftRow key={shift.id} shift={shift} users={users} showEdit />
+              <ShiftRow
+                nimet={nimet}
+                key={shift.id}
+                shift={shift}
+                users={users}
+                showEdit
+              />
             ))}
 
             {openShifts.map((open) => (
@@ -509,15 +588,22 @@ export default async function AdminShiftsPage() {
                     ?
                   </span>
                   <div>
-                    <p className="text-[14px] font-medium">{t.vuorot2.openShift}</p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {formatShortDate(open.date)} · {open.startTime}–{open.endTime} ·{" "}
-                      {POSITION_LABELS[open.position]}
+                    <p className="text-[14px] font-medium">
+                      {t.vuorot2.openShift}
+                    </p>
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {formatShortDate(open.date)} · {open.startTime}–
+                      {open.endTime} · {nimet.positions[open.position]}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Pill tone="risk" dot>{t.vuorot.noAssignee}</Pill>
+                  <Pill tone="risk" dot>
+                    {t.vuorot.noAssignee}
+                  </Pill>
 
                   {/*
                     Avoin vuoro on poistettavissa.
@@ -528,7 +614,11 @@ export default async function AdminShiftsPage() {
                     nimetyllä vuorolla — myös tekijän lisääminen.
                   */}
                   {canManage ? (
-                    <EditShift users={users} shift={openAsShift(open)} />
+                    <EditShift
+                      nimet={nimet}
+                      users={users}
+                      shift={openAsShift(open)}
+                    />
                   ) : null}
                 </div>
               </li>
@@ -556,7 +646,10 @@ export default async function AdminShiftsPage() {
                     <p className="truncate text-[14px] font-medium">
                       {pattern.user?.name ?? "Tuntematon"}
                     </p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {pattern.shiftCount} vuoroa · yhteensä{" "}
                       {formatVariance(pattern.totalVarianceMs)}
                     </p>
@@ -576,9 +669,13 @@ export default async function AdminShiftsPage() {
                     {formatVariance(pattern.averageVarianceMs)} / vuoro
                   </p>
                   {showsRates ? (
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {pattern.costImpactCents >= 0 ? "+" : "−"}
-                      {formatMoney(Math.abs(pattern.costImpactCents))} kustannusvaikutus
+                      {formatMoney(Math.abs(pattern.costImpactCents))}{" "}
+                      kustannusvaikutus
                     </p>
                   ) : null}
                 </div>
@@ -586,7 +683,12 @@ export default async function AdminShiftsPage() {
             ))}
           </ul>
 
-          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.vuorot.overrunNote}</p>
+          <p
+            className="mt-4 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.vuorot.overrunNote}
+          </p>
         </Card>
       ) : null}
 
@@ -605,37 +707,53 @@ export default async function AdminShiftsPage() {
                 <tr>
                   <th scope="col">{t.vuorot.day}</th>
                   <th scope="col">{t.vuorot.assignee}</th>
-                  <th scope="col" className="text-right">{t.vuorot2.planned}</th>
-                  <th scope="col" className="text-right">{t.vuorot2.actual}</th>
-                  <th scope="col" className="text-right">{t.vuorot2.diff}</th>
+                  <th scope="col" className="text-right">
+                    {t.vuorot2.planned}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.vuorot2.actual}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.vuorot2.diff}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {comparisons.slice(-15).reverse().map((c) => (
-                  <tr key={c.shift.id}>
-                    <td className="rf-tabular">{formatShortDate(c.shift.date)}</td>
-                    <td>{c.user?.name ?? "—"}</td>
-                    <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
-                      {formatDuration(c.plannedMs)}
-                    </td>
-                    <td className="num">
-                      {c.actualMs === 0 ? "—" : formatDuration(c.actualMs)}
-                    </td>
-                    <td
-                      className="rf-tabular px-5 py-3 text-right"
-                      style={{
-                        color:
-                          c.actualMs === 0
-                            ? "var(--rf-text-3)"
-                            : Math.abs(c.varianceMs) > 15 * 60000
-                              ? "var(--rf-amber-text)"
-                              : "var(--rf-text-2)",
-                      }}
-                    >
-                      {c.actualMs === 0 ? "ei leimauksia" : formatVariance(c.varianceMs)}
-                    </td>
-                  </tr>
-                ))}
+                {comparisons
+                  .slice(-15)
+                  .reverse()
+                  .map((c) => (
+                    <tr key={c.shift.id}>
+                      <td className="rf-tabular">
+                        {formatShortDate(c.shift.date)}
+                      </td>
+                      <td>{c.user?.name ?? "—"}</td>
+                      <td
+                        className="rf-tabular px-5 py-3 text-right"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
+                        {formatDuration(c.plannedMs)}
+                      </td>
+                      <td className="num">
+                        {c.actualMs === 0 ? "—" : formatDuration(c.actualMs)}
+                      </td>
+                      <td
+                        className="rf-tabular px-5 py-3 text-right"
+                        style={{
+                          color:
+                            c.actualMs === 0
+                              ? "var(--rf-text-3)"
+                              : Math.abs(c.varianceMs) > 15 * 60000
+                                ? "var(--rf-amber-text)"
+                                : "var(--rf-text-2)",
+                        }}
+                      >
+                        {c.actualMs === 0
+                          ? "ei leimauksia"
+                          : formatVariance(c.varianceMs)}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -646,10 +764,12 @@ export default async function AdminShiftsPage() {
 }
 
 function ShiftRow({
+  nimet,
   shift,
   users,
   showEdit,
 }: {
+  nimet: Labels;
   shift: Shift;
   users: User[];
   showEdit?: boolean;
@@ -673,13 +793,21 @@ function ShiftRow({
       <div className="flex min-w-0 items-center gap-3">
         <Avatar initials={user?.initials ?? "?"} size={36} />
         <div className="min-w-0">
-          <p className="truncate text-[14px] font-medium">{user?.name ?? "Avoin"}</p>
-          <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          <p className="truncate text-[14px] font-medium">
+            {user?.name ?? "Avoin"}
+          </p>
+          <p
+            className="rf-tabular text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {formatShortDate(shift.date)} · {shift.startTime}–{shift.endTime}
             {shift.location ? ` · ${shift.location}` : ""}
           </p>
           {shift.previousStartTime ? (
-            <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="rf-tabular text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               oli {shift.previousStartTime}–{shift.previousEndTime}
             </p>
           ) : null}
@@ -688,10 +816,12 @@ function ShiftRow({
 
       <Pill tone={tone}>
         <ShiftStatusIcon status={shift.status} size={13} />
-        {SHIFT_STATUS_LABELS[shift.status]}
+        {nimet.shiftStatus[shift.status]}
       </Pill>
 
-      {showEdit ? <EditShift users={users} shift={shift} /> : null}
+      {showEdit ? (
+        <EditShift nimet={nimet} users={users} shift={shift} />
+      ) : null}
     </li>
   );
 }

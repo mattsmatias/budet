@@ -10,9 +10,18 @@ import { dayIn } from "./clock-context";
 import type { Colleague } from "./queries";
 
 const MONTHS = [
-  "tammikuuta", "helmikuuta", "maaliskuuta", "huhtikuuta", "toukokuuta",
-  "kesäkuuta", "heinäkuuta", "elokuuta", "syyskuuta", "lokakuuta",
-  "marraskuuta", "joulukuuta",
+  "tammikuuta",
+  "helmikuuta",
+  "maaliskuuta",
+  "huhtikuuta",
+  "toukokuuta",
+  "kesäkuuta",
+  "heinäkuuta",
+  "elokuuta",
+  "syyskuuta",
+  "lokakuuta",
+  "marraskuuta",
+  "joulukuuta",
 ];
 
 /** "24. elokuuta". Ilman vuotta, koska vuotta ei ole tallennettu. */

@@ -14,7 +14,14 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
 import type { AdminState } from "../actions";
-import { closeMonth, correctEntry, postAll, postEntry, rejectEntry, syncMonth } from "./actions";
+import {
+  closeMonth,
+  correctEntry,
+  postAll,
+  postEntry,
+  rejectEntry,
+  syncMonth,
+} from "./actions";
 
 const alku: AdminState = {};
 
@@ -33,17 +40,33 @@ function Painike({
 
   const tyyli =
     tone === "primary"
-      ? { background: "var(--rf-accent)", color: "var(--rf-on-accent)", border: "1px solid transparent" }
+      ? {
+          background: "var(--rf-accent)",
+          color: "var(--rf-on-accent)",
+          border: "1px solid transparent",
+        }
       : tone === "danger"
-        ? { background: "var(--rf-card)", color: "var(--rf-red-text)", border: "1px solid var(--rf-line-strong)" }
-        : { background: "var(--rf-inset)", color: "var(--rf-text)", border: "1px solid var(--rf-line-strong)" };
+        ? {
+            background: "var(--rf-card)",
+            color: "var(--rf-red-text)",
+            border: "1px solid var(--rf-line-strong)",
+          }
+        : {
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            border: "1px solid var(--rf-line-strong)",
+          };
 
   return (
     <button
       type="submit"
       disabled={status.pending}
       className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
-      style={{ ...tyyli, borderRadius: "var(--rf-r-control)", opacity: status.pending ? 0.6 : 1 }}
+      style={{
+        ...tyyli,
+        borderRadius: "var(--rf-r-control)",
+        opacity: status.pending ? 0.6 : 1,
+      }}
     >
       {icon ? <RfIcon name={icon} size={15} /> : null}
       {status.pending ? pending : label}
@@ -72,14 +95,25 @@ export function SyncButton({ month }: { month: string }) {
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
       <input type="hidden" name="kuukausi" value={month} />
-      <Painike label="Hae tapahtumat" pending="Haetaan…" icon="download" tone="primary" />
+      <Painike
+        label="Hae tapahtumat"
+        pending="Haetaan…"
+        icon="download"
+        tone="primary"
+      />
       <Viesti state={state} />
     </form>
   );
 }
 
 /** Hyväksy kaikki kuukauden esitykset. */
-export function PostAllButton({ month, count }: { month: string; count: number }) {
+export function PostAllButton({
+  month,
+  count,
+}: {
+  month: string;
+  count: number;
+}) {
   const [state, action] = useActionState(postAll, alku);
 
   if (count === 0) return null;

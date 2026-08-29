@@ -15,7 +15,12 @@ import {
   fetchUsers,
 } from "./queries";
 import { windowStartIso } from "./clock-context";
-import { buildPayslip, type PayComponent, type Payslip, type PeriodBounds } from "./payroll";
+import {
+  buildPayslip,
+  type PayComponent,
+  type Payslip,
+  type PeriodBounds,
+} from "./payroll";
 import type { User } from "./types";
 
 export interface PayrollData {
@@ -143,7 +148,12 @@ export async function labourCost(
   to: string,
   nowIso: string,
 ): Promise<LabourCost> {
-  const data = await loadPayroll(restaurantId, timezone, { startsOn: from, endsOn: to }, nowIso);
+  const data = await loadPayroll(
+    restaurantId,
+    timezone,
+    { startsOn: from, endsOn: to },
+    nowIso,
+  );
 
   return {
     minutes: data.slips.reduce((sum, s) => sum + s.workedMinutes, 0),

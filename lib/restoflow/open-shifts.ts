@@ -53,20 +53,26 @@ export function claimableShifts(input: {
   const nowMin = minutesOfDayIn(timezone, nowIso);
   const horizon = addDays(today, OPEN_SHIFT_HORIZON_DAYS);
 
-  return openShifts
-    /*
-     * Vain voimassa oleva vuoro on tarjolla.
-     *
-     * Luonnosta ei ole luvattu kenellekään, ja peruttu vuoro on
-     * nimenomaan sellainen jota ei tehdä. Kumpikin tarjolla olevana
-     * olisi lupaus jota ei ole tarkoitettu.
-     */
-    .filter((open) => open.publishedAt !== null && open.cancelledAt === null)
-    .filter((open) => open.position === position)
-    .filter((open) => open.date >= today && open.date <= horizon)
-    .filter((open) => open.date > today || shiftBounds(open).endMin > nowMin)
-    .filter((open) => !overlapsAny(open, myShifts))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  return (
+    openShifts
+      /*
+       * Vain voimassa oleva vuoro on tarjolla.
+       *
+       * Luonnosta ei ole luvattu kenellekään, ja peruttu vuoro on
+       * nimenomaan sellainen jota ei tehdä. Kumpikin tarjolla olevana
+       * olisi lupaus jota ei ole tarkoitettu.
+       */
+      .filter((open) => open.publishedAt !== null && open.cancelledAt === null)
+      .filter((open) => open.position === position)
+      .filter((open) => open.date >= today && open.date <= horizon)
+      .filter((open) => open.date > today || shiftBounds(open).endMin > nowMin)
+      .filter((open) => !overlapsAny(open, myShifts))
+      .sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          a.startTime.localeCompare(b.startTime),
+      )
+  );
 }
 
 /**
@@ -105,7 +111,8 @@ export function overlapsAny(open: OpenShift, myShifts: Shift[]): boolean {
  */
 function dayOffset(from: string, to: string): number | null {
   const diff = Math.round(
-    (Date.parse(`${from}T00:00:00Z`) - Date.parse(`${to}T00:00:00Z`)) / 86_400_000,
+    (Date.parse(`${from}T00:00:00Z`) - Date.parse(`${to}T00:00:00Z`)) /
+      86_400_000,
   );
 
   return Math.abs(diff) <= 1 ? diff * 24 * 60 : null;

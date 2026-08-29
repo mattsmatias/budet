@@ -47,7 +47,8 @@ export function BulkShifts({
     () =>
       [...shifts].sort(
         (a, b) =>
-          a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime),
+          a.date.localeCompare(b.date) ||
+          a.startTime.localeCompare(b.startTime),
       ),
     [shifts],
   );
@@ -60,7 +61,11 @@ export function BulkShifts({
    * asian kuin mitä tapahtuu.
    */
   const outcome = useMemo(
-    () => removalOutcome(sorted.filter((shift) => selected.has(shift.id)), today),
+    () =>
+      removalOutcome(
+        sorted.filter((shift) => selected.has(shift.id)),
+        today,
+      ),
     [selected, sorted, today],
   );
 
@@ -158,7 +163,10 @@ export function BulkShifts({
           label="Luonnokset"
           onClick={() => pick((shift) => publicationOf(shift) === "draft")}
         />
-        <Pika label="Avoimet" onClick={() => pick((shift) => shift.userId === "")} />
+        <Pika
+          label="Avoimet"
+          onClick={() => pick((shift) => shift.userId === "")}
+        />
         <Pika label="Tyhjennä" onClick={() => pick(() => false)} />
       </div>
 
@@ -190,7 +198,10 @@ export function BulkShifts({
                     className="h-4 w-4 shrink-0"
                   />
 
-                  <span className="rf-tabular w-16 shrink-0 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  <span
+                    className="rf-tabular w-16 shrink-0 text-[12px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     {lyhytPaiva(shift.date)}
                   </span>
 
@@ -198,7 +209,10 @@ export function BulkShifts({
                     <span className="font-medium">
                       {user?.name ?? "Avoin vuoro"}
                     </span>{" "}
-                    <span className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
+                    <span
+                      className="rf-tabular"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {shift.startTime}–{shift.endTime}
                     </span>
                   </span>
@@ -225,7 +239,11 @@ export function BulkShifts({
         </ul>
 
         {state.error ? (
-          <p role="alert" className="mt-3 text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+          <p
+            role="alert"
+            className="mt-3 text-[12.5px]"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             {state.error}
           </p>
         ) : null}
@@ -238,30 +256,34 @@ export function BulkShifts({
             {confirming ? (
               <>
                 <p className="text-[13px] font-bold">
-                  {selected.size} {selected.size === 1 ? "vuoro" : "vuoroa"} valittu.
-                  Mitä tapahtuu:
+                  {selected.size} {selected.size === 1 ? "vuoro" : "vuoroa"}{" "}
+                  valittu. Mitä tapahtuu:
                 </p>
 
                 <ul className="mt-1.5 space-y-0.5 text-[12.5px]">
                   {outcome.removed > 0 ? (
-                    <li>{outcome.removed} luonnosta poistetaan lopullisesti.</li>
+                    <li>
+                      {outcome.removed} luonnosta poistetaan lopullisesti.
+                    </li>
                   ) : null}
                   {outcome.cancelled > 0 ? (
                     <li>
-                      {outcome.cancelled} julkaistua perutaan — työntekijä saa tiedon
-                      ja rivi jää historiaan.
+                      {outcome.cancelled} julkaistua perutaan — työntekijä saa
+                      tiedon ja rivi jää historiaan.
                     </li>
                   ) : null}
                   {outcome.blocked > 0 ? (
                     <li style={{ color: "var(--rf-text-3)" }}>
-                      {outcome.blocked} jää koskematta: mennyt nimetty vuoro tai jo
-                      peruttu.
+                      {outcome.blocked} jää koskematta: mennyt nimetty vuoro tai
+                      jo peruttu.
                     </li>
                   ) : null}
                 </ul>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Poista disabled={outcome.removed + outcome.cancelled === 0} />
+                  <Poista
+                    disabled={outcome.removed + outcome.cancelled === 0}
+                  />
                   <button
                     type="button"
                     onClick={() => setConfirming(false)}

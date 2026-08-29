@@ -89,7 +89,9 @@ describe("teemojen luettavuus", () => {
   it.each(THEMES)("%s: kortti erottuu taustasta", (theme) => {
     const t = LUNCH_THEMES[theme];
     const erottuu =
-      t.card !== t.bg || t.cardShadow !== "none" || t.cardBorder !== "transparent";
+      t.card !== t.bg ||
+      t.cardShadow !== "none" ||
+      t.cardBorder !== "transparent";
 
     expect(erottuu).toBe(true);
   });

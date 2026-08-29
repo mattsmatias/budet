@@ -83,7 +83,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { tag, dir } = localeInfo(locale);
 
   return (
-    <html lang={tag} dir={dir} className={`${jakarta.variable} ${mono.variable} h-full`}>
+    <html
+      lang={tag}
+      dir={dir}
+      className={`${jakarta.variable} ${mono.variable} h-full`}
+    >
       <body className="restoflow min-h-full" suppressHydrationWarning>
         {/*
           Teema ennen ensimmäistä piirtoa.

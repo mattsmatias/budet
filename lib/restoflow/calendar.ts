@@ -77,7 +77,11 @@ export function monthCalendar(month: string, today: string): CalendarWeek[] {
   const last = new Date(Date.UTC(year, m, 0, 12));
   const weeks: CalendarWeek[] = [];
 
-  while (cursor <= last || weeks.length === 0 || weeks[weeks.length - 1].days.length < 7) {
+  while (
+    cursor <= last ||
+    weeks.length === 0 ||
+    weeks[weeks.length - 1].days.length < 7
+  ) {
     const days: CalendarDay[] = [];
 
     for (let i = 0; i < 7; i += 1) {

@@ -13,7 +13,13 @@ import type { WorkerText } from "@/lib/i18n/worker-text";
  * ole. Keksitty 37,5 tuntia näyttäisi tavoitteelta jota kukaan ei ole
  * asettanut, ja osa-aikaiselle se olisi väärä joka viikko.
  */
-export function WeeklyHours({ workedMs, t }: { workedMs: number; t: WorkerText }) {
+export function WeeklyHours({
+  workedMs,
+  t,
+}: {
+  workedMs: number;
+  t: WorkerText;
+}) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <p
@@ -22,7 +28,10 @@ export function WeeklyHours({ workedMs, t }: { workedMs: number; t: WorkerText }
       >
         {t.yleinen.thisWeek}
       </p>
-      <p className="rf-tabular text-[20px] font-semibold" suppressHydrationWarning>
+      <p
+        className="rf-tabular text-[20px] font-semibold"
+        suppressHydrationWarning
+      >
         {formatDuration(workedMs)}
       </p>
     </div>

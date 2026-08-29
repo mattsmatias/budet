@@ -1,10 +1,19 @@
 import { z } from "zod";
 import { formatMoney } from "@/lib/money";
-import { formatMonth, periodTotals, receiptsInMonth } from "@/lib/restoflow/expenses";
+import {
+  formatMonth,
+  periodTotals,
+  receiptsInMonth,
+} from "@/lib/restoflow/expenses";
 import { monthStartDate } from "@/lib/restoflow/clock-context";
 import { attention, evaluability, focusItems } from "@/lib/restoflow/dashboard";
 import { buildInsights } from "@/lib/restoflow/insights";
-import { formatHours, labourCost, loadPayroll, summarise } from "@/lib/restoflow/payroll-data";
+import {
+  formatHours,
+  labourCost,
+  loadPayroll,
+  summarise,
+} from "@/lib/restoflow/payroll-data";
 import { monthPeriod } from "@/lib/restoflow/payroll";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import {
@@ -14,7 +23,12 @@ import {
   totalSalesCents,
 } from "@/lib/restoflow/sales";
 import { overallStatus } from "@/lib/restoflow/status";
-import { defineTool, dateSchema, monthSchema, type ToolDefinition } from "./tool-kit";
+import {
+  defineTool,
+  dateSchema,
+  monthSchema,
+  type ToolDefinition,
+} from "./tool-kit";
 import type { MattiContext } from "./context";
 
 /**
@@ -47,6 +61,7 @@ function dashboardInput(ctx: MattiContext, month: string) {
     today: ctx.today,
     now: ctx.now,
     timezone: ctx.timezone,
+    locale: ctx.locale,
   };
 }
 
@@ -74,6 +89,7 @@ const getBriefing = defineTool({
       today: ctx.today,
       now: ctx.now,
       timezone: ctx.timezone,
+      locale: ctx.locale,
     });
 
     const items = focusItems(input, insights);
@@ -122,7 +138,11 @@ const getBriefing = defineTool({
           ? "Kuukauden tulosta ei voi laskea ilman myyntitietoja."
           : `Kuukausi tähän asti ${formatMoney(pulse.monthToDate.resultCents)} (karkea: vain Katen läpi kulkeva).`),
       data: {
-        status: { tone: status.tone, headline: status.headline, counts: status.counts },
+        status: {
+          tone: status.tone,
+          headline: status.headline,
+          counts: status.counts,
+        },
         focus: top.map((i) => ({
           severity: i.severity,
           title: i.title,
@@ -243,7 +263,9 @@ const getSales = defineTool({
     const to = input.to ?? from;
 
     if (to < from) {
-      return { summary: "Aikaväli on väärinpäin: loppupäivä on alkupäivää aiemmin." };
+      return {
+        summary: "Aikaväli on väärinpäin: loppupäivä on alkupäivää aiemmin.",
+      };
     }
 
     const days = salesBetween(ctx.data.sales, from, to);
@@ -266,7 +288,8 @@ const getSales = defineTool({
 
     // Yhden päivän kysymykseen kuuluu vertailu; aikavälillä vertailukohtia
     // olisi yhtä monta kuin päiviä, eikä niistä syntyisi yhtä vastausta.
-    const comparison = from === to ? compareSales(days[0], ctx.data.sales) : null;
+    const comparison =
+      from === to ? compareSales(days[0], ctx.data.sales) : null;
 
     return {
       summary:
@@ -288,7 +311,10 @@ const getSales = defineTool({
         })),
       },
       card: {
-        title: from === to ? `Myynti ${formatDay(from)}` : `Myynti ${formatDay(from)}–${formatDay(to)}`,
+        title:
+          from === to
+            ? `Myynti ${formatDay(from)}`
+            : `Myynti ${formatDay(from)}–${formatDay(to)}`,
         value: formatMoney(total),
         meta: [
           ...(comparison ? [comparisonSentence(comparison)] : []),
@@ -333,7 +359,9 @@ const getLabourCost = defineTool({
     );
     const totals = summarise(data);
 
-    const sales = totalSalesCents(salesBetween(ctx.data.sales, period.startsOn, endsOn));
+    const sales = totalSalesCents(
+      salesBetween(ctx.data.sales, period.startsOn, endsOn),
+    );
     const share = labourShareOfSales(totals.grossCents, sales);
 
     return {
@@ -358,12 +386,14 @@ const getLabourCost = defineTool({
         shareOfSales: share,
       },
       card: {
-        title: `Työvoima ${formatMonth(month)}`,
+        title: `Työvoima ${formatMonth(month, ctx.locale)}`,
         value: formatMoney(totals.grossCents),
         meta: [
           formatHours(totals.workedMinutes),
           `${totals.staffCount} henkilöä`,
-          share === null ? "Myyntiä ei kirjattu" : `${Math.round(share * 100)} % myynnistä`,
+          share === null
+            ? "Myyntiä ei kirjattu"
+            : `${Math.round(share * 100)} % myynnistä`,
         ],
         href: `/admin/palkat?kuukausi=${month}`,
         linkLabel: "Avaa palkat",
@@ -398,6 +428,7 @@ const getTrends = defineTool({
       today: ctx.today,
       now: ctx.now,
       timezone: ctx.timezone,
+      locale: ctx.locale,
     });
 
     if (insights.length === 0) {
@@ -431,7 +462,9 @@ const getTrends = defineTool({
 
 // ---------------------------------------------------------------------------
 
-function comparisonSentence(comparison: ReturnType<typeof compareSales>): string {
+function comparisonSentence(
+  comparison: ReturnType<typeof compareSales>,
+): string {
   if (comparison.kind === "none") return "Vertailukohtaa ei ole";
 
   const change = Math.round((comparison.ratio - 1) * 100);

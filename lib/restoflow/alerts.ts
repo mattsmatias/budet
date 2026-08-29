@@ -11,6 +11,8 @@
  */
 
 import { budgetProgress, WARNING_THRESHOLD } from "./budgets";
+import { labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { findDuplicates } from "./duplicates";
 import { formatMoney } from "../money";
 import { needsReview, receiptsInMonth } from "./expenses";
@@ -18,8 +20,6 @@ import { supplierTrends } from "./suppliers";
 import { checkVat } from "./vat";
 import type { Task } from "./tasks";
 import {
-  CATEGORY_LABELS,
-  REVIEW_REASON_LABELS,
   type Absence,
   type Alert,
   type Budget,
@@ -72,6 +72,8 @@ export interface AlertContext {
    * muistaa katsoa.
    */
   tasks?: Task[];
+  /** Käyttöliittymän kieli: hälytysten teksti kirjoitetaan sillä. */
+  locale: AppLocale;
 }
 
 /**
@@ -105,21 +107,27 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
 }
 
 function severityRank(alert: Alert): number {
-  return alert.severity === "critical" ? 0 : alert.severity === "warning" ? 1 : 2;
+  return alert.severity === "critical"
+    ? 0
+    : alert.severity === "warning"
+      ? 1
+      : 2;
 }
 
 // ---------------------------------------------------------------------------
 
 function duplicateAlerts(ctx: AlertContext): Alert[] {
-  return findDuplicates(receiptsInMonth(ctx.receipts, ctx.month)).map((group) => ({
-    id: `dup-${group.receipts[0].id}`,
-    kind: "duplicate_receipt" as const,
-    severity: "critical" as const,
-    title: `Mahdollinen kaksoiskappale · ${group.supplierName}`,
-    detail: `${formatMoney(group.totalCents)} · ${group.reason}`,
-    href: `/admin/kuitit?korosta=${group.receipts[0].id}`,
-    entityId: group.receipts[0].id,
-  }));
+  return findDuplicates(receiptsInMonth(ctx.receipts, ctx.month)).map(
+    (group) => ({
+      id: `dup-${group.receipts[0].id}`,
+      kind: "duplicate_receipt" as const,
+      severity: "critical" as const,
+      title: `Mahdollinen kaksoiskappale · ${group.supplierName}`,
+      detail: `${formatMoney(group.totalCents)} · ${group.reason}`,
+      href: `/admin/kuitit?korosta=${group.receipts[0].id}`,
+      entityId: group.receipts[0].id,
+    }),
+  );
 }
 
 function budgetAlerts(ctx: AlertContext): Alert[] {
@@ -128,7 +136,7 @@ function budgetAlerts(ctx: AlertContext): Alert[] {
   return progress
     .filter((p) => p.status === "exceeded" || p.status === "warning")
     .map((p) => {
-      const label = CATEGORY_LABELS[p.category];
+      const label = labels(ctx.locale).categories[p.category];
       const pct = Math.round((p.ratio ?? 0) * 100);
 
       return p.status === "exceeded"
@@ -206,7 +214,7 @@ function receiptReviewAlerts(ctx: AlertContext): Alert[] {
     .map((receipt) => {
       const reasons = receipt.reviewReasons
         .filter((x) => !alreadyReported.has(x))
-        .map((x) => REVIEW_REASON_LABELS[x]);
+        .map((x) => labels(ctx.locale).reviewReasons[x]);
 
       return {
         id: `review-${receipt.id}`,
@@ -240,7 +248,9 @@ function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
     if (older.length === 0) continue;
 
     const lastDay = dayIn(ctx.timezone, older[older.length - 1].at);
-    const dayEvents = older.filter((e) => dayIn(ctx.timezone, e.at) === lastDay);
+    const dayEvents = older.filter(
+      (e) => dayIn(ctx.timezone, e.at) === lastDay,
+    );
 
     if (currentState(dayEvents) !== "off") {
       alerts.push({
@@ -270,7 +280,9 @@ function shiftAlerts(ctx: AlertContext): Alert[] {
   // joten ilmoitus luetaan nyt suoraan poissaoloista.
   // Loppupäivä ratkaisee: kesken oleva sairausloma on yhä voimassa,
   // vaikka se olisi alkanut viime viikolla.
-  const upcoming = ctx.absences.filter((absence) => absence.endDate >= ctx.today);
+  const upcoming = ctx.absences.filter(
+    (absence) => absence.endDate >= ctx.today,
+  );
 
   for (const absence of upcoming) {
     const user = ctx.users.find((u) => u.id === absence.userId);

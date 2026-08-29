@@ -36,10 +36,13 @@ export function Workplace({
             🎂
           </span>
           <p className="text-[14px] leading-snug font-medium">
-            {birthdaySentence(birthdays.map((b) => b.name), {
-              yksi: t.koti.birthdayOne,
-              monta: t.koti.birthdayMany,
-            })}
+            {birthdaySentence(
+              birthdays.map((b) => b.name),
+              {
+                yksi: t.koti.birthdayOne,
+                monta: t.koti.birthdayMany,
+              },
+            )}
           </p>
         </div>
       ) : null}
@@ -55,7 +58,10 @@ export function Workplace({
               <span
                 key={person.id}
                 className="inline-flex"
-                style={{ border: "2px solid var(--rf-card)", borderRadius: "50%" }}
+                style={{
+                  border: "2px solid var(--rf-card)",
+                  borderRadius: "50%",
+                }}
               >
                 <Avatar initials={person.initials} size={28} />
               </span>
@@ -63,10 +69,17 @@ export function Workplace({
           </span>
 
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">{t.koti.community}</span>
-            <span className="block text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <span className="block text-[15px] font-medium">
+              {t.koti.community}
+            </span>
+            <span
+              className="block text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {colleagues.length}{" "}
-              {colleagues.length === 1 ? t.koti.colleagueOne : t.koti.colleagueMany}
+              {colleagues.length === 1
+                ? t.koti.colleagueOne
+                : t.koti.colleagueMany}
             </span>
           </span>
 

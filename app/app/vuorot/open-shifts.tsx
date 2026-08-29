@@ -91,7 +91,10 @@ export function OpenShifts({
             </div>
           </Surface>
 
-          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="px-1 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {t.vuorot.takenNote}
           </p>
         </>
@@ -125,10 +128,15 @@ function Row({
     <div className="px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-medium">{shortDay(shift.date, locale)}</p>
+          <p className="text-[14px] font-medium">
+            {shortDay(shift.date, locale)}
+          </p>
           <p className="rf-tabular mt-0.5 text-[15px]">
             {shift.startTime}–{shift.endTime}
-            <span className="ml-2 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="ml-2 text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {length}
             </span>
           </p>

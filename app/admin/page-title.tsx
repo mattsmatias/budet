@@ -34,13 +34,7 @@ const EXTRA: { href: string; label: string }[] = [
   { href: "/admin/loki", label: "Toimintaloki" },
 ];
 
-export function PageTitle({
-  fallback,
-  t,
-}: {
-  fallback: string;
-  t: AdminText;
-}) {
+export function PageTitle({ fallback, t }: { fallback: string; t: AdminText }) {
   const pathname = usePathname();
 
   const routes = [

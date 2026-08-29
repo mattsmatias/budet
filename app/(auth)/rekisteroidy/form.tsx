@@ -13,8 +13,19 @@ export function SignUpForm({ joining, t }: { joining?: boolean; t: AuthText }) {
   return (
     <form action={action} className="mt-7 space-y-4">
       {joining ? <input type="hidden" name="tila" value="liity" /> : null}
-      <Field label={t.kentat.name} name="fullName" autoComplete="name" required />
-      <Field label={t.kentat.email} name="email" type="email" autoComplete="email" required />
+      <Field
+        label={t.kentat.name}
+        name="fullName"
+        autoComplete="name"
+        required
+      />
+      <Field
+        label={t.kentat.email}
+        name="email"
+        type="email"
+        autoComplete="email"
+        required
+      />
       <Field
         label={t.kentat.password}
         name="password"

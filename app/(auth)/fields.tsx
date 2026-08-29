@@ -40,7 +40,11 @@ export function Field({
         }}
       />
       {hint ? (
-        <p id={`${id}-hint`} className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          id={`${id}-hint`}
+          className="mt-1 text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {hint}
         </p>
       ) : null}

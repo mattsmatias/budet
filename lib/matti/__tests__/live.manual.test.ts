@@ -272,7 +272,6 @@ describe.skipIf(!key)("Matti mallia vasten", () => {
     expect(text).toMatch(/31,44|31.44/);
   }, 90_000);
 
-
   /*
    * Jälkiruoasta ja kahvista ei kysytä ennen työn tekemistä.
    *

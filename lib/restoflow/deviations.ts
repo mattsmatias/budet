@@ -24,11 +24,7 @@ import { dayIn } from "./clock-context";
 import type { Shift, User } from "./types";
 
 export type DeviationKind =
-  | "no_clock_in"
-  | "late"
-  | "overrun"
-  | "shift_missing"
-  | "overlap";
+  "no_clock_in" | "late" | "overrun" | "shift_missing" | "overlap";
 
 export type DeviationSeverity = "critical" | "warning";
 
@@ -137,7 +133,8 @@ export function findDeviations(input: {
     }
 
     const late =
-      localMinutes(row.actualStart, input.timezone) - plannedStartMinutes(shift);
+      localMinutes(row.actualStart, input.timezone) -
+      plannedStartMinutes(shift);
 
     if (late >= LATE_TOLERANCE_MINUTES) {
       found.push({

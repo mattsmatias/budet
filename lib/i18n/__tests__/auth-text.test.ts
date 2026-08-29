@@ -35,7 +35,9 @@ describe("kirjautumisen tekstit", () => {
 
   it("ei jätä yhtäkään tekstiä tyhjäksi", () => {
     for (const locale of APP_LOCALES) {
-      for (const [polku, arvo] of litista(authText(locale) as unknown as Solmu)) {
+      for (const [polku, arvo] of litista(
+        authText(locale) as unknown as Solmu,
+      )) {
         expect(arvo.trim(), `${locale}: ${polku}`).not.toBe("");
       }
     }

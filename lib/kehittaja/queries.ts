@@ -32,7 +32,11 @@ import type {
  * odotettavissa oleva tulos: se tarkoittaa ettei kutsujalla ole
  * oikeutta, ja silloin sivu näyttää tyhjän eikä vuoda mitään.
  */
-async function rpc<T>(name: string, args: Record<string, unknown>, fallback: T): Promise<T> {
+async function rpc<T>(
+  name: string,
+  args: Record<string, unknown>,
+  fallback: T,
+): Promise<T> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase.rpc(name, args);
@@ -45,17 +49,30 @@ async function rpc<T>(name: string, args: Record<string, unknown>, fallback: T):
 
 const TYHJA_OVERVIEW: Overview = {
   restaurants: {
-    total: 0, active: 0, trial: 0, suspended: 0,
-    cancelled: 0, archived: 0, test: 0, newToday: 0,
+    total: 0,
+    active: 0,
+    trial: 0,
+    suspended: 0,
+    cancelled: 0,
+    archived: 0,
+    test: 0,
+    newToday: 0,
   },
-  users: { total: 0, owners: 0, managers: 0, employees: 0, accountants: 0, inactive: 0 },
+  users: {
+    total: 0,
+    owners: 0,
+    managers: 0,
+    employees: 0,
+    accountants: 0,
+    inactive: 0,
+  },
   today: { newUsers: 0, activeUsers: 0 },
   trialsEndingSoon: 0,
   generatedAt: new Date().toISOString(),
 };
 
-export const fetchOverview = cache(
-  async (): Promise<Overview> => rpc("sa_overview", {}, TYHJA_OVERVIEW),
+export const fetchOverview = cache(async (): Promise<Overview> =>
+  rpc("sa_overview", {}, TYHJA_OVERVIEW),
 );
 
 export const fetchRestaurants = cache(async (): Promise<RestaurantRow[]> => {
@@ -154,7 +171,11 @@ export const fetchUsers = cache(async (): Promise<UserRow[]> => {
 });
 
 export const fetchAudit = cache(async (limit = 100): Promise<AuditRow[]> => {
-  const rows = await rpc<Record<string, unknown>[]>("sa_audit", { p_limit: limit }, []);
+  const rows = await rpc<Record<string, unknown>[]>(
+    "sa_audit",
+    { p_limit: limit },
+    [],
+  );
   return rows.map((r) => ({
     id: r.id as string,
     actorEmail: (r.actor_email as string | null) ?? null,
@@ -168,6 +189,6 @@ export const fetchAudit = cache(async (limit = 100): Promise<AuditRow[]> => {
   }));
 });
 
-export const fetchFlags = cache(
-  async (): Promise<Flag[]> => rpc<Flag[]>("sa_flags", {}, []),
+export const fetchFlags = cache(async (): Promise<Flag[]> =>
+  rpc<Flag[]>("sa_flags", {}, []),
 );

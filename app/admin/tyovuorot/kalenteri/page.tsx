@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
@@ -42,8 +44,17 @@ export const metadata = { title: "Työvuorokalenteri" };
 export default async function ShiftCalendarPage({
   searchParams,
 }: PageProps<"/admin/tyovuorot/kalenteri">) {
-  const { users, shifts: assigned, openShifts, budgets, month, today, role } =
-    await adminContext("/admin/tyovuorot");
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
+  const {
+    users,
+    shifts: assigned,
+    openShifts,
+    budgets,
+    month,
+    today,
+    role,
+  } = await adminContext("/admin/tyovuorot");
 
   /*
    * Avoimet vuorot mukaan kalenteriin.
@@ -57,11 +68,14 @@ export default async function ShiftCalendarPage({
   if (!can(role, "shifts.view.all")) return null;
 
   const params = await searchParams;
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) ? requested : month;
 
   const selectedDay =
-    typeof params.paiva === "string" && ISO_DATE.test(params.paiva) ? params.paiva : null;
+    typeof params.paiva === "string" && ISO_DATE.test(params.paiva)
+      ? params.paiva
+      : null;
 
   /*
    * Kolme näkymää samasta aineistosta.
@@ -71,17 +85,25 @@ export default async function ShiftCalendarPage({
    * linkittää ja paluunappi toimii.
    */
   const view =
-    params.nakyma === "viikko" ? "viikko" : params.nakyma === "paiva" ? "paiva" : "kuukausi";
+    params.nakyma === "viikko"
+      ? "viikko"
+      : params.nakyma === "paiva"
+        ? "paiva"
+        : "kuukausi";
 
   const canManage = can(role, "shifts.manage");
   const showsRates = seesPayRates(role);
 
-  const monthShifts = shifts.filter((shift) => shift.date.startsWith(viewMonth));
+  const monthShifts = shifts.filter((shift) =>
+    shift.date.startsWith(viewMonth),
+  );
   const weeks = monthCalendar(viewMonth, today);
   const plan = planSummary({ shifts: monthShifts, users });
   const overlapping = findOverlaps(monthShifts, users);
 
-  const drafts = monthShifts.filter((shift) => publicationOf(shift) === "draft");
+  const drafts = monthShifts.filter(
+    (shift) => publicationOf(shift) === "draft",
+  );
   const draftPlan = planSummary({ shifts: drafts, users });
 
   /*
@@ -110,13 +132,15 @@ export default async function ShiftCalendarPage({
     selectedDay ?? (today.startsWith(viewMonth) ? today : `${viewMonth}-01`);
 
   const focusWeek =
-    weeks.find((week) => week.days.some((day) => day.date === focusDate)) ?? weeks[0];
+    weeks.find((week) => week.days.some((day) => day.date === focusDate)) ??
+    weeks[0];
 
   const monthStart = `${viewMonth}-01`;
-  const monthEnd = weeks
-    .flatMap((week) => week.days)
-    .filter((day) => day.inMonth)
-    .at(-1)?.date ?? monthStart;
+  const monthEnd =
+    weeks
+      .flatMap((week) => week.days)
+      .filter((day) => day.inMonth)
+      .at(-1)?.date ?? monthStart;
 
   return (
     <div className="rf-enter space-y-5">
@@ -148,7 +172,7 @@ export default async function ShiftCalendarPage({
       {canManage ? (
         <PublishBar
           month={viewMonth}
-          monthLabel={`${monthWord(viewMonth)}n ${viewMonth.slice(0, 4)}`}
+          monthLabel={`${monthWord(viewMonth, locale)}n ${viewMonth.slice(0, 4)}`}
           drafts={drafts.length}
           people={draftPlan.people}
           hours={formatPlanned(draftPlan.plannedMinutes)}
@@ -164,13 +188,22 @@ export default async function ShiftCalendarPage({
       */}
       {canManage ? (
         <div className="flex flex-wrap gap-2.5">
-          <CopyRange month={viewMonth} monthStart={monthStart} monthEnd={monthEnd} />
-          <RecurringForm users={users} monthStart={monthStart} monthEnd={monthEnd} />
+          <CopyRange
+            month={viewMonth}
+            monthStart={monthStart}
+            monthEnd={monthEnd}
+          />
+          <RecurringForm
+            nimet={nimet}
+            users={users}
+            monthStart={monthStart}
+            monthEnd={monthEnd}
+          />
           <BulkShifts
             shifts={monthShifts}
             users={users}
             today={today}
-            monthLabel={formatMonth(viewMonth)}
+            monthLabel={formatMonth(viewMonth, locale)}
           />
         </div>
       ) : null}
@@ -219,7 +252,11 @@ export default async function ShiftCalendarPage({
             tileTone="blue"
             icon={<RfIcon name="budget" size={17} />}
             value={
-              labourBudget === null ? "—" : <CountUp to={labourBudget.amountCents} format="money" />
+              labourBudget === null ? (
+                "—"
+              ) : (
+                <CountUp to={labourBudget.amountCents} format="money" />
+              )
             }
             tone={overBudget ? "bad" : "muted"}
             delta={
@@ -258,7 +295,10 @@ export default async function ShiftCalendarPage({
             <RfIcon name="alert" size={15} />
           </span>
           {overlapping.length}{" "}
-          {overlapping.length === 1 ? "päällekkäinen vuoro" : "päällekkäistä vuoroa"}:{" "}
+          {overlapping.length === 1
+            ? "päällekkäinen vuoro"
+            : "päällekkäistä vuoroa"}
+          :{" "}
           {overlapping
             .slice(0, 3)
             .map((pair) => pair.user?.name ?? "tuntematon")
@@ -276,7 +316,10 @@ export default async function ShiftCalendarPage({
       */}
       <div
         className="flex flex-wrap items-center gap-0.5 self-start p-0.5"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
         <ViewTab
           href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}`}
@@ -295,10 +338,13 @@ export default async function ShiftCalendarPage({
         />
       </div>
 
-      {canManage && view !== "paiva" ? <DragStaff users={users} /> : null}
+      {canManage && view !== "paiva" ? (
+        <DragStaff nimet={nimet} users={users} />
+      ) : null}
 
       {view === "paiva" ? (
         <DayPanel
+          nimet={nimet}
           date={focusDate}
           month={viewMonth}
           users={users}
@@ -312,8 +358,8 @@ export default async function ShiftCalendarPage({
               <CardHeader
                 title={
                   view === "viikko"
-                    ? `Viikko ${focusWeek?.week ?? ""} · ${formatMonth(viewMonth)}`
-                    : formatMonth(viewMonth)
+                    ? `Viikko ${focusWeek?.week ?? ""} · ${formatMonth(viewMonth, locale)}`
+                    : formatMonth(viewMonth, locale)
                 }
                 subtitle={
                   view === "viikko"
@@ -324,9 +370,11 @@ export default async function ShiftCalendarPage({
             </div>
 
             <div className="-mt-1 overflow-x-auto px-2 pb-2">
-              <table className={`rf-cal w-full ${view === "viikko" ? "rf-cal-week-view" : ""}`}>
+              <table
+                className={`rf-cal w-full ${view === "viikko" ? "rf-cal-week-view" : ""}`}
+              >
                 <caption className="sr-only">
-                  Työvuorokalenteri {formatMonth(viewMonth)}
+                  Työvuorokalenteri {formatMonth(viewMonth, locale)}
                 </caption>
 
                 <thead>
@@ -343,30 +391,32 @@ export default async function ShiftCalendarPage({
                 </thead>
 
                 <tbody>
-                  {(view === "viikko" && focusWeek ? [focusWeek] : weeks).map((week) => (
-                    <tr key={`${week.week}-${week.days[0].date}`}>
-                      <th scope="row" className="rf-cal-week">
-                        {week.week}
-                      </th>
+                  {(view === "viikko" && focusWeek ? [focusWeek] : weeks).map(
+                    (week) => (
+                      <tr key={`${week.week}-${week.days[0].date}`}>
+                        <th scope="row" className="rf-cal-week">
+                          {week.week}
+                        </th>
 
-                      {week.days.map((day) => (
-                        <DayCell
-                          key={day.date}
-                          date={day.date}
-                          dayNumber={day.day}
-                          inMonth={day.inMonth}
-                          weekend={day.weekend}
-                          isToday={day.isToday}
-                          selected={day.date === selectedDay}
-                          shifts={shiftsOn(shifts, day.date)}
-                          users={users}
-                          month={viewMonth}
-                          view={view}
-                          limit={view === "viikko" ? Infinity : 3}
-                        />
-                      ))}
-                    </tr>
-                  ))}
+                        {week.days.map((day) => (
+                          <DayCell
+                            key={day.date}
+                            date={day.date}
+                            dayNumber={day.day}
+                            inMonth={day.inMonth}
+                            weekend={day.weekend}
+                            isToday={day.isToday}
+                            selected={day.date === selectedDay}
+                            shifts={shiftsOn(shifts, day.date)}
+                            users={users}
+                            month={viewMonth}
+                            view={view}
+                            limit={view === "viikko" ? Infinity : 3}
+                          />
+                        ))}
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
@@ -374,6 +424,7 @@ export default async function ShiftCalendarPage({
 
           {selectedDay ? (
             <DayPanel
+              nimet={nimet}
               date={selectedDay}
               month={viewMonth}
               users={users}
@@ -491,7 +542,10 @@ function DayCell({
                 }}
               >
                 {user?.name.split(" ")[0] ?? "Avoin"}{" "}
-                <span className="rf-tabular" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="rf-tabular"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   {short(shift.startTime)}–{short(shift.endTime)}
                 </span>
               </span>
@@ -499,7 +553,10 @@ function DayCell({
           })}
 
           {rest > 0 ? (
-            <span className="block text-[10.5px] font-medium" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="block text-[10.5px] font-medium"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               + {rest} muuta
             </span>
           ) : null}
@@ -546,4 +603,3 @@ function short(time: string): string {
   const [h, m] = time.split(":");
   return m === "00" ? String(Number(h)) : `${Number(h)}.${m}`;
 }
-

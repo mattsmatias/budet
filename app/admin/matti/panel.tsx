@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
@@ -127,15 +133,15 @@ export function MattiPanel({
         </button>
 
         {open ? (
-        <Overlay
-          t={t}
-          container={container}
-          pathname={pathname}
-          close={close}
-          briefing={briefing}
-          greeting={greeting}
-        />
-      ) : null}
+          <Overlay
+            t={t}
+            container={container}
+            pathname={pathname}
+            close={close}
+            briefing={briefing}
+            greeting={greeting}
+          />
+        ) : null}
       </>
     );
   }
@@ -168,7 +174,10 @@ export function MattiPanel({
           yksi syy siihen etta valikko vieritti lyhyella ruudulla.
           Nyt rivi on saman korkuinen kuin kaikki muutkin.
         */}
-        <span className="min-w-0 flex-1 font-bold" style={{ color: "var(--rf-text)" }}>
+        <span
+          className="min-w-0 flex-1 font-bold"
+          style={{ color: "var(--rf-text)" }}
+        >
           {t.matti.name}
         </span>
 
@@ -283,9 +292,10 @@ function Conversation({
   const [turns, setTurns] = useState<Turn[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ text: string; retryable: boolean } | null>(
-    null,
-  );
+  const [error, setError] = useState<{
+    text: string;
+    retryable: boolean;
+  } | null>(null);
   const [lastAsked, setLastAsked] = useState<string | null>(null);
 
   const scroller = useRef<HTMLDivElement>(null);
@@ -421,7 +431,9 @@ function Conversation({
                   setTurns((current) => current.slice(0, -1));
                   void send(lastAsked);
                 }}
-              >{t.matti.retry}</Button>
+              >
+                {t.matti.retry}
+              </Button>
             ) : null}
           </div>
         ) : null}
@@ -449,7 +461,9 @@ function Working({ t }: { t: AdminText }) {
     >
       <span className="rf-thinking" style={{ color: "var(--rf-accent)" }}>
         <RfIcon name="sparkle" size={14} />
-      </span>{t.matti.thinking}</p>
+      </span>
+      {t.matti.thinking}
+    </p>
   );
 }
 
@@ -480,8 +494,14 @@ function quickActions(
 
   const sivukohtaiset: Record<string, { label: string; prompt: string }[]> = {
     "/admin/budjetit": [
-      { label: t.mattiKysy.overBudgetShort, prompt: t.mattiKysy.overBudgetFull },
-      { label: t.mattiKysy.budgetLeftShort, prompt: t.mattiKysy.budgetLeftShort },
+      {
+        label: t.mattiKysy.overBudgetShort,
+        prompt: t.mattiKysy.overBudgetFull,
+      },
+      {
+        label: t.mattiKysy.budgetLeftShort,
+        prompt: t.mattiKysy.budgetLeftShort,
+      },
     ],
     "/admin/kuitit": [
       { label: t.mattiKysy.biggestShort, prompt: t.mattiKysy.biggestFull },
@@ -492,19 +512,34 @@ function quickActions(
       { label: t.mattiKysy.expensesShort, prompt: t.mattiKysy.expensesFull },
     ],
     "/admin/tyovuorot": [
-      { label: t.mattiKysy.rosterCostShort, prompt: t.mattiKysy.rosterCostFull },
-      { label: t.mattiKysy.openShiftsShort, prompt: t.mattiKysy.openShiftsFull },
+      {
+        label: t.mattiKysy.rosterCostShort,
+        prompt: t.mattiKysy.rosterCostFull,
+      },
+      {
+        label: t.mattiKysy.openShiftsShort,
+        prompt: t.mattiKysy.openShiftsFull,
+      },
     ],
     "/admin/lounas": [
       { label: t.mattiKysy.lunchListShort, prompt: t.mattiKysy.lunchListFull },
       { label: t.mattiKysy.lunchMostShort, prompt: t.mattiKysy.lunchMostFull },
     ],
     "/admin/myynti": [
-      { label: t.mattiKysy.salesTrendShort, prompt: t.mattiKysy.salesTrendShort },
-      { label: t.mattiKysy.salesTargetShort, prompt: t.mattiKysy.salesTargetFull },
+      {
+        label: t.mattiKysy.salesTrendShort,
+        prompt: t.mattiKysy.salesTrendShort,
+      },
+      {
+        label: t.mattiKysy.salesTargetShort,
+        prompt: t.mattiKysy.salesTargetFull,
+      },
     ],
     "/admin/palkat": [
-      { label: t.mattiKysy.labourCostShort, prompt: t.mattiKysy.labourCostShort },
+      {
+        label: t.mattiKysy.labourCostShort,
+        prompt: t.mattiKysy.labourCostShort,
+      },
     ],
     "/admin/tehtavat": [
       { label: t.mattiKysy.lateTasksShort, prompt: t.mattiKysy.lateTasksShort },
@@ -514,7 +549,9 @@ function quickActions(
     ],
   };
 
-  const osuma = Object.keys(sivukohtaiset).find((polku) => currentPage.startsWith(polku));
+  const osuma = Object.keys(sivukohtaiset).find((polku) =>
+    currentPage.startsWith(polku),
+  );
   return osuma ? [...sivukohtaiset[osuma], ...yleiset.slice(0, 1)] : yleiset;
 }
 
@@ -565,9 +602,7 @@ function Welcome({
       */}
       <p className="text-[14px] leading-relaxed">
         {greeting} 👋{" "}
-        {kaikkiKunnossa
-          ? t.matti.nothingToNote
-          : t.matti.hereAreTheMain}
+        {kaikkiKunnossa ? t.matti.nothingToNote : t.matti.hereAreTheMain}
       </p>
 
       {/*
@@ -593,12 +628,17 @@ function Welcome({
       ) : null}
 
       {kaikkiKunnossa ? (
-        <p className="flex items-center gap-2 text-[13.5px]" style={{ color: "var(--rf-green-text)" }}>
+        <p
+          className="flex items-center gap-2 text-[13.5px]"
+          style={{ color: "var(--rf-green-text)" }}
+        >
           <span
             aria-hidden="true"
             className="inline-block h-2 w-2 shrink-0"
             style={{ background: "var(--rf-green-text)", borderRadius: 999 }}
-          />{t.matti.allGood}</p>
+          />
+          {t.matti.allGood}
+        </p>
       ) : null}
 
       {/*
@@ -623,21 +663,34 @@ function Welcome({
             className="flex items-center gap-1.5 text-[12px] font-bold uppercase"
             style={{ color: "var(--rf-accent)", letterSpacing: "0.06em" }}
           >
-            <RfIcon name="sparkle" size={13} />{t.matti.noticed}</p>
+            <RfIcon name="sparkle" size={13} />
+            {t.matti.noticed}
+          </p>
 
-          <p className="mt-1.5 text-[13.5px] leading-relaxed">{havainto.text}</p>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed">
+            {havainto.text}
+          </p>
 
           <button
             type="button"
-            onClick={() => onPick(fill(t.matti.whyIsThat, { asia: havainto.text }))}
+            onClick={() =>
+              onPick(fill(t.matti.whyIsThat, { asia: havainto.text }))
+            }
             className="rf-press mt-2 text-[12.5px] font-bold"
             style={{ color: "var(--rf-accent)" }}
-          >{t.matti.whyLink}</button>
+          >
+            {t.matti.whyLink}
+          </button>
         </div>
       ))}
 
       <div>
-        <p className="text-[12.5px] font-semibold" style={{ color: "var(--rf-text-2)" }}>{t.matti.whatToDo}</p>
+        <p
+          className="text-[12.5px] font-semibold"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          {t.matti.whatToDo}
+        </p>
 
         <div className="mt-2 space-y-1.5">
           {quickActions(currentPage, t).map((action) => (
@@ -662,7 +715,12 @@ function Welcome({
         </div>
       </div>
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.matti.changesShown}</p>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {t.matti.changesShown}
+      </p>
     </div>
   );
 }
@@ -690,7 +748,10 @@ function Tilanne({
 
   return (
     <div>
-      <p className="flex items-center gap-2 text-[13.5px] font-semibold" style={{ color: vari }}>
+      <p
+        className="flex items-center gap-2 text-[13.5px] font-semibold"
+        style={{ color: vari }}
+      >
         <span
           aria-hidden="true"
           className="inline-block h-2 w-2 shrink-0"
@@ -711,8 +772,13 @@ function Tilanne({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              <span className="block text-[13.5px] font-medium">{alert.title}</span>
-              <span className="mt-0.5 block text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+              <span className="block text-[13.5px] font-medium">
+                {alert.title}
+              </span>
+              <span
+                className="mt-0.5 block text-[12.5px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {alert.detail}
               </span>
             </Link>
@@ -752,7 +818,9 @@ function TurnView({ turn, t }: { turn: Turn; t: AdminText }) {
   return (
     <div>
       {/* Ei kuplaa. Matin vastaus on sisältöä, ei viesti. */}
-      <p className="whitespace-pre-wrap text-[14px] leading-relaxed">{turn.text}</p>
+      <p className="whitespace-pre-wrap text-[14px] leading-relaxed">
+        {turn.text}
+      </p>
 
       {turn.cards?.map((card, index) => (
         <DataCard key={index} card={card} />
@@ -762,7 +830,9 @@ function TurnView({ turn, t }: { turn: Turn; t: AdminText }) {
         <ActionCard key={action.id} action={action} t={t} />
       ))}
 
-      {turn.steps && turn.steps.length > 0 ? <Steps steps={turn.steps} t={t} /> : null}
+      {turn.steps && turn.steps.length > 0 ? (
+        <Steps steps={turn.steps} t={t} />
+      ) : null}
     </div>
   );
 }
@@ -780,11 +850,17 @@ function Steps({ steps, t }: { steps: Step[]; t: AdminText }) {
       <summary
         className="cursor-pointer list-none text-[12px]"
         style={{ color: "var(--rf-text-3)" }}
-      >{t.matti.howSolved}</summary>
+      >
+        {t.matti.howSolved}
+      </summary>
 
       <ul className="mt-2 space-y-1">
         {steps.map((step, index) => (
-          <li key={index} className="flex items-start gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          <li
+            key={index}
+            className="flex items-start gap-1.5 text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             <span className="mt-0.5 shrink-0">
               <RfIcon name="check" size={11} />
             </span>
@@ -903,8 +979,14 @@ const initialAction: MattiActionState = {};
  * tästä kortista.
  */
 function ActionCard({ action, t }: { action: PendingAction; t: AdminText }) {
-  const [confirmState, confirm] = useActionState(confirmMattiAction, initialAction);
-  const [cancelState, cancel] = useActionState(cancelMattiAction, initialAction);
+  const [confirmState, confirm] = useActionState(
+    confirmMattiAction,
+    initialAction,
+  );
+  const [cancelState, cancel] = useActionState(
+    cancelMattiAction,
+    initialAction,
+  );
   const router = useRouter();
 
   const done = confirmState.ok || confirmState.error || cancelState.message;
@@ -942,7 +1024,10 @@ function ActionCard({ action, t }: { action: PendingAction; t: AdminText }) {
                     >
                       {change.from}
                     </span>
-                    <span aria-hidden="true" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      aria-hidden="true"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {" → "}
                     </span>
                   </>
@@ -1014,7 +1099,9 @@ function ActionCard({ action, t }: { action: PendingAction; t: AdminText }) {
 
           <form action={cancel}>
             <input type="hidden" name="actionId" value={action.id} />
-            <Button type="submit" tone="ghost" size="sm">{t.matti.cancel}</Button>
+            <Button type="submit" tone="ghost" size="sm">
+              {t.matti.cancel}
+            </Button>
           </form>
         </div>
       )}
@@ -1072,7 +1159,9 @@ function Composer({
           minHeight: 48,
         }}
       >
-        <label htmlFor="matti-input" className="sr-only">{t.matti.placeholder}</label>
+        <label htmlFor="matti-input" className="sr-only">
+          {t.matti.placeholder}
+        </label>
 
         <textarea
           id="matti-input"

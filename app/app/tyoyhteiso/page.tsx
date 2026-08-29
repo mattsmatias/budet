@@ -51,19 +51,28 @@ export default async function WorkplacePage() {
           <Surface padded={false}>
             <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
               {colleagues.map((person) => (
-                <li key={person.id} className="flex items-center gap-3.5 px-4 py-3">
+                <li
+                  key={person.id}
+                  className="flex items-center gap-3.5 px-4 py-3"
+                >
                   <Avatar initials={person.initials} size={40} />
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-medium">
                       {person.name}
                       {birthdayIds.has(person.id) ? (
-                        <span className="ml-2" aria-label={t.tyoyhteiso.birthdayToday}>
+                        <span
+                          className="ml-2"
+                          aria-label={t.tyoyhteiso.birthdayToday}
+                        >
                           🎂
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p
+                      className="text-[13px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {person.position
                         ? t.asemat[person.position]
                         : t.yleinen.employee}
@@ -88,7 +97,10 @@ export default async function WorkplacePage() {
             </ul>
           </Surface>
 
-          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="px-1 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {t.lisatiedot.birthdayNote}
           </p>
         </section>

@@ -1,8 +1,13 @@
 import { employeeContext } from "@/lib/restoflow/page-context";
+import { labels } from "@/lib/i18n/labels";
 import { weekStart } from "@/lib/restoflow/clock-context";
 import { fetchClockEvents, fetchColleagues } from "@/lib/restoflow/queries";
 import { birthdaysToday } from "@/lib/restoflow/workplace";
-import { daySummaries, eventsOnDate, workedBetween } from "@/lib/restoflow/timeclock";
+import {
+  daySummaries,
+  eventsOnDate,
+  workedBetween,
+} from "@/lib/restoflow/timeclock";
 import { ClockCard } from "./home/clock-card";
 import { NextShift } from "./home/next-shift";
 import { MyTasks } from "./my-tasks";
@@ -42,6 +47,7 @@ export default async function EmployeeHome() {
   const zone = restaurant.timezone;
   const locale = await resolveLocale();
   const t = workerText(locale);
+  const nimet = labels(locale);
 
   /*
    * Historia haetaan erikseen ja vain tälle sivulle.
@@ -120,10 +126,12 @@ export default async function EmployeeHome() {
     */
     <div className="space-y-6">
       <header className="bd-app-rise px-1 pt-1">
-        <h1 className="text-[30px] font-semibold" style={{ letterSpacing: "-0.03em" }}>
+        <h1
+          className="text-[30px] font-semibold"
+          style={{ letterSpacing: "-0.03em" }}
+        >
           {t.koti.hello}
-          {firstName ? `, ${firstName}` : ""}{" "}
-          <span aria-hidden="true">👋</span>
+          {firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
         </h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
@@ -143,7 +151,13 @@ export default async function EmployeeHome() {
         />
 
         <div className="space-y-4">
-          <NextShift shift={nextShift} today={today} t={t} locale={locale} />
+          <NextShift
+            nimet={nimet}
+            shift={nextShift}
+            today={today}
+            t={t}
+            locale={locale}
+          />
 
           <Surface>
             <WeeklyHours workedMs={week.workedMs} t={t} />
@@ -167,7 +181,13 @@ export default async function EmployeeHome() {
       </div>
 
       <div className="bd-app-rise bd-app-d4">
-        <RecentDays days={recent} timezone={zone} today={today} t={t} locale={locale} />
+        <RecentDays
+          days={recent}
+          timezone={zone}
+          today={today}
+          t={t}
+          locale={locale}
+        />
       </div>
     </div>
   );

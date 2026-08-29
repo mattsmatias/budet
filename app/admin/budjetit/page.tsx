@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -14,11 +15,7 @@ import {
 } from "@/lib/restoflow/budgets";
 import { formatMonth, receiptsInMonth } from "@/lib/restoflow/expenses";
 import { can } from "@/lib/restoflow/permissions";
-import {
-  CATEGORY_LABELS,
-  CATEGORY_ORDER,
-  type ExpenseCategory,
-} from "@/lib/restoflow/types";
+import { CATEGORY_ORDER, type ExpenseCategory } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon } from "@/components/restoflow/icons";
 import {
@@ -46,8 +43,15 @@ export const metadata = { title: "Budjetit" };
 export default async function BudgetsPage({
   searchParams,
 }: PageProps<"/admin/budjetit">) {
-  const { receipts, budgets, month: nykyinen, role } = await adminContext("/admin/budjetit");
-  const t = adminText(await resolveLocale());
+  const {
+    receipts,
+    budgets,
+    month: nykyinen,
+    role,
+  } = await adminContext("/admin/budjetit");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const month = monthFromParams(await searchParams, nykyinen);
 
@@ -70,7 +74,8 @@ export default async function BudgetsPage({
     <div className="rf-enter space-y-5">
       <div>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonth(month)} · {budgeted.length} budjetoitua kategoriaa
+          {formatMonth(month, locale)} · {budgeted.length} budjetoitua
+          kategoriaa
         </p>
       </div>
 
@@ -97,10 +102,13 @@ export default async function BudgetsPage({
             conclusion={
               summary.totalBudgetCents > 0
                 ? fill(t.budjetit.shareOfTotal, {
-                osuus: String(
-                  Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100),
-                ),
-              })
+                    osuus: String(
+                      Math.round(
+                        (summary.totalSpentCents / summary.totalBudgetCents) *
+                          100,
+                      ),
+                    ),
+                  })
                 : "Budjetteja ei ole asetettu"
             }
           />
@@ -110,7 +118,11 @@ export default async function BudgetsPage({
             tileTone="violet"
             value={<CountUp to={summary.exceededCount} format="integer" />}
             tone={summary.exceededCount > 0 ? "bad" : "muted"}
-            conclusion={summary.exceededCount > 0 ? "Kategoriaa yli rajan" : "Ei ylityksiä"}
+            conclusion={
+              summary.exceededCount > 0
+                ? "Kategoriaa yli rajan"
+                : "Ei ylityksiä"
+            }
           />
           <MetricCard
             label={t.budjetit.nearLimit}
@@ -119,8 +131,8 @@ export default async function BudgetsPage({
             value={<CountUp to={summary.warningCount} format="integer" />}
             tone={summary.warningCount > 0 ? "warn" : "muted"}
             conclusion={fill(t.budjetit.overThreshold, {
-                osuus: String(Math.round(WARNING_THRESHOLD * 100)),
-              })}
+              osuus: String(Math.round(WARNING_THRESHOLD * 100)),
+            })}
           />
         </section>
       ) : null}
@@ -136,7 +148,10 @@ export default async function BudgetsPage({
         />
       ) : (
         <Card>
-          <CardHeader title={t.toimittajat.categories} subtitle={t.budjetit.overFirst} />
+          <CardHeader
+            title={t.toimittajat.categories}
+            subtitle={t.budjetit.overFirst}
+          />
           <ul className="space-y-5">
             {budgeted.map((p) => {
               const pct = Math.round((p.ratio ?? 0) * 100);
@@ -149,19 +164,28 @@ export default async function BudgetsPage({
                       <span style={{ color: "var(--rf-text-2)" }}>
                         <CategoryIcon category={p.category} size={17} />
                       </span>
-                      {CATEGORY_LABELS[p.category]}
+                      {nimet.categories[p.category]}
                     </span>
                     <span className="flex items-center gap-2.5">
                       {p.status === "exceeded" ? (
-                        <Pill tone="risk" dot>ylitetty</Pill>
+                        <Pill tone="risk" dot>
+                          ylitetty
+                        </Pill>
                       ) : p.status === "warning" ? (
-                        <Pill tone="warn" dot>{t.budjetit.approaching}</Pill>
+                        <Pill tone="warn" dot>
+                          {t.budjetit.approaching}
+                        </Pill>
                       ) : (
-                        <Pill tone="ok" dot>ok</Pill>
+                        <Pill tone="ok" dot>
+                          ok
+                        </Pill>
                       )}
-                      <span className="rf-tabular text-[15px] font-semibold">{pct} %</span>
+                      <span className="rf-tabular text-[15px] font-semibold">
+                        {pct} %
+                      </span>
                       {canEdit ? (
                         <BudgetEditor
+                          nimet={nimet}
                           category={p.category}
                           currentCents={p.budgetCents}
                           spentCents={p.spentCents}
@@ -175,16 +199,26 @@ export default async function BudgetsPage({
                   </div>
 
                   <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-[13px]">
-                    <span className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
-                      {formatMoney(p.spentCents)} / {formatMoney(p.budgetCents ?? 0)}
+                    <span
+                      className="rf-tabular"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
+                      {formatMoney(p.spentCents)} /{" "}
+                      {formatMoney(p.budgetCents ?? 0)}
                     </span>
                     <span
                       className="rf-tabular"
-                      style={{ color: over ? "var(--rf-red-text)" : "var(--rf-text-3)" }}
+                      style={{
+                        color: over ? "var(--rf-red-text)" : "var(--rf-text-3)",
+                      }}
                     >
                       {over
-                        ? fill(t.budjetit.overBy, { summa: formatMoney(Math.abs(p.remainingCents ?? 0)) })
-                        : fill(t.budjetit.remaining, { summa: formatMoney(p.remainingCents ?? 0) })}
+                        ? fill(t.budjetit.overBy, {
+                            summa: formatMoney(Math.abs(p.remainingCents ?? 0)),
+                          })
+                        : fill(t.budjetit.remaining, {
+                            summa: formatMoney(p.remainingCents ?? 0),
+                          })}
                     </span>
                   </div>
                 </li>
@@ -196,7 +230,11 @@ export default async function BudgetsPage({
 
       {canEdit ? (
         <Card>
-          <AddBudget categories={available as ExpenseCategory[]} spend={spend} />
+          <AddBudget
+            nimet={nimet}
+            categories={available as ExpenseCategory[]}
+            spend={spend}
+          />
         </Card>
       ) : null}
 
@@ -205,17 +243,20 @@ export default async function BudgetsPage({
           <CardHeader
             title={t.budjetit.withoutBudget}
             subtitle={fill(t.budjetit.unbudgetedAmount, {
-                summa: formatMoney(summary.unbudgetedCents),
-              })}
+              summa: formatMoney(summary.unbudgetedCents),
+            })}
           />
           <ul className="space-y-2.5">
             {unbudgeted.map((p) => (
-              <li key={p.category} className="flex items-center justify-between gap-3">
+              <li
+                key={p.category}
+                className="flex items-center justify-between gap-3"
+              >
                 <span className="flex items-center gap-2 text-[14px]">
                   <span style={{ color: "var(--rf-text-2)" }}>
                     <CategoryIcon category={p.category} size={16} />
                   </span>
-                  {CATEGORY_LABELS[p.category]}
+                  {nimet.categories[p.category]}
                 </span>
                 <span className="flex items-center gap-2.5">
                   <span className="rf-tabular text-[14px] font-semibold">
@@ -223,6 +264,7 @@ export default async function BudgetsPage({
                   </span>
                   {canEdit ? (
                     <BudgetEditor
+                      nimet={nimet}
                       category={p.category}
                       currentCents={null}
                       spentCents={p.spentCents}
@@ -232,26 +274,43 @@ export default async function BudgetsPage({
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.budjetit.unbudgetedNote}</p>
+          <p
+            className="mt-4 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.budjetit.unbudgetedNote}
+          </p>
         </Card>
       ) : null}
 
       <Card>
         <CardHeader title={t.budjetit.howItWorks} />
-        <ul className="space-y-2 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <ul
+          className="space-y-2 text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           <li>
-            <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} % käytetty
+            <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} %
+            käytetty
           </li>
           <li>
-            <strong>{t.budjetit.approaching}</strong> — {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
+            <strong>{t.budjetit.approaching}</strong> —{" "}
+            {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
           </li>
           <li>
-            <strong>ylitetty</strong>{t.budjetit.overNote}</li>
+            <strong>ylitetty</strong>
+            {t.budjetit.overNote}
+          </li>
         </ul>
-        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-4 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           Sekakuitti jakautuu rivikohtaisesti useaan budjettiin. Kuitti jolla on
           ruokaa ja pesuainetta ei kirjaudu kokonaan ruokabudjettiin.{" "}
-          <Link href="/admin/kuitit" className="underline underline-offset-4">{t.budjetit.seeReceipts}</Link>
+          <Link href="/admin/kuitit" className="underline underline-offset-4">
+            {t.budjetit.seeReceipts}
+          </Link>
         </p>
       </Card>
     </div>

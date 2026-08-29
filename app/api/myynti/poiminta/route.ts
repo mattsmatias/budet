@@ -19,7 +19,10 @@ import { requireContext } from "@/lib/restoflow/session";
 import { explainAiError } from "@/lib/matti/errors";
 import { can } from "@/lib/restoflow/permissions";
 import { DEFAULT_MODEL, isRealExtractor } from "@/lib/restoflow/receipt-ai";
-import { emptySalesExtraction, type SalesExtraction } from "@/lib/restoflow/sales-ai";
+import {
+  emptySalesExtraction,
+  type SalesExtraction,
+} from "@/lib/restoflow/sales-ai";
 import { plausibleReportDate } from "@/lib/restoflow/sales-report";
 import { todayIn } from "@/lib/restoflow/clock-context";
 import type { Extracted } from "@/lib/restoflow/types";
@@ -32,7 +35,12 @@ const MAX_BYTES = 20 * 1024 * 1024;
 /** Yhden pyynnön yhteiskoko. Sivuja saa olla monta, tavuja ei rajatta. */
 const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
 
-const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
 const PDF_TYPE = "application/pdf";
 
 /**
@@ -130,7 +138,10 @@ export async function POST(request: Request) {
   if (!isRealExtractor()) {
     // 501 on sovittu merkki selaimelle: palaa jäljitelmään äläkä näytä
     // virhettä. Myynnin kirjaamisen on toimittava ilman poimintaa.
-    return NextResponse.json({ error: "Poimintaa ei ole kytketty." }, { status: 501 });
+    return NextResponse.json(
+      { error: "Poimintaa ei ole kytketty." },
+      { status: 501 },
+    );
   }
 
   const form = await request.formData();
@@ -199,26 +210,23 @@ export async function POST(request: Request) {
       const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
 
       return file.type === PDF_TYPE
-        ? ({
+        ? {
             type: "document" as const,
             source: {
               type: "base64" as const,
               media_type: "application/pdf" as const,
               data: base64,
             },
-          })
-        : ({
+          }
+        : {
             type: "image" as const,
             source: {
               type: "base64" as const,
               media_type: file.type as
-                | "image/jpeg"
-                | "image/png"
-                | "image/gif"
-                | "image/webp",
+                "image/jpeg" | "image/png" | "image/gif" | "image/webp",
               data: base64,
             },
-          });
+          };
     }),
   );
 
@@ -337,7 +345,8 @@ function sanitize(
         g.posName.trim() !== "" &&
         g.grossCents >= 0 &&
         g.grossCents <= MAX_CENTS &&
-        (g.vatCents === null || (g.vatCents >= 0 && g.vatCents <= g.grossCents)),
+        (g.vatCents === null ||
+          (g.vatCents >= 0 && g.vatCents <= g.grossCents)),
     )
     .map((g) => ({
       posName: g.posName.trim().slice(0, 80),
@@ -363,8 +372,12 @@ function sanitize(
 
       if (rate < 0 || rate >= 1) return false;
       if (r.vatCents < 0 || r.vatCents > MAX_CENTS) return false;
-      if (r.netCents !== null && (r.netCents < 0 || r.netCents > MAX_CENTS)) return false;
-      if (r.grossCents !== null && (r.grossCents < 0 || r.grossCents > MAX_CENTS)) {
+      if (r.netCents !== null && (r.netCents < 0 || r.netCents > MAX_CENTS))
+        return false;
+      if (
+        r.grossCents !== null &&
+        (r.grossCents < 0 || r.grossCents > MAX_CENTS)
+      ) {
         return false;
       }
 

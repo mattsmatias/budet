@@ -17,11 +17,7 @@
 // ---------------------------------------------------------------------------
 
 export type LedgerAccountType =
-  | "revenue"
-  | "expense"
-  | "asset"
-  | "liability"
-  | "equity";
+  "revenue" | "expense" | "asset" | "liability" | "equity";
 
 export type LedgerSource = "receipt" | "daily_sales" | "manual" | "correction";
 
@@ -134,7 +130,9 @@ export const MONTH_STATUS_LABELS: Record<MonthStatus, string> = {
  * tila kuun puolivälissä, ei huomautus. Keltainen varataan asioille
  * jotka oikeasti vaativat tekemistä.
  */
-export function monthTone(status: MonthStatus): "neutral" | "warn" | "good" | "muted" {
+export function monthTone(
+  status: MonthStatus,
+): "neutral" | "warn" | "good" | "muted" {
   switch (status) {
     case "review":
       return "warn";
@@ -195,7 +193,11 @@ export function canClose(state: MonthState): boolean {
  * kuukauden sulkemisen.
  */
 export function sortIssues(issues: MonthIssue[]): MonthIssue[] {
-  const rank: Record<IssueSeverity, number> = { critical: 0, warning: 1, info: 2 };
+  const rank: Record<IssueSeverity, number> = {
+    critical: 0,
+    warning: 1,
+    info: 2,
+  };
   return [...issues].sort(
     (a, b) => rank[a.severity] - rank[b.severity] || b.count - a.count,
   );
@@ -240,8 +242,18 @@ export function monthStart(month: string): string {
 
 /** "2026-08" → "Elokuu 2026". */
 const KUUKAUDET = [
-  "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-  "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
+  "Tammikuu",
+  "Helmikuu",
+  "Maaliskuu",
+  "Huhtikuu",
+  "Toukokuu",
+  "Kesäkuu",
+  "Heinäkuu",
+  "Elokuu",
+  "Syyskuu",
+  "Lokakuu",
+  "Marraskuu",
+  "Joulukuu",
 ];
 
 export function monthLabel(month: string): string {

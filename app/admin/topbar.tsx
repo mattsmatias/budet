@@ -1,4 +1,5 @@
 import { HeaderMenus } from "./header-menus";
+import type { Labels } from "@/lib/i18n/labels";
 import { PageTitle } from "./page-title";
 import { MonthScope } from "./month-scope";
 import { LanguagePicker } from "@/components/i18n/language-picker";
@@ -42,6 +43,7 @@ export function TopBar({
   months,
   month,
   locale,
+  nimet,
   t,
 }: {
   restaurantName: string;
@@ -60,6 +62,7 @@ export function TopBar({
   month: string;
   /** Kayttajan kieli kielivalitsinta varten. */
   locale: AppLocale;
+  nimet: Labels;
   /** Kuoren tekstit. */
   t: AdminText;
 }) {
@@ -76,7 +79,10 @@ export function TopBar({
         sivun nimestä.
       */}
       <div className="mr-auto min-w-[128px] flex-1">
-        <p className="truncate text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="truncate text-[11.5px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {restaurantName} · {date}
         </p>
         <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
@@ -94,7 +100,7 @@ export function TopBar({
         luvuista. Kuukausi koskee useaa sivua, joten se kuuluu samaan
         palkkiin kuin haku.
       */}
-      <MonthScope value={month} months={months} />
+      <MonthScope value={month} months={months} locale={locale} />
 
       {/* Kieli tunnusvalikon vieressa: se on tilin asetus. */}
       <LanguagePicker current={locale} />
@@ -111,6 +117,7 @@ export function TopBar({
       ) : null}
 
       <HeaderMenus
+        nimet={nimet}
         t={t}
         alerts={alerts}
         userName={userName}

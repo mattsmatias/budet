@@ -20,7 +20,15 @@ function line(
   salesGroupId = `g-${vatRate}`,
 ): SalesLine {
   const { vatCents, netCents } = lineFromGross(grossCents, vatRate);
-  return { salesGroupId, vatRate, grossCents, vatCents, netCents, posName: null, posVatCents };
+  return {
+    salesGroupId,
+    vatRate,
+    grossCents,
+    vatCents,
+    netCents,
+    posName: null,
+    posVatCents,
+  };
 }
 
 describe("lineFromGross", () => {
@@ -154,7 +162,7 @@ describe("reconcile", () => {
       posVatCents: s.vatCents,
       posVatRates: [],
       lines,
-      });
+    });
 
     expect(r.status).toBe("match");
     expect(r.explanation).toBeNull();
@@ -171,14 +179,19 @@ describe("reconcile", () => {
       posVatCents: s.vatCents - 1,
       posVatRates: [],
       lines,
-      });
+    });
 
     expect(r.status).toBe("match");
   });
 
   it("löytää eron loppusummasta", () => {
     const lines = [line(0.14, 479150)];
-    const r = reconcile({ posGrossCents: 482150, posVatCents: null, posVatRates: [], lines });
+    const r = reconcile({
+      posGrossCents: 482150,
+      posVatCents: null,
+      posVatRates: [],
+      lines,
+    });
 
     expect(r.status).toBe("mismatch");
     expect(r.total.diffCents).toBe(3000);
@@ -197,7 +210,7 @@ describe("reconcile", () => {
       posVatCents: 36842,
       posVatRates: [],
       lines,
-      });
+    });
 
     expect(r.status).toBe("mismatch");
     expect(r.explanation).toContain("verokantaan");
@@ -214,7 +227,7 @@ describe("reconcile", () => {
       posVatCents: s.vatCents,
       posVatRates: [],
       lines,
-      });
+    });
 
     expect(r.explanation).toContain("puuttuu riveiltä");
     expect(r.explanation).toContain(formatMoney(100000));
@@ -241,9 +254,16 @@ describe("reconcile", () => {
 
   it("vertaa kannoittain", () => {
     const lines = [line(0.14, 300000, 36842), line(0.255, 100000, 25000)];
-    const r = reconcile({ posGrossCents: 400000, posVatCents: 61842, posVatRates: [], lines });
+    const r = reconcile({
+      posGrossCents: 400000,
+      posVatCents: 61842,
+      posVatRates: [],
+      lines,
+    });
 
-    const alkoholi = r.byRate.find((c) => c.label === `ALV ${formatRate(0.255)}`);
+    const alkoholi = r.byRate.find(
+      (c) => c.label === `ALV ${formatRate(0.255)}`,
+    );
     expect(alkoholi?.status).toBe("mismatch");
     expect(alkoholi?.posCents).toBe(25000);
   });
@@ -341,7 +361,9 @@ describe("kassan ALV-erittely", () => {
       lines,
     });
 
-    const yleinen = r.byRate.find((c) => c.label === `Myynti ${formatRate(0.255)}`);
+    const yleinen = r.byRate.find(
+      (c) => c.label === `Myynti ${formatRate(0.255)}`,
+    );
 
     // Kassa 10,50, ryhmistä 10,00 — ero on myyntiä, ei veroa.
     expect(yleinen?.posCents).toBe(1050);
@@ -361,7 +383,12 @@ describe("kassan ALV-erittely", () => {
       posGrossCents: 133670,
       posVatCents: 15988,
       posVatRates: [
-        { vatRate: 0.255, grossCents: 133670, vatCents: 27162, netCents: 106508 },
+        {
+          vatRate: 0.255,
+          grossCents: 133670,
+          vatCents: 27162,
+          netCents: 106508,
+        },
       ],
       lines,
     });
@@ -435,7 +462,9 @@ describe("kassan ALV-erittely", () => {
       lines,
     });
 
-    const yleinen = r.byRate.find((c) => c.label === `ALV ${formatRate(0.255)}`);
+    const yleinen = r.byRate.find(
+      (c) => c.label === `ALV ${formatRate(0.255)}`,
+    );
 
     // Kassa 2,13, ryhmistä 2,03 — kymmenen senttiä, ei kohdistusvirhe.
     expect(yleinen?.posCents).toBe(213);
@@ -704,7 +733,7 @@ describe("mapReportGroups", () => {
       posVatCents: kassaAlv,
       posVatRates: [],
       lines,
-      });
+    });
 
     expect(r.status).toBe("match");
     expect(r.byRate).toHaveLength(2);

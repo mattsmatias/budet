@@ -12,7 +12,13 @@ import {
   type AuditEvent,
 } from "@/lib/restoflow/audit";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
-import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
+import {
+  Card,
+  CardHeader,
+  EmptyState,
+  MetricCard,
+  Pill,
+} from "@/components/restoflow/ui";
 
 export const metadata = { title: "Toimintaloki" };
 
@@ -74,7 +80,14 @@ export default async function AuditLogPage({
 
   const summary = summarise(events);
   const query = (extra: Record<string, string>) =>
-    buildQuery({ moduuli: entityType, toiminto: action, kayttaja: actorId, haku: search, jakso: String(days), ...extra });
+    buildQuery({
+      moduuli: entityType,
+      toiminto: action,
+      kayttaja: actorId,
+      haku: search,
+      jakso: String(days),
+      ...extra,
+    });
 
   return (
     <div className="rf-enter space-y-5">
@@ -96,8 +109,18 @@ export default async function AuditLogPage({
       >
         <Luku label="Tapahtumia" value={summary.total} icon="report" />
         <Luku label="Lisäyksiä" value={summary.created} tone="ok" icon="plus" />
-        <Luku label="Muutoksia" value={summary.updated} tone="info" icon="settings" />
-        <Luku label="Poistoja" value={summary.deleted} tone="risk" icon="trash" />
+        <Luku
+          label="Muutoksia"
+          value={summary.updated}
+          tone="info"
+          icon="settings"
+        />
+        <Luku
+          label="Poistoja"
+          value={summary.deleted}
+          tone="risk"
+          icon="trash"
+        />
       </section>
 
       {summary.latestCritical ? (
@@ -106,9 +129,18 @@ export default async function AuditLogPage({
             title="Viimeisin kriittinen muutos"
             subtitle="Palkka, käyttöoikeus, työaikakorjaus tai verokanta"
           />
-          <p className="text-[13.5px] font-semibold">{summary.latestCritical.summary}</p>
-          <p className="rf-tabular mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            {summary.latestCritical.actorName} · {formatMoment(summary.latestCritical.createdAt, restaurant.timezone)}
+          <p className="text-[13.5px] font-semibold">
+            {summary.latestCritical.summary}
+          </p>
+          <p
+            className="rf-tabular mt-1 text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {summary.latestCritical.actorName} ·{" "}
+            {formatMoment(
+              summary.latestCritical.createdAt,
+              restaurant.timezone,
+            )}
           </p>
         </Card>
       ) : null}
@@ -147,11 +179,24 @@ export default async function AuditLogPage({
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
-            <Valitsin name="moduuli" label="Moduuli" value={entityType} options={ENTITY_LABELS} />
-            <Valitsin name="toiminto" label="Toiminto" value={action} options={ACTION_LABELS} />
+            <Valitsin
+              name="moduuli"
+              label="Moduuli"
+              value={entityType}
+              options={ENTITY_LABELS}
+            />
+            <Valitsin
+              name="toiminto"
+              label="Toiminto"
+              value={action}
+              options={ACTION_LABELS}
+            />
 
             <label className="block">
-              <span className="block text-[12px] font-semibold" style={{ color: "var(--rf-text-2)" }}>
+              <span
+                className="block text-[12px] font-semibold"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 Käyttäjä
               </span>
               <select
@@ -188,8 +233,14 @@ export default async function AuditLogPage({
               aria-current={days === option.days ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px] font-semibold"
               style={{
-                background: days === option.days ? "var(--rf-accent-bg)" : "var(--rf-inset)",
-                color: days === option.days ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+                background:
+                  days === option.days
+                    ? "var(--rf-accent-bg)"
+                    : "var(--rf-inset)",
+                color:
+                  days === option.days
+                    ? "var(--rf-accent-strong)"
+                    : "var(--rf-text-2)",
                 borderRadius: "var(--rf-r-control)",
               }}
             >
@@ -251,7 +302,13 @@ export default async function AuditLogPage({
 
 // ---------------------------------------------------------------------------
 
-function Tapahtuma({ event, timezone }: { event: AuditEvent; timezone: string }) {
+function Tapahtuma({
+  event,
+  timezone,
+}: {
+  event: AuditEvent;
+  timezone: string;
+}) {
   const tone = actionTone(event.action);
   const changes = fieldChanges(event);
 
@@ -311,7 +368,10 @@ function Tapahtuma({ event, timezone }: { event: AuditEvent; timezone: string })
               {changes.map((change) => (
                 <tr key={change.field} className="rf-row">
                   <td className="font-medium">{change.field}</td>
-                  <td className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
+                  <td
+                    className="rf-tabular"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {change.before}
                   </td>
                   <td className="rf-tabular font-semibold">{change.after}</td>
@@ -321,7 +381,10 @@ function Tapahtuma({ event, timezone }: { event: AuditEvent; timezone: string })
           </table>
         </div>
       ) : (
-        <p className="mt-2 pl-5 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-2 pl-5 text-[12.5px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           Tapahtumasta ei ole tallennettu kenttäkohtaisia arvoja.
         </p>
       )}
@@ -387,7 +450,10 @@ function Valitsin({
 }) {
   return (
     <label className="block">
-      <span className="block text-[12px] font-semibold" style={{ color: "var(--rf-text-2)" }}>
+      <span
+        className="block text-[12px] font-semibold"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </span>
       <select

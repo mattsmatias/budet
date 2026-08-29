@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
-import { updateRestaurant, updateShiftRules, type AdminState } from "../actions";
+import {
+  updateRestaurant,
+  updateShiftRules,
+  type AdminState,
+} from "../actions";
 import { CONTROL, CONTROL_STYLE, Field, SaveRow, Toggle } from "./form-parts";
 
 const initial: AdminState = {};

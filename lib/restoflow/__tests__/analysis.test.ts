@@ -1,10 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { checkVat, dominantCategory, inferVatRate, isMixedReceipt, itemsSumMatches, rateMatchesCategory } from "../vat";
+import {
+  checkVat,
+  dominantCategory,
+  inferVatRate,
+  isMixedReceipt,
+  itemsSumMatches,
+  rateMatchesCategory,
+} from "../vat";
 import { quantityOf, reviewReasonsForSave, vatRateOf } from "../receipt-ai";
 import { daysApart, duplicateIds, findDuplicates } from "../duplicates";
-import { supplierTrends, totalsBySupplier, suggestedCategory } from "../suppliers";
+import {
+  supplierTrends,
+  totalsBySupplier,
+  suggestedCategory,
+} from "../suppliers";
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
-import { compareShift, formatVariance, shiftDurationMinutes, timeToMinutes, variancePatterns } from "../shifts";
+import {
+  compareShift,
+  formatVariance,
+  shiftDurationMinutes,
+  timeToMinutes,
+  variancePatterns,
+} from "../shifts";
 import {
   moreNavFor,
   primaryNavFor,
@@ -22,14 +39,28 @@ import {
   emptyResult,
   reviewReasonsFor,
 } from "../receipt-ai";
-import type { Budget, ClockEvent, ExpenseCategory, Receipt, ReceiptItem, Shift, Supplier, User } from "../types";
+import type {
+  Budget,
+  ClockEvent,
+  ExpenseCategory,
+  Receipt,
+  ReceiptItem,
+  Shift,
+  Supplier,
+  User,
+} from "../types";
 
 // ---------------------------------------------------------------------------
 // Apurit
 // ---------------------------------------------------------------------------
 
 let n = 0;
-function item(partial: Partial<ReceiptItem> & { totalCents: number; category: ExpenseCategory }): ReceiptItem {
+function item(
+  partial: Partial<ReceiptItem> & {
+    totalCents: number;
+    category: ExpenseCategory;
+  },
+): ReceiptItem {
   n += 1;
   return {
     id: `i${n}`,
@@ -44,7 +75,9 @@ function item(partial: Partial<ReceiptItem> & { totalCents: number; category: Ex
   };
 }
 
-function receipt(partial: Partial<Receipt> & { totalCents: number; date: string }): Receipt {
+function receipt(
+  partial: Partial<Receipt> & { totalCents: number; date: string },
+): Receipt {
   n += 1;
   return {
     id: `r${n}`,
@@ -272,7 +305,10 @@ describe("rivien summautuminen", () => {
     const r = receipt({
       date: "2026-08-01",
       totalCents: 3000,
-      items: [item({ totalCents: 1000, category: "food" }), item({ totalCents: 2000, category: "food" })],
+      items: [
+        item({ totalCents: 1000, category: "food" }),
+        item({ totalCents: 2000, category: "food" }),
+      ],
     });
     expect(itemsSumMatches(r)).toBe(true);
   });
@@ -287,7 +323,9 @@ describe("rivien summautuminen", () => {
   });
 
   it("hyväksyy kuitin ilman rivejä", () => {
-    expect(itemsSumMatches(receipt({ date: "2026-08-01", totalCents: 3000 }))).toBe(true);
+    expect(
+      itemsSumMatches(receipt({ date: "2026-08-01", totalCents: 3000 })),
+    ).toBe(true);
   });
 });
 
@@ -313,7 +351,12 @@ describe("sekakuitti", () => {
 });
 
 describe("kaksoiskappaleet", () => {
-  const base = { date: "2026-08-18", totalCents: 8720, supplierId: "s-kcity", supplierName: "K-Citymarket" };
+  const base = {
+    date: "2026-08-18",
+    totalCents: 8720,
+    supplierId: "s-kcity",
+    supplierName: "K-Citymarket",
+  };
 
   it("löytää saman toimittajan saman summan samana päivänä", () => {
     const groups = findDuplicates([receipt(base), receipt(base)]);
@@ -322,21 +365,35 @@ describe("kaksoiskappaleet", () => {
   });
 
   it("sallii sentin heiton", () => {
-    const groups = findDuplicates([receipt(base), receipt({ ...base, totalCents: 8721 })]);
+    const groups = findDuplicates([
+      receipt(base),
+      receipt({ ...base, totalCents: 8721 }),
+    ]);
     expect(groups).toHaveLength(1);
   });
 
   it("ei epäile eri toimittajaa", () => {
-    expect(findDuplicates([receipt(base), receipt({ ...base, supplierId: "s-muu" })])).toHaveLength(0);
+    expect(
+      findDuplicates([
+        receipt(base),
+        receipt({ ...base, supplierId: "s-muu" }),
+      ]),
+    ).toHaveLength(0);
   });
 
   it("ei epäile eri summaa", () => {
-    expect(findDuplicates([receipt(base), receipt({ ...base, totalCents: 9999 })])).toHaveLength(0);
+    expect(
+      findDuplicates([receipt(base), receipt({ ...base, totalCents: 9999 })]),
+    ).toHaveLength(0);
   });
 
   it("hyväksyy peräkkäiset päivät mutta ei kaukaisempia", () => {
-    expect(findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-19" })])).toHaveLength(1);
-    expect(findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-25" })])).toHaveLength(0);
+    expect(
+      findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-19" })]),
+    ).toHaveLength(1);
+    expect(
+      findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-25" })]),
+    ).toHaveLength(0);
   });
 
   it("kumoaa epäilyn kun kuittinumerot eroavat", () => {
@@ -359,21 +416,47 @@ describe("kaksoiskappaleet", () => {
   });
 
   it("kokoaa tunnisteet korostusta varten", () => {
-    const ids = duplicateIds([receipt(base), receipt(base), receipt({ ...base, supplierId: "s-x" })]);
+    const ids = duplicateIds([
+      receipt(base),
+      receipt(base),
+      receipt({ ...base, supplierId: "s-x" }),
+    ]);
     expect(ids.size).toBe(2);
   });
 });
 
 describe("toimittajat", () => {
   const receipts = [
-    receipt({ date: "2026-08-01", totalCents: 10000, supplierId: "s-a", supplierName: "A" }),
-    receipt({ date: "2026-08-02", totalCents: 30000, supplierId: "s-a", supplierName: "A" }),
-    receipt({ date: "2026-08-03", totalCents: 20000, supplierId: "s-b", supplierName: "B" }),
-    receipt({ date: "2026-07-05", totalCents: 20000, supplierId: "s-a", supplierName: "A" }),
+    receipt({
+      date: "2026-08-01",
+      totalCents: 10000,
+      supplierId: "s-a",
+      supplierName: "A",
+    }),
+    receipt({
+      date: "2026-08-02",
+      totalCents: 30000,
+      supplierId: "s-a",
+      supplierName: "A",
+    }),
+    receipt({
+      date: "2026-08-03",
+      totalCents: 20000,
+      supplierId: "s-b",
+      supplierName: "B",
+    }),
+    receipt({
+      date: "2026-07-05",
+      totalCents: 20000,
+      supplierId: "s-a",
+      supplierName: "A",
+    }),
   ];
 
   it("summaa toimittajittain, suurin ensin", () => {
-    const totals = totalsBySupplier(receipts.filter((r) => r.date.startsWith("2026-08")));
+    const totals = totalsBySupplier(
+      receipts.filter((r) => r.date.startsWith("2026-08")),
+    );
     expect(totals[0].supplierId).toBe("s-a");
     expect(totals[0].totalCents).toBe(40000);
     expect(totals[0].receiptCount).toBe(2);
@@ -385,7 +468,10 @@ describe("toimittajat", () => {
       date: "2026-08-01",
       totalCents: 3000,
       supplierId: "s-mix",
-      items: [item({ totalCents: 1000, category: "food" }), item({ totalCents: 2000, category: "cleaning" })],
+      items: [
+        item({ totalCents: 1000, category: "food" }),
+        item({ totalCents: 2000, category: "cleaning" }),
+      ],
     });
     const totals = totalsBySupplier([mixed]);
     expect(totals[0].categories).toEqual([
@@ -409,22 +495,44 @@ describe("toimittajat", () => {
 
   it("ehdottaa kategoriaa vasta toistuvan korjauksen jälkeen", () => {
     const supplier: Supplier = {
-      id: "s-1", restaurantId: "rest-1", name: "Lyreco", defaultCategory: "packaging",
+      id: "s-1",
+      restaurantId: "rest-1",
+      name: "Lyreco",
+      defaultCategory: "packaging",
       categoryOverrides: [{ from: "other", to: "kitchen_supplies", count: 4 }],
-      merchantId: null, merchantConfidence: null, merchantConfirmed: false,
+      merchantId: null,
+      merchantConfidence: null,
+      merchantConfirmed: false,
     };
-    expect(suggestedCategory(supplier, "other")?.category).toBe("kitchen_supplies");
+    expect(suggestedCategory(supplier, "other")?.category).toBe(
+      "kitchen_supplies",
+    );
     expect(suggestedCategory(supplier, "food")).toBeNull();
 
-    const once: Supplier = { ...supplier, categoryOverrides: [{ from: "other", to: "cleaning", count: 1 }] };
+    const once: Supplier = {
+      ...supplier,
+      categoryOverrides: [{ from: "other", to: "cleaning", count: 1 }],
+    };
     expect(suggestedCategory(once, "other")).toBeNull();
   });
 });
 
 describe("budjetit", () => {
   const budgets: Budget[] = [
-    { id: "b1", restaurantId: "rest-1", category: "food", month: null, amountCents: 100000 },
-    { id: "b2", restaurantId: "rest-1", category: "cleaning", month: null, amountCents: 10000 },
+    {
+      id: "b1",
+      restaurantId: "rest-1",
+      category: "food",
+      month: null,
+      amountCents: 100000,
+    },
+    {
+      id: "b2",
+      restaurantId: "rest-1",
+      category: "cleaning",
+      month: null,
+      amountCents: 10000,
+    },
   ];
 
   it("jakaa sekakuitin useaan budjettiin", () => {
@@ -432,7 +540,10 @@ describe("budjetit", () => {
       receipt({
         date: "2026-08-01",
         totalCents: 3000,
-        items: [item({ totalCents: 1000, category: "food" }), item({ totalCents: 2000, category: "cleaning" })],
+        items: [
+          item({ totalCents: 1000, category: "food" }),
+          item({ totalCents: 2000, category: "cleaning" }),
+        ],
       }),
     ]);
     expect(spend.get("food")).toBe(1000);
@@ -450,7 +561,11 @@ describe("budjetit", () => {
   it("nostaa ylitykset ja varoitukset listan kärkeen", () => {
     const progress = budgetProgress(
       [
-        receipt({ date: "2026-08-01", totalCents: 12000, category: "cleaning" }),
+        receipt({
+          date: "2026-08-01",
+          totalCents: 12000,
+          category: "cleaning",
+        }),
         receipt({ date: "2026-08-02", totalCents: 10000, category: "food" }),
       ],
       budgets,
@@ -462,7 +577,13 @@ describe("budjetit", () => {
 
   it("näyttää budjetoimattoman kulun eikä piilota sitä", () => {
     const progress = budgetProgress(
-      [receipt({ date: "2026-08-01", totalCents: 5000, category: "transport" })],
+      [
+        receipt({
+          date: "2026-08-01",
+          totalCents: 5000,
+          category: "transport",
+        }),
+      ],
       budgets,
       "2026-08",
     );
@@ -475,13 +596,32 @@ describe("budjetit", () => {
 
 describe("työvuoro vs. toteutunut", () => {
   const users: User[] = [
-    { id: "u1", restaurantId: "rest-1", name: "Ali", role: "employee", position: "waiter", hourlyRateCents: 1500, initials: "A", active: true },
+    {
+      id: "u1",
+      restaurantId: "rest-1",
+      name: "Ali",
+      role: "employee",
+      position: "waiter",
+      hourlyRateCents: 1500,
+      initials: "A",
+      active: true,
+    },
   ];
 
   const shift: Shift = {
-    id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-20",
-    startTime: "14:00", endTime: "22:00", location: "Sali", status: "accepted",
-    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    id: "sh1",
+    restaurantId: "rest-1",
+    userId: "u1",
+    date: "2026-08-20",
+    startTime: "14:00",
+    endTime: "22:00",
+    location: "Sali",
+    status: "accepted",
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    createdAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
   };
 
   const ZONE = "Europe/Helsinki";
@@ -505,18 +645,32 @@ describe("työvuoro vs. toteutunut", () => {
   });
 
   it("käsittelee yön yli menevän vuoron", () => {
-    expect(shiftDurationMinutes({ ...shift, startTime: "22:00", endTime: "02:00" })).toBe(240);
+    expect(
+      shiftDurationMinutes({ ...shift, startTime: "22:00", endTime: "02:00" }),
+    ).toBe(240);
   });
 
   it("laskee eron suunnitellun ja toteutuneen välillä", () => {
-    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z", ZONE);
+    const c = compareShift(
+      shift,
+      users,
+      events,
+      "2026-08-21T00:00:00.000Z",
+      ZONE,
+    );
     expect(c.plannedMs).toBe(480 * 60000);
     expect(c.actualMs).toBe(493 * 60000);
     expect(c.varianceMs).toBe(13 * 60000);
   });
 
   it("laskee kustannuseron tuntipalkasta", () => {
-    const c = compareShift(shift, users, events, "2026-08-21T00:00:00.000Z", ZONE);
+    const c = compareShift(
+      shift,
+      users,
+      events,
+      "2026-08-21T00:00:00.000Z",
+      ZONE,
+    );
     expect(c.plannedCostCents).toBe(12000); // 8 h × 15 €
     expect(c.actualCostCents).toBeGreaterThan(c.plannedCostCents);
   });
@@ -618,7 +772,9 @@ describe("oikeudet", () => {
 
   it("perii alipolun vaatimuksen pisimmästä osumasta", () => {
     // Ei saa osua /admin-juureen, jonka vaatimus on löyhempi.
-    expect(capabilityForPath("/admin/toimittajat/abc-123")).toBe("suppliers.view");
+    expect(capabilityForPath("/admin/toimittajat/abc-123")).toBe(
+      "suppliers.view",
+    );
     expect(capabilityForPath("/admin/kuitit/xyz")).toBe("receipts.view");
   });
 
@@ -629,7 +785,9 @@ describe("oikeudet", () => {
    */
   it("sulkeutuu tuntemattomalla hallintapolulla", () => {
     expect(capabilityForPath("/admin/tuntematon")).toBe("expenses.view");
-    expect(can("employee", capabilityForPath("/admin/tuntematon")!)).toBe(false);
+    expect(can("employee", capabilityForPath("/admin/tuntematon")!)).toBe(
+      false,
+    );
   });
 
   it("ei vaadi mitään hallinnan ulkopuolelta", () => {
@@ -690,7 +848,6 @@ describe("oikeudet", () => {
     expect(adminNavFor("owner")).toHaveLength(13);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
-
 
   /**
    * Sivupalkin kasvu ei saa muuttaa alapalkkia.
@@ -760,7 +917,9 @@ describe("oikeudet", () => {
      * ovat samassa "Muut"-ryhmässä. Ryhmä siis jää mutta kutistuu
      * yhteen riviin — se on eri asia kuin tyhjä ryhmä.
      */
-    const muut = adminNavSectionsFor("accountant").find((x) => x.id === "restaurant");
+    const muut = adminNavSectionsFor("accountant").find(
+      (x) => x.id === "restaurant",
+    );
     expect(muut?.items.map((i) => i.href)).toEqual(["/admin/raportit"]);
   });
 
@@ -800,13 +959,24 @@ describe("oikeudet", () => {
   });
 
   it("estää kirjanpitäjältä työvuorot", () => {
-    expect(can("accountant", capabilityForPath("/admin/tyovuorot")!)).toBe(false);
+    expect(can("accountant", capabilityForPath("/admin/tyovuorot")!)).toBe(
+      false,
+    );
   });
 });
 
 describe("poikkeamat", () => {
   const users: User[] = [
-    { id: "u1", restaurantId: "rest-1", name: "Ali", role: "employee", position: "waiter", hourlyRateCents: 1500, initials: "A", active: true },
+    {
+      id: "u1",
+      restaurantId: "rest-1",
+      name: "Ali",
+      role: "employee",
+      position: "waiter",
+      hourlyRateCents: 1500,
+      initials: "A",
+      active: true,
+    },
   ];
 
   /*
@@ -818,20 +988,36 @@ describe("poikkeamat", () => {
     input: Partial<AlertContext> & Pick<AlertContext, "month" | "today">,
   ) =>
     buildAlerts({
-      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
-      absences: [], openShifts: [], sales: [],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
+      absences: [],
+      openShifts: [],
+      sales: [],
       now: `${input.today}T12:00:00Z`,
       timezone: "Europe/Helsinki",
+      locale: "fi" as const,
       ...input,
     });
 
   it("nostaa kaksoiskappaleen kriittiseksi", () => {
-    const dup = { date: "2026-08-18", totalCents: 8720, supplierId: "s-x", supplierName: "X" };
+    const dup = {
+      date: "2026-08-18",
+      totalCents: 8720,
+      supplierId: "s-x",
+      supplierName: "X",
+    };
     const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
-      budgets: [], shifts: [], users, clockEvents: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     const d = alerts.find((a) => a.kind === "duplicate_receipt");
     expect(d?.severity).toBe("critical");
@@ -839,61 +1025,122 @@ describe("poikkeamat", () => {
 
   it("nostaa budjetin ylityksen ja varoituksen", () => {
     const budgets: Budget[] = [
-      { id: "b1", restaurantId: "rest-1", category: "cleaning", month: null, amountCents: 10000 },
+      {
+        id: "b1",
+        restaurantId: "rest-1",
+        category: "cleaning",
+        month: null,
+        amountCents: 10000,
+      },
     ];
     const alerts = alertsOf({
-      receipts: [receipt({ date: "2026-08-01", totalCents: 12000, category: "cleaning" })],
-      budgets, shifts: [], users, clockEvents: [],
+      receipts: [
+        receipt({
+          date: "2026-08-01",
+          totalCents: 12000,
+          category: "cleaning",
+        }),
+      ],
+      budgets,
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "budget_exceeded")).toBe(true);
   });
 
   it("huomaa sulkematta jääneen työajan", () => {
     const alerts = alertsOf({
-      receipts: [], budgets: [], shifts: [], users,
-      clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-18T16:00:00.000Z" }],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [
+        { id: "e1", userId: "u1", type: "in", at: "2026-08-18T16:00:00.000Z" },
+      ],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(true);
   });
 
   it("ei hälytä tänään käynnissä olevasta vuorosta", () => {
     const alerts = alertsOf({
-      receipts: [], budgets: [], shifts: [], users,
-      clockEvents: [{ id: "e1", userId: "u1", type: "in", at: "2026-08-20T09:00:00.000Z" }],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [
+        { id: "e1", userId: "u1", type: "in", at: "2026-08-20T09:00:00.000Z" },
+      ],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(false);
   });
 
   it("järjestää vakavimmat ensin", () => {
-    const dup = { date: "2026-08-18", totalCents: 8720, supplierId: "s-x", supplierName: "X" };
+    const dup = {
+      date: "2026-08-18",
+      totalCents: 8720,
+      supplierId: "s-x",
+      supplierName: "X",
+    };
     const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
       budgets: [],
-      shifts: [{ id: "sh1", restaurantId: "rest-1", userId: "u1", date: "2026-08-25", startTime: "14:00", endTime: "22:00", location: "Sali", status: "pending", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null, }],
-      users, clockEvents: [],
+      shifts: [
+        {
+          id: "sh1",
+          restaurantId: "rest-1",
+          userId: "u1",
+          date: "2026-08-25",
+          startTime: "14:00",
+          endTime: "22:00",
+          location: "Sali",
+          status: "pending",
+          breakMinutes: 0,
+          note: null,
+          publishedAt: "2026-08-01T00:00:00.000Z",
+          createdAt: "2026-08-01T00:00:00.000Z",
+          cancelledAt: null,
+        },
+      ],
+      users,
+      clockEvents: [],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts[0].severity).toBe("critical");
   });
 
   it("nostaa poissaoloilmoituksen kriittiseksi", () => {
     const alerts = alertsOf({
-      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [
         {
-          id: "a1", userId: "u1", date: "2026-08-22", endDate: "2026-08-22",
-          kind: "sick", note: null, reportedAt: "2026-08-22T06:00:00.000Z",
+          id: "a1",
+          userId: "u1",
+          date: "2026-08-22",
+          endDate: "2026-08-22",
+          kind: "sick",
+          note: null,
+          reportedAt: "2026-08-22T06:00:00.000Z",
           certificateSeenAt: null,
         },
       ],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     const absence = alerts.find((a) => a.kind === "absence_reported");
     expect(absence?.severity).toBe("critical");
@@ -904,40 +1151,71 @@ describe("poikkeamat", () => {
   // kun tekijää vielä etsitään.
   it("pitää kesken olevan jakson näkyvissä", () => {
     const alerts = alertsOf({
-      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [
         {
-          id: "a1", userId: "u1", date: "2026-08-18", endDate: "2026-08-24",
-          kind: "sick", note: null, reportedAt: "2026-08-18T06:00:00.000Z",
+          id: "a1",
+          userId: "u1",
+          date: "2026-08-18",
+          endDate: "2026-08-24",
+          kind: "sick",
+          note: null,
+          reportedAt: "2026-08-18T06:00:00.000Z",
           certificateSeenAt: null,
         },
       ],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "absence_reported")).toBe(true);
   });
 
   it("unohtaa päättyneen jakson", () => {
     const alerts = alertsOf({
-      receipts: [], budgets: [], shifts: [], users, clockEvents: [],
+      receipts: [],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [
         {
-          id: "a1", userId: "u1", date: "2026-08-10", endDate: "2026-08-14",
-          kind: "sick", note: null, reportedAt: "2026-08-10T06:00:00.000Z",
+          id: "a1",
+          userId: "u1",
+          date: "2026-08-10",
+          endDate: "2026-08-14",
+          kind: "sick",
+          note: null,
+          reportedAt: "2026-08-10T06:00:00.000Z",
           certificateSeenAt: null,
         },
       ],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "absence_reported")).toBe(false);
   });
 
   it("ei tuota hälytyksiä puhtaasta aineistosta", () => {
     const alerts = alertsOf({
-      receipts: [receipt({ date: "2026-08-01", totalCents: 11400, vatCents: 1400, category: "food" })],
-      budgets: [], shifts: [], users, clockEvents: [],
+      receipts: [
+        receipt({
+          date: "2026-08-01",
+          totalCents: 11400,
+          vatCents: 1400,
+          category: "food",
+        }),
+      ],
+      budgets: [],
+      shifts: [],
+      users,
+      clockEvents: [],
       absences: [],
-      month: "2026-08", today: "2026-08-20",
+      month: "2026-08",
+      today: "2026-08-20",
     });
     expect(alerts).toHaveLength(0);
   });

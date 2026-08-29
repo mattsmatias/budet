@@ -810,7 +810,8 @@ const da: Dictionary = {
     whyEmphasis: "Kate findes for at samle dem.",
     beliefsLabel: "Det tror vi på",
     belief1Title: "Enkelhed",
-    belief1Body: "God software skal gøre arbejdet lettere, ikke mere indviklet.",
+    belief1Body:
+      "God software skal gøre arbejdet lettere, ikke mere indviklet.",
     belief2Title: "Ét sted",
     belief2Body: "Restaurantens vigtige oplysninger hører til i ét system.",
     belief3Title: "Reel nytte",
@@ -907,7 +908,8 @@ const tr: Dictionary = {
       "Restoranın ne kazandığını ve paranın nereye gittiğini görün — gün gün " +
       "ve ay ay.",
     ledgerTitle: "Muhasebe",
-    ledgerBody: "Fişler ve satış günleri kaydedilir kaydedilmez muhasebeye geçer.",
+    ledgerBody:
+      "Fişler ve satış günleri kaydedilir kaydedilmez muhasebeye geçer.",
   },
   flow: {
     heading: "Bir kez girin.",
@@ -1193,7 +1195,8 @@ const et: Dictionary = {
     whyEmphasis: "Kate on selleks, et need kokku tuua.",
     beliefsLabel: "Mida usume",
     belief1Title: "Lihtsus",
-    belief1Body: "Hea tarkvara peaks tööd lihtsamaks tegema, mitte keerulisemaks.",
+    belief1Body:
+      "Hea tarkvara peaks tööd lihtsamaks tegema, mitte keerulisemaks.",
     belief2Title: "Üks koht",
     belief2Body: "Restorani olulised andmed kuuluvad ühte süsteemi.",
     belief3Title: "Tegelik kasu",

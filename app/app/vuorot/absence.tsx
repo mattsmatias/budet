@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { cancelAbsence, reportAbsence, type ActionState } from "../actions";
-import { ABSENCE_LABELS, type Absence, type AbsenceKind } from "@/lib/restoflow/types";
+import { type Absence, type AbsenceKind } from "@/lib/restoflow/types";
 import type { WorkerText } from "@/lib/i18n/worker-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
@@ -13,7 +14,7 @@ const initial: ActionState = {};
 /**
  * Poissaolon lajit kaannettyina.
  *
- * ABSENCE_LABELS on jaettu vakio ja suomeksi; hallintanakyma kayttaa
+ * nimet.absences on jaettu vakio ja suomeksi; hallintanakyma kayttaa
  * sita yha. Tyontekijanakyma lukee omansa sanakirjasta.
  */
 const lajit = (t: WorkerText): Record<Absence["kind"], string> => ({
@@ -32,10 +33,12 @@ const KINDS: AbsenceKind[] = ["sick", "cannot_attend", "other"];
  * hoidettu, vaikka kukaan ei ole vielä etsinyt tilalle tekijää.
  */
 export function AbsenceReporter({
+  nimet,
   defaultDate,
   absences,
   t,
 }: {
+  nimet: Labels;
   defaultDate: string;
   absences: Absence[];
   t: WorkerText;
@@ -60,7 +63,10 @@ export function AbsenceReporter({
                   <p className="text-[14px] font-medium">
                     {formatPeriod(absence.date, absence.endDate)}
                   </p>
-                  <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  <p
+                    className="text-[12px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     {absence.kind === "sick"
                       ? absence.certificateSeenAt
                         ? t.poissaolo.certificateSeen
@@ -94,12 +100,17 @@ export function AbsenceReporter({
 
       {open ? (
         <Card className="mt-3">
-          <p className="text-[15px] font-semibold">{t.asetukset.reportAbsence}</p>
+          <p className="text-[15px] font-semibold">
+            {t.asetukset.reportAbsence}
+          </p>
 
           <form action={action} className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label htmlFor="ab-date" className="block text-[13px] font-medium">
+                <label
+                  htmlFor="ab-date"
+                  className="block text-[13px] font-medium"
+                >
                   {t.poissaolo.starts}
                 </label>
                 <input
@@ -110,12 +121,18 @@ export function AbsenceReporter({
                   onChange={(event) => setStart(event.target.value)}
                   required
                   className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-                  style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                  style={{
+                    background: "var(--rf-inset)",
+                    borderRadius: "var(--rf-r-control)",
+                  }}
                 />
               </div>
 
               <div>
-                <label htmlFor="ab-end" className="block text-[13px] font-medium">
+                <label
+                  htmlFor="ab-end"
+                  className="block text-[13px] font-medium"
+                >
                   {t.poissaolo.ends}
                 </label>
                 {/* min estää jakson joka päättyy ennen alkuaan jo
@@ -126,17 +143,26 @@ export function AbsenceReporter({
                   type="date"
                   min={start}
                   className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-                  style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                  style={{
+                    background: "var(--rf-inset)",
+                    borderRadius: "var(--rf-r-control)",
+                  }}
                 />
               </div>
             </div>
 
-            <p className="-mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="-mt-1 text-[12px] leading-relaxed"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {t.poissaolo.endHint}
             </p>
 
             <div>
-              <label htmlFor="ab-kind" className="block text-[13px] font-medium">
+              <label
+                htmlFor="ab-kind"
+                className="block text-[13px] font-medium"
+              >
                 Syy
               </label>
               <select
@@ -144,18 +170,24 @@ export function AbsenceReporter({
                 name="kind"
                 defaultValue="sick"
                 className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-                style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                style={{
+                  background: "var(--rf-inset)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
               >
                 {KINDS.map((kind) => (
                   <option key={kind} value={kind}>
-                    {ABSENCE_LABELS[kind]}
+                    {nimet.absences[kind]}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label htmlFor="ab-note" className="block text-[13px] font-medium">
+              <label
+                htmlFor="ab-note"
+                className="block text-[13px] font-medium"
+              >
                 {t.poissaolo.extraInfo}
               </label>
               <input
@@ -164,9 +196,15 @@ export function AbsenceReporter({
                 maxLength={300}
                 placeholder="Vapaaehtoinen"
                 className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-                style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+                style={{
+                  background: "var(--rf-inset)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
               />
-              <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              <p
+                className="mt-1 text-[12px] leading-relaxed"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 Älä kirjoita tähän terveystietoja. Esihenkilö tarvitsee vain
                 tiedon siitä ettet pääse.
               </p>
@@ -183,7 +221,9 @@ export function AbsenceReporter({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              <strong className="font-semibold">{t.poissaolo.sickNoteTitle}</strong>{" "}
+              <strong className="font-semibold">
+                {t.poissaolo.sickNoteTitle}
+              </strong>{" "}
               {t.poissaolo.sickNoteBody}
             </div>
 
@@ -217,7 +257,10 @@ export function AbsenceReporter({
               </button>
             </div>
 
-            <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="text-[12px] leading-relaxed"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               Ilmoitus ei peru vuoroa. Se näkyy esihenkilölle, joka etsii
               tilalle tekijän.
             </p>
@@ -288,7 +331,11 @@ function Submit({ t }: { t: WorkerText }) {
       type="submit"
       disabled={pending}
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-accent)",
+        color: "var(--rf-on-accent)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       {pending ? t.yleinen.sending : t.asetukset.report}
     </button>

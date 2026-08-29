@@ -20,7 +20,9 @@ import {
   UserRow,
 } from "./forms";
 
-export async function generateMetadata({ params }: PageProps<"/kehittaja/ravintolat/[id]">) {
+export async function generateMetadata({
+  params,
+}: PageProps<"/kehittaja/ravintolat/[id]">) {
   const { id } = await params;
   const detail = await fetchRestaurant(id);
   return { title: detail?.restaurant.name ?? "Ravintola" };
@@ -97,14 +99,19 @@ export default async function DevRestaurantPage({
             r.businessId ? `Y-tunnus ${r.businessId}` : null,
             PLAN_LABELS[r.plan],
             `Luotu ${new Date(r.createdAt).toLocaleDateString("fi-FI")}`,
-            r.status === "trial" && r.trialEndsOn ? `Kokeilu päättyy ${r.trialEndsOn}` : null,
+            r.status === "trial" && r.trialEndsOn
+              ? `Kokeilu päättyy ${r.trialEndsOn}`
+              : null,
           ]
             .filter(Boolean)
             .join(" · ")}
         </p>
 
         {r.statusNote ? (
-          <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-amber-text)" }}>
+          <p
+            className="mt-1 text-[12.5px]"
+            style={{ color: "var(--rf-amber-text)" }}
+          >
             Tilan syy: {r.statusNote}
           </p>
         ) : null}
@@ -124,7 +131,9 @@ export default async function DevRestaurantPage({
               aria-current={active ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px]"
               style={{
-                background: active ? "var(--rf-accent-soft)" : "var(--rf-inset)",
+                background: active
+                  ? "var(--rf-accent-soft)"
+                  : "var(--rf-inset)",
                 color: active ? "var(--rf-accent)" : "var(--rf-text-2)",
                 fontWeight: active ? 700 : 500,
                 borderRadius: 980,
@@ -142,9 +151,26 @@ export default async function DevRestaurantPage({
             <MetricCard
               label="Asiakkuuden tila"
               value={STATUS_LABELS[r.status]}
-              icon={<RfIcon name={health.level === "healthy" ? "check" : "alert"} size={17} />}
-              tone={health.level === "risk" ? "bad" : health.level === "attention" ? "warn" : "neutral"}
-              tileTone={health.level === "risk" ? "bad" : health.level === "attention" ? "warn" : "green"}
+              icon={
+                <RfIcon
+                  name={health.level === "healthy" ? "check" : "alert"}
+                  size={17}
+                />
+              }
+              tone={
+                health.level === "risk"
+                  ? "bad"
+                  : health.level === "attention"
+                    ? "warn"
+                    : "neutral"
+              }
+              tileTone={
+                health.level === "risk"
+                  ? "bad"
+                  : health.level === "attention"
+                    ? "warn"
+                    : "green"
+              }
               hint={health.reason}
             />
 
@@ -169,18 +195,30 @@ export default async function DevRestaurantPage({
               value={PLAN_LABELS[r.plan]}
               icon={<RfIcon name="budget" size={17} />}
               tileTone="violet"
-              hint={r.status === "trial" && r.trialEndsOn ? `Kokeilu ${r.trialEndsOn} asti` : "Voimassa"}
+              hint={
+                r.status === "trial" && r.trialEndsOn
+                  ? `Kokeilu ${r.trialEndsOn} asti`
+                  : "Voimassa"
+              }
             />
           </section>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
-              <CardHeader title="Omistaja" subtitle="Kuka vastaa tästä ravintolasta" />
+              <CardHeader
+                title="Omistaja"
+                subtitle="Kuka vastaa tästä ravintolasta"
+              />
 
               {owner ? (
                 <div className="mt-2">
-                  <p className="text-[15px] font-semibold">{owner.name ?? "Nimetön"}</p>
-                  <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                  <p className="text-[15px] font-semibold">
+                    {owner.name ?? "Nimetön"}
+                  </p>
+                  <p
+                    className="text-[13px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {owner.email ?? "—"}
                   </p>
                   <p className="mt-1.5">
@@ -192,7 +230,10 @@ export default async function DevRestaurantPage({
                   </p>
                 </div>
               ) : (
-                <p className="mt-2 text-[13px]" style={{ color: "var(--rf-amber-text)" }}>
+                <p
+                  className="mt-2 text-[13px]"
+                  style={{ color: "var(--rf-amber-text)" }}
+                >
                   Ravintolalla ei ole aktiivista omistajaa. Luo kutsu
                   Käyttäjät-välilehdeltä.
                 </p>
@@ -208,7 +249,10 @@ export default async function DevRestaurantPage({
                 <Rivi
                   label="Osoite"
                   value={
-                    [r.address, [r.postalCode, r.city].filter(Boolean).join(" ")]
+                    [
+                      r.address,
+                      [r.postalCode, r.city].filter(Boolean).join(" "),
+                    ]
                       .filter(Boolean)
                       .join(", ") || null
                   }
@@ -265,12 +309,21 @@ export default async function DevRestaurantPage({
             </div>
 
             {invitations.length > 0 ? (
-              <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+              <ul
+                className="divide-y"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
                 {invitations.map((inv) => (
-                  <li key={inv.id} className="flex items-center gap-3 px-5 py-3">
+                  <li
+                    key={inv.id}
+                    className="flex items-center gap-3 px-5 py-3"
+                  >
                     <span className="min-w-0 flex-1 text-[13px]">
                       {inv.label ?? "Nimetön kutsu"}
-                      <span className="ml-2" style={{ color: "var(--rf-text-3)" }}>
+                      <span
+                        className="ml-2"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         loppuu …{inv.hint}
                       </span>
                     </span>
@@ -338,7 +391,10 @@ export default async function DevRestaurantPage({
             edellinen tarkoittaa ettei sovellusta ole otettu käyttöön.
           */}
           <Card>
-            <CardHeader title="Viimeisin kirjautuminen" subtitle="Kuka tahansa aktiivinen käyttäjä" />
+            <CardHeader
+              title="Viimeisin kirjautuminen"
+              subtitle="Kuka tahansa aktiivinen käyttäjä"
+            />
             <p className="mt-2 text-[15px] font-semibold">
               {usage.lastSignInAt
                 ? new Date(usage.lastSignInAt).toLocaleString("fi-FI", {
@@ -350,7 +406,10 @@ export default async function DevRestaurantPage({
                   })
                 : "Ei yhtään kirjautumista"}
             </p>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {health.reason}
             </p>
           </Card>

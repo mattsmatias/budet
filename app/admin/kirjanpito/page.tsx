@@ -30,7 +30,14 @@ import {
   Pill,
 } from "@/components/restoflow/ui";
 import { CloseMonthForm, SyncButton } from "./controls";
-import { Alv, Paakirja, Paivakirja, Raportit, Tilikartta, Veroasiat } from "./views";
+import {
+  Alv,
+  Paakirja,
+  Paivakirja,
+  Raportit,
+  Tilikartta,
+  Veroasiat,
+} from "./views";
 
 export const metadata = { title: "Kirjanpito" };
 
@@ -69,13 +76,19 @@ export default async function AccountingPage({
   searchParams,
 }: PageProps<"/admin/kirjanpito">) {
   const params = await searchParams;
-  const { restaurant, role, month: nykyinen } = await adminContext("/admin/kirjanpito");
+  const {
+    restaurant,
+    role,
+    month: nykyinen,
+  } = await adminContext("/admin/kirjanpito");
   const t = adminText(await resolveLocale());
 
-  const pyydetty = typeof params.kuukausi === "string" ? params.kuukausi : nykyinen;
+  const pyydetty =
+    typeof params.kuukausi === "string" ? params.kuukausi : nykyinen;
   const month = ISO_MONTH.test(pyydetty) ? pyydetty : nykyinen;
 
-  const tab = (TABS.find((t) => t.key === params.nakyma)?.key ?? "yhteenveto") as TabKey;
+  const tab = (TABS.find((t) => t.key === params.nakyma)?.key ??
+    "yhteenveto") as TabKey;
 
   const state = await fetchMonthState(restaurant.id, month);
   const saaKirjata = can(role, "accounting.manage");
@@ -128,7 +141,10 @@ export default async function AccountingPage({
       </div>
 
       {/* Välilehdet */}
-      <nav aria-label="Kirjanpidon näkymät" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <nav
+        aria-label="Kirjanpidon näkymät"
+        className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
+      >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {TABS.map((t) => {
             const active = t.key === tab;
@@ -138,7 +154,9 @@ export default async function AccountingPage({
                   href={`/admin/kirjanpito?nakyma=${t.key}&kuukausi=${month}`}
                   className="rf-press inline-flex items-center px-3.5 py-1.5 text-[13px] font-semibold"
                   style={{
-                    background: active ? "var(--rf-accent-soft)" : "var(--rf-inset)",
+                    background: active
+                      ? "var(--rf-accent-soft)"
+                      : "var(--rf-inset)",
                     color: active ? "var(--rf-accent)" : "var(--rf-text-2)",
                     borderRadius: 999,
                   }}
@@ -170,7 +188,10 @@ export default async function AccountingPage({
       ) : null}
 
       {tab === "paakirja" ? (
-        <Paakirja t={t} accounts={await fetchGeneralLedger(restaurant.id, month)} />
+        <Paakirja
+          t={t}
+          accounts={await fetchGeneralLedger(restaurant.id, month)}
+        />
       ) : null}
 
       {tab === "tilikartta" ? (
@@ -180,7 +201,12 @@ export default async function AccountingPage({
       {tab === "alv" ? <Alv t={t} vat={state.vat} /> : null}
 
       {tab === "veroasiat" ? (
-        <Veroasiat t={t} guides={await fetchTaxGuides()} vat={state.vat} month={month} />
+        <Veroasiat
+          t={t}
+          guides={await fetchTaxGuides()}
+          vat={state.vat}
+          month={month}
+        />
       ) : null}
 
       {tab === "raportit" ? (
@@ -297,7 +323,10 @@ async function Yhteenveto({
         ) : (
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             {issues.map((issue) => (
-              <li key={issue.kind} className="flex items-start gap-3.5 px-5 py-3.5">
+              <li
+                key={issue.kind}
+                className="flex items-start gap-3.5 px-5 py-3.5"
+              >
                 <span
                   aria-hidden="true"
                   className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center"
@@ -324,7 +353,9 @@ async function Yhteenveto({
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium">{issue.title}</span>
+                  <span className="block text-[14px] font-medium">
+                    {issue.title}
+                  </span>
                   <span
                     className="mt-0.5 block text-[13px] leading-relaxed"
                     style={{ color: "var(--rf-text-2)" }}
@@ -382,16 +413,19 @@ async function Yhteenveto({
             className="mt-4 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Tavallisesti tätä ei tarvita: kirjaus syntyy itsestään kun
-            tallennat kuitin tai päivän myynnin. Jos tapahtuma jää tähän
-            haun jälkeenkin, siltä puuttuu tietoja — yllä lukee mitä.
+            Tavallisesti tätä ei tarvita: kirjaus syntyy itsestään kun tallennat
+            kuitin tai päivän myynnin. Jos tapahtuma jää tähän haun jälkeenkin,
+            siltä puuttuu tietoja — yllä lukee mitä.
           </p>
         </Card>
       ) : null}
 
       {!saaKirjata ? (
         <Card>
-          <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             Näet kirjanpidon mutta et voi kirjata. Kirjaaminen on omistajan ja
             vuoropäällikön oikeus.
           </p>
@@ -421,7 +455,10 @@ async function Yhteenveto({
             omaa painiketta. Täsmäytys estää yhä — se ei ole esiehto vaan
             syy olla sulkematta.
           */}
-          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-3 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Sulkeminen kirjaa kuukauden tositteet ja lukitsee ne. Se ei onnistu
             jos täsmäytys ei mene läpi — painike kertoo silloin mikä estää.
           </p>
@@ -431,10 +468,16 @@ async function Yhteenveto({
       {state.status === "locked" ? (
         <Card>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="mt-0.5 shrink-0"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               <RfIcon name="check" size={20} />
             </span>
-            <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {monthLabel(month)} on suljettu. Tapahtumat säilyvät sellaisinaan;
               korjaus tehdään uudella tositteella joka viittaa alkuperäiseen.
             </p>

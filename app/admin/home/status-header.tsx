@@ -110,7 +110,9 @@ export function StatusHeader({
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-semibold">{focus.title}</span>
+                  <span className="block text-[13px] font-semibold">
+                    {focus.title}
+                  </span>
                   <span
                     className="mt-0.5 block text-[12.5px] leading-relaxed"
                     style={{ color: "var(--rf-text-2)" }}
@@ -119,7 +121,10 @@ export function StatusHeader({
                   </span>
                 </span>
 
-                <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="mt-0.5 shrink-0"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   <RfIcon name="chevron" size={14} />
                 </span>
               </Link>

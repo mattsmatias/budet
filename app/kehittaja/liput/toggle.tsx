@@ -37,7 +37,9 @@ export function FlagToggle({
         style={{
           background: enabled ? "var(--rf-inset)" : "var(--rf-accent)",
           color: enabled ? "var(--rf-text)" : "var(--rf-on-accent)",
-          border: enabled ? "1px solid var(--rf-line-strong)" : "1px solid transparent",
+          border: enabled
+            ? "1px solid var(--rf-line-strong)"
+            : "1px solid transparent",
           borderRadius: "var(--rf-r-control)",
         }}
       >

@@ -37,7 +37,8 @@ export default async function DevRestaurantsPage({
   const all = await fetchRestaurants();
 
   const tila = typeof params.tila === "string" ? params.tila : "kaikki";
-  const haku = typeof params.haku === "string" ? params.haku.trim().toLowerCase() : "";
+  const haku =
+    typeof params.haku === "string" ? params.haku.trim().toLowerCase() : "";
 
   const now = new Date();
 
@@ -57,7 +58,9 @@ export default async function DevRestaurantsPage({
     <div className="rf-stagger space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-bold tracking-[-0.02em]">Ravintolat</h1>
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">
+            Ravintolat
+          </h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {rows.length === all.length
               ? `${all.length} ${all.length === 1 ? "ravintola" : "ravintolaa"}`
@@ -87,7 +90,9 @@ export default async function DevRestaurantsPage({
         pitkä vasta kun asiakkaita on satoja.
       */}
       <form method="get" className="flex flex-wrap gap-2">
-        {tila !== "kaikki" ? <input type="hidden" name="tila" value={tila} /> : null}
+        {tila !== "kaikki" ? (
+          <input type="hidden" name="tila" value={tila} />
+        ) : null}
 
         <input
           name="haku"
@@ -128,11 +133,17 @@ export default async function DevRestaurantsPage({
           return (
             <Link
               key={s.key}
-              href={qs === "" ? "/kehittaja/ravintolat" : `/kehittaja/ravintolat?${qs}`}
+              href={
+                qs === ""
+                  ? "/kehittaja/ravintolat"
+                  : `/kehittaja/ravintolat?${qs}`
+              }
               aria-current={active ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px]"
               style={{
-                background: active ? "var(--rf-accent-soft)" : "var(--rf-inset)",
+                background: active
+                  ? "var(--rf-accent-soft)"
+                  : "var(--rf-inset)",
                 color: active ? "var(--rf-accent)" : "var(--rf-text-2)",
                 fontWeight: active ? 700 : 500,
                 borderRadius: 980,
@@ -193,15 +204,23 @@ export default async function DevRestaurantsPage({
                           ) : null}
                         </Link>
                         {r.city ? (
-                          <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                          <span
+                            className="text-[12px]"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
                             {r.city}
                           </span>
                         ) : null}
                       </td>
 
                       <td className="px-4 py-3">
-                        <span className="block text-[13px]">{r.ownerName ?? "—"}</span>
-                        <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                        <span className="block text-[13px]">
+                          {r.ownerName ?? "—"}
+                        </span>
+                        <span
+                          className="block text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
                           {r.ownerEmail ?? "ei omistajaa"}
                         </span>
                       </td>
@@ -220,9 +239,13 @@ export default async function DevRestaurantsPage({
                         ) : null}
                       </td>
 
-                      <td className="px-4 py-3 text-[13px]">{PLAN_LABELS[r.plan]}</td>
+                      <td className="px-4 py-3 text-[13px]">
+                        {PLAN_LABELS[r.plan]}
+                      </td>
 
-                      <td className="rf-tabular px-4 py-3 text-right">{r.userCount}</td>
+                      <td className="rf-tabular px-4 py-3 text-right">
+                        {r.userCount}
+                      </td>
 
                       <td className="px-4 py-3">
                         <span
@@ -240,7 +263,10 @@ export default async function DevRestaurantsPage({
                         </span>
                       </td>
 
-                      <td className="rf-tabular px-5 py-3 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                      <td
+                        className="rf-tabular px-5 py-3 text-[12.5px]"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
                         {new Date(r.createdAt).toLocaleDateString("fi-FI")}
                       </td>
                     </tr>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -18,19 +19,22 @@ import {
 } from "@/lib/restoflow/queries";
 import { fetchSourceLink } from "@/lib/restoflow/accounting-queries";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
-import { checkVat, formatRate, isMixedReceipt, vatByRate } from "@/lib/restoflow/vat";
 import {
-  CATEGORY_LABELS,
-  PAYMENT_LABELS,
-  REVIEW_REASON_LABELS,
-} from "@/lib/restoflow/types";
+  checkVat,
+  formatRate,
+  isMixedReceipt,
+  vatByRate,
+} from "@/lib/restoflow/vat";
+import {} from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { ReceiptImage } from "@/components/restoflow/receipt-image";
 import { Card, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "../review";
 
-export async function generateMetadata({ params }: PageProps<"/admin/kuitit/[id]">) {
+export async function generateMetadata({
+  params,
+}: PageProps<"/admin/kuitit/[id]">) {
   const { id } = await params;
   const receipt = await fetchReceipt(id);
   return { title: receipt?.supplierName ?? "Kuitti" };
@@ -50,6 +54,7 @@ export default async function AdminReceiptDetailPage({
   const { restaurant, role } = await requireContext("/admin/kuitit");
   const locale = await resolveLocale();
   const t = adminText(locale);
+  const nimet = labels(locale);
 
   if (!can(role, "receipts.view")) redirect("/admin");
 
@@ -72,18 +77,26 @@ export default async function AdminReceiptDetailPage({
         ? [receipt.imagePath]
         : [];
 
-  const [users, imageUrls, suppliers, merchants, merchantCategories, allReceipts, ledger] =
-    await Promise.all([
-      fetchUsers(restaurant.id),
-      fetchReceiptImageUrls(pagePaths),
-      fetchSuppliers(restaurant.id),
-      fetchMerchants(),
-      fetchMerchantCategories(),
-      fetchReceipts(restaurant.id),
-      fetchSourceLink(restaurant.id, "receipt", id),
-    ]);
+  const [
+    users,
+    imageUrls,
+    suppliers,
+    merchants,
+    merchantCategories,
+    allReceipts,
+    ledger,
+  ] = await Promise.all([
+    fetchUsers(restaurant.id),
+    fetchReceiptImageUrls(pagePaths),
+    fetchSuppliers(restaurant.id),
+    fetchMerchants(),
+    fetchMerchantCategories(),
+    fetchReceipts(restaurant.id),
+    fetchSourceLink(restaurant.id, "receipt", id),
+  ]);
 
-  const supplier = suppliers.find((row) => row.id === receipt.supplierId) ?? null;
+  const supplier =
+    suppliers.find((row) => row.id === receipt.supplierId) ?? null;
   const merchant =
     merchants.find((row) => row.id === supplier?.merchantId) ?? null;
   const tradeLabel =
@@ -99,7 +112,9 @@ export default async function AdminReceiptDetailPage({
    */
   const sameMerchantSupplierIds = new Set(
     merchant
-      ? suppliers.filter((row) => row.merchantId === merchant.id).map((r) => r.id)
+      ? suppliers
+          .filter((row) => row.merchantId === merchant.id)
+          .map((r) => r.id)
       : [receipt.supplierId],
   );
 
@@ -108,7 +123,9 @@ export default async function AdminReceiptDetailPage({
   );
 
   const month = receipt.date.slice(0, 7);
-  const monthReceipts = merchantReceipts.filter((r) => r.date.startsWith(month));
+  const monthReceipts = merchantReceipts.filter((r) =>
+    r.date.startsWith(month),
+  );
   const monthTotal = monthReceipts.reduce((sum, r) => sum + r.totalCents, 0);
   const latestVisit = merchantReceipts
     .map((r) => r.date)
@@ -126,7 +143,6 @@ export default async function AdminReceiptDetailPage({
   const canReview = can(role, "receipts.edit");
   /* Kannoittainen erittely riveiltä. Sekakuitti ei pakotu yhteen kantaan. */
   const rateBreakdown = vatByRate(receipt.items);
-
 
   return (
     <div className="rf-enter mx-auto max-w-4xl space-y-4">
@@ -172,8 +188,8 @@ export default async function AdminReceiptDetailPage({
               style={{ color: "var(--rf-text-2)" }}
             >
               Kuitilla on {vat.rates.length} verokantaa:{" "}
-              {vat.rates.map(formatRate).join(" ja ")}. Rivien verot
-              summautuvat kuittiin merkittyyn ALV:hen.
+              {vat.rates.map(formatRate).join(" ja ")}. Rivien verot summautuvat
+              kuittiin merkittyyn ALV:hen.
             </p>
           ) : null}
 
@@ -202,7 +218,10 @@ export default async function AdminReceiptDetailPage({
                 {/* Toimipiste erikseen kun brändi tunnetaan. Molempien
                     näyttäminen samalla rivillä toistaisi nimen. */}
                 {merchant ? (
-                  <p className="truncate text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                  <p
+                    className="truncate text-[13px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {receipt.supplierName}
                   </p>
                 ) : null}
@@ -215,7 +234,12 @@ export default async function AdminReceiptDetailPage({
                     {tradeLabel}
                   </p>
                 ) : (
-                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.merchantNotRecognised}</p>
+                  <p
+                    className="mt-1 text-[12px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    {t.kuitit.merchantNotRecognised}
+                  </p>
                 )}
               </div>
             </div>
@@ -227,11 +251,13 @@ export default async function AdminReceiptDetailPage({
               {receipt.status === "needs_review" ? (
                 receipt.reviewReasons.map((r) => (
                   <Pill key={r} tone="warn" dot>
-                    {REVIEW_REASON_LABELS[r]}
+                    {nimet.reviewReasons[r]}
                   </Pill>
                 ))
               ) : (
-                <Pill tone="ok" dot>{t.sanat.checked}</Pill>
+                <Pill tone="ok" dot>
+                  {t.sanat.checked}
+                </Pill>
               )}
 
               {/*
@@ -265,15 +291,20 @@ export default async function AdminReceiptDetailPage({
             </div>
 
             {canReview && receipt.status === "needs_review" ? (
-              <ReviewPanel receipt={receipt} />
+              <ReviewPanel nimet={nimet} receipt={receipt} />
             ) : null}
 
             <dl className="mt-4 grid grid-cols-3 gap-3">
               <Stat
-                label={fill(t.kuitit.purchasesIn, { kuukausi: monthWord(month, locale) })}
+                label={fill(t.kuitit.purchasesIn, {
+                  kuukausi: monthWord(month, locale),
+                })}
                 value={formatMoney(monthTotal)}
               />
-              <Stat label={t.sanat.receiptCount} value={String(merchantReceipts.length)} />
+              <Stat
+                label={t.sanat.receiptCount}
+                value={String(merchantReceipts.length)}
+              />
               <Stat
                 label={t.kuitti2.latest}
                 value={latestVisit ? formatDate(latestVisit) : "—"}
@@ -282,22 +313,44 @@ export default async function AdminReceiptDetailPage({
           </Card>
 
           <Card>
-            <p className="mb-1 text-[13px] font-semibold">{t.kuitti2.details}</p>
+            <p className="mb-1 text-[13px] font-semibold">
+              {t.kuitti2.details}
+            </p>
             <dl>
               <Row label={t.sanat.supplier} value={receipt.supplierName} />
               <Row label={t.kuitit.date} value={formatDate(receipt.date)} />
-              <Row label={t.kuitit.total} value={formatMoney(receipt.totalCents)} />
+              <Row
+                label={t.kuitit.total}
+                value={formatMoney(receipt.totalCents)}
+              />
               <Row
                 label={t.kuitti2.vat}
-                value={receipt.vatCents === null ? "—" : formatMoney(receipt.vatCents)}
+                value={
+                  receipt.vatCents === null
+                    ? "—"
+                    : formatMoney(receipt.vatCents)
+                }
                 warn={receipt.vatCents === null}
               />
-              <Row label={t.sanat.category} value={CATEGORY_LABELS[receipt.category]} />
-              <Row label={t.kuitti2.paymentMethod} value={PAYMENT_LABELS[receipt.paymentMethod]} />
-              <Row label={t.kuitti2.receiptNumber} value={receipt.receiptNumber ?? "—"} />
+              <Row
+                label={t.sanat.category}
+                value={nimet.categories[receipt.category]}
+              />
+              <Row
+                label={t.kuitti2.paymentMethod}
+                value={nimet.payments[receipt.paymentMethod]}
+              />
+              <Row
+                label={t.kuitti2.receiptNumber}
+                value={receipt.receiptNumber ?? "—"}
+              />
               <Row label={t.kuitti2.note} value={receipt.note ?? "—"} />
               <Row label={t.kuitit.addedBy} value={addedBy?.name ?? "—"} />
-              <Row label={t.kuitit.addedAt} value={formatDateTime(receipt.addedAt)} last />
+              <Row
+                label={t.kuitit.addedAt}
+                value={formatDateTime(receipt.addedAt)}
+                last
+              />
             </dl>
 
             {/*
@@ -309,30 +362,50 @@ export default async function AdminReceiptDetailPage({
               toistaisi vain yllä olevan rivin.
             */}
             {rateBreakdown.length > 1 ? (
-              <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
-                <h3 className="text-[13.5px] font-bold">{t.kuitti2.vatByRate}</h3>
+              <div
+                className="mt-4 border-t pt-4"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                <h3 className="text-[13.5px] font-bold">
+                  {t.kuitti2.vatByRate}
+                </h3>
 
                 <table className="rf-table mt-2.5 w-full">
                   <caption className="sr-only">{t.kuitti2.vatByRate}</caption>
                   <thead>
                     <tr>
                       <th scope="col">{t.kuitti2.rate}</th>
-                      <th scope="col" className="text-right">{t.kuitti2.withVat}</th>
-                      <th scope="col" className="text-right">{t.kuitti2.vat}</th>
-                      <th scope="col" className="text-right">{t.kuitti2.withoutVat}</th>
+                      <th scope="col" className="text-right">
+                        {t.kuitti2.withVat}
+                      </th>
+                      <th scope="col" className="text-right">
+                        {t.kuitti2.vat}
+                      </th>
+                      <th scope="col" className="text-right">
+                        {t.kuitti2.withoutVat}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {rateBreakdown.map((rate) => (
                       <tr key={rate.rate ?? "tuntematon"} className="rf-row">
                         <td className="font-semibold">
-                          {rate.rate === null ? t.kuitit.noVatRate : formatRate(rate.rate)}
+                          {rate.rate === null
+                            ? t.kuitit.noVatRate
+                            : formatRate(rate.rate)}
                         </td>
-                        <td className="rf-tabular text-right">{formatMoney(rate.grossCents)}</td>
                         <td className="rf-tabular text-right">
-                          {rate.rate === null ? "—" : formatMoney(rate.vatCents)}
+                          {formatMoney(rate.grossCents)}
                         </td>
-                        <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                        <td className="rf-tabular text-right">
+                          {rate.rate === null
+                            ? "—"
+                            : formatMoney(rate.vatCents)}
+                        </td>
+                        <td
+                          className="rf-tabular text-right"
+                          style={{ color: "var(--rf-text-2)" }}
+                        >
                           {formatMoney(rate.netCents)}
                         </td>
                       </tr>
@@ -341,7 +414,12 @@ export default async function AdminReceiptDetailPage({
                 </table>
 
                 {rateBreakdown.some((r) => r.rate === null) ? (
-                  <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>{t.kuitit.missingVatNote}</p>
+                  <p
+                    className="mt-2.5 text-[12px] leading-relaxed"
+                    style={{ color: "var(--rf-amber-text)" }}
+                  >
+                    {t.kuitit.missingVatNote}
+                  </p>
                 ) : null}
               </div>
             ) : null}
@@ -354,15 +432,26 @@ export default async function AdminReceiptDetailPage({
               </p>
               <ul className="space-y-3">
                 {receipt.items.map((item) => (
-                  <li key={item.id} className="flex items-start justify-between gap-3">
+                  <li
+                    key={item.id}
+                    className="flex items-start justify-between gap-3"
+                  >
                     <span className="flex min-w-0 items-start gap-2.5">
-                      <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                      <span
+                        className="mt-0.5 shrink-0"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         <CategoryIcon category={item.category} size={16} />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-[14px]">{item.description}</span>
-                        <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                          {CATEGORY_LABELS[item.category]}
+                        <span className="block text-[14px]">
+                          {item.description}
+                        </span>
+                        <span
+                          className="block text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {nimet.categories[item.category]}
                           {item.quantity !== null
                             ? ` · ${item.quantity}${item.unit ? ` ${item.unit}` : " kpl"}`
                             : ""}
@@ -380,7 +469,12 @@ export default async function AdminReceiptDetailPage({
               </ul>
 
               {mixed ? (
-                <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.multiCategoryNote}</p>
+                <p
+                  className="mt-4 text-[12px] leading-relaxed"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {t.kuitit.multiCategoryNote}
+                </p>
               ) : null}
             </Card>
           ) : null}
@@ -395,9 +489,15 @@ export default async function AdminReceiptDetailPage({
             </p>
 
             {imageUrls.length > 0 ? (
-              <ReceiptImage urls={imageUrls} alt={`Kuitti: ${receipt.supplierName}`} />
+              <ReceiptImage
+                urls={imageUrls}
+                alt={`Kuitti: ${receipt.supplierName}`}
+              />
             ) : (
-              <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              <p
+                className="text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 {receipt.hasImage
                   ? t.kuitit.imageNotLoaded
                   : t.kuitit.noImageAttached}
@@ -405,14 +505,26 @@ export default async function AdminReceiptDetailPage({
             )}
 
             {receipt.imageQuality === "poor" ? (
-              <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>{t.kuitit.unclearImage}</p>
+              <p
+                className="mt-3 text-[12px] leading-relaxed"
+                style={{ color: "var(--rf-amber-text)" }}
+              >
+                {t.kuitit.unclearImage}
+              </p>
             ) : null}
           </Card>
 
           {canReview ? (
             <Card>
-              <p className="mb-2 text-[13px] font-semibold">{t.kuitti2.deleteReceipt}</p>
-              <p className="mb-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.deleteWarning}</p>
+              <p className="mb-2 text-[13px] font-semibold">
+                {t.kuitti2.deleteReceipt}
+              </p>
+              <p
+                className="mb-3 text-[12px] leading-relaxed"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {t.kuitit.deleteWarning}
+              </p>
               <DeleteReceipt receiptId={receipt.id} />
             </Card>
           ) : null}
@@ -458,7 +570,10 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div
       className="px-3 py-2.5"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       <dt className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
         {label}

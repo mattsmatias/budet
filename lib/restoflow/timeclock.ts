@@ -78,7 +78,10 @@ export interface WorkedTime {
  * Tauko vähentää työaikaa. Keskeneräinen jakso lasketaan mukaan annettuun
  * hetkeen asti — muuten käynnissä oleva työvuoro näyttäisi nollaa.
  */
-export function computeWorked(events: ClockEvent[], nowIso: string): WorkedTime {
+export function computeWorked(
+  events: ClockEvent[],
+  nowIso: string,
+): WorkedTime {
   const sorted = sortEvents(events);
   const now = Date.parse(nowIso);
 
@@ -163,7 +166,10 @@ export interface WorkSegment {
  * Keskeneräinen jakso päättyy annettuun hetkeen samoin kuin
  * `computeWorked`issa — muuten käynnissä oleva vuoro näyttäisi nollaa.
  */
-export function workSegments(events: ClockEvent[], nowIso: string): WorkSegment[] {
+export function workSegments(
+  events: ClockEvent[],
+  nowIso: string,
+): WorkSegment[] {
   const sorted = sortEvents(events);
   const now = Date.parse(nowIso);
 
@@ -342,14 +348,17 @@ export function daySummaries(
   timezone: string,
   limit?: number,
 ): DaySummary[] {
-  const days = [...new Set(events.map((e) => dayIn(timezone, e.at)))].sort().reverse();
+  const days = [...new Set(events.map((e) => dayIn(timezone, e.at)))]
+    .sort()
+    .reverse();
   const wanted = limit === undefined ? days : days.slice(0, limit);
 
   return wanted.map((date) => {
     const dayEvents = eventsOnDate(events, date, timezone);
     const worked = computeWorked(dayEvents, nowIso);
     const firstIn = dayEvents.find((e) => e.type === "in")?.at ?? null;
-    const lastOut = [...dayEvents].reverse().find((e) => e.type === "out")?.at ?? null;
+    const lastOut =
+      [...dayEvents].reverse().find((e) => e.type === "out")?.at ?? null;
 
     return {
       date,
@@ -358,7 +367,8 @@ export function daySummaries(
       workedMs: worked.workedMs,
       breakMs: worked.breakMs,
       open: currentState(dayEvents) !== "off",
-      stale: currentState(dayEvents) !== "off" && date !== dayIn(timezone, nowIso),
+      stale:
+        currentState(dayEvents) !== "off" && date !== dayIn(timezone, nowIso),
       segments: workSegments(dayEvents, nowIso),
     };
   });

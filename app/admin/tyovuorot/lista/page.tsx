@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { labels, type Labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { formatMonth } from "@/lib/restoflow/expenses";
 import {
-  ABSENCE_SHORT,
   buildRoster,
   formatPlannedHours,
   shiftLabel,
@@ -13,7 +14,6 @@ import {
   type RosterDay,
 } from "@/lib/restoflow/roster";
 import { publicationOf } from "@/lib/restoflow/shift-planning";
-import { ABSENCE_LABELS, POSITION_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState } from "@/components/restoflow/ui";
 import { PrintButton } from "./print-button";
@@ -38,13 +38,16 @@ export const metadata = { title: "Työvuorolista" };
 export default async function RosterPage({
   searchParams,
 }: PageProps<"/admin/tyovuorot/lista">) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const { users, shifts, openShifts, absences, month, role, restaurant } =
     await adminContext("/admin/tyovuorot");
 
   if (!can(role, "shifts.view.all")) return null;
 
   const params = await searchParams;
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) ? requested : month;
 
   const roster = buildRoster({
@@ -57,7 +60,8 @@ export default async function RosterPage({
 
   const people = roster.rows.filter((row) => row.user !== null).length;
   const shiftCount = roster.rows.reduce((sum, row) => sum + row.shiftCount, 0);
-  const openCount = roster.rows.find((row) => row.user === null)?.shiftCount ?? 0;
+  const openCount =
+    roster.rows.find((row) => row.user === null)?.shiftCount ?? 0;
 
   /*
    * Kaksi tapaa lukea sama aineisto.
@@ -82,7 +86,8 @@ export default async function RosterPage({
   });
 
   const draftCount = shifts.filter(
-    (shift) => shift.date.startsWith(viewMonth) && publicationOf(shift) === "draft",
+    (shift) =>
+      shift.date.startsWith(viewMonth) && publicationOf(shift) === "draft",
   ).length;
 
   const usedAbsences = new Set(
@@ -106,7 +111,10 @@ export default async function RosterPage({
         <div className="flex flex-wrap items-center gap-2">
           <div
             className="flex items-center gap-0.5 p-0.5"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
           >
             <Valinta
               href={`/admin/tyovuorot/lista?kuukausi=${viewMonth}`}
@@ -134,20 +142,20 @@ export default async function RosterPage({
       */}
       <div className="hidden print:block">
         <h1 className="text-[15px] font-bold">
-          {restaurant.name} · Työvuorolista · {formatMonth(viewMonth)}
+          {restaurant.name} · Työvuorolista · {formatMonth(viewMonth, locale)}
         </h1>
       </div>
 
       {roster.rows.length === 0 ? (
         <EmptyState
           title="Ei vuoroja tässä kuussa"
-          description={`${formatMonth(viewMonth)} on tyhjä. Luo vuoroja työvuorosivulla, niin ne ilmestyvät tähän listaan.`}
+          description={`${formatMonth(viewMonth, locale)} on tyhjä. Luo vuoroja työvuorosivulla, niin ne ilmestyvät tähän listaan.`}
         />
       ) : (
         <>
           <p className="text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-            {people} {people === 1 ? "työntekijä" : "työntekijää"} · {shiftCount}{" "}
-            {shiftCount === 1 ? "vuoro" : "vuoroa"}
+            {people} {people === 1 ? "työntekijä" : "työntekijää"} ·{" "}
+            {shiftCount} {shiftCount === 1 ? "vuoro" : "vuoroa"}
             {openCount > 0 ? ` · ${openCount} avointa` : ""} ·{" "}
             {formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa
           </p>
@@ -180,104 +188,112 @@ export default async function RosterPage({
           {view === "paivat" ? (
             <Card padded={false} className="rf-print-section">
               <div className="overflow-x-auto print:overflow-visible">
-                <DayList roster={roster} />
+                <DayList nimet={nimet} roster={roster} />
               </div>
             </Card>
           ) : (
-          <Card padded={false} className="rf-print-section">
-            <div className="overflow-x-auto print:overflow-visible">
-              <table className="rf-roster w-full">
-                <caption className="sr-only">
-                  Työvuorot {formatMonth(viewMonth)}, työntekijät riveinä ja
-                  päivät sarakkeina
-                </caption>
+            <Card padded={false} className="rf-print-section">
+              <div className="overflow-x-auto print:overflow-visible">
+                <table className="rf-roster w-full">
+                  <caption className="sr-only">
+                    Työvuorot {formatMonth(viewMonth, locale)}, työntekijät
+                    riveinä ja päivät sarakkeina
+                  </caption>
 
-                <thead>
-                  <tr>
-                    <th scope="col" className="rf-roster-name">
-                      Työntekijä
-                    </th>
-
-                    {roster.days.map((day) => (
-                      <DayHead key={day.date} day={day} />
-                    ))}
-
-                    <th scope="col" className="rf-roster-sum">
-                      Yht.
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {roster.rows.map((row) => (
-                    <tr key={row.user?.id ?? "avoin"}>
-                      <th scope="row" className="rf-roster-name">
-                        <span className="block truncate font-semibold">
-                          {row.user?.name ?? "Avoimet vuorot"}
-                        </span>
-                        <span
-                          className="block truncate text-[10.5px] font-normal"
-                          style={{ color: "var(--rf-text-3)" }}
-                        >
-                          {row.user
-                            ? row.user.position
-                              ? POSITION_LABELS[row.user.position]
-                              : ""
-                            : "ei tekijää"}
-                        </span>
+                  <thead>
+                    <tr>
+                      <th scope="col" className="rf-roster-name">
+                        Työntekijä
                       </th>
 
-                      {row.cells.map((cell, index) => (
-                        <Cell
-                          key={cell.date}
-                          cell={cell}
-                          day={roster.days[index]}
-                          open={row.user === null}
-                        />
+                      {roster.days.map((day) => (
+                        <DayHead key={day.date} day={day} />
                       ))}
 
-                      <td className="rf-roster-sum rf-tabular">
-                        {row.user === null ? "—" : formatPlannedHours(row.plannedMinutes)}
-                      </td>
+                      <th scope="col" className="rf-roster-sum">
+                        Yht.
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
 
-                {/*
+                  <tbody>
+                    {roster.rows.map((row) => (
+                      <tr key={row.user?.id ?? "avoin"}>
+                        <th scope="row" className="rf-roster-name">
+                          <span className="block truncate font-semibold">
+                            {row.user?.name ?? "Avoimet vuorot"}
+                          </span>
+                          <span
+                            className="block truncate text-[10.5px] font-normal"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
+                            {row.user
+                              ? row.user.position
+                                ? nimet.positions[row.user.position]
+                                : ""
+                              : "ei tekijää"}
+                          </span>
+                        </th>
+
+                        {row.cells.map((cell, index) => (
+                          <Cell
+                            nimet={nimet}
+                            key={cell.date}
+                            cell={cell}
+                            day={roster.days[index]}
+                            open={row.user === null}
+                          />
+                        ))}
+
+                        <td className="rf-roster-sum rf-tabular">
+                          {row.user === null
+                            ? "—"
+                            : formatPlannedHours(row.plannedMinutes)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
+                  {/*
                   Miehitysrivi kertoo mitä listasta oikeasti haetaan:
                   minä päivänä on liian vähän väkeä. Avoimia vuoroja ei
                   lasketa mukaan — ne ovat nimenomaan puuttuvaa väkeä.
                 */}
-                <tfoot>
-                  <tr>
-                    <th scope="row" className="rf-roster-name">
-                      <span className="block truncate font-semibold">Vuorossa</span>
-                    </th>
+                  <tfoot>
+                    <tr>
+                      <th scope="row" className="rf-roster-name">
+                        <span className="block truncate font-semibold">
+                          Vuorossa
+                        </span>
+                      </th>
 
-                    {roster.perDay.map((count, index) => (
-                      <td
-                        key={roster.days[index].date}
-                        className="rf-roster-cell rf-tabular"
-                        style={{
-                          background: roster.days[index].weekend
-                            ? "var(--rf-inset)"
-                            : undefined,
-                          color: count === 0 ? "var(--rf-text-3)" : "var(--rf-text)",
-                          fontWeight: count === 0 ? 400 : 600,
-                        }}
-                      >
-                        {count === 0 ? "–" : count}
+                      {roster.perDay.map((count, index) => (
+                        <td
+                          key={roster.days[index].date}
+                          className="rf-roster-cell rf-tabular"
+                          style={{
+                            background: roster.days[index].weekend
+                              ? "var(--rf-inset)"
+                              : undefined,
+                            color:
+                              count === 0
+                                ? "var(--rf-text-3)"
+                                : "var(--rf-text)",
+                            fontWeight: count === 0 ? 400 : 600,
+                          }}
+                        >
+                          {count === 0 ? "–" : count}
+                        </td>
+                      ))}
+
+                      <td className="rf-roster-sum rf-tabular">
+                        {formatPlannedHours(roster.plannedMinutes)}
                       </td>
-                    ))}
-
-                    <td className="rf-roster-sum rf-tabular">
-                      {formatPlannedHours(roster.plannedMinutes)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </Card>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </Card>
           )}
 
           {/*
@@ -294,7 +310,10 @@ export default async function RosterPage({
             Luotu Katella {printedAt}
           </p>
 
-          <p className="text-[11.5px] leading-relaxed rf-no-print" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="text-[11.5px] leading-relaxed rf-no-print"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Suunniteltu työaika, ei toteutunut eikä palkka. Toteutunut aika
             lasketaan leimauksista.
             {usedAbsences.size > 0 ? (
@@ -302,7 +321,10 @@ export default async function RosterPage({
                 {" "}
                 Poissaolot:{" "}
                 {[...usedAbsences]
-                  .map((kind) => `${ABSENCE_SHORT[kind!]} = ${ABSENCE_LABELS[kind!].toLowerCase()}`)
+                  .map(
+                    (kind) =>
+                      `${nimet.absenceShort[kind!]} = ${nimet.absences[kind!].toLowerCase()}`,
+                  )
                   .join(", ")}
                 .
               </>
@@ -355,7 +377,10 @@ function DayHead({ day }: { day: RosterDay }) {
       className="rf-roster-cell"
       style={{ background: day.weekend ? "var(--rf-inset)" : undefined }}
     >
-      <span className="block text-[10.5px]" style={{ color: "var(--rf-text-3)" }}>
+      <span
+        className="block text-[10.5px]"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {weekdayName(day.weekday)}
       </span>
       <span className="rf-tabular block font-semibold">{day.day}</span>
@@ -364,10 +389,12 @@ function DayHead({ day }: { day: RosterDay }) {
 }
 
 function Cell({
+  nimet,
   cell,
   day,
   open,
 }: {
+  nimet: Labels;
   cell: RosterCell;
   day: RosterDay;
   open: boolean;
@@ -398,7 +425,8 @@ function Cell({
              * kertoo sen myös mustavalkoisella paperilla, jolla väri
              * ei erotu.
              */
-            textDecoration: shift.status === "declined" ? "line-through" : undefined,
+            textDecoration:
+              shift.status === "declined" ? "line-through" : undefined,
             color: open
               ? "var(--rf-red-text)"
               : shift.status === "declined"
@@ -415,9 +443,9 @@ function Cell({
         <span
           className="block text-[10px] font-bold"
           style={{ color: "var(--rf-amber-text)" }}
-          title={ABSENCE_LABELS[cell.absence]}
+          title={nimet.absences[cell.absence]}
         >
-          {ABSENCE_SHORT[cell.absence]}
+          {nimet.absenceShort[cell.absence]}
         </span>
       ) : null}
     </td>

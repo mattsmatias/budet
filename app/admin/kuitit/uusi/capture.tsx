@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
@@ -17,10 +18,7 @@ import {
 } from "@/lib/restoflow/receipt-ai";
 import {
   type CustomCategory,
-  CATEGORY_LABELS,
   EXPECTED_VAT_RATES,
-  PAYMENT_LABELS,
-  REVIEW_REASON_LABELS,
   type ExpenseCategory,
   type PaymentMethod,
   type Supplier,
@@ -50,12 +48,14 @@ const initial: AdminState = {};
  * pyyntökokorajaan.
  */
 export function CaptureFlow({
+  nimet,
   t,
   restaurantId,
   suppliers,
   categories,
   extractionEnabled,
 }: {
+  nimet: Labels;
   t: AdminText;
   restaurantId: string;
   suppliers: Supplier[];
@@ -142,7 +142,10 @@ export function CaptureFlow({
     const uploadPages = Promise.all(
       chosen.map(async (page) => {
         const pageHash = page === file ? hash : await sha256(page);
-        return { path: await uploadImage(page, restaurantId, pageHash), hash: pageHash };
+        return {
+          path: await uploadImage(page, restaurantId, pageHash),
+          hash: pageHash,
+        };
       }),
     )
       .then((saved) => {
@@ -307,30 +310,46 @@ export function CaptureFlow({
           </span>
         </button>
 
-        <ChooseButton icon="image" label={t.kuva.chooseImages} onClick={() => fileRef.current?.click()} />
-        <ChooseButton icon="file" label={t.kuva.uploadFile} onClick={() => fileRef.current?.click()} />
+        <ChooseButton
+          icon="image"
+          label={t.kuva.chooseImages}
+          onClick={() => fileRef.current?.click()}
+        />
+        <ChooseButton
+          icon="file"
+          label={t.kuva.uploadFile}
+          onClick={() => fileRef.current?.click()}
+        />
 
-        <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          {extractionEnabled
-            ? t.kuva.machineSuggests
-            : t.kuva.noExtractor}
+        <p
+          className="px-1 pt-2 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {extractionEnabled ? t.kuva.machineSuggests : t.kuva.noExtractor}
         </p>
 
-        <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuva.multiPage}</p>
+        <p
+          className="px-1 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.kuva.multiPage}
+        </p>
       </div>
     );
   }
 
-  if (phase === "analyzing") return <Analyzing t={t} fileName={fileName} preview={preview} />;
+  if (phase === "analyzing")
+    return <Analyzing t={t} fileName={fileName} preview={preview} />;
   if (phase === "saved") return <Saved t={t} receiptId={state.receiptId} />;
   if (!result) return null;
 
   // Kun poimintaa ei ole, mikään kenttä ei ole "epävarma" — se on vain
   // täyttämättä. Punainen korostus tyhjässä lomakkeessa on hälytys
   // asiasta joka ei ole vielä tapahtunut.
-  const uncertain = extractionEnabled && extractionError === null
-    ? new Set(uncertainFields(result))
-    : new Set<string>();
+  const uncertain =
+    extractionEnabled && extractionError === null
+      ? new Set(uncertainFields(result))
+      : new Set<string>();
 
   // Opittu korjaus: kun sama kategoriamuutos on tehty samalle
   // toimittajalle toistuvasti, ehdotetaan sitä. Ehdotus näytetään, ei
@@ -344,8 +363,11 @@ export function CaptureFlow({
       ? suggestedCategory(matchedSupplier, category)
       : null;
   const reasons =
-    extractionEnabled && extractionError === null ? reviewReasonsFor(result) : [];
-  const ready = supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
+    extractionEnabled && extractionError === null
+      ? reviewReasonsFor(result)
+      : [];
+  const ready =
+    supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
   // Puuttuva pakollinen tieto avaa kentät heti: muuten tallennus on
   // estetty eikä käyttäjä näe mistä se johtuu.
@@ -368,7 +390,11 @@ export function CaptureFlow({
       {/* Kaupan tunnistukseen. Ei näytetä lomakkeella: käyttäjä ei
           korjaa Y-tunnusta, ja jos poiminta luki sen väärin, tarkiste
           on jo pudottanut sen pois. */}
-      <input type="hidden" name="businessId" value={result.businessId.value ?? ""} />
+      <input
+        type="hidden"
+        name="businessId"
+        value={result.businessId.value ?? ""}
+      />
 
       <div
         className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
@@ -389,7 +415,11 @@ export function CaptureFlow({
         <span aria-hidden="true" className="mt-0.5 shrink-0">
           <RfIcon
             name={
-              !extractionEnabled ? "info" : reasons.length > 0 ? "alert" : "check"
+              !extractionEnabled
+                ? "info"
+                : reasons.length > 0
+                  ? "alert"
+                  : "check"
             }
             size={16}
           />
@@ -398,10 +428,10 @@ export function CaptureFlow({
           {extractionError
             ? t.kuva.fillYourself
             : !extractionEnabled
-            ? t.kuva.noExtractorShort
-            : reasons.length > 0
-              ? t.kuva.someUncertain
-              : t.kuva.allRecognised}
+              ? t.kuva.noExtractorShort
+              : reasons.length > 0
+                ? t.kuva.someUncertain
+                : t.kuva.allRecognised}
         </p>
       </div>
 
@@ -415,8 +445,8 @@ export function CaptureFlow({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {extractionError} Kuva on tallennettu, joten voit täyttää tiedot
-          käsin tai poistaa kuitin ja yrittää uudelleen.
+          {extractionError} Kuva on tallennettu, joten voit täyttää tiedot käsin
+          tai poistaa kuitin ja yrittää uudelleen.
         </p>
       ) : null}
 
@@ -464,12 +494,18 @@ export function CaptureFlow({
               {supplier.trim() === "" ? "Toimittaja puuttuu" : supplier}
             </p>
 
-            <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="rf-tabular mt-0.5 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {date ? formatDate(date) : t.kuva.dateMissing}
-              {category === "" ? "" : ` · ${CATEGORY_LABELS[category]}`}
+              {category === "" ? "" : ` · ${nimet.categories[category]}`}
             </p>
 
-            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {vatEuros.trim() === ""
                 ? t.kuva.vatMissing
                 : fill(t.kuva.vatEuros, { maara: vatEuros })}
@@ -488,7 +524,9 @@ export function CaptureFlow({
           >
             <span aria-hidden="true" className="mt-0.5 shrink-0">
               <RfIcon name="alert" size={14} />
-            </span>{t.kuva.uncertainFields}</p>
+            </span>
+            {t.kuva.uncertainFields}
+          </p>
         ) : null}
 
         <button
@@ -526,11 +564,15 @@ export function CaptureFlow({
       <Card>
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-[15px] font-medium">
-            {previews.length <= 1 ? t.kuva.receiptImage : fill(t.kuva.pagesCount, { n: String(previews.length) })}
+            {previews.length <= 1
+              ? t.kuva.receiptImage
+              : fill(t.kuva.pagesCount, { n: String(previews.length) })}
           </p>
 
           {adding ? (
-            <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.saving}</span>
+            <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              {t.kuva.saving}
+            </span>
           ) : null}
         </div>
 
@@ -624,7 +666,10 @@ export function CaptureFlow({
           }}
         />
 
-        <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-2 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           Sivuja voi olla niin monta kuin kuitissa on. Jälkikäteen lisätty sivu
           tallentuu kuittiin, mutta lukuja ei lueta uudelleen — tarkista summa
           itse.
@@ -659,110 +704,134 @@ export function CaptureFlow({
           mukana, ja tallennus menettäisi juuri ne tiedot jotka poiminta
           luki oikein. Piilotus on visuaalinen, ei rakenteellinen. */}
       <div hidden={!showFields}>
-      <Card>
-        <TextField
-          label={t.kuva.supplier}
-          name="supplier"
-          value={supplier}
-          onChange={setSupplier}
-          uncertain={uncertain.has("supplier")}
-          hint={result.supplier.hint}
-        />
-        <TextField
-          label={t.kuva.date}
-          name="date"
-          type="date"
-          value={date}
-          onChange={setDate}
-          uncertain={uncertain.has("date")}
-          hint={result.date.hint}
-        />
-        <TextField
-          label={t.kuva.total}
-          name="total"
-          value={totalEuros}
-          onChange={setTotalEuros}
-          suffix="€"
-          inputMode="decimal"
-          uncertain={uncertain.has("totalCents")}
-          hint={result.totalCents.hint}
-        />
-        <VatField t={t}
-          totalEuros={totalEuros}
-          value={vatEuros}
-          onChange={setVatEuros}
-          category={category}
-          uncertain={uncertain.has("vatCents")}
-          hint={result.vatCents.hint}
-        />
+        <Card>
+          <TextField
+            label={t.kuva.supplier}
+            name="supplier"
+            value={supplier}
+            onChange={setSupplier}
+            uncertain={uncertain.has("supplier")}
+            hint={result.supplier.hint}
+          />
+          <TextField
+            label={t.kuva.date}
+            name="date"
+            type="date"
+            value={date}
+            onChange={setDate}
+            uncertain={uncertain.has("date")}
+            hint={result.date.hint}
+          />
+          <TextField
+            label={t.kuva.total}
+            name="total"
+            value={totalEuros}
+            onChange={setTotalEuros}
+            suffix="€"
+            inputMode="decimal"
+            uncertain={uncertain.has("totalCents")}
+            hint={result.totalCents.hint}
+          />
+          <VatField
+            t={t}
+            totalEuros={totalEuros}
+            value={vatEuros}
+            onChange={setVatEuros}
+            category={category}
+            uncertain={uncertain.has("vatCents")}
+            hint={result.vatCents.hint}
+          />
 
-        <SelectField
-          label={t.kuva.category}
-          name="category"
-          value={category}
-          onChange={(v) => setCategory(v as ExpenseCategory)}
-          uncertain={uncertain.has("category")}
-          hint={result.category.hint}
-          options={[["", "Valitse…"], ...Object.entries(CATEGORY_LABELS)]}
-        />
+          <SelectField
+            label={t.kuva.category}
+            name="category"
+            value={category}
+            onChange={(v) => setCategory(v as ExpenseCategory)}
+            uncertain={uncertain.has("category")}
+            hint={result.category.hint}
+            options={[["", "Valitse…"], ...Object.entries(nimet.categories)]}
+          />
 
-        {categories.length > 0 ? (
-          <div>
-            <label htmlFor="rf-custom-category" className="block text-[13px] font-medium">{t.kuva.ownCategory}</label>
-            <select
-              id="rf-custom-category"
-              name="categoryId"
-              defaultValue=""
-              className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
-            >
-              <option value="">{t.kuva.noOwnCategory}</option>
-              {categories
-                .filter((c) => c.active)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-            </select>
-            <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuva.ownCategoryHint}</p>
-          </div>
-        ) : null}
+          {categories.length > 0 ? (
+            <div>
+              <label
+                htmlFor="rf-custom-category"
+                className="block text-[13px] font-medium"
+              >
+                {t.kuva.ownCategory}
+              </label>
+              <select
+                id="rf-custom-category"
+                name="categoryId"
+                defaultValue=""
+                className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
+                style={{
+                  background: "var(--rf-inset)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                <option value="">{t.kuva.noOwnCategory}</option>
+                {categories
+                  .filter((c) => c.active)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+              <p
+                className="mt-1 text-[12px] leading-relaxed"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {t.kuva.ownCategoryHint}
+              </p>
+            </div>
+          ) : null}
 
-        {suggestion ? (
-          <div
-            className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5"
-            style={{
-              background: "var(--rf-blue-bg)",
-              color: "var(--rf-blue-text)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            <p className="text-[13px] leading-relaxed">{t.kuva.suggestion}<strong>{CATEGORY_LABELS[suggestion.category]}</strong>.{" "}
-              {suggestion.reason}
-            </p>
-            <button
-              type="button"
-              onClick={() => setCategory(suggestion.category)}
-              className="rf-press px-3 py-1.5 text-[13px] font-semibold"
+          {suggestion ? (
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5"
               style={{
-                background: "var(--rf-card)",
+                background: "var(--rf-blue-bg)",
                 color: "var(--rf-blue-text)",
                 borderRadius: "var(--rf-r-control)",
               }}
-            >{t.kuva.use}</button>
-          </div>
-        ) : null}
-        <SelectField
-          label={t.kuva.paymentMethod}
-          name="payment"
-          value={payment}
-          onChange={(v) => setPayment(v as PaymentMethod)}
-          uncertain={uncertain.has("paymentMethod")}
-          options={Object.entries(PAYMENT_LABELS)}
-        />
-        <TextField label={t.kuva.note} name="note" value={note} onChange={setNote} last />
-      </Card>
+            >
+              <p className="text-[13px] leading-relaxed">
+                {t.kuva.suggestion}
+                <strong>{nimet.categories[suggestion.category]}</strong>.{" "}
+                {suggestion.reason}
+              </p>
+              <button
+                type="button"
+                onClick={() => setCategory(suggestion.category)}
+                className="rf-press px-3 py-1.5 text-[13px] font-semibold"
+                style={{
+                  background: "var(--rf-card)",
+                  color: "var(--rf-blue-text)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                {t.kuva.use}
+              </button>
+            </div>
+          ) : null}
+          <SelectField
+            label={t.kuva.paymentMethod}
+            name="payment"
+            value={payment}
+            onChange={(v) => setPayment(v as PaymentMethod)}
+            uncertain={uncertain.has("paymentMethod")}
+            options={Object.entries(nimet.payments)}
+          />
+          <TextField
+            label={t.kuva.note}
+            name="note"
+            value={note}
+            onChange={setNote}
+            last
+          />
+        </Card>
       </div>
 
       {result.items.length > 0 ? (
@@ -772,19 +841,30 @@ export function CaptureFlow({
           </p>
           <ul className="space-y-2.5">
             {result.items.map((item, i) => (
-              <li key={i} className="flex items-start justify-between gap-3 text-[14px]">
+              <li
+                key={i}
+                className="flex items-start justify-between gap-3 text-[14px]"
+              >
                 <span className="flex min-w-0 items-start gap-2">
-                  <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                  <span
+                    className="mt-0.5 shrink-0"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     <CategoryIcon category={item.category} size={15} />
                   </span>
                   <span className="min-w-0">
                     <span className="block">{item.description}</span>
-                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {CATEGORY_LABELS[item.category]}
+                    <span
+                      className="block text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {nimet.categories[item.category]}
                     </span>
                   </span>
                 </span>
-                <span className="rf-tabular shrink-0">{formatMoney(item.totalCents)}</span>
+                <span className="rf-tabular shrink-0">
+                  {formatMoney(item.totalCents)}
+                </span>
               </li>
             ))}
           </ul>
@@ -795,7 +875,7 @@ export function CaptureFlow({
         <div className="flex flex-wrap gap-2 px-1">
           {reasons.map((r) => (
             <Pill key={r} tone="warn" dot>
-              {REVIEW_REASON_LABELS[r]}
+              {nimet.reviewReasons[r]}
             </Pill>
           ))}
         </div>
@@ -818,7 +898,12 @@ export function CaptureFlow({
       <SaveButton t={t} disabled={!ready} />
 
       {!ready ? (
-        <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.requiredFields}</p>
+        <p
+          className="px-1 text-center text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.kuva.requiredFields}
+        </p>
       ) : null}
     </form>
   );
@@ -1010,16 +1095,20 @@ function Analyzing({
   );
 }
 
-function Saved({
-  t, receiptId }: {
-  t: AdminText; receiptId?: string }) {
+function Saved({ t, receiptId }: { t: AdminText; receiptId?: string }) {
   return (
     <div className="rf-enter flex flex-col items-center justify-center py-20">
       <div
         className="flex h-20 w-20 items-center justify-center"
         style={{ background: "var(--rf-green-bg)", borderRadius: "50%" }}
       >
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
           <path
             className="rf-draw"
             d="m5 13 4 4L19 7"
@@ -1035,7 +1124,9 @@ function Saved({
       <p
         className="mt-2 max-w-[18rem] text-center text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
-      >{t.kuva.savedBody}</p>
+      >
+        {t.kuva.savedBody}
+      </p>
 
       <div className="mt-7 flex gap-2.5">
         {receiptId ? (
@@ -1047,7 +1138,9 @@ function Saved({
               color: "var(--rf-on-accent)",
               borderRadius: "var(--rf-r-control)",
             }}
-          >{t.kuva.openReceipt}</Link>
+          >
+            {t.kuva.openReceipt}
+          </Link>
         ) : null}
         <Link
           href="/admin/kuitit"
@@ -1057,15 +1150,15 @@ function Saved({
             color: "var(--rf-text)",
             borderRadius: "var(--rf-r-control)",
           }}
-        >{t.kuva.allReceipts}</Link>
+        >
+          {t.kuva.allReceipts}
+        </Link>
       </div>
     </div>
   );
 }
 
-function SaveButton({
-  t, disabled }: {
-  t: AdminText; disabled: boolean }) {
+function SaveButton({ t, disabled }: { t: AdminText; disabled: boolean }) {
   const { pending } = useFormStatus();
 
   return (
@@ -1110,9 +1203,16 @@ function TextField({
   const id = `f-${name}`;
 
   return (
-    <div className={last ? "py-3" : "border-b py-3"} style={{ borderColor: "var(--rf-line)" }}>
+    <div
+      className={last ? "py-3" : "border-b py-3"}
+      style={{ borderColor: "var(--rf-line)" }}
+    >
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={id} className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        <label
+          htmlFor={id}
+          className="text-[13px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {label}
         </label>
         {uncertain ? <Pill tone="warn">tarkista</Pill> : null}
@@ -1127,10 +1227,15 @@ function TextField({
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-transparent text-[17px] font-medium outline-none"
         />
-        {suffix ? <span className="text-[17px] font-medium">{suffix}</span> : null}
+        {suffix ? (
+          <span className="text-[17px] font-medium">{suffix}</span>
+        ) : null}
       </div>
       {hint ? (
-        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+        <p
+          className="mt-1 text-[12px]"
+          style={{ color: "var(--rf-amber-text)" }}
+        >
           {hint}
         </p>
       ) : null}
@@ -1199,7 +1304,11 @@ function VatField({
   return (
     <div className="border-b py-3" style={{ borderColor: "var(--rf-line)" }}>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor="f-vat" className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        <label
+          htmlFor="f-vat"
+          className="text-[13px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           ALV
         </label>
         {uncertain ? <Pill tone="warn">tarkista</Pill> : null}
@@ -1221,7 +1330,9 @@ function VatField({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.calcFromBase}</span>
+        <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          {t.kuva.calcFromBase}
+        </span>
         {RATE_CHOICES.map((rate) => (
           <button
             key={rate}
@@ -1245,23 +1356,32 @@ function VatField({
       </div>
 
       {totalCents === null ? (
-        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.fillTotalFirst}</p>
+        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          {t.kuva.fillTotalFirst}
+        </p>
       ) : inferred !== null ? (
         <p
           className="mt-1.5 text-[12px]"
-          style={{ color: mismatch ? "var(--rf-amber-text)" : "var(--rf-text-3)" }}
+          style={{
+            color: mismatch ? "var(--rf-amber-text)" : "var(--rf-text-3)",
+          }}
         >
           {computed ? t.kuva.calculated + " " : ""}
           Vastaa {formatRate(inferred)} kantaa
           {mismatch
-            ? fill(t.kuva.expectedRate, { kannat: expected.map(formatRate).join(t.kuva.orSep) })
+            ? fill(t.kuva.expectedRate, {
+                kannat: expected.map(formatRate).join(t.kuva.orSep),
+              })
             : ""}
           .
         </p>
       ) : null}
 
       {hint ? (
-        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+        <p
+          className="mt-1 text-[12px]"
+          style={{ color: "var(--rf-amber-text)" }}
+        >
           {hint}
         </p>
       ) : null}
@@ -1306,7 +1426,11 @@ function SelectField({
   return (
     <div className="border-b py-3" style={{ borderColor: "var(--rf-line)" }}>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={id} className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        <label
+          htmlFor={id}
+          className="text-[13px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {label}
         </label>
         {uncertain ? <Pill tone="warn">tarkista</Pill> : null}
@@ -1325,7 +1449,10 @@ function SelectField({
         ))}
       </select>
       {hint ? (
-        <p className="mt-1 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+        <p
+          className="mt-1 text-[12px]"
+          style={{ color: "var(--rf-amber-text)" }}
+        >
           {hint}
         </p>
       ) : null}

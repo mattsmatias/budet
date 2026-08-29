@@ -10,6 +10,7 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
@@ -22,14 +23,21 @@ import {
 } from "@/lib/restoflow/report-rows";
 
 export async function GET(request: NextRequest) {
+  const locale = await resolveLocale();
   const user = await getUser();
   if (!user) {
-    return NextResponse.json({ error: "Kirjautuminen vaaditaan." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Kirjautuminen vaaditaan." },
+      { status: 401 },
+    );
   }
 
   const restaurant = await getActiveRestaurant();
   if (!restaurant) {
-    return NextResponse.json({ error: "Ravintolaa ei löytynyt." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Ravintolaa ei löytynyt." },
+      { status: 404 },
+    );
   }
 
   if (!can(restaurant.role, "reports.export")) {
@@ -62,14 +70,24 @@ export async function GET(request: NextRequest) {
    * osoitteen arvaaminen antaisi ne kenelle tahansa jolla on
    * raporttien vienti-oikeus.
    */
-  if (ACCOUNTING_KINDS.includes(kind) && !can(restaurant.role, "accounting.view")) {
+  if (
+    ACCOUNTING_KINDS.includes(kind) &&
+    !can(restaurant.role, "accounting.view")
+  ) {
     return NextResponse.json(
       { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
       { status: 403 },
     );
   }
 
-  const rows = await buildReportRows(kind, restaurant.id, month, restaurant.role, restaurant.timezone);
+  const rows = await buildReportRows(
+    kind,
+    restaurant.id,
+    month,
+    restaurant.role,
+    restaurant.timezone,
+    locale,
+  );
   const csv = "﻿" + rows.map((r) => r.map(escapeCell).join(";")).join("\r\n");
 
   return new NextResponse(csv, {

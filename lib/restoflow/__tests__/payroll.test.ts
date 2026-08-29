@@ -88,14 +88,16 @@ function component(partial: Partial<PayComponent> = {}): PayComponent {
   };
 }
 
-function slip(over: {
-  events?: ClockEvent[];
-  corrections?: TimeCorrection[];
-  components?: PayComponent[];
-  user?: User;
-  from?: string;
-  to?: string;
-} = {}) {
+function slip(
+  over: {
+    events?: ClockEvent[];
+    corrections?: TimeCorrection[];
+    components?: PayComponent[];
+    user?: User;
+    from?: string;
+    to?: string;
+  } = {},
+) {
   return buildPayslip({
     user: over.user ?? user,
     from: over.from ?? "2026-08-24",
@@ -317,7 +319,11 @@ describe("palkkalajin ikkuna", () => {
    * ehto from <= minute < to olisi aina epätosi.
    */
   it("käsittelee keskiyön yli menevän ikkunan", () => {
-    const yo = component({ code: "night", fromMinute: 23 * 60, toMinute: 6 * 60 });
+    const yo = component({
+      code: "night",
+      fromMinute: 23 * 60,
+      toMinute: 6 * 60,
+    });
     const yoSegments = workSegments(
       [
         ev("in", local("2026-08-24", "22:00")),
@@ -341,15 +347,21 @@ describe("palkkalajin ikkuna", () => {
 
 describe("palkkalajin voimassaolo", () => {
   it("ei sovella ennen alkupäivää", () => {
-    expect(componentApplies(component({ validFrom: "2026-09-01" }), "2026-08-24")).toBe(false);
+    expect(
+      componentApplies(component({ validFrom: "2026-09-01" }), "2026-08-24"),
+    ).toBe(false);
   });
 
   it("ei sovella päättymisen jälkeen", () => {
-    expect(componentApplies(component({ validTo: "2026-08-01" }), "2026-08-24")).toBe(false);
+    expect(
+      componentApplies(component({ validTo: "2026-08-01" }), "2026-08-24"),
+    ).toBe(false);
   });
 
   it("ei sovella passiivista", () => {
-    expect(componentApplies(component({ active: false }), "2026-08-24")).toBe(false);
+    expect(componentApplies(component({ active: false }), "2026-08-24")).toBe(
+      false,
+    );
   });
 
   it("sovelletaan voimassaoloaikana", () => {
@@ -364,7 +376,11 @@ describe("lisien laskenta", () => {
   ];
 
   it("maksaa euromääräisen lisän tunneilta", () => {
-    const ilta = component({ fromMinute: 18 * 60, toMinute: 23 * 60, value: 150 });
+    const ilta = component({
+      fromMinute: 18 * 60,
+      toMinute: 23 * 60,
+      value: 150,
+    });
     const result = slip({ events, components: [ilta] });
     // 4 h × 1,50 € = 6,00 €
     expect(result.supplementsCents).toBe(600);
@@ -372,7 +388,10 @@ describe("lisien laskenta", () => {
 
   it("maksaa prosenttilisän tuntipalkasta", () => {
     const sunnuntai = component({
-      code: "sunday", unit: "percent", value: 100, weekdays: [1],
+      code: "sunday",
+      unit: "percent",
+      value: 100,
+      weekdays: [1],
     });
     const result = slip({ events, components: [sunnuntai] });
     // 6 h × 15,50 € × 100 % = 93,00 €
@@ -394,12 +413,20 @@ describe("lisien laskenta", () => {
    */
   it("maksaa vain arvokkaimman kun lisät eivät yhdisty", () => {
     const ilta = component({
-      id: "c-ilta", name: "Iltalisä", value: 150,
-      fromMinute: 18 * 60, toMinute: 23 * 60, stackable: false,
+      id: "c-ilta",
+      name: "Iltalisä",
+      value: 150,
+      fromMinute: 18 * 60,
+      toMinute: 23 * 60,
+      stackable: false,
     });
     const iso = component({
-      id: "c-iso", name: "Suuri lisä", value: 500,
-      fromMinute: 18 * 60, toMinute: 23 * 60, stackable: false,
+      id: "c-iso",
+      name: "Suuri lisä",
+      value: 500,
+      fromMinute: 18 * 60,
+      toMinute: 23 * 60,
+      stackable: false,
     });
 
     const result = slip({ events, components: [ilta, iso] });
@@ -408,8 +435,18 @@ describe("lisien laskenta", () => {
   });
 
   it("maksaa molemmat kun lisät yhdistyvät", () => {
-    const ilta = component({ id: "c-ilta", value: 150, fromMinute: 18 * 60, toMinute: 23 * 60 });
-    const muu = component({ id: "c-muu", value: 100, fromMinute: 18 * 60, toMinute: 23 * 60 });
+    const ilta = component({
+      id: "c-ilta",
+      value: 150,
+      fromMinute: 18 * 60,
+      toMinute: 23 * 60,
+    });
+    const muu = component({
+      id: "c-muu",
+      value: 100,
+      fromMinute: 18 * 60,
+      toMinute: 23 * 60,
+    });
 
     const result = slip({ events, components: [ilta, muu] });
     // 4 h × (1,50 + 1,00) = 10,00 €
@@ -422,8 +459,9 @@ describe("lisien laskenta", () => {
     const prosentti = component({ id: "c", unit: "percent", value: 100 });
 
     // 100 % 15,50 €:sta on 15,50 € eli arvokkain.
-    expect(rankComponents([halpa, kallis, prosentti], 1550).map((c) => c.id))
-      .toEqual(["c", "b", "a"]);
+    expect(
+      rankComponents([halpa, kallis, prosentti], 1550).map((c) => c.id),
+    ).toEqual(["c", "b", "a"]);
   });
 });
 
@@ -469,7 +507,9 @@ describe("sormenjälki", () => {
         events,
         corrections: [
           {
-            id: "corr1", userId: "u1", workDate: "2026-08-24",
+            id: "corr1",
+            userId: "u1",
+            workDate: "2026-08-24",
             correctedIn: local("2026-08-24", "10:00"),
             correctedOut: local("2026-08-24", "19:00"),
             correctedBreakMinutes: 0,
@@ -485,7 +525,10 @@ describe("sormenjälki", () => {
   it("muuttuu kun lisä otetaan käyttöön", () => {
     const ennen = fingerprint(slip({ events }));
     const jalkeen = fingerprint(
-      slip({ events, components: [component({ fromMinute: 16 * 60, toMinute: 23 * 60 })] }),
+      slip({
+        events,
+        components: [component({ fromMinute: 16 * 60, toMinute: 23 * 60 })],
+      }),
     );
 
     expect(jalkeen).not.toBe(ennen);

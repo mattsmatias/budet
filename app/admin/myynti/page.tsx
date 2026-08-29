@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { formatMonth } from "@/lib/restoflow/expenses";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -36,7 +37,13 @@ export const metadata = { title: "Myynti" };
 export default async function SalesPage({
   searchParams,
 }: PageProps<"/admin/myynti">) {
-  const { restaurant, role, today, month: nykyinen } = await adminContext("/admin/myynti");
+  const locale = await resolveLocale();
+  const {
+    restaurant,
+    role,
+    today,
+    month: nykyinen,
+  } = await adminContext("/admin/myynti");
 
   const month = monthFromParams(await searchParams, nykyinen);
 
@@ -97,7 +104,10 @@ export default async function SalesPage({
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             Kuvaa kassan päiväraportti
           </h2>
-          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-[3px] text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             Poiminta lukee päivän, myynnin, ALV:n ja kuittien määrän. Tarkistat
             luvut ennen tallennusta.
           </p>
@@ -111,7 +121,9 @@ export default async function SalesPage({
       {canManage && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            {todayRow ? "Muuta tämän päivän myyntiä" : "Kirjaa päivän myynti käsin"}
+            {todayRow
+              ? "Muuta tämän päivän myyntiä"
+              : "Kirjaa päivän myynti käsin"}
           </h2>
           <SalesForm
             defaultDate={today}
@@ -135,7 +147,10 @@ export default async function SalesPage({
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             Täsmäytys kassaan
           </h2>
-          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-[3px] text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {formatDay(today)} · kassan päiväraportti vs. Katen laskelma
           </p>
 
@@ -159,17 +174,30 @@ export default async function SalesPage({
       {canManage && missingYesterday ? (
         <Card>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-amber-text)" }}>
+            <span
+              className="mt-0.5 shrink-0"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
               <RfIcon name="alert" size={18} />
             </span>
             <div>
-              <p className="text-[15px] font-medium">Eiliseltä puuttuu myynti</p>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+              <p className="text-[15px] font-medium">
+                Eiliseltä puuttuu myynti
+              </p>
+              <p
+                className="mt-1 text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {formatDay(yesterday)} on kirjaamatta. Ilman sitä viikon
                 vertailut ja työvoiman osuus jäävät vajaiksi.
               </p>
               <div className="mt-3">
-                <SalesForm defaultDate={yesterday} defaultNet="" defaultTarget="" compact />
+                <SalesForm
+                  defaultDate={yesterday}
+                  defaultNet=""
+                  defaultTarget=""
+                  compact
+                />
               </div>
             </div>
           </div>
@@ -184,7 +212,10 @@ export default async function SalesPage({
         ensimmäinen rivi, ja kaksi eri tapaa nimetä osio saa saman
         sivun näyttämään kahdesta eri sovelluksesta kootulta.
       */}
-      <Panel title="Kirjatut päivät" subtitle={`${formatMonth(month)} · ${inMonth.length} ${inMonth.length === 1 ? "päivä" : "päivää"}`}>
+      <Panel
+        title="Kirjatut päivät"
+        subtitle={`${formatMonth(month, locale)} · ${inMonth.length} ${inMonth.length === 1 ? "päivä" : "päivää"}`}
+      >
         {inMonth.length === 0 ? (
           <PanelEmpty
             text={
@@ -224,7 +255,10 @@ export default async function SalesPage({
         )}
       </Panel>
 
-      <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="px-1 text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         Veroton summa, koska työvoiman osuus myynnistä lasketaan siitä.
         Verollisella luvulla suhde olisi järjestelmällisesti liian pieni.
       </p>
@@ -249,7 +283,10 @@ function Row({
   const average = averageCheckCents(row.grossCents, row.transactions);
 
   return (
-    <tr className="border-b last:border-0" style={{ borderColor: "var(--rf-line)" }}>
+    <tr
+      className="border-b last:border-0"
+      style={{ borderColor: "var(--rf-line)" }}
+    >
       <td>
         <span className="flex items-center gap-2">
           <span>{formatDay(row.date)}</span>
@@ -282,7 +319,10 @@ function Row({
       <td className="num">
         {formatMoney(row.netCents)}
         {row.grossCents !== null ? (
-          <span className="block text-[11.5px] font-normal" style={{ color: "var(--rf-text-3)" }}>
+          <span
+            className="block text-[11.5px] font-normal"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {formatMoney(row.grossCents)} verollinen
           </span>
         ) : null}
@@ -295,7 +335,10 @@ function Row({
       <td className="num" style={{ color: "var(--rf-text-2)" }}>
         {average === null ? "—" : formatMoney(average)}
       </td>
-      <td className="rf-tabular px-5 py-3 text-right" style={{ color: "var(--rf-text-3)" }}>
+      <td
+        className="rf-tabular px-5 py-3 text-right"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {row.targetCents ? formatMoney(row.targetCents) : "—"}
       </td>
       <td>
@@ -304,9 +347,19 @@ function Row({
             Ei vertailukohtaa
           </span>
         ) : (
-          <Pill tone={comparison.ratio >= 1 ? "ok" : comparison.ratio >= 0.9 ? "warn" : "risk"}>
+          <Pill
+            tone={
+              comparison.ratio >= 1
+                ? "ok"
+                : comparison.ratio >= 0.9
+                  ? "warn"
+                  : "risk"
+            }
+          >
             {percent(comparison.ratio)}{" "}
-            {comparison.kind === "target" ? "tavoitteesta" : "vs. sama viikonpäivä"}
+            {comparison.kind === "target"
+              ? "tavoitteesta"
+              : "vs. sama viikonpäivä"}
           </Pill>
         )}
       </td>
@@ -329,7 +382,9 @@ function Row({
             <RfIcon name="chevron" size={15} />
           </Link>
 
-          {canManage ? <DeleteDay date={row.date} label={formatDay(row.date)} /> : null}
+          {canManage ? (
+            <DeleteDay date={row.date} label={formatDay(row.date)} />
+          ) : null}
         </span>
       </td>
     </tr>

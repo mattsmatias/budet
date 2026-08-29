@@ -45,7 +45,7 @@ describe("xlsx-kirjoitin", () => {
   it("kirjoittaa luvut lukuina eikä tekstinä", () => {
     const text = readText(file);
     expect(text).toContain("<v>1728000</v>");
-    expect(text).not.toContain("<t xml:space=\"preserve\">1728000</t>");
+    expect(text).not.toContain('<t xml:space="preserve">1728000</t>');
   });
 
   it("kirjoittaa tekstin inline-merkkijonona", () => {
@@ -65,7 +65,10 @@ describe("xlsx-kirjoitin", () => {
   /** Excel hylkää nimet joissa on : \ / ? * [ ] tai yli 31 merkkiä. */
   it("siivoaa välilehden nimen", () => {
     const odd = buildXlsx([
-      { name: "Kulut/2026[elokuu]:kaikki yhteensä ja vielä lisää", rows: [["x"]] },
+      {
+        name: "Kulut/2026[elokuu]:kaikki yhteensä ja vielä lisää",
+        rows: [["x"]],
+      },
     ]);
 
     const text = readText(odd);

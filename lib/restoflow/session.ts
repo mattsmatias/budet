@@ -85,35 +85,40 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
 });
 
 /** Ravintolat joihin käyttäjä kuuluu. Tyhjä = perustus kesken. */
-export const getMemberships = cache(async (): Promise<RestaurantMembership[]> => {
-  if (!isConfigured()) return [];
+export const getMemberships = cache(
+  async (): Promise<RestaurantMembership[]> => {
+    if (!isConfigured()) return [];
 
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("my_restaurants")
-      .select("id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents, clock_in_early_minutes, open_shift_claiming")
-      .order("name");
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from("my_restaurants")
+        .select(
+          "id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents, clock_in_early_minutes, open_shift_claiming",
+        )
+        .order("name");
 
-    if (error || !data) return [];
+      if (error || !data) return [];
 
-    return data.map((row) => ({
-      id: row.id as string,
-      name: row.name as string,
-      slug: row.slug as string,
-      lunchTheme: isLunchTheme(row.lunch_theme) ? row.lunch_theme : "light",
-      clockInEarlyMinutes: (row.clock_in_early_minutes as number | null) ?? 30,
-      openShiftClaiming: (row.open_shift_claiming as boolean | null) ?? true,
-      timezone: row.timezone as string,
-      currency: row.currency as string,
-      role: row.role as Role,
-      position: (row.position as StaffPosition | null) ?? null,
-      hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
-    }));
-  } catch {
-    return [];
-  }
-});
+      return data.map((row) => ({
+        id: row.id as string,
+        name: row.name as string,
+        slug: row.slug as string,
+        lunchTheme: isLunchTheme(row.lunch_theme) ? row.lunch_theme : "light",
+        clockInEarlyMinutes:
+          (row.clock_in_early_minutes as number | null) ?? 30,
+        openShiftClaiming: (row.open_shift_claiming as boolean | null) ?? true,
+        timezone: row.timezone as string,
+        currency: row.currency as string,
+        role: row.role as Role,
+        position: (row.position as StaffPosition | null) ?? null,
+        hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
+      }));
+    } catch {
+      return [];
+    }
+  },
+);
 
 /**
  * Aktiivinen ravintola.
@@ -151,7 +156,10 @@ export async function requireContext(returnTo = "/admin"): Promise<Context> {
    * evästeen, jonka RLS lukee itse. Peräkkäin ajettuna sivu odotti
    * kaksi verkkokierrosta yhden sijaan.
    */
-  const [user, restaurant] = await Promise.all([getUser(), getActiveRestaurant()]);
+  const [user, restaurant] = await Promise.all([
+    getUser(),
+    getActiveRestaurant(),
+  ]);
 
   if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
   if (!restaurant) redirect("/aloitus");
@@ -186,7 +194,9 @@ export async function requireUser(returnTo = "/admin"): Promise<SessionUser> {
  * toisilla tunnuksilla pääsisi, ja konsolin olemassaoloa ei ole
  * syytä kertoa.
  */
-export async function requireSuperAdmin(returnTo = "/kehittaja"): Promise<SessionUser> {
+export async function requireSuperAdmin(
+  returnTo = "/kehittaja",
+): Promise<SessionUser> {
   const user = await getUser();
   if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
   if (!user.isSuperAdmin) redirect("/admin");

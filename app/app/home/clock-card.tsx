@@ -140,7 +140,8 @@ export function ClockCard({
    * Pysyvä kuittaus jäisi ruudulle seuraavaan latauksen asti ja
    * kertoisi menneestä silloin kun käyttäjä katsoo nykyhetkeä.
    */
-  const [celebrating, setCelebrating] = useState<ActionState["clocked"]>(undefined);
+  const [celebrating, setCelebrating] =
+    useState<ActionState["clocked"]>(undefined);
   const lastSeen = useRef<string | null>(null);
 
   useEffect(() => {
@@ -239,7 +240,10 @@ export function ClockCard({
       */}
       <p
         className="rf-tabular mt-4 font-semibold leading-none"
-        style={{ fontSize: "clamp(40px, 12vw, 56px)", letterSpacing: "-0.035em" }}
+        style={{
+          fontSize: "clamp(40px, 12vw, 56px)",
+          letterSpacing: "-0.035em",
+        }}
         suppressHydrationWarning
       >
         {formatHoursMinutes(worked.workedMs)}
@@ -274,7 +278,10 @@ export function ClockCard({
           }}
         >
           {clockIn.kind === "too-early"
-            ? fill(t.kello.opensAt, { aika: clockIn.opensAt, vuoro: clockIn.shift })
+            ? fill(t.kello.opensAt, {
+                aika: clockIn.opensAt,
+                vuoro: clockIn.shift,
+              })
             : clockIn.next
               ? fill(t.kello.nextShiftIs, { vuoro: clockIn.next })
               : t.kello.noShiftPlanned}
@@ -373,14 +380,21 @@ function Success({
       <div className="flex items-center gap-2.5">
         <span
           className="flex h-7 w-7 items-center justify-center"
-          style={{ background: "var(--rf-green)", color: "#fff", borderRadius: "50%" }}
+          style={{
+            background: "var(--rf-green)",
+            color: "#fff",
+            borderRadius: "50%",
+          }}
         >
           <RfIcon name="check" size={16} />
         </span>
         <p className="text-[17px] font-semibold">{otsikot(t)[type]}</p>
       </div>
 
-      <p className="rf-tabular mt-4 text-[44px] font-semibold leading-none" style={{ letterSpacing: "-0.03em" }}>
+      <p
+        className="rf-tabular mt-4 text-[44px] font-semibold leading-none"
+        style={{ letterSpacing: "-0.03em" }}
+      >
         {timeIn(timezone, at)}
       </p>
 
@@ -389,7 +403,10 @@ function Success({
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {t.kello.todaysHours}
           </p>
-          <p className="rf-tabular mt-0.5 text-[24px] font-semibold" suppressHydrationWarning>
+          <p
+            className="rf-tabular mt-0.5 text-[24px] font-semibold"
+            suppressHydrationWarning
+          >
             {formatDuration(workedMs)}
           </p>
         </div>
@@ -470,7 +487,13 @@ function PrimaryAction({
   );
 }
 
-function SecondaryAction({ type, label }: { type: ClockEventType; label: string }) {
+function SecondaryAction({
+  type,
+  label,
+}: {
+  type: ClockEventType;
+  label: string;
+}) {
   const { pending } = useFormStatus();
 
   return (

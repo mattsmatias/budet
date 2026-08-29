@@ -64,8 +64,13 @@ export function RecentDays({
               style={{ borderColor: "var(--rf-line)" }}
             >
               <div className="min-w-0">
-                <p className="text-[14px] font-medium">{shortDay(day.date, locale)}</p>
-                <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                <p className="text-[14px] font-medium">
+                  {shortDay(day.date, locale)}
+                </p>
+                <p
+                  className="rf-tabular mt-0.5 text-[13px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
                   {" → "}
                   {day.open
@@ -83,7 +88,10 @@ export function RecentDays({
                   Unohtuneen päivän kestoa ei tiedetä. Kasvava luku
                   väittäisi että työ jatkuu yhä.
                 */}
-                <p className="rf-tabular text-[14px] font-semibold" suppressHydrationWarning>
+                <p
+                  className="rf-tabular text-[14px] font-semibold"
+                  suppressHydrationWarning
+                >
                   {day.stale ? "—" : formatDuration(day.workedMs)}
                 </p>
                 {/*

@@ -71,10 +71,7 @@ export function marketingMetadata(
 
   const title = page === "about" ? t.about.metaTitle : `Kate – ${tagline}`;
 
-  const description =
-    page === "about"
-      ? t.about.metaDescription
-      : t.hero.body;
+  const description = page === "about" ? t.about.metaDescription : t.hero.body;
 
   const languages: Record<string, string> = {};
   for (const code of LOCALES) {

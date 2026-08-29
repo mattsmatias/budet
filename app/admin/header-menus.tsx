@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { type Labels } from "@/lib/i18n/labels";
 import { useCallback, useState, type ReactNode } from "react";
 import { signOut } from "@/app/(auth)/actions";
-import { ROLE_LABELS, type Alert, type Role } from "@/lib/restoflow/types";
+import { type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { personInitials } from "@/lib/restoflow/initials";
 import { severityColor } from "@/components/restoflow/ui";
@@ -144,7 +145,11 @@ function NotificationMenu({
 
   return (
     <Dropdown
-      label={alerts.length > 0 ? fill(t.kuori2.alertsLabel, { maara: String(alerts.length) }) : "Huomiot"}
+      label={
+        alerts.length > 0
+          ? fill(t.kuori2.alertsLabel, { maara: String(alerts.length) })
+          : "Huomiot"
+      }
       badge={alerts.length}
       width={380}
       open={open}
@@ -171,13 +176,21 @@ function NotificationMenu({
               keskeyttääkö käyttäjä sen mitä on tekemässä.
             */}
             {alerts.length > 0 ? (
-              <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+              <p
+                className="mt-[3px] text-[12.5px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {critical > 0 ? (
                   <>
-                    <strong className="font-bold" style={{ color: "var(--rf-red-text)" }}>
+                    <strong
+                      className="font-bold"
+                      style={{ color: "var(--rf-red-text)" }}
+                    >
                       {critical} kiireellinen
                     </strong>
-                    {alerts.length > critical ? ` · ${alerts.length - critical} muuta` : ""}
+                    {alerts.length > critical
+                      ? ` · ${alerts.length - critical} muuta`
+                      : ""}
                   </>
                 ) : (
                   t.kuori.noUrgent
@@ -188,10 +201,16 @@ function NotificationMenu({
 
           {alerts.length === 0 ? (
             <div className="flex items-start gap-2.5 px-[18px] py-5">
-              <span className="mt-px shrink-0" style={{ color: "var(--rf-green-text)" }}>
+              <span
+                className="mt-px shrink-0"
+                style={{ color: "var(--rf-green-text)" }}
+              >
                 <RfIcon name="check" size={16} />
               </span>
-              <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+              <p
+                className="text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {t.kuori2.noObservations}
               </p>
             </div>
@@ -237,7 +256,10 @@ function NotificationMenu({
 
                     {/* Nuoli kertoo että rivi vie jonnekin. Ilman sitä
                         koko lista näytti tekstiltä eikä linkeiltä. */}
-                    <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                    <span
+                      className="mt-0.5 shrink-0"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       <RfIcon name="chevron" size={14} />
                     </span>
                   </Link>
@@ -258,7 +280,10 @@ function NotificationMenu({
               href="/admin/ilmoitukset"
               onClick={close}
               className="rf-press block border-t px-[18px] py-2.5 text-center text-[12.5px] font-bold"
-              style={{ borderColor: "var(--rf-line)", color: "var(--rf-accent)" }}
+              style={{
+                borderColor: "var(--rf-line)",
+                color: "var(--rf-accent)",
+              }}
             >
               {alerts.length > shown.length
                 ? fill(t.kuori2.showAllAlerts, { maara: String(alerts.length) })
@@ -289,6 +314,7 @@ function NotificationMenu({
  * työkaluja; tämä valikko koskee vain tätä.
  */
 function UserMenu({
+  nimet,
   t,
   userName,
   restaurantName,
@@ -298,6 +324,7 @@ function UserMenu({
   onToggle,
   onClose,
 }: {
+  nimet: Labels;
   t: AdminText;
   userName: string;
   restaurantName: string;
@@ -322,10 +349,16 @@ function UserMenu({
     >
       {(close) => (
         <>
-          <div className="border-b px-4 py-3" style={{ borderColor: "var(--rf-line)" }}>
+          <div
+            className="border-b px-4 py-3"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
             <p className="truncate text-[14px] font-semibold">{userName}</p>
-            <p className="truncate text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]} · {restaurantName}
+            <p
+              className="truncate text-[12px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              {nimet.roles[role]} · {restaurantName}
             </p>
           </div>
 
@@ -401,6 +434,7 @@ function UserMenu({
  */
 export function HeaderMenus({
   t,
+  nimet,
   alerts,
   userName,
   restaurantName,
@@ -410,6 +444,8 @@ export function HeaderMenus({
 }: {
   /** Kuoren tekstit. */
   t: AdminText;
+  /** Jaetut nimikkeet. */
+  nimet: Labels;
   alerts: Alert[];
   userName: string;
   restaurantName: string;
@@ -440,18 +476,19 @@ export function HeaderMenus({
       />
 
       {showUser ? (
-      <UserMenu
-        t={t}
-        userName={userName}
-        restaurantName={restaurantName}
-        role={role}
-        canOpenSettings={canOpenSettings}
-        open={openMenu === "user"}
-        onToggle={() =>
-          setOpenMenu((current) => (current === "user" ? null : "user"))
-        }
-        onClose={close}
-      />
+        <UserMenu
+          nimet={nimet}
+          t={t}
+          userName={userName}
+          restaurantName={restaurantName}
+          role={role}
+          canOpenSettings={canOpenSettings}
+          open={openMenu === "user"}
+          onToggle={() =>
+            setOpenMenu((current) => (current === "user" ? null : "user"))
+          }
+          onClose={close}
+        />
       ) : null}
     </div>
   );

@@ -99,15 +99,38 @@ const tiedote: MonthIssue = {
 
 describe("tositteen tasapaino", () => {
   it("tunnistaa tasapainoisen tositteen", () => {
-    expect(isBalanced(entry([[10925, 0], [1475, 0], [0, 12400]]))).toBe(true);
+    expect(
+      isBalanced(
+        entry([
+          [10925, 0],
+          [1475, 0],
+          [0, 12400],
+        ]),
+      ),
+    ).toBe(true);
   });
 
   it("tunnistaa epätasapainon", () => {
-    expect(isBalanced(entry([[10000, 0], [0, 9000]]))).toBe(false);
+    expect(
+      isBalanced(
+        entry([
+          [10000, 0],
+          [0, 9000],
+        ]),
+      ),
+    ).toBe(false);
   });
 
   it("laskee loppusumman debet-puolelta", () => {
-    expect(entryTotal(entry([[10925, 0], [1475, 0], [0, 12400]]))).toBe(12400);
+    expect(
+      entryTotal(
+        entry([
+          [10925, 0],
+          [1475, 0],
+          [0, 12400],
+        ]),
+      ),
+    ).toBe(12400);
   });
 });
 
@@ -162,9 +185,21 @@ describe("ongelmien järjestys", () => {
 
 describe("lähdetapahtuman tila", () => {
   const entries = [
-    { sourceType: "receipt" as const, sourceId: "a", status: "posted" as const },
-    { sourceType: "receipt" as const, sourceId: "b", status: "proposed" as const },
-    { sourceType: "daily_sales" as const, sourceId: "a", status: "rejected" as const },
+    {
+      sourceType: "receipt" as const,
+      sourceId: "a",
+      status: "posted" as const,
+    },
+    {
+      sourceType: "receipt" as const,
+      sourceId: "b",
+      status: "proposed" as const,
+    },
+    {
+      sourceType: "daily_sales" as const,
+      sourceId: "a",
+      status: "rejected" as const,
+    },
   ];
 
   it("kertoo kirjatun kuitin", () => {

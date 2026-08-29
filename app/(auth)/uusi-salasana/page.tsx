@@ -26,7 +26,10 @@ export default async function NewPasswordPage() {
         <h1 className="text-[26px] font-semibold tracking-tight">
           {t.uusiSalasana.invalidTitle}
         </h1>
-        <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="mt-2 text-[14px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {t.uusiSalasana.invalidBody}
         </p>
 
@@ -50,7 +53,10 @@ export default async function NewPasswordPage() {
       <h1 className="text-[26px] font-semibold tracking-tight">
         {t.uusiSalasana.title}
       </h1>
-      <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="mt-2 text-[14px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {fill(t.uusiSalasana.forAccount, { email: user.email ?? "" })}
       </p>
 

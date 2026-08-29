@@ -109,7 +109,9 @@ class AnthropicProvider implements AiProvider {
       .trim();
 
     const toolCalls = response.content
-      .filter((block): block is Anthropic.ToolUseBlock => block.type === "tool_use")
+      .filter(
+        (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
+      )
       .map((block) => ({ id: block.id, name: block.name, input: block.input }));
 
     return {
@@ -142,7 +144,8 @@ function toAnthropicMessages(messages: AiMessage[]): Anthropic.MessageParam[] {
     if (message.role === "assistant") {
       const content: Anthropic.ContentBlockParam[] = [];
 
-      if (message.content) content.push({ type: "text", text: message.content });
+      if (message.content)
+        content.push({ type: "text", text: message.content });
 
       for (const call of message.toolCalls ?? []) {
         content.push({

@@ -1,15 +1,12 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { useCallback, useState, useTransition } from "react";
 import { RfIcon } from "@/components/restoflow/icons";
 import { pickedMonth } from "@/lib/restoflow/dates";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
-
-const MONTH_NAMES = [
-  "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-  "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
-];
+import { formatMonth } from "@/lib/restoflow/expenses";
 
 /**
  * Kuukauden valinta.
@@ -28,7 +25,10 @@ const MONTH_NAMES = [
 export function MonthPicker({
   value: fallback,
   months,
+  locale,
 }: {
+  /** Kayttoliittyman kieli: kuukauden nimi tulee siita. */
+  locale: AppLocale;
   /**
    * Kuluva kuukausi. Vara, ei valinta.
    *
@@ -45,7 +45,9 @@ export function MonthPicker({
   const value = pickedMonth(params.get("kuukausi"), fallback, months);
 
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(() => Math.max(0, months.indexOf(value)));
+  const [active, setActive] = useState(() =>
+    Math.max(0, months.indexOf(value)),
+  );
   const [pending, startTransition] = useTransition();
 
   const close = useCallback(() => setOpen(false), []);
@@ -116,11 +118,16 @@ export function MonthPicker({
    * alkio.
    */
   const index = months.indexOf(value);
-  const older = index >= 0 && index < months.length - 1 ? months[index + 1] : null;
+  const older =
+    index >= 0 && index < months.length - 1 ? months[index + 1] : null;
   const newer = index > 0 ? months[index - 1] : null;
 
   return (
-    <div ref={container} className="relative flex items-center gap-1" onKeyDown={onKeyDown}>
+    <div
+      ref={container}
+      className="relative flex items-center gap-1"
+      onKeyDown={onKeyDown}
+    >
       <StepButton
         label="Edellinen kuukausi"
         icon="back"
@@ -136,7 +143,7 @@ export function MonthPicker({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Kuukausi: ${formatMonth(value)}`}
+        aria-label={`Kuukausi: ${formatMonth(value, locale)}`}
         // Kiinteä korkeus eikä pehmuste: askelnapit ovat 40 px, ja
         // pehmusteesta laskettu korkeus jäi kolme pikseliä suuremmaksi.
         // Ero näkyi rivissä epätasaisuutena.
@@ -154,7 +161,7 @@ export function MonthPicker({
           <RfIcon name="calendar" size={16} />
         </span>
 
-        <span className="whitespace-nowrap">{formatMonth(value)}</span>
+        <span className="whitespace-nowrap">{formatMonth(value, locale)}</span>
 
         <span
           aria-hidden="true"
@@ -207,11 +214,13 @@ export function MonthPicker({
                       : highlighted
                         ? "var(--rf-inset)"
                         : "transparent",
-                    color: selected ? "var(--rf-accent-strong)" : "var(--rf-text)",
+                    color: selected
+                      ? "var(--rf-accent-strong)"
+                      : "var(--rf-text)",
                     fontWeight: selected ? 600 : 400,
                   }}
                 >
-                  {formatMonth(month)}
+                  {formatMonth(month, locale)}
 
                   {/* Valinta ei näy pelkkänä värinä. */}
                   {selected ? <RfIcon name="check" size={15} /> : null}
@@ -223,11 +232,6 @@ export function MonthPicker({
       ) : null}
     </div>
   );
-}
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split("-");
-  return `${MONTH_NAMES[Number(m) - 1]} ${year}`;
 }
 
 // ---------------------------------------------------------------------------

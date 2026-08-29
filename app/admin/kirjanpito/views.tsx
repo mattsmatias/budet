@@ -21,7 +21,11 @@ import type {
 } from "@/lib/restoflow/accounting-queries";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
-import { CorrectEntryForm, PostEntryButton, RejectEntryButton } from "./controls";
+import {
+  CorrectEntryForm,
+  PostEntryButton,
+  RejectEntryButton,
+} from "./controls";
 
 // ---------------------------------------------------------------------------
 // Päiväkirja
@@ -63,8 +67,13 @@ export function Paivakirja({
             <Card>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[14px] font-semibold">{entry.description}</p>
-                  <p className="rf-tabular mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  <p className="text-[14px] font-semibold">
+                    {entry.description}
+                  </p>
+                  <p
+                    className="rf-tabular mt-0.5 text-[12px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     Tosite {entry.entryNumber} · {suomiPvm(entry.entryDate)} ·{" "}
                     {SOURCE_LABELS[entry.sourceType]}
                   </p>
@@ -74,8 +83,14 @@ export function Paivakirja({
 
               <ul className="mt-3 space-y-1.5">
                 {entry.lines.map((line, i) => (
-                  <li key={i} className="flex items-baseline justify-between gap-3 text-[13px]">
-                    <span className="min-w-0 truncate" style={{ color: "var(--rf-text-2)" }}>
+                  <li
+                    key={i}
+                    className="flex items-baseline justify-between gap-3 text-[13px]"
+                  >
+                    <span
+                      className="min-w-0 truncate"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {line.accountNumber} {line.accountName}
                     </span>
                     <span className="rf-tabular shrink-0 font-semibold">
@@ -103,7 +118,9 @@ export function Paivakirja({
         <div className="px-5 pt-5">
           <CardHeader
             title={t.kirjanpito.journal}
-            subtitle={fill(t.kirjanpito.voucherCount, { maara: String(entries.length) })}
+            subtitle={fill(t.kirjanpito.voucherCount, {
+              maara: String(entries.length),
+            })}
           />
         </div>
 
@@ -122,9 +139,15 @@ export function Paivakirja({
                 <th scope="col">{t.kirjanpito.voucher}</th>
                 <th scope="col">{t.kirjanpito.description}</th>
                 <th scope="col">{t.kirjanpito.account}</th>
-                <th scope="col" className="text-right">{t.kirjanpito.debit}</th>
-                <th scope="col" className="text-right">{t.kirjanpito.credit}</th>
-                <th scope="col" className="text-right">{t.kuitti2.vat}</th>
+                <th scope="col" className="text-right">
+                  {t.kirjanpito.debit}
+                </th>
+                <th scope="col" className="text-right">
+                  {t.kirjanpito.credit}
+                </th>
+                <th scope="col" className="text-right">
+                  {t.kuitti2.vat}
+                </th>
                 <th scope="col">{t.kirjanpito.source}</th>
                 <th scope="col">{t.sanat.status}</th>
               </tr>
@@ -134,14 +157,21 @@ export function Paivakirja({
               {entries.map((entry) =>
                 entry.lines.map((line, i) => (
                   <tr key={`${entry.id}-${i}`}>
-                    <td className="rf-tabular">{i === 0 ? suomiPvm(entry.entryDate) : ""}</td>
-                    <td className="rf-tabular">{i === 0 ? entry.entryNumber : ""}</td>
+                    <td className="rf-tabular">
+                      {i === 0 ? suomiPvm(entry.entryDate) : ""}
+                    </td>
+                    <td className="rf-tabular">
+                      {i === 0 ? entry.entryNumber : ""}
+                    </td>
                     <td>
                       {i === 0 ? (
                         <span className="flex items-center gap-2">
                           {entry.description}
                           {!isBalanced(entry) ? (
-                            <span title={t.kirjanpito.voucherMismatch} style={{ color: "var(--rf-red-text)" }}>
+                            <span
+                              title={t.kirjanpito.voucherMismatch}
+                              style={{ color: "var(--rf-red-text)" }}
+                            >
                               <RfIcon name="alert" size={14} />
                             </span>
                           ) : null}
@@ -157,7 +187,9 @@ export function Paivakirja({
                       {line.debitCents > 0 ? formatMoney(line.debitCents) : ""}
                     </td>
                     <td className="num">
-                      {line.creditCents > 0 ? formatMoney(line.creditCents) : ""}
+                      {line.creditCents > 0
+                        ? formatMoney(line.creditCents)
+                        : ""}
                     </td>
                     <td className="num" style={{ color: "var(--rf-text-3)" }}>
                       {line.vatRate !== null ? formatRate(line.vatRate) : ""}
@@ -188,7 +220,9 @@ export function Paivakirja({
                       Tosite {entry.entryNumber}
                     </span>{" "}
                     · {entry.description} ·{" "}
-                    <span className="rf-tabular">{formatMoney(entry.totalCents)}</span>
+                    <span className="rf-tabular">
+                      {formatMoney(entry.totalCents)}
+                    </span>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <PostEntryButton id={entry.id} />
@@ -209,7 +243,10 @@ export function Paivakirja({
                   .filter((e) => e.status === "posted")
                   .slice(0, 10)
                   .map((entry) => (
-                    <div key={entry.id} className="flex flex-wrap items-center gap-3">
+                    <div
+                      key={entry.id}
+                      className="flex flex-wrap items-center gap-3"
+                    >
                       <span className="rf-tabular min-w-0 flex-1 truncate text-[13px]">
                         Tosite {entry.entryNumber} · {entry.description}
                       </span>
@@ -229,7 +266,11 @@ function TilaMerkki({ entry }: { entry: LedgerEntry }) {
   return (
     <Pill
       tone={
-        entry.status === "posted" ? "ok" : entry.status === "rejected" ? "risk" : "warn"
+        entry.status === "posted"
+          ? "ok"
+          : entry.status === "rejected"
+            ? "risk"
+            : "warn"
       }
       dot
     >
@@ -274,7 +315,8 @@ export function Paakirja({
           <div className="flex flex-wrap items-baseline justify-between gap-3 px-5 pb-3 pt-4">
             <div className="min-w-0">
               <p className="text-[15px] font-bold tracking-[-0.0075em]">
-                <span className="rf-tabular">{account.number}</span> {account.name}
+                <span className="rf-tabular">{account.number}</span>{" "}
+                {account.name}
               </p>
               <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                 {ACCOUNT_TYPE_LABELS[account.type]} · {account.lineCount}{" "}
@@ -292,7 +334,10 @@ export function Paakirja({
                 <LahdeLinkki line={line}>
                   <span className="flex items-baseline justify-between gap-3 px-5 py-2.5 text-[13px]">
                     <span className="min-w-0 flex-1 truncate">
-                      <span className="rf-tabular" style={{ color: "var(--rf-text-3)" }}>
+                      <span
+                        className="rf-tabular"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         {suomiPvm(line.date)}
                       </span>{" "}
                       {line.description}
@@ -362,7 +407,9 @@ export function Tilikartta({
     );
   }
 
-  const ryhmat = (["revenue", "expense", "asset", "liability", "equity"] as const)
+  const ryhmat = (
+    ["revenue", "expense", "asset", "liability", "equity"] as const
+  )
     .map((type) => ({ type, rows: accounts.filter((a) => a.type === type) }))
     .filter((g) => g.rows.length > 0);
 
@@ -373,7 +420,9 @@ export function Tilikartta({
           <div className="px-5 pt-4">
             <CardHeader
               title={ACCOUNT_TYPE_LABELS[ryhma.type]}
-              subtitle={fill(t.kirjanpito.accountCount, { maara: String(ryhma.rows.length) })}
+              subtitle={fill(t.kirjanpito.accountCount, {
+                maara: String(ryhma.rows.length),
+              })}
             />
           </div>
 
@@ -384,13 +433,18 @@ export function Tilikartta({
                 className="flex items-baseline justify-between gap-3 px-5 py-2.5 text-[13.5px]"
               >
                 <span className="min-w-0">
-                  <span className="rf-tabular" style={{ color: "var(--rf-text-3)" }}>
+                  <span
+                    className="rf-tabular"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     {account.number}
                   </span>{" "}
                   {account.name}
                 </span>
                 <span className="shrink-0">
-                  {!account.active ? <Pill tone="info">{t.kirjanpito.unused}</Pill> : null}
+                  {!account.active ? (
+                    <Pill tone="info">{t.kirjanpito.unused}</Pill>
+                  ) : null}
                 </span>
               </li>
             ))}
@@ -398,7 +452,12 @@ export function Tilikartta({
         </Card>
       ))}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kirjanpito.chartNote}</p>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {t.kirjanpito.chartNote}
+      </p>
     </div>
   );
 }
@@ -430,8 +489,14 @@ export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
         />
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Luku label={t.kirjanpito.salesVat} value={formatMoney(vat.salesVatLedger)} />
-          <Luku label={t.kirjanpito.deductibleVat} value={formatMoney(vat.purchaseVatLedger)} />
+          <Luku
+            label={t.kirjanpito.salesVat}
+            value={formatMoney(vat.salesVatLedger)}
+          />
+          <Luku
+            label={t.kirjanpito.deductibleVat}
+            value={formatMoney(vat.purchaseVatLedger)}
+          />
           <Luku
             label={t.kirjanpito.payable}
             value={formatMoney(vat.payableCents)}
@@ -461,9 +526,15 @@ export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
               <thead>
                 <tr>
                   <th scope="col">{t.kirjanpito.taxRate}</th>
-                  <th scope="col" className="text-right">{t.kirjanpito.taxable}</th>
-                  <th scope="col" className="text-right">{t.kirjanpito.tax}</th>
-                  <th scope="col" className="text-right">{t.kirjanpito.exclTax}</th>
+                  <th scope="col" className="text-right">
+                    {t.kirjanpito.taxable}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.kirjanpito.tax}
+                  </th>
+                  <th scope="col" className="text-right">
+                    {t.kirjanpito.exclTax}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -480,13 +551,19 @@ export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
                 <tr>
                   <td>{t.kuitit.total}</td>
                   <td className="num">
-                    {formatMoney(vat.byRate.reduce((s, r) => s + r.grossCents, 0))}
+                    {formatMoney(
+                      vat.byRate.reduce((s, r) => s + r.grossCents, 0),
+                    )}
                   </td>
                   <td className="num">
-                    {formatMoney(vat.byRate.reduce((s, r) => s + r.vatCents, 0))}
+                    {formatMoney(
+                      vat.byRate.reduce((s, r) => s + r.vatCents, 0),
+                    )}
                   </td>
                   <td className="num">
-                    {formatMoney(vat.byRate.reduce((s, r) => s + r.netCents, 0))}
+                    {formatMoney(
+                      vat.byRate.reduce((s, r) => s + r.netCents, 0),
+                    )}
                   </td>
                 </tr>
               </tfoot>
@@ -553,17 +630,32 @@ function Tasmays({
       }}
     >
       <span className="flex items-center gap-2 text-[13.5px] font-medium">
-        <span style={{ color: ok ? "var(--rf-green-text)" : "var(--rf-amber-text)" }}>
+        <span
+          style={{
+            color: ok ? "var(--rf-green-text)" : "var(--rf-amber-text)",
+          }}
+        >
           <RfIcon name={ok ? "check" : "alert"} size={15} />
         </span>
         {label}
       </span>
 
       <span className="rf-tabular flex flex-wrap items-baseline gap-4 text-[13px]">
-        <span style={{ color: "var(--rf-text-2)" }}>Lähde {formatMoney(lahde)}</span>
-        <span style={{ color: "var(--rf-text-2)" }}>Kirjanpito {formatMoney(kirjanpito)}</span>
-        <span className="font-bold" style={{ color: ok ? "var(--rf-text-3)" : "var(--rf-amber-text)" }}>
-          {ok ? t.kirjanpito2.matches : fill(t.kirjanpito.difference, { summa: formatMoney(Math.abs(ero)) })}
+        <span style={{ color: "var(--rf-text-2)" }}>
+          Lähde {formatMoney(lahde)}
+        </span>
+        <span style={{ color: "var(--rf-text-2)" }}>
+          Kirjanpito {formatMoney(kirjanpito)}
+        </span>
+        <span
+          className="font-bold"
+          style={{ color: ok ? "var(--rf-text-3)" : "var(--rf-amber-text)" }}
+        >
+          {ok
+            ? t.kirjanpito2.matches
+            : fill(t.kirjanpito.difference, {
+                summa: formatMoney(Math.abs(ero)),
+              })}
         </span>
       </span>
     </div>
@@ -581,7 +673,10 @@ function Luku({
 }) {
   return (
     <div>
-      <dt className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+      <dt
+        className="text-[12px] font-medium"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </dt>
       <dd
@@ -658,22 +753,44 @@ export function Raportit({
             <CardHeader
               title={t.kirjanpito.incomeStatement}
               subtitle={`${monthLabel(month)}${
-          income.includesProposed ? t.kirjanpito.withProposed : t.kirjanpito.onlyBooked
-        }`}
+                income.includesProposed
+                  ? t.kirjanpito.withProposed
+                  : t.kirjanpito.onlyBooked
+              }`}
             />
           </div>
 
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             {income.revenue.map((row) => (
-              <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
+              <Rivi
+                key={row.number}
+                number={row.number}
+                name={row.name}
+                cents={row.amountCents}
+              />
             ))}
-            <Summa label={t.kirjanpito.revenueTotal} cents={income.revenueTotalCents} />
+            <Summa
+              label={t.kirjanpito.revenueTotal}
+              cents={income.revenueTotalCents}
+            />
 
             {income.expenses.map((row) => (
-              <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
+              <Rivi
+                key={row.number}
+                number={row.number}
+                name={row.name}
+                cents={row.amountCents}
+              />
             ))}
-            <Summa label={t.kirjanpito.expensesTotal} cents={income.expenseTotalCents} />
-            <Summa label={t.kirjanpito.result} cents={income.resultCents} korosta />
+            <Summa
+              label={t.kirjanpito.expensesTotal}
+              cents={income.expenseTotalCents}
+            />
+            <Summa
+              label={t.kirjanpito.result}
+              cents={income.resultCents}
+              korosta
+            />
           </ul>
         </Card>
       ) : null}
@@ -683,26 +800,50 @@ export function Raportit({
           <div className="px-5 pt-4">
             <CardHeader
               title={t.kirjanpito.balanceSheet}
-              subtitle={fill(t.kirjanpito.asOf, { paiva: suomiPvm(balance.asOf) })}
+              subtitle={fill(t.kirjanpito.asOf, {
+                paiva: suomiPvm(balance.asOf),
+              })}
             />
           </div>
 
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             {balance.assets.map((row) => (
-              <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
+              <Rivi
+                key={row.number}
+                number={row.number}
+                name={row.name}
+                cents={row.amountCents}
+              />
             ))}
-            <Summa label={t.kirjanpito.assetsTotal} cents={balance.assetsTotalCents} />
+            <Summa
+              label={t.kirjanpito.assetsTotal}
+              cents={balance.assetsTotalCents}
+            />
 
             {balance.liabilities.map((row) => (
-              <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
+              <Rivi
+                key={row.number}
+                number={row.number}
+                name={row.name}
+                cents={row.amountCents}
+              />
             ))}
-            <Rivi number="" name="Tilikauden tulos" cents={balance.resultCents} />
-            <Summa label={t.kirjanpito.liabilitiesTotal} cents={balance.balancesTotalCents} />
+            <Rivi
+              number=""
+              name="Tilikauden tulos"
+              cents={balance.resultCents}
+            />
+            <Summa
+              label={t.kirjanpito.liabilitiesTotal}
+              cents={balance.balancesTotalCents}
+            />
           </ul>
 
           <div className="px-5 pb-4 pt-3">
             <Pill tone={balance.balanced ? "ok" : "risk"} dot>
-              {balance.balanced ? t.kirjanpito2.balanceOk : t.kirjanpito2.balanceOff}
+              {balance.balanced
+                ? t.kirjanpito2.balanceOk
+                : t.kirjanpito2.balanceOff}
             </Pill>
           </div>
         </Card>
@@ -846,16 +987,33 @@ export function Veroasiat({
       <Card>
         <CardHeader
           title={t.kirjanpito.whatComputed}
-          subtitle={fill(t.kirjanpito.figuresFromBooks, { kuukausi: monthLabel(month) })}
+          subtitle={fill(t.kirjanpito.figuresFromBooks, {
+            kuukausi: monthLabel(month),
+          })}
         />
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Luku label={t.kirjanpito.salesVat} value={formatMoney(vat.salesVatLedger)} />
-          <Luku label={t.kirjanpito.deductibleVat} value={formatMoney(vat.purchaseVatLedger)} />
-          <Luku label={t.kirjanpito.payable} value={formatMoney(vat.payableCents)} korosta />
+          <Luku
+            label={t.kirjanpito.salesVat}
+            value={formatMoney(vat.salesVatLedger)}
+          />
+          <Luku
+            label={t.kirjanpito.deductibleVat}
+            value={formatMoney(vat.purchaseVatLedger)}
+          />
+          <Luku
+            label={t.kirjanpito.payable}
+            value={formatMoney(vat.payableCents)}
+            korosta
+          />
         </dl>
 
-        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kirjanpito.figuresNote}</p>
+        <p
+          className="mt-4 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.kirjanpito.figuresNote}
+        </p>
       </Card>
 
       {guides.length === 0 ? (
@@ -875,9 +1033,15 @@ export function Veroasiat({
               </div>
             </div>
 
-            <ol className="space-y-0 divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <ol
+              className="space-y-0 divide-y"
+              style={{ borderColor: "var(--rf-line)" }}
+            >
               {guide.steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3 px-5 py-2.5 text-[13.5px]">
+                <li
+                  key={i}
+                  className="flex items-start gap-3 px-5 py-2.5 text-[13.5px]"
+                >
                   <span
                     aria-hidden="true"
                     className="rf-tabular mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-[11px] font-bold"

@@ -17,11 +17,7 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
-import type {
-  LedgerEntry,
-  MonthState,
-  VatSummary,
-} from "./accounting";
+import type { LedgerEntry, MonthState, VatSummary } from "./accounting";
 
 /** Tilikartan rivi näkymälle. */
 export interface LedgerAccount {
@@ -34,7 +30,10 @@ export interface LedgerAccount {
   isSystem: boolean;
 }
 
-export interface GeneralLedgerAccount extends Omit<LedgerAccount, "vatRate" | "active" | "isSystem"> {
+export interface GeneralLedgerAccount extends Omit<
+  LedgerAccount,
+  "vatRate" | "active" | "isSystem"
+> {
   debitCents: number;
   creditCents: number;
   balanceCents: number;
@@ -129,8 +128,14 @@ export async function fetchJournal(
         accountName: String(l.accountName),
         debitCents: Number(l.debitCents ?? 0),
         creditCents: Number(l.creditCents ?? 0),
-        vatRate: l.vatRate === null || l.vatRate === undefined ? null : Number(l.vatRate),
-        vatCents: l.vatCents === null || l.vatCents === undefined ? null : Number(l.vatCents),
+        vatRate:
+          l.vatRate === null || l.vatRate === undefined
+            ? null
+            : Number(l.vatRate),
+        vatCents:
+          l.vatCents === null || l.vatCents === undefined
+            ? null
+            : Number(l.vatCents),
         description: l.description ? String(l.description) : null,
       })),
     };
@@ -302,7 +307,12 @@ export async function fetchSourceLink(
     .maybeSingle();
 
   if (error || !data) {
-    return { state: "unprocessed", entryNumber: null, entryId: null, entryDate: null };
+    return {
+      state: "unprocessed",
+      entryNumber: null,
+      entryId: null,
+      entryDate: null,
+    };
   }
 
   return {
@@ -336,14 +346,18 @@ export async function fetchTaxGuides(): Promise<TaxGuide[]> {
 
   const { data, error } = await supabase
     .from("tax_guides")
-    .select("key, tax_type, title, summary, steps, source, source_url, effective_until")
+    .select(
+      "key, tax_type, title, summary, steps, source, source_url, effective_until",
+    )
     .lte("effective_from", today)
     .order("sort_order");
 
   if (error || !data) return [];
 
   return data
-    .filter((row) => !row.effective_until || String(row.effective_until) >= today)
+    .filter(
+      (row) => !row.effective_until || String(row.effective_until) >= today,
+    )
     .map((row) => ({
       key: String(row.key),
       taxType: String(row.tax_type),

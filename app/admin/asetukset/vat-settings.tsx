@@ -52,9 +52,15 @@ export function SalesGroups({
         */
         <div
           className="px-3.5 py-3.5"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
-          <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             Yhtään myyntiryhmää ei ole vielä määritetty. Suomessa ravintolan
             kannat ovat samat joka ravintolalle, joten voit aloittaa
             vakiopohjasta ja muokata sitä.
@@ -75,7 +81,10 @@ export function SalesGroups({
             </button>
           </form>
 
-          <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-2.5 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Ravintolamyynti 13,5 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
             Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Kate ei
             seuraa verokantojen muutoksia puolestasi.
@@ -107,7 +116,11 @@ export function SalesGroups({
 
       <div className="mt-4">
         {editing === "new" ? (
-          <GroupForm action={action} state={state} onClose={() => setEditing(null)} />
+          <GroupForm
+            action={action}
+            state={state}
+            onClose={() => setEditing(null)}
+          />
         ) : (
           <button
             type="button"
@@ -129,7 +142,13 @@ export function SalesGroups({
   );
 }
 
-function GroupRow({ group, onEdit }: { group: SalesGroup; onEdit: () => void }) {
+function GroupRow({
+  group,
+  onEdit,
+}: {
+  group: SalesGroup;
+  onEdit: () => void;
+}) {
   return (
     <div
       className="flex flex-wrap items-center gap-3 px-3.5 py-2.5"
@@ -141,7 +160,9 @@ function GroupRow({ group, onEdit }: { group: SalesGroup; onEdit: () => void }) 
     >
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className="truncate text-[13.5px] font-semibold">{group.name}</span>
+          <span className="truncate text-[13.5px] font-semibold">
+            {group.name}
+          </span>
 
           {group.isDefault ? (
             <span
@@ -157,7 +178,10 @@ function GroupRow({ group, onEdit }: { group: SalesGroup; onEdit: () => void }) 
           ) : null}
 
           {group.active ? null : (
-            <span className="shrink-0 text-[11.5px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="shrink-0 text-[11.5px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               Ei käytössä
             </span>
           )}
@@ -230,7 +254,9 @@ function GroupForm({
 
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
           <label className="block">
-            <span className="block text-[12.5px] font-semibold">Myyntiryhmä</span>
+            <span className="block text-[12.5px] font-semibold">
+              Myyntiryhmä
+            </span>
             <input
               name="name"
               defaultValue={group?.name ?? ""}
@@ -247,7 +273,12 @@ function GroupForm({
             <input
               name="rate"
               defaultValue={
-                group ? String(Math.round(group.vatRate * 1e5) / 1e3).replace(".", ",") : ""
+                group
+                  ? String(Math.round(group.vatRate * 1e5) / 1e3).replace(
+                      ".",
+                      ",",
+                    )
+                  : ""
               }
               required
               inputMode="decimal"
@@ -291,8 +322,15 @@ function GroupForm({
       </form>
 
       {group ? (
-        <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
-          <DeleteGroup id={group.id} name={group.name} mappedNames={mappedNames} />
+        <div
+          className="mt-3 border-t pt-3"
+          style={{ borderColor: "var(--rf-line)" }}
+        >
+          <DeleteGroup
+            id={group.id}
+            name={group.name}
+            mappedNames={mappedNames}
+          />
         </div>
       ) : null}
     </div>
@@ -337,14 +375,21 @@ function DeleteGroup({
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         Poistetaanko {name}? Onnistuu vain jos ryhmää ei ole käytetty
         yhdelläkään myyntipäivällä.
         {mappedNames.length > 0 ? (
           <>
             {" "}
-            <strong className="font-bold" style={{ color: "var(--rf-amber-text)" }}>
-              Mukana poistuu {mappedNames.length === 1 ? "kohdistus" : "kohdistukset"}{" "}
+            <strong
+              className="font-bold"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
+              Mukana poistuu{" "}
+              {mappedNames.length === 1 ? "kohdistus" : "kohdistukset"}{" "}
               {mappedNames.join(", ")}.
             </strong>
           </>
@@ -406,7 +451,10 @@ export function PosMappings({
 
   if (groups.length === 0) {
     return (
-      <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         Lisää ensin myyntiryhmät. Kohdistus kertoo mihin niistä kassan oma
         ryhmänimi kuuluu.
       </p>
@@ -433,7 +481,10 @@ export function PosMappings({
                   {mapping.posName}
                 </span>
 
-                <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="shrink-0"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   <RfIcon name="chevron" size={14} />
                 </span>
 
@@ -461,7 +512,10 @@ export function PosMappings({
           })}
         </ul>
       ) : (
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           Kohdistuksia ei ole. Kohdistamaton ryhmä päätyy oletusryhmään, joten
           myynti ei katoa — mutta verokanta voi olla väärä.
         </p>
@@ -484,7 +538,9 @@ export function PosMappings({
           </label>
 
           <label className="block">
-            <span className="block text-[12.5px] font-semibold">Katen myyntiryhmä</span>
+            <span className="block text-[12.5px] font-semibold">
+              Katen myyntiryhmä
+            </span>
             <select
               name="salesGroupId"
               required
@@ -532,12 +588,14 @@ export function PosMappings({
           Lisää yleiset kassaryhmänimet
         </button>
 
-        <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          RUOKA, LOUNAS, VEDET ja muut tavalliset nimet ravintolamyyntiin;
-          OLUT, VIINI, ALKO ja vastaavat alkoholimyyntiin. Omat kohdistuksesi
-          säilyvät ennallaan. Monitulkintaisia nimiä kuten JUOMAT tai TAKE AWAY
-          ei kohdisteta puolestasi — niistä Kate varoittaa raporttia
-          luettaessa.
+        <p
+          className="mt-2 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          RUOKA, LOUNAS, VEDET ja muut tavalliset nimet ravintolamyyntiin; OLUT,
+          VIINI, ALKO ja vastaavat alkoholimyyntiin. Omat kohdistuksesi säilyvät
+          ennallaan. Monitulkintaisia nimiä kuten JUOMAT tai TAKE AWAY ei
+          kohdisteta puolestasi — niistä Kate varoittaa raporttia luettaessa.
         </p>
       </form>
     </div>

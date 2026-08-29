@@ -13,12 +13,7 @@
  */
 
 export type AuditAction =
-  | "created"
-  | "updated"
-  | "deleted"
-  | "published"
-  | "cancelled"
-  | "completed";
+  "created" | "updated" | "deleted" | "published" | "cancelled" | "completed";
 
 export type AuditEntity =
   | "member"
@@ -72,7 +67,11 @@ export const ENTITY_LABELS: Record<string, string> = {
  * poistaminen ovat ne joita listasta etsitään.
  */
 export function actionTone(action: string): "ok" | "info" | "risk" {
-  if (action === "created" || action === "completed" || action === "published") {
+  if (
+    action === "created" ||
+    action === "completed" ||
+    action === "published"
+  ) {
     return "ok";
   }
   if (action === "deleted" || action === "cancelled") return "risk";

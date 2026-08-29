@@ -379,7 +379,9 @@ export function reconcile(input: {
  * ja iso ravintola eivät jaa samaa käsitystä siitä mikä on pieni.
  */
 function wholeGroupFloor(lines: SalesLine[]): number {
-  const grosses = lines.map((line) => line.grossCents).filter((cents) => cents > 0);
+  const grosses = lines
+    .map((line) => line.grossCents)
+    .filter((cents) => cents > 0);
   if (grosses.length === 0) return 0;
 
   return Math.min(...grosses);
@@ -427,7 +429,13 @@ function compare(
   noteBelow = 0,
 ): Comparison {
   if (posCents === null) {
-    return { label, posCents: null, budetCents, diffCents: null, status: "unknown" };
+    return {
+      label,
+      posCents: null,
+      budetCents,
+      diffCents: null,
+      status: "unknown",
+    };
   }
 
   const diffCents = posCents - budetCents;
@@ -458,7 +466,9 @@ function explain(
   input: { posGrossCents: number | null; posVatCents: number | null },
 ): string {
   const totalOff = off.some((c) => c.label === "Päivän myynti");
-  const vatOff = off.some((c) => c.label === "ALV yhteensä" || c.label.includes("%"));
+  const vatOff = off.some(
+    (c) => c.label === "ALV yhteensä" || c.label.includes("%"),
+  );
 
   if (!totalOff && vatOff) {
     const vatDiff = Math.abs((input.posVatCents ?? 0) - summary.vatCents);
@@ -630,7 +640,12 @@ export function mapReportGroups(
 
   const merged = new Map<
     string,
-    { group: SalesGroup; grossCents: number; posVatCents: number | null; names: string[] }
+    {
+      group: SalesGroup;
+      grossCents: number;
+      posVatCents: number | null;
+      names: string[];
+    }
   >();
 
   const unmapped: string[] = [];

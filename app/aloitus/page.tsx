@@ -16,7 +16,9 @@ export const metadata = { title: "Aloitus" };
  * Molemmat vaihtoehdot ovat samalla sivulla, koska tässä kohtaa käyttäjä ei
  * tiedä kumpaan ryhmään kuuluu — hän tietää vain onko hänellä koodi.
  */
-export default async function SetupPage({ searchParams }: PageProps<"/aloitus">) {
+export default async function SetupPage({
+  searchParams,
+}: PageProps<"/aloitus">) {
   const params = await searchParams;
   const user = await requireUser("/aloitus");
 
@@ -37,7 +39,9 @@ export default async function SetupPage({ searchParams }: PageProps<"/aloitus">)
   const invite = await readInvite();
   if (invite) {
     const supabase = await createClient();
-    const { error } = await supabase.rpc("accept_invitation", { p_code: invite.code });
+    const { error } = await supabase.rpc("accept_invitation", {
+      p_code: invite.code,
+    });
 
     await clearInvite();
     if (!error) redirect("/app");
@@ -54,23 +58,36 @@ export default async function SetupPage({ searchParams }: PageProps<"/aloitus">)
         <h1 className="text-[26px] font-semibold tracking-tight">
           Tervetuloa{firstName ? `, ${firstName}` : ""}
         </h1>
-        <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="mt-2 text-[14px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           Perusta oma ravintola tai liity olemassa olevaan kutsukoodilla.
         </p>
 
         <div
           className="mt-6 grid grid-cols-2 gap-1 p-1"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <Tab href="/aloitus" label="Perusta" active={mode === "create"} />
-          <Tab href="/aloitus?tila=liity" label="Liity koodilla" active={mode === "join"} />
+          <Tab
+            href="/aloitus?tila=liity"
+            label="Liity koodilla"
+            active={mode === "join"}
+          />
         </div>
 
         <div className="mt-5">
           {mode === "create" ? (
             <>
               <SetupForm />
-              <p className="mt-5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+              <p
+                className="mt-5 text-[12px] leading-relaxed"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 Sinusta tulee ravintolan omistaja. Voit kutsua managereita,
                 työntekijöitä ja kirjanpitäjän heti perustamisen jälkeen.
               </p>

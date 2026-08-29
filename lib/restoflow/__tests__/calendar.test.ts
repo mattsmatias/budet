@@ -111,7 +111,9 @@ describe("monthCalendar", () => {
     const viimeinen = helmi[helmi.length - 1].days[6];
 
     expect(viimeinen.date).toBe("2027-02-28");
-    expect(helmi.flatMap((w) => w.days).filter((d) => d.inMonth)).toHaveLength(28);
+    expect(helmi.flatMap((w) => w.days).filter((d) => d.inMonth)).toHaveLength(
+      28,
+    );
   });
 
   it("kestää kelvottoman kuukauden", () => {
@@ -142,7 +144,11 @@ describe("shiftsOn", () => {
   it("siirtää perutut viimeiseksi", () => {
     const list = shiftsOn(
       [
-        shift({ id: "a", startTime: "09:00", cancelledAt: "2026-08-25T08:00:00.000Z" }),
+        shift({
+          id: "a",
+          startTime: "09:00",
+          cancelledAt: "2026-08-25T08:00:00.000Z",
+        }),
         shift({ id: "b", startTime: "17:00" }),
       ],
       "2026-09-01",

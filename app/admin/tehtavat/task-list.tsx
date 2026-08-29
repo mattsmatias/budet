@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { cancelTask, completeTask, deleteTask, postponeTask, reopenTask } from "./actions";
+import {
+  cancelTask,
+  completeTask,
+  deleteTask,
+  postponeTask,
+  reopenTask,
+} from "./actions";
 import { TaskForm } from "./task-form";
 import {
   PRIORITY_LABELS,
@@ -59,12 +65,18 @@ export function TaskList({
               <Merkki status={group.status} />
               {group.label}
             </p>
-            <span className="rf-tabular text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="rf-tabular text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {group.tasks.length}
             </span>
           </div>
 
-          <ul className="divide-y px-5 pb-4 pt-2" style={{ borderColor: "var(--rf-line)" }}>
+          <ul
+            className="divide-y px-5 pb-4 pt-2"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
             {group.tasks.map((task) =>
               editing === task.id ? (
                 <li key={task.id} className="py-3">
@@ -121,12 +133,21 @@ function Rivi({
             aria-hidden="true"
             className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center"
             style={{
-              background: status === "completed" ? "var(--rf-green-bg)" : "var(--rf-inset)",
-              color: status === "completed" ? "var(--rf-green-text)" : "var(--rf-text-3)",
+              background:
+                status === "completed"
+                  ? "var(--rf-green-bg)"
+                  : "var(--rf-inset)",
+              color:
+                status === "completed"
+                  ? "var(--rf-green-text)"
+                  : "var(--rf-text-3)",
               borderRadius: "50%",
             }}
           >
-            <RfIcon name={status === "completed" ? "check" : "more"} size={13} />
+            <RfIcon
+              name={status === "completed" ? "check" : "more"}
+              size={13}
+            />
           </span>
         ) : (
           <form action={completeTask} className="mt-0.5 shrink-0">
@@ -145,7 +166,8 @@ function Rivi({
               className="block text-[14px] font-semibold"
               style={{
                 color: done ? "var(--rf-text-3)" : undefined,
-                textDecoration: status === "cancelled" ? "line-through" : undefined,
+                textDecoration:
+                  status === "cancelled" ? "line-through" : undefined,
               }}
             >
               {task.title}
@@ -157,7 +179,9 @@ function Rivi({
             >
               {formatDate(task.dueOn)}
               {task.dueTime ? ` klo ${task.dueTime}` : ""}
-              {late > 0 ? ` · myöhässä ${late} ${late === 1 ? "päivä" : "päivää"}` : ""}
+              {late > 0
+                ? ` · myöhässä ${late} ${late === 1 ? "päivä" : "päivää"}`
+                : ""}
               {owner ? ` · ${owner.name}` : ""}
               {task.recurrence !== "none"
                 ? ` · ${RECURRENCE_LABELS[task.recurrence].toLowerCase()}`
@@ -178,7 +202,10 @@ function Rivi({
       {open ? (
         <div className="mt-2.5 pl-[34px]">
           {task.description ? (
-            <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {task.description}
             </p>
           ) : null}
@@ -208,13 +235,21 @@ function Rivi({
                   */}
                   <form action={postponeTask}>
                     <input type="hidden" name="id" value={task.id} />
-                    <input type="hidden" name="dueOn" value={addDays(task.dueOn, 1)} />
+                    <input
+                      type="hidden"
+                      name="dueOn"
+                      value={addDays(task.dueOn, 1)}
+                    />
                     <Toiminto label="Siirrä päivällä" />
                   </form>
 
                   <form action={postponeTask}>
                     <input type="hidden" name="id" value={task.id} />
-                    <input type="hidden" name="dueOn" value={addDays(task.dueOn, 7)} />
+                    <input
+                      type="hidden"
+                      name="dueOn"
+                      value={addDays(task.dueOn, 7)}
+                    />
                     <Toiminto label="Siirrä viikolla" />
                   </form>
 

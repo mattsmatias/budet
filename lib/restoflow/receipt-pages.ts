@@ -31,25 +31,27 @@ export function parseReceiptPages(raw: unknown): ReceiptPageInput[] {
 
   const seen = new Set<string>();
 
-  return parsed
-    .filter(
-      (page): page is { path: string; hash?: unknown } =>
-        typeof page?.path === "string" && page.path.trim() !== "",
-    )
-    .map((page) => ({
-      path: page.path.trim(),
-      hash: typeof page.hash === "string" ? page.hash : "",
-    }))
-    /*
-     * Sama polku kahdesti tarkoittaisi samaa sivua kahdella numerolla.
-     *
-     * Kaksoiskappale syntyy helposti: sama sivu kuvataan uudelleen, ja
-     * tiivisteeseen perustuva tallennuspolku on silloin identtinen.
-     * Ensimmäinen esiintymä säilyttää paikkansa järjestyksessä.
-     */
-    .filter((page) => {
-      if (seen.has(page.path)) return false;
-      seen.add(page.path);
-      return true;
-    });
+  return (
+    parsed
+      .filter(
+        (page): page is { path: string; hash?: unknown } =>
+          typeof page?.path === "string" && page.path.trim() !== "",
+      )
+      .map((page) => ({
+        path: page.path.trim(),
+        hash: typeof page.hash === "string" ? page.hash : "",
+      }))
+      /*
+       * Sama polku kahdesti tarkoittaisi samaa sivua kahdella numerolla.
+       *
+       * Kaksoiskappale syntyy helposti: sama sivu kuvataan uudelleen, ja
+       * tiivisteeseen perustuva tallennuspolku on silloin identtinen.
+       * Ensimmäinen esiintymä säilyttää paikkansa järjestyksessä.
+       */
+      .filter((page) => {
+        if (seen.has(page.path)) return false;
+        seen.add(page.path);
+        return true;
+      })
+  );
 }

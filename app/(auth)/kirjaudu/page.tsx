@@ -9,7 +9,9 @@ export async function generateMetadata() {
   return { title: t.kirjaudu.metaTitle };
 }
 
-export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu">) {
+export default async function SignInPage({
+  searchParams,
+}: PageProps<"/kirjaudu">) {
   const params = await searchParams;
   const raw = typeof params.seuraava === "string" ? params.seuraava : "/admin";
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/admin";
@@ -19,7 +21,9 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
 
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">{t.kirjaudu.title}</h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">
+        {t.kirjaudu.title}
+      </h1>
       <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
         {t.kirjaudu.noAccount}{" "}
         <Link

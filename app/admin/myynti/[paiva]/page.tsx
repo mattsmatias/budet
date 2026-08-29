@@ -87,7 +87,10 @@ export default async function SalesDayPage({
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
           {formatDay(paiva)}
         </h2>
-        <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="mt-[3px] text-[12.5px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {day.source === "report"
             ? "Luettu kassan päiväraportista"
             : "Kirjattu käsin"}
@@ -117,8 +120,13 @@ export default async function SalesDayPage({
 
       {lines.length > 0 ? (
         <Card>
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Myynti ryhmittäin</h2>
-          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            Myynti ryhmittäin
+          </h2>
+          <p
+            className="mt-[3px] text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi
             asetusmuutos ei muuta tätä riviä.
           </p>
@@ -130,25 +138,45 @@ export default async function SalesDayPage({
                 <tr>
                   <th scope="col">Ryhmä</th>
                   <th scope="col">Kassan nimi</th>
-                  <th scope="col" className="text-right">ALV %</th>
-                  <th scope="col" className="text-right">Verollinen</th>
-                  <th scope="col" className="text-right">ALV</th>
-                  <th scope="col" className="text-right">Veroton</th>
+                  <th scope="col" className="text-right">
+                    ALV %
+                  </th>
+                  <th scope="col" className="text-right">
+                    Verollinen
+                  </th>
+                  <th scope="col" className="text-right">
+                    ALV
+                  </th>
+                  <th scope="col" className="text-right">
+                    Veroton
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {lines.map((line) => (
                   <tr key={line.salesGroupId} className="rf-row">
-                    <td className="font-semibold">{nameOf(line.salesGroupId)}</td>
-                    <td style={{ color: "var(--rf-text-2)" }}>{line.posName ?? "—"}</td>
-                    <td className="rf-tabular text-right">{formatRate(line.vatRate)}</td>
+                    <td className="font-semibold">
+                      {nameOf(line.salesGroupId)}
+                    </td>
+                    <td style={{ color: "var(--rf-text-2)" }}>
+                      {line.posName ?? "—"}
+                    </td>
+                    <td className="rf-tabular text-right">
+                      {formatRate(line.vatRate)}
+                    </td>
                     <td className="rf-tabular text-right font-semibold">
                       {formatMoney(line.grossCents)}
                     </td>
-                    <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                    <td
+                      className="rf-tabular text-right"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {formatMoney(line.vatCents)}
                     </td>
-                    <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                    <td
+                      className="rf-tabular text-right"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
                       {formatMoney(line.netCents)}
                     </td>
                   </tr>
@@ -160,8 +188,13 @@ export default async function SalesDayPage({
       ) : null}
 
       <Card>
-        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Täsmäytys kassaan</h2>
-        <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          Täsmäytys kassaan
+        </h2>
+        <p
+          className="mt-[3px] text-[12.5px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           Kassan päiväraportti vasemmalla, Katen laskelma oikealla.
         </p>
 
@@ -189,9 +222,15 @@ function Figure({
   return (
     <div
       className="px-3.5 py-3"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
-      <dt className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+      <dt
+        className="text-[12px] font-medium"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </dt>
       <dd
@@ -207,7 +246,15 @@ function Figure({
   );
 }
 
-const DAYS = ["sunnuntai", "maanantai", "tiistai", "keskiviikko", "torstai", "perjantai", "lauantai"];
+const DAYS = [
+  "sunnuntai",
+  "maanantai",
+  "tiistai",
+  "keskiviikko",
+  "torstai",
+  "perjantai",
+  "lauantai",
+];
 
 function formatDay(isoDate: string): string {
   const d = new Date(`${isoDate}T12:00:00Z`);

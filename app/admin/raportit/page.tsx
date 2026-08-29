@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
@@ -23,7 +24,8 @@ const REPORTS = [
   {
     kind: "kategoriat",
     title: "Kulut kategorioittain",
-    description: "Ruoka, juomat, tarvikkeet, siivous ja muut — summat ja osuudet.",
+    description:
+      "Ruoka, juomat, tarvikkeet, siivous ja muut — summat ja osuudet.",
   },
   {
     kind: "kuitit",
@@ -53,12 +55,13 @@ const REPORTS = [
 export default async function ReportsPage({
   searchParams,
 }: PageProps<"/admin/raportit">) {
+  const locale = await resolveLocale();
   const params = await searchParams;
-  const { receipts, users, month, restaurant } = await adminContext(
-    "/admin/raportit",
-  );
+  const { receipts, users, month, restaurant } =
+    await adminContext("/admin/raportit");
 
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth =
     ISO_MONTH.test(requested) && requested <= month ? requested : month;
 
@@ -79,7 +82,7 @@ export default async function ReportsPage({
     <div className="rf-enter space-y-5 md:space-y-6">
       <div className="rf-z-page relative flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonth(viewMonth)} · {totals.receiptCount} kuittia ·{" "}
+          {formatMonth(viewMonth, locale)} · {totals.receiptCount} kuittia ·{" "}
           {formatMoney(totals.totalCents)} kirjattuja kuluja
         </p>
 
@@ -114,7 +117,9 @@ export default async function ReportsPage({
           <Card key={report.kind} hover>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{report.title}</h2>
+                <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+                  {report.title}
+                </h2>
                 <p
                   className="mt-1.5 text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}
@@ -150,7 +155,9 @@ export default async function ReportsPage({
       </div>
 
       <Card>
-        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Toimitus kirjanpitäjälle</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          Toimitus kirjanpitäjälle
+        </h2>
 
         {accountants.length > 0 ? (
           <>
@@ -184,9 +191,10 @@ export default async function ReportsPage({
             className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Kutsu kirjanpitäjä käyttäjäksi roolilla <strong>Kirjanpitäjä</strong>,
-            niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse
-            lähettää. Hän ei näe tuntipalkkoja eikä henkilöstön yksityiskohtia.
+            Kutsu kirjanpitäjä käyttäjäksi roolilla{" "}
+            <strong>Kirjanpitäjä</strong>, niin hän näkee kulut, ALV:t ja
+            raportit itse eikä tiedostoja tarvitse lähettää. Hän ei näe
+            tuntipalkkoja eikä henkilöstön yksityiskohtia.
           </p>
         )}
 
@@ -195,8 +203,8 @@ export default async function ReportsPage({
           style={{ color: "var(--rf-text-2)" }}
         >
           Excel-tiedostossa summat ovat lukuja, joten niillä voi laskea heti.
-          CSV:ssä kaikki on tekstiä, ja se käyttää puolipistettä erottimena
-          sekä UTF-8-tunnistetta — suomalainen Excel avaa sen suoraan oikein.
+          CSV:ssä kaikki on tekstiä, ja se käyttää puolipistettä erottimena sekä
+          UTF-8-tunnistetta — suomalainen Excel avaa sen suoraan oikein.
           Molemmat rakennetaan samasta lähteestä, joten luvut eivät voi erota
           toisistaan.
         </p>
@@ -234,7 +242,7 @@ export default async function ReportsPage({
 
         <SendToAccountant
           restaurantName={restaurant.name}
-          monthLabel={formatMonth(viewMonth)}
+          monthLabel={formatMonth(viewMonth, locale)}
           receiptCount={totals.receiptCount}
           totalLabel={formatMoney(totals.totalCents)}
         />

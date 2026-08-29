@@ -72,11 +72,16 @@ export function findDuplicates(receipts: Receipt[]): DuplicateGroup[] {
 
 function looksLikeSame(a: Receipt, b: Receipt): boolean {
   if (a.supplierId !== b.supplierId) return false;
-  if (Math.abs(a.totalCents - b.totalCents) > AMOUNT_TOLERANCE_CENTS) return false;
+  if (Math.abs(a.totalCents - b.totalCents) > AMOUNT_TOLERANCE_CENTS)
+    return false;
   if (daysApart(a.date, b.date) > DAY_WINDOW) return false;
 
   // Eri kuittinumerot todistavat eri tositteet.
-  if (a.receiptNumber && b.receiptNumber && a.receiptNumber !== b.receiptNumber) {
+  if (
+    a.receiptNumber &&
+    b.receiptNumber &&
+    a.receiptNumber !== b.receiptNumber
+  ) {
     return false;
   }
 

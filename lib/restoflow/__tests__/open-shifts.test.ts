@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { claimableShifts, overlapsAny, OPEN_SHIFT_HORIZON_DAYS } from "../open-shifts";
+import {
+  claimableShifts,
+  overlapsAny,
+  OPEN_SHIFT_HORIZON_DAYS,
+} from "../open-shifts";
 import type { OpenShift, Shift, StaffPosition } from "../types";
 
 /*
@@ -25,7 +29,11 @@ function open(partial: Partial<OpenShift> = {}): OpenShift {
     startTime: "10:00",
     endTime: "18:00",
     position: "waiter",
-    status: "draft", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    status: "draft",
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
     createdAt: "2026-08-01T00:00:00.000Z",
     ...partial,
   };
@@ -40,7 +48,11 @@ function mine(partial: Partial<Shift> = {}): Shift {
     startTime: "10:00",
     endTime: "18:00",
     location: "Sali",
-    breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null,
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    createdAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
     status: "accepted",
     ...partial,
   };
@@ -91,7 +103,9 @@ describe("asema", () => {
 
 describe("aika", () => {
   it("ei näytä mennyttä vuoroa", () => {
-    expect(claimable({ openShifts: [open({ date: "2026-08-20" })] })).toEqual([]);
+    expect(claimable({ openShifts: [open({ date: "2026-08-20" })] })).toEqual(
+      [],
+    );
   });
 
   it("ei näytä tänään jo päättynyttä vuoroa", () => {
@@ -127,9 +141,16 @@ describe("aika", () => {
    * näyttäisi menneeltä.
    */
   it("lukee päivän ravintolan ajassa", () => {
-    const tonight = open({ date: "2026-08-25", startTime: "10:00", endTime: "18:00" });
+    const tonight = open({
+      date: "2026-08-25",
+      startTime: "10:00",
+      endTime: "18:00",
+    });
     // 2026-08-24T21:30Z = 25.8. klo 00:30 paikallista.
-    const result = claimable({ openShifts: [tonight], nowIso: "2026-08-24T21:30:00.000Z" });
+    const result = claimable({
+      openShifts: [tonight],
+      nowIso: "2026-08-24T21:30:00.000Z",
+    });
 
     expect(ids(result)).toEqual(["o1"]);
   });
@@ -142,7 +163,9 @@ describe("päällekkäisyys", () => {
 
   it("näyttää vuoron joka alkaa oman vuoron jälkeen", () => {
     const after = open({ startTime: "18:00", endTime: "22:00" });
-    expect(ids(claimable({ openShifts: [after], myShifts: [mine()] }))).toEqual(["o1"]);
+    expect(ids(claimable({ openShifts: [after], myShifts: [mine()] }))).toEqual(
+      ["o1"],
+    );
   });
 
   it("näyttää saman päivän vuoron eri aikaan", () => {
@@ -155,7 +178,9 @@ describe("päällekkäisyys", () => {
    * työntekijää ottamasta korvaavaa vuoroa samalta päivältä.
    */
   it("ei anna hylätyn vuoron estää", () => {
-    expect(ids(claimable({ myShifts: [mine({ status: "declined" })] }))).toEqual(["o1"]);
+    expect(
+      ids(claimable({ myShifts: [mine({ status: "declined" })] })),
+    ).toEqual(["o1"]);
   });
 
   /*
@@ -163,11 +188,21 @@ describe("päällekkäisyys", () => {
    * päivävertailu ei näkisi tätä päällekkäisyyttä ollenkaan.
    */
   it("huomaa edellisen yön vuoron jatkumisen", () => {
-    const nightBefore = mine({ date: "2026-08-25", startTime: "22:00", endTime: "06:00" });
-    const early = open({ date: "2026-08-26", startTime: "05:00", endTime: "13:00" });
+    const nightBefore = mine({
+      date: "2026-08-25",
+      startTime: "22:00",
+      endTime: "06:00",
+    });
+    const early = open({
+      date: "2026-08-26",
+      startTime: "05:00",
+      endTime: "13:00",
+    });
 
     expect(overlapsAny(early, [nightBefore])).toBe(true);
-    expect(claimable({ openShifts: [early], myShifts: [nightBefore] })).toEqual([]);
+    expect(claimable({ openShifts: [early], myShifts: [nightBefore] })).toEqual(
+      [],
+    );
   });
 
   it("ei sekoita kahden päivän päässä olevaa vuoroa", () => {
@@ -188,7 +223,12 @@ describe("järjestys", () => {
     const shifts = [
       open({ id: "myohemmin", date: "2026-08-27", startTime: "10:00" }),
       open({ id: "ilta", date: "2026-08-26", startTime: "17:00" }),
-      open({ id: "aamu", date: "2026-08-26", startTime: "08:00", endTime: "12:00" }),
+      open({
+        id: "aamu",
+        date: "2026-08-26",
+        startTime: "08:00",
+        endTime: "12:00",
+      }),
     ];
 
     expect(ids(claimable({ openShifts: shifts }))).toEqual([

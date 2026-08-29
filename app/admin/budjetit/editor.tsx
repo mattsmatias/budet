@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { setBudget, type AdminState } from "../actions";
-import { CATEGORY_LABELS, type ExpenseCategory } from "@/lib/restoflow/types";
+import { type ExpenseCategory } from "@/lib/restoflow/types";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
 
@@ -17,10 +18,12 @@ const initial: AdminState = {};
  * ylitetty ja hälyttäisi turhaan.
  */
 export function BudgetEditor({
+  nimet,
   category,
   currentCents,
   spentCents,
 }: {
+  nimet: Labels;
   category: ExpenseCategory;
   currentCents: number | null;
   spentCents: number;
@@ -33,7 +36,7 @@ export function BudgetEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`Muokkaa budjettia: ${CATEGORY_LABELS[category]}`}
+        aria-label={`Muokkaa budjettia: ${nimet.categories[category]}`}
         className="rf-press px-3 py-1.5 text-[13px] font-medium"
         style={{
           background: "var(--rf-inset)",
@@ -54,7 +57,7 @@ export function BudgetEditor({
         htmlFor={`budget-${category}`}
         className="block text-[13px] font-medium"
       >
-        Kuukausibudjetti · {CATEGORY_LABELS[category]}
+        Kuukausibudjetti · {nimet.categories[category]}
       </label>
 
       <div className="mt-1.5 flex items-center gap-2">
@@ -73,14 +76,17 @@ export function BudgetEditor({
             borderRadius: "var(--rf-r-control)",
           }}
         />
-        <span className="shrink-0 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+        <span
+          className="shrink-0 text-[14px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           € / kk
         </span>
       </div>
 
       <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Tässä kuussa käytetty {formatMoney(spentCents)}. Tyhjä tai nolla
-        poistaa budjetin.
+        Tässä kuussa käytetty {formatMoney(spentCents)}. Tyhjä tai nolla poistaa
+        budjetin.
       </p>
 
       {state.error ? (
@@ -123,9 +129,11 @@ export function BudgetEditor({
  * siinä ei ole palkkia eikä prosenttia, vain kulu ja kutsu asettaa raja.
  */
 export function AddBudget({
+  nimet,
   categories,
   spend,
 }: {
+  nimet: Labels;
   categories: ExpenseCategory[];
   spend: Record<string, number>;
 }) {
@@ -156,7 +164,10 @@ export function AddBudget({
   return (
     <form action={action} className="space-y-3">
       <div>
-        <label htmlFor="new-budget-category" className="block text-[13px] font-medium">
+        <label
+          htmlFor="new-budget-category"
+          className="block text-[13px] font-medium"
+        >
           Kategoria
         </label>
         <select
@@ -165,19 +176,25 @@ export function AddBudget({
           value={category}
           onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <option value="">Valitse…</option>
           {categories.map((c) => (
             <option key={c} value={c}>
-              {CATEGORY_LABELS[c]}
+              {nimet.categories[c]}
             </option>
           ))}
         </select>
       </div>
 
       <div>
-        <label htmlFor="new-budget-amount" className="block text-[13px] font-medium">
+        <label
+          htmlFor="new-budget-amount"
+          className="block text-[13px] font-medium"
+        >
           Kuukausibudjetti
         </label>
         <div className="mt-1.5 flex items-center gap-2">
@@ -187,14 +204,23 @@ export function AddBudget({
             inputMode="decimal"
             placeholder="2000"
             className="rf-tabular w-full px-3.5 py-2.5 text-[16px] outline-none"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
           />
-          <span className="shrink-0 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          <span
+            className="shrink-0 text-[14px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             € / kk
           </span>
         </div>
         {category ? (
-          <p className="mt-1.5 flex items-center gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-1.5 flex items-center gap-1.5 text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             <CategoryIcon category={category} size={13} />
             Tässä kuussa käytetty {formatMoney(spend[category] ?? 0)}
           </p>

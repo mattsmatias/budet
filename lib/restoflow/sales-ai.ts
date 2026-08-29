@@ -108,7 +108,8 @@ export class MockSalesExtractor implements SalesExtractor {
 
     // Tiedostonimen tiiviste antaa vaihtelua ilman satunnaisuutta.
     let hash = 0;
-    for (const ch of input.fileName) hash = (hash * 31 + ch.charCodeAt(0)) % 100000;
+    for (const ch of input.fileName)
+      hash = (hash * 31 + ch.charCodeAt(0)) % 100000;
 
     const grossCents = 180000 + (hash % 220) * 1000;
 
@@ -129,8 +130,16 @@ export class MockSalesExtractor implements SalesExtractor {
       netCents: { value: netCents, confidence: "high" },
       transactions: { value: 40 + (hash % 90), confidence: "medium" },
       groups: [
-        { posName: "Ruoka", grossCents: Math.round(grossCents * 0.7), vatCents: null },
-        { posName: "Juomat", grossCents: grossCents - Math.round(grossCents * 0.7), vatCents: null },
+        {
+          posName: "Ruoka",
+          grossCents: Math.round(grossCents * 0.7),
+          vatCents: null,
+        },
+        {
+          posName: "Juomat",
+          grossCents: grossCents - Math.round(grossCents * 0.7),
+          vatCents: null,
+        },
       ],
       vatRates: [{ vatRate: 0.135, grossCents, vatCents, netCents }],
       imageQuality: "good",
@@ -167,8 +176,8 @@ export class RemoteSalesExtractor implements SalesExtractor {
      * järjestys on osa sisältöä.
      */
     const prepared = await Promise.all(
-      [input.file, ...(input.extraPages ?? [])].map(async (page) =>
-        (await prepareForExtraction(page)).file,
+      [input.file, ...(input.extraPages ?? [])].map(
+        async (page) => (await prepareForExtraction(page)).file,
       ),
     );
 

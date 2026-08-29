@@ -80,13 +80,17 @@ const base = {
 
 describe("findDeviations", () => {
   it("ei löydä mitään kun kaikki meni suunnitellusti", () => {
-    expect(findDeviations({ ...base, comparisons: [comparison()] })).toEqual([]);
+    expect(findDeviations({ ...base, comparisons: [comparison()] })).toEqual(
+      [],
+    );
   });
 
   it("löytää puuttuvan sisäänleimauksen", () => {
     const d = findDeviations({
       ...base,
-      comparisons: [comparison({ actualStart: null, actualEnd: null, actualMs: 0 })],
+      comparisons: [
+        comparison({ actualStart: null, actualEnd: null, actualMs: 0 }),
+      ],
     });
 
     expect(d).toHaveLength(1);
@@ -136,7 +140,9 @@ describe("findDeviations", () => {
   it("ei pidä pientä ylitystä poikkeamana", () => {
     const d = findDeviations({
       ...base,
-      comparisons: [comparison({ varianceMs: (OVERRUN_TOLERANCE_MINUTES - 5) * 60000 })],
+      comparisons: [
+        comparison({ varianceMs: (OVERRUN_TOLERANCE_MINUTES - 5) * 60000 }),
+      ],
     });
 
     expect(d).toEqual([]);
@@ -188,7 +194,9 @@ describe("findDeviations", () => {
     const d = findDeviations({
       ...base,
       shifts: [cancelled],
-      comparisons: [comparison({ shift: cancelled, actualStart: null, actualMs: 0 })],
+      comparisons: [
+        comparison({ shift: cancelled, actualStart: null, actualMs: 0 }),
+      ],
     });
 
     expect(d).toEqual([]);
@@ -200,7 +208,9 @@ describe("findDeviations", () => {
     const d = findDeviations({
       ...base,
       shifts: [draft],
-      comparisons: [comparison({ shift: draft, actualStart: null, actualMs: 0 })],
+      comparisons: [
+        comparison({ shift: draft, actualStart: null, actualMs: 0 }),
+      ],
     });
 
     expect(d).toEqual([]);
@@ -234,7 +244,6 @@ describe("findDeviations", () => {
  * tehty.
  */
 describe("jälkikäteen kirjattu vuoro", () => {
-
   function vertailu(s: Shift): ShiftComparison {
     return {
       shift: s,

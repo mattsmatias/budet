@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { createShiftByDrop } from "../planning-actions";
-import { POSITION_LABELS, type User } from "@/lib/restoflow/types";
+import { type User } from "@/lib/restoflow/types";
 import { Avatar } from "@/components/restoflow/ui";
 
 /**
@@ -28,7 +29,7 @@ import { Avatar } from "@/components/restoflow/ui";
  * lähes aina samaa vuoroa. Vuoro syntyy luonnoksena, joten väärä
  * arvaus ei mene kenellekään.
  */
-export function DragStaff({ users }: { users: User[] }) {
+export function DragStaff({ nimet, users }: { nimet: Labels; users: User[] }) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const overRef = useRef<HTMLElement | null>(null);
@@ -165,8 +166,11 @@ export function DragStaff({ users }: { users: User[] }) {
               <Avatar initials={user.initials} size={22} />
               <span className="text-[12.5px] font-semibold">{user.name}</span>
               {user.position ? (
-                <span className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
-                  {POSITION_LABELS[user.position]}
+                <span
+                  className="text-[11px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {nimet.positions[user.position]}
                 </span>
               ) : null}
             </div>

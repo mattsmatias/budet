@@ -118,8 +118,14 @@ export interface LabourSummary {
 export function labourSummary(comparisons: ShiftComparison[]): LabourSummary {
   const plannedMs = comparisons.reduce((s, c) => s + c.plannedMs, 0);
   const actualMs = comparisons.reduce((s, c) => s + c.actualMs, 0);
-  const plannedCostCents = comparisons.reduce((s, c) => s + c.plannedCostCents, 0);
-  const actualCostCents = comparisons.reduce((s, c) => s + c.actualCostCents, 0);
+  const plannedCostCents = comparisons.reduce(
+    (s, c) => s + c.plannedCostCents,
+    0,
+  );
+  const actualCostCents = comparisons.reduce(
+    (s, c) => s + c.actualCostCents,
+    0,
+  );
 
   return {
     plannedMs,

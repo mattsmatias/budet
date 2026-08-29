@@ -13,7 +13,11 @@ import {
   updateRestaurant,
   type DevState,
 } from "../../actions";
-import { PLAN_LABELS, STATUS_LABELS, type RestaurantDetail } from "@/lib/kehittaja/types";
+import {
+  PLAN_LABELS,
+  STATUS_LABELS,
+  type RestaurantDetail,
+} from "@/lib/kehittaja/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, Pill } from "@/components/restoflow/ui";
 import { CONTROL, CONTROL_STYLE } from "@/app/admin/asetukset/form-parts";
@@ -27,22 +31,44 @@ const ROOLIT: Record<string, string> = {
   accountant: "Kirjanpitäjä",
 };
 
-function Tallenna({ label = "Tallenna", tone = "accent" }: { label?: string; tone?: "accent" | "danger" | "quiet" }) {
+function Tallenna({
+  label = "Tallenna",
+  tone = "accent",
+}: {
+  label?: string;
+  tone?: "accent" | "danger" | "quiet";
+}) {
   const { pending } = useFormStatus();
 
   const style =
     tone === "danger"
-      ? { background: "var(--rf-red-text)", color: "#fff", border: "1px solid transparent" }
+      ? {
+          background: "var(--rf-red-text)",
+          color: "#fff",
+          border: "1px solid transparent",
+        }
       : tone === "quiet"
-        ? { background: "var(--rf-inset)", color: "var(--rf-text)", border: "1px solid var(--rf-line-strong)" }
-        : { background: "var(--rf-accent)", color: "var(--rf-on-accent)", border: "1px solid transparent" };
+        ? {
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            border: "1px solid var(--rf-line-strong)",
+          }
+        : {
+            background: "var(--rf-accent)",
+            color: "var(--rf-on-accent)",
+            border: "1px solid transparent",
+          };
 
   return (
     <button
       type="submit"
       disabled={pending}
       className="rf-press px-4 py-2 text-[13px] font-bold"
-      style={{ ...style, borderRadius: "var(--rf-r-control)", opacity: pending ? 0.6 : 1 }}
+      style={{
+        ...style,
+        borderRadius: "var(--rf-r-control)",
+        opacity: pending ? 0.6 : 1,
+      }}
     >
       {pending ? "Tallennetaan…" : label}
     </button>
@@ -52,14 +78,21 @@ function Tallenna({ label = "Tallenna", tone = "accent" }: { label?: string; ton
 function Viesti({ state }: { state: DevState }) {
   if (state.error) {
     return (
-      <p role="alert" className="mt-2 text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+      <p
+        role="alert"
+        className="mt-2 text-[12.5px]"
+        style={{ color: "var(--rf-red-text)" }}
+      >
         {state.error}
       </p>
     );
   }
   if (state.notice) {
     return (
-      <p className="mt-2 text-[12.5px]" style={{ color: "var(--rf-green-text)" }}>
+      <p
+        className="mt-2 text-[12.5px]"
+        style={{ color: "var(--rf-green-text)" }}
+      >
         {state.notice}
       </p>
     );
@@ -79,7 +112,12 @@ function Viesti({ state }: { state: DevState }) {
  * mukana, koska "miksi tämä on keskeytetty" on ensimmäinen kysymys
  * kolmen kuukauden päästä.
  */
-export function StatusForm({ id, current, trialEndsOn, note }: {
+export function StatusForm({
+  id,
+  current,
+  trialEndsOn,
+  note,
+}: {
   id: string;
   current: string;
   trialEndsOn: string | null;
@@ -90,7 +128,10 @@ export function StatusForm({ id, current, trialEndsOn, note }: {
 
   return (
     <Card>
-      <CardHeader title="Asiakkuuden tila" subtitle="Muutos kirjataan Developer Consolen lokiin." />
+      <CardHeader
+        title="Asiakkuuden tila"
+        subtitle="Muutos kirjataan Developer Consolen lokiin."
+      />
 
       <form action={action} className="mt-3 space-y-3">
         <input type="hidden" name="id" value={id} />
@@ -115,7 +156,9 @@ export function StatusForm({ id, current, trialEndsOn, note }: {
 
           {valittu === "trial" ? (
             <label className="block">
-              <span className="block text-[12.5px] font-semibold">Kokeilun pituus (päivää)</span>
+              <span className="block text-[12.5px] font-semibold">
+                Kokeilun pituus (päivää)
+              </span>
               <input
                 name="trialDays"
                 type="number"
@@ -132,7 +175,10 @@ export function StatusForm({ id, current, trialEndsOn, note }: {
         <label className="block">
           <span className="block text-[12.5px] font-semibold">
             Syy
-            <span className="ml-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="ml-1 font-normal"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               valinnainen
             </span>
           </span>
@@ -145,7 +191,8 @@ export function StatusForm({ id, current, trialEndsOn, note }: {
           />
         </label>
 
-        {valittu !== current && (valittu === "suspended" || valittu === "cancelled") ? (
+        {valittu !== current &&
+        (valittu === "suspended" || valittu === "cancelled") ? (
           <p
             className="px-3.5 py-2.5 text-[12.5px] leading-relaxed"
             style={{
@@ -178,14 +225,22 @@ export function PlanForm({ id, current }: { id: string; current: string }) {
 
   return (
     <Card>
-      <CardHeader title="Paketti" subtitle="Laskutus hoidetaan maksupalvelussa — tässä on vain paketin taso." />
+      <CardHeader
+        title="Paketti"
+        subtitle="Laskutus hoidetaan maksupalvelussa — tässä on vain paketin taso."
+      />
 
       <form action={action} className="mt-3 flex flex-wrap items-end gap-3">
         <input type="hidden" name="id" value={id} />
 
         <label className="block min-w-[10rem] flex-1">
           <span className="block text-[12.5px] font-semibold">Paketti</span>
-          <select name="plan" defaultValue={current} className={`${CONTROL} mt-1.5`} style={CONTROL_STYLE}>
+          <select
+            name="plan"
+            defaultValue={current}
+            className={`${CONTROL} mt-1.5`}
+            style={CONTROL_STYLE}
+          >
             {Object.entries(PLAN_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -211,22 +266,43 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
 
   return (
     <Card>
-      <CardHeader title="Yrityksen tiedot" subtitle="Muutokset kirjataan lokiin ennen ja jälkeen -arvoineen." />
+      <CardHeader
+        title="Yrityksen tiedot"
+        subtitle="Muutokset kirjataan lokiin ennen ja jälkeen -arvoineen."
+      />
 
       <form action={action} className="mt-3 space-y-3.5">
         <input type="hidden" name="id" value={r.id} />
 
-        <Kentta label="Ravintolan nimi" name="name" defaultValue={r.name} required />
+        <Kentta
+          label="Ravintolan nimi"
+          name="name"
+          defaultValue={r.name}
+          required
+        />
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Kentta label="Virallinen nimi" name="legalName" defaultValue={r.legalName} />
-          <Kentta label="Y-tunnus" name="businessId" defaultValue={r.businessId} placeholder="1234567-8" />
+          <Kentta
+            label="Virallinen nimi"
+            name="legalName"
+            defaultValue={r.legalName}
+          />
+          <Kentta
+            label="Y-tunnus"
+            name="businessId"
+            defaultValue={r.businessId}
+            placeholder="1234567-8"
+          />
         </div>
 
         <Kentta label="Osoite" name="address" defaultValue={r.address} />
 
         <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
-          <Kentta label="Postinumero" name="postalCode" defaultValue={r.postalCode} />
+          <Kentta
+            label="Postinumero"
+            name="postalCode"
+            defaultValue={r.postalCode}
+          />
           <Kentta label="Kaupunki" name="city" defaultValue={r.city} />
         </div>
 
@@ -243,10 +319,18 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
         <Kentta label="Aikavyöhyke" name="timezone" defaultValue={r.timezone} />
 
         <label className="flex items-start gap-2.5 text-[13px]">
-          <input type="checkbox" name="isTest" defaultChecked={r.isTestAccount} className="mt-0.5 h-4 w-4" />
+          <input
+            type="checkbox"
+            name="isTest"
+            defaultChecked={r.isTestAccount}
+            className="mt-0.5 h-4 w-4"
+          />
           <span>
             Testiravintola
-            <span className="mt-0.5 block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="mt-0.5 block text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               Jätetään pois asiakasluvuista.
             </span>
           </span>
@@ -263,7 +347,11 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
 // Käyttäjät
 // ---------------------------------------------------------------------------
 
-export function UserRow({ user }: { user: RestaurantDetail["users"][number] & { membershipId?: string } }) {
+export function UserRow({
+  user,
+}: {
+  user: RestaurantDetail["users"][number] & { membershipId?: string };
+}) {
   return (
     <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
       <span className="min-w-0 flex-1">
@@ -275,7 +363,10 @@ export function UserRow({ user }: { user: RestaurantDetail["users"][number] & { 
             </span>
           )}
         </span>
-        <span className="mt-0.5 block truncate text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+        <span
+          className="mt-0.5 block truncate text-[12.5px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {user.email ?? "—"} · {ROOLIT[user.role] ?? user.role}
           {user.lastSignInAt
             ? ` · kirjautui ${new Date(user.lastSignInAt).toLocaleDateString("fi-FI")}`
@@ -347,7 +438,11 @@ export function UserControls({
             type="button"
             onClick={() => setVarmistus(true)}
             className="rf-press px-2.5 py-1.5 text-[12px] font-semibold"
-            style={{ color: "var(--rf-red-text)", border: "1px solid var(--rf-line-strong)", borderRadius: 8 }}
+            style={{
+              color: "var(--rf-red-text)",
+              border: "1px solid var(--rf-line-strong)",
+              borderRadius: 8,
+            }}
           >
             Poista käytöstä
           </button>
@@ -358,7 +453,11 @@ export function UserControls({
             <button
               type="submit"
               className="rf-press px-2.5 py-1.5 text-[12px] font-semibold"
-              style={{ background: "var(--rf-inset)", border: "1px solid var(--rf-line-strong)", borderRadius: 8 }}
+              style={{
+                background: "var(--rf-inset)",
+                border: "1px solid var(--rf-line-strong)",
+                borderRadius: 8,
+              }}
             >
               Aktivoi
             </button>
@@ -369,9 +468,15 @@ export function UserControls({
       {varmistus ? (
         <div
           className="space-y-2 px-3.5 py-3"
-          style={{ background: "var(--rf-red-bg)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-red-bg)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
-          <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--rf-red-text)" }}>
+          <p
+            className="text-[12.5px] leading-relaxed"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             Olet poistamassa käyttäjän käytöstä.
             <br />
             <strong>{name}</strong> · {restaurantName}
@@ -395,7 +500,11 @@ export function UserControls({
               <button
                 type="submit"
                 className="rf-press px-3 py-1.5 text-[12.5px] font-bold"
-                style={{ background: "var(--rf-red-text)", color: "#fff", borderRadius: 8 }}
+                style={{
+                  background: "var(--rf-red-text)",
+                  color: "#fff",
+                  borderRadius: 8,
+                }}
               >
                 Poista käytöstä
               </button>
@@ -404,7 +513,9 @@ export function UserControls({
         </div>
       ) : null}
 
-      <Viesti state={roleState.error || roleState.notice ? roleState : activeState} />
+      <Viesti
+        state={roleState.error || roleState.notice ? roleState : activeState}
+      />
     </div>
   );
 }
@@ -436,7 +547,10 @@ export function InviteForm({ id }: { id: string }) {
         <label className="block min-w-[10rem] flex-1">
           <span className="block text-[12.5px] font-semibold">
             Nimi
-            <span className="ml-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="ml-1 font-normal"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               valinnainen
             </span>
           </span>
@@ -473,7 +587,10 @@ export function InviteForm({ id }: { id: string }) {
           >
             {state.code}
           </p>
-          <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
+          <p
+            className="mt-1.5 text-[12px]"
+            style={{ color: "var(--rf-amber-text)" }}
+          >
             Kopioi nyt — koodia ei voi hakea myöhemmin.
           </p>
         </div>
@@ -497,13 +614,17 @@ export function FlagRow({
 }) {
   const [state, action] = useActionState(setFlagFor, initial);
 
-  const nykyinen = flag.override === null ? "oletus" : flag.override ? "true" : "false";
+  const nykyinen =
+    flag.override === null ? "oletus" : flag.override ? "true" : "false";
 
   return (
     <li className="flex flex-wrap items-center gap-3 px-5 py-3">
       <span className="min-w-0 flex-1">
         <span className="block text-[13.5px] font-semibold">{flag.label}</span>
-        <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        <span
+          className="block text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {flag.key} · oletus {flag.global ? "päällä" : "pois"}
         </span>
       </span>
@@ -518,7 +639,9 @@ export function FlagRow({
           className="px-2.5 text-[12.5px]"
           style={{ ...CONTROL_STYLE, height: 32, borderRadius: 8 }}
         >
-          <option value="oletus">Oletus ({flag.global ? "päällä" : "pois"})</option>
+          <option value="oletus">
+            Oletus ({flag.global ? "päällä" : "pois"})
+          </option>
           <option value="true">Päällä</option>
           <option value="false">Pois</option>
         </select>
@@ -526,14 +649,21 @@ export function FlagRow({
         <button
           type="submit"
           className="rf-press px-2.5 py-1.5 text-[12px] font-semibold"
-          style={{ background: "var(--rf-inset)", border: "1px solid var(--rf-line-strong)", borderRadius: 8 }}
+          style={{
+            background: "var(--rf-inset)",
+            border: "1px solid var(--rf-line-strong)",
+            borderRadius: 8,
+          }}
         >
           Aseta
         </button>
       </form>
 
       {state.error ? (
-        <span className="w-full text-[12px]" style={{ color: "var(--rf-red-text)" }}>
+        <span
+          className="w-full text-[12px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </span>
       ) : null}
@@ -599,21 +729,33 @@ export function DangerZone({
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="mt-px shrink-0" style={{ color: "var(--rf-red-text)" }}>
+        <span
+          className="mt-px shrink-0"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           <RfIcon name="alert" size={18} />
         </span>
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold" style={{ color: "var(--rf-red-text)" }}>
+          <h2
+            className="text-[15px] font-bold"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             Poista ravintola pysyvästi
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-1 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             Tämä poistaa ravintolan ja kaiken siihen liittyvän. Toimintoa ei voi
             perua.
           </p>
         </div>
       </div>
 
-      <ul className="mt-3 space-y-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+      <ul
+        className="mt-3 space-y-1 text-[13px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         <li className="flex justify-between gap-4">
           <span>Käyttäjien jäsenyydet</span>
           <span className="rf-tabular font-semibold">{counts.users}</span>

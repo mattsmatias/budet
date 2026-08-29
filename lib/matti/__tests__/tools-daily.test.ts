@@ -23,10 +23,22 @@ const TODAY = "2026-08-24";
 
 function emptyData(partial: Partial<RestaurantData> = {}): RestaurantData {
   return {
-    receipts: [], openShifts: [], users: [], suppliers: [], budgets: [],
-    shifts: [], clockEvents: [], absences: [], closedMonths: [],
-    categories: [], merchants: [], merchantCategories: [], sales: [],
-    salesGroups: [], posMappings: [], tasks: [],
+    receipts: [],
+    openShifts: [],
+    users: [],
+    suppliers: [],
+    budgets: [],
+    shifts: [],
+    clockEvents: [],
+    absences: [],
+    closedMonths: [],
+    categories: [],
+    merchants: [],
+    merchantCategories: [],
+    sales: [],
+    salesGroups: [],
+    posMappings: [],
+    tasks: [],
     ...partial,
   };
 }
@@ -42,13 +54,17 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
     now: `${TODAY}T09:00:00Z`,
     timezone: TZ,
     currentPage: null,
-  locale: "fi" as const,
+    locale: "fi" as const,
     data: emptyData(partial),
     lunchWeek: async () => null,
   };
 }
 
-function sale(date: string, netCents: number, targetCents: number | null = null): DailySales {
+function sale(
+  date: string,
+  netCents: number,
+  targetCents: number | null = null,
+): DailySales {
   return {
     date,
     netCents,
@@ -65,17 +81,35 @@ function sale(date: string, netCents: number, targetCents: number | null = null)
 
 function receipt(date: string, totalCents: number): Receipt {
   return {
-    id: `r-${date}`, restaurantId: "rest-1", date, totalCents,
-    supplierId: "s-1", supplierName: "Tukku", vatCents: null,
-    category: "food", paymentMethod: "card", receiptNumber: null,
-    note: null, status: "confirmed", reviewReasons: [], items: [],
-    addedByUserId: "u1", addedAt: `${date}T10:00:00.000Z`,
-    hasImage: true, imagePath: null, pages: [], categoryId: null, imageQuality: "good",
+    id: `r-${date}`,
+    restaurantId: "rest-1",
+    date,
+    totalCents,
+    supplierId: "s-1",
+    supplierName: "Tukku",
+    vatCents: null,
+    category: "food",
+    paymentMethod: "card",
+    receiptNumber: null,
+    note: null,
+    status: "confirmed",
+    reviewReasons: [],
+    items: [],
+    addedByUserId: "u1",
+    addedAt: `${date}T10:00:00.000Z`,
+    hasImage: true,
+    imagePath: null,
+    pages: [],
+    categoryId: null,
+    imageQuality: "good",
   };
 }
 
-const run = (name: string, data: Partial<RestaurantData>, input: unknown = {}) =>
-  findTool(name)!.run(ctx(data), input);
+const run = (
+  name: string,
+  data: Partial<RestaurantData>,
+  input: unknown = {},
+) => findTool(name)!.run(ctx(data), input);
 
 // ---------------------------------------------------------------------------
 
@@ -119,7 +153,9 @@ describe("työkalujen rekisteröinti", () => {
 
 describe("get_sales", () => {
   it("kertoo päivän myynnin ja vertaa tavoitteeseen", async () => {
-    const result = await run("get_sales", { sales: [sale(TODAY, 120_000, 100_000)] });
+    const result = await run("get_sales", {
+      sales: [sale(TODAY, 120_000, 100_000)],
+    });
 
     expect(result.summary).toContain(formatMoney(120_000));
     expect(result.summary).toContain("20 % yli");
@@ -136,7 +172,9 @@ describe("get_sales", () => {
 
     expect(result.summary).toContain("ei ole kirjattu");
     expect(result.summary).not.toContain(formatMoney(0));
-    expect((result.data as { totalCents: number | null }).totalCents).toBeNull();
+    expect(
+      (result.data as { totalCents: number | null }).totalCents,
+    ).toBeNull();
   });
 
   it("laskee aikavälin yhteen", async () => {
@@ -155,7 +193,12 @@ describe("get_sales", () => {
   it("ei vertaa aikaväliä", async () => {
     const result = await run(
       "get_sales",
-      { sales: [sale("2026-08-20", 100_000, 200_000), sale("2026-08-21", 50_000)] },
+      {
+        sales: [
+          sale("2026-08-20", 100_000, 200_000),
+          sale("2026-08-21", 50_000),
+        ],
+      },
       { from: "2026-08-20", to: "2026-08-21" },
     );
 
@@ -163,7 +206,11 @@ describe("get_sales", () => {
   });
 
   it("huomaa väärinpäin annetun aikavälin", async () => {
-    const result = await run("get_sales", {}, { from: "2026-08-21", to: "2026-08-20" });
+    const result = await run(
+      "get_sales",
+      {},
+      { from: "2026-08-21", to: "2026-08-20" },
+    );
     expect(result.summary).toContain("väärinpäin");
   });
 

@@ -10,7 +10,13 @@
  * eikä tietomallissa ole kenttää myynnille.
  */
 
-import { CATEGORY_LABELS } from "./types";
+import { labels, receiptCountIn, shiftCountIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import {
+  formatMonthIn,
+  formatMonthShortIn,
+  monthWordIn,
+} from "@/lib/i18n/labels";
 import type {
   CustomCategory,
   ExpenseCategory,
@@ -125,7 +131,9 @@ export function relativeChange(
 /** "+8,4 %" tai "−4,2 %". */
 export function formatChange(change: number | null): string {
   if (change === null) return "ei vertailukohtaa";
-  const pct = Math.abs(change * 100).toFixed(1).replace(".", ",");
+  const pct = Math.abs(change * 100)
+    .toFixed(1)
+    .replace(".", ",");
   const sign = change > 0 ? "+" : change < 0 ? "−" : "";
   return `${sign}${pct} %`;
 }
@@ -149,8 +157,8 @@ export function changeTone(change: number | null): ChangeTone {
  * Yhdessä paikassa, koska sama lause on kahdella sivulla: yleiskuvan
  * ja kulujen kulukortti kertovat molemmat edellisen kuun summan.
  */
-export function monthWord(month: string): string {
-  return formatMonth(month).split(" ")[0].toLowerCase();
+export function monthWord(month: string, locale: AppLocale): string {
+  return monthWordIn(month, locale);
 }
 
 export function previousMonth(month: string): string {
@@ -167,19 +175,12 @@ export function nextMonth(month: string): string {
   return date.toISOString().slice(0, 7);
 }
 
-const MONTH_NAMES = [
-  "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-  "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
-];
-
-export function formatMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  return `${MONTH_NAMES[m - 1]} ${year}`;
+export function formatMonth(month: string, locale: AppLocale): string {
+  return formatMonthIn(month, locale);
 }
 
-export function formatMonthShort(month: string): string {
-  const [, m] = month.split("-").map(Number);
-  return MONTH_NAMES[m - 1];
+export function formatMonthShort(month: string, locale: AppLocale): string {
+  return formatMonthShortIn(month, locale);
 }
 
 /** Kuukausisarja kehitysgraafiin, vanhin ensin. */
@@ -251,11 +252,14 @@ export function searchReceipts(receipts: Receipt[], query: string): Receipt[] {
     if (receipt.receiptNumber?.toLowerCase().includes(q)) return true;
     if (receipt.note?.toLowerCase().includes(q)) return true;
     if (receipt.date.includes(q)) return true;
-    if (cents !== null && Math.abs(receipt.totalCents - cents) <= 1) return true;
+    if (cents !== null && Math.abs(receipt.totalCents - cents) <= 1)
+      return true;
 
     // Myös tuoterivit. Kuitin nimi on "S-Market", mutta se mitä
     // etsitään on usein "maito" — ja se lukee vain riveillä.
-    if (receipt.items.some((item) => item.description.toLowerCase().includes(q))) {
+    if (
+      receipt.items.some((item) => item.description.toLowerCase().includes(q))
+    ) {
       return true;
     }
 
@@ -286,7 +290,8 @@ export function filterReceipts(
 
 export function sortByDateDesc(receipts: Receipt[]): Receipt[] {
   return [...receipts].sort(
-    (a, b) => b.date.localeCompare(a.date) || b.addedAt.localeCompare(a.addedAt),
+    (a, b) =>
+      b.date.localeCompare(a.date) || b.addedAt.localeCompare(a.addedAt),
   );
 }
 
@@ -294,13 +299,13 @@ export function sortByDateDesc(receipts: Receipt[]): Receipt[] {
  * Suomen monikko kuiteille. "1 kuittia" on kielioppivirhe joka pistää
  * silmään heti, ja se toistuisi joka kortissa ilman tätä.
  */
-export function receiptCountLabel(count: number): string {
-  return count === 1 ? "1 kuitti" : `${count} kuittia`;
+export function receiptCountLabel(count: number, locale: AppLocale): string {
+  return receiptCountIn(count, locale);
 }
 
 /** Sama vuoroille. */
-export function shiftCountLabel(count: number): string {
-  return count === 1 ? "1 vuoro" : `${count} vuoroa`;
+export function shiftCountLabel(count: number, locale: AppLocale): string {
+  return shiftCountIn(count, locale);
 }
 
 // ---------------------------------------------------------------------------
@@ -329,12 +334,16 @@ export interface CustomCategoryTotal {
 export function totalsByCustomCategory(
   receipts: Receipt[],
   categories: CustomCategory[],
+  locale: AppLocale,
 ): CustomCategoryTotal[] {
+  const nimet = labels(locale).categories;
   const byId = new Map(categories.map((category) => [category.id, category]));
   const buckets = new Map<string, CustomCategoryTotal>();
 
   for (const receipt of receipts) {
-    const custom = receipt.categoryId ? byId.get(receipt.categoryId) : undefined;
+    const custom = receipt.categoryId
+      ? byId.get(receipt.categoryId)
+      : undefined;
 
     const key = custom ? custom.id : receipt.category;
     const existing = buckets.get(key);
@@ -347,7 +356,7 @@ export function totalsByCustomCategory(
 
     buckets.set(key, {
       key,
-      name: custom ? custom.name : CATEGORY_LABELS[receipt.category],
+      name: custom ? custom.name : nimet[receipt.category],
       baseCategory: custom ? custom.baseCategory : receipt.category,
       totalCents: receipt.totalCents,
       receiptCount: 1,
@@ -356,7 +365,10 @@ export function totalsByCustomCategory(
     });
   }
 
-  const total = [...buckets.values()].reduce((sum, row) => sum + row.totalCents, 0);
+  const total = [...buckets.values()].reduce(
+    (sum, row) => sum + row.totalCents,
+    0,
+  );
 
   return [...buckets.values()]
     .map((row) => ({ ...row, share: total === 0 ? 0 : row.totalCents / total }))

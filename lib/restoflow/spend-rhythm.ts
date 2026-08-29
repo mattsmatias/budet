@@ -52,11 +52,24 @@ export interface SpendRhythm {
    * torstain perusteella tehty väite "torstait ovat kalleimmat" on
    * arvaus joka näyttää tiedolta.
    */
-  peakWeekday: { weekday: number; label: string; cents: number; share: number } | null;
+  peakWeekday: {
+    weekday: number;
+    label: string;
+    cents: number;
+    share: number;
+  } | null;
   busiestDay: SpendDay | null;
 }
 
-export const WEEKDAY_LABELS = ["ma", "ti", "ke", "to", "pe", "la", "su"] as const;
+export const WEEKDAY_LABELS = [
+  "ma",
+  "ti",
+  "ke",
+  "to",
+  "pe",
+  "la",
+  "su",
+] as const;
 export const WEEKDAY_NAMES = [
   "maanantai",
   "tiistai",
@@ -246,7 +259,9 @@ export function monthlyFlow(
 
   const salesByMonth = months.map((m) => {
     const rows = sales.filter((s) => s.date.startsWith(m));
-    return rows.length === 0 ? null : rows.reduce((sum, s) => sum + s.netCents, 0);
+    return rows.length === 0
+      ? null
+      : rows.reduce((sum, s) => sum + s.netCents, 0);
   });
 
   return {
@@ -266,8 +281,18 @@ export function monthlyFlow(
  */
 function shortMonth(month: string): string {
   const names = [
-    "Tam", "Hel", "Maa", "Huh", "Tou", "Kes",
-    "Hei", "Elo", "Syy", "Lok", "Mar", "Jou",
+    "Tam",
+    "Hel",
+    "Maa",
+    "Huh",
+    "Tou",
+    "Kes",
+    "Hei",
+    "Elo",
+    "Syy",
+    "Lok",
+    "Mar",
+    "Jou",
   ];
   return names[Number(month.slice(5, 7)) - 1] ?? month;
 }

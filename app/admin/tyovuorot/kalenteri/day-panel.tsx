@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { formatPlanned, plannedMinutes, publicationOf } from "@/lib/restoflow/shift-planning";
-import { POSITION_LABELS, SHIFT_STATUS_LABELS, type Shift, type User } from "@/lib/restoflow/types";
+import { type Labels } from "@/lib/i18n/labels";
+import {
+  formatPlanned,
+  plannedMinutes,
+  publicationOf,
+} from "@/lib/restoflow/shift-planning";
+import { type Shift, type User } from "@/lib/restoflow/types";
 import { Avatar, Card, CardHeader, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { EditShift, NewShiftButton } from "../shift-form";
@@ -25,12 +30,14 @@ const DAYS = [
  * selaimen paluunappi toimii.
  */
 export function DayPanel({
+  nimet,
   date,
   month,
   users,
   shifts,
   canManage,
 }: {
+  nimet: Labels;
   date: string;
   month: string;
   users: User[];
@@ -87,12 +94,19 @@ export function DayPanel({
                     <p className="truncate text-[14px] font-medium">
                       {user?.name ?? "Avoin vuoro"}
                     </p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {shift.startTime}–{shift.endTime}
-                      {shift.breakMinutes > 0 ? ` · tauko ${shift.breakMinutes} min` : ""}
+                      {shift.breakMinutes > 0
+                        ? ` · tauko ${shift.breakMinutes} min`
+                        : ""}
                       {" · "}
                       {formatPlanned(plannedMinutes(shift))}
-                      {user?.position ? ` · ${POSITION_LABELS[user.position]}` : ""}
+                      {user?.position
+                        ? ` · ${nimet.positions[user.position]}`
+                        : ""}
                       {shift.note ? ` · ${shift.note}` : ""}
                     </p>
                   </div>
@@ -109,14 +123,14 @@ export function DayPanel({
                     </Pill>
                   ) : (
                     <Pill tone="ok" dot>
-                      {SHIFT_STATUS_LABELS[shift.status].toLowerCase()}
+                      {nimet.shiftStatus[shift.status].toLowerCase()}
                     </Pill>
                   )}
 
                   {canManage && tila !== "cancelled" ? (
                     <>
                       <CopyDay shift={shift} />
-                      <EditShift users={users} shift={shift} />
+                      <EditShift nimet={nimet} users={users} shift={shift} />
                     </>
                   ) : null}
                 </div>
@@ -128,7 +142,7 @@ export function DayPanel({
 
       {canManage ? (
         <div className="mt-4">
-          <NewShiftButton users={users} defaultDate={date} />
+          <NewShiftButton nimet={nimet} users={users} defaultDate={date} />
         </div>
       ) : null}
     </Card>

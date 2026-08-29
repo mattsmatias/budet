@@ -61,7 +61,8 @@ const getTasks = defineTool({
       daysLate: daysLate(task, ctx.today),
       priority: PRIORITY_LABELS[task.priority],
       assignedTo:
-        ctx.data.users.find((user) => user.id === task.assignedTo)?.name ?? null,
+        ctx.data.users.find((user) => user.id === task.assignedTo)?.name ??
+        null,
       recurring: task.recurrence !== "none",
     }));
 

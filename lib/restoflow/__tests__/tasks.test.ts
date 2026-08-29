@@ -59,12 +59,18 @@ describe("statusOf", () => {
    * myöhässä olevaksi seuraavana päivänä.
    */
   it("ei nosta tehtyä myöhässä olevaksi", () => {
-    const done = task({ dueOn: "2026-08-01", completedAt: "2026-08-01T12:00:00.000Z" });
+    const done = task({
+      dueOn: "2026-08-01",
+      completedAt: "2026-08-01T12:00:00.000Z",
+    });
     expect(statusOf(done, TODAY)).toBe("completed");
   });
 
   it("ei nosta peruttua myöhässä olevaksi", () => {
-    const cancelled = task({ dueOn: "2026-08-01", cancelledAt: "2026-08-01T12:00:00.000Z" });
+    const cancelled = task({
+      dueOn: "2026-08-01",
+      cancelledAt: "2026-08-01T12:00:00.000Z",
+    });
     expect(statusOf(cancelled, TODAY)).toBe("cancelled");
   });
 
@@ -99,7 +105,10 @@ describe("daysLate", () => {
   });
 
   it("on nolla tehdylle", () => {
-    const done = task({ dueOn: "2026-08-01", completedAt: "2026-08-02T10:00:00.000Z" });
+    const done = task({
+      dueOn: "2026-08-01",
+      completedAt: "2026-08-02T10:00:00.000Z",
+    });
     expect(daysLate(done, TODAY)).toBe(0);
     expect(isOpen(done)).toBe(false);
   });
@@ -158,7 +167,11 @@ describe("sortTasks", () => {
       TODAY,
     );
 
-    expect(sorted.map((t) => t.id)).toEqual(["kriittinen", "tarkea", "normaali"]);
+    expect(sorted.map((t) => t.id)).toEqual([
+      "kriittinen",
+      "tarkea",
+      "normaali",
+    ]);
   });
 });
 
@@ -180,7 +193,11 @@ describe("groupTasks", () => {
       TODAY,
     );
 
-    expect(groups.map((g) => g.status)).toEqual(["overdue", "due_today", "upcoming"]);
+    expect(groups.map((g) => g.status)).toEqual([
+      "overdue",
+      "due_today",
+      "upcoming",
+    ]);
   });
 });
 
@@ -208,7 +225,10 @@ describe("activeReminders", () => {
 
   it("vaikenee päivinä joita ei ole valittu", () => {
     expect(
-      activeReminders([task({ dueOn: "2026-08-29", remindDaysBefore: [1] })], TODAY),
+      activeReminders(
+        [task({ dueOn: "2026-08-29", remindDaysBefore: [1] })],
+        TODAY,
+      ),
     ).toEqual([]);
   });
 
@@ -244,8 +264,16 @@ describe("activeReminders", () => {
     expect(
       activeReminders(
         [
-          task({ id: "a", dueOn: "2026-08-20", completedAt: "2026-08-20T10:00:00.000Z" }),
-          task({ id: "b", dueOn: "2026-08-20", cancelledAt: "2026-08-20T10:00:00.000Z" }),
+          task({
+            id: "a",
+            dueOn: "2026-08-20",
+            completedAt: "2026-08-20T10:00:00.000Z",
+          }),
+          task({
+            id: "b",
+            dueOn: "2026-08-20",
+            cancelledAt: "2026-08-20T10:00:00.000Z",
+          }),
         ],
         TODAY,
       ),
@@ -262,7 +290,11 @@ describe("activeReminders", () => {
       TODAY,
     );
 
-    expect(reminders.map((r) => r.task.id)).toEqual(["myohassa", "tanaan", "tuleva"]);
+    expect(reminders.map((r) => r.task.id)).toEqual([
+      "myohassa",
+      "tanaan",
+      "tuleva",
+    ]);
   });
 });
 

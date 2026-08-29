@@ -34,7 +34,13 @@ export function SalesForm({
     <form action={action} className="mt-3 space-y-3">
       <input type="hidden" name="date" value={defaultDate} />
 
-      <div className={compact ? "flex flex-wrap items-end gap-3" : "grid gap-3 sm:grid-cols-2"}>
+      <div
+        className={
+          compact
+            ? "flex flex-wrap items-end gap-3"
+            : "grid gap-3 sm:grid-cols-2"
+        }
+      >
         <Field
           label="Veroton myynti"
           hint={compact ? undefined : "Kassan päiväraportin summa ilman ALV:tä"}
@@ -51,7 +57,10 @@ export function SalesForm({
         </Field>
 
         {compact ? null : (
-          <Field label="Tavoite" hint="Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan.">
+          <Field
+            label="Tavoite"
+            hint="Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan."
+          >
             <input
               name="target"
               inputMode="decimal"
@@ -67,7 +76,11 @@ export function SalesForm({
       </div>
 
       {state.error ? (
-        <p role="alert" className="text-[13px]" style={{ color: "var(--rf-red-text)" }}>
+        <p
+          role="alert"
+          className="text-[13px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </p>
       ) : null}
@@ -100,12 +113,18 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+      <span
+        className="block text-[12px] font-medium"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </span>
       <span className="mt-1 block">{children}</span>
       {hint ? (
-        <span className="mt-1 block text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <span
+          className="mt-1 block text-[11px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {hint}
         </span>
       ) : null}

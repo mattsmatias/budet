@@ -41,7 +41,9 @@ const getShiftPlan = defineTool({
   schema: z.object({ month: monthSchema.optional() }),
   async run(ctx, input) {
     const month = input.month ?? ctx.month;
-    const shifts = ctx.data.shifts.filter((shift) => shift.date.startsWith(month));
+    const shifts = ctx.data.shifts.filter((shift) =>
+      shift.date.startsWith(month),
+    );
 
     if (shifts.length === 0) {
       return {
@@ -51,15 +53,21 @@ const getShiftPlan = defineTool({
     }
 
     const plan = planSummary({ shifts, users: ctx.data.users });
-    const drafts = shifts.filter((shift) => publicationOf(shift) === "draft").length;
+    const drafts = shifts.filter(
+      (shift) => publicationOf(shift) === "draft",
+    ).length;
 
     /*
      * Henkilöstöbudjetti on kulubudjetti kategorialle staff.
      * Kuukausikohtainen voittaa toistuvan.
      */
     const budget =
-      ctx.data.budgets.find((b) => b.category === "staff" && b.month === month) ??
-      ctx.data.budgets.find((b) => b.category === "staff" && b.month === null) ??
+      ctx.data.budgets.find(
+        (b) => b.category === "staff" && b.month === month,
+      ) ??
+      ctx.data.budgets.find(
+        (b) => b.category === "staff" && b.month === null,
+      ) ??
       null;
 
     const overBy =
@@ -78,7 +86,9 @@ const getShiftPlan = defineTool({
     }
 
     if (budget === null) {
-      parts.push("Henkilöstöbudjettia ei ole asetettu, joten vertailukohtaa ei ole.");
+      parts.push(
+        "Henkilöstöbudjettia ei ole asetettu, joten vertailukohtaa ei ole.",
+      );
     } else if (overBy !== null && overBy > 0) {
       parts.push(
         `Suunnitelma YLITTÄÄ henkilöstöbudjetin ${formatMoney(overBy)} ` +
@@ -148,10 +158,14 @@ const getStaffingByDay = defineTool({
       weekend: day.weekend,
       people: roster.perDay[index],
       who: roster.rows
-        .filter((row) => row.user !== null && row.cells[index].shifts.length > 0)
+        .filter(
+          (row) => row.user !== null && row.cells[index].shifts.length > 0,
+        )
         .map((row) => ({
           name: row.user!.name,
-          times: row.cells[index].shifts.map((s) => `${s.startTime}–${s.endTime}`),
+          times: row.cells[index].shifts.map(
+            (s) => `${s.startTime}–${s.endTime}`,
+          ),
         })),
     }));
 
@@ -162,7 +176,10 @@ const getStaffingByDay = defineTool({
       summary:
         `${month}: miehitys 0–${busiest?.people ?? 0} henkeä päivässä. ` +
         (empty.length > 0
-          ? `${empty.length} päivää ilman ketään: ${empty.slice(0, 5).map((d) => d.date).join(", ")}${empty.length > 5 ? " ja muita" : ""}.`
+          ? `${empty.length} päivää ilman ketään: ${empty
+              .slice(0, 5)
+              .map((d) => d.date)
+              .join(", ")}${empty.length > 5 ? " ja muita" : ""}.`
           : "Jokaisena päivänä on vähintään yksi vuorossa.") +
         ` Yhteensä ${formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa.`,
       data: { month, days },
@@ -181,10 +198,14 @@ const getShiftProblems = defineTool({
   schema: z.object({ month: monthSchema.optional() }),
   async run(ctx, input) {
     const month = input.month ?? ctx.month;
-    const shifts = ctx.data.shifts.filter((shift) => shift.date.startsWith(month));
+    const shifts = ctx.data.shifts.filter((shift) =>
+      shift.date.startsWith(month),
+    );
 
     const overlaps = findOverlaps(shifts, ctx.data.users);
-    const open = ctx.data.openShifts.filter((shift) => shift.date.startsWith(month));
+    const open = ctx.data.openShifts.filter((shift) =>
+      shift.date.startsWith(month),
+    );
     const drafts = shifts.filter((shift) => publicationOf(shift) === "draft");
 
     if (overlaps.length === 0 && open.length === 0 && drafts.length === 0) {
@@ -225,8 +246,16 @@ const getShiftProblems = defineTool({
         month,
         overlaps: overlaps.map((pair) => ({
           user: pair.user?.name ?? null,
-          first: { date: pair.a.date, start: pair.a.startTime, end: pair.a.endTime },
-          second: { date: pair.b.date, start: pair.b.startTime, end: pair.b.endTime },
+          first: {
+            date: pair.a.date,
+            start: pair.a.startTime,
+            end: pair.a.endTime,
+          },
+          second: {
+            date: pair.b.date,
+            start: pair.b.startTime,
+            end: pair.b.endTime,
+          },
         })),
         openShifts: open.map((shift) => ({
           date: shift.date,

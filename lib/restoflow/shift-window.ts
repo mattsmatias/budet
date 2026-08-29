@@ -41,7 +41,10 @@ export function shiftLengthMinutes(shift: TimeSpan): number {
  * yksinkertaisempaa kuin kahden päivämäärän käsittely, ja vertailu
  * tehdään samassa yksikössä.
  */
-export function shiftBounds(shift: TimeSpan): { startMin: number; endMin: number } {
+export function shiftBounds(shift: TimeSpan): {
+  startMin: number;
+  endMin: number;
+} {
   const startMin = toMinutes(shift.startTime);
   return { startMin, endMin: startMin + shiftLengthMinutes(shift) };
 }
@@ -118,7 +121,11 @@ export function clockInState(input: {
   if (upcoming && upcoming.date === today) {
     const { startMin } = shiftBounds(upcoming);
     if (nowMin < startMin - earlyMinutes) {
-      return { kind: "too-early", shift: upcoming, opensAtMinutes: startMin - earlyMinutes };
+      return {
+        kind: "too-early",
+        shift: upcoming,
+        opensAtMinutes: startMin - earlyMinutes,
+      };
     }
   }
 
@@ -190,7 +197,9 @@ export function opensInMs(
   nowIso: string,
   timezone: string,
 ): number {
-  return Math.max(0, opensAtMinutes - minutesOfDayIn(timezone, nowIso)) * 60_000;
+  return (
+    Math.max(0, opensAtMinutes - minutesOfDayIn(timezone, nowIso)) * 60_000
+  );
 }
 
 /** "09:30" minuuteista keskiyöstä. Yli vuorokauden menevä kiertää ympäri. */

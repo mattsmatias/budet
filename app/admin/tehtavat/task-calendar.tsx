@@ -13,7 +13,13 @@ import { Card } from "@/components/restoflow/ui";
  * Sama ruudukko kuin työvuorokalenterissa: viikot riveinä ja
  * maanantai ensin.
  */
-export function TaskCalendar({ tasks, today }: { tasks: Task[]; today: string }) {
+export function TaskCalendar({
+  tasks,
+  today,
+}: {
+  tasks: Task[];
+  today: string;
+}) {
   const month = today.slice(0, 7);
   const weeks = monthCalendar(month, today);
 
@@ -25,7 +31,10 @@ export function TaskCalendar({ tasks, today }: { tasks: Task[]; today: string })
   return (
     <Card padded={false}>
       <div className="overflow-x-auto">
-        <table className="w-full" style={{ borderCollapse: "collapse", minWidth: "44rem" }}>
+        <table
+          className="w-full"
+          style={{ borderCollapse: "collapse", minWidth: "44rem" }}
+        >
           <caption className="sr-only">Tehtävät kuukauden päivillä</caption>
 
           <thead>
@@ -72,7 +81,11 @@ export function TaskCalendar({ tasks, today }: { tasks: Task[]; today: string })
                     >
                       <span
                         className="rf-tabular block text-[11.5px] font-semibold"
-                        style={{ color: day.isToday ? "var(--rf-accent-strong)" : "var(--rf-text-3)" }}
+                        style={{
+                          color: day.isToday
+                            ? "var(--rf-accent-strong)"
+                            : "var(--rf-text-3)",
+                        }}
                       >
                         {day.day}
                       </span>
@@ -85,7 +98,9 @@ export function TaskCalendar({ tasks, today }: { tasks: Task[]; today: string })
                               title={task.title}
                             >
                               <Piste status={statusOf(task, today)} />
-                              <span className="min-w-0 flex-1 truncate">{task.title}</span>
+                              <span className="min-w-0 flex-1 truncate">
+                                {task.title}
+                              </span>
                             </span>
                           </li>
                         ))}

@@ -91,7 +91,8 @@ const en: WorkerErrors = {
   passwordChangeFailed:
     "Changing the password did not work. Sign out and back in, then try again.",
   passwordChanged: "Password changed.",
-  migrationsMissing: "The database structures are missing. Run the migrations first.",
+  migrationsMissing:
+    "The database structures are missing. Run the migrations first.",
   noPermission: "You do not have permission for this action.",
   sessionExpired: "Your session has expired. Sign in again.",
   onlyManagerTimes: "Only a manager can change the times of a shift.",
@@ -100,7 +101,8 @@ const en: WorkerErrors = {
   birthdaySaved: "Birthday saved.",
   unknownShift: "Unknown shift.",
   someoneFirst: "Someone was first — the shift is already taken.",
-  overlappingShift: "You already have a shift at the same time. Ask your manager.",
+  overlappingShift:
+    "You already have a shift at the same time. Ask your manager.",
   shiftEnded: "The shift has already ended.",
   otherPosition: "The shift is for a different position.",
   claimingDisabled: "Taking shifts is not enabled at this restaurant.",
@@ -259,7 +261,8 @@ const et: WorkerErrors = {
   passwordChangeFailed:
     "Parooli vahetamine ebaõnnestus. Logi välja ja uuesti sisse ning proovi siis uuesti.",
   passwordChanged: "Parool vahetatud.",
-  migrationsMissing: "Andmebaasi struktuurid puuduvad. Käivita esmalt migratsioonid.",
+  migrationsMissing:
+    "Andmebaasi struktuurid puuduvad. Käivita esmalt migratsioonid.",
   noPermission: "Sul ei ole selleks toiminguks õigust.",
   sessionExpired: "Sinu sessioon on aegunud. Logi uuesti sisse.",
   onlyManagerTimes: "Vahetuse aegu saab muuta ainult juhataja.",
@@ -271,7 +274,8 @@ const et: WorkerErrors = {
   overlappingShift: "Sul on samal ajal juba vahetus. Küsi juhatajalt.",
   shiftEnded: "Vahetus on juba lõppenud.",
   otherPosition: "Vahetus on mõne teise ametikoha jaoks.",
-  claimingDisabled: "Selles restoranis ei ole vahetuste võtmine sisse lülitatud.",
+  claimingDisabled:
+    "Selles restoranis ei ole vahetuste võtmine sisse lülitatud.",
   claimFailed: "Vahetuse võtmine ebaõnnestus",
   shiftIsYours: "Vahetus on nüüd sinu.",
 };

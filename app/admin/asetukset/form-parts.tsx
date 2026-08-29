@@ -35,7 +35,10 @@ export function Field({
       <div className="mt-1.5">{children}</div>
 
       {hint ? (
-        <p className="mt-1.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-1.5 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {hint}
         </p>
       ) : null}
@@ -79,7 +82,10 @@ export function Toggle({
   return (
     <label
       className="rf-press flex cursor-pointer items-start gap-3 px-3.5 py-3"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       <input
         type="checkbox"
@@ -108,7 +114,13 @@ export function Toggle({
  * se työntäisi painikkeen alaspäin juuri kun siihen ollaan
  * osumassa uudestaan.
  */
-export function SaveRow({ state, label = "Tallenna" }: { state: AdminState; label?: string }) {
+export function SaveRow({
+  state,
+  label = "Tallenna",
+}: {
+  state: AdminState;
+  label?: string;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-3 pt-1">
       <Submit label={label} />
@@ -140,7 +152,11 @@ export function Submit({ label }: { label: string }) {
 export function Feedback({ state }: { state: AdminState }) {
   if (state.error) {
     return (
-      <p role="alert" className="text-[12.5px] font-semibold" style={{ color: "var(--rf-red-text)" }}>
+      <p
+        role="alert"
+        className="text-[12.5px] font-semibold"
+        style={{ color: "var(--rf-red-text)" }}
+      >
         {state.error}
       </p>
     );
@@ -148,7 +164,11 @@ export function Feedback({ state }: { state: AdminState }) {
 
   if (state.notice) {
     return (
-      <p role="status" className="text-[12.5px] font-semibold" style={{ color: "var(--rf-green-text)" }}>
+      <p
+        role="status"
+        className="text-[12.5px] font-semibold"
+        style={{ color: "var(--rf-green-text)" }}
+      >
         {state.notice}
       </p>
     );

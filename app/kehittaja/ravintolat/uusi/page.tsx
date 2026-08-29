@@ -17,7 +17,9 @@ export default function DevNewRestaurantPage() {
           Ravintolat
         </Link>
 
-        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em]">Luo ravintola</h1>
+        <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em]">
+          Luo ravintola
+        </h1>
       </header>
 
       <Wizard />

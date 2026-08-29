@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { type Labels } from "@/lib/i18n/labels";
 import { RfIcon } from "@/components/restoflow/icons";
-import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
+import { type Shift } from "@/lib/restoflow/types";
 import { Empty, Surface, Tag, shortDay } from "../ui";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { WorkerText } from "@/lib/i18n/worker-text";
@@ -16,11 +17,13 @@ import type { WorkerText } from "@/lib/i18n/worker-text";
  * näyttää samalta kuin Vuorot-sivun rivit.
  */
 export function NextShift({
+  nimet,
   shift,
   today,
   t,
   locale,
 }: {
+  nimet: Labels;
   shift: Shift | null;
   today: string;
   t: WorkerText;
@@ -28,7 +31,10 @@ export function NextShift({
 }) {
   if (!shift) {
     return (
-      <Empty title={t.koti.nextShiftEmpty} description={t.koti.nextShiftEmptyBody} />
+      <Empty
+        title={t.koti.nextShiftEmpty}
+        description={t.koti.nextShiftEmptyBody}
+      />
     );
   }
 
@@ -38,13 +44,18 @@ export function NextShift({
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-              {shift.date === today ? t.yleinen.today : shortDay(shift.date, locale)}
+              {shift.date === today
+                ? t.yleinen.today
+                : shortDay(shift.date, locale)}
             </p>
             <p className="rf-tabular mt-0.5 text-[20px] font-semibold tracking-tight">
               {shift.startTime}–{shift.endTime}
             </p>
             {shift.location ? (
-              <p className="mt-0.5 truncate text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              <p
+                className="mt-0.5 truncate text-[13px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {shift.location}
               </p>
             ) : null}
@@ -58,7 +69,7 @@ export function NextShift({
               </Tag>
             ) : (
               <Tag tone={shift.status === "changed" ? "info" : "neutral"}>
-                {SHIFT_STATUS_LABELS[shift.status]}
+                {nimet.shiftStatus[shift.status]}
               </Tag>
             )}
             <span style={{ color: "var(--rf-text-3)" }}>

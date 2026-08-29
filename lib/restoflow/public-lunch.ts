@@ -145,7 +145,9 @@ export function weekAsText(week: PublicWeek, publicUrl: string): string {
 
   if (legend.size > 0) {
     lines.push("");
-    lines.push([...legend].map(([short, label]) => `${short} = ${label}`).join(", "));
+    lines.push(
+      [...legend].map(([short, label]) => `${short} = ${label}`).join(", "),
+    );
   }
 
   lines.push("");

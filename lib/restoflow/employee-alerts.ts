@@ -12,12 +12,12 @@
 
 import { currentState, eventsOnDate } from "./timeclock";
 import { dayIn } from "./clock-context";
-import { SHIFT_STATUS_LABELS, type Absence, type ClockEvent, type Shift } from "./types";
+import { labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { Absence, ClockEvent, Shift } from "./types";
 
 export type EmployeeAlertKind =
-  | "shift_changed"
-  | "clock_open"
-  | "absence_reported";
+  "shift_changed" | "clock_open" | "absence_reported";
 
 export type EmployeeAlertSeverity = "action" | "info";
 
@@ -46,12 +46,10 @@ export interface EmployeeAlertContext {
  * Vastausta odottava vuoro on ensin: siitä on kiinni pääseekö
  * esihenkilö suunnittelemaan viikon loppuun.
  */
-export function buildEmployeeAlerts(ctx: EmployeeAlertContext): EmployeeAlert[] {
-  return [
-    ...changedShifts(ctx),
-    ...openClock(ctx),
-    ...reportedAbsences(ctx),
-  ];
+export function buildEmployeeAlerts(
+  ctx: EmployeeAlertContext,
+): EmployeeAlert[] {
+  return [...changedShifts(ctx), ...openClock(ctx), ...reportedAbsences(ctx)];
 }
 
 // ---------------------------------------------------------------------------
@@ -93,7 +91,9 @@ function openClock(ctx: EmployeeAlertContext): EmployeeAlert[] {
     .sort();
 
   const stuck = days.filter((day) => {
-    const state = currentState(eventsOnDate(ctx.clockEvents, day, ctx.timezone));
+    const state = currentState(
+      eventsOnDate(ctx.clockEvents, day, ctx.timezone),
+    );
     return state === "working" || state === "on_break";
   });
 
@@ -118,7 +118,9 @@ function openClock(ctx: EmployeeAlertContext): EmployeeAlert[] {
 
 /** Oma poissaoloilmoitus näkyy kuittauksena, ei toimenpiteenä. */
 function reportedAbsences(ctx: EmployeeAlertContext): EmployeeAlert[] {
-  const upcoming = ctx.absences.filter((absence) => absence.endDate >= ctx.today);
+  const upcoming = ctx.absences.filter(
+    (absence) => absence.endDate >= ctx.today,
+  );
   if (upcoming.length === 0) return [];
 
   return [
@@ -141,8 +143,8 @@ function reportedAbsences(ctx: EmployeeAlertContext): EmployeeAlert[] {
 // ---------------------------------------------------------------------------
 
 /** Vuoron tila sanoina — käytetään listauksissa. */
-export function shiftStatusText(shift: Shift): string {
-  return SHIFT_STATUS_LABELS[shift.status];
+export function shiftStatusText(shift: Shift, locale: AppLocale): string {
+  return labels(locale).shiftStatus[shift.status];
 }
 
 function formatDate(isoDate: string): string {

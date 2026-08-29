@@ -2,12 +2,7 @@ import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchTasks } from "@/lib/restoflow/queries";
-import {
-  countTasks,
-  isOpen,
-  statusOf,
-  type Task,
-} from "@/lib/restoflow/tasks";
+import { countTasks, isOpen, statusOf, type Task } from "@/lib/restoflow/tasks";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MetricCard } from "@/components/restoflow/ui";
 import { NewTask } from "./new-task";
@@ -28,10 +23,12 @@ export const metadata = { title: "Tehtävät" };
 export default async function TasksPage({
   searchParams,
 }: PageProps<"/admin/tehtavat">) {
-  const { restaurant, role, users, today } = await adminContext("/admin/tehtavat");
+  const { restaurant, role, users, today } =
+    await adminContext("/admin/tehtavat");
 
   const params = await searchParams;
-  const filter = typeof params.suodatin === "string" ? params.suodatin : "avoimet";
+  const filter =
+    typeof params.suodatin === "string" ? params.suodatin : "avoimet";
   const view = params.nakyma === "kalenteri" ? "kalenteri" : "lista";
   const search = typeof params.haku === "string" ? params.haku.trim() : "";
 
@@ -72,14 +69,20 @@ export default async function TasksPage({
           value={counts.overdue}
           tone="risk"
           href="/admin/tehtavat?suodatin=myohassa"
-          hint={counts.overdue === 0 ? "Ei myöhässä olevia" : "Eräpäivä on mennyt"}
+          hint={
+            counts.overdue === 0 ? "Ei myöhässä olevia" : "Eräpäivä on mennyt"
+          }
         />
         <Luku
           label="Erääntyy tänään"
           value={counts.dueToday}
           tone="warn"
           href="/admin/tehtavat?suodatin=tanaan"
-          hint={counts.dueToday === 0 ? "Ei tämän päivän tehtäviä" : "Hoidettava tänään"}
+          hint={
+            counts.dueToday === 0
+              ? "Ei tämän päivän tehtäviä"
+              : "Hoidettava tänään"
+          }
         />
         <Luku
           label="Tulevat"
@@ -106,7 +109,10 @@ export default async function TasksPage({
 
         <div
           className="flex items-center gap-0.5 p-0.5"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <Valinta
             href={`/admin/tehtavat?suodatin=${filter}`}
@@ -273,7 +279,9 @@ function Luku({
       tileTone={active ? sävy : "muted"}
       icon={
         <RfIcon
-          name={tone === "risk" ? "alert" : tone === "warn" ? "clock" : "calendar"}
+          name={
+            tone === "risk" ? "alert" : tone === "warn" ? "clock" : "calendar"
+          }
           size={17}
         />
       }

@@ -16,7 +16,14 @@
  */
 
 import { shiftDurationMinutes } from "./shifts";
-import type { AbsenceKind, Absence, OpenShift, Shift, ShiftStatus, User } from "./types";
+import type {
+  AbsenceKind,
+  Absence,
+  OpenShift,
+  Shift,
+  ShiftStatus,
+  User,
+} from "./types";
 
 export interface RosterShift {
   startTime: string;
@@ -103,10 +110,16 @@ export function monthDays(month: string): RosterDay[] {
  * Jakso on suljettu molemmista päistä: yhden päivän poissaolossa
  * date ja endDate ovat sama päivä.
  */
-function absenceOn(absences: Absence[], userId: string, date: string): AbsenceKind | null {
+function absenceOn(
+  absences: Absence[],
+  userId: string,
+  date: string,
+): AbsenceKind | null {
   const hit = absences.find(
     (absence) =>
-      absence.userId === userId && absence.date <= date && absence.endDate >= date,
+      absence.userId === userId &&
+      absence.date <= date &&
+      absence.endDate >= date,
   );
 
   return hit?.kind ?? null;
@@ -142,7 +155,9 @@ export function buildRoster(input: {
   const openShifts = input.openShifts.filter((open) => dates.has(open.date));
 
   const absences = input.absences.filter(
-    (absence) => absence.date <= days[days.length - 1]?.date && absence.endDate >= days[0]?.date,
+    (absence) =>
+      absence.date <= days[days.length - 1]?.date &&
+      absence.endDate >= days[0]?.date,
   );
 
   const userIds = new Set<string>([
@@ -157,7 +172,9 @@ export function buildRoster(input: {
       const cells = days.map((day) => ({
         date: day.date,
         shifts: shifts
-          .filter((shift) => shift.userId === user.id && shift.date === day.date)
+          .filter(
+            (shift) => shift.userId === user.id && shift.date === day.date,
+          )
           .sort((a, b) => a.startTime.localeCompare(b.startTime))
           .map(toRosterShift),
         absence: absenceOn(absences, user.id, day.date),
@@ -201,8 +218,11 @@ export function buildRoster(input: {
     });
   }
 
-  const perDay = days.map((_, index) =>
-    rows.filter((row) => row.user !== null && row.cells[index].shifts.length > 0).length,
+  const perDay = days.map(
+    (_, index) =>
+      rows.filter(
+        (row) => row.user !== null && row.cells[index].shifts.length > 0,
+      ).length,
   );
 
   return {
@@ -264,10 +284,3 @@ export function shortTime(time: string): string {
 export function shiftLabel(shift: RosterShift): string {
   return `${shortTime(shift.startTime)}–${shortTime(shift.endTime)}`;
 }
-
-/** Lyhenne poissaololle. Ruudussa on tilaa kahdelle merkille. */
-export const ABSENCE_SHORT: Record<AbsenceKind, string> = {
-  sick: "SL",
-  other: "P",
-  cannot_attend: "EP",
-};

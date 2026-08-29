@@ -24,13 +24,18 @@ import "../worker.css";
  * ja sisääntuloliike. Värit tulevat yhä theme.css:stä, joten tumma
  * teema toimii eikä punaista ole kahta.
  */
-export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
+export default async function EmployeeAppLayout({
+  children,
+}: LayoutProps<"/app">) {
   const { user } = await requireContext("/app");
   const t = workerText(await resolveLocale());
 
   return (
     <div className="bd-app flex min-h-screen justify-center lg:justify-start">
-      <AppSidebar userName={user.fullName ?? user.email ?? t.yleinen.user} t={t} />
+      <AppSidebar
+        userName={user.fullName ?? user.email ?? t.yleinen.user}
+        t={t}
+      />
 
       <div
         className="relative flex min-h-screen w-full max-w-md flex-col lg:max-w-none"

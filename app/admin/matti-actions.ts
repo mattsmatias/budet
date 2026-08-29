@@ -73,10 +73,13 @@ export async function confirmMattiAction(
   const supabase = await createClient();
 
   // Varaa ehdotus. Palauttaa rivin vain kerran.
-  const { data: rows, error: claimError } = await supabase.rpc("ai_resolve_action", {
-    p_action: parsed.data,
-    p_status: "confirmed",
-  });
+  const { data: rows, error: claimError } = await supabase.rpc(
+    "ai_resolve_action",
+    {
+      p_action: parsed.data,
+      p_status: "confirmed",
+    },
+  );
 
   const action = normalizeRow(rows);
 
@@ -87,14 +90,30 @@ export async function confirmMattiAction(
   const tool = findTool(action.tool);
 
   if (!tool || tool.level !== "write") {
-    await log(supabase, action, restaurant.id, null, null, false, "Tuntematon työkalu");
+    await log(
+      supabase,
+      action,
+      restaurant.id,
+      null,
+      null,
+      false,
+      "Tuntematon työkalu",
+    );
     return { error: "Tuntematon toiminto." };
   }
 
   // Oikeus tarkistetaan uudelleen suoritushetkellä. Rooli on voinut
   // muuttua ehdotuksen ja hyväksynnän välissä.
   if (!can(role, tool.requires)) {
-    await log(supabase, action, restaurant.id, null, null, false, "Ei oikeutta");
+    await log(
+      supabase,
+      action,
+      restaurant.id,
+      null,
+      null,
+      false,
+      "Ei oikeutta",
+    );
     return { error: "Sinulla ei ole oikeutta tähän toimintoon." };
   }
 
@@ -217,20 +236,20 @@ async function execute(
     case "propose_lunch_items": {
       const { days, replace, priceEuros, includesDessert, includesCoffee } =
         args as {
-        priceEuros?: number;
-        includesDessert?: boolean;
-        includesCoffee?: boolean;
-        days: {
-          date: string;
-          items: {
-            name: string;
-            description?: string;
-            diets?: string[];
-            allergens?: string[];
+          priceEuros?: number;
+          includesDessert?: boolean;
+          includesCoffee?: boolean;
+          days: {
+            date: string;
+            items: {
+              name: string;
+              description?: string;
+              diets?: string[];
+              allergens?: string[];
+            }[];
           }[];
-        }[];
-        replace?: boolean;
-      };
+          replace?: boolean;
+        };
 
       const { restaurant } = await requireContext("/admin");
 
@@ -374,7 +393,11 @@ async function execute(
     }
 
     case "propose_lunch_price": {
-      const { weekStart: rawWeek, euros, priceName } = args as {
+      const {
+        weekStart: rawWeek,
+        euros,
+        priceName,
+      } = args as {
         weekStart: string;
         euros: number;
         priceName?: string;
@@ -470,9 +493,12 @@ async function lunchDay(
 
   return {
     id: data.id as string,
-    prices: ((data.lunch_prices as unknown as { name: string; price_cents: number }[]) ?? []).map(
-      (p) => ({ name: p.name, cents: p.price_cents }),
-    ),
+    prices: (
+      (data.lunch_prices as unknown as {
+        name: string;
+        price_cents: number;
+      }[]) ?? []
+    ).map((p) => ({ name: p.name, cents: p.price_cents })),
   };
 }
 
@@ -489,7 +515,8 @@ async function lunchMenu(
   if (!data) return null;
 
   const prices =
-    (data.lunch_prices as unknown as { name: string; price_cents: number }[]) ?? [];
+    (data.lunch_prices as unknown as { name: string; price_cents: number }[]) ??
+    [];
 
   return {
     id: data.id as string,

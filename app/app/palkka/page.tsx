@@ -32,6 +32,7 @@ export const metadata = { title: "Palkkani" };
  * tule tänne edes vahingossa.
  */
 export default async function MyPayPage() {
+  const locale = await resolveLocale();
   const { user, restaurant, month, now } = await employeeContext("/app/palkka");
   const t = workerText(await resolveLocale());
 
@@ -83,7 +84,10 @@ export default async function MyPayPage() {
     timezone: restaurant.timezone,
   });
 
-  const supplements = new Map<string, { name: string; cents: number; minutes: number }>();
+  const supplements = new Map<
+    string,
+    { name: string; cents: number; minutes: number }
+  >();
   for (const line of slip.lines) {
     if (line.componentId === null) continue;
     const row = supplements.get(line.componentId) ?? {
@@ -100,7 +104,10 @@ export default async function MyPayPage() {
 
   return (
     <div className="rf-enter space-y-6">
-      <PageHeader title={t.lisatiedot.payTitle} subtitle={formatMonth(month)} />
+      <PageHeader
+        title={t.lisatiedot.payTitle}
+        subtitle={formatMonth(month, locale)}
+      />
 
       <Surface>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
@@ -117,7 +124,10 @@ export default async function MyPayPage() {
         </p>
 
         {supplements.size > 0 ? (
-          <dl className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
+          <dl
+            className="mt-4 space-y-1.5 border-t pt-4"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
             <div className="flex justify-between text-[13px]">
               <dt style={{ color: "var(--rf-text-2)" }}>{t.palkka.basePay}</dt>
               <dd className="rf-tabular">{formatMoney(slip.baseCents)}</dd>
@@ -133,7 +143,10 @@ export default async function MyPayPage() {
           </dl>
         ) : null}
 
-        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="mt-4 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {t.lisatiedot.payDisclaimer}
         </p>
       </Surface>
@@ -143,7 +156,10 @@ export default async function MyPayPage() {
           <h2 className="text-[15px] font-semibold">{t.palkka.toCheck}</h2>
           <ul className="mt-2 space-y-2">
             {slip.issues.map((issue, index) => (
-              <li key={index} className="flex items-start gap-2.5 text-[13px] leading-relaxed">
+              <li
+                key={index}
+                className="flex items-start gap-2.5 text-[13px] leading-relaxed"
+              >
                 <span style={{ color: "var(--rf-amber-text)" }}>
                   <RfIcon name="alert" size={15} />
                 </span>
@@ -151,7 +167,10 @@ export default async function MyPayPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-3 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {t.lisatiedot.payIssuesNote}
           </p>
         </Surface>
@@ -161,23 +180,41 @@ export default async function MyPayPage() {
         <Surface padded={false}>
           <div className="px-5 pt-5">
             <h2 className="text-[15px] font-semibold">{t.palkka.days}</h2>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {t.palkka.fromStamps}
             </p>
           </div>
 
           {days.length === 0 ? (
-            <p className="px-5 pt-3 pb-5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="px-5 pt-3 pb-5 text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {t.palkka.empty}
             </p>
           ) : (
-            <ul className="mt-3 divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <ul
+              className="mt-3 divide-y"
+              style={{ borderColor: "var(--rf-line)" }}
+            >
               {days.map((line) => (
-                <li key={line.date} className="flex items-baseline justify-between gap-3 px-5 py-3">
+                <li
+                  key={line.date}
+                  className="flex items-baseline justify-between gap-3 px-5 py-3"
+                >
                   <span className="min-w-0">
-                    <span className="block text-[14px] font-medium">{fi(line.date)}</span>
-                    <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {line.description} · {formatDuration(line.minutes * 60000)}
+                    <span className="block text-[14px] font-medium">
+                      {fi(line.date)}
+                    </span>
+                    <span
+                      className="block text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {line.description} ·{" "}
+                      {formatDuration(line.minutes * 60000)}
                     </span>
                   </span>
                   <span className="rf-tabular shrink-0 text-[14px] font-semibold">

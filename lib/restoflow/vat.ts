@@ -31,7 +31,10 @@ const SUM_TOLERANCE_CENTS = 2;
  * Palauttaa null jos nettoa ei voi laskea — nollalla jakaminen tuottaisi
  * Infinityn, joka näyttäisi käyttöliittymässä verokannalta.
  */
-export function inferVatRate(totalCents: number, vatCents: number): number | null {
+export function inferVatRate(
+  totalCents: number,
+  vatCents: number,
+): number | null {
   const netCents = totalCents - vatCents;
   if (netCents <= 0) return null;
   return vatCents / netCents;
@@ -97,7 +100,9 @@ function vatFromLines(
     0,
   );
 
-  const rates = [...new Set(lines.map((line) => line.vatRate!))].sort((a, b) => b - a);
+  const rates = [...new Set(lines.map((line) => line.vatRate!))].sort(
+    (a, b) => b - a,
+  );
 
   return { cents, rates };
 }
@@ -223,7 +228,10 @@ export function dominantCategory(
 
   const totals = new Map<ExpenseCategory, number>();
   for (const item of items) {
-    totals.set(item.category, (totals.get(item.category) ?? 0) + item.totalCents);
+    totals.set(
+      item.category,
+      (totals.get(item.category) ?? 0) + item.totalCents,
+    );
   }
 
   let best: ExpenseCategory = fallback;
@@ -282,9 +290,7 @@ export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
     };
 
     const vat =
-      line.vatRate === null
-        ? 0
-        : vatFromGross(line.totalCents, line.vatRate);
+      line.vatRate === null ? 0 : vatFromGross(line.totalCents, line.vatRate);
 
     current.grossCents += line.totalCents;
     current.vatCents += vat;
@@ -313,7 +319,10 @@ export function vatByRate(lines: RatedLine[]): VatRateTotal[] {
  * paikassa, ja neljä kopiota yhdestä säännöstä on kolme mahdollisuutta
  * eriytyä.
  */
-export function lineVatCents(totalCents: number, vatRate: number | null): number | null {
+export function lineVatCents(
+  totalCents: number,
+  vatRate: number | null,
+): number | null {
   if (vatRate === null) return null;
   return vatFromGross(totalCents, vatRate);
 }

@@ -21,7 +21,14 @@ import { formatMoney } from "../money";
 import { compareSales, type DailySales } from "./sales";
 import { shiftBounds } from "./shift-window";
 import { currentState, eventsOnDate } from "./timeclock";
-import type { Alert, ClockEvent, OpenShift, Receipt, Shift, User } from "./types";
+import type {
+  Alert,
+  ClockEvent,
+  OpenShift,
+  Receipt,
+  Shift,
+  User,
+} from "./types";
 import { daysLate, statusOf, type Task } from "./tasks";
 
 /** Vuoron alusta tämän jälkeen puuttuva sisäänleimaus on poikkeama. */
@@ -112,7 +119,9 @@ function taskDeadlines(ctx: OperationsContext): Alert[] {
         kind: "task_due",
         severity: task.priority === "critical" ? "critical" : "warning",
         title: task.title,
-        detail: task.dueTime ? `Erääntyy tänään klo ${task.dueTime}.` : "Erääntyy tänään.",
+        detail: task.dueTime
+          ? `Erääntyy tänään klo ${task.dueTime}.`
+          : "Erääntyy tänään.",
         href: "/admin/tehtavat?suodatin=tanaan",
         entityId: task.id,
       });
@@ -285,11 +294,16 @@ function salesShortfall(ctx: OperationsContext): Alert[] {
 function receiptGap(ctx: OperationsContext): Alert[] {
   if (ctx.receipts.length === 0) return [];
 
-  const latest = ctx.receipts.reduce((max, r) => (r.date > max ? r.date : max), "");
+  const latest = ctx.receipts.reduce(
+    (max, r) => (r.date > max ? r.date : max),
+    "",
+  );
   const gap = daysBetween(latest, ctx.today);
   if (gap < RECEIPT_GAP_DAYS) return [];
 
-  const worked = ctx.clockEvents.some((e) => dayIn(ctx.timezone, e.at) > latest);
+  const worked = ctx.clockEvents.some(
+    (e) => dayIn(ctx.timezone, e.at) > latest,
+  );
   if (!worked) return [];
 
   return [

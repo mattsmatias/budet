@@ -10,10 +10,7 @@ export default function Loading() {
 
       <div className="grid grid-cols-2 gap-3">
         {[0, 1].map((box) => (
-          <div
-            key={box}
-            className="bd-app-card px-4 py-3.5"
-          >
+          <div key={box} className="bd-app-card px-4 py-3.5">
             <div className="rf-skeleton-block h-3.5 w-24" />
             <div className="rf-skeleton-block mt-2 h-6 w-20" />
           </div>

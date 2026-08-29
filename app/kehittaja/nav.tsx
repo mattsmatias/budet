@@ -39,7 +39,10 @@ export function DevNav() {
         </Link>
       </div>
 
-      <nav aria-label="Konsolin navigaatio" className="flex-1 overflow-y-auto px-3 pb-2">
+      <nav
+        aria-label="Konsolin navigaatio"
+        className="flex-1 overflow-y-auto px-3 pb-2"
+      >
         {DEV_NAV.map((section) => (
           <div key={section.id}>
             {section.id === "main" ? null : (
@@ -54,7 +57,9 @@ export function DevNav() {
 
             <ul
               aria-label={section.id === "main" ? section.label : undefined}
-              aria-labelledby={section.id === "main" ? undefined : `dev-nav-${section.id}`}
+              aria-labelledby={
+                section.id === "main" ? undefined : `dev-nav-${section.id}`
+              }
             >
               {section.items.map((item) => {
                 const active = isDevPath(pathname, item.href);
@@ -87,7 +92,10 @@ export function DevNav() {
         Ylläpitäjä on myös tavallinen käyttäjä. Ilman tätä riviä
         konsolista pääsee pois vain kirjoittamalla osoitteen käsin.
       */}
-      <div className="border-t px-3 py-2" style={{ borderColor: "var(--rf-line)" }}>
+      <div
+        className="border-t px-3 py-2"
+        style={{ borderColor: "var(--rf-line)" }}
+      >
         <Link
           href="/admin"
           className="rf-rail-link rf-press flex items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-[13px] font-medium"

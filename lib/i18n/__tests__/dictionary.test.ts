@@ -31,10 +31,14 @@ describe("jokainen kieli on täydellinen", () => {
   });
 
   it("kaikilla kielillä on samat avaimet", () => {
-    const reference = everyString(dictionary("fi")).map(([path]) => path).sort();
+    const reference = everyString(dictionary("fi"))
+      .map(([path]) => path)
+      .sort();
 
     for (const [locale, d] of dicts) {
-      const keys = everyString(d).map(([path]) => path).sort();
+      const keys = everyString(d)
+        .map(([path]) => path)
+        .sort();
       expect(keys, locale).toEqual(reference);
     }
   });

@@ -1,6 +1,11 @@
 import type { MattiContext } from "./context";
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
-import { formatWeekRange, isoWeekNumber, nextWeek, weekStartOf } from "@/lib/restoflow/lunch";
+import {
+  formatWeekRange,
+  isoWeekNumber,
+  nextWeek,
+  weekStartOf,
+} from "@/lib/restoflow/lunch";
 
 /**
  * Matin järjestelmäkehote.

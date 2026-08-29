@@ -52,7 +52,10 @@ export function SendToAccountant({
     `&body=${encodeURIComponent(body)}`;
 
   return (
-    <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
+    <div
+      className="mt-5 border-t pt-4"
+      style={{ borderColor: "var(--rf-line)" }}
+    >
       <p className="text-[13px] font-semibold">Jos haluat lähettää tiedostot</p>
 
       <p

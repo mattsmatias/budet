@@ -12,7 +12,10 @@ export const metadata = { title: "Järjestelmän tila" };
  */
 export const dynamic = "force-dynamic";
 
-const TILA: Record<CheckState, { label: string; tone: "ok" | "warn" | "risk" | "info" }> = {
+const TILA: Record<
+  CheckState,
+  { label: string; tone: "ok" | "warn" | "risk" | "info" }
+> = {
   ok: { label: "Toimii", tone: "ok" },
   warn: { label: "Hidas", tone: "warn" },
   down: { label: "Poikki", tone: "risk" },
@@ -28,10 +31,17 @@ export default async function DevHealthPage() {
   return (
     <div className="rf-stagger space-y-5">
       <header>
-        <h1 className="text-[22px] font-bold tracking-[-0.02em]">Järjestelmän tila</h1>
+        <h1 className="text-[22px] font-bold tracking-[-0.02em]">
+          Järjestelmän tila
+        </h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Jokainen rivi on oikea kokeilu, ei tallennettu tila. Mittaus tehtiin{" "}
-          {new Date().toLocaleTimeString("fi-FI", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}.
+          {new Date().toLocaleTimeString("fi-FI", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
+          .
         </p>
       </header>
 
@@ -73,7 +83,10 @@ export default async function DevHealthPage() {
                   ? "Kaikki vastaa, osa hitaasti"
                   : "Kaikki toimii"}
             </h2>
-            <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {poikki.length > 0
                 ? poikki.map((c) => c.label).join(", ")
                 : "Tietokanta, tunnistautuminen ja tallennustila vastaavat normaalisti."}
@@ -91,16 +104,27 @@ export default async function DevHealthPage() {
           {checks.map((check) => {
             const tila = TILA[check.state];
             return (
-              <li key={check.key} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+              <li
+                key={check.key}
+                className="flex flex-wrap items-center gap-3 px-5 py-3.5"
+              >
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold">{check.label}</span>
-                  <span className="block text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                  <span className="block text-[14px] font-semibold">
+                    {check.label}
+                  </span>
+                  <span
+                    className="block text-[12.5px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {check.detail}
                   </span>
                 </span>
 
                 {check.ms !== null ? (
-                  <span className="rf-tabular text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                  <span
+                    className="rf-tabular text-[12.5px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     {check.ms} ms
                   </span>
                 ) : null}
@@ -114,7 +138,10 @@ export default async function DevHealthPage() {
         </ul>
       </Card>
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         Sähköpostia ja maksuintegraatiota ei ole otettu käyttöön, joten ne
         näkyvät tilassa &quot;ei käytössä&quot;. Vihreä väittäisi että ne
         toimivat, punainen että ne ovat rikki — kumpikaan ei olisi totta.

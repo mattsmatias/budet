@@ -74,8 +74,13 @@ describe("viikon liikkuminen", () => {
 
   it("antaa viikon seitsemän päivää järjestyksessä", () => {
     expect(weekDates("2026-08-24")).toEqual([
-      "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27",
-      "2026-08-28", "2026-08-29", "2026-08-30",
+      "2026-08-24",
+      "2026-08-25",
+      "2026-08-26",
+      "2026-08-27",
+      "2026-08-28",
+      "2026-08-29",
+      "2026-08-30",
     ]);
   });
 });
@@ -161,22 +166,37 @@ describe("julkaisemattomat muutokset", () => {
 describe("sisältö", () => {
   const withItems = week({
     days: [
-      { id: "d1", date: "2026-08-24", items: [
-        { id: "i1", name: "Lohikeitto", description: null, sortOrder: 0, diets: [], allergens: [] },
-      ] },
+      {
+        id: "d1",
+        date: "2026-08-24",
+        items: [
+          {
+            id: "i1",
+            name: "Lohikeitto",
+            description: null,
+            sortOrder: 0,
+            diets: [],
+            allergens: [],
+          },
+        ],
+      },
       { id: "d2", date: "2026-08-25", items: [] },
     ],
   });
 
   it("tietää onko viikossa ruokia", () => {
     expect(hasContent(withItems)).toBe(true);
-    expect(hasContent(week({ days: [{ id: "d", date: "2026-08-24", items: [] }] }))).toBe(false);
+    expect(
+      hasContent(week({ days: [{ id: "d", date: "2026-08-24", items: [] }] })),
+    ).toBe(false);
   });
 
   // Tyhjä päivä julkisella sivulla näyttäisi siltä että ravintola on
   // kiinni, vaikka lista on vain kesken.
   it("jättää tyhjät päivät pois", () => {
-    expect(daysWithContent(withItems).map((d) => d.date)).toEqual(["2026-08-24"]);
+    expect(daysWithContent(withItems).map((d) => d.date)).toEqual([
+      "2026-08-24",
+    ]);
   });
 });
 
@@ -235,10 +255,7 @@ describe("mitä hintaan sisältyy", () => {
 describe("jälkiruoan ja kahvin periytyminen", () => {
   it("perii edelliseltä viikolta kun mitään ei ole sanottu", () => {
     expect(
-      inheritedIncludes(
-        {},
-        { includesDessert: false, includesCoffee: true },
-      ),
+      inheritedIncludes({}, { includesDessert: false, includesCoffee: true }),
     ).toEqual({ includesDessert: false, includesCoffee: true });
   });
 

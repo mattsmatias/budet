@@ -89,7 +89,5 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 
 /** Tuntematon osio putoaa ensimmäiseen: osoiterivin voi kirjoittaa itse. */
 export function sectionFor(id: unknown): SettingsSection {
-  return (
-    SETTINGS_SECTIONS.find((s) => s.id === id) ?? SETTINGS_SECTIONS[0]
-  );
+  return SETTINGS_SECTIONS.find((s) => s.id === id) ?? SETTINGS_SECTIONS[0];
 }

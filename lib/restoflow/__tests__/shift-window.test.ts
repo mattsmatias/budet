@@ -67,11 +67,15 @@ describe("vuoron pituus", () => {
   });
 
   it("laskee yön yli menevän vuoron", () => {
-    expect(shiftLengthMinutes(shift({ startTime: "22:00", endTime: "02:00" }))).toBe(240);
+    expect(
+      shiftLengthMinutes(shift({ startTime: "22:00", endTime: "02:00" })),
+    ).toBe(240);
   });
 
   it("antaa loppuhetken yli vuorokauden yön vuorolle", () => {
-    expect(shiftBounds(shift({ startTime: "22:00", endTime: "02:00" }))).toEqual({
+    expect(
+      shiftBounds(shift({ startTime: "22:00", endTime: "02:00" })),
+    ).toEqual({
       startMin: 22 * 60,
       endMin: 26 * 60,
     });
@@ -88,7 +92,9 @@ describe("ei vuoroa", () => {
   });
 
   it("estää leimauksen hylätyllä vuorolla", () => {
-    expect(state([shift({ status: "declined" })], "12:00").kind).toBe("no-shift");
+    expect(state([shift({ status: "declined" })], "12:00").kind).toBe(
+      "no-shift",
+    );
   });
 
   it("kertoo seuraavan vuoron vaikka tänään ei ole", () => {
@@ -103,7 +109,8 @@ describe("liian aikaisin", () => {
   it("ei avaa ikkunaa tuntia ennen", () => {
     const s = state([shift()], "09:00");
     expect(s.kind).toBe("too-early");
-    if (s.kind === "too-early") expect(formatMinuteOfDay(s.opensAtMinutes)).toBe("09:30");
+    if (s.kind === "too-early")
+      expect(formatMinuteOfDay(s.opensAtMinutes)).toBe("09:30");
   });
 
   /*
@@ -159,7 +166,9 @@ describe("yön yli menevä vuoro", () => {
    */
   it("sallii leimauksen keskiyön jälkeen edellisen päivän vuorolla", () => {
     const s = clockInState({
-      shifts: [shift({ date: "2026-08-23", startTime: "22:00", endTime: "02:00" })],
+      shifts: [
+        shift({ date: "2026-08-23", startTime: "22:00", endTime: "02:00" }),
+      ],
       userId: "u1",
       nowIso: at("00:30"),
       timezone: ZONE,
@@ -170,7 +179,9 @@ describe("yön yli menevä vuoro", () => {
 
   it("sulkee ikkunan yövuoron loputtua", () => {
     const s = clockInState({
-      shifts: [shift({ date: "2026-08-23", startTime: "22:00", endTime: "02:00" })],
+      shifts: [
+        shift({ date: "2026-08-23", startTime: "22:00", endTime: "02:00" }),
+      ],
       userId: "u1",
       nowIso: at("02:30"),
       timezone: ZONE,
@@ -216,7 +227,9 @@ describe("seuraava vuoro", () => {
     const morning = shift({ id: "aamu", startTime: "08:00", endTime: "12:00" });
     const evening = shift({ id: "ilta", startTime: "17:00", endTime: "22:00" });
 
-    expect(nextShiftFrom([morning, evening], at("13:00"), ZONE)?.id).toBe("ilta");
+    expect(nextShiftFrom([morning, evening], at("13:00"), ZONE)?.id).toBe(
+      "ilta",
+    );
   });
 
   it("järjestää saman päivän vuorot alkuajan mukaan", () => {
@@ -225,7 +238,9 @@ describe("seuraava vuoro", () => {
     const evening = shift({ id: "ilta", startTime: "17:00", endTime: "22:00" });
     const morning = shift({ id: "aamu", startTime: "08:00", endTime: "12:00" });
 
-    expect(nextShiftFrom([evening, morning], at("06:00"), ZONE)?.id).toBe("aamu");
+    expect(nextShiftFrom([evening, morning], at("06:00"), ZONE)?.id).toBe(
+      "aamu",
+    );
   });
 
   it("ei palauta hylättyä vuoroa", () => {
@@ -269,7 +284,9 @@ describe("ikkunan avautumiseen jäävä aika", () => {
     // 06:45Z on Helsingissä 09:45, eli ikkuna on juuri auennut.
     expect(opensInMs(585, "2026-08-24T06:45:00.000Z", ZONE)).toBe(0);
     // UTC:nä luettuna kello olisi 06:45 ja odotusta jäisi kolme tuntia.
-    expect(opensInMs(585, "2026-08-24T06:45:00.000Z", "UTC")).toBe(180 * 60_000);
+    expect(opensInMs(585, "2026-08-24T06:45:00.000Z", "UTC")).toBe(
+      180 * 60_000,
+    );
   });
 });
 
@@ -281,7 +298,9 @@ describe("ikkunan avautumiseen jäävä aika", () => {
  */
 describe("julkaisu ja peruutus", () => {
   it("ei avaa leimausta luonnokselle", () => {
-    expect(state([shift({ publishedAt: null })], "10:00").kind).toBe("no-shift");
+    expect(state([shift({ publishedAt: null })], "10:00").kind).toBe(
+      "no-shift",
+    );
   });
 
   it("ei avaa leimausta perutulle vuorolle", () => {

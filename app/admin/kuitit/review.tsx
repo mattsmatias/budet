@@ -1,14 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteReceipt, reviewReceipt, type AdminState } from "../actions";
-import {
-  CATEGORY_LABELS,
-  PAYMENT_LABELS,
-  REVIEW_REASON_LABELS,
-  type Receipt,
-} from "@/lib/restoflow/types";
+import { type Receipt } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Pill } from "@/components/restoflow/ui";
 
@@ -21,7 +17,13 @@ const initial: AdminState = {};
  * muokkauksena ja hyväksyntänä kuitti voisi jäädä tilaan jossa se on
  * hyväksytty mutta vanhoilla arvoilla.
  */
-export function ReviewPanel({ receipt }: { receipt: Receipt }) {
+export function ReviewPanel({
+  nimet,
+  receipt,
+}: {
+  nimet: Labels;
+  receipt: Receipt;
+}) {
   const [state, action] = useActionState(reviewReceipt, initial);
   const [open, setOpen] = useState(false);
 
@@ -63,8 +65,17 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
     <form action={action} className="mt-3 space-y-3">
       <input type="hidden" name="receiptId" value={receipt.id} />
 
-      <Field label="Toimittaja" name="supplier" defaultValue={receipt.supplierName} />
-      <Field label="Päivämäärä" name="date" type="date" defaultValue={receipt.date} />
+      <Field
+        label="Toimittaja"
+        name="supplier"
+        defaultValue={receipt.supplierName}
+      />
+      <Field
+        label="Päivämäärä"
+        name="date"
+        type="date"
+        defaultValue={receipt.date}
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <Field
@@ -77,7 +88,9 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
           label="ALV"
           name="vat"
           inputMode="decimal"
-          defaultValue={receipt.vatCents === null ? "" : euros(receipt.vatCents)}
+          defaultValue={
+            receipt.vatCents === null ? "" : euros(receipt.vatCents)
+          }
           warn={receipt.vatCents === null}
         />
       </div>
@@ -86,20 +99,20 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
         label="Kategoria"
         name="category"
         defaultValue={receipt.category}
-        options={Object.entries(CATEGORY_LABELS)}
+        options={Object.entries(nimet.categories)}
       />
       <SelectField
         label="Maksutapa"
         name="payment"
         defaultValue={receipt.paymentMethod}
-        options={Object.entries(PAYMENT_LABELS)}
+        options={Object.entries(nimet.payments)}
       />
 
       {receipt.reviewReasons.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {receipt.reviewReasons.map((r) => (
             <Pill key={r} tone="warn" dot>
-              {REVIEW_REASON_LABELS[r]}
+              {nimet.reviewReasons[r]}
             </Pill>
           ))}
         </div>
@@ -146,7 +159,10 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
         </button>
       </div>
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         Kategorian muutos kirjataan toimittajalle. Kun sama korjaus toistuu,
         Kate ehdottaa sitä jatkossa.
       </p>
@@ -258,7 +274,11 @@ function Field({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+      <label
+        htmlFor={id}
+        className="block text-[12px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </label>
       <input
@@ -292,7 +312,11 @@ function SelectField({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-[12px]" style={{ color: "var(--rf-text-2)" }}>
+      <label
+        htmlFor={id}
+        className="block text-[12px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </label>
       <select
@@ -300,7 +324,10 @@ function SelectField({
         name={name}
         defaultValue={defaultValue}
         className="mt-1 w-full px-3 py-2 text-[16px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
         {options.map(([v, l]) => (
           <option key={v} value={v}>

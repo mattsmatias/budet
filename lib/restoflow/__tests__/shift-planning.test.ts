@@ -81,7 +81,9 @@ describe("plannedMinutes", () => {
   });
 
   it("laskee yön yli menevän vuoron", () => {
-    expect(plannedMinutes(shift({ startTime: "22:00", endTime: "02:00" }))).toBe(4 * 60);
+    expect(
+      plannedMinutes(shift({ startTime: "22:00", endTime: "02:00" })),
+    ).toBe(4 * 60);
   });
 
   /*
@@ -92,7 +94,9 @@ describe("plannedMinutes", () => {
    * yhteenvedossa.
    */
   it("ei mene negatiiviseksi liian pitkällä tauolla", () => {
-    expect(plannedMinutes(shift({ endTime: "14:00", breakMinutes: 600 }))).toBe(0);
+    expect(plannedMinutes(shift({ endTime: "14:00", breakMinutes: 600 }))).toBe(
+      0,
+    );
   });
 });
 
@@ -125,15 +129,35 @@ describe("overlaps", () => {
    * päivien vuoroilta eivätkä osuisi toisiinsa lainkaan.
    */
   it("tunnistaa yövuoron ja seuraavan aamun päällekkäisyyden", () => {
-    const yo = shift({ id: "a", date: "2026-09-01", startTime: "22:00", endTime: "02:00" });
-    const aamu = shift({ id: "b", date: "2026-09-02", startTime: "01:00", endTime: "09:00" });
+    const yo = shift({
+      id: "a",
+      date: "2026-09-01",
+      startTime: "22:00",
+      endTime: "02:00",
+    });
+    const aamu = shift({
+      id: "b",
+      date: "2026-09-02",
+      startTime: "01:00",
+      endTime: "09:00",
+    });
 
     expect(overlaps(yo, aamu)).toBe(true);
   });
 
   it("ei näe päällekkäisyyttä yövuoron jälkeisessä myöhemmässä vuorossa", () => {
-    const yo = shift({ id: "a", date: "2026-09-01", startTime: "22:00", endTime: "02:00" });
-    const paiva = shift({ id: "b", date: "2026-09-02", startTime: "10:00", endTime: "18:00" });
+    const yo = shift({
+      id: "a",
+      date: "2026-09-01",
+      startTime: "22:00",
+      endTime: "02:00",
+    });
+    const paiva = shift({
+      id: "b",
+      date: "2026-09-02",
+      startTime: "10:00",
+      endTime: "18:00",
+    });
 
     expect(overlaps(yo, paiva)).toBe(false);
   });
@@ -206,8 +230,18 @@ describe("findOverlaps", () => {
     // julkaisua, ei sen jälkeen.
     const pairs = findOverlaps(
       [
-        shift({ id: "a", startTime: "10:00", endTime: "18:00", publishedAt: null }),
-        shift({ id: "b", startTime: "16:00", endTime: "22:00", publishedAt: null }),
+        shift({
+          id: "a",
+          startTime: "10:00",
+          endTime: "18:00",
+          publishedAt: null,
+        }),
+        shift({
+          id: "b",
+          startTime: "16:00",
+          endTime: "22:00",
+          publishedAt: null,
+        }),
       ],
       [ali],
     );
@@ -251,7 +285,11 @@ describe("planSummary", () => {
     const s = planSummary({
       shifts: [
         shift({ id: "a" }),
-        shift({ id: "b", date: "2026-09-02", cancelledAt: "2026-08-25T08:00:00.000Z" }),
+        shift({
+          id: "b",
+          date: "2026-09-02",
+          cancelledAt: "2026-08-25T08:00:00.000Z",
+        }),
       ],
       users: [ali],
     });
@@ -324,24 +362,37 @@ describe("removalOutcome", () => {
   const TANAAN = "2026-09-15";
 
   it("poistaa luonnoksen", () => {
-    expect(removalOutcome([shift({ publishedAt: null, date: "2026-09-20" })], TANAAN))
-      .toEqual({ removed: 1, cancelled: 0, blocked: 0 });
+    expect(
+      removalOutcome(
+        [shift({ publishedAt: null, date: "2026-09-20" })],
+        TANAAN,
+      ),
+    ).toEqual({ removed: 1, cancelled: 0, blocked: 0 });
   });
 
   it("peruu julkaistun", () => {
-    expect(removalOutcome([shift({ date: "2026-09-20" })], TANAAN))
-      .toEqual({ removed: 0, cancelled: 1, blocked: 0 });
+    expect(removalOutcome([shift({ date: "2026-09-20" })], TANAAN)).toEqual({
+      removed: 0,
+      cancelled: 1,
+      blocked: 0,
+    });
   });
 
   it("peruu julkaistun myös menneeltä päivältä", () => {
     // Peruutus ei pyyhi mitään: rivi säilyy peruttuna historiassa.
-    expect(removalOutcome([shift({ date: "2026-09-01" })], TANAAN))
-      .toEqual({ removed: 0, cancelled: 1, blocked: 0 });
+    expect(removalOutcome([shift({ date: "2026-09-01" })], TANAAN)).toEqual({
+      removed: 0,
+      cancelled: 1,
+      blocked: 0,
+    });
   });
 
   it("suojaa menneen nimetyn luonnoksen", () => {
     expect(
-      removalOutcome([shift({ publishedAt: null, date: "2026-09-01" })], TANAAN),
+      removalOutcome(
+        [shift({ publishedAt: null, date: "2026-09-01" })],
+        TANAAN,
+      ),
     ).toEqual({ removed: 0, cancelled: 0, blocked: 1 });
   });
 
@@ -363,7 +414,12 @@ describe("removalOutcome", () => {
   it("ohittaa jo perutun", () => {
     expect(
       removalOutcome(
-        [shift({ date: "2026-09-20", cancelledAt: "2026-09-10T08:00:00.000Z" })],
+        [
+          shift({
+            date: "2026-09-20",
+            cancelledAt: "2026-09-10T08:00:00.000Z",
+          }),
+        ],
         TANAAN,
       ),
     ).toEqual({ removed: 0, cancelled: 0, blocked: 1 });
@@ -376,7 +432,11 @@ describe("removalOutcome", () => {
         shift({ id: "b", publishedAt: null, date: "2026-09-21" }),
         shift({ id: "c", date: "2026-09-22" }),
         shift({ id: "d", publishedAt: null, date: "2026-09-01" }),
-        shift({ id: "e", date: "2026-09-20", cancelledAt: "2026-09-10T08:00:00.000Z" }),
+        shift({
+          id: "e",
+          date: "2026-09-20",
+          cancelledAt: "2026-09-10T08:00:00.000Z",
+        }),
       ],
       TANAAN,
     );
@@ -385,6 +445,10 @@ describe("removalOutcome", () => {
   });
 
   it("kestää tyhjän valinnan", () => {
-    expect(removalOutcome([], TANAAN)).toEqual({ removed: 0, cancelled: 0, blocked: 0 });
+    expect(removalOutcome([], TANAAN)).toEqual({
+      removed: 0,
+      cancelled: 0,
+      blocked: 0,
+    });
   });
 });

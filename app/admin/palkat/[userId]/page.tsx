@@ -218,7 +218,9 @@ export default async function PayslipPage({
                 {formatHours(slip.workedMinutes)} ×{" "}
                 {slip.hourlyRateCents === null
                   ? "— tuntipalkka puuttuu"
-                  : fill(t.palkka.perHour, { summa: formatMoney(slip.hourlyRateCents) })}
+                  : fill(t.palkka.perHour, {
+                      summa: formatMoney(slip.hourlyRateCents),
+                    })}
               </span>
             </dt>
             <dd className="rf-tabular shrink-0 font-medium">

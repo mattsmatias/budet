@@ -14,7 +14,12 @@
 import { cache } from "react";
 
 import type { PayComponent, TimeCorrection } from "./payroll";
-import type { PosMapping, PosVatRate, SalesGroup, SalesLine } from "./sales-vat";
+import type {
+  PosMapping,
+  PosVatRate,
+  SalesGroup,
+  SalesLine,
+} from "./sales-vat";
 import type { DailySales } from "./sales";
 import type { Task } from "./tasks";
 import type { AuditEvent } from "./audit";
@@ -68,7 +73,11 @@ interface ReceiptRow {
   status: string;
   review_reasons: string[] | null;
   image_path: string | null;
-  receipt_pages?: { page_number: number; storage_path: string; file_hash: string | null }[];
+  receipt_pages?: {
+    page_number: number;
+    storage_path: string;
+    file_hash: string | null;
+  }[];
   category_id: string | null;
   image_quality: string | null;
   added_by: string;
@@ -256,14 +265,16 @@ export async function fetchUsers(restaurantId: string): Promise<User[]> {
   if (members.error || !members.data) return [];
 
   const rateByUser = new Map<string, number | null>(
-    ((rates.data as { user_id: string; hourly_rate_cents: number | null }[] | null) ?? [])
-      .map((row) => [row.user_id, row.hourly_rate_cents]),
+    (
+      (rates.data as
+        { user_id: string; hourly_rate_cents: number | null }[] | null) ?? []
+    ).map((row) => [row.user_id, row.hourly_rate_cents]),
   );
 
   return members.data.map((row) => {
     const name =
-      (row.profiles as unknown as { full_name: string | null } | null)?.full_name ??
-      "Nimetön";
+      (row.profiles as unknown as { full_name: string | null } | null)
+        ?.full_name ?? "Nimetön";
     const id = row.user_id as string;
 
     return {
@@ -292,7 +303,9 @@ function initialsOf(name: string): string {
 // Toimittajat
 // ---------------------------------------------------------------------------
 
-export async function fetchSuppliers(restaurantId: string): Promise<Supplier[]> {
+export async function fetchSuppliers(
+  restaurantId: string,
+): Promise<Supplier[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("suppliers")
@@ -310,9 +323,8 @@ export async function fetchSuppliers(restaurantId: string): Promise<Supplier[]> 
     name: row.name as string,
     defaultCategory: row.default_category as ExpenseCategory,
     merchantId: (row.merchant_id as string | null) ?? null,
-    merchantConfidence: row.merchant_confidence === null
-      ? null
-      : Number(row.merchant_confidence),
+    merchantConfidence:
+      row.merchant_confidence === null ? null : Number(row.merchant_confidence),
     merchantConfirmed: Boolean(row.merchant_confirmed),
     categoryOverrides: (
       (row.supplier_category_overrides as unknown as {
@@ -424,7 +436,9 @@ export async function fetchOpenShifts(
     date: row.shift_date as string,
     startTime: hhmm(row.start_time as string),
     endTime: hhmm(row.end_time as string),
-    position: (row.position as "waiter" | "kitchen" | "manager" | "cleaning") ?? "waiter",
+    position:
+      (row.position as "waiter" | "kitchen" | "manager" | "cleaning") ??
+      "waiter",
     status: row.status as OpenShift["status"],
     breakMinutes: (row.break_minutes as number | null) ?? 0,
     note: (row.note as string | null) ?? null,
@@ -510,7 +524,9 @@ export async function fetchAbsences(
  * indeksoitavissa. Sovellus laskee kuukausilla merkkijonoina, joten
  * muunnos tehdään tässä eikä joka kutsupaikassa erikseen.
  */
-export async function fetchClosedMonths(restaurantId: string): Promise<string[]> {
+export async function fetchClosedMonths(
+  restaurantId: string,
+): Promise<string[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("closed_months")
@@ -585,9 +601,9 @@ export async function fetchMerchants(): Promise<Merchant[]> {
     brandColor: row.brand_color as string,
     brandBackground: row.brand_background as string,
     logoUrl: (row.logo_url as string | null) ?? null,
-    aliases: ((row.merchant_aliases as unknown as { alias: string }[]) ?? []).map(
-      (a) => a.alias,
-    ),
+    aliases: (
+      (row.merchant_aliases as unknown as { alias: string }[]) ?? []
+    ).map((a) => a.alias),
   }));
 }
 
@@ -646,7 +662,9 @@ export async function fetchLunchWeek(
           description: item.description ?? null,
           sortOrder: item.sort_order,
           diets: (item.lunch_item_diets ?? []).map((d) => d.diet_type),
-          allergens: (item.lunch_item_allergens ?? []).map((a) => a.allergen_type),
+          allergens: (item.lunch_item_allergens ?? []).map(
+            (a) => a.allergen_type,
+          ),
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder),
     }))
@@ -764,7 +782,10 @@ export async function fetchAllergenTypes(): Promise<AllergenType[]> {
 
   if (error || !data) return [];
 
-  return data.map((row) => ({ id: row.id as string, label: row.label as string }));
+  return data.map((row) => ({
+    id: row.id as string,
+    label: row.label as string,
+  }));
 }
 
 export interface RestaurantData {
@@ -926,7 +947,9 @@ export async function fetchInvitations(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("restaurant_invitations")
-    .select("id, code_hint, role, position, hourly_rate_cents, label, expires_at, created_at")
+    .select(
+      "id, code_hint, role, position, hourly_rate_cents, label, expires_at, created_at",
+    )
     .eq("restaurant_id", restaurantId)
     .is("accepted_at", null)
     .gt("expires_at", new Date().toISOString())
@@ -993,7 +1016,9 @@ export interface PayPeriod {
   paidAt: string | null;
 }
 
-export async function fetchPayPeriods(restaurantId: string): Promise<PayPeriod[]> {
+export async function fetchPayPeriods(
+  restaurantId: string,
+): Promise<PayPeriod[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("pay_periods")
@@ -1096,7 +1121,9 @@ export interface StoredPayslip {
   approvedAt: string | null;
 }
 
-export async function fetchPayslips(periodId: string): Promise<StoredPayslip[]> {
+export async function fetchPayslips(
+  periodId: string,
+): Promise<StoredPayslip[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("payslips")
@@ -1143,11 +1170,15 @@ export interface Colleague {
  * Rajaus toiseen ravintolaan ei ole tämän kyselyn varassa vaan RLS:n:
  * profiles_read vaatii yhteisen jäsenyyden.
  */
-export async function fetchColleagues(restaurantId: string): Promise<Colleague[]> {
+export async function fetchColleagues(
+  restaurantId: string,
+): Promise<Colleague[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("memberships")
-    .select("user_id, position, profiles ( full_name, avatar_url, birth_day, birth_month )")
+    .select(
+      "user_id, position, profiles ( full_name, avatar_url, birth_day, birth_month )",
+    )
     .eq("restaurant_id", restaurantId)
     .eq("active", true);
 
@@ -1229,7 +1260,9 @@ export async function fetchDailySales(
  * ilman nimeä rivi olisi historiassa nimetön summa. "Käytössä" rajaa
  * vain sitä mitä uudelle riville voi valita.
  */
-export async function fetchSalesGroups(restaurantId: string): Promise<SalesGroup[]> {
+export async function fetchSalesGroups(
+  restaurantId: string,
+): Promise<SalesGroup[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("sales_groups")
@@ -1253,7 +1286,9 @@ export async function fetchSalesGroups(restaurantId: string): Promise<SalesGroup
 }
 
 /** Kassajärjestelmän ryhmänimien kohdistukset. */
-export async function fetchPosMappings(restaurantId: string): Promise<PosMapping[]> {
+export async function fetchPosMappings(
+  restaurantId: string,
+): Promise<PosMapping[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("pos_sales_groups")
@@ -1294,7 +1329,9 @@ export async function fetchSalesLines(
 
   const { data, error } = await supabase
     .from("daily_sales_lines")
-    .select("sales_group_id, vat_rate, gross_cents, vat_cents, net_cents, pos_name, pos_vat_cents")
+    .select(
+      "sales_group_id, vat_rate, gross_cents, vat_cents, net_cents, pos_name, pos_vat_cents",
+    )
     .eq("daily_sales_id", day.id as string);
 
   if (error || !data) return [];
@@ -1440,7 +1477,9 @@ export async function fetchTasks(restaurantId: string): Promise<Task[]> {
     cancelledBy: (row.cancelled_by as string | null) ?? null,
     recurrence: row.recurrence as Task["recurrence"],
     parentTaskId: (row.parent_task_id as string | null) ?? null,
-    remindDaysBefore: ((row.remind_days_before as number[] | null) ?? []).map(Number),
+    remindDaysBefore: ((row.remind_days_before as number[] | null) ?? []).map(
+      Number,
+    ),
     remindOnDue: Boolean(row.remind_on_due),
     remindWhenOverdue: Boolean(row.remind_when_overdue),
     createdBy: row.created_by as string,
@@ -1450,7 +1489,11 @@ export async function fetchTasks(restaurantId: string): Promise<Task[]> {
 
 export async function fetchTask(id: string): Promise<Task | null> {
   const supabase = await createClient();
-  const { data } = await supabase.from("tasks").select("restaurant_id").eq("id", id).maybeSingle();
+  const { data } = await supabase
+    .from("tasks")
+    .select("restaurant_id")
+    .eq("id", id)
+    .maybeSingle();
   if (!data) return null;
 
   const all = await fetchTasks(data.restaurant_id as string);

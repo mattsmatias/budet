@@ -124,12 +124,19 @@ export function isoWeekNumber(isoDate: string): number {
   const thursday = new Date(date.getTime() + 3 * DAY_MS);
   const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1, 12));
 
-  return Math.round((thursday.getTime() - yearStart.getTime()) / DAY_MS / 7) + 1;
+  return (
+    Math.round((thursday.getTime() - yearStart.getTime()) / DAY_MS / 7) + 1
+  );
 }
 
 const WEEKDAYS = [
-  "Maanantai", "Tiistai", "Keskiviikko", "Torstai",
-  "Perjantai", "Lauantai", "Sunnuntai",
+  "Maanantai",
+  "Tiistai",
+  "Keskiviikko",
+  "Torstai",
+  "Perjantai",
+  "Lauantai",
+  "Sunnuntai",
 ];
 
 const WEEKDAYS_SHORT = ["MA", "TI", "KE", "TO", "PE", "LA", "SU"];
@@ -226,7 +233,11 @@ export const DEFAULT_PRICE_NAME = "Lounas";
  * alennukset sen jälkeen suuruusjärjestyksessä. Aakkosjärjestys olisi
  * nostanut eläkeläishinnan ensimmäiseksi.
  */
-export const EXTRA_PRICE_NAMES = ["Opiskelija", "Lapsi", "Eläkeläinen"] as const;
+export const EXTRA_PRICE_NAMES = [
+  "Opiskelija",
+  "Lapsi",
+  "Eläkeläinen",
+] as const;
 
 export type ExtraPriceName = (typeof EXTRA_PRICE_NAMES)[number];
 
@@ -304,8 +315,10 @@ export function inheritedIncludes(
   previous: LunchIncludes | null,
 ): LunchIncludes {
   return {
-    includesDessert: explicit.includesDessert ?? previous?.includesDessert ?? false,
-    includesCoffee: explicit.includesCoffee ?? previous?.includesCoffee ?? false,
+    includesDessert:
+      explicit.includesDessert ?? previous?.includesDessert ?? false,
+    includesCoffee:
+      explicit.includesCoffee ?? previous?.includesCoffee ?? false,
   };
 }
 

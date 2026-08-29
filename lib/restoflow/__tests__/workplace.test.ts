@@ -52,7 +52,9 @@ describe("tämän päivän syntymäpäivät", () => {
 
   it("ohittaa merkitsemättömät", () => {
     const tuntematon = person({ birthDay: null, birthMonth: null });
-    expect(birthdaysToday([tuntematon], yollaHelsingissa, ZONE)).toHaveLength(0);
+    expect(birthdaysToday([tuntematon], yollaHelsingissa, ZONE)).toHaveLength(
+      0,
+    );
   });
 
   it("ohittaa muut päivät", () => {
@@ -70,7 +72,9 @@ describe("onnittelulause", () => {
    * jonka omistaja huomaa heti.
    */
   it("käyttää nimeä perusmuodossa", () => {
-    expect(birthdaySentence(["Minna Virtanen"], SUOMI)).toBe("Minna täyttää tänään vuosia!");
+    expect(birthdaySentence(["Minna Virtanen"], SUOMI)).toBe(
+      "Minna täyttää tänään vuosia!",
+    );
   });
 
   it("ei taivuta myöskään astevaihtelullista nimeä", () => {

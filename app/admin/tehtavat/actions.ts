@@ -56,7 +56,8 @@ export async function saveTask(
   formData: FormData,
 ): Promise<AdminState> {
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "tasks.manage")) return { error: "Ei oikeutta hallita tehtäviä." };
+  if (!can(role, "tasks.manage"))
+    return { error: "Ei oikeutta hallita tehtäviä." };
 
   const title = String(formData.get("title") ?? "").trim();
   if (title === "") return { error: "Anna tehtävälle nimi." };
@@ -101,7 +102,8 @@ export async function saveTask(
       .eq("user_id", assignedTo)
       .maybeSingle();
 
-    if (!member) return { error: "Vastuuhenkilö ei ole tämän ravintolan jäsen." };
+    if (!member)
+      return { error: "Vastuuhenkilö ei ole tämän ravintolan jäsen." };
   }
 
   const payload = {

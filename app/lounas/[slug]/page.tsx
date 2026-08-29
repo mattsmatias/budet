@@ -91,7 +91,9 @@ async function loadWeek(
   return data as unknown as PublicWeek;
 }
 
-export async function generateMetadata({ params }: PageProps<"/lounas/[slug]">) {
+export async function generateMetadata({
+  params,
+}: PageProps<"/lounas/[slug]">) {
   const { slug } = await params;
   const week = await loadWeek(slug, null);
 
@@ -161,7 +163,9 @@ export default async function PublicLunchPage({
   return (
     <main
       className={
-        preview ? "rf-a4-stage min-h-screen" : "min-h-screen px-4 py-8 sm:px-6 sm:py-12"
+        preview
+          ? "rf-a4-stage min-h-screen"
+          : "min-h-screen px-4 py-8 sm:px-6 sm:py-12"
       }
       style={
         {
@@ -215,7 +219,8 @@ export default async function PublicLunchPage({
             className="mt-1 text-[13px] font-semibold uppercase"
             style={{ color: t.text2, letterSpacing: "0.08em" }}
           >
-            Vko {isoWeekNumber(week.weekStart)} ({formatWeekRange(week.weekStart)})
+            Vko {isoWeekNumber(week.weekStart)} (
+            {formatWeekRange(week.weekStart)})
           </p>
 
           {week.prices.length > 0 ? (
@@ -253,7 +258,9 @@ export default async function PublicLunchPage({
 
         {!week.published || days.length === 0 ? (
           <div className="mt-10 text-center">
-            <p className="text-[15px] font-medium">Lounaslistaa ei ole julkaistu</p>
+            <p className="text-[15px] font-medium">
+              Lounaslistaa ei ole julkaistu
+            </p>
             <p
               className="mt-1.5 text-[13px] leading-relaxed"
               style={{ color: t.text2 }}
@@ -279,11 +286,16 @@ export default async function PublicLunchPage({
                       ? "grid grid-cols-[3rem_1fr] gap-x-5 py-2.5"
                       : "grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[3.5rem_1fr] sm:gap-x-6"
                   }
-                  style={index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined}
+                  style={
+                    index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined
+                  }
                 >
                   <dt
                     className="text-[15px] font-bold uppercase sm:text-[17px]"
-                    style={{ fontFamily: t.headingFont, letterSpacing: "0.02em" }}
+                    style={{
+                      fontFamily: t.headingFont,
+                      letterSpacing: "0.02em",
+                    }}
                   >
                     {weekdayShort(day.date)}
                   </dt>
@@ -324,13 +336,13 @@ export default async function PublicLunchPage({
                         ))}
                       </p>
                     ) : (
-                    <ul className="space-y-2">
-                      {day.items.map((item, i) => (
-                        <li key={i}>
-                          <p className="text-[15px] leading-snug break-words">
-                            {item.name}
+                      <ul className="space-y-2">
+                        {day.items.map((item, i) => (
+                          <li key={i}>
+                            <p className="text-[15px] leading-snug break-words">
+                              {item.name}
 
-                            {/*
+                              {/*
                               Lyhenteet nimen perässä, kuten painetussa
                               listassa. Koko sana toistuisi
                               kaksikymmentä kertaa samalla arkilla ja
@@ -341,34 +353,37 @@ export default async function PublicLunchPage({
                               tekstinä: ruudunlukija ja leikepöytä
                               näkivät "JuureskeittoVEG".
                             */}
-                            {shortDiets(item.diets).length > 0 ? (
-                              <span
-                                className="text-[12px] font-semibold"
+                              {shortDiets(item.diets).length > 0 ? (
+                                <span
+                                  className="text-[12px] font-semibold"
+                                  style={{ color: t.text2 }}
+                                >
+                                  {" "}
+                                  {shortDiets(item.diets).join(" ")}
+                                </span>
+                              ) : null}
+                            </p>
+
+                            {item.description ? (
+                              <p
+                                className="text-[13px] leading-relaxed break-words"
                                 style={{ color: t.text2 }}
                               >
-                                {" "}
-                                {shortDiets(item.diets).join(" ")}
-                              </span>
+                                {item.description}
+                              </p>
                             ) : null}
-                          </p>
 
-                          {item.description ? (
-                            <p
-                              className="text-[13px] leading-relaxed break-words"
-                              style={{ color: t.text2 }}
-                            >
-                              {item.description}
-                            </p>
-                          ) : null}
-
-                          {item.allergens.length > 0 ? (
-                            <p className="text-[12px]" style={{ color: t.text2 }}>
-                              Sisältää: {item.allergens.join(", ")}
-                            </p>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
+                            {item.allergens.length > 0 ? (
+                              <p
+                                className="text-[12px]"
+                                style={{ color: t.text2 }}
+                              >
+                                Sisältää: {item.allergens.join(", ")}
+                              </p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </dd>
                 </div>
@@ -411,8 +426,8 @@ export default async function PublicLunchPage({
           className="rf-no-print fixed inset-x-0 bottom-0 py-3 text-center text-[12px]"
           style={{ background: "rgba(233, 234, 238, 0.92)", color: "#4b5563" }}
         >
-          A4-esikatselu. Tulosta selaimesta (Ctrl/Cmd + P) — asettelu on
-          sama kuin tässä.
+          A4-esikatselu. Tulosta selaimesta (Ctrl/Cmd + P) — asettelu on sama
+          kuin tässä.
         </p>
       ) : null}
     </main>

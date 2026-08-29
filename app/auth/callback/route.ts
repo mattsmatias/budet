@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
   // vahvistetun käyttäjän vieraaseen osoitteeseen.
   const requested = searchParams.get("seuraava") ?? "/admin";
   const next =
-    requested.startsWith("/") && !requested.startsWith("//") ? requested : "/admin";
+    requested.startsWith("/") && !requested.startsWith("//")
+      ? requested
+      : "/admin";
 
   const supabase = await createClient();
 
@@ -32,7 +34,8 @@ export async function GET(request: NextRequest) {
     if (!error) return NextResponse.redirect(`${origin}${next}`);
   } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
-      type: type as "signup" | "recovery" | "email_change" | "invite" | "magiclink",
+      type: type as
+        "signup" | "recovery" | "email_change" | "invite" | "magiclink",
       token_hash: tokenHash,
     });
     if (!error) return NextResponse.redirect(`${origin}${next}`);

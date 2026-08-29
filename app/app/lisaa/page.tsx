@@ -1,7 +1,7 @@
 import { signOut } from "@/app/(auth)/actions";
+import { labels } from "@/lib/i18n/labels";
 import { employeeContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
-import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar } from "@/components/restoflow/ui";
 import { List, PageHeader, Row, SectionTitle, Surface } from "../ui";
@@ -27,6 +27,8 @@ export async function generateMetadata() {
  * menossa.
  */
 export default async function MorePage() {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const { user, restaurant, role } = await employeeContext("/app/lisaa");
 
   const t = workerText(await resolveLocale());
@@ -42,10 +44,15 @@ export default async function MorePage() {
           <div className="min-w-0">
             <p className="truncate text-[17px] font-semibold">{name}</p>
             <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]}
-              {restaurant.position ? ` · ${POSITION_LABELS[restaurant.position]}` : ""}
+              {nimet.roles[role]}
+              {restaurant.position
+                ? ` · ${nimet.positions[restaurant.position]}`
+                : ""}
             </p>
-            <p className="truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="truncate text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {restaurant.name}
             </p>
           </div>
@@ -55,9 +62,21 @@ export default async function MorePage() {
       <section className="space-y-2">
         <SectionTitle>{t.lisaa.account}</SectionTitle>
         <List>
-          <Row href="/app/palkka" icon="payroll" title={t.lisatiedot.payTitle} />
-          <Row href="/app/ilmoitukset" icon="bell" title={t.ilmoitukset.title} />
-          <Row href="/app/asetukset" icon="settings" title={t.asetukset.title} />
+          <Row
+            href="/app/palkka"
+            icon="payroll"
+            title={t.lisatiedot.payTitle}
+          />
+          <Row
+            href="/app/ilmoitukset"
+            icon="bell"
+            title={t.ilmoitukset.title}
+          />
+          <Row
+            href="/app/asetukset"
+            icon="settings"
+            title={t.asetukset.title}
+          />
         </List>
       </section>
 
@@ -91,7 +110,10 @@ export default async function MorePage() {
         </button>
       </form>
 
-      <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="px-1 text-center text-[12px]"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {t.lisaa.footer}
       </p>
     </div>

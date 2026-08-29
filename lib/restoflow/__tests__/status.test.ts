@@ -3,12 +3,22 @@ import { overallStatus } from "../status";
 import type { FocusItem, FocusSeverity } from "../dashboard";
 
 function item(severity: FocusSeverity, id: string = severity): FocusItem {
-  return { id, severity, title: "x", detail: "y", href: "/admin", icon: "alert" };
+  return {
+    id,
+    severity,
+    title: "x",
+    detail: "y",
+    href: "/admin",
+    icon: "alert",
+  };
 }
 
 describe("kokonaistila", () => {
   it("nostaa kriittisen kaiken edelle", () => {
-    const s = overallStatus([item("info"), item("warning"), item("critical")], true);
+    const s = overallStatus(
+      [item("info"), item("warning"), item("critical")],
+      true,
+    );
     expect(s.tone).toBe("bad");
     expect(s.headline).toBe("1 kriittinen asia vaatii huomiota");
     /* Yksi varoitus ja yksi havainto: kaksi riviä otsikon lisäksi. */
@@ -16,7 +26,10 @@ describe("kokonaistila", () => {
   });
 
   it("taivuttaa monikon", () => {
-    const s = overallStatus([item("critical", "a"), item("critical", "b")], true);
+    const s = overallStatus(
+      [item("critical", "a"), item("critical", "b")],
+      true,
+    );
     expect(s.headline).toBe("2 kriittistä asiaa vaatii huomiota");
   });
 
@@ -81,7 +94,12 @@ describe("kokonaistila", () => {
 
   it("laskee määrät", () => {
     const s = overallStatus(
-      [item("critical", "a"), item("warning", "b"), item("warning", "c"), item("info", "d")],
+      [
+        item("critical", "a"),
+        item("warning", "b"),
+        item("warning", "c"),
+        item("info", "d"),
+      ],
       true,
     );
     expect(s.counts).toEqual({ critical: 1, warning: 2, info: 1 });

@@ -1,10 +1,5 @@
-import {
-  ABSENCE_SHORT,
-  shiftLabel,
-  weekdayName,
-  type Roster,
-} from "@/lib/restoflow/roster";
-import { ABSENCE_LABELS } from "@/lib/restoflow/types";
+import { type Labels } from "@/lib/i18n/labels";
+import { shiftLabel, weekdayName, type Roster } from "@/lib/restoflow/roster";
 
 /**
  * Työvuorolista päivittäin.
@@ -18,7 +13,7 @@ import { ABSENCE_LABELS } from "@/lib/restoflow/types";
  * paljon: ruudukon sarake kapenee jokaisesta työntekijästä, mutta
  * päivärivi vain pitenee.
  */
-export function DayList({ roster }: { roster: Roster }) {
+export function DayList({ nimet, roster }: { nimet: Labels; roster: Roster }) {
   return (
     <table className="rf-table w-full">
       <caption className="sr-only">Työvuorot päivittäin</caption>
@@ -39,13 +34,18 @@ export function DayList({ roster }: { roster: Roster }) {
         {roster.days.map((day, index) => {
           const rows = roster.rows
             .map((row) => ({ row, cell: row.cells[index] }))
-            .filter((entry) => entry.cell.shifts.length > 0 || entry.cell.absence !== null);
+            .filter(
+              (entry) =>
+                entry.cell.shifts.length > 0 || entry.cell.absence !== null,
+            );
 
           return (
             <tr
               key={day.date}
               className="rf-row"
-              style={{ background: day.weekend ? "var(--rf-inset)" : undefined }}
+              style={{
+                background: day.weekend ? "var(--rf-inset)" : undefined,
+              }}
             >
               <th scope="row" className="text-left">
                 <span className="rf-tabular text-[13px] font-semibold">
@@ -55,26 +55,37 @@ export function DayList({ roster }: { roster: Roster }) {
 
               <td>
                 {rows.length === 0 ? (
-                  <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+                  <span
+                    className="text-[13px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
                     —
                   </span>
                 ) : (
                   <span className="flex flex-wrap gap-x-4 gap-y-1">
                     {rows.map(({ row, cell }) => (
-                      <span key={row.user?.id ?? "avoin"} className="text-[13px]">
+                      <span
+                        key={row.user?.id ?? "avoin"}
+                        className="text-[13px]"
+                      >
                         <span className="font-medium">
                           {row.user?.name.split(" ")[0] ?? "Avoin"}
                         </span>{" "}
-                        <span className="rf-tabular" style={{ color: "var(--rf-text-2)" }}>
-                          {cell.shifts.map((shift) => shiftLabel(shift)).join(", ")}
+                        <span
+                          className="rf-tabular"
+                          style={{ color: "var(--rf-text-2)" }}
+                        >
+                          {cell.shifts
+                            .map((shift) => shiftLabel(shift))
+                            .join(", ")}
                         </span>
                         {cell.absence ? (
                           <span
                             className="ml-1 text-[11px] font-bold"
                             style={{ color: "var(--rf-amber-text)" }}
-                            title={ABSENCE_LABELS[cell.absence]}
+                            title={nimet.absences[cell.absence]}
                           >
-                            {ABSENCE_SHORT[cell.absence]}
+                            {nimet.absenceShort[cell.absence]}
                           </span>
                         ) : null}
                       </span>

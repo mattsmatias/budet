@@ -66,19 +66,35 @@ export type Capability =
   | "settings.edit";
 
 const OWNER: Capability[] = [
-  "receipts.view", "receipts.add", "receipts.edit",
-  "expenses.view", "suppliers.view",
-  "budgets.view", "budgets.edit",
-  "shifts.view.own", "shifts.view.all", "shifts.manage",
-  "time.track.own", "time.view.all",
-  "staff.view", "staff.rates.view", "staff.manage",
-  "payroll.view", "payroll.view.own", "payroll.manage",
-  "sales.view", "sales.manage",
-  "reports.view", "reports.export",
-  "lunch.view", "lunch.manage",
+  "receipts.view",
+  "receipts.add",
+  "receipts.edit",
+  "expenses.view",
+  "suppliers.view",
+  "budgets.view",
+  "budgets.edit",
+  "shifts.view.own",
+  "shifts.view.all",
+  "shifts.manage",
+  "time.track.own",
+  "time.view.all",
+  "staff.view",
+  "staff.rates.view",
+  "staff.manage",
+  "payroll.view",
+  "payroll.view.own",
+  "payroll.manage",
+  "sales.view",
+  "sales.manage",
+  "reports.view",
+  "reports.export",
+  "lunch.view",
+  "lunch.manage",
   "matti.use",
-  "tasks.view", "tasks.manage",
-  "accounting.view", "accounting.manage",
+  "tasks.view",
+  "tasks.manage",
+  "accounting.view",
+  "accounting.manage",
   /*
    * Toimintaloki on omistajan näkymä.
    *
@@ -87,24 +103,41 @@ const OWNER: Capability[] = [
    * näkymistä; koko yrityksen loki on omistajan.
    */
   "audit.view",
-  "alerts.view", "settings.view", "settings.edit",
+  "alerts.view",
+  "settings.view",
+  "settings.edit",
 ];
 
 const MANAGER: Capability[] = [
-  "receipts.view", "receipts.add", "receipts.edit",
-  "expenses.view", "suppliers.view",
+  "receipts.view",
+  "receipts.add",
+  "receipts.edit",
+  "expenses.view",
+  "suppliers.view",
   "budgets.view",
-  "shifts.view.own", "shifts.view.all", "shifts.manage",
-  "time.track.own", "time.view.all",
-  "staff.view", "staff.rates.view",
-  "payroll.view", "payroll.view.own", "payroll.manage",
-  "sales.view", "sales.manage",
-  "reports.view", "reports.export",
-  "lunch.view", "lunch.manage",
+  "shifts.view.own",
+  "shifts.view.all",
+  "shifts.manage",
+  "time.track.own",
+  "time.view.all",
+  "staff.view",
+  "staff.rates.view",
+  "payroll.view",
+  "payroll.view.own",
+  "payroll.manage",
+  "sales.view",
+  "sales.manage",
+  "reports.view",
+  "reports.export",
+  "lunch.view",
+  "lunch.manage",
   "matti.use",
-  "tasks.view", "tasks.manage",
-  "accounting.view", "accounting.manage",
-  "alerts.view", "settings.view",
+  "tasks.view",
+  "tasks.manage",
+  "accounting.view",
+  "accounting.manage",
+  "alerts.view",
+  "settings.view",
 ];
 
 /**
@@ -135,9 +168,11 @@ const EMPLOYEE: Capability[] = [
  */
 const ACCOUNTANT: Capability[] = [
   "receipts.view",
-  "expenses.view", "suppliers.view",
+  "expenses.view",
+  "suppliers.view",
   "budgets.view",
-  "reports.view", "reports.export",
+  "reports.view",
+  "reports.export",
   "time.view.all",
   // Kirjanpitäjä lukee myynnin raportteja varten muttei kirjaa sitä.
   "sales.view",
@@ -285,7 +320,13 @@ export interface NavEntry {
  * kellokuvakkeesta ja tunnusvalikosta.
  */
 export const ADMIN_NAV: NavEntry[] = [
-  { href: "/admin", key: "overview", icon: "overview", requires: "expenses.view", section: "main" },
+  {
+    href: "/admin",
+    key: "overview",
+    icon: "overview",
+    requires: "expenses.view",
+    section: "main",
+  },
 
   /*
    * Myynti on valikossa, ja se on TALOUDEN ensimmäinen kohta.
@@ -298,11 +339,35 @@ export const ADMIN_NAV: NavEntry[] = [
    * paljonko tuli. Jälkimmäinen tulee ensin, koska ilman sitä
    * ensimmäisellä ei ole mittakaavaa.
    */
-  { href: "/admin/myynti", key: "sales", icon: "sales", requires: "sales.view", section: "finance" },
+  {
+    href: "/admin/myynti",
+    key: "sales",
+    icon: "sales",
+    requires: "sales.view",
+    section: "finance",
+  },
 
-  { href: "/admin/kuitit", key: "receipts", icon: "receipt", requires: "receipts.view", section: "finance" },
-  { href: "/admin/kulut", key: "expenses", icon: "expenses", requires: "expenses.view", section: "finance" },
-  { href: "/admin/budjetit", key: "budgets", icon: "budget", requires: "budgets.view", section: "finance" },
+  {
+    href: "/admin/kuitit",
+    key: "receipts",
+    icon: "receipt",
+    requires: "receipts.view",
+    section: "finance",
+  },
+  {
+    href: "/admin/kulut",
+    key: "expenses",
+    icon: "expenses",
+    requires: "expenses.view",
+    section: "finance",
+  },
+  {
+    href: "/admin/budjetit",
+    key: "budgets",
+    icon: "budget",
+    requires: "budgets.view",
+    section: "finance",
+  },
 
   /*
    * Toimittajat on valikossa.
@@ -312,7 +377,13 @@ export const ADMIN_NAV: NavEntry[] = [
    * toimittajan haluaa. Sivu vastaa kysymykseen "kenelle raha
    * menee", ja se on kysymys jota ei osaa esittää linkin kautta.
    */
-  { href: "/admin/toimittajat", key: "suppliers", icon: "suppliers", requires: "suppliers.view", section: "finance" },
+  {
+    href: "/admin/toimittajat",
+    key: "suppliers",
+    icon: "suppliers",
+    requires: "suppliers.view",
+    section: "finance",
+  },
 
   /*
    * Kirjanpito on talouden viimeinen kohta.
@@ -324,7 +395,13 @@ export const ADMIN_NAV: NavEntry[] = [
    * Se on omalla sivullaan muttei oma tietosiilonsa: sivu ei kysy
    * käyttäjältä mitään mitä Kate jo tietää.
    */
-  { href: "/admin/kirjanpito", key: "accounting", icon: "report", requires: "accounting.view", section: "finance" },
+  {
+    href: "/admin/kirjanpito",
+    key: "accounting",
+    icon: "report",
+    requires: "accounting.view",
+    section: "finance",
+  },
 
   /*
    * Tehtävät ovat päivittäinen kohta, ei arkisto.
@@ -338,15 +415,51 @@ export const ADMIN_NAV: NavEntry[] = [
    * hallinta. Ilman tätä eroa työntekijä ohjautuisi kirjautuessaan
    * hallinnan tehtäväsivulle.
    */
-  { href: "/admin/tehtavat", key: "tasks", icon: "check", requires: "tasks.manage", section: "main" },
+  {
+    href: "/admin/tehtavat",
+    key: "tasks",
+    icon: "check",
+    requires: "tasks.manage",
+    section: "main",
+  },
 
-  { href: "/admin/tyovuorot", key: "shifts", icon: "calendar", requires: "shifts.view.all", section: "staff" },
-  { href: "/admin/tyontekijat", key: "staff", icon: "staff", requires: "staff.view", section: "staff" },
-  { href: "/admin/palkat", key: "payroll", icon: "payroll", requires: "payroll.view", section: "staff" },
+  {
+    href: "/admin/tyovuorot",
+    key: "shifts",
+    icon: "calendar",
+    requires: "shifts.view.all",
+    section: "staff",
+  },
+  {
+    href: "/admin/tyontekijat",
+    key: "staff",
+    icon: "staff",
+    requires: "staff.view",
+    section: "staff",
+  },
+  {
+    href: "/admin/palkat",
+    key: "payroll",
+    icon: "payroll",
+    requires: "payroll.view",
+    section: "staff",
+  },
 
-  { href: "/admin/lounas", key: "lunch", icon: "lunch", requires: "lunch.view", section: "restaurant" },
+  {
+    href: "/admin/lounas",
+    key: "lunch",
+    icon: "lunch",
+    requires: "lunch.view",
+    section: "restaurant",
+  },
 
-  { href: "/admin/raportit", key: "reports", icon: "report", requires: "reports.view", section: "restaurant" },
+  {
+    href: "/admin/raportit",
+    key: "reports",
+    icon: "report",
+    requires: "reports.view",
+    section: "restaurant",
+  },
 ];
 
 /*
@@ -364,9 +477,27 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
-  { href: "/admin/tyontekijat", key: "staff", icon: "staff", requires: "staff.view", section: "staff" },
-  { href: "/admin/budjetit", key: "budgets", icon: "budget", requires: "budgets.view", section: "finance" },
-  { href: "/admin/raportit", key: "reports", icon: "report", requires: "reports.view", section: "restaurant" },
+  {
+    href: "/admin/tyontekijat",
+    key: "staff",
+    icon: "staff",
+    requires: "staff.view",
+    section: "staff",
+  },
+  {
+    href: "/admin/budjetit",
+    key: "budgets",
+    icon: "budget",
+    requires: "budgets.view",
+    section: "finance",
+  },
+  {
+    href: "/admin/raportit",
+    key: "reports",
+    icon: "report",
+    requires: "reports.view",
+    section: "restaurant",
+  },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {
@@ -425,7 +556,8 @@ export function moreNavFor(role: Role): NavEntry[] {
     ...adminNavFor(role).filter((entry) => !primary.has(entry.href)),
     ...MORE_NAV.filter((entry) => can(role, entry.requires)),
   ].filter(
-    (entry, index, all) => all.findIndex((e) => e.href === entry.href) === index,
+    (entry, index, all) =>
+      all.findIndex((e) => e.href === entry.href) === index,
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { MonthPicker } from "./month-picker";
 
 /**
@@ -67,10 +68,18 @@ function useMonthly(): boolean {
 }
 
 /** Työpöydän yläpalkkiin. */
-export function MonthScope({ value, months }: { value: string; months: string[] }) {
+export function MonthScope({
+  value,
+  months,
+  locale,
+}: {
+  value: string;
+  months: string[];
+  locale: AppLocale;
+}) {
   if (!useMonthly()) return null;
 
-  return <MonthPicker value={value} months={months} />;
+  return <MonthPicker value={value} months={months} locale={locale} />;
 }
 
 /**
@@ -94,9 +103,11 @@ export function MonthScope({ value, months }: { value: string; months: string[] 
 export function MobileMonthBar({
   value,
   months,
+  locale,
 }: {
   value: string;
   months: string[];
+  locale: AppLocale;
 }) {
   if (!useMonthly()) return null;
 
@@ -105,7 +116,7 @@ export function MobileMonthBar({
       className="rf-no-print flex justify-center border-b px-4 py-2.5 md:hidden"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
-      <MonthPicker value={value} months={months} />
+      <MonthPicker value={value} months={months} locale={locale} />
     </div>
   );
 }

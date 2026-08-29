@@ -61,7 +61,8 @@ export function explainAiError(error: unknown): AiFailure {
 
   if (status === 429) {
     return {
-      message: "Matti on juuri nyt ruuhkautunut. Yritä hetken päästä uudelleen.",
+      message:
+        "Matti on juuri nyt ruuhkautunut. Yritä hetken päästä uudelleen.",
       retryable: true,
       status: 429,
       reason: "rate_limited",

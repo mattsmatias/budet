@@ -54,7 +54,8 @@ const fi = {
     colleagueOne: "työkaveri",
     colleagueMany: "työkaveria",
     recentStamps: "Viimeisimmät leimaukset",
-    noStampsYet: "Työaikasi näkyvät täällä, kun olet tehnyt ensimmäisen leimauksen.",
+    noStampsYet:
+      "Työaikasi näkyvät täällä, kun olet tehnyt ensimmäisen leimauksen.",
     nextShiftEmpty: "Ei tulevia työvuoroja",
     nextShiftEmptyBody: "Sinulle ei ole vielä lisätty tulevia työvuoroja.",
     birthdayOne: "{nimi} täyttää tänään vuosia!",
@@ -77,7 +78,8 @@ const fi = {
     recording: "Kirjataan…",
     opensAt: "Sisäänleimaus avautuu klo {aika}. Työvuoro {vuoro}.",
     nextShiftIs: "Sinulle ei ole työvuoroa juuri nyt. Seuraava vuoro: {vuoro}.",
-    noShiftPlanned: "Sinulle ei ole suunniteltu työvuoroa. Esihenkilö lisää vuorot.",
+    noShiftPlanned:
+      "Sinulle ei ole suunniteltu työvuoroa. Esihenkilö lisää vuorot.",
     doneIn: "Työvuoro aloitettu",
     doneBreakStart: "Tauko alkoi",
     doneBreakEnd: "Takaisin töissä",
@@ -101,7 +103,8 @@ const fi = {
     takeShift: "Ota vuoro",
     confirmTake: "Otatko vuoron {paiva} klo {ajat}? Se on sinun heti.",
     cancel: "Peruuta",
-    takenNote: "Otettu vuoro on sinun heti. Jos et pääsekään, ilmoita poissaolo — älä jätä sitä esihenkilön huomattavaksi.",
+    takenNote:
+      "Otettu vuoro on sinun heti. Jos et pääsekään, ilmoita poissaolo — älä jätä sitä esihenkilön huomattavaksi.",
   },
 
   poissaolo: {
@@ -114,7 +117,8 @@ const fi = {
     starts: "Alkaa",
     cancelReport: "Peru ilmoitus",
     sickNoteTitle: "Sairauslomatodistus",
-    sickNoteBody: "toimitetaan esihenkilölle erikseen silloin kun se on olemassa — ilmoita poissaolosta jo nyt. Todistusta ei liitetä Kateen, vaan esihenkilö merkitsee tähän ilmoitukseen nähneensä sen.",
+    sickNoteBody:
+      "toimitetaan esihenkilölle erikseen silloin kun se on olemassa — ilmoita poissaolosta jo nyt. Todistusta ei liitetä Kateen, vaan esihenkilö merkitsee tähän ilmoitukseen nähneensä sen.",
     kindSick: "Sairaus",
     kindOther: "Muu poissaolo",
     kindCannotAttend: "En pääse vuoroon",
@@ -180,7 +184,8 @@ const fi = {
     report: "Ilmoita",
     newPassword: "Uusi salasana",
     newPasswordAgain: "Uusi salasana uudelleen",
-    birthdayNote: "Työkaverit näkevät päivän ja kuukauden. Vuotta ei tallenneta. Tyhjennä kenttä ja tallenna, jos et halua näkyä.",
+    birthdayNote:
+      "Työkaverit näkevät päivän ja kuukauden. Vuotta ei tallenneta. Tyhjennä kenttä ja tallenna, jos et halua näkyä.",
   },
 
   lisaa: {
@@ -216,12 +221,17 @@ const fi = {
   lisatiedot: {
     forInfo: "{maara} tiedoksi",
     needsAction: "{maara} vaatii toimenpiteen",
-    noticesNote: "Ilmoitukset lasketaan omista vuoroistasi ja leimauksistasi joka kerta kun avaat sivun. Niitä ei tallenneta, joten hoidettu asia katoaa listalta itsestään.",
-    birthdayNote: "Syntymäpäivän voi lisätä tai poistaa omista asetuksista. Vuotta ei kysytä eikä tallenneta.",
+    noticesNote:
+      "Ilmoitukset lasketaan omista vuoroistasi ja leimauksistasi joka kerta kun avaat sivun. Niitä ei tallenneta, joten hoidettu asia katoaa listalta itsestään.",
+    birthdayNote:
+      "Syntymäpäivän voi lisätä tai poistaa omista asetuksista. Vuotta ei kysytä eikä tallenneta.",
     payTitle: "Palkkani",
-    payDisclaimer: "Laskettu leimauksistasi. Bruttosumma ilman ennakonpidätystä ja muita vähennyksiä — ei palkkalaskelma eikä palkkatodistus.",
-    payIssuesNote: "Kerro esihenkilölle, niin hän korjaa ajan. Sinä et voi muuttaa omaa työaikaasi jälkikäteen.",
-    settingsNote: "Sähköpostin ja tuntipalkan muuttaa esihenkilö. Tuntipalkka näkyy tässä vain sinulle.",
+    payDisclaimer:
+      "Laskettu leimauksistasi. Bruttosumma ilman ennakonpidätystä ja muita vähennyksiä — ei palkkalaskelma eikä palkkatodistus.",
+    payIssuesNote:
+      "Kerro esihenkilölle, niin hän korjaa ajan. Sinä et voi muuttaa omaa työaikaasi jälkikäteen.",
+    settingsNote:
+      "Sähköpostin ja tuntipalkan muuttaa esihenkilö. Tuntipalkka näkyy tässä vain sinulle.",
   },
 };
 
@@ -260,7 +270,8 @@ const en: WorkerText = {
     colleagueOne: "colleague",
     colleagueMany: "colleagues",
     recentStamps: "Latest clock-ins",
-    noStampsYet: "Your hours will show up here once you have clocked in for the first time.",
+    noStampsYet:
+      "Your hours will show up here once you have clocked in for the first time.",
     nextShiftEmpty: "No upcoming shifts",
     nextShiftEmptyBody: "No upcoming shifts have been added for you yet.",
     birthdayOne: "It is {nimi}'s birthday today!",
@@ -282,7 +293,8 @@ const en: WorkerText = {
     recording: "Recording…",
     opensAt: "Clock-in opens at {aika}. Shift {vuoro}.",
     nextShiftIs: "You have no shift right now. Next shift: {vuoro}.",
-    noShiftPlanned: "No shift has been planned for you. Your manager adds the shifts.",
+    noShiftPlanned:
+      "No shift has been planned for you. Your manager adds the shifts.",
     doneIn: "Shift started",
     doneBreakStart: "Break started",
     doneBreakEnd: "Back at work",
@@ -305,7 +317,8 @@ const en: WorkerText = {
     takeShift: "Take the shift",
     confirmTake: "Take the shift on {paiva} at {ajat}? It is yours right away.",
     cancel: "Cancel",
-    takenNote: "A shift you take is yours right away. If you cannot make it after all, report an absence — do not leave it for your manager to notice.",
+    takenNote:
+      "A shift you take is yours right away. If you cannot make it after all, report an absence — do not leave it for your manager to notice.",
   },
   poissaolo: {
     certificateSeen: "Certificate marked as seen",
@@ -317,7 +330,8 @@ const en: WorkerText = {
     starts: "Starts",
     cancelReport: "Withdraw the report",
     sickNoteTitle: "A sickness certificate",
-    sickNoteBody: "is given to your manager separately once it exists — report the absence now anyway. The certificate is not attached in Kate; your manager marks on this report that they have seen it.",
+    sickNoteBody:
+      "is given to your manager separately once it exists — report the absence now anyway. The certificate is not attached in Kate; your manager marks on this report that they have seen it.",
     kindSick: "Illness",
     kindOther: "Other absence",
     kindCannotAttend: "Cannot make the shift",
@@ -342,7 +356,8 @@ const en: WorkerText = {
     days: "Days",
     basePay: "Base pay",
     toCheck: "Needs checking",
-    fromStamps: "The time comes from your clock-ins, not from the planned shift.",
+    fromStamps:
+      "The time comes from your clock-ins, not from the planned shift.",
     empty: "No hours this month yet.",
   },
   ilmoitukset: {
@@ -378,7 +393,8 @@ const en: WorkerText = {
     report: "Report",
     newPassword: "New password",
     newPasswordAgain: "New password again",
-    birthdayNote: "Your colleagues see the day and the month. The year is not stored. Clear the field and save if you would rather not appear.",
+    birthdayNote:
+      "Your colleagues see the day and the month. The year is not stored. Clear the field and save if you would rather not appear.",
   },
   lisaa: {
     title: "More",
@@ -412,12 +428,17 @@ const en: WorkerText = {
   lisatiedot: {
     forInfo: "{maara} for information",
     needsAction: "{maara} needs action",
-    noticesNote: "Notices are worked out from your own shifts and clock-ins every time you open the page. They are not stored, so a handled matter disappears from the list on its own.",
-    birthdayNote: "You can add or remove your birthday in your own settings. The year is not asked for and not stored.",
+    noticesNote:
+      "Notices are worked out from your own shifts and clock-ins every time you open the page. They are not stored, so a handled matter disappears from the list on its own.",
+    birthdayNote:
+      "You can add or remove your birthday in your own settings. The year is not asked for and not stored.",
     payTitle: "My pay",
-    payDisclaimer: "Worked out from your clock-ins. A gross figure without withholding tax or other deductions — not a payslip and not a certificate of earnings.",
-    payIssuesNote: "Tell your manager and they will fix the time. You cannot change your own hours afterwards.",
-    settingsNote: "Your manager changes the email address and the hourly rate. The rate is shown here only to you.",
+    payDisclaimer:
+      "Worked out from your clock-ins. A gross figure without withholding tax or other deductions — not a payslip and not a certificate of earnings.",
+    payIssuesNote:
+      "Tell your manager and they will fix the time. You cannot change your own hours afterwards.",
+    settingsNote:
+      "Your manager changes the email address and the hourly rate. The rate is shown here only to you.",
   },
 };
 
@@ -451,7 +472,8 @@ const sv: WorkerText = {
     colleagueOne: "kollega",
     colleagueMany: "kollegor",
     recentStamps: "Senaste stämplingar",
-    noStampsYet: "Din arbetstid visas här när du har stämplat in första gången.",
+    noStampsYet:
+      "Din arbetstid visas här när du har stämplat in första gången.",
     nextShiftEmpty: "Inga kommande pass",
     nextShiftEmptyBody: "Inga kommande pass har lagts till för dig än.",
     birthdayOne: "{nimi} fyller år i dag!",
@@ -473,7 +495,8 @@ const sv: WorkerText = {
     recording: "Registrerar…",
     opensAt: "Instämpling öppnar kl. {aika}. Pass {vuoro}.",
     nextShiftIs: "Du har inget pass just nu. Nästa pass: {vuoro}.",
-    noShiftPlanned: "Inget pass har planerats för dig. Din chef lägger till passen.",
+    noShiftPlanned:
+      "Inget pass har planerats för dig. Din chef lägger till passen.",
     doneIn: "Passet har börjat",
     doneBreakStart: "Rasten började",
     doneBreakEnd: "Tillbaka på jobbet",
@@ -496,7 +519,8 @@ const sv: WorkerText = {
     takeShift: "Ta passet",
     confirmTake: "Tar du passet {paiva} kl. {ajat}? Det är ditt direkt.",
     cancel: "Avbryt",
-    takenNote: "Ett pass du tar är ditt direkt. Om du ändå inte kan, anmäl frånvaro — lämna det inte åt din chef att upptäcka.",
+    takenNote:
+      "Ett pass du tar är ditt direkt. Om du ändå inte kan, anmäl frånvaro — lämna det inte åt din chef att upptäcka.",
   },
   poissaolo: {
     certificateSeen: "Intyget är markerat som sett",
@@ -508,7 +532,8 @@ const sv: WorkerText = {
     starts: "Börjar",
     cancelReport: "Ta tillbaka anmälan",
     sickNoteTitle: "Ett sjukintyg",
-    sickNoteBody: "lämnas till din chef separat när det finns — anmäl frånvaron redan nu. Intyget bifogas inte i Kate, utan din chef markerar på den här anmälan att hen sett det.",
+    sickNoteBody:
+      "lämnas till din chef separat när det finns — anmäl frånvaron redan nu. Intyget bifogas inte i Kate, utan din chef markerar på den här anmälan att hen sett det.",
     kindSick: "Sjukdom",
     kindOther: "Annan frånvaro",
     kindCannotAttend: "Kan inte ta passet",
@@ -533,7 +558,8 @@ const sv: WorkerText = {
     days: "Dagar",
     basePay: "Grundlön",
     toCheck: "Att kontrollera",
-    fromStamps: "Tiden kommer från dina stämplingar, inte från det planerade passet.",
+    fromStamps:
+      "Tiden kommer från dina stämplingar, inte från det planerade passet.",
     empty: "Ingen arbetstid denna månad än.",
   },
   ilmoitukset: {
@@ -569,7 +595,8 @@ const sv: WorkerText = {
     report: "Anmäl",
     newPassword: "Nytt lösenord",
     newPasswordAgain: "Nytt lösenord igen",
-    birthdayNote: "Dina kollegor ser dagen och månaden. Året sparas inte. Töm fältet och spara om du hellre inte vill synas.",
+    birthdayNote:
+      "Dina kollegor ser dagen och månaden. Året sparas inte. Töm fältet och spara om du hellre inte vill synas.",
   },
   lisaa: {
     title: "Mer",
@@ -603,12 +630,17 @@ const sv: WorkerText = {
   lisatiedot: {
     forInfo: "{maara} till kännedom",
     needsAction: "{maara} kräver åtgärd",
-    noticesNote: "Meddelandena räknas fram ur dina egna pass och stämplingar varje gång du öppnar sidan. De sparas inte, så en avklarad sak försvinner från listan av sig själv.",
-    birthdayNote: "Du kan lägga till eller ta bort födelsedagen i dina egna inställningar. Året frågas inte och sparas inte.",
+    noticesNote:
+      "Meddelandena räknas fram ur dina egna pass och stämplingar varje gång du öppnar sidan. De sparas inte, så en avklarad sak försvinner från listan av sig själv.",
+    birthdayNote:
+      "Du kan lägga till eller ta bort födelsedagen i dina egna inställningar. Året frågas inte och sparas inte.",
     payTitle: "Min lön",
-    payDisclaimer: "Framräknat ur dina stämplingar. Bruttobelopp utan förskottsinnehållning och andra avdrag — inte en lönespecifikation och inte ett löneintyg.",
-    payIssuesNote: "Säg till din chef så rättar hen tiden. Du kan inte ändra din egen arbetstid i efterhand.",
-    settingsNote: "Din chef ändrar e-postadressen och timlönen. Timlönen visas här bara för dig.",
+    payDisclaimer:
+      "Framräknat ur dina stämplingar. Bruttobelopp utan förskottsinnehållning och andra avdrag — inte en lönespecifikation och inte ett löneintyg.",
+    payIssuesNote:
+      "Säg till din chef så rättar hen tiden. Du kan inte ändra din egen arbetstid i efterhand.",
+    settingsNote:
+      "Din chef ändrar e-postadressen och timlönen. Timlönen visas här bara för dig.",
   },
 };
 
@@ -642,7 +674,8 @@ const da: WorkerText = {
     colleagueOne: "kollega",
     colleagueMany: "kolleger",
     recentStamps: "Seneste stemplinger",
-    noStampsYet: "Din arbejdstid vises her, når du har stemplet ind første gang.",
+    noStampsYet:
+      "Din arbejdstid vises her, når du har stemplet ind første gang.",
     nextShiftEmpty: "Ingen kommende vagter",
     nextShiftEmptyBody: "Der er ikke lagt kommende vagter ind til dig endnu.",
     birthdayOne: "{nimi} har fødselsdag i dag!",
@@ -664,7 +697,8 @@ const da: WorkerText = {
     recording: "Registrerer…",
     opensAt: "Indstempling åbner kl. {aika}. Vagt {vuoro}.",
     nextShiftIs: "Du har ingen vagt lige nu. Næste vagt: {vuoro}.",
-    noShiftPlanned: "Der er ikke planlagt en vagt til dig. Din leder tilføjer vagterne.",
+    noShiftPlanned:
+      "Der er ikke planlagt en vagt til dig. Din leder tilføjer vagterne.",
     doneIn: "Vagten er startet",
     doneBreakStart: "Pausen begyndte",
     doneBreakEnd: "Tilbage på arbejde",
@@ -685,9 +719,11 @@ const da: WorkerText = {
     confirmed: "Bekræftet",
     openShifts: "Ledige vagter",
     takeShift: "Tag vagten",
-    confirmTake: "Tager du vagten {paiva} kl. {ajat}? Den er din med det samme.",
+    confirmTake:
+      "Tager du vagten {paiva} kl. {ajat}? Den er din med det samme.",
     cancel: "Annullér",
-    takenNote: "En vagt du tager, er din med det samme. Hvis du alligevel ikke kan, så meld fravær — lad ikke din leder opdage det selv.",
+    takenNote:
+      "En vagt du tager, er din med det samme. Hvis du alligevel ikke kan, så meld fravær — lad ikke din leder opdage det selv.",
   },
   poissaolo: {
     certificateSeen: "Attesten er markeret som set",
@@ -699,7 +735,8 @@ const da: WorkerText = {
     starts: "Starter",
     cancelReport: "Træk meldingen tilbage",
     sickNoteTitle: "En lægeerklæring",
-    sickNoteBody: "afleveres til din leder særskilt, når den findes — meld fraværet allerede nu. Erklæringen vedhæftes ikke i Kate; din leder markerer på denne melding, at vedkommende har set den.",
+    sickNoteBody:
+      "afleveres til din leder særskilt, når den findes — meld fraværet allerede nu. Erklæringen vedhæftes ikke i Kate; din leder markerer på denne melding, at vedkommende har set den.",
     kindSick: "Sygdom",
     kindOther: "Andet fravær",
     kindCannotAttend: "Kan ikke tage vagten",
@@ -724,7 +761,8 @@ const da: WorkerText = {
     days: "Dage",
     basePay: "Grundløn",
     toCheck: "Skal tjekkes",
-    fromStamps: "Tiden kommer fra dine stemplinger, ikke fra den planlagte vagt.",
+    fromStamps:
+      "Tiden kommer fra dine stemplinger, ikke fra den planlagte vagt.",
     empty: "Ingen arbejdstid denne måned endnu.",
   },
   ilmoitukset: {
@@ -736,7 +774,8 @@ const da: WorkerText = {
   tyoyhteiso: {
     title: "Arbejdsfællesskab",
     emptyTitle: "Ingen kolleger",
-    emptyBody: "Der er ikke tilføjet andre medarbejdere til restauranten endnu.",
+    emptyBody:
+      "Der er ikke tilføjet andre medarbejdere til restauranten endnu.",
     colleagues: "Kolleger",
     birthdayToday: "fødselsdag i dag",
   },
@@ -760,7 +799,8 @@ const da: WorkerText = {
     report: "Meld",
     newPassword: "Ny adgangskode",
     newPasswordAgain: "Ny adgangskode igen",
-    birthdayNote: "Dine kolleger ser dagen og måneden. Året gemmes ikke. Ryd feltet og gem, hvis du helst ikke vil vises.",
+    birthdayNote:
+      "Dine kolleger ser dagen og måneden. Året gemmes ikke. Ryd feltet og gem, hvis du helst ikke vil vises.",
   },
   lisaa: {
     title: "Mere",
@@ -794,12 +834,17 @@ const da: WorkerText = {
   lisatiedot: {
     forInfo: "{maara} til orientering",
     needsAction: "{maara} kræver handling",
-    noticesNote: "Beskederne regnes ud fra dine egne vagter og stemplinger, hver gang du åbner siden. De gemmes ikke, så en ordnet sag forsvinder fra listen af sig selv.",
-    birthdayNote: "Du kan tilføje eller fjerne fødselsdagen i dine egne indstillinger. Året spørges der ikke om, og det gemmes ikke.",
+    noticesNote:
+      "Beskederne regnes ud fra dine egne vagter og stemplinger, hver gang du åbner siden. De gemmes ikke, så en ordnet sag forsvinder fra listen af sig selv.",
+    birthdayNote:
+      "Du kan tilføje eller fjerne fødselsdagen i dine egne indstillinger. Året spørges der ikke om, og det gemmes ikke.",
     payTitle: "Min løn",
-    payDisclaimer: "Udregnet ud fra dine stemplinger. Bruttobeløb uden A-skat og andre fradrag — ikke en lønseddel og ikke en lønattest.",
-    payIssuesNote: "Sig det til din leder, så retter vedkommende tiden. Du kan ikke ændre din egen arbejdstid bagefter.",
-    settingsNote: "Din leder ændrer e-mailadressen og timelønnen. Timelønnen vises kun for dig her.",
+    payDisclaimer:
+      "Udregnet ud fra dine stemplinger. Bruttobeløb uden A-skat og andre fradrag — ikke en lønseddel og ikke en lønattest.",
+    payIssuesNote:
+      "Sig det til din leder, så retter vedkommende tiden. Du kan ikke ændre din egen arbejdstid bagefter.",
+    settingsNote:
+      "Din leder ændrer e-mailadressen og timelønnen. Timelønnen vises kun for dig her.",
   },
 };
 
@@ -833,7 +878,8 @@ const tr: WorkerText = {
     colleagueOne: "iş arkadaşı",
     colleagueMany: "iş arkadaşı",
     recentStamps: "Son kayıtlar",
-    noStampsYet: "İlk giriş kaydını yaptığında çalışma saatlerin burada görünür.",
+    noStampsYet:
+      "İlk giriş kaydını yaptığında çalışma saatlerin burada görünür.",
     nextShiftEmpty: "Yaklaşan vardiya yok",
     nextShiftEmptyBody: "Sana henüz yaklaşan bir vardiya eklenmedi.",
     birthdayOne: "Bugün {nimi} doğum gününü kutluyor!",
@@ -876,9 +922,11 @@ const tr: WorkerText = {
     confirmed: "Onaylandı",
     openShifts: "Açık vardiyalar",
     takeShift: "Vardiyayı al",
-    confirmTake: "{paiva} saat {ajat} vardiyasını alıyor musun? Hemen senin olur.",
+    confirmTake:
+      "{paiva} saat {ajat} vardiyasını alıyor musun? Hemen senin olur.",
     cancel: "Vazgeç",
-    takenNote: "Aldığın vardiya hemen senin olur. Yine de gelemeyecek olursan devamsızlık bildir — yöneticinin fark etmesini bekleme.",
+    takenNote:
+      "Aldığın vardiya hemen senin olur. Yine de gelemeyecek olursan devamsızlık bildir — yöneticinin fark etmesini bekleme.",
   },
   poissaolo: {
     certificateSeen: "Belge görüldü olarak işaretlendi",
@@ -890,7 +938,8 @@ const tr: WorkerText = {
     starts: "Başlangıç",
     cancelReport: "Bildirimi geri al",
     sickNoteTitle: "Sağlık raporu",
-    sickNoteBody: "eline geçtiğinde yöneticine ayrıca verilir — devamsızlığı şimdiden bildir. Rapor Kate'e eklenmez; yöneticin bu bildirime raporu gördüğünü işaretler.",
+    sickNoteBody:
+      "eline geçtiğinde yöneticine ayrıca verilir — devamsızlığı şimdiden bildir. Rapor Kate'e eklenmez; yöneticin bu bildirime raporu gördüğünü işaretler.",
     kindSick: "Hastalık",
     kindOther: "Diğer devamsızlık",
     kindCannotAttend: "Vardiyaya gelemiyorum",
@@ -951,7 +1000,8 @@ const tr: WorkerText = {
     report: "Bildir",
     newPassword: "Yeni parola",
     newPasswordAgain: "Yeni parola tekrar",
-    birthdayNote: "İş arkadaşların günü ve ayı görür. Yıl saklanmaz. Görünmek istemiyorsan alanı boşaltıp kaydet.",
+    birthdayNote:
+      "İş arkadaşların günü ve ayı görür. Yıl saklanmaz. Görünmek istemiyorsan alanı boşaltıp kaydet.",
   },
   lisaa: {
     title: "Daha fazla",
@@ -985,12 +1035,17 @@ const tr: WorkerText = {
   lisatiedot: {
     forInfo: "{maara} bilgi",
     needsAction: "{maara} işlem gerektiriyor",
-    noticesNote: "Bildirimler sayfayı her açtığında kendi vardiyalarından ve kayıtlarından hesaplanır. Saklanmazlar, bu yüzden halledilen konu listeden kendiliğinden kaybolur.",
-    birthdayNote: "Doğum gününü kendi ayarlarından ekleyebilir veya kaldırabilirsin. Yıl sorulmaz ve saklanmaz.",
+    noticesNote:
+      "Bildirimler sayfayı her açtığında kendi vardiyalarından ve kayıtlarından hesaplanır. Saklanmazlar, bu yüzden halledilen konu listeden kendiliğinden kaybolur.",
+    birthdayNote:
+      "Doğum gününü kendi ayarlarından ekleyebilir veya kaldırabilirsin. Yıl sorulmaz ve saklanmaz.",
     payTitle: "Ücretim",
-    payDisclaimer: "Kayıtlarından hesaplandı. Stopaj ve diğer kesintiler hariç brüt tutar — bordro ya da ücret belgesi değildir.",
-    payIssuesNote: "Yöneticine söyle, süreyi o düzeltir. Kendi çalışma saatini sonradan değiştiremezsin.",
-    settingsNote: "E-posta adresini ve saat ücretini yöneticin değiştirir. Saat ücreti burada yalnızca sana görünür.",
+    payDisclaimer:
+      "Kayıtlarından hesaplandı. Stopaj ve diğer kesintiler hariç brüt tutar — bordro ya da ücret belgesi değildir.",
+    payIssuesNote:
+      "Yöneticine söyle, süreyi o düzeltir. Kendi çalışma saatini sonradan değiştiremezsin.",
+    settingsNote:
+      "E-posta adresini ve saat ücretini yöneticin değiştirir. Saat ücreti burada yalnızca sana görünür.",
   },
 };
 
@@ -1024,7 +1079,8 @@ const et: WorkerText = {
     colleagueOne: "kolleeg",
     colleagueMany: "kolleegi",
     recentStamps: "Viimased registreeringud",
-    noStampsYet: "Sinu tööaeg ilmub siia, kui oled esimest korda sisse registreerinud.",
+    noStampsYet:
+      "Sinu tööaeg ilmub siia, kui oled esimest korda sisse registreerinud.",
     nextShiftEmpty: "Tulevasi vahetusi pole",
     nextShiftEmptyBody: "Sulle pole veel tulevasi vahetusi lisatud.",
     birthdayOne: "{nimi} tähistab täna sünnipäeva!",
@@ -1046,7 +1102,8 @@ const et: WorkerText = {
     recording: "Registreerime…",
     opensAt: "Sisseregistreerimine avaneb kell {aika}. Vahetus {vuoro}.",
     nextShiftIs: "Sul ei ole praegu vahetust. Järgmine vahetus: {vuoro}.",
-    noShiftPlanned: "Sulle ei ole vahetust planeeritud. Vahetused lisab juhataja.",
+    noShiftPlanned:
+      "Sulle ei ole vahetust planeeritud. Vahetused lisab juhataja.",
     doneIn: "Vahetus algas",
     doneBreakStart: "Paus algas",
     doneBreakEnd: "Tagasi tööl",
@@ -1069,7 +1126,8 @@ const et: WorkerText = {
     takeShift: "Võta vahetus",
     confirmTake: "Kas võtad vahetuse {paiva} kell {ajat}? See on kohe sinu.",
     cancel: "Loobu",
-    takenNote: "Võetud vahetus on kohe sinu. Kui sa siiski ei saa tulla, teata puudumisest — ära jäta seda juhataja märgata.",
+    takenNote:
+      "Võetud vahetus on kohe sinu. Kui sa siiski ei saa tulla, teata puudumisest — ära jäta seda juhataja märgata.",
   },
   poissaolo: {
     certificateSeen: "Tõend on märgitud nähtuks",
@@ -1081,7 +1139,8 @@ const et: WorkerText = {
     starts: "Algab",
     cancelReport: "Võta teade tagasi",
     sickNoteTitle: "Haigusleht",
-    sickNoteBody: "antakse juhatajale eraldi siis, kui see olemas on — teata puudumisest juba praegu. Tõendit Kate'i ei lisata; juhataja märgib sellele teatele, et on seda näinud.",
+    sickNoteBody:
+      "antakse juhatajale eraldi siis, kui see olemas on — teata puudumisest juba praegu. Tõendit Kate'i ei lisata; juhataja märgib sellele teatele, et on seda näinud.",
     kindSick: "Haigus",
     kindOther: "Muu puudumine",
     kindCannotAttend: "Ei saa vahetusse tulla",
@@ -1106,7 +1165,8 @@ const et: WorkerText = {
     days: "Päevad",
     basePay: "Põhipalk",
     toCheck: "Vajab kontrolli",
-    fromStamps: "Aeg tuleb sinu registreeringutest, mitte planeeritud vahetusest.",
+    fromStamps:
+      "Aeg tuleb sinu registreeringutest, mitte planeeritud vahetusest.",
     empty: "Sel kuul veel tööaega pole.",
   },
   ilmoitukset: {
@@ -1142,7 +1202,8 @@ const et: WorkerText = {
     report: "Teata",
     newPassword: "Uus parool",
     newPasswordAgain: "Uus parool uuesti",
-    birthdayNote: "Kolleegid näevad päeva ja kuud. Aastat ei salvestata. Kui sa ei soovi näha olla, tühjenda väli ja salvesta.",
+    birthdayNote:
+      "Kolleegid näevad päeva ja kuud. Aastat ei salvestata. Kui sa ei soovi näha olla, tühjenda väli ja salvesta.",
   },
   lisaa: {
     title: "Rohkem",
@@ -1176,12 +1237,17 @@ const et: WorkerText = {
   lisatiedot: {
     forInfo: "{maara} teadmiseks",
     needsAction: "{maara} vajab tegutsemist",
-    noticesNote: "Teated arvutatakse sinu enda vahetustest ja registreeringutest iga kord, kui lehe avad. Neid ei salvestata, nii et korras asi kaob nimekirjast ise.",
-    birthdayNote: "Sünnipäeva saad lisada või eemaldada oma seadetes. Aastat ei küsita ega salvestata.",
+    noticesNote:
+      "Teated arvutatakse sinu enda vahetustest ja registreeringutest iga kord, kui lehe avad. Neid ei salvestata, nii et korras asi kaob nimekirjast ise.",
+    birthdayNote:
+      "Sünnipäeva saad lisada või eemaldada oma seadetes. Aastat ei küsita ega salvestata.",
     payTitle: "Minu palk",
-    payDisclaimer: "Arvutatud sinu registreeringutest. Brutosumma ilma tulumaksu ja muude mahaarvamisteta — see ei ole palgateatis ega palgatõend.",
-    payIssuesNote: "Ütle juhatajale, tema parandab aja. Oma tööaega sa tagantjärele muuta ei saa.",
-    settingsNote: "E-posti aadressi ja tunnitasu muudab juhataja. Tunnitasu näed siin ainult sina.",
+    payDisclaimer:
+      "Arvutatud sinu registreeringutest. Brutosumma ilma tulumaksu ja muude mahaarvamisteta — see ei ole palgateatis ega palgatõend.",
+    payIssuesNote:
+      "Ütle juhatajale, tema parandab aja. Oma tööaega sa tagantjärele muuta ei saa.",
+    settingsNote:
+      "E-posti aadressi ja tunnitasu muudab juhataja. Tunnitasu näed siin ainult sina.",
   },
 };
 

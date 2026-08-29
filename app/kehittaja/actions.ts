@@ -92,7 +92,8 @@ export async function createRestaurant(
     p_industry: teksti(data, "industry"),
     p_plan: String(data.get("plan") ?? "free"),
     p_status: status,
-    p_trial_days: status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
+    p_trial_days:
+      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
     p_is_test: data.get("isTest") === "on",
   });
 
@@ -109,11 +110,14 @@ export async function createRestaurant(
    * joten sitä ei voi hakea myöhemmin uudelleen.
    */
   const ownerLabel = teksti(data, "ownerName");
-  const { data: code, error: inviteError } = await supabase.rpc("sa_invite_owner", {
-    p_restaurant: id,
-    p_role: "owner",
-    p_label: ownerLabel,
-  });
+  const { data: code, error: inviteError } = await supabase.rpc(
+    "sa_invite_owner",
+    {
+      p_restaurant: id,
+      p_role: "owner",
+      p_label: ownerLabel,
+    },
+  );
 
   revalidatePath("/kehittaja", "layout");
 
@@ -163,7 +167,10 @@ export async function updateRestaurant(
   return { notice: "Tiedot tallennettiin." };
 }
 
-export async function setStatus(_prev: DevState, data: FormData): Promise<DevState> {
+export async function setStatus(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const id = String(data.get("id") ?? "");
@@ -176,7 +183,8 @@ export async function setStatus(_prev: DevState, data: FormData): Promise<DevSta
   const { error } = await supabase.rpc("sa_set_status", {
     p_id: id,
     p_status: status,
-    p_trial_days: status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
+    p_trial_days:
+      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
     p_note: teksti(data, "note"),
   });
 
@@ -186,7 +194,10 @@ export async function setStatus(_prev: DevState, data: FormData): Promise<DevSta
   return { notice: "Tila päivitettiin." };
 }
 
-export async function setPlan(_prev: DevState, data: FormData): Promise<DevState> {
+export async function setPlan(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const id = String(data.get("id") ?? "");
@@ -194,7 +205,10 @@ export async function setPlan(_prev: DevState, data: FormData): Promise<DevState
   if (id === "" || plan === "") return { error: "Pakettia ei tunnistettu." };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("sa_set_plan", { p_id: id, p_plan: plan });
+  const { error } = await supabase.rpc("sa_set_plan", {
+    p_id: id,
+    p_plan: plan,
+  });
 
   if (error) return { error: virhe(error.message) };
 
@@ -234,7 +248,10 @@ export async function deleteRestaurant(
 // Käyttäjät
 // ---------------------------------------------------------------------------
 
-export async function inviteUser(_prev: DevState, data: FormData): Promise<DevState> {
+export async function inviteUser(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const id = String(data.get("id") ?? "");
@@ -274,15 +291,24 @@ export async function setMemberActive(
   if (error) return { error: virhe(error.message) };
 
   revalidatePath("/kehittaja", "layout");
-  return { notice: data.get("active") === "true" ? "Käyttäjä aktivoitiin." : "Käyttäjä poistettiin käytöstä." };
+  return {
+    notice:
+      data.get("active") === "true"
+        ? "Käyttäjä aktivoitiin."
+        : "Käyttäjä poistettiin käytöstä.",
+  };
 }
 
-export async function setMemberRole(_prev: DevState, data: FormData): Promise<DevState> {
+export async function setMemberRole(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const membership = String(data.get("membership") ?? "");
   const role = String(data.get("role") ?? "");
-  if (membership === "" || role === "") return { error: "Roolia ei tunnistettu." };
+  if (membership === "" || role === "")
+    return { error: "Roolia ei tunnistettu." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("sa_set_member_role", {
@@ -300,7 +326,10 @@ export async function setMemberRole(_prev: DevState, data: FormData): Promise<De
 // Feature flagit
 // ---------------------------------------------------------------------------
 
-export async function setFlag(_prev: DevState, data: FormData): Promise<DevState> {
+export async function setFlag(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const key = String(data.get("key") ?? "");
@@ -325,12 +354,16 @@ export async function setFlag(_prev: DevState, data: FormData): Promise<DevState
  * Ilman kolmatta poikkeuksen voisi luoda muttei poistaa, ja ravintola
  * jäisi pysyvästi irti globaalista asetuksesta.
  */
-export async function setFlagFor(_prev: DevState, data: FormData): Promise<DevState> {
+export async function setFlagFor(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
   await requireSuperAdmin();
 
   const key = String(data.get("key") ?? "");
   const restaurant = String(data.get("restaurant") ?? "");
-  if (key === "" || restaurant === "") return { error: "Lippua ei tunnistettu." };
+  if (key === "" || restaurant === "")
+    return { error: "Lippua ei tunnistettu." };
 
   const arvo = String(data.get("value") ?? "");
   const enabled = arvo === "oletus" ? null : arvo === "true";

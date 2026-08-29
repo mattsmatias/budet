@@ -70,13 +70,17 @@ export default async function EmbeddedLunchPage({
       <header>
         <h2
           className="text-[20px] font-bold"
-          style={{ fontFamily: t.headingFont, letterSpacing: t.headingTracking }}
+          style={{
+            fontFamily: t.headingFont,
+            letterSpacing: t.headingTracking,
+          }}
         >
           Lounas
         </h2>
 
         <p className="text-[13px]" style={{ color: t.text2 }}>
-          Viikko {isoWeekNumber(week.weekStart)} · {formatWeekRange(week.weekStart)}
+          Viikko {isoWeekNumber(week.weekStart)} ·{" "}
+          {formatWeekRange(week.weekStart)}
         </p>
 
         {week.prices.length > 0 ? (
@@ -109,7 +113,9 @@ export default async function EmbeddedLunchPage({
               <div
                 key={day.date}
                 className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-2.5"
-                style={index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined}
+                style={
+                  index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined
+                }
               >
                 <dt
                   className="text-[14px] font-bold uppercase"
@@ -121,7 +127,9 @@ export default async function EmbeddedLunchPage({
                 <dd className="min-w-0 text-[13.5px] leading-relaxed">
                   {day.items.map((item, i) => (
                     <span key={i}>
-                      {i > 0 ? <span style={{ color: t.text3 }}> · </span> : null}
+                      {i > 0 ? (
+                        <span style={{ color: t.text3 }}> · </span>
+                      ) : null}
                       {item.name}
                       {shortDiets(item.diets).length > 0 ? (
                         <span

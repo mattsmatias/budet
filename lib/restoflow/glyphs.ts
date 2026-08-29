@@ -45,44 +45,179 @@ export type GlyphName =
  */
 const PRODUCT_WORDS: [readonly string[], GlyphName][] = [
   // Purkit ja tölkit ennen sisältöään.
-  [["maustekurkku", "kastike", "ketsuppi", "sinappi", "majoneesi", "hillo",
-    "hunaja", "säilyke", "tahna", "pesto", "salsa", "purkki"], "jar"],
+  [
+    [
+      "maustekurkku",
+      "kastike",
+      "ketsuppi",
+      "sinappi",
+      "majoneesi",
+      "hillo",
+      "hunaja",
+      "säilyke",
+      "tahna",
+      "pesto",
+      "salsa",
+      "purkki",
+    ],
+    "jar",
+  ],
 
   [["pantti", "kierrätys"], "deposit"],
 
-  [["maito", "kerma", "rahka", "jogurtti", "viili", "juusto", "voi ",
-    "margariini", "piimä", "jäätelö", "raejuusto", "smetana"], "milk"],
+  [
+    [
+      "maito",
+      "kerma",
+      "rahka",
+      "jogurtti",
+      "viili",
+      "juusto",
+      "voi ",
+      "margariini",
+      "piimä",
+      "jäätelö",
+      "raejuusto",
+      "smetana",
+    ],
+    "milk",
+  ],
 
   [["muna", "kananmuna"], "egg"],
 
-  [["jauheliha", "liha", "kana", "nauta", "possu", "porsas", "makkara",
-    "filee", "pekoni", "kinkku", "nakki", "leikkele", "broileri"], "meat"],
+  [
+    [
+      "jauheliha",
+      "liha",
+      "kana",
+      "nauta",
+      "possu",
+      "porsas",
+      "makkara",
+      "filee",
+      "pekoni",
+      "kinkku",
+      "nakki",
+      "leikkele",
+      "broileri",
+    ],
+    "meat",
+  ],
 
-  [["lohi", "kala", "tonnikala", "silli", "katkarapu", "seiti", "muikku"], "fish"],
+  [
+    ["lohi", "kala", "tonnikala", "silli", "katkarapu", "seiti", "muikku"],
+    "fish",
+  ],
 
-  [["leipä", "tortilla", "sämpylä", "patonki", "pizzapohja", "ruisleipä",
-    "keksi", "pulla", "croissant", "näkkileipä"], "bread"],
+  [
+    [
+      "leipä",
+      "tortilla",
+      "sämpylä",
+      "patonki",
+      "pizzapohja",
+      "ruisleipä",
+      "keksi",
+      "pulla",
+      "croissant",
+      "näkkileipä",
+    ],
+    "bread",
+  ],
 
-  [["makaroni", "pasta", "spagetti", "riisi", "jauho", "puuro", "hiutale",
-    "couscous", "nuudeli", "myslit", "murot"], "grain"],
+  [
+    [
+      "makaroni",
+      "pasta",
+      "spagetti",
+      "riisi",
+      "jauho",
+      "puuro",
+      "hiutale",
+      "couscous",
+      "nuudeli",
+      "myslit",
+      "murot",
+    ],
+    "grain",
+  ],
 
-  [["sipuli", "kurkku", "tomaatti", "salaatti", "peruna", "porkkana",
-    "paprika", "kaali", "herne", "papu", "sieni", "vihannes", "basilika",
-    "persilja", "kesäkurpitsa", "parsakaali", "maissi"], "vegetable"],
+  [
+    [
+      "sipuli",
+      "kurkku",
+      "tomaatti",
+      "salaatti",
+      "peruna",
+      "porkkana",
+      "paprika",
+      "kaali",
+      "herne",
+      "papu",
+      "sieni",
+      "vihannes",
+      "basilika",
+      "persilja",
+      "kesäkurpitsa",
+      "parsakaali",
+      "maissi",
+    ],
+    "vegetable",
+  ],
 
-  [["omena", "banaani", "päärynä", "appelsiini", "sitruuna", "marja",
-    "mansikka", "mustikka", "viinirypäle", "ananas", "meloni", "hedelmä",
-    "avokado", "lime"], "fruit"],
+  [
+    [
+      "omena",
+      "banaani",
+      "päärynä",
+      "appelsiini",
+      "sitruuna",
+      "marja",
+      "mansikka",
+      "mustikka",
+      "viinirypäle",
+      "ananas",
+      "meloni",
+      "hedelmä",
+      "avokado",
+      "lime",
+    ],
+    "fruit",
+  ],
 
   [["kahvi", "tee ", "espresso", "cappuccino"], "coffee"],
 
   [["tölkki", "energiajuoma", "olut", "siideri", "lonkero"], "can"],
 
-  [["juoma", "mehu", "limsa", "limonadi", "vesi", "kivennäis", "virvoitus",
-    "smoothie", "cola", "pullo"], "bottle"],
+  [
+    [
+      "juoma",
+      "mehu",
+      "limsa",
+      "limonadi",
+      "vesi",
+      "kivennäis",
+      "virvoitus",
+      "smoothie",
+      "cola",
+      "pullo",
+    ],
+    "bottle",
+  ],
 
-  [["kassi", "pussi", "muovikassi", "paperikassi", "rasia", "kelmu",
-    "folio", "pakkaus"], "bag"],
+  [
+    [
+      "kassi",
+      "pussi",
+      "muovikassi",
+      "paperikassi",
+      "rasia",
+      "kelmu",
+      "folio",
+      "pakkaus",
+    ],
+    "bag",
+  ],
 ];
 
 /**
@@ -94,12 +229,42 @@ const PRODUCT_WORDS: [readonly string[], GlyphName][] = [
 const SUPPLIER_WORDS: [readonly string[], GlyphName][] = [
   [["alko", "viini", "panimo", "juomatukku"], "wine"],
 
-  [["tukku", "kespro", "metro ", "wihuri", "heinon", "valio", "meira",
-    "atria", "hkscan", "snellman", "kesko pro"], "wholesale"],
+  [
+    [
+      "tukku",
+      "kespro",
+      "metro ",
+      "wihuri",
+      "heinon",
+      "valio",
+      "meira",
+      "atria",
+      "hkscan",
+      "snellman",
+      "kesko pro",
+    ],
+    "wholesale",
+  ],
 
-  [["market", "kauppa", "prisma", "lidl", "citymarket", "alepa", "sale",
-    "coop", "sokos", "abc", "siwa", "valintatalo", "minimani", "tokmanni"],
-   "shop"],
+  [
+    [
+      "market",
+      "kauppa",
+      "prisma",
+      "lidl",
+      "citymarket",
+      "alepa",
+      "sale",
+      "coop",
+      "sokos",
+      "abc",
+      "siwa",
+      "valintatalo",
+      "minimani",
+      "tokmanni",
+    ],
+    "shop",
+  ],
 ];
 
 function matchWords(

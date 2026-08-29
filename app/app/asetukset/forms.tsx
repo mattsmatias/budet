@@ -12,7 +12,13 @@ import type { WorkerText } from "@/lib/i18n/worker-text";
 
 const initial: ActionState = {};
 
-export function ProfileForm({ fullName, t }: { fullName: string; t: WorkerText }) {
+export function ProfileForm({
+  fullName,
+  t,
+}: {
+  fullName: string;
+  t: WorkerText;
+}) {
   const [state, action] = useActionState(updateProfile, initial);
 
   return (
@@ -28,7 +34,10 @@ export function ProfileForm({ fullName, t }: { fullName: string; t: WorkerText }
       <Feedback state={state} />
       <Submit idle={t.asetukset.saveName} busy={t.yleinen.saving} />
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {t.asetukset.nameHint}
       </p>
     </form>
@@ -104,7 +113,10 @@ function Field({
         autoComplete={autoComplete}
         required={required}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       />
       {hint ? (
         <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
@@ -159,7 +171,11 @@ function Submit({ idle, busy }: { idle: string; busy: string }) {
       type="submit"
       disabled={pending}
       className="rf-press w-full py-2.5 text-[14px] font-semibold disabled:opacity-50"
-      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-accent)",
+        color: "var(--rf-on-accent)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       {pending ? busy : idle}
     </button>
@@ -194,7 +210,10 @@ export function BirthdayForm({
   return (
     <form action={action} className="mt-3 space-y-3">
       <label className="block">
-        <span className="block text-[13px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+        <span
+          className="block text-[13px] font-medium"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {t.asetukset.birthday}
         </span>
         <input
@@ -213,7 +232,10 @@ export function BirthdayForm({
       <Feedback state={state} />
       <Submit idle={t.asetukset.saveBirthday} busy={t.yleinen.saving} />
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {t.asetukset.birthdayNote}
       </p>
     </form>

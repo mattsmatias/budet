@@ -76,13 +76,20 @@ export default async function LunchDisplayPage({
 
         <h1
           className="mt-[0.5vh] text-[4vw] font-bold leading-none"
-          style={{ fontFamily: t.headingFont, letterSpacing: t.headingTracking }}
+          style={{
+            fontFamily: t.headingFont,
+            letterSpacing: t.headingTracking,
+          }}
         >
           Lounas
         </h1>
 
-        <p className="mt-[0.8vh] text-[1.5vw] font-semibold" style={{ color: t.text2 }}>
-          Viikko {isoWeekNumber(week.weekStart)} · {formatWeekRange(week.weekStart)}
+        <p
+          className="mt-[0.8vh] text-[1.5vw] font-semibold"
+          style={{ color: t.text2 }}
+        >
+          Viikko {isoWeekNumber(week.weekStart)} ·{" "}
+          {formatWeekRange(week.weekStart)}
           {week.prices.length > 0 ? (
             <span style={{ color: t.text }}>
               {"  ·  "}
@@ -124,7 +131,9 @@ export default async function LunchDisplayPage({
               <div
                 key={day.date}
                 className="grid grid-cols-[7vw_1fr] items-baseline gap-x-[2vw] py-[1vh]"
-                style={index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined}
+                style={
+                  index > 0 ? { borderTop: `1px solid ${t.line}` } : undefined
+                }
               >
                 <dt
                   className="text-[2.6vw] font-bold uppercase leading-none"
@@ -136,7 +145,9 @@ export default async function LunchDisplayPage({
                 <dd className="min-w-0 text-[1.7vw] leading-snug">
                   {day.items.map((item, i) => (
                     <span key={i}>
-                      {i > 0 ? <span style={{ color: t.text3 }}> · </span> : null}
+                      {i > 0 ? (
+                        <span style={{ color: t.text3 }}> · </span>
+                      ) : null}
                       {item.name}
                       {shortDiets(item.diets).length > 0 ? (
                         <span
@@ -159,7 +170,9 @@ export default async function LunchDisplayPage({
               className="mt-[2vh] text-center text-[1.1vw]"
               style={{ color: t.text2 }}
             >
-              {[...legend].map(([short, label]) => `${short} ${label}`).join("  ·  ")}
+              {[...legend]
+                .map(([short, label]) => `${short} ${label}`)
+                .join("  ·  ")}
             </p>
           ) : null}
         </>

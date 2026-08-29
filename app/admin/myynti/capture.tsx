@@ -91,7 +91,8 @@ export function ReportCapture({
           error instanceof SalesExtractionError
             ? error.message
             : "Raportin luku epäonnistui.",
-        retryable: error instanceof SalesExtractionError ? error.retryable : true,
+        retryable:
+          error instanceof SalesExtractionError ? error.retryable : true,
       });
     }
   }
@@ -131,9 +132,15 @@ export function ReportCapture({
       {phase.at === "reading" ? (
         <div
           className="flex items-center gap-3 px-4 py-4"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
-          <span className="rf-breathe shrink-0" style={{ color: "var(--rf-accent)" }}>
+          <span
+            className="rf-breathe shrink-0"
+            style={{ color: "var(--rf-accent)" }}
+          >
             <RfIcon name="sparkle" size={18} />
           </span>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
@@ -228,7 +235,10 @@ function ReviewForm({
     netCents: result.netCents.value,
   });
 
-  const average = averageCheckCents(amounts.grossCents, result.transactions.value);
+  const average = averageCheckCents(
+    amounts.grossCents,
+    result.transactions.value,
+  );
 
   /*
    * Ryhmät kohdistetaan heti eikä vasta tallennuksessa.
@@ -297,7 +307,9 @@ function ReviewForm({
         </Banner>
       ) : null}
 
-      {amounts.mismatch ? <Banner tone="warn">{amounts.mismatch}</Banner> : null}
+      {amounts.mismatch ? (
+        <Banner tone="warn">{amounts.mismatch}</Banner>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
@@ -306,7 +318,9 @@ function ReviewForm({
           type="date"
           defaultValue={result.date.value ?? today}
           uncertain={result.date.value === null}
-          hint={result.date.value === null ? "Ei löytynyt raportista" : undefined}
+          hint={
+            result.date.value === null ? "Ei löytynyt raportista" : undefined
+          }
           required
         />
 
@@ -317,7 +331,9 @@ function ReviewForm({
           defaultValue={result.transactions.value?.toString() ?? ""}
           uncertain={result.transactions.confidence === "low"}
           hint={
-            average !== null ? `Keskiostos ${formatMoney(average)}` : "Vapaaehtoinen"
+            average !== null
+              ? `Keskiostos ${formatMoney(average)}`
+              : "Vapaaehtoinen"
           }
         />
 
@@ -327,7 +343,11 @@ function ReviewForm({
           inputMode="decimal"
           defaultValue={euros(amounts.grossCents)}
           uncertain={result.grossCents.confidence === "low"}
-          hint={amounts.derived.includes("grossCents") ? "Laskettu: veroton + ALV" : undefined}
+          hint={
+            amounts.derived.includes("grossCents")
+              ? "Laskettu: veroton + ALV"
+              : undefined
+          }
         />
 
         <Field
@@ -336,7 +356,11 @@ function ReviewForm({
           inputMode="decimal"
           defaultValue={euros(amounts.vatCents)}
           uncertain={result.vatCents.confidence === "low"}
-          hint={amounts.derived.includes("vatCents") ? "Laskettu: verollinen − veroton" : undefined}
+          hint={
+            amounts.derived.includes("vatCents")
+              ? "Laskettu: verollinen − veroton"
+              : undefined
+          }
         />
 
         <Field
@@ -376,25 +400,45 @@ function ReviewForm({
               <tr>
                 <th scope="col">Ryhmä</th>
                 <th scope="col">Kassan nimi</th>
-                <th scope="col" className="text-right">ALV %</th>
-                <th scope="col" className="text-right">Verollinen</th>
-                <th scope="col" className="text-right">ALV</th>
-                <th scope="col" className="text-right">Veroton</th>
+                <th scope="col" className="text-right">
+                  ALV %
+                </th>
+                <th scope="col" className="text-right">
+                  Verollinen
+                </th>
+                <th scope="col" className="text-right">
+                  ALV
+                </th>
+                <th scope="col" className="text-right">
+                  Veroton
+                </th>
               </tr>
             </thead>
             <tbody>
               {mapped.lines.map((l) => (
                 <tr key={l.salesGroupId} className="rf-row">
-                  <td className="font-semibold">{nameOf(groups, l.salesGroupId)}</td>
-                  <td style={{ color: "var(--rf-text-2)" }}>{l.posName ?? "—"}</td>
-                  <td className="rf-tabular text-right">{formatRate(l.vatRate)}</td>
+                  <td className="font-semibold">
+                    {nameOf(groups, l.salesGroupId)}
+                  </td>
+                  <td style={{ color: "var(--rf-text-2)" }}>
+                    {l.posName ?? "—"}
+                  </td>
+                  <td className="rf-tabular text-right">
+                    {formatRate(l.vatRate)}
+                  </td>
                   <td className="rf-tabular text-right font-semibold">
                     {formatMoney(l.grossCents)}
                   </td>
-                  <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                  <td
+                    className="rf-tabular text-right"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {formatMoney(l.vatCents)}
                   </td>
-                  <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+                  <td
+                    className="rf-tabular text-right"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
                     {formatMoney(l.netCents)}
                   </td>
                 </tr>
@@ -404,17 +448,17 @@ function ReviewForm({
 
           {mapped.unmapped.length > 0 ? (
             <Banner tone="warn">
-              Kohdistamaton kassaryhmä: {mapped.unmapped.join(", ")}. Myynti meni
-              oletusryhmään, joten summa täsmää — mutta verokanta on arvattu.
-              Lisää kohdistus asetuksista.
+              Kohdistamaton kassaryhmä: {mapped.unmapped.join(", ")}. Myynti
+              meni oletusryhmään, joten summa täsmää — mutta verokanta on
+              arvattu. Lisää kohdistus asetuksista.
             </Banner>
           ) : null}
 
           {mapped.dropped.length > 0 ? (
             <Banner tone="warn">
-              Ryhmää {mapped.dropped.join(", ")} ei voitu kirjata: kohdistusta ei
-              ole eikä oletusryhmää ole määritetty. Päivän summa jää tältä osin
-              vajaaksi.
+              Ryhmää {mapped.dropped.join(", ")} ei voitu kirjata: kohdistusta
+              ei ole eikä oletusryhmää ole määritetty. Päivän summa jää tältä
+              osin vajaaksi.
             </Banner>
           ) : null}
 
@@ -425,13 +469,21 @@ function ReviewForm({
       ) : null}
 
       {state.error ? (
-        <p role="alert" className="text-[12.5px] font-semibold" style={{ color: "var(--rf-red-text)" }}>
+        <p
+          role="alert"
+          className="text-[12.5px] font-semibold"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </p>
       ) : null}
 
       {state.notice ? (
-        <p role="status" className="text-[12.5px] font-semibold" style={{ color: "var(--rf-green-text)" }}>
+        <p
+          role="status"
+          className="text-[12.5px] font-semibold"
+          style={{ color: "var(--rf-green-text)" }}
+        >
           {state.notice}
         </p>
       ) : null}
@@ -481,7 +533,10 @@ function Field({
 
   return (
     <div>
-      <label htmlFor={id} className="flex items-center gap-2 text-[13px] font-semibold">
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 text-[13px] font-semibold"
+      >
         {label}
         {uncertain ? (
           <span
@@ -519,7 +574,13 @@ function Field({
   );
 }
 
-function Banner({ tone, children }: { tone: "warn"; children: React.ReactNode }) {
+function Banner({
+  tone,
+  children,
+}: {
+  tone: "warn";
+  children: React.ReactNode;
+}) {
   return (
     <p
       className="flex items-start gap-2.5 px-3.5 py-2.5 text-[12.5px] leading-relaxed"

@@ -60,8 +60,21 @@ export interface MerchantMatch {
  * jokainen kirjoitusasu tarvitsisi oman aliaksensa.
  */
 const NOISE_WORDS = new Set([
-  "oy", "oyj", "ab", "ky", "tmi", "ltd", "as", "abp", "osk",
-  "finland", "suomi", "yritysmyynti", "kuitti", "myymala", "myymälä",
+  "oy",
+  "oyj",
+  "ab",
+  "ky",
+  "tmi",
+  "ltd",
+  "as",
+  "abp",
+  "osk",
+  "finland",
+  "suomi",
+  "yritysmyynti",
+  "kuitti",
+  "myymala",
+  "myymälä",
 ]);
 
 /**
@@ -77,15 +90,17 @@ const NOISE_WORDS = new Set([
  * toisiinsa.
  */
 export function normalizeMerchantName(raw: string): string {
-  return raw
-    .toLowerCase()
-    // Piste kuuluu nimeen: verkkokauppa.com ei ole verkkokauppa com.
-    .replace(/[^\p{L}\p{N}.]+/gu, " ")
-    .split(" ")
-    .map((word) => word.replace(/^\.+|\.+$/g, ""))
-    .filter((word) => word !== "" && !NOISE_WORDS.has(word))
-    .join(" ")
-    .trim();
+  return (
+    raw
+      .toLowerCase()
+      // Piste kuuluu nimeen: verkkokauppa.com ei ole verkkokauppa com.
+      .replace(/[^\p{L}\p{N}.]+/gu, " ")
+      .split(" ")
+      .map((word) => word.replace(/^\.+|\.+$/g, ""))
+      .filter((word) => word !== "" && !NOISE_WORDS.has(word))
+      .join(" ")
+      .trim()
+  );
 }
 
 /**

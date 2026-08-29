@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { alertIcon } from "@/lib/restoflow/alert-icons";
 import { needsReview, reviewReasonCounts } from "@/lib/restoflow/expenses";
-import { REVIEW_REASON_LABELS, type Alert } from "@/lib/restoflow/types";
+import { type Alert } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
 
@@ -29,6 +31,8 @@ export const metadata = { title: "Ilmoitukset" };
  * ilmoitus jäisi roikkumaan senkin jälkeen kun asia on hoidettu.
  */
 export default async function NotificationsPage() {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const data = await adminContext("/admin/ilmoitukset");
 
   const alerts = buildAlerts({
@@ -42,6 +46,7 @@ export default async function NotificationsPage() {
     today: data.today,
     now: data.now,
     timezone: data.restaurant.timezone,
+    locale,
     openShifts: data.openShifts,
     sales: data.sales,
     tasks: data.tasks,
@@ -114,7 +119,7 @@ export default async function NotificationsPage() {
                 className="flex items-baseline justify-between gap-4 text-[13.5px]"
               >
                 <span style={{ color: "var(--rf-text-2)" }}>
-                  {REVIEW_REASON_LABELS[reason]}
+                  {nimet.reviewReasons[reason]}
                 </span>
                 <span className="rf-tabular font-semibold">{count}</span>
               </li>
@@ -123,7 +128,10 @@ export default async function NotificationsPage() {
         </Card>
       ) : null}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         Ilmoitukset johdetaan aineiston tilasta joka latauksella, eikä niitä
         tallenneta. Kun asia on hoidettu, ilmoitus katoaa itsestään.
       </p>
@@ -151,7 +159,10 @@ function Ryhma({
       <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
         {alerts.map((alert) => (
           <li key={alert.id}>
-            <Link href={alert.href} className="rf-press flex items-start gap-3.5 px-5 py-3.5">
+            <Link
+              href={alert.href}
+              className="rf-press flex items-start gap-3.5 px-5 py-3.5"
+            >
               <span
                 aria-hidden="true"
                 className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center"
@@ -175,7 +186,9 @@ function Ryhma({
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-medium">{alert.title}</span>
+                <span className="block text-[14px] font-medium">
+                  {alert.title}
+                </span>
                 <span
                   className="mt-0.5 block text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}

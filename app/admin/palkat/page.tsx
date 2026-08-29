@@ -51,7 +51,8 @@ export default async function PayrollPage({
   const params = await searchParams;
   const { restaurant, role, month, now, users } =
     await adminContext("/admin/palkat");
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
 
   const requested =
     typeof params.kuukausi === "string" ? params.kuukausi : month;
@@ -114,7 +115,7 @@ export default async function PayrollPage({
       <header className="rf-z-page relative flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {formatMonth(viewMonth)} · {chosen.label}
+            {formatMonth(viewMonth, locale)} · {chosen.label}
           </p>
         </div>
 

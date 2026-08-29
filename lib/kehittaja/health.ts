@@ -67,7 +67,10 @@ export async function runChecks(): Promise<Check[]> {
      * kysely kertoo että myös RLS toimii, ei vain että yhteys on auki.
      */
     mittaa("db", "Tietokanta", async () => {
-      const { error } = await supabase.from("feature_flags").select("key").limit(1);
+      const { error } = await supabase
+        .from("feature_flags")
+        .select("key")
+        .limit(1);
       if (error) return { ok: false, detail: error.message };
       return { ok: true, detail: "Kysely läpi rivikäytäntöjen" };
     }),

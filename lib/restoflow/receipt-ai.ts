@@ -103,10 +103,42 @@ function profileFor(fileName: string): Profile {
       businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
-        { description: "Naudan sisäfilee", quantity: 4, unit: "kg", totalCents: 8960, category: "food", vatRate: 0.14, productGroup: "Liha" },
-        { description: "Perunat", quantity: 25, unit: "kg", totalCents: 2450, category: "food", vatRate: 0.14, productGroup: "Vihannekset" },
-        { description: "Salaattisekoitus", quantity: 6, unit: "pkt", totalCents: 3480, category: "food", vatRate: 0.14, productGroup: "Vihannekset" },
-        { description: "Oliiviöljy", quantity: 1, unit: "kanisteri", totalCents: 3800, category: "food", vatRate: 0.14, productGroup: "Öljyt" },
+        {
+          description: "Naudan sisäfilee",
+          quantity: 4,
+          unit: "kg",
+          totalCents: 8960,
+          category: "food",
+          vatRate: 0.14,
+          productGroup: "Liha",
+        },
+        {
+          description: "Perunat",
+          quantity: 25,
+          unit: "kg",
+          totalCents: 2450,
+          category: "food",
+          vatRate: 0.14,
+          productGroup: "Vihannekset",
+        },
+        {
+          description: "Salaattisekoitus",
+          quantity: 6,
+          unit: "pkt",
+          totalCents: 3480,
+          category: "food",
+          vatRate: 0.14,
+          productGroup: "Vihannekset",
+        },
+        {
+          description: "Oliiviöljy",
+          quantity: 1,
+          unit: "kanisteri",
+          totalCents: 3800,
+          category: "food",
+          vatRate: 0.14,
+          productGroup: "Öljyt",
+        },
       ],
     };
   }
@@ -124,10 +156,42 @@ function profileFor(fileName: string): Profile {
       businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
-        { description: "Kanafilee", quantity: 10, unit: "kg", totalCents: 14200, category: "food", vatRate: 0.14, productGroup: "Liha" },
-        { description: "Coca-Cola 0,33 l", quantity: 24, unit: "kpl", totalCents: 8650, category: "soft_drinks", vatRate: 0.14, productGroup: "Virvoitusjuomat" },
-        { description: "Astianpesuaine", quantity: 2, unit: "kanisteri", totalCents: 5900, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
-        { description: "Talouspaperi", quantity: 6, unit: "rll", totalCents: 2500, category: "cleaning", vatRate: 0.255, productGroup: "Puhdistusaineet" },
+        {
+          description: "Kanafilee",
+          quantity: 10,
+          unit: "kg",
+          totalCents: 14200,
+          category: "food",
+          vatRate: 0.14,
+          productGroup: "Liha",
+        },
+        {
+          description: "Coca-Cola 0,33 l",
+          quantity: 24,
+          unit: "kpl",
+          totalCents: 8650,
+          category: "soft_drinks",
+          vatRate: 0.14,
+          productGroup: "Virvoitusjuomat",
+        },
+        {
+          description: "Astianpesuaine",
+          quantity: 2,
+          unit: "kanisteri",
+          totalCents: 5900,
+          category: "cleaning",
+          vatRate: 0.255,
+          productGroup: "Puhdistusaineet",
+        },
+        {
+          description: "Talouspaperi",
+          quantity: 6,
+          unit: "rll",
+          totalCents: 2500,
+          category: "cleaning",
+          vatRate: 0.255,
+          productGroup: "Puhdistusaineet",
+        },
       ],
     };
   }
@@ -141,9 +205,17 @@ function profileFor(fileName: string): Profile {
         confidence: "low",
         hint: "Loppusumma oli osittain rypistynyt — tarkista",
       },
-      vatCents: { value: null, confidence: "low", hint: "ALV ei erottunut kuitista" },
+      vatCents: {
+        value: null,
+        confidence: "low",
+        hint: "ALV ei erottunut kuitista",
+      },
       category: { value: "food", confidence: "medium" },
-      paymentMethod: { value: "unknown", confidence: "low", hint: "Maksutapaa ei tunnistettu" },
+      paymentMethod: {
+        value: "unknown",
+        confidence: "low",
+        hint: "Maksutapaa ei tunnistettu",
+      },
       receiptNumber: { value: null, confidence: "low" },
       businessId: { value: null, confidence: "low" },
       imageQuality: "poor",
@@ -158,20 +230,44 @@ function profileFor(fileName: string): Profile {
       supplier: { value: "Alko Yritysmyynti", confidence: "high" },
       date: { value: "2026-08-17", confidence: "high" },
       totalCents: { value: 128400, confidence: "high" },
-      vatCents: { value: 16260, confidence: "medium", hint: "Tarkista verokanta" },
+      vatCents: {
+        value: 16260,
+        confidence: "medium",
+        hint: "Tarkista verokanta",
+      },
       category: { value: "alcohol", confidence: "high" },
       paymentMethod: { value: "invoice", confidence: "high" },
       receiptNumber: { value: "ALK-7781", confidence: "high" },
       businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
-        { description: "Punaviini 0,75 l", quantity: 36, unit: "plo", totalCents: 79200, category: "alcohol", vatRate: 0.255, productGroup: "Viinit" },
-        { description: "Valkoviini 0,75 l", quantity: 24, unit: "plo", totalCents: 49200, category: "alcohol", vatRate: 0.255, productGroup: "Viinit" },
+        {
+          description: "Punaviini 0,75 l",
+          quantity: 36,
+          unit: "plo",
+          totalCents: 79200,
+          category: "alcohol",
+          vatRate: 0.255,
+          productGroup: "Viinit",
+        },
+        {
+          description: "Valkoviini 0,75 l",
+          quantity: 24,
+          unit: "plo",
+          totalCents: 49200,
+          category: "alcohol",
+          vatRate: 0.255,
+          productGroup: "Viinit",
+        },
       ],
     };
   }
 
-  if (name.includes("juoma") || name.includes("olut") || name.includes("hartwall")) {
+  if (
+    name.includes("juoma") ||
+    name.includes("olut") ||
+    name.includes("hartwall")
+  ) {
     return {
       supplier: { value: "Hartwall", confidence: "high" },
       date: { value: "2026-08-16", confidence: "high" },
@@ -183,8 +279,24 @@ function profileFor(fileName: string): Profile {
       businessId: { value: null, confidence: "low" },
       imageQuality: "good",
       items: [
-        { description: "Virvoitusjuomat 0,33 l", quantity: 240, unit: "kpl", totalCents: 43200, category: "soft_drinks", vatRate: 0.14, productGroup: "Virvoitusjuomat" },
-        { description: "Kivennäisvesi", quantity: 120, unit: "kpl", totalCents: 25200, category: "soft_drinks", vatRate: 0.14, productGroup: "Vedet" },
+        {
+          description: "Virvoitusjuomat 0,33 l",
+          quantity: 240,
+          unit: "kpl",
+          totalCents: 43200,
+          category: "soft_drinks",
+          vatRate: 0.14,
+          productGroup: "Virvoitusjuomat",
+        },
+        {
+          description: "Kivennäisvesi",
+          quantity: 120,
+          unit: "kpl",
+          totalCents: 25200,
+          category: "soft_drinks",
+          vatRate: 0.14,
+          productGroup: "Vedet",
+        },
       ],
     };
   }
@@ -197,7 +309,11 @@ function profileFor(fileName: string): Profile {
   // summa, ja se saisi käyttäjän kuvaamaan kuitin turhaan uudelleen.
   return {
     supplier: { value: null, confidence: "low" },
-    date: { value: new Date().toISOString().slice(0, 10), confidence: "low", hint: "Oletus: tänään" },
+    date: {
+      value: new Date().toISOString().slice(0, 10),
+      confidence: "low",
+      hint: "Oletus: tänään",
+    },
     totalCents: { value: null, confidence: "low" },
     vatCents: { value: null, confidence: "low" },
     category: { value: null, confidence: "low" },
@@ -222,7 +338,10 @@ function profileFor(fileName: string): Profile {
 export function reviewReasonsFor(result: ExtractionResult): ReviewReason[] {
   const reasons: ReviewReason[] = [];
 
-  if (result.totalCents.value === null || result.totalCents.confidence === "low") {
+  if (
+    result.totalCents.value === null ||
+    result.totalCents.confidence === "low"
+  ) {
     reasons.push("total_uncertain");
   }
 
@@ -257,7 +376,10 @@ export function reviewReasonsFor(result: ExtractionResult): ReviewReason[] {
 
   if (result.date.confidence === "low") reasons.push("date_uncertain");
 
-  if (result.paymentMethod.value === null || result.paymentMethod.value === "unknown") {
+  if (
+    result.paymentMethod.value === null ||
+    result.paymentMethod.value === "unknown"
+  ) {
     reasons.push("payment_missing");
   }
 
@@ -354,7 +476,10 @@ export class ExtractionError extends Error {
 
 /** Tyhjä tulos. Tyhjä arvo on parempi kuin keksitty. */
 export function emptyResult(): ExtractionResult {
-  const unknown = <T>() => ({ value: null as T | null, confidence: "low" as const });
+  const unknown = <T>() => ({
+    value: null as T | null,
+    confidence: "low" as const,
+  });
 
   return {
     supplier: unknown<string>(),

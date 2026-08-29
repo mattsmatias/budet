@@ -126,7 +126,9 @@ export interface EmployeeContext extends Context {
  * lataaminen puhelimeen olisi hidasta eikä työntekijällä ole siihen
  * oikeuttakaan.
  */
-export async function employeeContext(returnTo: string): Promise<EmployeeContext> {
+export async function employeeContext(
+  returnTo: string,
+): Promise<EmployeeContext> {
   const ctx = await requireContext(returnTo);
 
   const month = monthIn(ctx.restaurant.timezone);

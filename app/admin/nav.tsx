@@ -162,8 +162,12 @@ function DesktopSidebar({
             )}
 
             <ul
-              aria-label={section.id === "main" ? t.nav[section.key] : undefined}
-              aria-labelledby={section.id === "main" ? undefined : `rf-nav-${section.id}`}
+              aria-label={
+                section.id === "main" ? t.nav[section.key] : undefined
+              }
+              aria-labelledby={
+                section.id === "main" ? undefined : `rf-nav-${section.id}`
+              }
             >
               {section.items.map((item) => (
                 <NavLink
@@ -190,11 +194,13 @@ function DesktopSidebar({
         kuulu mihinkään osastoon vaan omalle rivilleen viivan alle.
       */}
       {matti ? (
-        <div className="border-t px-3 pb-2 pt-2" style={{ borderColor: "var(--rf-line)" }}>
+        <div
+          className="border-t px-3 pb-2 pt-2"
+          style={{ borderColor: "var(--rf-line)" }}
+        >
           <MattiPanel enabled t={t} briefing={briefing} greeting={greeting} />
         </div>
       ) : null}
-
     </aside>
   );
 }
@@ -291,10 +297,14 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
                 /* Valittu välilehti on korostusvärillä kuten kiskossakin:
                    sininen oli tässä ainoa paikka jossa "valittu" oli
                    sininen, ja puhelin näytti eri sovellukselta. */
-                style={{ color: active ? "var(--rf-accent)" : "var(--rf-text-3)" }}
+                style={{
+                  color: active ? "var(--rf-accent)" : "var(--rf-text-3)",
+                }}
               >
                 <RfIcon name={item.icon} size={22} />
-                <span className="text-[10px] font-medium">{t.nav[item.key]}</span>
+                <span className="text-[10px] font-medium">
+                  {t.nav[item.key]}
+                </span>
               </Link>
             </li>
           );
@@ -307,7 +317,9 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
               aria-current={isActive("/admin/lisaa") ? "page" : undefined}
               className="rf-press flex flex-col items-center gap-1 py-2"
               style={{
-                color: isActive("/admin/lisaa") ? "var(--rf-accent)" : "var(--rf-text-3)",
+                color: isActive("/admin/lisaa")
+                  ? "var(--rf-accent)"
+                  : "var(--rf-text-3)",
               }}
             >
               <RfIcon name="more" size={22} />
@@ -319,5 +331,3 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
     </nav>
   );
 }
-
-

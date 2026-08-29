@@ -117,7 +117,6 @@ export async function signOut(): Promise<void> {
   redirect("/kirjaudu");
 }
 
-
 /*
  * Supabasen viesti on aina englanniksi ja tarkoitettu kehittäjälle.
  * Tunnistetaan tapaus ja kerrotaan se käyttäjän kielellä; tuntematon
@@ -126,7 +125,10 @@ export async function signOut(): Promise<void> {
  */
 function translateSignUpError(message: string, t: AuthText): string {
   const m = message.toLowerCase();
-  if (m.includes("already registered") || m.includes("already been registered")) {
+  if (
+    m.includes("already registered") ||
+    m.includes("already been registered")
+  ) {
     return t.virheet.alreadyRegistered;
   }
   if (m.includes("password")) {

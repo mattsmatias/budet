@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { fetchRestaurants } from "@/lib/kehittaja/queries";
-import { PLAN_LABELS, STATUS_LABELS, statusTone, type RestaurantPlan } from "@/lib/kehittaja/types";
+import {
+  PLAN_LABELS,
+  STATUS_LABELS,
+  statusTone,
+  type RestaurantPlan,
+} from "@/lib/kehittaja/types";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
+import {
+  Card,
+  CardHeader,
+  EmptyState,
+  MetricCard,
+  Pill,
+} from "@/components/restoflow/ui";
 
 export const metadata = { title: "Tilaukset" };
 
@@ -23,7 +34,9 @@ const PAKETIT: RestaurantPlan[] = ["free", "pro", "business", "enterprise"];
  */
 export default async function DevPlansPage() {
   const restaurants = await fetchRestaurants();
-  const elavat = restaurants.filter((r) => !r.isTestAccount && r.status !== "archived");
+  const elavat = restaurants.filter(
+    (r) => !r.isTestAccount && r.status !== "archived",
+  );
 
   const paketeittain = PAKETIT.map((plan) => ({
     plan,
@@ -97,14 +110,21 @@ export default async function DevPlansPage() {
                     className="rf-press flex items-center gap-3 px-5 py-3.5"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-semibold">{r.name}</span>
-                      <span className="block text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+                      <span className="block truncate text-[14px] font-semibold">
+                        {r.name}
+                      </span>
+                      <span
+                        className="block text-[12.5px]"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
                         {PLAN_LABELS[r.plan]} · {r.ownerName ?? "ei omistajaa"}
                       </span>
                     </span>
 
                     <Pill tone={ohi ? "risk" : "warn"} dot>
-                      {ohi ? `Päättyi ${r.trialEndsOn}` : `Päättyy ${r.trialEndsOn}`}
+                      {ohi
+                        ? `Päättyi ${r.trialEndsOn}`
+                        : `Päättyy ${r.trialEndsOn}`}
                     </Pill>
                   </Link>
                 </li>
@@ -143,13 +163,17 @@ export default async function DevPlansPage() {
                         {r.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-[13px]">{PLAN_LABELS[r.plan]}</td>
+                    <td className="px-4 py-3 text-[13px]">
+                      {PLAN_LABELS[r.plan]}
+                    </td>
                     <td className="px-4 py-3">
                       <Pill tone={tone === "muted" ? "info" : tone} dot>
                         {STATUS_LABELS[r.status]}
                       </Pill>
                     </td>
-                    <td className="rf-tabular px-5 py-3 text-right">{r.userCount}</td>
+                    <td className="rf-tabular px-5 py-3 text-right">
+                      {r.userCount}
+                    </td>
                   </tr>
                 );
               })}

@@ -71,8 +71,12 @@ export function PublishBar({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[13.5px] font-bold" style={{ color: "var(--rf-amber-text)" }}>
-            {drafts} {drafts === 1 ? "julkaisematon vuoro" : "julkaisematonta vuoroa"}
+          <p
+            className="text-[13.5px] font-bold"
+            style={{ color: "var(--rf-amber-text)" }}
+          >
+            {drafts}{" "}
+            {drafts === 1 ? "julkaisematon vuoro" : "julkaisematonta vuoroa"}
           </p>
           <p
             className="mt-0.5 text-[12.5px] leading-relaxed"
@@ -108,18 +112,31 @@ export function PublishBar({
         >
           <input type="hidden" name="month" value={month} />
 
-          <p className="text-[13px] font-bold" style={{ color: "var(--rf-amber-text)" }}>
+          <p
+            className="text-[13px] font-bold"
+            style={{ color: "var(--rf-amber-text)" }}
+          >
             Julkaise {monthLabel} työvuorot?
           </p>
 
           <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[12.5px]">
-            <Luku label={people === 1 ? "työntekijä" : "työntekijää"} value={String(people)} />
-            <Luku label={drafts === 1 ? "työvuoro" : "työvuoroa"} value={String(drafts)} />
+            <Luku
+              label={people === 1 ? "työntekijä" : "työntekijää"}
+              value={String(people)}
+            />
+            <Luku
+              label={drafts === 1 ? "työvuoro" : "työvuoroa"}
+              value={String(drafts)}
+            />
             <Luku label="suunniteltua työaikaa" value={hours} />
           </dl>
 
           {state.error ? (
-            <p role="alert" className="mt-2 text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+            <p
+              role="alert"
+              className="mt-2 text-[12.5px]"
+              style={{ color: "var(--rf-red-text)" }}
+            >
               {state.error}
             </p>
           ) : null}
@@ -144,10 +161,16 @@ export function PublishBar({
 function Luku({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11.5px]" style={{ color: "var(--rf-amber-text)", opacity: 0.8 }}>
+      <dt
+        className="text-[11.5px]"
+        style={{ color: "var(--rf-amber-text)", opacity: 0.8 }}
+      >
         {label}
       </dt>
-      <dd className="rf-tabular text-[15px] font-bold" style={{ color: "var(--rf-amber-text)" }}>
+      <dd
+        className="rf-tabular text-[15px] font-bold"
+        style={{ color: "var(--rf-amber-text)" }}
+      >
         {value}
       </dd>
     </div>

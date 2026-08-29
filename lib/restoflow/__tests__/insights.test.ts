@@ -36,7 +36,11 @@ function receipt(
   };
 }
 
-function budget(category: ExpenseCategory, cents: number, month: string): Budget {
+function budget(
+  category: ExpenseCategory,
+  cents: number,
+  month: string,
+): Budget {
   n += 1;
   return {
     id: `b${n}`,
@@ -58,6 +62,7 @@ function context(partial: Partial<InsightContext> = {}): InsightContext {
     today: "2026-08-15",
     now: "2026-08-15T12:00:00.000Z",
     timezone: "Europe/Helsinki",
+    locale: "fi" as const,
     ...partial,
   };
 }
@@ -121,12 +126,24 @@ describe("havainnot", () => {
   it("huomaa toimittajakeskittymän", () => {
     const ctx = context({
       receipts: [
-        receipt({ totalCents: 80000, date: "2026-08-02", supplierId: "iso", supplierName: "Iso Tukku" }),
-        receipt({ totalCents: 10000, date: "2026-08-03", supplierId: "pieni", supplierName: "Pieni" }),
+        receipt({
+          totalCents: 80000,
+          date: "2026-08-02",
+          supplierId: "iso",
+          supplierName: "Iso Tukku",
+        }),
+        receipt({
+          totalCents: 10000,
+          date: "2026-08-03",
+          supplierId: "pieni",
+          supplierName: "Pieni",
+        }),
       ],
     });
 
-    const insight = buildInsights(ctx).find((i) => i.id === "supplier-concentration");
+    const insight = buildInsights(ctx).find(
+      (i) => i.id === "supplier-concentration",
+    );
     expect(insight?.detail).toContain("Iso Tukku");
   });
 
@@ -177,8 +194,16 @@ describe("havainnot", () => {
   it("nostaa tarkistusjonon kun neljännes odottaa", () => {
     const ctx = context({
       receipts: [
-        receipt({ totalCents: 1000, date: "2026-08-01", status: "needs_review" }),
-        receipt({ totalCents: 1000, date: "2026-08-02", status: "needs_review" }),
+        receipt({
+          totalCents: 1000,
+          date: "2026-08-01",
+          status: "needs_review",
+        }),
+        receipt({
+          totalCents: 1000,
+          date: "2026-08-02",
+          status: "needs_review",
+        }),
         receipt({ totalCents: 1000, date: "2026-08-03" }),
         receipt({ totalCents: 1000, date: "2026-08-04" }),
       ],

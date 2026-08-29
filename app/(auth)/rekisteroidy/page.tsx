@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { isConfigured } from "@/utils/supabase/server";
 import { readInvite } from "../liity/actions";
-import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import type { Role, StaffPosition } from "@/lib/restoflow/types";
 import { SignUpForm } from "./form";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -15,6 +15,8 @@ export async function generateMetadata() {
 export default async function SignUpPage({
   searchParams,
 }: PageProps<"/rekisteroidy">) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const params = await searchParams;
 
   // Kutsulinkistä tullut ei ole perustamassa ravintolaa vaan
@@ -35,7 +37,9 @@ export default async function SignUpPage({
 
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">{t.rekisteroidy.title}</h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">
+        {t.rekisteroidy.title}
+      </h1>
       <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
         {t.rekisteroidy.haveAccount}{" "}
         <Link
@@ -62,8 +66,8 @@ export default async function SignUpPage({
           </p>
           <p className="mt-0.5 text-[13px]">
             {invite.preview.position
-              ? POSITION_LABELS[invite.preview.position as StaffPosition]
-              : ROLE_LABELS[invite.preview.role as Role]}
+              ? nimet.positions[invite.preview.position as StaffPosition]
+              : nimet.roles[invite.preview.role as Role]}
           </p>
           <p className="mt-2 text-[12px] leading-relaxed">
             {t.rekisteroidy.joiningNote}
@@ -79,7 +83,10 @@ export default async function SignUpPage({
           }}
         >
           {t.rekisteroidy.inviteMissing}{" "}
-          <Link href="/liity" className="font-medium underline underline-offset-4">
+          <Link
+            href="/liity"
+            className="font-medium underline underline-offset-4"
+          >
             {t.rekisteroidy.enterCodeAgain}
           </Link>
         </p>

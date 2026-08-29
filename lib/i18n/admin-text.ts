@@ -93,15 +93,18 @@ const fi = {
     componentNeedsName: "Anna palkkalajille nimi.",
     unknownUnit: "Tuntematon yksikkö.",
     valueMissing: "Arvo puuttuu.",
-    windowBothOrNeither: "Anna ikkunalle sekä alku että loppu, tai jätä molemmat tyhjiksi.",
+    windowBothOrNeither:
+      "Anna ikkunalle sekä alku että loppu, tai jätä molemmat tyhjiksi.",
     componentSaveFailed: "Palkkalajin tallennus epäonnistui",
     componentUpdated: "Palkkalaji päivitetty.",
     componentAdded: "Palkkalaji lisätty.",
     fixFirst: "Korjaa ensin: {viesti}",
     periodIssues: "Kaudella on {maara} tarkistettavaa kohtaa.",
-    approveAllFirst: "Hyväksy ensin kaikki palkkalaskelmat ({hyvaksytty}/{kaikki}).",
+    approveAllFirst:
+      "Hyväksy ensin kaikki palkkalaskelmat ({hyvaksytty}/{kaikki}).",
     components: "Palkkalajit",
-    componentsIntro: "Ilta-, yö- ja viikonloppulisät. Kate ei tunne työehtosopimusta, joten arvot syötetään itse.",
+    componentsIntro:
+      "Ilta-, yö- ja viikonloppulisät. Kate ei tunne työehtosopimusta, joten arvot syötetään itse.",
     addComponent: "Lisää palkkalaji",
     noComponents: "Ei palkkalajeja. Peruspalkka lasketaan silti tuntipalkasta.",
     eveningSupp: "Iltalisä",
@@ -112,7 +115,8 @@ const fi = {
     otherSupp: "Muu lisä",
     weekdaysHint: "Viikonpäivät — valitsematta jättäminen tarkoittaa kaikkia",
     canCombine: "Voi yhdistyä muihin lisiin",
-    combineHint: "Jos lisä ei yhdisty, samalta minuutilta maksetaan vain arvokkain.",
+    combineHint:
+      "Jos lisä ei yhdisty, samalta minuutilta maksetaan vain arvokkain.",
     mon: "Ma",
     tue: "Ti",
     wed: "Ke",
@@ -143,10 +147,12 @@ const fi = {
     nothingToNote: "Ei huomautettavaa",
     needsCorrection: "Vaatii korjauksen",
     periodApproval: "Palkkakauden hyväksyntä",
-    grossNote: "Bruttopalkka ei sisällä ennakonpidätystä, muita vähennyksiä eikä työnantajan sivukuluja. Kate ei ole palkkahallinto-ohjelma eikä korvaa sellaista.",
+    grossNote:
+      "Bruttopalkka ei sisällä ennakonpidätystä, muita vähennyksiä eikä työnantajan sivukuluja. Kate ei ole palkkahallinto-ohjelma eikä korvaa sellaista.",
     payWages: "Maksa palkat",
     notYetAvailable: "— ei vielä käytössä",
-    periodLockedNote: "Kausi on hyväksytty ja lukittu. Laskelmat eivät muutu ennen kuin kausi avataan.",
+    periodLockedNote:
+      "Kausi on hyväksytty ja lukittu. Laskelmat eivät muutu ennen kuin kausi avataan.",
     approvedWord: "Hyväksytty",
     readyForApproval: "Valmis hyväksyttäväksi",
     inProgress: "Kesken",
@@ -155,27 +161,32 @@ const fi = {
     approvePeriod: "Hyväksy palkkakausi",
     approving: "Hyväksytään…",
     payoutComing: "Palkanmaksu tulee käyttöön maksupalveluintegraation kautta.",
-    approveFirstThenPay: "Hyväksy kausi ensin. Palkanmaksu tulee käyttöön maksupalveluintegraation kautta.",
+    approveFirstThenPay:
+      "Hyväksy kausi ensin. Palkanmaksu tulee käyttöön maksupalveluintegraation kautta.",
     approvedOf: "Hyväksytty {hyvaksytty}/{kaikki} laskelmaa.",
     issueCount: "Tarkistettavia kohtia {maara}.",
     check: "Tarkista",
     awaitingApproval: "Odottaa hyväksyntää",
     toCheck: "Tarkistettavaa",
-    notApprovedUntilFixed: "Palkkaa ei hyväksytä ennen kuin nämä on korjattu. Korjaus tehdään alla olevasta erittelystä.",
+    notApprovedUntilFixed:
+      "Palkkaa ei hyväksytä ennen kuin nämä on korjattu. Korjaus tehdään alla olevasta erittelystä.",
     workTime: "Työaika",
     payWord: "Palkka",
     basePay: "Peruspalkka",
     grossPay: "Bruttopalkka",
-    grossExcludes: "Ei sisällä ennakonpidätystä, muita vähennyksiä eikä työnantajan sivukuluja.",
+    grossExcludes:
+      "Ei sisällä ennakonpidätystä, muita vähennyksiä eikä työnantajan sivukuluja.",
     howFormed: "Mistä tämä summa muodostui?",
-    eachRowIsDay: "Jokainen rivi on yksi työpäivä. Aika on leimauksista, ei suunnitellusta vuorosta.",
+    eachRowIsDay:
+      "Jokainen rivi on yksi työpäivä. Aika on leimauksista, ei suunnitellusta vuorosta.",
     noWorkedTime: "Kaudella ei ole toteutunutta työaikaa.",
     payslip: "Palkkalaskelma",
     baseHours: "Perustunnit",
     corrected: "Korjattu",
     restoreClockings: "Palauta leimaukset",
     whyCorrecting: "Miksi aikaa korjataan?",
-    correctionNote: "Alkuperäisiä leimauksia ei muuteta. Korjaus tallennetaan omana merkintänään, ja siihen jää nimesi, aika ja perustelu.",
+    correctionNote:
+      "Alkuperäisiä leimauksia ei muuteta. Korjaus tallennetaan omana merkintänään, ja siihen jää nimesi, aika ja perustelu.",
     cancel: "Peruuta",
     changeCorrection: "Muuta korjausta",
     correctWorkedTime: "Korjaa toteutunut aika",
@@ -184,8 +195,10 @@ const fi = {
     breakMin: "Tauko (min)",
     forgotClockOut: "Ulosleima unohtui",
     saveCorrection: "Tallenna korjaus",
-    changedAfterApproval: "Työaikaa on muutettu hyväksynnän jälkeen. Tallennettu summa ei enää vastaa laskelmaa, joten se on hyväksyttävä uudelleen.",
-    periodLockedOpenFromPay: "Palkkakausi on hyväksytty ja lukittu. Avaa kausi Palkat-sivulta jos laskelmaa pitää muuttaa.",
+    changedAfterApproval:
+      "Työaikaa on muutettu hyväksynnän jälkeen. Tallennettu summa ei enää vastaa laskelmaa, joten se on hyväksyttävä uudelleen.",
+    periodLockedOpenFromPay:
+      "Palkkakausi on hyväksytty ja lukittu. Avaa kausi Palkat-sivulta jos laskelmaa pitää muuttaa.",
     fixIssuesFirst: "Korjaa ensin tarkistettavat kohdat.",
     approvePay: "Hyväksy palkka",
     unknownError: "tuntematon virhe",
@@ -229,18 +242,26 @@ const fi = {
     priceSaved: "Hinta tallennettu.",
     retrySuffix: "{syy} Yritä uudelleen.",
     shareTitle: "Vie lista eteenpäin",
-    printHint: "Esikatselu on A4-kokoinen ja tulostuu samanlaisena. Avaa se ja paina Ctrl/Cmd + P.",
+    printHint:
+      "Esikatselu on A4-kokoinen ja tulostuu samanlaisena. Avaa se ja paina Ctrl/Cmd + P.",
     openA4: "Avaa A4-esikatselu",
-    printNote: "Kuvaukset ja ruokakohtaiset allergeenit eivät mahdu arkille. Ne ovat verkkosivulla, jonka asiakas avaa QR-koodista.",
-    embedHint: "Liitä tämä omalle sivullesi. Lista päivittyy itsestään kun julkaiset uuden viikon — koodia ei tarvitse vaihtaa.",
-    embedNote: "Tausta on läpinäkyvä, joten se ottaa oman sivusi värin. Lisää osoitteen perään",
+    printNote:
+      "Kuvaukset ja ruokakohtaiset allergeenit eivät mahdu arkille. Ne ovat verkkosivulla, jonka asiakas avaa QR-koodista.",
+    embedHint:
+      "Liitä tämä omalle sivullesi. Lista päivittyy itsestään kun julkaiset uuden viikon — koodia ei tarvitse vaihtaa.",
+    embedNote:
+      "Tausta on läpinäkyvä, joten se ottaa oman sivusi värin. Lisää osoitteen perään",
     seeEmbed: "Katso miltä upotus näyttää",
-    facebookHint: "Kate ei julkaise Facebookiin puolestasi — se vaatisi Facebook-sovelluksen ja sivun käyttöoikeuden. Tässä on lista valmiina tekstinä: kopioi ja liitä.",
+    facebookHint:
+      "Kate ei julkaise Facebookiin puolestasi — se vaatisi Facebook-sovelluksen ja sivun käyttöoikeuden. Tässä on lista valmiina tekstinä: kopioi ja liitä.",
     openFacebook: "Avaa Facebookin jakoikkuna",
-    facebookNote: "Jakoikkuna jakaa linkin esikatselukuvineen. Teksti kannattaa liittää mukaan, koska moni lukee sen avaamatta linkkiä.",
-    screenHint: "Näyttötila on suurella tekstillä ja lataa itsensä uudelleen kymmenen minuutin välein. Avaa tämä osoite näytön selaimessa koko ruudun tilassa.",
+    facebookNote:
+      "Jakoikkuna jakaa linkin esikatselukuvineen. Teksti kannattaa liittää mukaan, koska moni lukee sen avaamatta linkkiä.",
+    screenHint:
+      "Näyttötila on suurella tekstillä ja lataa itsensä uudelleen kymmenen minuutin välein. Avaa tämä osoite näytön selaimessa koko ruudun tilassa.",
     openScreen: "Avaa näyttötila",
-    screenNote: "Kuvaukset ja allergeenit jäävät pois: metrin päästä niitä ei lue kukaan, ja ne veisivät tilan siltä mitä luetaan.",
+    screenNote:
+      "Kuvaukset ja allergeenit jäävät pois: metrin päästä niitä ei lue kukaan, ja ne veisivät tilan siltä mitä luetaan.",
     tabPrint: "Tulosteet",
     tabWeb: "Kotisivut",
     tabScreens: "Infonäytöt",
@@ -251,13 +272,16 @@ const fi = {
     copied: "Kopioitu",
     copy: "Kopioi",
     preview: "Esikatsele",
-    unpublishedChanges: "Julkaistuun lounaslistaan on tehty muutoksia. Asiakkaat näkevät yhä edellisen version.",
-    publicPageHint: "Sivu aukeaa ilman kirjautumista ja näyttää kuluvan viikon lounaslistan. Luonnokset eivät näy siellä lainkaan.",
+    unpublishedChanges:
+      "Julkaistuun lounaslistaan on tehty muutoksia. Asiakkaat näkevät yhä edellisen version.",
+    publicPageHint:
+      "Sivu aukeaa ilman kirjautumista ja näyttää kuluvan viikon lounaslistan. Luonnokset eivät näy siellä lainkaan.",
     openPage: "Avaa sivu",
     qrHint: "Tallenna kuva hiiren oikealla ja tulosta pöytään tai oveen.",
     thisWeek: "Tämä viikko",
     noMenuThisWeek: "Tällä viikolla ei ole vielä lounaslistaa",
-    startHint: "Aloita tyhjästä tai kopioi viime viikon lista pohjaksi. Kopio on aina luonnos, joten se ei julkaise mitään itsestään.",
+    startHint:
+      "Aloita tyhjästä tai kopioi viime viikon lista pohjaksi. Kopio on aina luonnos, joten se ei julkaise mitään itsestään.",
     startWeek: "Aloita viikko",
     weekend: "Viikonloppu",
     noItems: "Ei ruokia.",
@@ -299,7 +323,8 @@ const fi = {
     publishConfirm: "Julkaistaanko viikon lounaslista?",
     copyLastWeek: "Kopioi viime viikko",
     copyConfirm: "Kopioidaanko lounaslista?",
-    copyWeekNote: "Kohdeviikon nykyinen sisältö korvataan. Kopio on luonnos eikä se julkaise mitään.",
+    copyWeekNote:
+      "Kohdeviikon nykyinen sisältö korvataan. Kopio on luonnos eikä se julkaise mitään.",
     copyToDay: "Kopioi toiseen päivään",
     chooseDay: "Valitse päivä…",
     copyDayNote: "Kohdepäivän nykyinen sisältö korvataan.",
@@ -311,13 +336,16 @@ const fi = {
     copyToDayNamed: "Kopioi {paiva} päivään",
   },
   kuva: {
-    multiPage: "Monisivuisesta kuitista voi kuvata tai valita kaikki sivut kerralla. Sivuja voi lisätä myös tarkistusvaiheessa.",
-    uncertainFields: "Poiminta ei ole varma kaikista kentistä. Avaa tiedot ja tarkista korostetut.",
+    multiPage:
+      "Monisivuisesta kuitista voi kuvata tai valita kaikki sivut kerralla. Sivuja voi lisätä myös tarkistusvaiheessa.",
+    uncertainFields:
+      "Poiminta ei ole varma kaikista kentistä. Avaa tiedot ja tarkista korostetut.",
     saving: "Tallennetaan…",
     addPage: "Lisää sivu",
     ownCategory: "Oma kategoria",
     noOwnCategory: "Ei omaa kategoriaa",
-    ownCategoryHint: "Tarkennus raportteja varten. ALV ja budjetti tulevat yllä valitusta perusluokasta.",
+    ownCategoryHint:
+      "Tarkennus raportteja varten. ALV ja budjetti tulevat yllä valitusta perusluokasta.",
     suggestion: "Ehdotus:",
     use: "Käytä",
     requiredFields: "Toimittaja, summa ja kategoria vaaditaan.",
@@ -334,12 +362,17 @@ const fi = {
     shootAndFill: "Kuvaa ja täytä tiedot",
     chooseImages: "Valitse kuvat",
     uploadFile: "Lataa tiedosto",
-    machineSuggests: "Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat muokattavissa ennen tallennusta ja epävarmat on merkitty.",
-    noExtractor: "Kuvan luku ei ole käytössä tässä ympäristössä. Kuva tallentuu, mutta tiedot täytetään käsin — sovellus ei arvaa niitä puolestasi.",
+    machineSuggests:
+      "Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat muokattavissa ennen tallennusta ja epävarmat on merkitty.",
+    noExtractor:
+      "Kuvan luku ei ole käytössä tässä ympäristössä. Kuva tallentuu, mutta tiedot täytetään käsin — sovellus ei arvaa niitä puolestasi.",
     fillYourself: "Täytä tiedot kuitista itse.",
-    noExtractorShort: "Kuvan luku ei ole käytössä, joten täytä tiedot kuitista itse. Kuva tallentuu ja näkyy kuitin sivulla.",
-    someUncertain: "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta.",
-    allRecognised: "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin.",
+    noExtractorShort:
+      "Kuvan luku ei ole käytössä, joten täytä tiedot kuitista itse. Kuva tallentuu ja näkyy kuitin sivulla.",
+    someUncertain:
+      "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta.",
+    allRecognised:
+      "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin.",
     zoomImage: "Suurenna kuitin kuva",
     receipt: "Kuitti",
     dateMissing: "Päivämäärä puuttuu",
@@ -457,7 +490,8 @@ const fi = {
     joined: "Liityit ravintolaan.",
     checkInput: "Tarkista syötetyt tiedot.",
     needOwner: "vähintään yksi omistaja",
-    needOwnerBody: "Ravintolalla on oltava vähintään yksi omistaja. Nimitä joku toinen ensin.",
+    needOwnerBody:
+      "Ravintolalla on oltava vähintään yksi omistaja. Nimitä joku toinen ensin.",
     saveFailed: "Tallennus epäonnistui",
     saved: "Tiedot tallennettu.",
     categoryMissing: "Kategoria puuttuu.",
@@ -473,7 +507,8 @@ const fi = {
     sameTimes: "Alku- ja loppuaika ovat samat.",
     shiftSaveFailed: "Vuoron tallennus epäonnistui",
     shiftUpdated: "Vuoro päivitetty.",
-    shiftDraft: "Vuoro luotu luonnoksena. Se näkyy työntekijälle vasta kun julkaiset.",
+    shiftDraft:
+      "Vuoro luotu luonnoksena. Se näkyy työntekijälle vasta kun julkaiset.",
     noPublishRight: "Ei oikeutta julkaista vuoroja.",
     checkMonth: "Tarkista kuukausi.",
     publishFailed: "Julkaisu epäonnistui",
@@ -482,7 +517,8 @@ const fi = {
     totalMissing: "Loppusumma puuttuu.",
     chooseCategory: "Valitse kategoria.",
     onlyManagerReceipts: "Vain ravintolan esihenkilö voi lisätä kuitteja.",
-    duplicateFile: "Tämä sama tiedosto on jo tallennettu. Jos kyseessä on eri ostos, kuvaa se uudelleen.",
+    duplicateFile:
+      "Tämä sama tiedosto on jo tallennettu. Jos kyseessä on eri ostos, kuvaa se uudelleen.",
     receiptSaveFailed: "Kuitin tallennus epäonnistui",
     receiptSaved: "Kuitti tallennettu.",
     nameMissing: "Nimi puuttuu.",
@@ -496,7 +532,8 @@ const fi = {
     categoryExists: "Samanniminen kategoria on jo olemassa.",
     categorySaveFailed: "Kategorian tallennus epäonnistui",
     categorySaved: "Kategoria tallennettu.",
-    migrationsMissing: "Tietokannan rakenteet puuttuvat. Aja migraatiot 0004 ja 0005.",
+    migrationsMissing:
+      "Tietokannan rakenteet puuttuvat. Aja migraatiot 0004 ja 0005.",
     noRight: "Sinulla ei ole oikeutta tähän toimintoon.",
     ownerOnly: "Vain omistaja",
     ownerOnlyBody: "Vain omistaja voi tehdä tämän.",
@@ -514,7 +551,8 @@ const fi = {
     currentOrFuture: "Kuluvaa tai tulevaa",
     currentOrFutureBody: "Kuluvaa tai tulevaa kuukautta ei voi sulkea.",
     ownerOnlyCategories: "Vain omistaja voi hallita kategorioita.",
-    shiftsPublished: "{maara} {yksikko} julkaistu. Ne näkyvät nyt työntekijöille.",
+    shiftsPublished:
+      "{maara} {yksikko} julkaistu. Ne näkyvät nyt työntekijöille.",
     shiftOne: "vuoro",
     shiftMany: "vuoroa",
     extraPagesLost:
@@ -527,7 +565,8 @@ const fi = {
       "Hae tapahtumat yhteenvedosta, niin Kate muodostaa kirjausesitykset kuiteista ja myyntipäivistä.",
     ledgerFills: "Pääkirja täyttyy kun kuukauden tositteet on muodostettu.",
     entry: "vientiä",
-    chartAppears: "Tilikartta syntyy kun haet kuukauden tapahtumat ensimmäisen kerran.",
+    chartAppears:
+      "Tilikartta syntyy kun haet kuukauden tapahtumat ensimmäisen kerran.",
     matches: "täsmää",
     generalLedger: "Pääkirja",
     balanceOk: "Tase täsmää",
@@ -626,7 +665,8 @@ const fi = {
     overThreshold: "Yli {osuus} % käytetty",
     overBy: "{summa} yli",
     remaining: "{summa} jäljellä",
-    unbudgetedAmount: "{summa} kuluja kategorioissa joille ei ole asetettu budjettia",
+    unbudgetedAmount:
+      "{summa} kuluja kategorioissa joille ei ole asetettu budjettia",
   },
 
   kuitti2: {
@@ -740,7 +780,8 @@ const fi = {
     markCertificateSeen: "Merkitse todistus nähdyksi",
     plannedVsActual: "Suunniteltu ja toteutunut eivät kohdanneet",
     declined: "Kieltäytyneet",
-    openShiftsNote: "Nämä vuorot ovat auki — merkitse joku muu tai jätä avoimeksi",
+    openShiftsNote:
+      "Nämä vuorot ovat auki — merkitse joku muu tai jätä avoimeksi",
     actualHours: "Toteutunut työaika",
     labourCost: "Työvoimakustannus",
     emptyBody:
@@ -777,7 +818,8 @@ const fi = {
     employees: "Työntekijät",
     basePlusSupplements: "Peruspalkka ja lisät, ei vähennyksiä eikä sivukuluja",
     accrual: "Palkkakertymä",
-    emptyBody: "Kaudella ei ole toteutunutta työaikaa. Palkka muodostuu leimauksista.",
+    emptyBody:
+      "Kaudella ei ole toteutunutta työaikaa. Palkka muodostuu leimauksista.",
     employee: "Työntekijä",
     supplements: "Lisät",
     approved: "Hyväksytty",
@@ -812,7 +854,8 @@ const fi = {
     addForBreakdown: "Lisää kuitteja nähdäksesi kulujakauman.",
     salesAndExpenses: "Myynti ja kulut",
     range: "Aikaväli",
-    trendNeedsTwoMonths: "Kehitys näkyy täällä kun aineistoa on kahdelta kuukaudelta.",
+    trendNeedsTwoMonths:
+      "Kehitys näkyy täällä kun aineistoa on kahdelta kuukaudelta.",
     latestReceipts: "Viimeisimmät kuitit",
     showAllReceipts: "Näytä kaikki kuitit",
     firstReceiptHere: "Ensimmäinen kuittisi näkyy täällä.",
@@ -825,7 +868,8 @@ const fi = {
   kuitit: {
     all: "Kaikki",
     purchasesIn: "Ostoksia {kuukausi}",
-    foundElsewhere: "Hakusana löytyy muualta: {maara} {yksikko} muilta kuukausilta. Vaihda kuukautta yläpalkista.",
+    foundElsewhere:
+      "Hakusana löytyy muualta: {maara} {yksikko} muilta kuukausilta. Vaihda kuukautta yläpalkista.",
     receiptOne: "kuitti",
     receiptMany: "kuittia",
     rows: "{maara} riviä",
@@ -846,14 +890,16 @@ const fi = {
     addedBy: "Lisännyt",
     addedAt: "Lisätty",
     noVatRate: "Ei kantaa",
-    imageNotLoaded: "Kuva on tallennettu, mutta sitä ei juuri nyt saatu haettua.",
+    imageNotLoaded:
+      "Kuva on tallennettu, mutta sitä ei juuri nyt saatu haettua.",
     noImageAttached: "Tähän kuittiin ei liitetty kuvaa.",
     merchantNotRecognised: "Kauppaa ei tunnistettu",
     missingVatNote:
       "Osalla riveistä ei ole verokantaa. Niiden veroa ei ole laskettu eikä oletettu — tarkista ne kuitista.",
     multiCategoryNote:
       "Tämä kuitti jakautuu useaan kategoriaan. Kulut kirjautuvat rivikohtaisesti, ei koko summa yhteen kategoriaan.",
-    unclearImage: "Kuva arvioitiin epäselväksi. Tarkista luvut erityisen huolellisesti.",
+    unclearImage:
+      "Kuva arvioitiin epäselväksi. Tarkista luvut erityisen huolellisesti.",
     deleteWarning:
       "Poisto on peruuttamaton. Jos kyseessä on kaksoiskappale, poista se — jos erillinen ostos, jätä molemmat.",
   },
@@ -915,7 +961,8 @@ const en: AdminText = {
   },
   palkka: {
     periodApproved: "The pay period is approved",
-    periodApprovedBody: "The pay period is approved. Open the period before changing anything.",
+    periodApprovedBody:
+      "The pay period is approved. Open the period before changing anything.",
     noRightCorrect: "No right to correct working time.",
     incompleteData: "Incomplete details.",
     tellWhy: "Say why the time is being corrected.",
@@ -942,7 +989,8 @@ const en: AdminText = {
     componentNeedsName: "Give the pay component a name.",
     unknownUnit: "Unknown unit.",
     valueMissing: "The value is missing.",
-    windowBothOrNeither: "Give the window both a start and an end, or leave both empty.",
+    windowBothOrNeither:
+      "Give the window both a start and an end, or leave both empty.",
     componentSaveFailed: "Saving the pay component failed",
     componentUpdated: "The pay component is updated.",
     componentAdded: "The pay component is added.",
@@ -950,9 +998,11 @@ const en: AdminText = {
     periodIssues: "The period has {maara} items to check.",
     approveAllFirst: "Approve every payslip first ({hyvaksytty}/{kaikki}).",
     components: "Pay components",
-    componentsIntro: "Evening, night and weekend supplements. Kate does not know your collective agreement, so the values are entered by hand.",
+    componentsIntro:
+      "Evening, night and weekend supplements. Kate does not know your collective agreement, so the values are entered by hand.",
     addComponent: "Add a pay component",
-    noComponents: "No pay components. Base pay is still calculated from the hourly rate.",
+    noComponents:
+      "No pay components. Base pay is still calculated from the hourly rate.",
     eveningSupp: "Evening supplement",
     nightSupp: "Night supplement",
     saturdaySupp: "Saturday supplement",
@@ -961,7 +1011,8 @@ const en: AdminText = {
     otherSupp: "Other supplement",
     weekdaysHint: "Weekdays — leaving them unselected means all of them",
     canCombine: "Can combine with other supplements",
-    combineHint: "If a supplement does not combine, only the highest one is paid for the same minute.",
+    combineHint:
+      "If a supplement does not combine, only the highest one is paid for the same minute.",
     mon: "Mon",
     tue: "Tue",
     wed: "Wed",
@@ -992,10 +1043,12 @@ const en: AdminText = {
     nothingToNote: "Nothing to note",
     needsCorrection: "Needs a correction",
     periodApproval: "Pay period approval",
-    grossNote: "Gross pay excludes withholding tax, other deductions and employer side costs. Kate is not a payroll system and does not replace one.",
+    grossNote:
+      "Gross pay excludes withholding tax, other deductions and employer side costs. Kate is not a payroll system and does not replace one.",
     payWages: "Pay the wages",
     notYetAvailable: "— not available yet",
-    periodLockedNote: "The period is approved and locked. The payslips do not change until it is opened.",
+    periodLockedNote:
+      "The period is approved and locked. The payslips do not change until it is opened.",
     approvedWord: "Approved",
     readyForApproval: "Ready for approval",
     inProgress: "In progress",
@@ -1003,28 +1056,34 @@ const en: AdminText = {
     opening: "Opening…",
     approvePeriod: "Approve the pay period",
     approving: "Approving…",
-    payoutComing: "Paying wages will arrive through a payment service integration.",
-    approveFirstThenPay: "Approve the period first. Paying wages will arrive through a payment service integration.",
+    payoutComing:
+      "Paying wages will arrive through a payment service integration.",
+    approveFirstThenPay:
+      "Approve the period first. Paying wages will arrive through a payment service integration.",
     approvedOf: "Approved {hyvaksytty}/{kaikki} payslips.",
     issueCount: "{maara} items to check.",
     check: "Check",
     awaitingApproval: "Awaiting approval",
     toCheck: "To check",
-    notApprovedUntilFixed: "The pay is not approved until these are fixed. Corrections are made from the breakdown below.",
+    notApprovedUntilFixed:
+      "The pay is not approved until these are fixed. Corrections are made from the breakdown below.",
     workTime: "Working time",
     payWord: "Pay",
     basePay: "Base pay",
     grossPay: "Gross pay",
-    grossExcludes: "Excludes withholding tax, other deductions and employer side costs.",
+    grossExcludes:
+      "Excludes withholding tax, other deductions and employer side costs.",
     howFormed: "How was this sum formed?",
-    eachRowIsDay: "Each row is one working day. The time comes from the clockings, not from the planned shift.",
+    eachRowIsDay:
+      "Each row is one working day. The time comes from the clockings, not from the planned shift.",
     noWorkedTime: "The period has no worked time.",
     payslip: "Payslip",
     baseHours: "Base hours",
     corrected: "Corrected",
     restoreClockings: "Restore the clockings",
     whyCorrecting: "Why is the time being corrected?",
-    correctionNote: "The original clockings are not changed. The correction is saved as its own entry with your name, the time and the reason.",
+    correctionNote:
+      "The original clockings are not changed. The correction is saved as its own entry with your name, the time and the reason.",
     cancel: "Cancel",
     changeCorrection: "Change the correction",
     correctWorkedTime: "Correct the worked time",
@@ -1033,8 +1092,10 @@ const en: AdminText = {
     breakMin: "Break (min)",
     forgotClockOut: "The clock-out was forgotten",
     saveCorrection: "Save the correction",
-    changedAfterApproval: "The working time was changed after approval. The saved sum no longer matches the payslip, so it must be approved again.",
-    periodLockedOpenFromPay: "The pay period is approved and locked. Open it from the Pay page if the payslip needs changing.",
+    changedAfterApproval:
+      "The working time was changed after approval. The saved sum no longer matches the payslip, so it must be approved again.",
+    periodLockedOpenFromPay:
+      "The pay period is approved and locked. Open it from the Pay page if the payslip needs changing.",
     fixIssuesFirst: "Fix the items to check first.",
     approvePay: "Approve the pay",
     unknownError: "unknown error",
@@ -1078,18 +1139,26 @@ const en: AdminText = {
     priceSaved: "The price is saved.",
     retrySuffix: "{syy} Try again.",
     shareTitle: "Take the menu further",
-    printHint: "The preview is A4 and prints exactly as shown. Open it and press Ctrl/Cmd + P.",
+    printHint:
+      "The preview is A4 and prints exactly as shown. Open it and press Ctrl/Cmd + P.",
     openA4: "Open the A4 preview",
-    printNote: "Descriptions and per-dish allergens do not fit the sheet. They are on the web page the customer opens from the QR code.",
-    embedHint: "Paste this on your own site. The menu updates by itself when you publish a new week — the code never changes.",
-    embedNote: "The background is transparent, so it takes your page's colour. Add to the end of the address",
+    printNote:
+      "Descriptions and per-dish allergens do not fit the sheet. They are on the web page the customer opens from the QR code.",
+    embedHint:
+      "Paste this on your own site. The menu updates by itself when you publish a new week — the code never changes.",
+    embedNote:
+      "The background is transparent, so it takes your page's colour. Add to the end of the address",
     seeEmbed: "See how the embed looks",
-    facebookHint: "Kate does not post to Facebook for you — that would need a Facebook app and access to the page. Here is the menu ready as text: copy and paste.",
+    facebookHint:
+      "Kate does not post to Facebook for you — that would need a Facebook app and access to the page. Here is the menu ready as text: copy and paste.",
     openFacebook: "Open the Facebook share window",
-    facebookNote: "The share window posts the link with its preview image. Paste the text along with it, because many people read it without opening the link.",
-    screenHint: "Screen mode uses large text and reloads itself every ten minutes. Open this address in the screen's browser in full-screen mode.",
+    facebookNote:
+      "The share window posts the link with its preview image. Paste the text along with it, because many people read it without opening the link.",
+    screenHint:
+      "Screen mode uses large text and reloads itself every ten minutes. Open this address in the screen's browser in full-screen mode.",
     openScreen: "Open screen mode",
-    screenNote: "Descriptions and allergens are left out: nobody reads them from a metre away, and they would take the space from what is read.",
+    screenNote:
+      "Descriptions and allergens are left out: nobody reads them from a metre away, and they would take the space from what is read.",
     tabPrint: "Print",
     tabWeb: "Website",
     tabScreens: "Info screens",
@@ -1100,13 +1169,17 @@ const en: AdminText = {
     copied: "Copied",
     copy: "Copy",
     preview: "Preview",
-    unpublishedChanges: "The published lunch menu has been changed. Customers still see the previous version.",
-    publicPageHint: "The page opens without signing in and shows this week's lunch menu. Drafts never show there.",
+    unpublishedChanges:
+      "The published lunch menu has been changed. Customers still see the previous version.",
+    publicPageHint:
+      "The page opens without signing in and shows this week's lunch menu. Drafts never show there.",
     openPage: "Open the page",
-    qrHint: "Save the image with a right-click and print it for the table or the door.",
+    qrHint:
+      "Save the image with a right-click and print it for the table or the door.",
     thisWeek: "This week",
     noMenuThisWeek: "There is no lunch menu for this week yet",
-    startHint: "Start from empty or copy last week's menu as a base. A copy is always a draft, so it publishes nothing by itself.",
+    startHint:
+      "Start from empty or copy last week's menu as a base. A copy is always a draft, so it publishes nothing by itself.",
     startWeek: "Start the week",
     weekend: "Weekend",
     noItems: "No dishes.",
@@ -1148,7 +1221,8 @@ const en: AdminText = {
     publishConfirm: "Publish the week's lunch menu?",
     copyLastWeek: "Copy last week",
     copyConfirm: "Copy the lunch menu?",
-    copyWeekNote: "The target week's current content is replaced. The copy is a draft and publishes nothing.",
+    copyWeekNote:
+      "The target week's current content is replaced. The copy is a draft and publishes nothing.",
     copyToDay: "Copy to another day",
     chooseDay: "Choose a day…",
     copyDayNote: "The target day's current content is replaced.",
@@ -1160,13 +1234,16 @@ const en: AdminText = {
     copyToDayNamed: "Copy into {paiva}",
   },
   kuva: {
-    multiPage: "For a multi-page receipt you can photograph or pick every page at once. Pages can also be added while checking.",
-    uncertainFields: "The extraction is not certain about every field. Open the details and check the highlighted ones.",
+    multiPage:
+      "For a multi-page receipt you can photograph or pick every page at once. Pages can also be added while checking.",
+    uncertainFields:
+      "The extraction is not certain about every field. Open the details and check the highlighted ones.",
     saving: "Saving…",
     addPage: "Add page",
     ownCategory: "Own category",
     noOwnCategory: "No own category",
-    ownCategoryHint: "A refinement for reports. VAT and budget come from the base class chosen above.",
+    ownCategoryHint:
+      "A refinement for reports. VAT and budget come from the base class chosen above.",
     suggestion: "Suggestion:",
     use: "Use",
     requiredFields: "Supplier, amount and category are required.",
@@ -1176,19 +1253,25 @@ const en: AdminText = {
     openReceipt: "Open receipt",
     allReceipts: "All receipts",
     calcFromBase: "Calculate from the base:",
-    fillTotalFirst: "Fill in the total first so VAT can be calculated from the base.",
+    fillTotalFirst:
+      "Fill in the total first so VAT can be calculated from the base.",
     readFailed: "Reading the image failed.",
     pageSaveFailed: "Saving the page failed.",
     shootReceipt: "Photograph the receipt",
     shootAndFill: "Photograph and fill in the details",
     chooseImages: "Choose images",
     uploadFile: "Upload a file",
-    machineSuggests: "The machine suggests, a person confirms: every field can be edited before saving and the uncertain ones are marked.",
-    noExtractor: "Image reading is not enabled in this environment. The image is saved, but the details are filled in by hand — the app does not guess them for you.",
+    machineSuggests:
+      "The machine suggests, a person confirms: every field can be edited before saving and the uncertain ones are marked.",
+    noExtractor:
+      "Image reading is not enabled in this environment. The image is saved, but the details are filled in by hand — the app does not guess them for you.",
     fillYourself: "Fill in the details from the receipt yourself.",
-    noExtractorShort: "Image reading is not enabled, so fill in the details from the receipt yourself. The image is saved and shows on the receipt page.",
-    someUncertain: "Some details stayed uncertain. Check the highlighted fields before saving.",
-    allRecognised: "Every field was recognised. Check anyway that they match the receipt.",
+    noExtractorShort:
+      "Image reading is not enabled, so fill in the details from the receipt yourself. The image is saved and shows on the receipt page.",
+    someUncertain:
+      "Some details stayed uncertain. Check the highlighted fields before saving.",
+    allRecognised:
+      "Every field was recognised. Check anyway that they match the receipt.",
     zoomImage: "Enlarge the receipt image",
     receipt: "Receipt",
     dateMissing: "Date is missing",
@@ -1252,7 +1335,8 @@ const en: AdminText = {
     profitShort: "Analyse this month's profitability",
     profitFull: "Analyse this month's profitability.",
     overBudgetShort: "Why are the expenses over budget?",
-    overBudgetFull: "Why are the expenses over budget? Break it down by category.",
+    overBudgetFull:
+      "Why are the expenses over budget? Break it down by category.",
     budgetLeftShort: "What will the budget cover for the rest of the month?",
     biggestShort: "Find this month's biggest expenses",
     biggestFull: "Find this month's biggest expenses.",
@@ -1306,7 +1390,8 @@ const en: AdminText = {
     joined: "You joined the restaurant.",
     checkInput: "Check the details you entered.",
     needOwner: "at least one owner",
-    needOwnerBody: "A restaurant must have at least one owner. Appoint someone else first.",
+    needOwnerBody:
+      "A restaurant must have at least one owner. Appoint someone else first.",
     saveFailed: "Saving failed",
     saved: "The details were saved.",
     categoryMissing: "The category is missing.",
@@ -1322,7 +1407,8 @@ const en: AdminText = {
     sameTimes: "The start and end times are the same.",
     shiftSaveFailed: "Saving the shift failed",
     shiftUpdated: "The shift was updated.",
-    shiftDraft: "The shift was created as a draft. It reaches the employee only once you publish.",
+    shiftDraft:
+      "The shift was created as a draft. It reaches the employee only once you publish.",
     noPublishRight: "You may not publish shifts.",
     checkMonth: "Check the month.",
     publishFailed: "Publishing failed",
@@ -1331,7 +1417,8 @@ const en: AdminText = {
     totalMissing: "The total is missing.",
     chooseCategory: "Choose a category.",
     onlyManagerReceipts: "Only the restaurant's manager can add receipts.",
-    duplicateFile: "This same file has already been saved. If it is a different purchase, photograph it again.",
+    duplicateFile:
+      "This same file has already been saved. If it is a different purchase, photograph it again.",
     receiptSaveFailed: "Saving the receipt failed",
     receiptSaved: "The receipt was saved.",
     nameMissing: "The name is missing.",
@@ -1345,7 +1432,8 @@ const en: AdminText = {
     categoryExists: "A category with the same name already exists.",
     categorySaveFailed: "Saving the category failed",
     categorySaved: "The category was saved.",
-    migrationsMissing: "The database structures are missing. Run migrations 0004 and 0005.",
+    migrationsMissing:
+      "The database structures are missing. Run migrations 0004 and 0005.",
     noRight: "You do not have the right to do this.",
     ownerOnly: "Owner only",
     ownerOnlyBody: "Only the owner can do this.",
@@ -1363,7 +1451,8 @@ const en: AdminText = {
     currentOrFuture: "Current or future",
     currentOrFutureBody: "The current or a future month cannot be closed.",
     ownerOnlyCategories: "Only the owner can manage categories.",
-    shiftsPublished: "{maara} {yksikko} published. They are now visible to the employees.",
+    shiftsPublished:
+      "{maara} {yksikko} published. They are now visible to the employees.",
     shiftOne: "shift",
     shiftMany: "shifts",
     extraPagesLost:
@@ -1374,9 +1463,11 @@ const en: AdminText = {
   kirjanpito2: {
     fetchFirst:
       "Fetch the entries from the summary and Kate will build the proposals from receipts and sales days.",
-    ledgerFills: "The general ledger fills up once the month's vouchers have been created.",
+    ledgerFills:
+      "The general ledger fills up once the month's vouchers have been created.",
     entry: "entries",
-    chartAppears: "The chart of accounts appears when you first fetch the month's entries.",
+    chartAppears:
+      "The chart of accounts appears when you first fetch the month's entries.",
     matches: "matches",
     generalLedger: "General ledger",
     balanceOk: "The balance sheet balances",
@@ -1584,12 +1675,14 @@ const en: AdminText = {
     title: "Shifts",
     overlapping: "Overlapping shifts",
     overlap: "overlapping",
-    noticeDoesNotCancel: "A notice does not cancel the shift — it still has an assignee",
+    noticeDoesNotCancel:
+      "A notice does not cancel the shift — it still has an assignee",
     certificateSeen: "Certificate seen",
     markCertificateSeen: "Mark the certificate as seen",
     plannedVsActual: "Planned and actual did not match",
     declined: "Declined",
-    openShiftsNote: "These shifts are open — assign someone else or leave them open",
+    openShiftsNote:
+      "These shifts are open — assign someone else or leave them open",
     actualHours: "Actual hours",
     labourCost: "Labour cost",
     emptyBody:
@@ -1624,9 +1717,11 @@ const en: AdminText = {
     employeeCount: "Employees",
     noHoursInPeriod: "No hours in this period",
     employees: "Employees",
-    basePlusSupplements: "Base pay and supplements, no deductions or employer costs",
+    basePlusSupplements:
+      "Base pay and supplements, no deductions or employer costs",
     accrual: "Pay accrued",
-    emptyBody: "There are no actual hours in this period. Pay is built from clock-ins.",
+    emptyBody:
+      "There are no actual hours in this period. Pay is built from clock-ins.",
     employee: "Employee",
     supplements: "Supplements",
     approved: "Approved",
@@ -1661,7 +1756,8 @@ const en: AdminText = {
     addForBreakdown: "Add receipts to see where the money goes.",
     salesAndExpenses: "Sales and expenses",
     range: "Range",
-    trendNeedsTwoMonths: "The trend appears here once there is data from two months.",
+    trendNeedsTwoMonths:
+      "The trend appears here once there is data from two months.",
     latestReceipts: "Latest receipts",
     showAllReceipts: "Show all receipts",
     firstReceiptHere: "Your first receipt will appear here.",
@@ -1674,7 +1770,8 @@ const en: AdminText = {
   kuitit: {
     all: "All",
     purchasesIn: "Purchases in {kuukausi}",
-    foundElsewhere: "The search term appears elsewhere: {maara} {yksikko} in other months. Change the month in the top bar.",
+    foundElsewhere:
+      "The search term appears elsewhere: {maara} {yksikko} in other months. Change the month in the top bar.",
     receiptOne: "receipt",
     receiptMany: "receipts",
     rows: "{maara} rows",
@@ -1695,14 +1792,16 @@ const en: AdminText = {
     addedBy: "Added by",
     addedAt: "Added",
     noVatRate: "No rate",
-    imageNotLoaded: "The image is stored, but it could not be fetched right now.",
+    imageNotLoaded:
+      "The image is stored, but it could not be fetched right now.",
     noImageAttached: "No image was attached to this receipt.",
     merchantNotRecognised: "Merchant not recognised",
     missingVatNote:
       "Some rows have no VAT rate. Their tax has not been calculated or assumed — check them against the receipt.",
     multiCategoryNote:
       "This receipt splits across several categories. Expenses are booked row by row, not the whole sum into one category.",
-    unclearImage: "The image was judged unclear. Check the figures especially carefully.",
+    unclearImage:
+      "The image was judged unclear. Check the figures especially carefully.",
     deleteWarning:
       "Deleting cannot be undone. If this is a duplicate, delete it — if a separate purchase, keep both.",
   },
@@ -1759,7 +1858,8 @@ const sv: AdminText = {
   },
   palkka: {
     periodApproved: "Löneperioden är godkänd",
-    periodApprovedBody: "Löneperioden är godkänd. Öppna perioden innan du ändrar något.",
+    periodApprovedBody:
+      "Löneperioden är godkänd. Öppna perioden innan du ändrar något.",
     noRightCorrect: "Ingen behörighet att korrigera arbetstid.",
     incompleteData: "Ofullständiga uppgifter.",
     tellWhy: "Berätta varför tiden korrigeras.",
@@ -1781,20 +1881,24 @@ const sv: AdminText = {
     periodApprovedLocked: "Löneperioden är godkänd och låst.",
     noRightOpenPeriod: "Ingen behörighet att öppna löneperioden.",
     openFailed: "Öppnandet misslyckades",
-    periodOpened: "Löneperioden är öppnad. Specifikationerna kräver nytt godkännande.",
+    periodOpened:
+      "Löneperioden är öppnad. Specifikationerna kräver nytt godkännande.",
     noRightComponents: "Ingen behörighet att ändra lönearter.",
     componentNeedsName: "Ge lönearten ett namn.",
     unknownUnit: "Okänd enhet.",
     valueMissing: "Värdet saknas.",
-    windowBothOrNeither: "Ge fönstret både start och slut, eller lämna båda tomma.",
+    windowBothOrNeither:
+      "Ge fönstret både start och slut, eller lämna båda tomma.",
     componentSaveFailed: "Lönearten kunde inte sparas",
     componentUpdated: "Lönearten är uppdaterad.",
     componentAdded: "Lönearten är tillagd.",
     fixFirst: "Åtgärda först: {viesti}",
     periodIssues: "Perioden har {maara} punkter att kontrollera.",
-    approveAllFirst: "Godkänn först alla lönespecifikationer ({hyvaksytty}/{kaikki}).",
+    approveAllFirst:
+      "Godkänn först alla lönespecifikationer ({hyvaksytty}/{kaikki}).",
     components: "Lönearter",
-    componentsIntro: "Kvälls-, natt- och helgtillägg. Kate känner inte till kollektivavtalet, så värdena matas in för hand.",
+    componentsIntro:
+      "Kvälls-, natt- och helgtillägg. Kate känner inte till kollektivavtalet, så värdena matas in för hand.",
     addComponent: "Lägg till en löneart",
     noComponents: "Inga lönearter. Grundlönen räknas ändå från timlönen.",
     eveningSupp: "Kvällstillägg",
@@ -1805,7 +1909,8 @@ const sv: AdminText = {
     otherSupp: "Annat tillägg",
     weekdaysHint: "Veckodagar — att inte välja någon betyder alla",
     canCombine: "Kan kombineras med andra tillägg",
-    combineHint: "Om ett tillägg inte kombineras betalas bara det högsta för samma minut.",
+    combineHint:
+      "Om ett tillägg inte kombineras betalas bara det högsta för samma minut.",
     mon: "Mån",
     tue: "Tis",
     wed: "Ons",
@@ -1836,10 +1941,12 @@ const sv: AdminText = {
     nothingToNote: "Inget att anmärka",
     needsCorrection: "Kräver korrigering",
     periodApproval: "Godkännande av löneperiod",
-    grossNote: "Bruttolönen omfattar inte förskottsinnehållning, andra avdrag eller arbetsgivarens bikostnader. Kate är inget löneprogram och ersätter inte ett sådant.",
+    grossNote:
+      "Bruttolönen omfattar inte förskottsinnehållning, andra avdrag eller arbetsgivarens bikostnader. Kate är inget löneprogram och ersätter inte ett sådant.",
     payWages: "Betala lönerna",
     notYetAvailable: "— inte tillgängligt än",
-    periodLockedNote: "Perioden är godkänd och låst. Specifikationerna ändras inte förrän den öppnas.",
+    periodLockedNote:
+      "Perioden är godkänd och låst. Specifikationerna ändras inte förrän den öppnas.",
     approvedWord: "Godkänd",
     readyForApproval: "Klar för godkännande",
     inProgress: "Pågår",
@@ -1847,28 +1954,34 @@ const sv: AdminText = {
     opening: "Öppnar…",
     approvePeriod: "Godkänn löneperioden",
     approving: "Godkänner…",
-    payoutComing: "Löneutbetalning kommer via en integration mot en betaltjänst.",
-    approveFirstThenPay: "Godkänn perioden först. Löneutbetalning kommer via en integration mot en betaltjänst.",
+    payoutComing:
+      "Löneutbetalning kommer via en integration mot en betaltjänst.",
+    approveFirstThenPay:
+      "Godkänn perioden först. Löneutbetalning kommer via en integration mot en betaltjänst.",
     approvedOf: "Godkänt {hyvaksytty}/{kaikki} specifikationer.",
     issueCount: "{maara} punkter att kontrollera.",
     check: "Kontrollera",
     awaitingApproval: "Väntar på godkännande",
     toCheck: "Att kontrollera",
-    notApprovedUntilFixed: "Lönen godkänns inte förrän dessa är åtgärdade. Korrigeringen görs i specifikationen nedan.",
+    notApprovedUntilFixed:
+      "Lönen godkänns inte förrän dessa är åtgärdade. Korrigeringen görs i specifikationen nedan.",
     workTime: "Arbetstid",
     payWord: "Lön",
     basePay: "Grundlön",
     grossPay: "Bruttolön",
-    grossExcludes: "Omfattar inte förskottsinnehållning, andra avdrag eller arbetsgivarens bikostnader.",
+    grossExcludes:
+      "Omfattar inte förskottsinnehållning, andra avdrag eller arbetsgivarens bikostnader.",
     howFormed: "Hur uppstod den här summan?",
-    eachRowIsDay: "Varje rad är en arbetsdag. Tiden kommer från stämplingarna, inte från det planerade passet.",
+    eachRowIsDay:
+      "Varje rad är en arbetsdag. Tiden kommer från stämplingarna, inte från det planerade passet.",
     noWorkedTime: "Perioden har ingen utförd arbetstid.",
     payslip: "Lönespecifikation",
     baseHours: "Grundtimmar",
     corrected: "Korrigerad",
     restoreClockings: "Återställ stämplingarna",
     whyCorrecting: "Varför korrigeras tiden?",
-    correctionNote: "De ursprungliga stämplingarna ändras inte. Korrigeringen sparas som en egen anteckning med ditt namn, tiden och motiveringen.",
+    correctionNote:
+      "De ursprungliga stämplingarna ändras inte. Korrigeringen sparas som en egen anteckning med ditt namn, tiden och motiveringen.",
     cancel: "Avbryt",
     changeCorrection: "Ändra korrigeringen",
     correctWorkedTime: "Korrigera den utförda tiden",
@@ -1877,8 +1990,10 @@ const sv: AdminText = {
     breakMin: "Rast (min)",
     forgotClockOut: "Utstämplingen glömdes",
     saveCorrection: "Spara korrigeringen",
-    changedAfterApproval: "Arbetstiden har ändrats efter godkännandet. Den sparade summan stämmer inte längre med specifikationen, så den måste godkännas igen.",
-    periodLockedOpenFromPay: "Löneperioden är godkänd och låst. Öppna den på Löner-sidan om specifikationen behöver ändras.",
+    changedAfterApproval:
+      "Arbetstiden har ändrats efter godkännandet. Den sparade summan stämmer inte längre med specifikationen, så den måste godkännas igen.",
+    periodLockedOpenFromPay:
+      "Löneperioden är godkänd och låst. Öppna den på Löner-sidan om specifikationen behöver ändras.",
     fixIssuesFirst: "Åtgärda först punkterna som ska kontrolleras.",
     approvePay: "Godkänn lönen",
     unknownError: "okänt fel",
@@ -1922,18 +2037,26 @@ const sv: AdminText = {
     priceSaved: "Priset är sparat.",
     retrySuffix: "{syy} Försök igen.",
     shareTitle: "För listan vidare",
-    printHint: "Förhandsvisningen är i A4 och skrivs ut likadan. Öppna den och tryck Ctrl/Cmd + P.",
+    printHint:
+      "Förhandsvisningen är i A4 och skrivs ut likadan. Öppna den och tryck Ctrl/Cmd + P.",
     openA4: "Öppna A4-förhandsvisningen",
-    printNote: "Beskrivningar och allergener per rätt får inte plats på arket. De finns på webbsidan som kunden öppnar via QR-koden.",
-    embedHint: "Klistra in det här på din egen sida. Listan uppdateras av sig själv när du publicerar en ny vecka — koden behöver inte bytas.",
-    embedNote: "Bakgrunden är genomskinlig, så den tar din sidas färg. Lägg till efter adressen",
+    printNote:
+      "Beskrivningar och allergener per rätt får inte plats på arket. De finns på webbsidan som kunden öppnar via QR-koden.",
+    embedHint:
+      "Klistra in det här på din egen sida. Listan uppdateras av sig själv när du publicerar en ny vecka — koden behöver inte bytas.",
+    embedNote:
+      "Bakgrunden är genomskinlig, så den tar din sidas färg. Lägg till efter adressen",
     seeEmbed: "Se hur inbäddningen ser ut",
-    facebookHint: "Kate publicerar inte på Facebook åt dig — det skulle kräva en Facebook-app och behörighet till sidan. Här är listan färdig som text: kopiera och klistra in.",
+    facebookHint:
+      "Kate publicerar inte på Facebook åt dig — det skulle kräva en Facebook-app och behörighet till sidan. Här är listan färdig som text: kopiera och klistra in.",
     openFacebook: "Öppna Facebooks delningsfönster",
-    facebookNote: "Delningsfönstret delar länken med förhandsbild. Klistra in texten också, eftersom många läser den utan att öppna länken.",
-    screenHint: "Skärmläget har stor text och laddar om sig var tionde minut. Öppna adressen i skärmens webbläsare i helskärmsläge.",
+    facebookNote:
+      "Delningsfönstret delar länken med förhandsbild. Klistra in texten också, eftersom många läser den utan att öppna länken.",
+    screenHint:
+      "Skärmläget har stor text och laddar om sig var tionde minut. Öppna adressen i skärmens webbläsare i helskärmsläge.",
     openScreen: "Öppna skärmläget",
-    screenNote: "Beskrivningar och allergener utelämnas: ingen läser dem på en meters håll, och de skulle ta plats från det som läses.",
+    screenNote:
+      "Beskrivningar och allergener utelämnas: ingen läser dem på en meters håll, och de skulle ta plats från det som läses.",
     tabPrint: "Utskrifter",
     tabWeb: "Webbplats",
     tabScreens: "Infoskärmar",
@@ -1944,13 +2067,17 @@ const sv: AdminText = {
     copied: "Kopierat",
     copy: "Kopiera",
     preview: "Förhandsgranska",
-    unpublishedChanges: "Den publicerade lunchlistan har ändrats. Kunderna ser fortfarande den tidigare versionen.",
-    publicPageHint: "Sidan öppnas utan inloggning och visar den här veckans lunchlista. Utkast syns aldrig där.",
+    unpublishedChanges:
+      "Den publicerade lunchlistan har ändrats. Kunderna ser fortfarande den tidigare versionen.",
+    publicPageHint:
+      "Sidan öppnas utan inloggning och visar den här veckans lunchlista. Utkast syns aldrig där.",
     openPage: "Öppna sidan",
-    qrHint: "Spara bilden med högerklick och skriv ut den till bordet eller dörren.",
+    qrHint:
+      "Spara bilden med högerklick och skriv ut den till bordet eller dörren.",
     thisWeek: "Den här veckan",
     noMenuThisWeek: "Den här veckan har ingen lunchlista än",
-    startHint: "Börja från tomt eller kopiera förra veckans lista som grund. En kopia är alltid ett utkast och publicerar inget av sig själv.",
+    startHint:
+      "Börja från tomt eller kopiera förra veckans lista som grund. En kopia är alltid ett utkast och publicerar inget av sig själv.",
     startWeek: "Starta veckan",
     weekend: "Helg",
     noItems: "Inga rätter.",
@@ -1992,7 +2119,8 @@ const sv: AdminText = {
     publishConfirm: "Publicera veckans lunchlista?",
     copyLastWeek: "Kopiera förra veckan",
     copyConfirm: "Kopiera lunchlistan?",
-    copyWeekNote: "Målveckans nuvarande innehåll ersätts. Kopian är ett utkast och publicerar inget.",
+    copyWeekNote:
+      "Målveckans nuvarande innehåll ersätts. Kopian är ett utkast och publicerar inget.",
     copyToDay: "Kopiera till en annan dag",
     chooseDay: "Välj dag…",
     copyDayNote: "Måldagens nuvarande innehåll ersätts.",
@@ -2004,13 +2132,16 @@ const sv: AdminText = {
     copyToDayNamed: "Kopiera till {paiva}",
   },
   kuva: {
-    multiPage: "Ett kvitto med flera sidor kan du fotografera eller välja alla sidor på en gång. Sidor kan även läggas till vid kontrollen.",
-    uncertainFields: "Avläsningen är inte säker på alla fält. Öppna uppgifterna och kontrollera de markerade.",
+    multiPage:
+      "Ett kvitto med flera sidor kan du fotografera eller välja alla sidor på en gång. Sidor kan även läggas till vid kontrollen.",
+    uncertainFields:
+      "Avläsningen är inte säker på alla fält. Öppna uppgifterna och kontrollera de markerade.",
     saving: "Sparar…",
     addPage: "Lägg till sida",
     ownCategory: "Egen kategori",
     noOwnCategory: "Ingen egen kategori",
-    ownCategoryHint: "En precisering för rapporterna. Moms och budget kommer från grundklassen ovan.",
+    ownCategoryHint:
+      "En precisering för rapporterna. Moms och budget kommer från grundklassen ovan.",
     suggestion: "Förslag:",
     use: "Använd",
     requiredFields: "Leverantör, summa och kategori krävs.",
@@ -2020,19 +2151,25 @@ const sv: AdminText = {
     openReceipt: "Öppna kvittot",
     allReceipts: "Alla kvitton",
     calcFromBase: "Räkna från underlaget:",
-    fillTotalFirst: "Fyll i slutsumman först, så kan momsen räknas från underlaget.",
+    fillTotalFirst:
+      "Fyll i slutsumman först, så kan momsen räknas från underlaget.",
     readFailed: "Läsningen av bilden misslyckades.",
     pageSaveFailed: "Sidan kunde inte sparas.",
     shootReceipt: "Fotografera kvittot",
     shootAndFill: "Fotografera och fyll i uppgifterna",
     chooseImages: "Välj bilder",
     uploadFile: "Ladda upp fil",
-    machineSuggests: "Maskinen föreslår, människan bekräftar: alla fält går att ändra före sparandet och de osäkra är markerade.",
-    noExtractor: "Bildläsning är inte aktiverad i den här miljön. Bilden sparas, men uppgifterna fylls i för hand — appen gissar dem inte åt dig.",
+    machineSuggests:
+      "Maskinen föreslår, människan bekräftar: alla fält går att ändra före sparandet och de osäkra är markerade.",
+    noExtractor:
+      "Bildläsning är inte aktiverad i den här miljön. Bilden sparas, men uppgifterna fylls i för hand — appen gissar dem inte åt dig.",
     fillYourself: "Fyll i uppgifterna från kvittot själv.",
-    noExtractorShort: "Bildläsning är inte aktiverad, så fyll i uppgifterna från kvittot själv. Bilden sparas och syns på kvittots sida.",
-    someUncertain: "En del uppgifter blev osäkra. Kontrollera de markerade fälten innan du sparar.",
-    allRecognised: "Alla fält kändes igen. Kontrollera ändå att de stämmer med kvittot.",
+    noExtractorShort:
+      "Bildläsning är inte aktiverad, så fyll i uppgifterna från kvittot själv. Bilden sparas och syns på kvittots sida.",
+    someUncertain:
+      "En del uppgifter blev osäkra. Kontrollera de markerade fälten innan du sparar.",
+    allRecognised:
+      "Alla fält kändes igen. Kontrollera ändå att de stämmer med kvittot.",
     zoomImage: "Förstora kvittobilden",
     receipt: "Kvitto",
     dateMissing: "Datum saknas",
@@ -2150,7 +2287,8 @@ const sv: AdminText = {
     joined: "Du gick med i restaurangen.",
     checkInput: "Kontrollera uppgifterna du angav.",
     needOwner: "minst en ägare",
-    needOwnerBody: "En restaurang måste ha minst en ägare. Utse någon annan först.",
+    needOwnerBody:
+      "En restaurang måste ha minst en ägare. Utse någon annan först.",
     saveFailed: "Det gick inte att spara",
     saved: "Uppgifterna sparades.",
     categoryMissing: "Kategorin saknas.",
@@ -2166,7 +2304,8 @@ const sv: AdminText = {
     sameTimes: "Start- och sluttiden är desamma.",
     shiftSaveFailed: "Det gick inte att spara passet",
     shiftUpdated: "Passet uppdaterades.",
-    shiftDraft: "Passet skapades som utkast. Det syns för den anställda först när du publicerar.",
+    shiftDraft:
+      "Passet skapades som utkast. Det syns för den anställda först när du publicerar.",
     noPublishRight: "Du får inte publicera pass.",
     checkMonth: "Kontrollera månaden.",
     publishFailed: "Publiceringen misslyckades",
@@ -2175,7 +2314,8 @@ const sv: AdminText = {
     totalMissing: "Slutsumman saknas.",
     chooseCategory: "Välj en kategori.",
     onlyManagerReceipts: "Bara restaurangens chef kan lägga till kvitton.",
-    duplicateFile: "Samma fil har redan sparats. Om det är ett annat köp, fotografera det på nytt.",
+    duplicateFile:
+      "Samma fil har redan sparats. Om det är ett annat köp, fotografera det på nytt.",
     receiptSaveFailed: "Det gick inte att spara kvittot",
     receiptSaved: "Kvittot sparades.",
     nameMissing: "Namnet saknas.",
@@ -2189,7 +2329,8 @@ const sv: AdminText = {
     categoryExists: "En kategori med samma namn finns redan.",
     categorySaveFailed: "Det gick inte att spara kategorin",
     categorySaved: "Kategorin sparades.",
-    migrationsMissing: "Databasstrukturerna saknas. Kör migrationerna 0004 och 0005.",
+    migrationsMissing:
+      "Databasstrukturerna saknas. Kör migrationerna 0004 och 0005.",
     noRight: "Du har inte rätt att göra detta.",
     ownerOnly: "Endast ägaren",
     ownerOnlyBody: "Bara ägaren kan göra detta.",
@@ -2205,9 +2346,11 @@ const sv: AdminText = {
     unknownTimezone: "Okänd tidszon",
     unknownTimezoneBody: "Okänd tidszon.",
     currentOrFuture: "Innevarande eller kommande",
-    currentOrFutureBody: "Innevarande eller en kommande månad kan inte stängas.",
+    currentOrFutureBody:
+      "Innevarande eller en kommande månad kan inte stängas.",
     ownerOnlyCategories: "Bara ägaren kan hantera kategorier.",
-    shiftsPublished: "{maara} {yksikko} publicerade. De syns nu för de anställda.",
+    shiftsPublished:
+      "{maara} {yksikko} publicerade. De syns nu för de anställda.",
     shiftOne: "pass",
     shiftMany: "pass",
     extraPagesLost:
@@ -2220,7 +2363,8 @@ const sv: AdminText = {
       "Hämta händelserna från sammanfattningen, så bygger Kate förslagen ur kvitton och försäljningsdagar.",
     ledgerFills: "Huvudboken fylls när månadens verifikat har skapats.",
     entry: "poster",
-    chartAppears: "Kontoplanen skapas när du hämtar månadens händelser första gången.",
+    chartAppears:
+      "Kontoplanen skapas när du hämtar månadens händelser första gången.",
     matches: "stämmer",
     generalLedger: "Huvudbok",
     balanceOk: "Balansräkningen stämmer",
@@ -2428,12 +2572,14 @@ const sv: AdminText = {
     title: "Arbetspass",
     overlapping: "Överlappande pass",
     overlap: "överlappar",
-    noticeDoesNotCancel: "En anmälan avbokar inte passet — passet har fortfarande en person",
+    noticeDoesNotCancel:
+      "En anmälan avbokar inte passet — passet har fortfarande en person",
     certificateSeen: "Intyget sett",
     markCertificateSeen: "Markera intyget som sett",
     plannedVsActual: "Planerat och utfall stämde inte",
     declined: "Tackat nej",
-    openShiftsNote: "De här passen är öppna — sätt någon annan eller lämna dem öppna",
+    openShiftsNote:
+      "De här passen är öppna — sätt någon annan eller lämna dem öppna",
     actualHours: "Utförd arbetstid",
     labourCost: "Personalkostnad",
     emptyBody:
@@ -2468,9 +2614,11 @@ const sv: AdminText = {
     employeeCount: "Anställda",
     noHoursInPeriod: "Ingen arbetstid under perioden",
     employees: "Anställda",
-    basePlusSupplements: "Grundlön och tillägg, inga avdrag eller arbetsgivaravgifter",
+    basePlusSupplements:
+      "Grundlön och tillägg, inga avdrag eller arbetsgivaravgifter",
     accrual: "Intjänad lön",
-    emptyBody: "Perioden har ingen utförd arbetstid. Lönen byggs av stämplingar.",
+    emptyBody:
+      "Perioden har ingen utförd arbetstid. Lönen byggs av stämplingar.",
     employee: "Anställd",
     supplements: "Tillägg",
     approved: "Godkänt",
@@ -2505,7 +2653,8 @@ const sv: AdminText = {
     addForBreakdown: "Lägg till kvitton för att se vart pengarna går.",
     salesAndExpenses: "Försäljning och kostnader",
     range: "Intervall",
-    trendNeedsTwoMonths: "Utvecklingen visas här när det finns underlag från två månader.",
+    trendNeedsTwoMonths:
+      "Utvecklingen visas här när det finns underlag från två månader.",
     latestReceipts: "Senaste kvitton",
     showAllReceipts: "Visa alla kvitton",
     firstReceiptHere: "Ditt första kvitto visas här.",
@@ -2518,7 +2667,8 @@ const sv: AdminText = {
   kuitit: {
     all: "Alla",
     purchasesIn: "Inköp i {kuukausi}",
-    foundElsewhere: "Sökordet finns någon annanstans: {maara} {yksikko} från andra månader. Byt månad i övre fältet.",
+    foundElsewhere:
+      "Sökordet finns någon annanstans: {maara} {yksikko} från andra månader. Byt månad i övre fältet.",
     receiptOne: "kvitto",
     receiptMany: "kvitton",
     rows: "{maara} rader",
@@ -2546,7 +2696,8 @@ const sv: AdminText = {
       "Vissa rader saknar momssats. Deras moms har varken beräknats eller antagits — kontrollera dem mot kvittot.",
     multiCategoryNote:
       "Det här kvittot delas på flera kategorier. Kostnaderna bokförs rad för rad, inte hela summan på en kategori.",
-    unclearImage: "Bilden bedömdes som otydlig. Kontrollera siffrorna extra noga.",
+    unclearImage:
+      "Bilden bedömdes som otydlig. Kontrollera siffrorna extra noga.",
     deleteWarning:
       "Borttagning kan inte ångras. Är det en dubblett, ta bort den — är det ett separat köp, behåll båda.",
   },
@@ -2603,7 +2754,8 @@ const da: AdminText = {
   },
   palkka: {
     periodApproved: "Lønperioden er godkendt",
-    periodApprovedBody: "Lønperioden er godkendt. Åbn perioden, før du ændrer noget.",
+    periodApprovedBody:
+      "Lønperioden er godkendt. Åbn perioden, før du ændrer noget.",
     noRightCorrect: "Ingen ret til at rette arbejdstid.",
     incompleteData: "Ufuldstændige oplysninger.",
     tellWhy: "Fortæl, hvorfor tiden rettes.",
@@ -2630,7 +2782,8 @@ const da: AdminText = {
     componentNeedsName: "Giv lønarten et navn.",
     unknownUnit: "Ukendt enhed.",
     valueMissing: "Værdien mangler.",
-    windowBothOrNeither: "Giv vinduet både start og slut, eller lad begge være tomme.",
+    windowBothOrNeither:
+      "Giv vinduet både start og slut, eller lad begge være tomme.",
     componentSaveFailed: "Lønarten kunne ikke gemmes",
     componentUpdated: "Lønarten er opdateret.",
     componentAdded: "Lønarten er tilføjet.",
@@ -2638,9 +2791,11 @@ const da: AdminText = {
     periodIssues: "Perioden har {maara} punkter, der skal tjekkes.",
     approveAllFirst: "Godkend først alle lønsedler ({hyvaksytty}/{kaikki}).",
     components: "Lønarter",
-    componentsIntro: "Aften-, nat- og weekendtillæg. Kate kender ikke overenskomsten, så værdierne indtastes manuelt.",
+    componentsIntro:
+      "Aften-, nat- og weekendtillæg. Kate kender ikke overenskomsten, så værdierne indtastes manuelt.",
     addComponent: "Tilføj en lønart",
-    noComponents: "Ingen lønarter. Grundlønnen beregnes stadig ud fra timelønnen.",
+    noComponents:
+      "Ingen lønarter. Grundlønnen beregnes stadig ud fra timelønnen.",
     eveningSupp: "Aftentillæg",
     nightSupp: "Nattillæg",
     saturdaySupp: "Lørdagstillæg",
@@ -2649,7 +2804,8 @@ const da: AdminText = {
     otherSupp: "Andet tillæg",
     weekdaysHint: "Ugedage — hvis du ikke vælger nogen, gælder alle",
     canCombine: "Kan kombineres med andre tillæg",
-    combineHint: "Hvis et tillæg ikke kombineres, betales kun det højeste for samme minut.",
+    combineHint:
+      "Hvis et tillæg ikke kombineres, betales kun det højeste for samme minut.",
     mon: "Man",
     tue: "Tir",
     wed: "Ons",
@@ -2680,10 +2836,12 @@ const da: AdminText = {
     nothingToNote: "Intet at bemærke",
     needsCorrection: "Kræver en rettelse",
     periodApproval: "Godkendelse af lønperiode",
-    grossNote: "Bruttolønnen omfatter ikke forskudsskat, andre fradrag eller arbejdsgiverens omkostninger. Kate er ikke et lønsystem og erstatter ikke et.",
+    grossNote:
+      "Bruttolønnen omfatter ikke forskudsskat, andre fradrag eller arbejdsgiverens omkostninger. Kate er ikke et lønsystem og erstatter ikke et.",
     payWages: "Udbetal lønnen",
     notYetAvailable: "— ikke tilgængeligt endnu",
-    periodLockedNote: "Perioden er godkendt og låst. Lønsedlerne ændres ikke, før den åbnes.",
+    periodLockedNote:
+      "Perioden er godkendt og låst. Lønsedlerne ændres ikke, før den åbnes.",
     approvedWord: "Godkendt",
     readyForApproval: "Klar til godkendelse",
     inProgress: "I gang",
@@ -2691,28 +2849,34 @@ const da: AdminText = {
     opening: "Åbner…",
     approvePeriod: "Godkend lønperioden",
     approving: "Godkender…",
-    payoutComing: "Lønudbetaling kommer via en integration til en betalingstjeneste.",
-    approveFirstThenPay: "Godkend perioden først. Lønudbetaling kommer via en integration til en betalingstjeneste.",
+    payoutComing:
+      "Lønudbetaling kommer via en integration til en betalingstjeneste.",
+    approveFirstThenPay:
+      "Godkend perioden først. Lønudbetaling kommer via en integration til en betalingstjeneste.",
     approvedOf: "Godkendt {hyvaksytty}/{kaikki} lønsedler.",
     issueCount: "{maara} punkter at tjekke.",
     check: "Tjek",
     awaitingApproval: "Afventer godkendelse",
     toCheck: "At tjekke",
-    notApprovedUntilFixed: "Lønnen godkendes ikke, før disse er rettet. Rettelsen sker i specifikationen nedenfor.",
+    notApprovedUntilFixed:
+      "Lønnen godkendes ikke, før disse er rettet. Rettelsen sker i specifikationen nedenfor.",
     workTime: "Arbejdstid",
     payWord: "Løn",
     basePay: "Grundløn",
     grossPay: "Bruttoløn",
-    grossExcludes: "Omfatter ikke forskudsskat, andre fradrag eller arbejdsgiverens omkostninger.",
+    grossExcludes:
+      "Omfatter ikke forskudsskat, andre fradrag eller arbejdsgiverens omkostninger.",
     howFormed: "Hvordan er dette beløb dannet?",
-    eachRowIsDay: "Hver række er en arbejdsdag. Tiden kommer fra stemplingerne, ikke fra den planlagte vagt.",
+    eachRowIsDay:
+      "Hver række er en arbejdsdag. Tiden kommer fra stemplingerne, ikke fra den planlagte vagt.",
     noWorkedTime: "Perioden har ingen udført arbejdstid.",
     payslip: "Lønseddel",
     baseHours: "Grundtimer",
     corrected: "Rettet",
     restoreClockings: "Gendan stemplingerne",
     whyCorrecting: "Hvorfor rettes tiden?",
-    correctionNote: "De oprindelige stemplinger ændres ikke. Rettelsen gemmes som sin egen post med dit navn, tidspunktet og begrundelsen.",
+    correctionNote:
+      "De oprindelige stemplinger ændres ikke. Rettelsen gemmes som sin egen post med dit navn, tidspunktet og begrundelsen.",
     cancel: "Annullér",
     changeCorrection: "Ret korrektionen",
     correctWorkedTime: "Ret den udførte tid",
@@ -2721,8 +2885,10 @@ const da: AdminText = {
     breakMin: "Pause (min)",
     forgotClockOut: "Udstemplingen blev glemt",
     saveCorrection: "Gem rettelsen",
-    changedAfterApproval: "Arbejdstiden er ændret efter godkendelsen. Det gemte beløb passer ikke længere med lønsedlen, så den skal godkendes igen.",
-    periodLockedOpenFromPay: "Lønperioden er godkendt og låst. Åbn den på Løn-siden, hvis lønsedlen skal ændres.",
+    changedAfterApproval:
+      "Arbejdstiden er ændret efter godkendelsen. Det gemte beløb passer ikke længere med lønsedlen, så den skal godkendes igen.",
+    periodLockedOpenFromPay:
+      "Lønperioden er godkendt og låst. Åbn den på Løn-siden, hvis lønsedlen skal ændres.",
     fixIssuesFirst: "Ret først de punkter, der skal tjekkes.",
     approvePay: "Godkend lønnen",
     unknownError: "ukendt fejl",
@@ -2766,18 +2932,26 @@ const da: AdminText = {
     priceSaved: "Prisen er gemt.",
     retrySuffix: "{syy} Prøv igen.",
     shareTitle: "Del menuen videre",
-    printHint: "Forhåndsvisningen er i A4 og printes ens. Åbn den og tryk Ctrl/Cmd + P.",
+    printHint:
+      "Forhåndsvisningen er i A4 og printes ens. Åbn den og tryk Ctrl/Cmd + P.",
     openA4: "Åbn A4-forhåndsvisningen",
-    printNote: "Beskrivelser og allergener pr. ret er der ikke plads til på arket. De findes på websiden, som kunden åbner via QR-koden.",
-    embedHint: "Indsæt dette på din egen side. Menuen opdateres af sig selv, når du udgiver en ny uge — koden skal ikke skiftes.",
-    embedNote: "Baggrunden er gennemsigtig, så den tager din sides farve. Tilføj efter adressen",
+    printNote:
+      "Beskrivelser og allergener pr. ret er der ikke plads til på arket. De findes på websiden, som kunden åbner via QR-koden.",
+    embedHint:
+      "Indsæt dette på din egen side. Menuen opdateres af sig selv, når du udgiver en ny uge — koden skal ikke skiftes.",
+    embedNote:
+      "Baggrunden er gennemsigtig, så den tager din sides farve. Tilføj efter adressen",
     seeEmbed: "Se, hvordan indlejringen ser ud",
-    facebookHint: "Kate udgiver ikke på Facebook for dig — det ville kræve en Facebook-app og adgang til siden. Her er menuen klar som tekst: kopiér og indsæt.",
+    facebookHint:
+      "Kate udgiver ikke på Facebook for dig — det ville kræve en Facebook-app og adgang til siden. Her er menuen klar som tekst: kopiér og indsæt.",
     openFacebook: "Åbn Facebooks delingsvindue",
-    facebookNote: "Delingsvinduet deler linket med forhåndsbillede. Indsæt teksten med, fordi mange læser den uden at åbne linket.",
-    screenHint: "Skærmtilstand har stor tekst og genindlæser sig selv hvert tiende minut. Åbn adressen i skærmens browser i fuldskærm.",
+    facebookNote:
+      "Delingsvinduet deler linket med forhåndsbillede. Indsæt teksten med, fordi mange læser den uden at åbne linket.",
+    screenHint:
+      "Skærmtilstand har stor tekst og genindlæser sig selv hvert tiende minut. Åbn adressen i skærmens browser i fuldskærm.",
     openScreen: "Åbn skærmtilstand",
-    screenNote: "Beskrivelser og allergener udelades: ingen læser dem på en meters afstand, og de ville tage pladsen fra det, der læses.",
+    screenNote:
+      "Beskrivelser og allergener udelades: ingen læser dem på en meters afstand, og de ville tage pladsen fra det, der læses.",
     tabPrint: "Print",
     tabWeb: "Hjemmeside",
     tabScreens: "Infoskærme",
@@ -2788,13 +2962,17 @@ const da: AdminText = {
     copied: "Kopieret",
     copy: "Kopiér",
     preview: "Forhåndsvis",
-    unpublishedChanges: "Den udgivne frokostmenu er ændret. Kunderne ser stadig den forrige version.",
-    publicPageHint: "Siden åbnes uden login og viser denne uges frokostmenu. Kladder vises aldrig der.",
+    unpublishedChanges:
+      "Den udgivne frokostmenu er ændret. Kunderne ser stadig den forrige version.",
+    publicPageHint:
+      "Siden åbnes uden login og viser denne uges frokostmenu. Kladder vises aldrig der.",
     openPage: "Åbn siden",
-    qrHint: "Gem billedet med et højreklik, og print det til bordet eller døren.",
+    qrHint:
+      "Gem billedet med et højreklik, og print det til bordet eller døren.",
     thisWeek: "Denne uge",
     noMenuThisWeek: "Denne uge har endnu ingen frokostmenu",
-    startHint: "Start fra tom, eller kopiér sidste uges menu som grundlag. En kopi er altid en kladde og udgiver intet af sig selv.",
+    startHint:
+      "Start fra tom, eller kopiér sidste uges menu som grundlag. En kopi er altid en kladde og udgiver intet af sig selv.",
     startWeek: "Start ugen",
     weekend: "Weekend",
     noItems: "Ingen retter.",
@@ -2836,7 +3014,8 @@ const da: AdminText = {
     publishConfirm: "Udgiv ugens frokostmenu?",
     copyLastWeek: "Kopiér sidste uge",
     copyConfirm: "Kopiér frokostmenuen?",
-    copyWeekNote: "Måluges nuværende indhold erstattes. Kopien er en kladde og udgiver intet.",
+    copyWeekNote:
+      "Måluges nuværende indhold erstattes. Kopien er en kladde og udgiver intet.",
     copyToDay: "Kopiér til en anden dag",
     chooseDay: "Vælg dag…",
     copyDayNote: "Måldagens nuværende indhold erstattes.",
@@ -2848,13 +3027,16 @@ const da: AdminText = {
     copyToDayNamed: "Kopiér til {paiva}",
   },
   kuva: {
-    multiPage: "En kvittering med flere sider kan du fotografere eller vælge alle sider på én gang. Sider kan også tilføjes under kontrollen.",
-    uncertainFields: "Aflæsningen er ikke sikker på alle felter. Åbn oplysningerne og tjek de markerede.",
+    multiPage:
+      "En kvittering med flere sider kan du fotografere eller vælge alle sider på én gang. Sider kan også tilføjes under kontrollen.",
+    uncertainFields:
+      "Aflæsningen er ikke sikker på alle felter. Åbn oplysningerne og tjek de markerede.",
     saving: "Gemmer…",
     addPage: "Tilføj side",
     ownCategory: "Egen kategori",
     noOwnCategory: "Ingen egen kategori",
-    ownCategoryHint: "En præcisering til rapporterne. Moms og budget kommer fra grundklassen ovenfor.",
+    ownCategoryHint:
+      "En præcisering til rapporterne. Moms og budget kommer fra grundklassen ovenfor.",
     suggestion: "Forslag:",
     use: "Brug",
     requiredFields: "Leverandør, beløb og kategori kræves.",
@@ -2864,19 +3046,25 @@ const da: AdminText = {
     openReceipt: "Åbn kvitteringen",
     allReceipts: "Alle kvitteringer",
     calcFromBase: "Beregn ud fra grundlaget:",
-    fillTotalFirst: "Udfyld slutsummen først, så kan momsen beregnes ud fra grundlaget.",
+    fillTotalFirst:
+      "Udfyld slutsummen først, så kan momsen beregnes ud fra grundlaget.",
     readFailed: "Læsning af billedet mislykkedes.",
     pageSaveFailed: "Siden kunne ikke gemmes.",
     shootReceipt: "Fotografér kvitteringen",
     shootAndFill: "Fotografér og udfyld oplysningerne",
     chooseImages: "Vælg billeder",
     uploadFile: "Upload fil",
-    machineSuggests: "Maskinen foreslår, mennesket bekræfter: alle felter kan ændres, før du gemmer, og de usikre er markeret.",
-    noExtractor: "Billedlæsning er ikke slået til i dette miljø. Billedet gemmes, men oplysningerne udfyldes i hånden — appen gætter dem ikke for dig.",
+    machineSuggests:
+      "Maskinen foreslår, mennesket bekræfter: alle felter kan ændres, før du gemmer, og de usikre er markeret.",
+    noExtractor:
+      "Billedlæsning er ikke slået til i dette miljø. Billedet gemmes, men oplysningerne udfyldes i hånden — appen gætter dem ikke for dig.",
     fillYourself: "Udfyld selv oplysningerne fra kvitteringen.",
-    noExtractorShort: "Billedlæsning er ikke slået til, så udfyld selv oplysningerne fra kvitteringen. Billedet gemmes og vises på kvitteringens side.",
-    someUncertain: "Nogle oplysninger blev usikre. Tjek de markerede felter, før du gemmer.",
-    allRecognised: "Alle felter blev genkendt. Tjek alligevel, at de passer med kvitteringen.",
+    noExtractorShort:
+      "Billedlæsning er ikke slået til, så udfyld selv oplysningerne fra kvitteringen. Billedet gemmes og vises på kvitteringens side.",
+    someUncertain:
+      "Nogle oplysninger blev usikre. Tjek de markerede felter, før du gemmer.",
+    allRecognised:
+      "Alle felter blev genkendt. Tjek alligevel, at de passer med kvitteringen.",
     zoomImage: "Forstør kvitteringsbilledet",
     receipt: "Kvittering",
     dateMissing: "Dato mangler",
@@ -2940,7 +3128,8 @@ const da: AdminText = {
     profitShort: "Analysér månedens indtjening",
     profitFull: "Analysér månedens indtjening.",
     overBudgetShort: "Hvorfor er udgifterne over budget?",
-    overBudgetFull: "Hvorfor er udgifterne over budget? Del det op pr. kategori.",
+    overBudgetFull:
+      "Hvorfor er udgifterne over budget? Del det op pr. kategori.",
     budgetLeftShort: "Hvad rækker budgettet til resten af måneden?",
     biggestShort: "Find månedens største udgifter",
     biggestFull: "Find månedens største udgifter.",
@@ -2994,7 +3183,8 @@ const da: AdminText = {
     joined: "Du tilsluttede dig restauranten.",
     checkInput: "Tjek de indtastede oplysninger.",
     needOwner: "mindst én ejer",
-    needOwnerBody: "En restaurant skal have mindst én ejer. Udpeg en anden først.",
+    needOwnerBody:
+      "En restaurant skal have mindst én ejer. Udpeg en anden først.",
     saveFailed: "Kunne ikke gemmes",
     saved: "Oplysningerne blev gemt.",
     categoryMissing: "Kategorien mangler.",
@@ -3010,7 +3200,8 @@ const da: AdminText = {
     sameTimes: "Start- og sluttidspunkt er ens.",
     shiftSaveFailed: "Vagten kunne ikke gemmes",
     shiftUpdated: "Vagten blev opdateret.",
-    shiftDraft: "Vagten blev oprettet som kladde. Den ses af medarbejderen først, når du udgiver.",
+    shiftDraft:
+      "Vagten blev oprettet som kladde. Den ses af medarbejderen først, når du udgiver.",
     noPublishRight: "Du må ikke udgive vagter.",
     checkMonth: "Tjek måneden.",
     publishFailed: "Udgivelsen mislykkedes",
@@ -3019,7 +3210,8 @@ const da: AdminText = {
     totalMissing: "Slutsummen mangler.",
     chooseCategory: "Vælg en kategori.",
     onlyManagerReceipts: "Kun restaurantens leder kan tilføje kvitteringer.",
-    duplicateFile: "Den samme fil er allerede gemt. Er det et andet køb, så fotografér det igen.",
+    duplicateFile:
+      "Den samme fil er allerede gemt. Er det et andet køb, så fotografér det igen.",
     receiptSaveFailed: "Kvitteringen kunne ikke gemmes",
     receiptSaved: "Kvitteringen blev gemt.",
     nameMissing: "Navnet mangler.",
@@ -3033,7 +3225,8 @@ const da: AdminText = {
     categoryExists: "En kategori med samme navn findes allerede.",
     categorySaveFailed: "Kategorien kunne ikke gemmes",
     categorySaved: "Kategorien blev gemt.",
-    migrationsMissing: "Databasestrukturerne mangler. Kør migrationerne 0004 og 0005.",
+    migrationsMissing:
+      "Databasestrukturerne mangler. Kør migrationerne 0004 og 0005.",
     noRight: "Du har ikke ret til at gøre dette.",
     ownerOnly: "Kun ejeren",
     ownerOnlyBody: "Kun ejeren kan gøre dette.",
@@ -3049,7 +3242,8 @@ const da: AdminText = {
     unknownTimezone: "Ukendt tidszone",
     unknownTimezoneBody: "Ukendt tidszone.",
     currentOrFuture: "Indeværende eller kommende",
-    currentOrFutureBody: "Den indeværende eller en kommende måned kan ikke lukkes.",
+    currentOrFutureBody:
+      "Den indeværende eller en kommende måned kan ikke lukkes.",
     ownerOnlyCategories: "Kun ejeren kan administrere kategorier.",
     shiftsPublished: "{maara} {yksikko} udgivet. De ses nu af medarbejderne.",
     shiftOne: "vagt",
@@ -3064,7 +3258,8 @@ const da: AdminText = {
       "Hent posteringerne fra opsummeringen, så bygger Kate forslagene ud fra kvitteringer og salgsdage.",
     ledgerFills: "Hovedbogen fyldes, når månedens bilag er dannet.",
     entry: "posteringer",
-    chartAppears: "Kontoplanen dannes, når du henter månedens posteringer første gang.",
+    chartAppears:
+      "Kontoplanen dannes, når du henter månedens posteringer første gang.",
     matches: "stemmer",
     generalLedger: "Hovedbog",
     balanceOk: "Balancen stemmer",
@@ -3272,12 +3467,14 @@ const da: AdminText = {
     title: "Vagter",
     overlapping: "Overlappende vagter",
     overlap: "overlapper",
-    noticeDoesNotCancel: "En melding aflyser ikke vagten — vagten har stadig en person",
+    noticeDoesNotCancel:
+      "En melding aflyser ikke vagten — vagten har stadig en person",
     certificateSeen: "Attesten set",
     markCertificateSeen: "Markér attesten som set",
     plannedVsActual: "Planlagt og faktisk passede ikke",
     declined: "Sagt nej",
-    openShiftsNote: "Disse vagter er åbne — sæt en anden på, eller lad dem stå åbne",
+    openShiftsNote:
+      "Disse vagter er åbne — sæt en anden på, eller lad dem stå åbne",
     actualHours: "Faktisk arbejdstid",
     labourCost: "Lønomkostning",
     emptyBody:
@@ -3312,9 +3509,11 @@ const da: AdminText = {
     employeeCount: "Medarbejdere",
     noHoursInPeriod: "Ingen arbejdstid i perioden",
     employees: "Medarbejdere",
-    basePlusSupplements: "Grundløn og tillæg, ingen fradrag eller arbejdsgiveromkostninger",
+    basePlusSupplements:
+      "Grundløn og tillæg, ingen fradrag eller arbejdsgiveromkostninger",
     accrual: "Optjent løn",
-    emptyBody: "Perioden har ingen faktisk arbejdstid. Lønnen bygges af stemplinger.",
+    emptyBody:
+      "Perioden har ingen faktisk arbejdstid. Lønnen bygges af stemplinger.",
     employee: "Medarbejder",
     supplements: "Tillæg",
     approved: "Godkendt",
@@ -3349,7 +3548,8 @@ const da: AdminText = {
     addForBreakdown: "Tilføj kvitteringer for at se, hvor pengene går.",
     salesAndExpenses: "Salg og udgifter",
     range: "Interval",
-    trendNeedsTwoMonths: "Udviklingen vises her, når der er data fra to måneder.",
+    trendNeedsTwoMonths:
+      "Udviklingen vises her, når der er data fra to måneder.",
     latestReceipts: "Seneste kvitteringer",
     showAllReceipts: "Vis alle kvitteringer",
     firstReceiptHere: "Din første kvittering vises her.",
@@ -3362,7 +3562,8 @@ const da: AdminText = {
   kuitit: {
     all: "Alle",
     purchasesIn: "Køb i {kuukausi}",
-    foundElsewhere: "Søgeordet findes andre steder: {maara} {yksikko} fra andre måneder. Skift måned i topbjælken.",
+    foundElsewhere:
+      "Søgeordet findes andre steder: {maara} {yksikko} fra andre måneder. Skift måned i topbjælken.",
     receiptOne: "kvittering",
     receiptMany: "kvitteringer",
     rows: "{maara} rækker",
@@ -3390,7 +3591,8 @@ const da: AdminText = {
       "Nogle linjer har ingen momssats. Deres moms er hverken beregnet eller antaget — tjek dem mod kvitteringen.",
     multiCategoryNote:
       "Denne kvittering deles på flere kategorier. Udgifterne bogføres linje for linje, ikke hele summen på én kategori.",
-    unclearImage: "Billedet blev vurderet utydeligt. Tjek tallene ekstra grundigt.",
+    unclearImage:
+      "Billedet blev vurderet utydeligt. Tjek tallene ekstra grundigt.",
     deleteWarning:
       "Sletning kan ikke fortrydes. Er det en dublet, så slet den — er det et separat køb, så behold begge.",
   },
@@ -3447,7 +3649,8 @@ const tr: AdminText = {
   },
   palkka: {
     periodApproved: "Bordro dönemi onaylandı",
-    periodApprovedBody: "Bordro dönemi onaylandı. Değişiklikten önce dönemi aç.",
+    periodApprovedBody:
+      "Bordro dönemi onaylandı. Değişiklikten önce dönemi aç.",
     noRightCorrect: "Çalışma süresini düzeltme yetkisi yok.",
     incompleteData: "Eksik bilgiler.",
     tellWhy: "Sürenin neden düzeltildiğini yaz.",
@@ -3469,12 +3672,14 @@ const tr: AdminText = {
     periodApprovedLocked: "Bordro dönemi onaylandı ve kilitlendi.",
     noRightOpenPeriod: "Bordro dönemini açma yetkisi yok.",
     openFailed: "Açma başarısız oldu",
-    periodOpened: "Bordro dönemi açıldı. Bordroların yeniden onaylanması gerekir.",
+    periodOpened:
+      "Bordro dönemi açıldı. Bordroların yeniden onaylanması gerekir.",
     noRightComponents: "Ücret bileşenlerini düzenleme yetkisi yok.",
     componentNeedsName: "Ücret bileşenine bir ad ver.",
     unknownUnit: "Bilinmeyen birim.",
     valueMissing: "Değer eksik.",
-    windowBothOrNeither: "Aralığa hem başlangıç hem bitiş ver ya da ikisini de boş bırak.",
+    windowBothOrNeither:
+      "Aralığa hem başlangıç hem bitiş ver ya da ikisini de boş bırak.",
     componentSaveFailed: "Ücret bileşeni kaydedilemedi",
     componentUpdated: "Ücret bileşeni güncellendi.",
     componentAdded: "Ücret bileşeni eklendi.",
@@ -3482,9 +3687,11 @@ const tr: AdminText = {
     periodIssues: "Dönemde kontrol edilecek {maara} nokta var.",
     approveAllFirst: "Önce tüm bordroları onayla ({hyvaksytty}/{kaikki}).",
     components: "Ücret bileşenleri",
-    componentsIntro: "Akşam, gece ve hafta sonu ek ödemeleri. Kate toplu iş sözleşmesini bilmez, bu yüzden değerler elle girilir.",
+    componentsIntro:
+      "Akşam, gece ve hafta sonu ek ödemeleri. Kate toplu iş sözleşmesini bilmez, bu yüzden değerler elle girilir.",
     addComponent: "Ücret bileşeni ekle",
-    noComponents: "Ücret bileşeni yok. Temel ücret yine de saat ücretinden hesaplanır.",
+    noComponents:
+      "Ücret bileşeni yok. Temel ücret yine de saat ücretinden hesaplanır.",
     eveningSupp: "Akşam ek ödemesi",
     nightSupp: "Gece ek ödemesi",
     saturdaySupp: "Cumartesi ek ödemesi",
@@ -3493,7 +3700,8 @@ const tr: AdminText = {
     otherSupp: "Diğer ek ödeme",
     weekdaysHint: "Haftanın günleri — hiçbirini seçmemek tümü demektir",
     canCombine: "Diğer ek ödemelerle birleşebilir",
-    combineHint: "Bir ek ödeme birleşmiyorsa, aynı dakika için yalnızca en yükseği ödenir.",
+    combineHint:
+      "Bir ek ödeme birleşmiyorsa, aynı dakika için yalnızca en yükseği ödenir.",
     mon: "Pzt",
     tue: "Sal",
     wed: "Çar",
@@ -3524,10 +3732,12 @@ const tr: AdminText = {
     nothingToNote: "Belirtilecek bir şey yok",
     needsCorrection: "Düzeltme gerekiyor",
     periodApproval: "Bordro dönemi onayı",
-    grossNote: "Brüt ücret; stopaj, diğer kesintiler ve işveren yan maliyetlerini içermez. Kate bir bordro programı değildir ve onun yerini almaz.",
+    grossNote:
+      "Brüt ücret; stopaj, diğer kesintiler ve işveren yan maliyetlerini içermez. Kate bir bordro programı değildir ve onun yerini almaz.",
     payWages: "Ücretleri öde",
     notYetAvailable: "— henüz kullanılamıyor",
-    periodLockedNote: "Dönem onaylandı ve kilitlendi. Dönem açılana kadar bordrolar değişmez.",
+    periodLockedNote:
+      "Dönem onaylandı ve kilitlendi. Dönem açılana kadar bordrolar değişmez.",
     approvedWord: "Onaylandı",
     readyForApproval: "Onaya hazır",
     inProgress: "Sürüyor",
@@ -3536,27 +3746,32 @@ const tr: AdminText = {
     approvePeriod: "Bordro dönemini onayla",
     approving: "Onaylanıyor…",
     payoutComing: "Ücret ödemesi bir ödeme servisi entegrasyonuyla gelecek.",
-    approveFirstThenPay: "Önce dönemi onayla. Ücret ödemesi bir ödeme servisi entegrasyonuyla gelecek.",
+    approveFirstThenPay:
+      "Önce dönemi onayla. Ücret ödemesi bir ödeme servisi entegrasyonuyla gelecek.",
     approvedOf: "{hyvaksytty}/{kaikki} bordro onaylandı.",
     issueCount: "Kontrol edilecek {maara} nokta.",
     check: "Kontrol et",
     awaitingApproval: "Onay bekliyor",
     toCheck: "Kontrol edilecek",
-    notApprovedUntilFixed: "Bunlar düzeltilene kadar ücret onaylanmaz. Düzeltme aşağıdaki dökümden yapılır.",
+    notApprovedUntilFixed:
+      "Bunlar düzeltilene kadar ücret onaylanmaz. Düzeltme aşağıdaki dökümden yapılır.",
     workTime: "Çalışma süresi",
     payWord: "Ücret",
     basePay: "Temel ücret",
     grossPay: "Brüt ücret",
-    grossExcludes: "Stopaj, diğer kesintiler ve işveren yan maliyetlerini içermez.",
+    grossExcludes:
+      "Stopaj, diğer kesintiler ve işveren yan maliyetlerini içermez.",
     howFormed: "Bu tutar nasıl oluştu?",
-    eachRowIsDay: "Her satır bir iş günü. Süre planlanan vardiyadan değil, kayıtlardan gelir.",
+    eachRowIsDay:
+      "Her satır bir iş günü. Süre planlanan vardiyadan değil, kayıtlardan gelir.",
     noWorkedTime: "Dönemde gerçekleşen çalışma süresi yok.",
     payslip: "Bordro",
     baseHours: "Temel saatler",
     corrected: "Düzeltildi",
     restoreClockings: "Kayıtları geri yükle",
     whyCorrecting: "Süre neden düzeltiliyor?",
-    correctionNote: "Orijinal kayıtlar değiştirilmez. Düzeltme kendi kaydı olarak adın, saat ve gerekçeyle saklanır.",
+    correctionNote:
+      "Orijinal kayıtlar değiştirilmez. Düzeltme kendi kaydı olarak adın, saat ve gerekçeyle saklanır.",
     cancel: "Vazgeç",
     changeCorrection: "Düzeltmeyi değiştir",
     correctWorkedTime: "Gerçekleşen süreyi düzelt",
@@ -3565,8 +3780,10 @@ const tr: AdminText = {
     breakMin: "Mola (dk)",
     forgotClockOut: "Çıkış kaydı unutuldu",
     saveCorrection: "Düzeltmeyi kaydet",
-    changedAfterApproval: "Çalışma süresi onaydan sonra değişti. Kaydedilen tutar artık bordroyla uyuşmuyor, bu yüzden yeniden onaylanmalı.",
-    periodLockedOpenFromPay: "Bordro dönemi onaylandı ve kilitlendi. Bordronun değişmesi gerekiyorsa Ücretler sayfasından aç.",
+    changedAfterApproval:
+      "Çalışma süresi onaydan sonra değişti. Kaydedilen tutar artık bordroyla uyuşmuyor, bu yüzden yeniden onaylanmalı.",
+    periodLockedOpenFromPay:
+      "Bordro dönemi onaylandı ve kilitlendi. Bordronun değişmesi gerekiyorsa Ücretler sayfasından aç.",
     fixIssuesFirst: "Önce kontrol edilecek noktaları düzelt.",
     approvePay: "Ücreti onayla",
     unknownError: "bilinmeyen hata",
@@ -3610,18 +3827,26 @@ const tr: AdminText = {
     priceSaved: "Fiyat kaydedildi.",
     retrySuffix: "{syy} Tekrar dene.",
     shareTitle: "Menüyü paylaş",
-    printHint: "Önizleme A4 boyutunda ve aynen yazdırılır. Aç ve Ctrl/Cmd + P tuşlarına bas.",
+    printHint:
+      "Önizleme A4 boyutunda ve aynen yazdırılır. Aç ve Ctrl/Cmd + P tuşlarına bas.",
     openA4: "A4 önizlemesini aç",
-    printNote: "Açıklamalar ve yemek başına alerjenler sayfaya sığmıyor. Bunlar, müşterinin QR koddan açtığı web sayfasında.",
-    embedHint: "Bunu kendi sitene yapıştır. Yeni bir hafta yayınladığında menü kendiliğinden güncellenir — kodu değiştirmen gerekmez.",
-    embedNote: "Arka plan saydam, bu yüzden kendi sayfanın rengini alır. Adresin sonuna ekle",
+    printNote:
+      "Açıklamalar ve yemek başına alerjenler sayfaya sığmıyor. Bunlar, müşterinin QR koddan açtığı web sayfasında.",
+    embedHint:
+      "Bunu kendi sitene yapıştır. Yeni bir hafta yayınladığında menü kendiliğinden güncellenir — kodu değiştirmen gerekmez.",
+    embedNote:
+      "Arka plan saydam, bu yüzden kendi sayfanın rengini alır. Adresin sonuna ekle",
     seeEmbed: "Yerleştirmenin nasıl göründüğüne bak",
-    facebookHint: "Kate senin yerine Facebook'ta paylaşmaz — bunun için bir Facebook uygulaması ve sayfa erişimi gerekir. Menü metin olarak hazır: kopyala ve yapıştır.",
+    facebookHint:
+      "Kate senin yerine Facebook'ta paylaşmaz — bunun için bir Facebook uygulaması ve sayfa erişimi gerekir. Menü metin olarak hazır: kopyala ve yapıştır.",
     openFacebook: "Facebook paylaşım penceresini aç",
-    facebookNote: "Paylaşım penceresi bağlantıyı önizleme görseliyle paylaşır. Metni de yapıştır, çünkü birçok kişi bağlantıyı açmadan okur.",
-    screenHint: "Ekran modu büyük yazı kullanır ve on dakikada bir kendini yeniler. Bu adresi ekranın tarayıcısında tam ekran modunda aç.",
+    facebookNote:
+      "Paylaşım penceresi bağlantıyı önizleme görseliyle paylaşır. Metni de yapıştır, çünkü birçok kişi bağlantıyı açmadan okur.",
+    screenHint:
+      "Ekran modu büyük yazı kullanır ve on dakikada bir kendini yeniler. Bu adresi ekranın tarayıcısında tam ekran modunda aç.",
     openScreen: "Ekran modunu aç",
-    screenNote: "Açıklamalar ve alerjenler dışarıda bırakılır: bir metre uzaktan kimse okumaz ve okunanın yerini alırlar.",
+    screenNote:
+      "Açıklamalar ve alerjenler dışarıda bırakılır: bir metre uzaktan kimse okumaz ve okunanın yerini alırlar.",
     tabPrint: "Baskılar",
     tabWeb: "Web sitesi",
     tabScreens: "Bilgi ekranları",
@@ -3632,13 +3857,16 @@ const tr: AdminText = {
     copied: "Kopyalandı",
     copy: "Kopyala",
     preview: "Önizle",
-    unpublishedChanges: "Yayınlanmış öğle menüsü değişti. Müşteriler hâlâ önceki sürümü görüyor.",
-    publicPageHint: "Sayfa giriş yapmadan açılır ve bu haftanın öğle menüsünü gösterir. Taslaklar orada hiç görünmez.",
+    unpublishedChanges:
+      "Yayınlanmış öğle menüsü değişti. Müşteriler hâlâ önceki sürümü görüyor.",
+    publicPageHint:
+      "Sayfa giriş yapmadan açılır ve bu haftanın öğle menüsünü gösterir. Taslaklar orada hiç görünmez.",
     openPage: "Sayfayı aç",
     qrHint: "Görseli sağ tıkla kaydet ve masaya ya da kapıya yazdır.",
     thisWeek: "Bu hafta",
     noMenuThisWeek: "Bu hafta için henüz öğle menüsü yok",
-    startHint: "Boştan başla ya da geçen haftanın menüsünü temel olarak kopyala. Kopya her zaman taslaktır, kendiliğinden hiçbir şey yayınlamaz.",
+    startHint:
+      "Boştan başla ya da geçen haftanın menüsünü temel olarak kopyala. Kopya her zaman taslaktır, kendiliğinden hiçbir şey yayınlamaz.",
     startWeek: "Haftayı başlat",
     weekend: "Hafta sonu",
     noItems: "Yemek yok.",
@@ -3680,7 +3908,8 @@ const tr: AdminText = {
     publishConfirm: "Haftanın öğle menüsü yayınlansın mı?",
     copyLastWeek: "Geçen haftayı kopyala",
     copyConfirm: "Öğle menüsü kopyalansın mı?",
-    copyWeekNote: "Hedef haftanın mevcut içeriği değiştirilir. Kopya bir taslaktır ve hiçbir şey yayınlamaz.",
+    copyWeekNote:
+      "Hedef haftanın mevcut içeriği değiştirilir. Kopya bir taslaktır ve hiçbir şey yayınlamaz.",
     copyToDay: "Başka bir güne kopyala",
     chooseDay: "Bir gün seç…",
     copyDayNote: "Hedef günün mevcut içeriği değiştirilir.",
@@ -3692,13 +3921,16 @@ const tr: AdminText = {
     copyToDayNamed: "{paiva} gününe kopyala",
   },
   kuva: {
-    multiPage: "Çok sayfalı bir fişin tüm sayfalarını tek seferde çekebilir ya da seçebilirsin. Sayfaları kontrol aşamasında da ekleyebilirsin.",
-    uncertainFields: "Okuma her alandan emin değil. Bilgileri aç ve işaretli olanları kontrol et.",
+    multiPage:
+      "Çok sayfalı bir fişin tüm sayfalarını tek seferde çekebilir ya da seçebilirsin. Sayfaları kontrol aşamasında da ekleyebilirsin.",
+    uncertainFields:
+      "Okuma her alandan emin değil. Bilgileri aç ve işaretli olanları kontrol et.",
     saving: "Kaydediliyor…",
     addPage: "Sayfa ekle",
     ownCategory: "Kendi kategorin",
     noOwnCategory: "Kendi kategorisi yok",
-    ownCategoryHint: "Raporlar için ayrıntı. KDV ve bütçe yukarıda seçilen ana sınıftan gelir.",
+    ownCategoryHint:
+      "Raporlar için ayrıntı. KDV ve bütçe yukarıda seçilen ana sınıftan gelir.",
     suggestion: "Öneri:",
     use: "Kullan",
     requiredFields: "Tedarikçi, tutar ve kategori zorunlu.",
@@ -3708,19 +3940,25 @@ const tr: AdminText = {
     openReceipt: "Fişi aç",
     allReceipts: "Tüm fişler",
     calcFromBase: "Matrahtan hesapla:",
-    fillTotalFirst: "Önce toplam tutarı gir, böylece KDV matrahtan hesaplanabilir.",
+    fillTotalFirst:
+      "Önce toplam tutarı gir, böylece KDV matrahtan hesaplanabilir.",
     readFailed: "Görsel okunamadı.",
     pageSaveFailed: "Sayfa kaydedilemedi.",
     shootReceipt: "Fişi çek",
     shootAndFill: "Çek ve bilgileri doldur",
     chooseImages: "Görselleri seç",
     uploadFile: "Dosya yükle",
-    machineSuggests: "Makine önerir, insan onaylar: kaydetmeden önce tüm alanlar düzenlenebilir ve belirsiz olanlar işaretlidir.",
-    noExtractor: "Bu ortamda görsel okuma açık değil. Görsel kaydedilir, ancak bilgiler elle doldurulur — uygulama senin yerine tahmin etmez.",
+    machineSuggests:
+      "Makine önerir, insan onaylar: kaydetmeden önce tüm alanlar düzenlenebilir ve belirsiz olanlar işaretlidir.",
+    noExtractor:
+      "Bu ortamda görsel okuma açık değil. Görsel kaydedilir, ancak bilgiler elle doldurulur — uygulama senin yerine tahmin etmez.",
     fillYourself: "Bilgileri fişten kendin doldur.",
-    noExtractorShort: "Görsel okuma açık değil, bu yüzden bilgileri fişten kendin doldur. Görsel kaydedilir ve fiş sayfasında görünür.",
-    someUncertain: "Bazı bilgiler belirsiz kaldı. Kaydetmeden önce işaretli alanları kontrol et.",
-    allRecognised: "Tüm alanlar tanındı. Yine de fişle eşleştiklerini kontrol et.",
+    noExtractorShort:
+      "Görsel okuma açık değil, bu yüzden bilgileri fişten kendin doldur. Görsel kaydedilir ve fiş sayfasında görünür.",
+    someUncertain:
+      "Bazı bilgiler belirsiz kaldı. Kaydetmeden önce işaretli alanları kontrol et.",
+    allRecognised:
+      "Tüm alanlar tanındı. Yine de fişle eşleştiklerini kontrol et.",
     zoomImage: "Fiş görselini büyüt",
     receipt: "Fiş",
     dateMissing: "Tarih eksik",
@@ -3838,7 +4076,8 @@ const tr: AdminText = {
     joined: "Restorana katıldın.",
     checkInput: "Girdiğin bilgileri kontrol et.",
     needOwner: "en az bir sahip",
-    needOwnerBody: "Bir restoranın en az bir sahibi olmalı. Önce başka birini ata.",
+    needOwnerBody:
+      "Bir restoranın en az bir sahibi olmalı. Önce başka birini ata.",
     saveFailed: "Kaydetme başarısız",
     saved: "Bilgiler kaydedildi.",
     categoryMissing: "Kategori eksik.",
@@ -3854,7 +4093,8 @@ const tr: AdminText = {
     sameTimes: "Başlangıç ve bitiş saati aynı.",
     shiftSaveFailed: "Vardiya kaydedilemedi",
     shiftUpdated: "Vardiya güncellendi.",
-    shiftDraft: "Vardiya taslak olarak oluşturuldu. Çalışana ancak yayınladığında görünür.",
+    shiftDraft:
+      "Vardiya taslak olarak oluşturuldu. Çalışana ancak yayınladığında görünür.",
     noPublishRight: "Vardiya yayınlama yetkin yok.",
     checkMonth: "Ayı kontrol et.",
     publishFailed: "Yayınlama başarısız",
@@ -3863,7 +4103,8 @@ const tr: AdminText = {
     totalMissing: "Toplam tutar eksik.",
     chooseCategory: "Bir kategori seç.",
     onlyManagerReceipts: "Fişleri yalnızca restoranın yöneticisi ekleyebilir.",
-    duplicateFile: "Aynı dosya zaten kaydedilmiş. Farklı bir alışverişse yeniden fotoğrafla.",
+    duplicateFile:
+      "Aynı dosya zaten kaydedilmiş. Farklı bir alışverişse yeniden fotoğrafla.",
     receiptSaveFailed: "Fiş kaydedilemedi",
     receiptSaved: "Fiş kaydedildi.",
     nameMissing: "Ad eksik.",
@@ -3877,7 +4118,8 @@ const tr: AdminText = {
     categoryExists: "Aynı adlı bir kategori zaten var.",
     categorySaveFailed: "Kategori kaydedilemedi",
     categorySaved: "Kategori kaydedildi.",
-    migrationsMissing: "Veritabanı yapıları eksik. 0004 ve 0005 migrasyonlarını çalıştır.",
+    migrationsMissing:
+      "Veritabanı yapıları eksik. 0004 ve 0005 migrasyonlarını çalıştır.",
     noRight: "Bunu yapma yetkin yok.",
     ownerOnly: "Yalnızca sahip",
     ownerOnlyBody: "Bunu yalnızca sahip yapabilir.",
@@ -3895,7 +4137,8 @@ const tr: AdminText = {
     currentOrFuture: "İçinde bulunulan ya da gelecek",
     currentOrFutureBody: "İçinde bulunulan ya da gelecek bir ay kapatılamaz.",
     ownerOnlyCategories: "Kategorileri yalnızca sahip yönetebilir.",
-    shiftsPublished: "{maara} {yksikko} yayınlandı. Artık çalışanlara görünüyor.",
+    shiftsPublished:
+      "{maara} {yksikko} yayınlandı. Artık çalışanlara görünüyor.",
     shiftOne: "vardiya",
     shiftMany: "vardiya",
     extraPagesLost:
@@ -3955,7 +4198,8 @@ const tr: AdminText = {
     sideBySide: "Kaynak veri ve muhasebe yan yana",
     salesTotal: "Toplam satış",
     download: "Muhasebeyi indir",
-    downloadNote: "Dosyalarda yalnızca kaydedilmiş belgeler var, öneriler değil",
+    downloadNote:
+      "Dosyalarda yalnızca kaydedilmiş belgeler var, öneriler değil",
     incomeStatement: "Gelir tablosu",
     revenueTotal: "Toplam gelir",
     expensesTotal: "Toplam gider",
@@ -4116,7 +4360,8 @@ const tr: AdminText = {
     title: "Vardiyalar",
     overlapping: "Çakışan vardiyalar",
     overlap: "çakışıyor",
-    noticeDoesNotCancel: "Bildirim vardiyayı iptal etmez — vardiya hâlâ birine ait",
+    noticeDoesNotCancel:
+      "Bildirim vardiyayı iptal etmez — vardiya hâlâ birine ait",
     certificateSeen: "Belge görüldü",
     markCertificateSeen: "Belgeyi görüldü olarak işaretle",
     plannedVsActual: "Planlanan ile gerçekleşen uyuşmadı",
@@ -4156,9 +4401,11 @@ const tr: AdminText = {
     employeeCount: "Çalışan sayısı",
     noHoursInPeriod: "Bu dönemde çalışma saati yok",
     employees: "Çalışanlar",
-    basePlusSupplements: "Temel ücret ve ek ödemeler, kesinti ve işveren maliyeti hariç",
+    basePlusSupplements:
+      "Temel ücret ve ek ödemeler, kesinti ve işveren maliyeti hariç",
     accrual: "Biriken ücret",
-    emptyBody: "Bu dönemde gerçekleşen çalışma saati yok. Ücret kayıtlardan oluşur.",
+    emptyBody:
+      "Bu dönemde gerçekleşen çalışma saati yok. Ücret kayıtlardan oluşur.",
     employee: "Çalışan",
     supplements: "Ek ödemeler",
     approved: "Onaylandı",
@@ -4206,7 +4453,8 @@ const tr: AdminText = {
   kuitit: {
     all: "Tümü",
     purchasesIn: "{kuukausi} alışverişleri",
-    foundElsewhere: "Arama sözcüğü başka yerde geçiyor: diğer aylarda {maara} {yksikko}. Ayı üst çubuktan değiştir.",
+    foundElsewhere:
+      "Arama sözcüğü başka yerde geçiyor: diğer aylarda {maara} {yksikko}. Ayı üst çubuktan değiştir.",
     receiptOne: "fiş",
     receiptMany: "fiş",
     rows: "{maara} satır",
@@ -4234,7 +4482,8 @@ const tr: AdminText = {
       "Bazı satırlarda KDV oranı yok. Vergileri hesaplanmadı ve varsayılmadı — fişten kontrol et.",
     multiCategoryNote:
       "Bu fiş birden çok kategoriye bölünüyor. Giderler satır satır kaydedilir, tüm tutar tek kategoriye değil.",
-    unclearImage: "Görsel belirsiz bulundu. Rakamları özellikle dikkatli kontrol et.",
+    unclearImage:
+      "Görsel belirsiz bulundu. Rakamları özellikle dikkatli kontrol et.",
     deleteWarning:
       "Silme geri alınamaz. Kopyaysa sil — ayrı bir alışverişse ikisini de bırak.",
   },
@@ -4291,7 +4540,8 @@ const et: AdminText = {
   },
   palkka: {
     periodApproved: "Palgaperiood on kinnitatud",
-    periodApprovedBody: "Palgaperiood on kinnitatud. Ava periood enne muutmist.",
+    periodApprovedBody:
+      "Palgaperiood on kinnitatud. Ava periood enne muutmist.",
     noRightCorrect: "Tööaja parandamise õigust ei ole.",
     incompleteData: "Puudulikud andmed.",
     tellWhy: "Selgita, miks aega parandatakse.",
@@ -4318,7 +4568,8 @@ const et: AdminText = {
     componentNeedsName: "Anna palgaliigile nimi.",
     unknownUnit: "Tundmatu ühik.",
     valueMissing: "Väärtus puudub.",
-    windowBothOrNeither: "Anna aknale nii algus kui lõpp või jäta mõlemad tühjaks.",
+    windowBothOrNeither:
+      "Anna aknale nii algus kui lõpp või jäta mõlemad tühjaks.",
     componentSaveFailed: "Palgaliigi salvestamine ebaõnnestus",
     componentUpdated: "Palgaliik on uuendatud.",
     componentAdded: "Palgaliik on lisatud.",
@@ -4326,7 +4577,8 @@ const et: AdminText = {
     periodIssues: "Perioodil on {maara} kontrollimist vajavat kohta.",
     approveAllFirst: "Kinnita esmalt kõik palgalehed ({hyvaksytty}/{kaikki}).",
     components: "Palgaliigid",
-    componentsIntro: "Õhtu-, öö- ja nädalavahetuselisad. Kate ei tunne kollektiivlepingut, seega väärtused sisestatakse käsitsi.",
+    componentsIntro:
+      "Õhtu-, öö- ja nädalavahetuselisad. Kate ei tunne kollektiivlepingut, seega väärtused sisestatakse käsitsi.",
     addComponent: "Lisa palgaliik",
     noComponents: "Palgaliike ei ole. Põhipalk arvutatakse siiski tunnitasust.",
     eveningSupp: "Õhtulisa",
@@ -4337,7 +4589,8 @@ const et: AdminText = {
     otherSupp: "Muu lisa",
     weekdaysHint: "Nädalapäevad — valimata jätmine tähendab kõiki",
     canCombine: "Võib kombineeruda teiste lisadega",
-    combineHint: "Kui lisa ei kombineeru, makstakse sama minuti eest ainult kõrgeim.",
+    combineHint:
+      "Kui lisa ei kombineeru, makstakse sama minuti eest ainult kõrgeim.",
     mon: "E",
     tue: "T",
     wed: "K",
@@ -4368,10 +4621,12 @@ const et: AdminText = {
     nothingToNote: "Märkida ei ole midagi",
     needsCorrection: "Vajab parandust",
     periodApproval: "Palgaperioodi kinnitamine",
-    grossNote: "Brutopalk ei sisalda kinnipeetavat tulumaksu, muid mahaarvamisi ega tööandja kõrvalkulusid. Kate ei ole palgaarvestusprogramm ega asenda seda.",
+    grossNote:
+      "Brutopalk ei sisalda kinnipeetavat tulumaksu, muid mahaarvamisi ega tööandja kõrvalkulusid. Kate ei ole palgaarvestusprogramm ega asenda seda.",
     payWages: "Maksa palgad",
     notYetAvailable: "— pole veel saadaval",
-    periodLockedNote: "Periood on kinnitatud ja lukustatud. Palgalehed ei muutu enne avamist.",
+    periodLockedNote:
+      "Periood on kinnitatud ja lukustatud. Palgalehed ei muutu enne avamist.",
     approvedWord: "Kinnitatud",
     readyForApproval: "Kinnitamiseks valmis",
     inProgress: "Pooleli",
@@ -4380,27 +4635,32 @@ const et: AdminText = {
     approvePeriod: "Kinnita palgaperiood",
     approving: "Kinnitan…",
     payoutComing: "Palkade maksmine tuleb makseteenuse liidese kaudu.",
-    approveFirstThenPay: "Kinnita esmalt periood. Palkade maksmine tuleb makseteenuse liidese kaudu.",
+    approveFirstThenPay:
+      "Kinnita esmalt periood. Palkade maksmine tuleb makseteenuse liidese kaudu.",
     approvedOf: "Kinnitatud {hyvaksytty}/{kaikki} palgalehte.",
     issueCount: "Kontrollida on {maara} kohta.",
     check: "Kontrolli",
     awaitingApproval: "Ootab kinnitamist",
     toCheck: "Kontrollida",
-    notApprovedUntilFixed: "Palka ei kinnitata enne, kui need on parandatud. Parandus tehakse allolevast koondist.",
+    notApprovedUntilFixed:
+      "Palka ei kinnitata enne, kui need on parandatud. Parandus tehakse allolevast koondist.",
     workTime: "Tööaeg",
     payWord: "Palk",
     basePay: "Põhipalk",
     grossPay: "Brutopalk",
-    grossExcludes: "Ei sisalda kinnipeetavat tulumaksu, muid mahaarvamisi ega tööandja kõrvalkulusid.",
+    grossExcludes:
+      "Ei sisalda kinnipeetavat tulumaksu, muid mahaarvamisi ega tööandja kõrvalkulusid.",
     howFormed: "Kuidas see summa kujunes?",
-    eachRowIsDay: "Iga rida on üks tööpäev. Aeg tuleb registreeringutest, mitte planeeritud vahetusest.",
+    eachRowIsDay:
+      "Iga rida on üks tööpäev. Aeg tuleb registreeringutest, mitte planeeritud vahetusest.",
     noWorkedTime: "Perioodil ei ole tegelikku tööaega.",
     payslip: "Palgaleht",
     baseHours: "Põhitunnid",
     corrected: "Parandatud",
     restoreClockings: "Taasta registreeringud",
     whyCorrecting: "Miks aega parandatakse?",
-    correctionNote: "Algseid registreeringuid ei muudeta. Parandus salvestatakse eraldi kandena koos sinu nime, aja ja põhjendusega.",
+    correctionNote:
+      "Algseid registreeringuid ei muudeta. Parandus salvestatakse eraldi kandena koos sinu nime, aja ja põhjendusega.",
     cancel: "Tühista",
     changeCorrection: "Muuda parandust",
     correctWorkedTime: "Paranda tegelik aeg",
@@ -4409,8 +4669,10 @@ const et: AdminText = {
     breakMin: "Paus (min)",
     forgotClockOut: "Väljaregistreering ununes",
     saveCorrection: "Salvesta parandus",
-    changedAfterApproval: "Tööaega muudeti pärast kinnitamist. Salvestatud summa ei vasta enam palgalehele, seega tuleb see uuesti kinnitada.",
-    periodLockedOpenFromPay: "Palgaperiood on kinnitatud ja lukustatud. Ava see Palkade lehelt, kui palgalehte on vaja muuta.",
+    changedAfterApproval:
+      "Tööaega muudeti pärast kinnitamist. Salvestatud summa ei vasta enam palgalehele, seega tuleb see uuesti kinnitada.",
+    periodLockedOpenFromPay:
+      "Palgaperiood on kinnitatud ja lukustatud. Ava see Palkade lehelt, kui palgalehte on vaja muuta.",
     fixIssuesFirst: "Paranda esmalt kontrollimist vajavad kohad.",
     approvePay: "Kinnita palk",
     unknownError: "tundmatu viga",
@@ -4454,18 +4716,26 @@ const et: AdminText = {
     priceSaved: "Hind on salvestatud.",
     retrySuffix: "{syy} Proovi uuesti.",
     shareTitle: "Vii menüü edasi",
-    printHint: "Eelvaade on A4 ja prinditakse samasugusena. Ava see ja vajuta Ctrl/Cmd + P.",
+    printHint:
+      "Eelvaade on A4 ja prinditakse samasugusena. Ava see ja vajuta Ctrl/Cmd + P.",
     openA4: "Ava A4 eelvaade",
-    printNote: "Kirjeldused ja toitude allergeenid ei mahu lehele. Need on veebilehel, mille klient avab QR-koodist.",
-    embedHint: "Kleebi see oma lehele. Menüü uueneb ise, kui avaldad uue nädala — koodi ei ole vaja vahetada.",
-    embedNote: "Taust on läbipaistev, seega võtab see sinu lehe värvi. Lisa aadressi lõppu",
+    printNote:
+      "Kirjeldused ja toitude allergeenid ei mahu lehele. Need on veebilehel, mille klient avab QR-koodist.",
+    embedHint:
+      "Kleebi see oma lehele. Menüü uueneb ise, kui avaldad uue nädala — koodi ei ole vaja vahetada.",
+    embedNote:
+      "Taust on läbipaistev, seega võtab see sinu lehe värvi. Lisa aadressi lõppu",
     seeEmbed: "Vaata, kuidas manus välja näeb",
-    facebookHint: "Kate ei avalda sinu eest Facebookis — see nõuaks Facebooki rakendust ja lehe õigusi. Siin on menüü valmis tekstina: kopeeri ja kleebi.",
+    facebookHint:
+      "Kate ei avalda sinu eest Facebookis — see nõuaks Facebooki rakendust ja lehe õigusi. Siin on menüü valmis tekstina: kopeeri ja kleebi.",
     openFacebook: "Ava Facebooki jagamisaken",
-    facebookNote: "Jagamisaken jagab linki koos eelvaatepildiga. Kleebi tekst kaasa, sest paljud loevad seda linki avamata.",
-    screenHint: "Ekraanirežiim kasutab suurt kirja ja laadib end iga kümne minuti tagant uuesti. Ava see aadress ekraani brauseris täisekraanil.",
+    facebookNote:
+      "Jagamisaken jagab linki koos eelvaatepildiga. Kleebi tekst kaasa, sest paljud loevad seda linki avamata.",
+    screenHint:
+      "Ekraanirežiim kasutab suurt kirja ja laadib end iga kümne minuti tagant uuesti. Ava see aadress ekraani brauseris täisekraanil.",
     openScreen: "Ava ekraanirežiim",
-    screenNote: "Kirjeldused ja allergeenid jäetakse välja: meetri kauguselt ei loe neid keegi ja need võtaksid ruumi selle eest, mida loetakse.",
+    screenNote:
+      "Kirjeldused ja allergeenid jäetakse välja: meetri kauguselt ei loe neid keegi ja need võtaksid ruumi selle eest, mida loetakse.",
     tabPrint: "Väljatrükid",
     tabWeb: "Koduleht",
     tabScreens: "Infoekraanid",
@@ -4476,13 +4746,16 @@ const et: AdminText = {
     copied: "Kopeeritud",
     copy: "Kopeeri",
     preview: "Eelvaade",
-    unpublishedChanges: "Avaldatud lõunamenüüd on muudetud. Kliendid näevad endiselt eelmist versiooni.",
-    publicPageHint: "Leht avaneb ilma sisselogimiseta ja näitab selle nädala lõunamenüüd. Mustandid seal ei ilmu.",
+    unpublishedChanges:
+      "Avaldatud lõunamenüüd on muudetud. Kliendid näevad endiselt eelmist versiooni.",
+    publicPageHint:
+      "Leht avaneb ilma sisselogimiseta ja näitab selle nädala lõunamenüüd. Mustandid seal ei ilmu.",
     openPage: "Ava leht",
     qrHint: "Salvesta pilt parema klõpsuga ja prindi lauale või uksele.",
     thisWeek: "See nädal",
     noMenuThisWeek: "Sel nädalal ei ole veel lõunamenüüd",
-    startHint: "Alusta tühjalt või kopeeri eelmise nädala menüü aluseks. Koopia on alati mustand ega avalda midagi ise.",
+    startHint:
+      "Alusta tühjalt või kopeeri eelmise nädala menüü aluseks. Koopia on alati mustand ega avalda midagi ise.",
     startWeek: "Alusta nädalat",
     weekend: "Nädalavahetus",
     noItems: "Toite ei ole.",
@@ -4524,7 +4797,8 @@ const et: AdminText = {
     publishConfirm: "Kas avaldada nädala lõunamenüü?",
     copyLastWeek: "Kopeeri eelmine nädal",
     copyConfirm: "Kas kopeerida lõunamenüü?",
-    copyWeekNote: "Sihtnädala praegune sisu asendatakse. Koopia on mustand ega avalda midagi.",
+    copyWeekNote:
+      "Sihtnädala praegune sisu asendatakse. Koopia on mustand ega avalda midagi.",
     copyToDay: "Kopeeri teisele päevale",
     chooseDay: "Vali päev…",
     copyDayNote: "Sihtpäeva praegune sisu asendatakse.",
@@ -4536,13 +4810,16 @@ const et: AdminText = {
     copyToDayNamed: "Kopeeri päeva {paiva}",
   },
   kuva: {
-    multiPage: "Mitmeleheküljelise tšeki kõik lehed saab pildistada või valida korraga. Lehti saab lisada ka kontrollimise ajal.",
-    uncertainFields: "Lugemine ei ole kõigis väljades kindel. Ava andmed ja kontrolli esiletõstetuid.",
+    multiPage:
+      "Mitmeleheküljelise tšeki kõik lehed saab pildistada või valida korraga. Lehti saab lisada ka kontrollimise ajal.",
+    uncertainFields:
+      "Lugemine ei ole kõigis väljades kindel. Ava andmed ja kontrolli esiletõstetuid.",
     saving: "Salvestan…",
     addPage: "Lisa leht",
     ownCategory: "Oma kategooria",
     noOwnCategory: "Oma kategooriat pole",
-    ownCategoryHint: "Täpsustus aruannete jaoks. Käibemaks ja eelarve tulevad ülal valitud põhiklassist.",
+    ownCategoryHint:
+      "Täpsustus aruannete jaoks. Käibemaks ja eelarve tulevad ülal valitud põhiklassist.",
     suggestion: "Ettepanek:",
     use: "Kasuta",
     requiredFields: "Tarnija, summa ja kategooria on kohustuslikud.",
@@ -4552,19 +4829,25 @@ const et: AdminText = {
     openReceipt: "Ava tšekk",
     allReceipts: "Kõik tšekid",
     calcFromBase: "Arvuta aluselt:",
-    fillTotalFirst: "Täida esmalt lõppsumma, siis saab käibemaksu aluselt arvutada.",
+    fillTotalFirst:
+      "Täida esmalt lõppsumma, siis saab käibemaksu aluselt arvutada.",
     readFailed: "Pildi lugemine ebaõnnestus.",
     pageSaveFailed: "Lehe salvestamine ebaõnnestus.",
     shootReceipt: "Pildista tšekk",
     shootAndFill: "Pildista ja täida andmed",
     chooseImages: "Vali pildid",
     uploadFile: "Laadi fail üles",
-    machineSuggests: "Masin pakub, inimene kinnitab: kõiki välju saab enne salvestamist muuta ja ebakindlad on märgitud.",
-    noExtractor: "Pildi lugemine ei ole selles keskkonnas kasutusel. Pilt salvestub, aga andmed täidetakse käsitsi — rakendus ei paku neid sinu eest.",
+    machineSuggests:
+      "Masin pakub, inimene kinnitab: kõiki välju saab enne salvestamist muuta ja ebakindlad on märgitud.",
+    noExtractor:
+      "Pildi lugemine ei ole selles keskkonnas kasutusel. Pilt salvestub, aga andmed täidetakse käsitsi — rakendus ei paku neid sinu eest.",
     fillYourself: "Täida andmed tšekilt ise.",
-    noExtractorShort: "Pildi lugemine ei ole kasutusel, seega täida andmed tšekilt ise. Pilt salvestub ja on näha tšeki lehel.",
-    someUncertain: "Osa andmeid jäi ebakindlaks. Kontrolli esiletõstetud välju enne salvestamist.",
-    allRecognised: "Kõik väljad tuvastati. Kontrolli siiski, et need vastavad tšekile.",
+    noExtractorShort:
+      "Pildi lugemine ei ole kasutusel, seega täida andmed tšekilt ise. Pilt salvestub ja on näha tšeki lehel.",
+    someUncertain:
+      "Osa andmeid jäi ebakindlaks. Kontrolli esiletõstetud välju enne salvestamist.",
+    allRecognised:
+      "Kõik väljad tuvastati. Kontrolli siiski, et need vastavad tšekile.",
     zoomImage: "Suurenda tšeki pilt",
     receipt: "Tšekk",
     dateMissing: "Kuupäev puudub",
@@ -4682,7 +4965,8 @@ const et: AdminText = {
     joined: "Liitusid restoraniga.",
     checkInput: "Kontrolli sisestatud andmeid.",
     needOwner: "vähemalt üks omanik",
-    needOwnerBody: "Restoranil peab olema vähemalt üks omanik. Määra kõigepealt keegi teine.",
+    needOwnerBody:
+      "Restoranil peab olema vähemalt üks omanik. Määra kõigepealt keegi teine.",
     saveFailed: "Salvestamine ebaõnnestus",
     saved: "Andmed salvestatud.",
     categoryMissing: "Kategooria puudub.",
@@ -4698,7 +4982,8 @@ const et: AdminText = {
     sameTimes: "Algus- ja lõpuaeg on samad.",
     shiftSaveFailed: "Vahetuse salvestamine ebaõnnestus",
     shiftUpdated: "Vahetus uuendatud.",
-    shiftDraft: "Vahetus loodi mustandina. Töötaja näeb seda alles siis, kui avaldad.",
+    shiftDraft:
+      "Vahetus loodi mustandina. Töötaja näeb seda alles siis, kui avaldad.",
     noPublishRight: "Sul ei ole õigust vahetusi avaldada.",
     checkMonth: "Kontrolli kuud.",
     publishFailed: "Avaldamine ebaõnnestus",
@@ -4707,7 +4992,8 @@ const et: AdminText = {
     totalMissing: "Lõppsumma puudub.",
     chooseCategory: "Vali kategooria.",
     onlyManagerReceipts: "Tšekke saab lisada ainult restorani juhataja.",
-    duplicateFile: "Sama fail on juba salvestatud. Kui tegu on teise ostuga, pildista uuesti.",
+    duplicateFile:
+      "Sama fail on juba salvestatud. Kui tegu on teise ostuga, pildista uuesti.",
     receiptSaveFailed: "Tšeki salvestamine ebaõnnestus",
     receiptSaved: "Tšekk salvestatud.",
     nameMissing: "Nimi puudub.",
@@ -4721,7 +5007,8 @@ const et: AdminText = {
     categoryExists: "Sama nimega kategooria on juba olemas.",
     categorySaveFailed: "Kategooria salvestamine ebaõnnestus",
     categorySaved: "Kategooria salvestatud.",
-    migrationsMissing: "Andmebaasi struktuurid puuduvad. Käivita migratsioonid 0004 ja 0005.",
+    migrationsMissing:
+      "Andmebaasi struktuurid puuduvad. Käivita migratsioonid 0004 ja 0005.",
     noRight: "Sul ei ole õigust seda teha.",
     ownerOnly: "Ainult omanik",
     ownerOnlyBody: "Seda saab teha ainult omanik.",
@@ -4739,7 +5026,8 @@ const et: AdminText = {
     currentOrFuture: "Käesolev või tulevane",
     currentOrFutureBody: "Käesolevat või tulevast kuud ei saa sulgeda.",
     ownerOnlyCategories: "Kategooriaid saab hallata ainult omanik.",
-    shiftsPublished: "{maara} {yksikko} avaldatud. Need on nüüd töötajatele nähtavad.",
+    shiftsPublished:
+      "{maara} {yksikko} avaldatud. Need on nüüd töötajatele nähtavad.",
     shiftOne: "vahetus",
     shiftMany: "vahetust",
     extraPagesLost:
@@ -4851,7 +5139,8 @@ const et: AdminText = {
     overThreshold: "Üle {osuus} % kasutatud",
     overBy: "{summa} üle",
     remaining: "{summa} alles",
-    unbudgetedAmount: "{summa} kulusid kategooriates, millele pole eelarvet määratud",
+    unbudgetedAmount:
+      "{summa} kulusid kategooriates, millele pole eelarvet määratud",
   },
 
   kuitti2: {
@@ -4960,12 +5249,14 @@ const et: AdminText = {
     title: "Vahetused",
     overlapping: "Kattuvad vahetused",
     overlap: "kattub",
-    noticeDoesNotCancel: "Teade ei tühista vahetust — vahetusel on endiselt tegija",
+    noticeDoesNotCancel:
+      "Teade ei tühista vahetust — vahetusel on endiselt tegija",
     certificateSeen: "Tõend nähtud",
     markCertificateSeen: "Märgi tõend nähtuks",
     plannedVsActual: "Planeeritu ja tegelik ei klappinud",
     declined: "Keeldunud",
-    openShiftsNote: "Need vahetused on vabad — määra keegi teine või jäta vabaks",
+    openShiftsNote:
+      "Need vahetused on vabad — määra keegi teine või jäta vabaks",
     actualHours: "Tegelik tööaeg",
     labourCost: "Tööjõukulu",
     emptyBody:
@@ -5000,9 +5291,11 @@ const et: AdminText = {
     employeeCount: "Töötajaid",
     noHoursInPeriod: "Perioodil tööaega pole",
     employees: "Töötajad",
-    basePlusSupplements: "Põhipalk ja lisatasud, ilma mahaarvamiste ja tööandja kuludeta",
+    basePlusSupplements:
+      "Põhipalk ja lisatasud, ilma mahaarvamiste ja tööandja kuludeta",
     accrual: "Kogunenud palk",
-    emptyBody: "Perioodil ei ole tegelikku tööaega. Palk moodustub registreeringutest.",
+    emptyBody:
+      "Perioodil ei ole tegelikku tööaega. Palk moodustub registreeringutest.",
     employee: "Töötaja",
     supplements: "Lisatasud",
     approved: "Kinnitatud",
@@ -5050,7 +5343,8 @@ const et: AdminText = {
   kuitit: {
     all: "Kõik",
     purchasesIn: "Ostud {kuukausi}",
-    foundElsewhere: "Otsingusõna leidub mujal: teistes kuudes {maara} {yksikko}. Vaheta kuud ülaribalt.",
+    foundElsewhere:
+      "Otsingusõna leidub mujal: teistes kuudes {maara} {yksikko}. Vaheta kuud ülaribalt.",
     receiptOne: "tšekk",
     receiptMany: "tšekki",
     rows: "{maara} rida",
@@ -5071,14 +5365,16 @@ const et: AdminText = {
     addedBy: "Lisas",
     addedAt: "Lisatud",
     noVatRate: "Määra pole",
-    imageNotLoaded: "Pilt on salvestatud, kuid seda ei õnnestunud praegu laadida.",
+    imageNotLoaded:
+      "Pilt on salvestatud, kuid seda ei õnnestunud praegu laadida.",
     noImageAttached: "Sellele tšekile ei lisatud pilti.",
     merchantNotRecognised: "Kauplust ei tuvastatud",
     missingVatNote:
       "Mõnel real puudub käibemaksumäär. Nende maksu ei ole arvutatud ega oletatud — kontrolli neid tšekilt.",
     multiCategoryNote:
       "See tšekk jaguneb mitme kategooria vahel. Kulud kirjendatakse rea kaupa, mitte kogu summa ühte kategooriasse.",
-    unclearImage: "Pilti hinnati ebaselgeks. Kontrolli numbreid eriti hoolikalt.",
+    unclearImage:
+      "Pilti hinnati ebaselgeks. Kontrolli numbreid eriti hoolikalt.",
     deleteWarning:
       "Kustutamist ei saa tagasi võtta. Kui tegu on duplikaadiga, kustuta — kui eraldi ostuga, jäta mõlemad.",
   },

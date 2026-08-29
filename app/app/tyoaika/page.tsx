@@ -1,5 +1,10 @@
 import { employeeContext } from "@/lib/restoflow/page-context";
-import { monthStartDate, timeIn, weekStart, windowStartIso } from "@/lib/restoflow/clock-context";
+import {
+  monthStartDate,
+  timeIn,
+  weekStart,
+  windowStartIso,
+} from "@/lib/restoflow/clock-context";
 import { fetchClockEvents } from "@/lib/restoflow/queries";
 import {
   daySummaries,
@@ -43,11 +48,20 @@ export default async function TimePage() {
    * Jaettu konteksti antaa leimaukset viikon alusta, mikä riittää
    * viikkosummaan. Kuukausisumma ja historialista tarvitsevat enemmän.
    */
-  const events = await fetchClockEvents(restaurant.id, windowStartIso(monthStartDate(month)));
+  const events = await fetchClockEvents(
+    restaurant.id,
+    windowStartIso(monthStartDate(month)),
+  );
   const mine = events.filter((e) => e.userId === user.id);
 
   const week = workedBetween(clockEvents, weekStart(today), today, now, zone);
-  const monthWorked = workedBetween(mine, monthStartDate(month), today, now, zone);
+  const monthWorked = workedBetween(
+    mine,
+    monthStartDate(month),
+    today,
+    now,
+    zone,
+  );
   const days = daySummaries(mine, now, zone);
 
   /*
@@ -74,7 +88,10 @@ export default async function TimePage() {
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {t.yleinen.thisWeek}
           </p>
-          <p className="rf-tabular mt-1 text-[22px] font-semibold" suppressHydrationWarning>
+          <p
+            className="rf-tabular mt-1 text-[22px] font-semibold"
+            suppressHydrationWarning
+          >
             {formatDuration(week.workedMs)}
           </p>
         </Surface>
@@ -83,7 +100,10 @@ export default async function TimePage() {
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {t.yleinen.thisMonth}
           </p>
-          <p className="rf-tabular mt-1 text-[22px] font-semibold" suppressHydrationWarning>
+          <p
+            className="rf-tabular mt-1 text-[22px] font-semibold"
+            suppressHydrationWarning
+          >
             {formatDuration(monthWorked.workedMs)}
           </p>
         </Surface>
@@ -102,7 +122,12 @@ export default async function TimePage() {
                 <span
                   aria-hidden="true"
                   className="rf-pulse-dot"
-                  style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--rf-green)" }}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "var(--rf-green)",
+                  }}
                 />
                 <p className="text-[15px] font-medium">{t.tyoaika.open}</p>
               </div>
@@ -111,13 +136,20 @@ export default async function TimePage() {
                 ensimmäinen leimaus. Aamulla alkanut ja välillä suljettu
                 päivä kertoisi muuten väärän kellonajan.
               */}
-              <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              <p
+                className="mt-0.5 text-[13px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 {shortDay(running.date, locale)}
                 {running.segments.length > 0
-                  ? ` · ${fill(t.tyoaika.startedAt, { aika: timeIn(
-                      zone,
-                      new Date(running.segments[running.segments.length - 1].startMs).toISOString(),
-                    ) })}`
+                  ? ` · ${fill(t.tyoaika.startedAt, {
+                      aika: timeIn(
+                        zone,
+                        new Date(
+                          running.segments[running.segments.length - 1].startMs,
+                        ).toISOString(),
+                      ),
+                    })}`
                   : ""}
               </p>
             </div>
@@ -147,7 +179,10 @@ export default async function TimePage() {
       {unclosed.length > 0 ? (
         <Surface>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-amber-text)" }}>
+            <span
+              className="mt-0.5 shrink-0"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
               <RfIcon name="alert" size={18} />
             </span>
             <div className="min-w-0">
@@ -158,7 +193,10 @@ export default async function TimePage() {
                       maara: String(unclosed.length),
                     })}
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+              <p
+                className="mt-1 text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 {unclosed.map((d) => shortDay(d.date, locale)).join(", ")}.{" "}
                 {t.tyoaika.managerFixes}
               </p>
@@ -226,13 +264,19 @@ function DayRow({
         <p className="text-[15px] font-medium">
           {shortDay(day.date, locale)}
           {day.date === today ? (
-            <span className="ml-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="ml-2 text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {t.yleinen.today.toLocaleLowerCase(locale)}
             </span>
           ) : null}
         </p>
 
-        <p className="rf-tabular text-[15px] font-semibold" suppressHydrationWarning>
+        <p
+          className="rf-tabular text-[15px] font-semibold"
+          suppressHydrationWarning
+        >
           {stale ? "—" : formatDuration(day.workedMs)}
         </p>
       </div>
@@ -267,8 +311,13 @@ function DayRow({
                         : "nyt"
                       : timeIn(timezone, new Date(segment.endMs).toISOString())}
                   </span>
-                  <span className="rf-tabular shrink-0" suppressHydrationWarning>
-                    {running && stale ? "—" : formatDuration(segment.endMs - segment.startMs)}
+                  <span
+                    className="rf-tabular shrink-0"
+                    suppressHydrationWarning
+                  >
+                    {running && stale
+                      ? "—"
+                      : formatDuration(segment.endMs - segment.startMs)}
                   </span>
                 </li>
               );
@@ -276,13 +325,19 @@ function DayRow({
           </ul>
 
           {day.breakMs > 0 ? (
-            <p className="mt-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="mt-2 text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               Taukoa {formatDuration(day.breakMs)} — ei lasketa työaikaan.
             </p>
           ) : null}
         </>
       ) : (
-        <p className="rf-tabular mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="rf-tabular mt-1 text-[13px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
           {" → "}
           {day.open

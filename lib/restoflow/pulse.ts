@@ -126,11 +126,18 @@ export function todayPulse(input: {
  * ei ole vielä ottanut ominaisuutta käyttöön, eikä koko historia ole
  * "puuttuvaa" vaan käyttämätöntä.
  */
-function countMissing(month: string, today: string, sales: DailySales[]): number {
+function countMissing(
+  month: string,
+  today: string,
+  sales: DailySales[],
+): number {
   const inMonth = sales.filter((s) => s.date.startsWith(month));
   if (inMonth.length === 0) return 0;
 
-  const first = inMonth.reduce((min, s) => (s.date < min ? s.date : min), today);
+  const first = inMonth.reduce(
+    (min, s) => (s.date < min ? s.date : min),
+    today,
+  );
   const known = new Set(inMonth.map((s) => s.date));
 
   let missing = 0;

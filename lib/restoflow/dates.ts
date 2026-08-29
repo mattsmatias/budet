@@ -165,6 +165,6 @@ export function monthFromParams(
   fallback: string,
 ): string {
   const raw = params.kuukausi;
-  const value = typeof raw === 'string' ? raw : fallback;
+  const value = typeof raw === "string" ? raw : fallback;
   return isIsoMonth(value) ? value : fallback;
 }

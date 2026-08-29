@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
+import { labels } from "@/lib/i18n/labels";
 import { redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
-import { fetchExpenseCategories, fetchSuppliers } from "@/lib/restoflow/queries";
+import {
+  fetchExpenseCategories,
+  fetchSuppliers,
+} from "@/lib/restoflow/queries";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -22,7 +26,9 @@ export async function generateMetadata() {
  * myös vastaa sen oikeellisuudesta.
  */
 export default async function NewReceiptPage() {
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
   const { restaurant, role } = await requireContext("/admin/kuitit/uusi");
 
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
@@ -47,6 +53,7 @@ export default async function NewReceiptPage() {
       </header>
 
       <CaptureFlow
+        nimet={nimet}
         t={t}
         restaurantId={restaurant.id}
         suppliers={suppliers}

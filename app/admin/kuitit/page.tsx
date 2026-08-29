@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -15,11 +16,7 @@ import {
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { duplicateIds, findDuplicates } from "@/lib/restoflow/duplicates";
 import { can } from "@/lib/restoflow/permissions";
-import {
-  CATEGORY_LABELS,
-  PAYMENT_LABELS,
-  REVIEW_REASON_LABELS,
-} from "@/lib/restoflow/types";
+import {} from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { ProductIcon, RfIcon } from "@/components/restoflow/icons";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
@@ -54,9 +51,18 @@ export default async function AdminReceiptsPage({
   searchParams,
 }: PageProps<"/admin/kuitit">) {
   const params = await searchParams;
-  const { receipts, users, role, suppliers, merchants, merchantCategories, month: nykyinen } =
-    await adminContext("/admin/kuitit");
-  const t = adminText(await resolveLocale());
+  const {
+    receipts,
+    users,
+    role,
+    suppliers,
+    merchants,
+    merchantCategories,
+    month: nykyinen,
+  } = await adminContext("/admin/kuitit");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const month = monthFromParams(params, nykyinen);
 
@@ -82,7 +88,9 @@ export default async function AdminReceiptsPage({
     merchantBySupplier.get(receipt.supplierId ?? "") ?? null;
 
   const query = typeof params.haku === "string" ? params.haku : "";
-  const filter = (typeof params.suodatin === "string" ? params.suodatin : "all") as ReceiptFilter;
+  const filter = (
+    typeof params.suodatin === "string" ? params.suodatin : "all"
+  ) as ReceiptFilter;
   const highlight = typeof params.korosta === "string" ? params.korosta : null;
 
   /*
@@ -150,13 +158,18 @@ export default async function AdminReceiptsPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {formatMonth(month)} · {visible.length} kuittia ·{" "}
+            {formatMonth(month, locale)} · {visible.length} kuittia ·{" "}
             {formatMoney(total)}
-            {reviewCount > 0 && filter === "all" ? ` · ${reviewCount} tarkistettavaa` : ""}
+            {reviewCount > 0 && filter === "all"
+              ? ` · ${reviewCount} tarkistettavaa`
+              : ""}
           </p>
 
           {elsewhere > 0 ? (
-            <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="mt-1 text-[12.5px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {elsewhere} {elsewhere === 1 ? "osuma" : "osumaa"} muilta
               kuukausilta — vaihda kuukautta nähdäksesi ne.
             </p>
@@ -180,7 +193,10 @@ export default async function AdminReceiptsPage({
       {duplicateGroups.length > 0 && canReview ? (
         <Card>
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-red)" }}>
+            <span
+              className="mt-0.5 shrink-0"
+              style={{ color: "var(--rf-red)" }}
+            >
               <RfIcon name="alert" size={20} />
             </span>
             <div className="min-w-0 flex-1">
@@ -189,7 +205,12 @@ export default async function AdminReceiptsPage({
                   ? "Mahdollinen kaksoiskappale"
                   : `${duplicateGroups.length} mahdollista kaksoiskappaletta`}
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>{t.kuitit.duplicateHint}</p>
+              <p
+                className="mt-1 text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {t.kuitit.duplicateHint}
+              </p>
 
               <ul className="mt-3 space-y-3">
                 {duplicateGroups.map((group) => (
@@ -197,7 +218,10 @@ export default async function AdminReceiptsPage({
                     <p className="text-[14px] font-medium">
                       {group.supplierName} · {formatMoney(group.totalCents)}
                     </p>
-                    <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                    <p
+                      className="text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {group.reason}
                     </p>
                     <ul className="mt-2 space-y-2">
@@ -206,9 +230,13 @@ export default async function AdminReceiptsPage({
                           key={r.id}
                           className="flex flex-wrap items-center justify-between gap-2"
                         >
-                          <span className="rf-tabular text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                          <span
+                            className="rf-tabular text-[13px]"
+                            style={{ color: "var(--rf-text-2)" }}
+                          >
                             {formatDate(r.date)} · lisännyt{" "}
-                            {users.find((u) => u.id === r.addedByUserId)?.name ?? "—"}
+                            {users.find((u) => u.id === r.addedByUserId)
+                              ?.name ?? "—"}
                           </span>
                           <DeleteReceipt receiptId={r.id} />
                         </li>
@@ -222,7 +250,10 @@ export default async function AdminReceiptsPage({
         </Card>
       ) : null}
 
-      <nav aria-label={t.sanat.filters} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <nav
+        aria-label={t.sanat.filters}
+        className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
+      >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {suodattimet(t).map((f) => {
             const active = filter === f.key;
@@ -280,9 +311,12 @@ export default async function AdminReceiptsPage({
           description={
             elsewhere > 0
               ? fill(t.kuitit.foundElsewhere, {
-              maara: String(elsewhere),
-              yksikko: elsewhere === 1 ? t.kuitit.receiptOne : t.kuitit.receiptMany,
-            })
+                  maara: String(elsewhere),
+                  yksikko:
+                    elsewhere === 1
+                      ? t.kuitit.receiptOne
+                      : t.kuitit.receiptMany,
+                })
               : query
                 ? "Kokeile toista hakusanaa."
                 : t.kuitit.addFromButton
@@ -328,8 +362,9 @@ export default async function AdminReceiptsPage({
                         className="rf-tabular mt-0.5 text-[13px]"
                         style={{ color: "var(--rf-text-2)" }}
                       >
-                        {formatDate(receipt.date)} · {CATEGORY_LABELS[receipt.category]} ·{" "}
-                        {PAYMENT_LABELS[receipt.paymentMethod]}
+                        {formatDate(receipt.date)} ·{" "}
+                        {nimet.categories[receipt.category]} ·{" "}
+                        {nimet.payments[receipt.paymentMethod]}
                       </p>
 
                       {merchantOf(receipt) ? (
@@ -337,8 +372,9 @@ export default async function AdminReceiptsPage({
                           <span
                             style={{ color: merchantOf(receipt)!.brandColor }}
                           >
-                            {categoryLabels.get(merchantOf(receipt)!.category) ??
-                              merchantOf(receipt)!.category}
+                            {categoryLabels.get(
+                              merchantOf(receipt)!.category,
+                            ) ?? merchantOf(receipt)!.category}
                           </span>
                           <span style={{ color: "var(--rf-text-3)" }}>
                             {" · "}
@@ -347,12 +383,20 @@ export default async function AdminReceiptsPage({
                         </p>
                       ) : null}
 
-                      <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      <p
+                        className="text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         ALV{" "}
-                        {receipt.vatCents === null ? "puuttuu" : formatMoney(receipt.vatCents)}
-                        {receipt.items.length > 0 ? ` · ${fill(t.kuitit.rows, { maara: String(receipt.items.length) })}` : ""} ·
-                        lisännyt{" "}
-                        {users.find((u) => u.id === receipt.addedByUserId)?.name ?? "—"}
+                        {receipt.vatCents === null
+                          ? "puuttuu"
+                          : formatMoney(receipt.vatCents)}
+                        {receipt.items.length > 0
+                          ? ` · ${fill(t.kuitit.rows, { maara: String(receipt.items.length) })}`
+                          : ""}{" "}
+                        · lisännyt{" "}
+                        {users.find((u) => u.id === receipt.addedByUserId)
+                          ?.name ?? "—"}
                       </p>
 
                       {receipt.status === "needs_review" || isDuplicate ? (
@@ -364,7 +408,7 @@ export default async function AdminReceiptsPage({
                           ) : null}
                           {receipt.reviewReasons.map((r) => (
                             <Pill key={r} tone="warn" dot>
-                              {REVIEW_REASON_LABELS[r]}
+                              {nimet.reviewReasons[r]}
                             </Pill>
                           ))}
                         </div>
@@ -395,7 +439,9 @@ export default async function AdminReceiptsPage({
                         <span style={{ color: "var(--rf-blue)" }}>
                           {receipt.items.length === 1
                             ? t.kuitit.showOneRow
-                            : fill(t.kuitit.showRows, { maara: String(receipt.items.length) })}
+                            : fill(t.kuitit.showRows, {
+                                maara: String(receipt.items.length),
+                              })}
                         </span>
                       </summary>
 
@@ -406,16 +452,24 @@ export default async function AdminReceiptsPage({
                             className="flex items-center justify-between gap-3 text-[13px]"
                           >
                             <span className="flex min-w-0 items-center gap-2">
-                              <span className="shrink-0" style={{ color: "var(--rf-text-3)" }}>
+                              <span
+                                className="shrink-0"
+                                style={{ color: "var(--rf-text-3)" }}
+                              >
                                 <ProductIcon
                                   description={item.description}
                                   category={item.category}
                                   size={15}
                                 />
                               </span>
-                              <span className="truncate">{item.description}</span>
+                              <span className="truncate">
+                                {item.description}
+                              </span>
                             </span>
-                            <span className="rf-tabular shrink-0" style={{ color: "var(--rf-text-2)" }}>
+                            <span
+                              className="rf-tabular shrink-0"
+                              style={{ color: "var(--rf-text-2)" }}
+                            >
                               {formatMoney(item.totalCents)}
                             </span>
                           </li>
@@ -424,11 +478,19 @@ export default async function AdminReceiptsPage({
                     </details>
                   ) : null}
 
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
-                    <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                  <div
+                    className="mt-3 flex items-center justify-between gap-3 border-t pt-3"
+                    style={{ borderColor: "var(--rf-line)" }}
+                  >
+                    <span
+                      className="flex items-center gap-1.5 text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
                       {receipt.hasImage ? (
                         <>
-                          <RfIcon name="image" size={14} />{t.sanat.imageAttached}</>
+                          <RfIcon name="image" size={14} />
+                          {t.sanat.imageAttached}
+                        </>
                       ) : (
                         t.kuitit.noImage
                       )}
@@ -437,12 +499,14 @@ export default async function AdminReceiptsPage({
                       href={`/admin/kuitit/${receipt.id}`}
                       className="rf-press -my-3 flex items-center gap-1 py-3 text-[13px] font-medium"
                       style={{ color: "var(--rf-blue)" }}
-                    >{t.sanat.open}<RfIcon name="chevron" size={14} />
+                    >
+                      {t.sanat.open}
+                      <RfIcon name="chevron" size={14} />
                     </Link>
                   </div>
 
                   {canReview && receipt.status === "needs_review" ? (
-                    <ReviewPanel receipt={receipt} />
+                    <ReviewPanel nimet={nimet} receipt={receipt} />
                   ) : null}
                 </Card>
               </li>

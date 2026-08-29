@@ -18,8 +18,14 @@ const TODAY = "2026-08-24";
 
 const users: User[] = [
   {
-    id: "u1", restaurantId: "rest-1", name: "Ali", role: "employee",
-    position: "waiter", hourlyRateCents: 1500, initials: "A", active: true,
+    id: "u1",
+    restaurantId: "rest-1",
+    name: "Ali",
+    role: "employee",
+    position: "waiter",
+    hourlyRateCents: 1500,
+    initials: "A",
+    active: true,
   },
 ];
 
@@ -40,9 +46,20 @@ function ctx(partial: Partial<OperationsContext> = {}): OperationsContext {
 
 function shift(partial: Partial<Shift> = {}): Shift {
   return {
-    id: "s1", restaurantId: "rest-1", userId: "u1", date: TODAY,
-    startTime: "09:00", endTime: "17:00", location: "Sali",
-    status: "accepted", breakMinutes: 0, note: null, publishedAt: "2026-08-01T00:00:00.000Z", createdAt: "2026-08-01T00:00:00.000Z", cancelledAt: null, ...partial,
+    id: "s1",
+    restaurantId: "rest-1",
+    userId: "u1",
+    date: TODAY,
+    startTime: "09:00",
+    endTime: "17:00",
+    location: "Sali",
+    status: "accepted",
+    breakMinutes: 0,
+    note: null,
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    createdAt: "2026-08-01T00:00:00.000Z",
+    cancelledAt: null,
+    ...partial,
   };
 }
 
@@ -52,16 +69,35 @@ function clock(type: ClockEvent["type"], at: string): ClockEvent {
 
 function receipt(date: string): Receipt {
   return {
-    id: `r-${date}`, restaurantId: "rest-1", date, totalCents: 5000,
-    supplierId: "s-1", supplierName: "Tukku", vatCents: null,
-    category: "food", paymentMethod: "card", receiptNumber: null,
-    note: null, status: "confirmed", reviewReasons: [], items: [],
-    addedByUserId: "u1", addedAt: `${date}T10:00:00.000Z`,
-    hasImage: true, imagePath: null, pages: [], categoryId: null, imageQuality: "good",
+    id: `r-${date}`,
+    restaurantId: "rest-1",
+    date,
+    totalCents: 5000,
+    supplierId: "s-1",
+    supplierName: "Tukku",
+    vatCents: null,
+    category: "food",
+    paymentMethod: "card",
+    receiptNumber: null,
+    note: null,
+    status: "confirmed",
+    reviewReasons: [],
+    items: [],
+    addedByUserId: "u1",
+    addedAt: `${date}T10:00:00.000Z`,
+    hasImage: true,
+    imagePath: null,
+    pages: [],
+    categoryId: null,
+    imageQuality: "good",
   };
 }
 
-function sale(date: string, netCents: number, targetCents: number | null = null): DailySales {
+function sale(
+  date: string,
+  netCents: number,
+  targetCents: number | null = null,
+): DailySales {
   return {
     date,
     netCents,
@@ -93,12 +129,17 @@ describe("myöhässä oleva sisäänleimaus", () => {
 
   it("vaikenee armoajan sisällä", () => {
     // 09:10 paikallista = 06:10Z, eli 10 minuuttia vuoron alusta.
-    expect(kinds(ctx({ shifts: [shift()], now: `${TODAY}T06:10:00Z` }))).toEqual([]);
+    expect(
+      kinds(ctx({ shifts: [shift()], now: `${TODAY}T06:10:00Z` })),
+    ).toEqual([]);
   });
 
   it("vaikenee kun sisään on leimattu", () => {
     const alerts = kinds(
-      ctx({ shifts: [shift()], clockEvents: [clock("in", `${TODAY}T06:05:00Z`)] }),
+      ctx({
+        shifts: [shift()],
+        clockEvents: [clock("in", `${TODAY}T06:05:00Z`)],
+      }),
     );
     expect(alerts).not.toContain("late_clock_in");
   });
@@ -148,14 +189,19 @@ describe("venynyt vuoro", () => {
     );
 
     expect(alerts.map((a) => a.kind)).toContain("shift_overrun");
-    expect(alerts.find((a) => a.kind === "shift_overrun")!.severity).toBe("warning");
+    expect(alerts.find((a) => a.kind === "shift_overrun")!.severity).toBe(
+      "warning",
+    );
   });
 
   it("vaikenee kun ulos on leimattu", () => {
     const alerts = kinds(
       ctx({
         shifts: [shift()],
-        clockEvents: [clock("in", `${TODAY}T06:00:00Z`), clock("out", `${TODAY}T14:00:00Z`)],
+        clockEvents: [
+          clock("in", `${TODAY}T06:00:00Z`),
+          clock("out", `${TODAY}T14:00:00Z`),
+        ],
         now: `${TODAY}T15:30:00Z`,
       }),
     );
@@ -177,8 +223,12 @@ describe("venynyt vuoro", () => {
 
 describe("tekijätön vuoro", () => {
   const open = (date: string) => ({
-    id: `o-${date}`, restaurantId: "rest-1", date,
-    startTime: "10:00", endTime: "18:00", position: "waiter" as const,
+    id: `o-${date}`,
+    restaurantId: "rest-1",
+    date,
+    startTime: "10:00",
+    endTime: "18:00",
+    position: "waiter" as const,
     status: "draft" as const,
     breakMinutes: 0,
     note: null,
@@ -219,7 +269,9 @@ describe("myynti alle vertailukohdan", () => {
 
   it("vaikenee kun tavoite lähes täyttyi", () => {
     // 95 % tavoitteesta on tavallista vaihtelua, ei poikkeama.
-    expect(kinds(ctx({ sales: [sale(yesterday, 95_000, 100_000)] }))).toEqual([]);
+    expect(kinds(ctx({ sales: [sale(yesterday, 95_000, 100_000)] }))).toEqual(
+      [],
+    );
   });
 
   /*
@@ -287,6 +339,8 @@ describe("kuittitauko", () => {
 
   it("vaikenee kun kuitteja ei ole lainkaan", () => {
     // Uusi ravintola ei ole myöhässä mistään.
-    expect(kinds(ctx({ clockEvents: [clock("in", "2026-08-20T06:00:00Z")] }))).toEqual([]);
+    expect(
+      kinds(ctx({ clockEvents: [clock("in", "2026-08-20T06:00:00Z")] })),
+    ).toEqual([]);
   });
 });

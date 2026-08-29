@@ -38,7 +38,12 @@ export interface Briefing {
 }
 
 /** Summa aikavälillä [alku, loppu). */
-function sumBetween(rows: { date: string }[], alku: string, loppu: string, arvo: (r: never) => number): number {
+function sumBetween(
+  rows: { date: string }[],
+  alku: string,
+  loppu: string,
+  arvo: (r: never) => number,
+): number {
   let total = 0;
   for (const row of rows) {
     if (row.date >= alku && row.date < loppu) {
@@ -48,7 +53,11 @@ function sumBetween(rows: { date: string }[], alku: string, loppu: string, arvo:
   return total;
 }
 
-function countBetween(rows: { date: string }[], alku: string, loppu: string): number {
+function countBetween(
+  rows: { date: string }[],
+  alku: string,
+  loppu: string,
+): number {
   return rows.filter((r) => r.date >= alku && r.date < loppu).length;
 }
 
@@ -84,7 +93,12 @@ export function expenseObservation(
   for (let i = 1; i <= 4; i++) {
     const alku = addDays(today, -7 * (i + 1));
     const loppu = addDays(today, -7 * i);
-    const summa = sumBetween(receipts, alku, loppu, (r: Receipt) => r.totalCents);
+    const summa = sumBetween(
+      receipts,
+      alku,
+      loppu,
+      (r: Receipt) => r.totalCents,
+    );
     if (summa <= 0) return null;
     viikot.push(summa);
   }
@@ -124,7 +138,12 @@ export function salesObservation(
   if (nytPaivia < 3 || ennenPaivia < 3) return null;
 
   const nyt = sumBetween(sales, viikko, today, (s: DailySales) => s.netCents);
-  const ennen = sumBetween(sales, edellinen, viikko, (s: DailySales) => s.netCents);
+  const ennen = sumBetween(
+    sales,
+    edellinen,
+    viikko,
+    (s: DailySales) => s.netCents,
+  );
 
   const ero = muutos(nyt, ennen);
   if (ero === null || Math.abs(ero) < 8) return null;
@@ -142,7 +161,10 @@ export function salesObservation(
 }
 
 /** Työvuorot: ensi viikko vs. neljän edellisen viikon keskiarvo. */
-export function shiftObservation(shifts: Shift[], today: string): Observation | null {
+export function shiftObservation(
+  shifts: Shift[],
+  today: string,
+): Observation | null {
   const alku = addDays(today, 7);
   const loppu = addDays(today, 14);
   const ensiViikko = countBetween(shifts, alku, loppu);

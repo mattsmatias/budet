@@ -24,19 +24,12 @@ import { addDays, daysBetween } from "./dates";
 export type TaskPriority = "normal" | "important" | "critical";
 
 export type TaskVisibility =
-  | "owner_only"
-  | "managers"
-  | "assigned_user"
-  | "all_staff";
+  "owner_only" | "managers" | "assigned_user" | "all_staff";
 
 export type TaskRecurrence = "none" | "daily" | "weekly" | "monthly" | "yearly";
 
 export type TaskStatus =
-  | "upcoming"
-  | "due_today"
-  | "overdue"
-  | "completed"
-  | "cancelled";
+  "upcoming" | "due_today" | "overdue" | "completed" | "cancelled";
 
 export interface Task {
   id: string;
@@ -105,14 +98,22 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
  * myöhästyy sinä hetkenä — muuten kello 15 määräaika ei tarkoittaisi
  * mitään.
  */
-export function statusOf(task: Task, today: string, nowTime?: string): TaskStatus {
+export function statusOf(
+  task: Task,
+  today: string,
+  nowTime?: string,
+): TaskStatus {
   if (task.cancelledAt !== null) return "cancelled";
   if (task.completedAt !== null) return "completed";
 
   if (task.dueOn < today) return "overdue";
 
   if (task.dueOn === today) {
-    if (task.dueTime !== null && nowTime !== undefined && nowTime > task.dueTime) {
+    if (
+      task.dueTime !== null &&
+      nowTime !== undefined &&
+      nowTime > task.dueTime
+    ) {
       return "overdue";
     }
     return "due_today";
@@ -221,7 +222,8 @@ export function sortTasks(
      */
     if (a.dueOn !== b.dueOn) return a.dueOn.localeCompare(b.dueOn);
 
-    const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    const priorityDiff =
+      PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
     if (priorityDiff !== 0) return priorityDiff;
 
     return a.title.localeCompare(b.title, "fi");

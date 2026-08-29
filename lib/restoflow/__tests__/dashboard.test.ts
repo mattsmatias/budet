@@ -46,9 +46,19 @@ function receipt(
   };
 }
 
-function budget(category: ExpenseCategory, cents: number, month: string): Budget {
+function budget(
+  category: ExpenseCategory,
+  cents: number,
+  month: string,
+): Budget {
   n += 1;
-  return { id: `b${n}`, restaurantId: "rest-1", category, month, amountCents: cents };
+  return {
+    id: `b${n}`,
+    restaurantId: "rest-1",
+    category,
+    month,
+    amountCents: cents,
+  };
 }
 
 function input(partial: Partial<DashboardInput> = {}): DashboardInput {
@@ -63,6 +73,7 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
     today: "2026-08-15",
     now: "2026-08-15T12:00:00Z",
     timezone: "Europe/Helsinki",
+    locale: "fi" as const,
     ...partial,
   };
 }
@@ -92,7 +103,9 @@ describe("arvioitavuus", () => {
     const ctx = input({
       // ALV on oltava odotetun mukainen, muuten kuitti nostaa itse
       // hälytyksen eikä testi mittaa sitä mitä pitäisi. 5700 sis. 14 % = 700.
-      receipts: [receipt({ totalCents: 5700, vatCents: 700, date: "2026-08-04" })],
+      receipts: [
+        receipt({ totalCents: 5700, vatCents: 700, date: "2026-08-04" }),
+      ],
     });
 
     expect(evaluability(ctx).canJudge).toBe(true);
@@ -102,7 +115,13 @@ describe("arvioitavuus", () => {
   it("nostaa huomiot kun niitä on", () => {
     const ctx = input({
       receipts: [
-        receipt({ totalCents: 5000, date: "2026-08-04", status: "needs_review", reviewReasons: ["vat_missing"], vatCents: null }),
+        receipt({
+          totalCents: 5000,
+          date: "2026-08-04",
+          status: "needs_review",
+          reviewReasons: ["vat_missing"],
+          vatCents: null,
+        }),
       ],
     });
 
@@ -171,7 +190,11 @@ describe("kuittien tila", () => {
       [
         receipt({ totalCents: 1000, date: "2026-08-01" }),
         receipt({ totalCents: 1000, date: "2026-08-02" }),
-        receipt({ totalCents: 1000, date: "2026-08-03", status: "needs_review" }),
+        receipt({
+          totalCents: 1000,
+          date: "2026-08-03",
+          status: "needs_review",
+        }),
       ],
       "2026-08",
     );
@@ -250,7 +273,10 @@ describe("kaavion historia", () => {
     expect(hasChartHistory(two, "2026-08")).toBe(false);
 
     expect(
-      hasChartHistory([...two, receipt({ totalCents: 1000, date: "2026-06-01" })], "2026-08"),
+      hasChartHistory(
+        [...two, receipt({ totalCents: 1000, date: "2026-06-01" })],
+        "2026-08",
+      ),
     ).toBe(true);
   });
 
@@ -269,9 +295,30 @@ describe("yhdistetty huomiolista", () => {
   /** Hyvä uutinen ei kuulu listaan jonka otsikko on "vaatii huomiota". */
   it("ottaa mukaan vain seurattavat havainnot", () => {
     const items = focusItems(input(), [
-      { id: "hyva", tone: "good", icon: "trend", title: "Hienoa", detail: "x", href: "/admin" },
-      { id: "seuraa", tone: "watch", icon: "trend", title: "Kulut nousivat", detail: "y", href: "/admin/kulut" },
-      { id: "neutraali", tone: "neutral", icon: "trend", title: "Tasan", detail: "z", href: "/admin" },
+      {
+        id: "hyva",
+        tone: "good",
+        icon: "trend",
+        title: "Hienoa",
+        detail: "x",
+        href: "/admin",
+      },
+      {
+        id: "seuraa",
+        tone: "watch",
+        icon: "trend",
+        title: "Kulut nousivat",
+        detail: "y",
+        href: "/admin/kulut",
+      },
+      {
+        id: "neutraali",
+        tone: "neutral",
+        icon: "trend",
+        title: "Tasan",
+        detail: "z",
+        href: "/admin",
+      },
     ]);
 
     expect(items.map((i) => i.id)).toEqual(["seuraa"]);
@@ -292,7 +339,14 @@ describe("yhdistetty huomiolista", () => {
     });
 
     const items = focusItems(ctx, [
-      { id: "havainto", tone: "watch", icon: "trend", title: "Suunta", detail: "x", href: "/admin/kulut" },
+      {
+        id: "havainto",
+        tone: "watch",
+        icon: "trend",
+        title: "Suunta",
+        detail: "x",
+        href: "/admin/kulut",
+      },
     ]);
 
     expect(items.length).toBeGreaterThan(1);
@@ -302,7 +356,13 @@ describe("yhdistetty huomiolista", () => {
 
   it("antaa jokaiselle kohteelle polun", () => {
     const items = focusItems(input(), [
-      { id: "ilman", tone: "watch", icon: "trend", title: "Ei polkua", detail: "x" },
+      {
+        id: "ilman",
+        tone: "watch",
+        icon: "trend",
+        title: "Ei polkua",
+        detail: "x",
+      },
     ]);
 
     expect(items[0].href).toBe("/admin/kulut");

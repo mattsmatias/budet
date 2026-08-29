@@ -1,9 +1,9 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { requireContext } from "@/lib/restoflow/session";
 import { landingFor, moreNavFor } from "@/lib/restoflow/permissions";
-import { ROLE_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -19,7 +19,9 @@ export const metadata = { title: "Lisää" };
  */
 export default async function AdminMorePage() {
   const { user, restaurant, role } = await requireContext("/admin/lisaa");
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const items = moreNavFor(role);
 
@@ -30,8 +32,7 @@ export default async function AdminMorePage() {
 
   return (
     <div className="rf-enter space-y-5">
-      <header className="px-1 pt-1">
-      </header>
+      <header className="px-1 pt-1"></header>
 
       <Card>
         <div className="flex items-center gap-3.5">
@@ -39,9 +40,12 @@ export default async function AdminMorePage() {
           <div className="min-w-0">
             <p className="truncate text-[16px] font-semibold">{name}</p>
             <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]}
+              {nimet.roles[role]}
             </p>
-            <p className="truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="truncate text-[13px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {restaurant.name}
             </p>
           </div>
@@ -55,11 +59,16 @@ export default async function AdminMorePage() {
             <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
               {overflow.map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href} className="flex items-center gap-3 px-5 py-3.5">
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3 px-5 py-3.5"
+                  >
                     <span style={{ color: "var(--rf-text-2)" }}>
                       <RfIcon name={item.icon} size={20} />
                     </span>
-                    <span className="flex-1 text-[15px] font-medium">{t.nav[item.key]}</span>
+                    <span className="flex-1 text-[15px] font-medium">
+                      {t.nav[item.key]}
+                    </span>
                     <span style={{ color: "var(--rf-text-3)" }}>
                       <RfIcon name="chevron" size={16} />
                     </span>
@@ -123,5 +132,8 @@ export default async function AdminMorePage() {
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  return parts.slice(0, 2).map((p) => p[0]!.toUpperCase()).join("");
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("");
 }

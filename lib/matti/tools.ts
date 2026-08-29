@@ -13,7 +13,7 @@ import {
 } from "@/lib/restoflow/expenses";
 import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
 import { budgetLines } from "@/lib/restoflow/dashboard";
-import { CATEGORY_LABELS } from "@/lib/restoflow/types";
+import { labels } from "@/lib/i18n/labels";
 import {
   LUNCH_STATUS_LABELS,
   formatWeekRange,
@@ -104,7 +104,7 @@ const getDashboard = defineTool({
         previousMonthTotalCents: previous.totalCents,
       },
       card: {
-        title: formatMonth(month),
+        title: formatMonth(month, ctx.locale),
         value: formatMoney(totals.totalCents),
         meta: [
           `${totals.receiptCount} kuittia`,
@@ -133,28 +133,34 @@ const getExpensesByCategory = defineTool({
     const totals = totalsByCategory(receiptsInMonth(ctx.data.receipts, month));
 
     if (totals.length === 0) {
-      return { summary: `${month}: ei kirjattuja kuluja.`, data: { month, categories: [] } };
+      return {
+        summary: `${month}: ei kirjattuja kuluja.`,
+        data: { month, categories: [] },
+      };
     }
 
     return {
       summary:
         `${month} kategorioittain: ` +
         totals
-          .map((t) => `${CATEGORY_LABELS[t.category]} ${formatMoney(t.totalCents)}`)
+          .map(
+            (t) =>
+              `${labels(ctx.locale).categories[t.category]} ${formatMoney(t.totalCents)}`,
+          )
           .join(", "),
       data: {
         month,
         categories: totals.map((t) => ({
           category: t.category,
-          label: CATEGORY_LABELS[t.category],
+          label: labels(ctx.locale).categories[t.category],
           totalCents: t.totalCents,
         })),
       },
       card: {
-        title: `${formatMonth(month)} kategorioittain`,
+        title: `${formatMonth(month, ctx.locale)} kategorioittain`,
         value: formatMoney(totals.reduce((sum, t) => sum + t.totalCents, 0)),
         bars: totals.slice(0, 5).map((t) => ({
-          label: CATEGORY_LABELS[t.category],
+          label: labels(ctx.locale).categories[t.category],
           value: formatMoney(t.totalCents),
           percent: Math.round(t.share * 100),
         })),
@@ -184,7 +190,10 @@ const getSuppliers = defineTool({
     );
 
     if (suppliers.length === 0) {
-      return { summary: `${month}: ei ostoja.`, data: { month, suppliers: [] } };
+      return {
+        summary: `${month}: ei ostoja.`,
+        data: { month, suppliers: [] },
+      };
     }
 
     return {
@@ -202,7 +211,7 @@ const getSuppliers = defineTool({
         })),
       },
       card: {
-        title: `Suurimmat toimittajat · ${formatMonth(month)}`,
+        title: `Suurimmat toimittajat · ${formatMonth(month, ctx.locale)}`,
         value: formatMoney(suppliers.reduce((sum, x) => sum + x.totalCents, 0)),
         bars: suppliers.map((x) => ({
           label: x.name,
@@ -225,7 +234,11 @@ const searchReceipts = defineTool({
   requires: "receipts.view",
   schema: z.object({
     month: monthSchema.optional(),
-    supplier: z.string().max(120).optional().describe("Osa toimittajan nimestä"),
+    supplier: z
+      .string()
+      .max(120)
+      .optional()
+      .describe("Osa toimittajan nimestä"),
     minEuros: z.number().min(0).optional(),
     onlyNeedsReview: z.boolean().optional(),
   }),
@@ -269,7 +282,9 @@ const searchReceipts = defineTool({
         found.length === 0
           ? "Ei osumia."
           : `${found.length} kuittia, yhteensä ${formatMoney(total)}.` +
-            (found.length > shown.length ? ` Näytetään ${shown.length} uusinta.` : ""),
+            (found.length > shown.length
+              ? ` Näytetään ${shown.length} uusinta.`
+              : ""),
       data: {
         matchCount: found.length,
         totalCents: total,
@@ -311,7 +326,7 @@ const getBudgets = defineTool({
         lines
           .map(
             (l) =>
-              `${CATEGORY_LABELS[l.category]} ${formatMoney(l.spentCents)}/${formatMoney(l.budgetCents)}` +
+              `${labels(ctx.locale).categories[l.category]} ${formatMoney(l.spentCents)}/${formatMoney(l.budgetCents)}` +
               ` (${l.percent} %)`,
           )
           .join(", "),
@@ -319,7 +334,7 @@ const getBudgets = defineTool({
         month,
         budgets: lines.map((l) => ({
           category: l.category,
-          label: CATEGORY_LABELS[l.category],
+          label: labels(ctx.locale).categories[l.category],
           budgetCents: l.budgetCents,
           spentCents: l.spentCents,
           remainingCents: l.budgetCents - l.spentCents,
@@ -327,13 +342,13 @@ const getBudgets = defineTool({
         })),
       },
       card: {
-        title: `Budjetit · ${formatMonth(month)}`,
+        title: `Budjetit · ${formatMonth(month, ctx.locale)}`,
         value: formatMoney(lines.reduce((sum, l) => sum + l.spentCents, 0)),
         meta: [
           `${formatMoney(lines.reduce((sum, l) => sum + l.budgetCents, 0))} budjetoitu`,
         ],
         bars: lines.slice(0, 5).map((l) => ({
-          label: CATEGORY_LABELS[l.category],
+          label: labels(ctx.locale).categories[l.category],
           value: `${l.percent} %`,
           percent: Math.min(100, l.percent),
         })),
@@ -422,7 +437,11 @@ const getStaff = defineTool({
       data: {
         // Tuntipalkkoja ei anneta mallille. Ne ovat henkilötietoa jota
         // tähän ei tarvita, ja mitä ei lähetetä sitä ei voi vuotaa.
-        staff: active.map((u) => ({ name: u.name, role: u.role, position: u.position })),
+        staff: active.map((u) => ({
+          name: u.name,
+          role: u.role,
+          position: u.position,
+        })),
       },
     };
   },
@@ -441,7 +460,11 @@ const getShifts = defineTool({
   async run(ctx, input) {
     const rows = ctx.data.shifts
       .filter((s) => s.date >= input.from && s.date <= input.to)
-      .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+      .sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          a.startTime.localeCompare(b.startTime),
+      );
 
     const names = new Map(ctx.data.users.map((u) => [u.id, u.name]));
 
@@ -504,12 +527,18 @@ const proposeLunchItems = defineTool({
               z.object({
                 name: z.string().min(1).max(120),
                 description: z.string().max(400).optional(),
-                diets: z.array(z.string()).optional().describe(
-                  "vegetarian, vegan, gluten_free, lactose_free, milk_free",
-                ),
-                allergens: z.array(z.string()).optional().describe(
-                  "gluten, milk, egg, fish, shellfish, soy, nuts, celery, mustard, sesame",
-                ),
+                diets: z
+                  .array(z.string())
+                  .optional()
+                  .describe(
+                    "vegetarian, vegan, gluten_free, lactose_free, milk_free",
+                  ),
+                allergens: z
+                  .array(z.string())
+                  .optional()
+                  .describe(
+                    "gluten, milk, egg, fish, shellfish, soy, nuts, celery, mustard, sesame",
+                  ),
               }),
             )
             .min(1)
@@ -553,7 +582,9 @@ const proposeLunchItems = defineTool({
     // riville, eikä kumpikaan olisi selvästi oikea.
     const dates = input.days.map((d) => d.date);
     if (new Set(dates).size !== dates.length) {
-      return { summary: "Sama päivä on listassa kahdesti. Anna jokainen päivä kerran." };
+      return {
+        summary: "Sama päivä on listassa kahdesti. Anna jokainen päivä kerran.",
+      };
     }
 
     const changes: ActionPreview["changes"] = [];
@@ -600,15 +631,18 @@ const proposeLunchItems = defineTool({
 
     changes.push({
       label: "Hintaan sisältyy",
-      from: menu && before.join() !== after.join()
-        ? before.length > 0
-          ? before.join(" ja ")
-          : "ei mitään"
-        : undefined,
+      from:
+        menu && before.join() !== after.join()
+          ? before.length > 0
+            ? before.join(" ja ")
+            : "ei mitään"
+          : undefined,
       to: after.length > 0 ? after.join(" ja ") : "ei jälkiruokaa eikä kahvia",
     });
 
-    for (const day of [...input.days].sort((a, b) => a.date.localeCompare(b.date))) {
+    for (const day of [...input.days].sort((a, b) =>
+      a.date.localeCompare(b.date),
+    )) {
       const existing = (await ctx.lunchWeek(weekStartOf(day.date)))?.days.find(
         (d) => d.date === day.date,
       );
@@ -655,7 +689,11 @@ const proposeLunchPrice = defineTool({
     weekStart: dateSchema.describe(
       "Viikon maanantai. Anna mikä tahansa viikon päivä, se pyöristetään.",
     ),
-    euros: z.number().min(0).max(1000).describe("Uusi hinta euroina, esim. 16.5"),
+    euros: z
+      .number()
+      .min(0)
+      .max(1000)
+      .describe("Uusi hinta euroina, esim. 16.5"),
     priceName: z.string().max(40).optional().describe("Oletus: Lounas"),
   }),
   async run(ctx, input) {
@@ -715,7 +753,9 @@ const proposeCopyLunchWeek = defineTool({
 
     const source = await ctx.lunchWeek(from);
     if (!source || !hasContent(source)) {
-      return { summary: `Viikolla ${formatWeekRange(from)} ei ole lounaslistaa kopioitavaksi.` };
+      return {
+        summary: `Viikolla ${formatWeekRange(from)} ei ole lounaslistaa kopioitavaksi.`,
+      };
     }
 
     const target = await ctx.lunchWeek(to);
@@ -726,7 +766,10 @@ const proposeCopyLunchWeek = defineTool({
       preview: {
         title: "Lounaslistan kopiointi",
         changes: [
-          { label: "Lähde", to: `${formatWeekRange(from)} · ${itemCount} ruokaa` },
+          {
+            label: "Lähde",
+            to: `${formatWeekRange(from)} · ${itemCount} ruokaa`,
+          },
           { label: "Kohde", to: formatWeekRange(to) },
           { label: "Tila kopioinnin jälkeen", to: "Luonnos" },
         ],
@@ -752,9 +795,14 @@ const proposePublishLunch = defineTool({
     const week = weekStartOf(input.weekStart);
     const menu = await ctx.lunchWeek(week);
 
-    if (!menu) return { summary: `Viikolle ${formatWeekRange(week)} ei ole lounaslistaa.` };
+    if (!menu)
+      return {
+        summary: `Viikolle ${formatWeekRange(week)} ei ole lounaslistaa.`,
+      };
     if (!hasContent(menu)) {
-      return { summary: "Tyhjää lounaslistaa ei voi julkaista. Lisää ensin ruokia." };
+      return {
+        summary: "Tyhjää lounaslistaa ei voi julkaista. Lisää ensin ruokia.",
+      };
     }
 
     const dayCount = menu.days.filter((d) => d.items.length > 0).length;
@@ -765,10 +813,18 @@ const proposePublishLunch = defineTool({
       preview: {
         title: "Lounaslistan julkaisu",
         changes: [
-          { label: "Viikko", to: `${formatWeekRange(week)} · ${dayCount} päivää, ${itemCount} ruokaa` },
-          { label: "Tila", from: menu.status === "published" ? "Julkaistu" : "Luonnos", to: "Julkaistu" },
+          {
+            label: "Viikko",
+            to: `${formatWeekRange(week)} · ${dayCount} päivää, ${itemCount} ruokaa`,
+          },
+          {
+            label: "Tila",
+            from: menu.status === "published" ? "Julkaistu" : "Luonnos",
+            to: "Julkaistu",
+          },
         ],
-        warning: "Julkaisun jälkeen lista näkyy asiakkaille julkisella sivulla.",
+        warning:
+          "Julkaisun jälkeen lista näkyy asiakkaille julkisella sivulla.",
       },
       data: { menuId: menu.id, weekStart: week },
     };
@@ -804,4 +860,3 @@ export function toolsFor(role: Role): ToolDefinition[] {
 export function findTool(name: string): ToolDefinition | null {
   return TOOLS.find((tool) => tool.name === name) ?? null;
 }
-

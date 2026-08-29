@@ -12,6 +12,8 @@
  */
 
 import { budgetProgress } from "./budgets";
+import { labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { IconName } from "@/components/restoflow/icons";
 import { formatMoney } from "../money";
 import {
@@ -25,7 +27,6 @@ import {
 import { supplierTotalsInMonth } from "./suppliers";
 import { compareShifts, labourSummary } from "./shifts";
 import {
-  CATEGORY_LABELS,
   type Budget,
   type ClockEvent,
   type Receipt,
@@ -64,6 +65,8 @@ export interface InsightContext {
   now: string;
   /** Ravintolan aikavyöhyke: leimauksen päivä luetaan siinä ajassa. */
   timezone: string;
+  /** Käyttöliittymän kieli: havaintojen teksti kirjoitetaan sillä. */
+  locale: AppLocale;
 }
 
 /** Kuluvertailu jätetään tekemättä, jos vertailukuukausi on lähes tyhjä. */
@@ -111,7 +114,7 @@ function spendTrend(ctx: InsightContext): Insight[] {
   return [
     {
       id: "spend-trend",
-        icon: "trend",
+      icon: "trend",
       tone: diff > 0 ? "watch" : "good",
       title: diff > 0 ? "Kulut nousivat" : "Kulut laskivat",
       detail:
@@ -149,7 +152,7 @@ function categoryShift(ctx: InsightContext): Insight[] {
       id: `category-${biggest.category}`,
       icon: "expenses",
       tone: biggest.diff > 0 ? "watch" : "good",
-      title: `${CATEGORY_LABELS[biggest.category]} ${biggest.diff > 0 ? "kasvoi" : "pieneni"}`,
+      title: `${labels(ctx.locale).categories[biggest.category]} ${biggest.diff > 0 ? "kasvoi" : "pieneni"}`,
       detail:
         `${biggest.diff > 0 ? "+" : "−"}${formatMoney(Math.abs(biggest.diff))} edelliseen kuukauteen. ` +
         `Yhteensä ${formatMoney(biggest.total)}.`,
@@ -168,7 +171,7 @@ function supplierConcentration(ctx: InsightContext): Insight[] {
   return [
     {
       id: "supplier-concentration",
-        icon: "suppliers",
+      icon: "suppliers",
       tone: "watch",
       title: "Yksi toimittaja hallitsee kuluja",
       detail:
@@ -218,7 +221,7 @@ function budgetPace(ctx: InsightContext): Insight[] {
       id: `budget-pace-${ahead.category}`,
       icon: "budget",
       tone: "watch",
-      title: `${CATEGORY_LABELS[ahead.category]} kuluu etuajassa`,
+      title: `${labels(ctx.locale).categories[ahead.category]} kuluu etuajassa`,
       detail:
         `${Math.round((ahead.ratio as number) * 100)} % budjetista käytetty, ` +
         `kun kuukaudesta on kulunut ${Math.round(elapsed * 100)} %. ` +
@@ -229,7 +232,9 @@ function budgetPace(ctx: InsightContext): Insight[] {
 }
 
 function labourShare(ctx: InsightContext): Insight[] {
-  const past = ctx.shifts.filter((s) => s.date < ctx.today && s.date.startsWith(ctx.month));
+  const past = ctx.shifts.filter(
+    (s) => s.date < ctx.today && s.date.startsWith(ctx.month),
+  );
   if (past.length === 0) return [];
 
   const summary = labourSummary(
@@ -244,7 +249,7 @@ function labourShare(ctx: InsightContext): Insight[] {
   return [
     {
       id: "labour-variance",
-        icon: "clock",
+      icon: "clock",
       tone: overtimeHours > 0 ? "watch" : "neutral",
       title:
         overtimeHours > 0
@@ -284,7 +289,7 @@ function reviewDiscipline(ctx: InsightContext): Insight[] {
   return [
     {
       id: "review-backlog",
-        icon: "receipt",
+      icon: "receipt",
       tone: "watch",
       title: "Tarkistusjono kasvaa",
       detail:

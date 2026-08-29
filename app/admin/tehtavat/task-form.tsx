@@ -105,7 +105,10 @@ export function TaskForm({
           <label className="block">
             <span className="block text-[12.5px] font-semibold">
               Kello
-              <span className="ml-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+              <span
+                className="ml-1 font-normal"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 valinnainen
               </span>
             </span>
@@ -124,7 +127,10 @@ export function TaskForm({
             <label className="block">
               <span className="block text-[12.5px] font-semibold">
                 Kuvaus
-                <span className="ml-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="ml-1 font-normal"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   valinnainen
                 </span>
               </span>
@@ -140,7 +146,9 @@ export function TaskForm({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="block text-[12.5px] font-semibold">Vastuuhenkilö</span>
+                <span className="block text-[12.5px] font-semibold">
+                  Vastuuhenkilö
+                </span>
                 <select
                   name="assignedTo"
                   defaultValue={task?.assignedTo ?? ""}
@@ -157,7 +165,9 @@ export function TaskForm({
               </label>
 
               <label className="block">
-                <span className="block text-[12.5px] font-semibold">Prioriteetti</span>
+                <span className="block text-[12.5px] font-semibold">
+                  Prioriteetti
+                </span>
                 <select
                   name="priority"
                   defaultValue={task?.priority ?? "normal"}
@@ -173,7 +183,9 @@ export function TaskForm({
               </label>
 
               <label className="block">
-                <span className="block text-[12.5px] font-semibold">Kuka näkee</span>
+                <span className="block text-[12.5px] font-semibold">
+                  Kuka näkee
+                </span>
                 <select
                   name="visibility"
                   defaultValue={task?.visibility ?? "managers"}
@@ -189,7 +201,9 @@ export function TaskForm({
               </label>
 
               <label className="block">
-                <span className="block text-[12.5px] font-semibold">Toistuu</span>
+                <span className="block text-[12.5px] font-semibold">
+                  Toistuu
+                </span>
                 <select
                   name="recurrence"
                   defaultValue={task?.recurrence ?? "none"}
@@ -217,12 +231,17 @@ export function TaskForm({
 
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
                 {[7, 3, 2, 1].map((day) => (
-                  <label key={day} className="flex items-center gap-2 text-[13px]">
+                  <label
+                    key={day}
+                    className="flex items-center gap-2 text-[13px]"
+                  >
                     <input
                       type="checkbox"
                       name="remindDays"
                       value={day}
-                      defaultChecked={(task?.remindDaysBefore ?? [1]).includes(day)}
+                      defaultChecked={(task?.remindDaysBefore ?? [1]).includes(
+                        day,
+                      )}
                       className="h-4 w-4"
                     />
                     {day} pv ennen
@@ -263,7 +282,11 @@ export function TaskForm({
         )}
 
         {state.error ? (
-          <p role="alert" className="text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+          <p
+            role="alert"
+            className="text-[12.5px]"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             {state.error}
           </p>
         ) : null}

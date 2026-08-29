@@ -26,8 +26,14 @@ function merkit(teksti: string): string[] {
 }
 
 const OSAT = [
-  ["näkymä", (l: (typeof APP_LOCALES)[number]) => workerText(l) as unknown as Solmu],
-  ["viestit", (l: (typeof APP_LOCALES)[number]) => workerErrors(l) as unknown as Solmu],
+  [
+    "näkymä",
+    (l: (typeof APP_LOCALES)[number]) => workerText(l) as unknown as Solmu,
+  ],
+  [
+    "viestit",
+    (l: (typeof APP_LOCALES)[number]) => workerErrors(l) as unknown as Solmu,
+  ],
 ] as const;
 
 for (const [nimi, hae] of OSAT) {
@@ -60,7 +66,9 @@ for (const [nimi, hae] of OSAT) {
       for (const locale of APP_LOCALES) {
         const omat = litista(hae(locale));
         for (const [i, [polku, arvo]] of omat.entries()) {
-          expect(merkit(arvo), `${locale}: ${polku}`).toEqual(merkit(suomi[i][1]));
+          expect(merkit(arvo), `${locale}: ${polku}`).toEqual(
+            merkit(suomi[i][1]),
+          );
         }
       }
     });

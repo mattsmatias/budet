@@ -57,7 +57,8 @@ export async function saveDailySales(
   formData: FormData,
 ): Promise<SalesState> {
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "sales.manage")) return { error: "Ei oikeutta kirjata myyntiä." };
+  if (!can(role, "sales.manage"))
+    return { error: "Ei oikeutta kirjata myyntiä." };
 
   const date = String(formData.get("date") ?? "");
   if (!ISO_DATE.test(date)) return { error: "Tarkista päivämäärä." };
@@ -87,7 +88,10 @@ export async function saveDailySales(
    * käyttäjälle sen mitä hän voi korjata.
    */
   if (gross !== null && gross < net) {
-    return { error: "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut." };
+    return {
+      error:
+        "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut.",
+    };
   }
 
   /*
@@ -145,7 +149,9 @@ export async function saveDailySales(
       : resolveLines(submitted, await fetchSalesGroups(restaurant.id));
 
   if (lines === null) {
-    return { error: "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen." };
+    return {
+      error: "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen.",
+    };
   }
 
   /*
@@ -161,24 +167,31 @@ export async function saveDailySales(
    * summan, sen on korvattava myös erittely.
    */
   {
-    await supabase.from("daily_sales_lines").delete().eq("daily_sales_id", saved.id);
+    await supabase
+      .from("daily_sales_lines")
+      .delete()
+      .eq("daily_sales_id", saved.id);
 
     if (lines.length > 0) {
-      const { error: lineError } = await supabase.from("daily_sales_lines").insert(
-        lines.map((line) => ({
-          daily_sales_id: saved.id as string,
-          sales_group_id: line.salesGroupId,
-          vat_rate: line.vatRate,
-          gross_cents: line.grossCents,
-          vat_cents: line.vatCents,
-          net_cents: line.netCents,
-          pos_name: line.posName,
-          pos_vat_cents: line.posVatCents,
-        })),
-      );
+      const { error: lineError } = await supabase
+        .from("daily_sales_lines")
+        .insert(
+          lines.map((line) => ({
+            daily_sales_id: saved.id as string,
+            sales_group_id: line.salesGroupId,
+            vat_rate: line.vatRate,
+            gross_cents: line.grossCents,
+            vat_cents: line.vatCents,
+            net_cents: line.netCents,
+            pos_name: line.posName,
+            pos_vat_cents: line.posVatCents,
+          })),
+        );
 
       if (lineError) {
-        return { error: `Myyntirivien tallennus epäonnistui: ${lineError.message}` };
+        return {
+          error: `Myyntirivien tallennus epäonnistui: ${lineError.message}`,
+        };
       }
     }
   }
@@ -192,7 +205,10 @@ export async function saveDailySales(
    * vaihtuneet sen alta.
    */
   {
-    await supabase.from("daily_sales_vat").delete().eq("daily_sales_id", saved.id);
+    await supabase
+      .from("daily_sales_vat")
+      .delete()
+      .eq("daily_sales_id", saved.id);
 
     const rates = parseVatRates(formData.get("vatRates"));
 
@@ -208,7 +224,9 @@ export async function saveDailySales(
       );
 
       if (vatError) {
-        return { error: `ALV-erittelyn tallennus epäonnistui: ${vatError.message}` };
+        return {
+          error: `ALV-erittelyn tallennus epäonnistui: ${vatError.message}`,
+        };
       }
     }
   }
@@ -364,7 +382,8 @@ function parseLines(json: string): SubmittedLine[] | null {
     lines.push({
       salesGroupId,
       grossCents,
-      posName: typeof row.posName === "string" ? row.posName.slice(0, 200) : null,
+      posName:
+        typeof row.posName === "string" ? row.posName.slice(0, 200) : null,
       posVatCents:
         typeof posVat === "number" && Number.isInteger(posVat) && posVat >= 0
           ? posVat

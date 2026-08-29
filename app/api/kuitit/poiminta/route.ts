@@ -30,8 +30,8 @@ import {
   type ExtractionResult,
 } from "@/lib/restoflow/receipt-ai";
 import {
-  CATEGORY_LABELS,
-  PAYMENT_LABELS,
+  CATEGORY_ORDER,
+  PAYMENT_ORDER,
   type ExpenseCategory,
   type PaymentMethod,
 } from "@/lib/restoflow/types";
@@ -58,11 +58,22 @@ const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
  * lähetystä, joten tänne ei pitäisi päätyä HEIC:iä; jos päätyy, siitä
  * kerrotaan suoraan eikä anneta mallin hylätä sitä puolestamme.
  */
-const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
 const PDF_TYPE = "application/pdf";
 
-const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS) as [string, ...string[]];
-const PAYMENT_KEYS = Object.keys(PAYMENT_LABELS) as [string, ...string[]];
+/*
+ * Avaimet tulevat tyyppilistoista eivat nimikkeista.
+ *
+ * Malli palauttaa avaimen, ei nakyvaa nimea, joten kieli ei saa
+ * vaikuttaa siihen mita se saa palauttaa.
+ */
+const CATEGORY_KEYS = CATEGORY_ORDER as unknown as [string, ...string[]];
+const PAYMENT_KEYS = PAYMENT_ORDER as unknown as [string, ...string[]];
 
 const confidence = z.enum(["high", "medium", "low"]);
 
@@ -79,7 +90,10 @@ const extraction = z.object({
   totalCents: z.object({ value: z.number().int().nullable(), confidence }),
   vatCents: z.object({ value: z.number().int().nullable(), confidence }),
   category: z.object({ value: z.enum(CATEGORY_KEYS).nullable(), confidence }),
-  paymentMethod: z.object({ value: z.enum(PAYMENT_KEYS).nullable(), confidence }),
+  paymentMethod: z.object({
+    value: z.enum(PAYMENT_KEYS).nullable(),
+    confidence,
+  }),
   receiptNumber: z.object({ value: z.string().nullable(), confidence }),
   businessId: z.object({ value: z.string().nullable(), confidence }),
   items: z.array(
@@ -107,7 +121,10 @@ export async function POST(request: Request) {
   if (!isRealExtractor()) {
     // 501 on sovittu merkki selaimelle: avaa käsintäyttö äläkä näytä
     // virhettä. Kuitin lisäyksen on toimittava ilman poimintaa.
-    return NextResponse.json({ error: "Poimintaa ei ole kytketty." }, { status: 501 });
+    return NextResponse.json(
+      { error: "Poimintaa ei ole kytketty." },
+      { status: 501 },
+    );
   }
 
   const form = await request.formData();
@@ -177,22 +194,23 @@ export async function POST(request: Request) {
       const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
 
       return file.type === PDF_TYPE
-        ? ({
+        ? {
             type: "document" as const,
             source: {
               type: "base64" as const,
               media_type: "application/pdf" as const,
               data: base64,
             },
-          })
-        : ({
+          }
+        : {
             type: "image" as const,
             source: {
               type: "base64" as const,
-              media_type: file.type as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              media_type: file.type as
+                "image/jpeg" | "image/png" | "image/gif" | "image/webp",
               data: base64,
             },
-          });
+          };
     }),
   );
 
@@ -305,7 +323,10 @@ function sanitize(parsed: Parsed): ExtractionResult {
     check: (value: T) => T | null,
   ) => {
     const value = raw.value === null ? null : check(raw.value);
-    return { value, confidence: value === null ? ("low" as const) : raw.confidence };
+    return {
+      value,
+      confidence: value === null ? ("low" as const) : raw.confidence,
+    };
   };
 
   return {

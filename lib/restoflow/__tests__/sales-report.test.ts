@@ -8,20 +8,32 @@ import {
 
 describe("reconcile", () => {
   it("laskee puuttuvan verottoman", () => {
-    const r = reconcile({ grossCents: 290000, vatCents: 40000, netCents: null });
+    const r = reconcile({
+      grossCents: 290000,
+      vatCents: 40000,
+      netCents: null,
+    });
     expect(r.netCents).toBe(250000);
     expect(r.derived).toEqual(["netCents"]);
     expect(r.mismatch).toBeNull();
   });
 
   it("laskee puuttuvan verollisen", () => {
-    const r = reconcile({ grossCents: null, vatCents: 40000, netCents: 250000 });
+    const r = reconcile({
+      grossCents: null,
+      vatCents: 40000,
+      netCents: 250000,
+    });
     expect(r.grossCents).toBe(290000);
     expect(r.derived).toEqual(["grossCents"]);
   });
 
   it("laskee puuttuvan ALV:n", () => {
-    const r = reconcile({ grossCents: 290000, vatCents: null, netCents: 250000 });
+    const r = reconcile({
+      grossCents: 290000,
+      vatCents: null,
+      netCents: 250000,
+    });
     expect(r.vatCents).toBe(40000);
     expect(r.derived).toEqual(["vatCents"]);
   });
@@ -40,26 +52,42 @@ describe("reconcile", () => {
   });
 
   it("hyväksyy kaikki kolme kun ne täsmäävät", () => {
-    const r = reconcile({ grossCents: 290000, vatCents: 40000, netCents: 250000 });
+    const r = reconcile({
+      grossCents: 290000,
+      vatCents: 40000,
+      netCents: 250000,
+    });
     expect(r.mismatch).toBeNull();
     expect(r.derived).toEqual([]);
   });
 
   /* Kassan pyöristys on sentin sivussa. Se ei ole virhe. */
   it("sietää sentin pyöristyksen", () => {
-    const r = reconcile({ grossCents: 290001, vatCents: 40000, netCents: 250000 });
+    const r = reconcile({
+      grossCents: 290001,
+      vatCents: 40000,
+      netCents: 250000,
+    });
     expect(r.mismatch).toBeNull();
   });
 
   it("kertoo ristiriidan lukuineen", () => {
-    const r = reconcile({ grossCents: 290000, vatCents: 40000, netCents: 245000 });
+    const r = reconcile({
+      grossCents: 290000,
+      vatCents: 40000,
+      netCents: 245000,
+    });
     /* formatMoney käyttää sitkeää välilyöntiä, joten literaali ei kelpaa. */
     expect(r.mismatch).toContain(formatMoney(290000));
     expect(r.mismatch).toContain(formatMoney(285000));
   });
 
   it("ei muuta lukuja ristiriidasta huolimatta", () => {
-    const r = reconcile({ grossCents: 290000, vatCents: 40000, netCents: 245000 });
+    const r = reconcile({
+      grossCents: 290000,
+      vatCents: 40000,
+      netCents: 245000,
+    });
     expect(r.grossCents).toBe(290000);
     expect(r.netCents).toBe(245000);
   });

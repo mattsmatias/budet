@@ -1,11 +1,11 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { fetchInvitations } from "@/lib/restoflow/queries";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
-import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { revokeInvitation } from "../actions";
 import { Avatar, Card, MetricCard, Pill } from "@/components/restoflow/ui";
@@ -21,7 +21,9 @@ export async function generateMetadata() {
 export default async function StaffPage() {
   const { users, shifts, monthlyHours, role, restaurant } =
     await adminContext("/admin/tyontekijat");
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const canManage = can(role, "staff.manage");
   const showsRates = seesPayRates(role);
@@ -48,10 +50,11 @@ export default async function StaffPage() {
   return (
     <div className="rf-enter space-y-5">
       <div>
-
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {users.length} käyttäjää
-          {invitations.length > 0 ? ` · ${invitations.length} avointa kutsua` : ""}
+          {invitations.length > 0
+            ? ` · ${invitations.length} avointa kutsua`
+            : ""}
         </p>
       </div>
 
@@ -100,13 +103,23 @@ export default async function StaffPage() {
         />
       </section>
 
-      {canManage ? <InviteForm /> : null}
+      {canManage ? <InviteForm nimet={nimet} /> : null}
 
       {invitations.length > 0 ? (
         <Card>
-          <p className="text-[15px] font-semibold">{t.henkilosto2.openInvites}</p>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>{t.henkilosto.codeOnce}</p>
-          <ul className="mt-3 divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <p className="text-[15px] font-semibold">
+            {t.henkilosto2.openInvites}
+          </p>
+          <p
+            className="mt-1 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {t.henkilosto.codeOnce}
+          </p>
+          <ul
+            className="mt-3 divide-y"
+            style={{ borderColor: "var(--rf-line)" }}
+          >
             {invitations.map((inv) => (
               <li
                 key={inv.id}
@@ -114,15 +127,17 @@ export default async function StaffPage() {
               >
                 <div className="min-w-0">
                   <p className="text-[14px] font-medium">
-                    {inv.label ?? ROLE_LABELS[inv.role]}
+                    {inv.label ?? nimet.roles[inv.role]}
                   </p>
                   <p
                     className="rf-tabular text-[12px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    ···{inv.codeHint} · {ROLE_LABELS[inv.role]}
-                    {inv.position ? ` · ${POSITION_LABELS[inv.position]}` : ""} ·
-                    voimassa {formatDate(inv.expiresAt)} asti
+                    ···{inv.codeHint} · {nimet.roles[inv.role]}
+                    {inv.position
+                      ? ` · ${nimet.positions[inv.position]}`
+                      : ""}{" "}
+                    · voimassa {formatDate(inv.expiresAt)} asti
                   </p>
                 </div>
                 <form action={revokeInvitation}>
@@ -135,7 +150,9 @@ export default async function StaffPage() {
                       color: "var(--rf-red-text)",
                       borderRadius: "var(--rf-r-control)",
                     }}
-                  >{t.henkilosto.revoke}</button>
+                  >
+                    {t.henkilosto.revoke}
+                  </button>
                 </form>
               </li>
             ))}
@@ -152,17 +169,27 @@ export default async function StaffPage() {
               <div className="flex items-start gap-3">
                 <Avatar initials={user.initials} size={40} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold">{user.name}</p>
-                  <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                    {ROLE_LABELS[user.role]}
-                    {user.position ? ` · ${POSITION_LABELS[user.position]}` : ""}
+                  <p className="truncate text-[15px] font-semibold">
+                    {user.name}
+                  </p>
+                  <p
+                    className="text-[13px]"
+                    style={{ color: "var(--rf-text-2)" }}
+                  >
+                    {nimet.roles[user.role]}
+                    {user.position
+                      ? ` · ${nimet.positions[user.position]}`
+                      : ""}
                   </p>
                 </div>
               </div>
 
               <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <Stat label={t.sanat.hours} value={`${hours} h`} />
-                <Stat label={t.henkilosto2.shiftCount} value={String(shiftCount)} />
+                <Stat
+                  label={t.henkilosto2.shiftCount}
+                  value={String(shiftCount)}
+                />
                 <Stat
                   label={showsRates ? t.henkilosto2.cost : "Kuitit"}
                   value={
@@ -175,7 +202,7 @@ export default async function StaffPage() {
                 />
               </dl>
 
-              {canManage ? <MemberForm user={user} /> : null}
+              {canManage ? <MemberForm nimet={nimet} user={user} /> : null}
             </Card>
           </li>
         ))}
@@ -189,12 +216,20 @@ export default async function StaffPage() {
               <tr>
                 <th scope="col">{t.henkilosto.user}</th>
                 <th scope="col">{t.sanat.role}</th>
-                <th scope="col" className="text-right">{t.sanat.hours}</th>
-                <th scope="col" className="text-right">{t.henkilosto2.shiftCount}</th>
+                <th scope="col" className="text-right">
+                  {t.sanat.hours}
+                </th>
+                <th scope="col" className="text-right">
+                  {t.henkilosto2.shiftCount}
+                </th>
                 {showsRates ? (
                   <>
-                    <th scope="col" className="text-right">{t.henkilosto2.hourlyRate}</th>
-                    <th scope="col" className="text-right">{t.henkilosto2.cost}</th>
+                    <th scope="col" className="text-right">
+                      {t.henkilosto2.hourlyRate}
+                    </th>
+                    <th scope="col" className="text-right">
+                      {t.henkilosto2.cost}
+                    </th>
                   </>
                 ) : null}
               </tr>
@@ -208,22 +243,25 @@ export default async function StaffPage() {
                       <div>
                         <span className="font-medium">{user.name}</span>
                         {user.position ? (
-                          <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                            {POSITION_LABELS[user.position]}
+                          <p
+                            className="text-[12px]"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
+                            {nimet.positions[user.position]}
                           </p>
                         ) : null}
                       </div>
                     </div>
-                    {canManage ? <MemberForm user={user} /> : null}
+                    {canManage ? (
+                      <MemberForm nimet={nimet} user={user} />
+                    ) : null}
                   </td>
                   <td>
                     <Pill tone={user.role === "owner" ? "info" : "neutral"}>
-                      {ROLE_LABELS[user.role]}
+                      {nimet.roles[user.role]}
                     </Pill>
                   </td>
-                  <td className="num">
-                    {hours} h
-                  </td>
+                  <td className="num">{hours} h</td>
                   <td
                     className="rf-tabular px-5 py-3 text-right"
                     style={{ color: "var(--rf-text-2)" }}
@@ -245,9 +283,7 @@ export default async function StaffPage() {
                           ? "ei asetettu"
                           : formatMoney(user.hourlyRateCents)}
                       </td>
-                      <td className="num">
-                        {formatMoney(cost)}
-                      </td>
+                      <td className="num">{formatMoney(cost)}</td>
                     </>
                   ) : null}
                 </tr>

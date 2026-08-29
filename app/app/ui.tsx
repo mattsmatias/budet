@@ -109,7 +109,10 @@ export function Stat({ label, value }: { label: string; value: string }) {
       <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {label}
       </p>
-      <p className="rf-tabular mt-1 text-[24px] font-semibold" suppressHydrationWarning>
+      <p
+        className="rf-tabular mt-1 text-[24px] font-semibold"
+        suppressHydrationWarning
+      >
         {value}
       </p>
     </div>
@@ -149,12 +152,17 @@ export function Row({
       <div className="min-w-0 flex-1">
         <div
           className="text-[15px] font-medium"
-          style={muted ? { color: "var(--rf-text-3)", fontWeight: 400 } : undefined}
+          style={
+            muted ? { color: "var(--rf-text-3)", fontWeight: 400 } : undefined
+          }
         >
           {title}
         </div>
         {meta ? (
-          <div className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+          <div
+            className="mt-0.5 text-[13px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {meta}
           </div>
         ) : null}
@@ -183,7 +191,10 @@ export function Row({
 export function List({ children }: { children: ReactNode }) {
   return (
     <Surface padded={false}>
-      <div className="bd-app-list divide-y" style={{ borderColor: "var(--rf-line)" }}>
+      <div
+        className="bd-app-list divide-y"
+        style={{ borderColor: "var(--rf-line)" }}
+      >
         {children}
       </div>
     </Surface>
@@ -196,11 +207,20 @@ export function List({ children }: { children: ReactNode }) {
  * Kertoo mitä tähän tulee ja milloin. Pelkkä "ei tietoja" jättää
  * käyttäjän arvailemaan onko kyseessä tyhjyys vai vika.
  */
-export function Empty({ title, description }: { title: string; description: string }) {
+export function Empty({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <Surface>
       <p className="text-[15px] font-medium">{title}</p>
-      <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="mt-1 text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {description}
       </p>
     </Surface>

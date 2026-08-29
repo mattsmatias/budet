@@ -9,7 +9,11 @@ import {
   type DailySales,
 } from "../sales";
 
-function day(date: string, netCents: number, targetCents: number | null = null): DailySales {
+function day(
+  date: string,
+  netCents: number,
+  targetCents: number | null = null,
+): DailySales {
   return {
     date,
     netCents,
@@ -78,7 +82,9 @@ describe("vertailu saman viikonpäivän historiaan", () => {
   });
 
   it("ei vertaa yhteen havaintoon", () => {
-    expect(compareSales(day(MA, 231000), [day("2026-08-17", 200000)]).kind).toBe("none");
+    expect(
+      compareSales(day(MA, 231000), [day("2026-08-17", 200000)]).kind,
+    ).toBe("none");
   });
 
   it("ei laske itseään mukaan keskiarvoon", () => {
@@ -105,24 +111,37 @@ describe("työvoiman osuus myynnistä", () => {
 
 describe("karkea tulos", () => {
   it("vähentää kulut ja työvoiman myynnistä", () => {
-    expect(roughResult({ netSalesCents: 400000, expenseCents: 120000, labourCents: 90000 }))
-      .toBe(190000);
+    expect(
+      roughResult({
+        netSalesCents: 400000,
+        expenseCents: 120000,
+        labourCents: 90000,
+      }),
+    ).toBe(190000);
   });
 
   it("voi olla negatiivinen", () => {
-    expect(roughResult({ netSalesCents: 100000, expenseCents: 120000, labourCents: 90000 }))
-      .toBeLessThan(0);
+    expect(
+      roughResult({
+        netSalesCents: 100000,
+        expenseCents: 120000,
+        labourCents: 90000,
+      }),
+    ).toBeLessThan(0);
   });
 });
 
 describe("aikavälit ja summat", () => {
-  const kaikki = [day("2026-08-01", 100), day("2026-08-15", 200), day("2026-09-01", 400)];
+  const kaikki = [
+    day("2026-08-01", 100),
+    day("2026-08-15", 200),
+    day("2026-09-01", 400),
+  ];
 
   it("rajaa aikavälille", () => {
-    expect(salesBetween(kaikki, "2026-08-01", "2026-08-31").map((s) => s.date)).toEqual([
-      "2026-08-01",
-      "2026-08-15",
-    ]);
+    expect(
+      salesBetween(kaikki, "2026-08-01", "2026-08-31").map((s) => s.date),
+    ).toEqual(["2026-08-01", "2026-08-15"]);
   });
 
   it("summaa", () => {
@@ -135,7 +154,9 @@ describe("puuttuvat päivät", () => {
 
   it("löytää menneen päivän jolta myynti puuttuu", () => {
     const kirjatut = [day("2026-08-22", 100)];
-    expect(missingSalesDays(paivat, kirjatut, "2026-08-24")).toEqual(["2026-08-23"]);
+    expect(missingSalesDays(paivat, kirjatut, "2026-08-24")).toEqual([
+      "2026-08-23",
+    ]);
   });
 
   /*
@@ -143,6 +164,8 @@ describe("puuttuvat päivät", () => {
    * päätteeksi, eikä aamulla puuttuva luku ole virhe.
    */
   it("ei pidä tätä päivää puuttuvana", () => {
-    expect(missingSalesDays(paivat, [], "2026-08-24")).not.toContain("2026-08-24");
+    expect(missingSalesDays(paivat, [], "2026-08-24")).not.toContain(
+      "2026-08-24",
+    );
   });
 });

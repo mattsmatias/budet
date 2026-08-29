@@ -72,7 +72,8 @@ const fi = {
       "Luo tunnus, niin liittäminen tapahtuu automaattisesti. Koodia ei tarvitse syöttää uudelleen.",
     inviteMissing: "Kutsukoodi puuttuu tai on vanhentunut.",
     enterCodeAgain: "Syötä koodi uudelleen",
-    notConfigured: "Rekisteröitymistä ei ole otettu käyttöön tässä ympäristössä.",
+    notConfigured:
+      "Rekisteröitymistä ei ole otettu käyttöön tässä ympäristössä.",
     idle: "Luo tunnus",
     busy: "Luodaan…",
   },
@@ -115,7 +116,8 @@ const fi = {
     resetSent:
       "Jos osoitteella on tili, lähetimme sinne palautuslinkin. Linkki on voimassa tunnin.",
     passwordsDiffer: "Salasanat eivät täsmää.",
-    resetExpired: "Palautuslinkki on vanhentunut tai jo käytetty. Pyydä uusi linkki.",
+    resetExpired:
+      "Palautuslinkki on vanhentunut tai jo käytetty. Pyydä uusi linkki.",
     samePassword: "Uusi salasana ei voi olla sama kuin vanha.",
     changeFailed: "Salasanan vaihto ei onnistunut. Yritä uudelleen.",
     enterCode: "Syötä kutsukoodi.",
@@ -209,7 +211,8 @@ const en: AuthText = {
     nameMissing: "Name is missing.",
     badCredentials: "Email or password does not match.",
     alreadyRegistered: "This email already has an account. Sign in instead.",
-    passwordWeak: "The password does not meet the requirements. Use at least 8 characters.",
+    passwordWeak:
+      "The password does not meet the requirements. Use at least 8 characters.",
     rateLimit: "Too many attempts. Wait a moment and try again.",
     signUpFailed: "Sign-up failed: {syy}",
     confirmSent:
@@ -217,7 +220,8 @@ const en: AuthText = {
     resetSent:
       "If the address has an account, we sent a reset link to it. The link is valid for an hour.",
     passwordsDiffer: "The passwords do not match.",
-    resetExpired: "The reset link has expired or has already been used. Request a new one.",
+    resetExpired:
+      "The reset link has expired or has already been used. Request a new one.",
     samePassword: "The new password cannot be the same as the old one.",
     changeFailed: "Changing the password did not work. Try again.",
     enterCode: "Enter the invite code.",
@@ -301,7 +305,8 @@ const sv: AuthText = {
     passwordMin: "Lösenordet måste vara minst 8 tecken.",
     nameMissing: "Namnet saknas.",
     badCredentials: "E-post eller lösenord stämmer inte.",
-    alreadyRegistered: "Den här e-postadressen har redan ett konto. Logga in i stället.",
+    alreadyRegistered:
+      "Den här e-postadressen har redan ett konto. Logga in i stället.",
     passwordWeak: "Lösenordet uppfyller inte kraven. Använd minst 8 tecken.",
     rateLimit: "För många försök. Vänta en stund och försök igen.",
     signUpFailed: "Registreringen misslyckades: {syy}",
@@ -310,7 +315,8 @@ const sv: AuthText = {
     resetSent:
       "Om adressen har ett konto skickade vi en återställningslänk dit. Länken gäller i en timme.",
     passwordsDiffer: "Lösenorden stämmer inte överens.",
-    resetExpired: "Återställningslänken har gått ut eller redan använts. Begär en ny.",
+    resetExpired:
+      "Återställningslänken har gått ut eller redan använts. Begär en ny.",
     samePassword: "Det nya lösenordet kan inte vara samma som det gamla.",
     changeFailed: "Lösenordet kunde inte bytas. Försök igen.",
     enterCode: "Ange inbjudningskoden.",
@@ -403,7 +409,8 @@ const da: AuthText = {
     resetSent:
       "Hvis adressen har en konto, sendte vi et nulstillingslink dertil. Linket gælder i en time.",
     passwordsDiffer: "Adgangskoderne er ikke ens.",
-    resetExpired: "Nulstillingslinket er udløbet eller allerede brugt. Bed om et nyt.",
+    resetExpired:
+      "Nulstillingslinket er udløbet eller allerede brugt. Bed om et nyt.",
     samePassword: "Den nye adgangskode må ikke være den samme som den gamle.",
     changeFailed: "Adgangskoden kunne ikke skiftes. Prøv igen.",
     enterCode: "Indtast invitationskoden.",
@@ -488,7 +495,8 @@ const tr: AuthText = {
     nameMissing: "Ad eksik.",
     badCredentials: "E-posta veya parola eşleşmiyor.",
     alreadyRegistered: "Bu e-posta ile zaten bir hesap var. Giriş yap.",
-    passwordWeak: "Parola gereksinimleri karşılamıyor. En az 8 karakter kullan.",
+    passwordWeak:
+      "Parola gereksinimleri karşılamıyor. En az 8 karakter kullan.",
     rateLimit: "Çok fazla deneme. Biraz bekleyip tekrar dene.",
     signUpFailed: "Kayıt başarısız: {syy}",
     confirmSent:
@@ -496,7 +504,8 @@ const tr: AuthText = {
     resetSent:
       "Adresin bir hesabı varsa oraya sıfırlama bağlantısı gönderdik. Bağlantı bir saat geçerli.",
     passwordsDiffer: "Parolalar eşleşmiyor.",
-    resetExpired: "Sıfırlama bağlantısı süresi dolmuş ya da kullanılmış. Yenisini iste.",
+    resetExpired:
+      "Sıfırlama bağlantısı süresi dolmuş ya da kullanılmış. Yenisini iste.",
     samePassword: "Yeni parola eskisiyle aynı olamaz.",
     changeFailed: "Parola değiştirilemedi. Tekrar dene.",
     enterCode: "Davet kodunu gir.",

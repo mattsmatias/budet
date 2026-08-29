@@ -8,11 +8,7 @@
 
 /** Asiakkuuden tila. Päätös, ei datasta johdettu arvo. */
 export type RestaurantStatus =
-  | "trial"
-  | "active"
-  | "suspended"
-  | "cancelled"
-  | "archived";
+  "trial" | "active" | "suspended" | "cancelled" | "archived";
 
 export type RestaurantPlan = "free" | "pro" | "business" | "enterprise";
 
@@ -38,7 +34,9 @@ export const PLAN_LABELS: Record<RestaurantPlan, string> = {
  * ylläpitäjän oma päätös eikä hälytys, joten se on keltainen —
  * punainen varataan sille mikä vaatii toimenpiteen.
  */
-export function statusTone(status: RestaurantStatus): "ok" | "warn" | "risk" | "muted" {
+export function statusTone(
+  status: RestaurantStatus,
+): "ok" | "warn" | "risk" | "muted" {
   switch (status) {
     case "active":
       return "ok";
@@ -132,7 +130,12 @@ export interface RestaurantDetail {
     activeUsers: number;
     lastSignInAt: string | null;
   };
-  flags: { key: string; label: string; global: boolean; override: boolean | null }[];
+  flags: {
+    key: string;
+    label: string;
+    global: boolean;
+    override: boolean | null;
+  }[];
 }
 
 export interface DetailUser {
@@ -190,7 +193,11 @@ export interface Flag {
   label: string;
   description: string | null;
   enabled: boolean;
-  overrides: { restaurantId: string; restaurantName: string; enabled: boolean }[];
+  overrides: {
+    restaurantId: string;
+    restaurantName: string;
+    enabled: boolean;
+  }[];
 }
 
 /**
@@ -230,5 +237,8 @@ export function healthOf(
   if (days >= 14) {
     return { level: "attention", reason: `Ei kirjautumista ${days} päivään` };
   }
-  return { level: "healthy", reason: days === 0 ? "Kirjautui tänään" : `Kirjautui ${days} pv sitten` };
+  return {
+    level: "healthy",
+    reason: days === 0 ? "Kirjautui tänään" : `Kirjautui ${days} pv sitten`,
+  };
 }

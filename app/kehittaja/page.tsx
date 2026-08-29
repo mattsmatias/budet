@@ -1,8 +1,18 @@
 import Link from "next/link";
-import { fetchAudit, fetchOverview, fetchRestaurants } from "@/lib/kehittaja/queries";
+import {
+  fetchAudit,
+  fetchOverview,
+  fetchRestaurants,
+} from "@/lib/kehittaja/queries";
 import { STATUS_LABELS, healthOf, statusTone } from "@/lib/kehittaja/types";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
+import {
+  Card,
+  CardHeader,
+  EmptyState,
+  MetricCard,
+  Pill,
+} from "@/components/restoflow/ui";
 
 /*
  * absolute, koska title.template koskee lapsisegmenttejä eikä
@@ -44,14 +54,19 @@ export default async function DevOverviewPage() {
     .filter((r) => !r.isTestAccount && r.status !== "archived")
     .map((r) => ({ r, health: healthOf(r.lastSignInAt, r.status, now) }))
     .filter((x) => x.health.level !== "healthy")
-    .sort((a, b) => Number(b.health.level === "risk") - Number(a.health.level === "risk"))
+    .sort(
+      (a, b) =>
+        Number(b.health.level === "risk") - Number(a.health.level === "risk"),
+    )
     .slice(0, 6);
 
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-bold tracking-[-0.02em]">Kate System Overview</h1>
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">
+            Kate System Overview
+          </h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {overview.restaurants.test === 0
               ? "Koko järjestelmä yhdellä silmäyksellä."
@@ -114,7 +129,9 @@ export default async function DevOverviewPage() {
           tone={overview.restaurants.suspended > 0 ? "warn" : "neutral"}
           tileTone={overview.restaurants.suspended > 0 ? "warn" : "muted"}
           hint={
-            overview.restaurants.suspended === 0 ? "Ei keskeytyksiä" : "Käyttö on katkaistu"
+            overview.restaurants.suspended === 0
+              ? "Ei keskeytyksiä"
+              : "Käyttö on katkaistu"
           }
         />
 
@@ -164,7 +181,9 @@ export default async function DevOverviewPage() {
                     className="rf-press flex items-center gap-3 px-5 py-3.5"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-semibold">{r.name}</span>
+                      <span className="block truncate text-[14px] font-semibold">
+                        {r.name}
+                      </span>
                       <span
                         className="mt-0.5 block truncate text-[12.5px]"
                         style={{ color: "var(--rf-text-2)" }}
@@ -216,7 +235,10 @@ export default async function DevOverviewPage() {
             {overview.trialsEndingSoon > 0 ? (
               <p
                 className="mt-3 border-t pt-3 text-[12.5px]"
-                style={{ borderColor: "var(--rf-line)", color: "var(--rf-amber-text)" }}
+                style={{
+                  borderColor: "var(--rf-line)",
+                  color: "var(--rf-amber-text)",
+                }}
               >
                 {overview.trialsEndingSoon === 1
                   ? "1 kokeilu päättyy viikon sisällä."
@@ -227,16 +249,25 @@ export default async function DevOverviewPage() {
 
           <Card padded={false}>
             <div className="px-5 pt-4">
-              <CardHeader title="Viimeisimmät toimet" subtitle="Developer Consolen loki" />
+              <CardHeader
+                title="Viimeisimmät toimet"
+                subtitle="Developer Consolen loki"
+              />
             </div>
 
             {audit.length === 0 ? (
-              <p className="px-5 pb-5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+              <p
+                className="px-5 pb-5 text-[13px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
                 Ei vielä yhtään merkintää.
               </p>
             ) : (
               <>
-                <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+                <ul
+                  className="divide-y"
+                  style={{ borderColor: "var(--rf-line)" }}
+                >
                   {audit.map((row) => (
                     <li key={row.id} className="px-5 py-2.5">
                       <p className="text-[13px] leading-snug">{row.summary}</p>

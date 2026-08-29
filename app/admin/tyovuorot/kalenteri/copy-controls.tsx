@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import {
   copyShiftNextWeek,
@@ -8,7 +9,11 @@ import {
   createRecurringShifts,
 } from "../planning-actions";
 import type { AdminState } from "../../actions";
-import { POSITION_LABELS, type Shift, type StaffPosition, type User } from "@/lib/restoflow/types";
+import {
+  type Shift,
+  type StaffPosition,
+  type User,
+} from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader } from "@/components/restoflow/ui";
 
@@ -137,7 +142,11 @@ export function CopyRange({
       </div>
 
       {state.error ? (
-        <p role="alert" className="mt-3 text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+        <p
+          role="alert"
+          className="mt-3 text-[12.5px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </p>
       ) : null}
@@ -212,10 +221,12 @@ function Painike({ label, hint }: { label: string; hint: string }) {
  * kuukausisuunnittelun raskain kohta.
  */
 export function RecurringForm({
+  nimet,
   users,
   monthStart,
   monthEnd,
 }: {
+  nimet: Labels;
   users: User[];
   monthStart: string;
   monthEnd: string;
@@ -274,7 +285,10 @@ export function RecurringForm({
             id="rec-user"
             name="userId"
             className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
           >
             <option value="">Avoin vuoro</option>
             {users
@@ -282,7 +296,7 @@ export function RecurringForm({
               .map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name}
-                  {u.position ? ` · ${POSITION_LABELS[u.position]}` : ""}
+                  {u.position ? ` · ${nimet.positions[u.position]}` : ""}
                 </option>
               ))}
           </select>
@@ -318,21 +332,32 @@ export function RecurringForm({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Kentta label="Tauko (min)" name="break" type="number" defaultValue="30" />
+          <Kentta
+            label="Tauko (min)"
+            name="break"
+            type="number"
+            defaultValue="30"
+          />
           <div>
-            <label htmlFor="rec-position" className="block text-[13px] font-medium">
+            <label
+              htmlFor="rec-position"
+              className="block text-[13px] font-medium"
+            >
               Tehtävä
             </label>
             <select
               id="rec-position"
               name="position"
               className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+              style={{
+                background: "var(--rf-inset)",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
               <option value="">—</option>
               {POSITIONS.map((p) => (
                 <option key={p} value={p}>
-                  {POSITION_LABELS[p]}
+                  {nimet.positions[p]}
                 </option>
               ))}
             </select>
@@ -340,12 +365,26 @@ export function RecurringForm({
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Kentta label="Jakso alkaa" name="from" type="date" defaultValue={monthStart} />
-          <Kentta label="Jakso päättyy" name="to" type="date" defaultValue={monthEnd} />
+          <Kentta
+            label="Jakso alkaa"
+            name="from"
+            type="date"
+            defaultValue={monthStart}
+          />
+          <Kentta
+            label="Jakso päättyy"
+            name="to"
+            type="date"
+            defaultValue={monthEnd}
+          />
         </div>
 
         {state.error ? (
-          <p role="alert" className="text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+          <p
+            role="alert"
+            className="text-[12.5px]"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             {state.error}
           </p>
         ) : null}
@@ -391,7 +430,10 @@ function Kentta({
         defaultValue={defaultValue}
         min={type === "number" ? 0 : undefined}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       />
     </div>
   );

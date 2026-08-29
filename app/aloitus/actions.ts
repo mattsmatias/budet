@@ -62,9 +62,7 @@ export async function createRestaurant(
  * mitään. Tuntematon virhe näytetään sellaisenaan — vaikeaselkoinen viesti
  * on silti parempi kuin hyödytön.
  */
-function explain(
-  error: { code?: string; message?: string } | null,
-): string {
+function explain(error: { code?: string; message?: string } | null): string {
   const code = error?.code ?? "";
   const message = error?.message ?? "";
 

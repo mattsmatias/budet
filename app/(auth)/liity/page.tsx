@@ -24,8 +24,13 @@ export default async function JoinPage() {
 
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">{t.liity.title}</h1>
-      <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <h1 className="text-[26px] font-semibold tracking-tight">
+        {t.liity.title}
+      </h1>
+      <p
+        className="mt-2 text-[14px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {t.liity.body}
       </p>
 

@@ -94,7 +94,10 @@ describe("viestin sisältö", () => {
   // alkuperäisviestiä. Ne kuuluvat lokiin.
   it("ei vuoda teknistä viestiä käyttäjälle", () => {
     const failure = explainAiError(
-      apiError(400, "Your credit balance is too low to access the Anthropic API."),
+      apiError(
+        400,
+        "Your credit balance is too low to access the Anthropic API.",
+      ),
     );
 
     expect(failure.message).not.toMatch(/credit balance/i);

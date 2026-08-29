@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels, type Labels } from "@/lib/i18n/labels";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
@@ -7,7 +8,6 @@ import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
-import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { AdminNav } from "./nav";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
@@ -29,6 +29,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   const locale = await resolveLocale();
   const t = adminText(locale);
+  const nimet = labels(locale);
 
   const data = await fetchRestaurantData(restaurant.id);
   const month = monthIn(restaurant.timezone);
@@ -46,6 +47,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     today,
     now,
     timezone: restaurant.timezone,
+    locale,
     openShifts: data.openShifts,
     sales: data.sales,
     tasks: data.tasks,
@@ -82,7 +84,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       months.push(cursor);
       const [year, m] = cursor.split("-").map(Number);
       cursor =
-        m === 1 ? `${year - 1}-12` : `${year}-${String(m - 1).padStart(2, "0")}`;
+        m === 1
+          ? `${year - 1}-12`
+          : `${year}-${String(m - 1).padStart(2, "0")}`;
     }
   }
 
@@ -126,33 +130,39 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
-        {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
-        <header
-          className="rf-no-print rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
-          style={{
-            borderColor: "var(--rf-line)",
-            background: "rgba(255,255,255,0.86)",
-            backdropFilter: "saturate(180%) blur(20px)",
-            WebkitBackdropFilter: "saturate(180%) blur(20px)",
-          }}
-        >
-          <Link href="/admin" className="min-w-0">
-            <p className="truncate text-[15px] font-semibold">{restaurant.name}</p>
-            <p className="truncate text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              {userName}
-            </p>
-          </Link>
-          <HeaderMenus
-            t={t}
-            alerts={alerts}
-            userName={userName}
-            restaurantName={restaurant.name}
-            role={role}
-            canOpenSettings={can(role, "settings.view")}
-          />
-        </header>
+          {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
+          <header
+            className="rf-no-print rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
+            style={{
+              borderColor: "var(--rf-line)",
+              background: "rgba(255,255,255,0.86)",
+              backdropFilter: "saturate(180%) blur(20px)",
+              WebkitBackdropFilter: "saturate(180%) blur(20px)",
+            }}
+          >
+            <Link href="/admin" className="min-w-0">
+              <p className="truncate text-[15px] font-semibold">
+                {restaurant.name}
+              </p>
+              <p
+                className="truncate text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {userName}
+              </p>
+            </Link>
+            <HeaderMenus
+              nimet={nimet}
+              t={t}
+              alerts={alerts}
+              userName={userName}
+              restaurantName={restaurant.name}
+              role={role}
+              canOpenSettings={can(role, "settings.view")}
+            />
+          </header>
 
-        {/*
+          {/*
           Kuukausi puhelimessa.
 
           Työpöydän yläpalkki on md:flex, joten sen valitsin katosi
@@ -161,33 +171,34 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           kuukausisivulla. Oma rivi näkyy vain niillä sivuilla joilla
           valitsin oikeasti tekee jotain.
         */}
-        <MobileMonthBar value={month} months={months} />
+          <MobileMonthBar value={month} months={months} locale={locale} />
 
-        {/*
+          {/*
           Työpöydän yläpalkki.
 
           Palkki ja sisältö jakavat saman pehmusteen levyn reunasta,
           joten painikkeet ja korttien oikea reuna ovat samassa
           pystylinjassa.
         */}
-        <TopBar
-          restaurantName={restaurant.name}
-          date={longDate(now, restaurant.timezone)}
-          alerts={alerts}
-          userName={userName}
-          role={role}
-          search={searchItems(role, data.suppliers, data.users, t)}
-          canAddReceipt={can(role, "receipts.add")}
-          canOpenSettings={can(role, "settings.view")}
-          months={months}
-          month={month}
-          locale={locale}
-          t={t}
-        />
+          <TopBar
+            nimet={nimet}
+            restaurantName={restaurant.name}
+            date={longDate(now, restaurant.timezone)}
+            alerts={alerts}
+            userName={userName}
+            role={role}
+            search={searchItems(role, data.suppliers, data.users, t, nimet)}
+            canAddReceipt={can(role, "receipts.add")}
+            canOpenSettings={can(role, "settings.view")}
+            months={months}
+            month={month}
+            locale={locale}
+            t={t}
+          />
 
-        <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">
-          {children}
-        </main>
+          <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">
+            {children}
+          </main>
         </div>
       </div>
     </div>
@@ -213,14 +224,14 @@ function longDate(iso: string, timeZone: string): string {
     year: "numeric",
   }).formatToParts(new Date(iso));
 
-  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
 
   // fi-FI antaa lyhyen viikonpäivän muodossa "ma" — pisteineen tai ilman.
   const weekday = get("weekday").replace(".", "").toUpperCase();
 
   return `${weekday} ${get("day")}.${get("month")}.${get("year")}`;
 }
-
 
 /**
  * Haun sisältö.
@@ -234,8 +245,14 @@ function longDate(iso: string, timeZone: string): string {
 function searchItems(
   role: Parameters<typeof adminNavFor>[0],
   suppliers: { id: string; name: string }[],
-  users: { id: string; name: string; position: StaffPosition | null; active: boolean }[],
+  users: {
+    id: string;
+    name: string;
+    position: StaffPosition | null;
+    active: boolean;
+  }[],
   t: AdminText,
+  nimet: Labels,
 ): SearchItem[] {
   const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, t.nav[s.key]]));
 
@@ -267,7 +284,7 @@ function searchItems(
           id: `staff-${person.id}`,
           label: person.name,
           detail: person.position
-            ? POSITION_LABELS[person.position]
+            ? nimet.positions[person.position]
             : t.kuori.employee,
           href: "/admin/tyontekijat",
           icon: "staff" as const,

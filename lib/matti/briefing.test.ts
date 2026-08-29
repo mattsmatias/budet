@@ -56,7 +56,9 @@ function vuoro(date: string, n: number): Shift {
 
 /** n kuittia jokaiselle päivälle välillä [alku, alku+7). */
 function viikonKuitit(alku: string, summaPerPaiva: number): Receipt[] {
-  return Array.from({ length: 7 }, (_, i) => kuitti(addDays(alku, i), summaPerPaiva));
+  return Array.from({ length: 7 }, (_, i) =>
+    kuitti(addDays(alku, i), summaPerPaiva),
+  );
 }
 
 describe("expenseObservation", () => {
@@ -209,7 +211,9 @@ describe("greeting", () => {
 
   it("vaihtaa tervehdyksen vuorokauden mukaan", () => {
     const hki = "Europe/Helsinki";
-    expect(greeting(new Date("2026-08-26T04:00:00Z"), hki)).toBe("Hyvää huomenta");
+    expect(greeting(new Date("2026-08-26T04:00:00Z"), hki)).toBe(
+      "Hyvää huomenta",
+    );
     expect(greeting(new Date("2026-08-26T18:00:00Z"), hki)).toBe("Hyvää iltaa");
   });
 });

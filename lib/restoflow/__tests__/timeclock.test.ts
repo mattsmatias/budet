@@ -36,11 +36,17 @@ describe("currentState", () => {
   it("siirtyy tauolle ja takaisin", () => {
     const events = [ev("in", t("09:00")), ev("break_start", t("12:00"))];
     expect(currentState(events)).toBe("on_break");
-    expect(currentState([...events, ev("break_end", t("12:30"))])).toBe("working");
+    expect(currentState([...events, ev("break_end", t("12:30"))])).toBe(
+      "working",
+    );
   });
 
   it("uloskirjaus palauttaa off-tilaan myös tauolta", () => {
-    const events = [ev("in", t("09:00")), ev("break_start", t("12:00")), ev("out", t("12:30"))];
+    const events = [
+      ev("in", t("09:00")),
+      ev("break_start", t("12:00")),
+      ev("out", t("12:30")),
+    ];
     expect(currentState(events)).toBe("off");
   });
 
@@ -48,7 +54,9 @@ describe("currentState", () => {
     // Tauko ilman sisäänkirjausta ei tee mitään.
     expect(currentState([ev("break_start", t("09:00"))])).toBe("off");
     // Toinen sisäänkirjaus ei nollaa käynnissä olevaa jaksoa.
-    expect(currentState([ev("in", t("09:00")), ev("in", t("10:00"))])).toBe("working");
+    expect(currentState([ev("in", t("09:00")), ev("in", t("10:00"))])).toBe(
+      "working",
+    );
   });
 
   it("ei riipu tapahtumien järjestyksestä syötteessä", () => {
@@ -80,7 +88,10 @@ describe("computeWorked", () => {
   const HOUR = 3600000;
 
   it("laskee suoran vuoron", () => {
-    const r = computeWorked([ev("in", t("09:00")), ev("out", t("17:00"))], t("18:00"));
+    const r = computeWorked(
+      [ev("in", t("09:00")), ev("out", t("17:00"))],
+      t("18:00"),
+    );
     expect(r.workedMs).toBe(8 * HOUR);
     expect(r.breakMs).toBe(0);
     expect(r.runningSince).toBeNull();
@@ -135,7 +146,11 @@ describe("computeWorked", () => {
 
   it("ohittaa kelvottoman aikaleiman", () => {
     const r = computeWorked(
-      [ev("in", t("09:00")), ev("break_start", "ei-aika"), ev("out", t("17:00"))],
+      [
+        ev("in", t("09:00")),
+        ev("break_start", "ei-aika"),
+        ev("out", t("17:00")),
+      ],
       t("18:00"),
     );
     expect(r.workedMs).toBe(8 * HOUR);
@@ -157,7 +172,9 @@ describe("workedOnDate", () => {
       ev("in", t("10:00")),
       ev("out", t("14:00")),
     ];
-    expect(workedOnDate(events, D, t("20:00"), ZONE).workedMs).toBe(4 * 3600000);
+    expect(workedOnDate(events, D, t("20:00"), ZONE).workedMs).toBe(
+      4 * 3600000,
+    );
   });
 });
 

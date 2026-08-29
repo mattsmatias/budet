@@ -37,7 +37,12 @@ describe("parseReceiptPages", () => {
 
   it("hylkää rivit joilla ei ole polkua", () => {
     const pages = parseReceiptPages(
-      JSON.stringify([{ path: "" }, { path: "   " }, { hash: "x" }, { path: "ok.jpg" }]),
+      JSON.stringify([
+        { path: "" },
+        { path: "   " },
+        { hash: "x" },
+        { path: "ok.jpg" },
+      ]),
     );
 
     expect(pages).toEqual([{ path: "ok.jpg", hash: "" }]);
@@ -54,7 +59,9 @@ describe("parseReceiptPages", () => {
   it("täydentää puuttuvan tiivisteen tyhjäksi eikä pudota sivua", () => {
     // Tiiviste on kaksoiskappaleiden tunnistusta varten. Sen puute ei
     // tee sivusta kelvotonta: kuva on silti kuitin sivu.
-    const pages = parseReceiptPages(JSON.stringify([{ path: "a.jpg", hash: 7 }]));
+    const pages = parseReceiptPages(
+      JSON.stringify([{ path: "a.jpg", hash: 7 }]),
+    );
 
     expect(pages).toEqual([{ path: "a.jpg", hash: "" }]);
   });

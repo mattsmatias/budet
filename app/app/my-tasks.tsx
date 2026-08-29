@@ -1,5 +1,11 @@
 import { completeTask } from "@/app/admin/tehtavat/actions";
-import { daysLate, isOpen, sortTasks, statusOf, type Task } from "@/lib/restoflow/tasks";
+import {
+  daysLate,
+  isOpen,
+  sortTasks,
+  statusOf,
+  type Task,
+} from "@/lib/restoflow/tasks";
 import { RfIcon } from "@/components/restoflow/icons";
 import { fill } from "@/lib/i18n/auth-text";
 import type { WorkerText } from "@/lib/i18n/worker-text";
@@ -90,11 +96,15 @@ export function MyTasks({
                   >
                     {status === "overdue"
                       ? late === 0
-                        ? fill(t.tehtavat.overdueToday, { aika: task.dueTime ?? "" })
+                        ? fill(t.tehtavat.overdueToday, {
+                            aika: task.dueTime ?? "",
+                          })
                         : fill(t.tehtavat.overdueDays, {
                             maara: String(late),
                             yksikko:
-                              late === 1 ? t.tehtavat.dayOne : t.tehtavat.dayMany,
+                              late === 1
+                                ? t.tehtavat.dayOne
+                                : t.tehtavat.dayMany,
                           })
                       : status === "due_today"
                         ? t.yleinen.today +

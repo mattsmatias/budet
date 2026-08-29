@@ -46,7 +46,9 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const parsed = requestSchema.safeParse(await request.json().catch(() => null));
+  const parsed = requestSchema.safeParse(
+    await request.json().catch(() => null),
+  );
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -89,7 +91,10 @@ export async function POST(request: Request) {
   // Rooliportti. Työkalut tarkistavat oikeutensa erikseen, mutta
   // ilman tätä väärä rooli saisi silti mallin vastaamaan.
   if (!can(ctx.role, "matti.use")) {
-    return NextResponse.json({ error: "Ei oikeutta Mattiin." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Ei oikeutta Mattiin." },
+      { status: 403 },
+    );
   }
 
   const supabase = await createClient();

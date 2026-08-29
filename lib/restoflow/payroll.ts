@@ -62,11 +62,7 @@ export interface TimeCorrection {
 }
 
 export type PayrollIssueKind =
-  | "missing_out"
-  | "missing_rate"
-  | "illogical"
-  | "implausible"
-  | "running";
+  "missing_out" | "missing_rate" | "illogical" | "implausible" | "running";
 
 /**
  * Pisin uskottava yhtenäinen työjakso.
@@ -184,7 +180,8 @@ export function resolveWorkday(input: {
   const segments = workSegments(dayEvents, nowIso);
 
   const firstIn = dayEvents.find((e) => e.type === "in")?.at ?? null;
-  const lastOut = [...dayEvents].reverse().find((e) => e.type === "out")?.at ?? null;
+  const lastOut =
+    [...dayEvents].reverse().find((e) => e.type === "out")?.at ?? null;
 
   /*
    * Auki jäänyt leimaus ei muodosta palkkaa.
@@ -214,7 +211,10 @@ export function resolveWorkday(input: {
 
   const workedMs = segments.reduce((sum, s) => sum + (s.endMs - s.startMs), 0);
 
-  const longest = segments.reduce((max, s) => Math.max(max, s.endMs - s.startMs), 0);
+  const longest = segments.reduce(
+    (max, s) => Math.max(max, s.endMs - s.startMs),
+    0,
+  );
   if (longest > IMPLAUSIBLE_SEGMENT_MINUTES * 60000) {
     issues.push({
       kind: "implausible",
@@ -246,7 +246,10 @@ export function resolveWorkday(input: {
 // ---------------------------------------------------------------------------
 
 /** Onko palkkalaji voimassa annettuna päivänä? */
-export function componentApplies(component: PayComponent, date: string): boolean {
+export function componentApplies(
+  component: PayComponent,
+  date: string,
+): boolean {
   if (!component.active) return false;
   if (date < component.validFrom) return false;
   if (component.validTo !== null && date > component.validTo) return false;
@@ -286,7 +289,9 @@ export function componentMinutes(
 
         // from > to tarkoittaa keskiyön yli: 23:00-06:00 on 1380 -> 360.
         const inside =
-          from <= to ? minute >= from && minute < to : minute >= from || minute < to;
+          from <= to
+            ? minute >= from && minute < to
+            : minute >= from || minute < to;
 
         if (!inside) continue;
       }
@@ -338,7 +343,15 @@ export function buildPayslip(input: {
   timezone: string;
 }): Payslip {
   const {
-    user, from, to, events, shifts, corrections, components, nowIso, timezone,
+    user,
+    from,
+    to,
+    events,
+    shifts,
+    corrections,
+    components,
+    nowIso,
+    timezone,
   } = input;
 
   const mine = events.filter((e) => e.userId === user.id);
@@ -381,7 +394,9 @@ export function buildPayslip(input: {
     // --- Peruspalkka -----------------------------------------------------
 
     const baseCents =
-      rate === null ? 0 : Math.round(msToHours(workday.workedMinutes * 60000) * rate);
+      rate === null
+        ? 0
+        : Math.round(msToHours(workday.workedMinutes * 60000) * rate);
 
     lines.push({
       date,
@@ -427,7 +442,7 @@ export function buildPayslip(input: {
         component.unit === "per_hour"
           ? Math.round(hours * component.value)
           : component.unit === "percent"
-            ? Math.round(hours * ((rate ?? 0) * component.value) / 100)
+            ? Math.round((hours * ((rate ?? 0) * component.value)) / 100)
             : Math.round(component.value);
 
       lines.push({
@@ -497,7 +512,10 @@ export function halfMonthPeriods(month: string): PeriodBounds[] {
 
   return [
     { startsOn: `${month}-01`, endsOn: `${month}-15` },
-    { startsOn: `${month}-16`, endsOn: `${month}-${String(last).padStart(2, "0")}` },
+    {
+      startsOn: `${month}-16`,
+      endsOn: `${month}-${String(last).padStart(2, "0")}`,
+    },
   ];
 }
 

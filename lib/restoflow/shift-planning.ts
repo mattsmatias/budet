@@ -56,7 +56,10 @@ export function isLive(shift: Shift): boolean {
  * leviäisi siitä jokaiseen summaan.
  */
 export function plannedMinutes(shift: Shift): number {
-  return Math.max(0, shiftDurationMinutes(shift) - Math.max(0, shift.breakMinutes));
+  return Math.max(
+    0,
+    shiftDurationMinutes(shift) - Math.max(0, shift.breakMinutes),
+  );
 }
 
 /**
@@ -93,7 +96,10 @@ export function overlaps(a: Shift, b: Shift): boolean {
 
   const first = span(a);
   const second = span(b);
-  const shifted = { start: second.start + gap * 1440, end: second.end + gap * 1440 };
+  const shifted = {
+    start: second.start + gap * 1440,
+    end: second.end + gap * 1440,
+  };
 
   return first.start < shifted.end && shifted.start < first.end;
 }
@@ -116,7 +122,10 @@ export interface OverlapPair {
  */
 export function findOverlaps(shifts: Shift[], users: User[]): OverlapPair[] {
   const live = shifts.filter(
-    (shift) => shift.cancelledAt === null && shift.userId !== null && shift.userId !== "",
+    (shift) =>
+      shift.cancelledAt === null &&
+      shift.userId !== null &&
+      shift.userId !== "",
   );
 
   const byUser = new Map<string, Shift[]>();
@@ -129,7 +138,9 @@ export function findOverlaps(shifts: Shift[], users: User[]): OverlapPair[] {
   for (const [userId, list] of byUser) {
     const sorted = list
       .slice()
-      .sort((x, y) => `${x.date}${x.startTime}`.localeCompare(`${y.date}${y.startTime}`));
+      .sort((x, y) =>
+        `${x.date}${x.startTime}`.localeCompare(`${y.date}${y.startTime}`),
+      );
 
     for (let i = 0; i < sorted.length; i += 1) {
       for (let j = i + 1; j < sorted.length; j += 1) {
@@ -191,7 +202,9 @@ export function planSummary(input: {
   shifts: Shift[];
   users: User[];
 }): PlanSummary {
-  const assigned = input.shifts.filter((s) => s.userId !== null && s.userId !== "");
+  const assigned = input.shifts.filter(
+    (s) => s.userId !== null && s.userId !== "",
+  );
   const open = input.shifts.filter((s) => s.userId === null || s.userId === "");
 
   const live = assigned.filter((s) => s.cancelledAt === null);
@@ -217,8 +230,10 @@ export function planSummary(input: {
     people,
     shiftCount: assigned.length + open.length,
     draftCount: input.shifts.filter((s) => publicationOf(s) === "draft").length,
-    publishedCount: input.shifts.filter((s) => publicationOf(s) === "published").length,
-    cancelledCount: input.shifts.filter((s) => publicationOf(s) === "cancelled").length,
+    publishedCount: input.shifts.filter((s) => publicationOf(s) === "published")
+      .length,
+    cancelledCount: input.shifts.filter((s) => publicationOf(s) === "cancelled")
+      .length,
     openCount: open.filter((s) => s.cancelledAt === null).length,
     plannedMinutes: minutes,
     labourCostCents: cost,

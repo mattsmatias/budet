@@ -1,11 +1,16 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { type Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
-import { cancelShift, deleteShift, saveShift, type AdminState } from "../actions";
+import {
+  cancelShift,
+  deleteShift,
+  saveShift,
+  type AdminState,
+} from "../actions";
 import { publicationOf } from "@/lib/restoflow/shift-planning";
 import {
-  POSITION_LABELS,
   type Shift,
   type StaffPosition,
   type User,
@@ -24,11 +29,13 @@ const POSITIONS: StaffPosition[] = ["waiter", "kitchen", "manager", "cleaning"];
  * työvuorolista tehdään usein ennen kuin tiedetään kuka on käytettävissä.
  */
 export function ShiftForm({
+  nimet,
   users,
   shift,
   defaultDate,
   onDone,
 }: {
+  nimet: Labels;
   users: User[];
   shift?: Shift;
   defaultDate: string;
@@ -65,7 +72,10 @@ export function ShiftForm({
           name="userId"
           defaultValue={shift?.userId ?? ""}
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <option value="">Avoin vuoro</option>
           {users
@@ -73,7 +83,7 @@ export function ShiftForm({
             .map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name}
-                {u.position ? ` · ${POSITION_LABELS[u.position]}` : ""}
+                {u.position ? ` · ${nimet.positions[u.position]}` : ""}
               </option>
             ))}
         </select>
@@ -83,7 +93,10 @@ export function ShiftForm({
       </div>
 
       <div>
-        <label htmlFor="shift-position" className="block text-[13px] font-medium">
+        <label
+          htmlFor="shift-position"
+          className="block text-[13px] font-medium"
+        >
           Tehtävä
         </label>
         <select
@@ -91,12 +104,15 @@ export function ShiftForm({
           name="position"
           defaultValue=""
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
           <option value="">—</option>
           {POSITIONS.map((p) => (
             <option key={p} value={p}>
-              {POSITION_LABELS[p]}
+              {nimet.positions[p]}
             </option>
           ))}
         </select>
@@ -194,7 +210,10 @@ export function ShiftForm({
       </div>
 
       {shift ? (
-        <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+        <p
+          className="text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           Jos muutat hyväksytyn vuoron aikoja, tekijän on hyväksyttävä se
           uudelleen. Vanhat ajat näytetään hänelle.
         </p>
@@ -205,9 +224,11 @@ export function ShiftForm({
 
 /** Uuden vuoron avaava painike. */
 export function NewShiftButton({
+  nimet,
   users,
   defaultDate,
 }: {
+  nimet: Labels;
   users: User[];
   defaultDate: string;
 }) {
@@ -250,16 +271,23 @@ export function NewShiftButton({
   return (
     <Card>
       <p className="mb-3 text-[15px] font-semibold">Uusi työvuoro</p>
-      <ShiftForm users={users} defaultDate={defaultDate} onDone={() => setOpen(false)} />
+      <ShiftForm
+        nimet={nimet}
+        users={users}
+        defaultDate={defaultDate}
+        onDone={() => setOpen(false)}
+      />
     </Card>
   );
 }
 
 /** Vuoron muokkaus ja poisto. */
 export function EditShift({
+  nimet,
   users,
   shift,
 }: {
+  nimet: Labels;
   users: User[];
   shift: Shift;
 }) {
@@ -288,8 +316,12 @@ export function EditShift({
   }
 
   return (
-    <div className="mt-3 w-full basis-full border-t pt-3" style={{ borderColor: "var(--rf-line)" }}>
+    <div
+      className="mt-3 w-full basis-full border-t pt-3"
+      style={{ borderColor: "var(--rf-line)" }}
+    >
       <ShiftForm
+        nimet={nimet}
         users={users}
         shift={shift}
         defaultDate={shift.date}
@@ -311,7 +343,10 @@ export function EditShift({
             jälkikäteen.
           </p>
         ) : confirming ? (
-          <form action={julkaistu ? cancelShift : deleteShift} className="flex flex-wrap items-center gap-2">
+          <form
+            action={julkaistu ? cancelShift : deleteShift}
+            className="flex flex-wrap items-center gap-2"
+          >
             <input type="hidden" name="shiftId" value={shift.id} />
             <button
               type="submit"
@@ -332,7 +367,10 @@ export function EditShift({
             >
               Peruuta
             </button>
-            <span className="basis-full text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <span
+              className="basis-full text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               {julkaistu
                 ? "Työntekijä on jo nähnyt tämän vuoron. Peruutus jää näkyviin hänelle ja historiaan."
                 : "Luonnosta ei ole näytetty kenellekään."}
@@ -395,7 +433,10 @@ function Input({
         max={max}
         step={step}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       />
     </div>
   );

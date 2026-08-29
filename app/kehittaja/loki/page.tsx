@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { fetchAudit } from "@/lib/kehittaja/queries";
-import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/restoflow/ui";
+import {
+  Card,
+  CardHeader,
+  EmptyState,
+  MetricCard,
+  Pill,
+} from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 
 export const metadata = { title: "Toimintaloki" };
@@ -62,7 +68,9 @@ export default async function DevAuditPage({
   return (
     <div className="rf-stagger space-y-5">
       <header>
-        <h1 className="text-[22px] font-bold tracking-[-0.02em]">Toimintaloki</h1>
+        <h1 className="text-[22px] font-bold tracking-[-0.02em]">
+          Toimintaloki
+        </h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Järjestelmän ylläpitäjän toimet. Rivejä ei voi muuttaa eikä poistaa.
         </p>
@@ -84,7 +92,13 @@ export default async function DevAuditPage({
         />
         <MetricCard
           label="Ravintoloita koskien"
-          value={new Set(rows.filter((r) => r.targetType === "restaurant").map((r) => r.targetId)).size}
+          value={
+            new Set(
+              rows
+                .filter((r) => r.targetType === "restaurant")
+                .map((r) => r.targetId),
+            ).size
+          }
           icon={<RfIcon name="suppliers" size={17} />}
           tileTone="muted"
         />
@@ -96,11 +110,15 @@ export default async function DevAuditPage({
           return (
             <Link
               key={n}
-              href={n === 100 ? "/kehittaja/loki" : `/kehittaja/loki?maara=${n}`}
+              href={
+                n === 100 ? "/kehittaja/loki" : `/kehittaja/loki?maara=${n}`
+              }
               aria-current={active ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px]"
               style={{
-                background: active ? "var(--rf-accent-soft)" : "var(--rf-inset)",
+                background: active
+                  ? "var(--rf-accent-soft)"
+                  : "var(--rf-inset)",
                 color: active ? "var(--rf-accent)" : "var(--rf-text-2)",
                 fontWeight: active ? 700 : 500,
                 borderRadius: 980,
@@ -132,8 +150,12 @@ export default async function DevAuditPage({
                   aria-hidden="true"
                   className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center"
                   style={{
-                    background: row.critical ? "var(--rf-amber-bg)" : "var(--rf-inset)",
-                    color: row.critical ? "var(--rf-amber-text)" : "var(--rf-text-3)",
+                    background: row.critical
+                      ? "var(--rf-amber-bg)"
+                      : "var(--rf-inset)",
+                    color: row.critical
+                      ? "var(--rf-amber-text)"
+                      : "var(--rf-text-3)",
                     borderRadius: 999,
                   }}
                 >
@@ -141,7 +163,9 @@ export default async function DevAuditPage({
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] leading-snug">{row.summary}</span>
+                  <span className="block text-[14px] leading-snug">
+                    {row.summary}
+                  </span>
 
                   <span
                     className="rf-tabular mt-0.5 block text-[12px]"

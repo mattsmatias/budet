@@ -20,7 +20,13 @@ export function SignInForm({ next, t }: { next: string; t: AuthText }) {
   return (
     <form action={action} className="mt-7 space-y-4">
       <input type="hidden" name="next" value={next} />
-      <Field label={t.kentat.email} name="email" type="email" autoComplete="email" required />
+      <Field
+        label={t.kentat.email}
+        name="email"
+        type="email"
+        autoComplete="email"
+        required
+      />
       <Field
         label={t.kentat.password}
         name="password"

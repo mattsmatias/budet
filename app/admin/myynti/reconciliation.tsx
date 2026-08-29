@@ -30,12 +30,18 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
     return (
       <div
         className="flex items-start gap-2.5 px-3.5 py-3"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
         <span className="mt-px shrink-0" style={{ color: "var(--rf-text-3)" }}>
           <RfIcon name="info" size={15} />
         </span>
-        <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="text-[12.5px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           Kassan lukuja ei ole, joten päivää ei ole täsmäytetty. Kuvaa
           päiväraportti, niin Kate vertaa oman laskelmansa siihen.
         </p>
@@ -84,7 +90,9 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
         <div className="min-w-0">
           <p
             className="text-[13px] font-bold"
-            style={{ color: ok ? "var(--rf-green-text)" : "var(--rf-red-text)" }}
+            style={{
+              color: ok ? "var(--rf-green-text)" : "var(--rf-red-text)",
+            }}
           >
             {heading}
           </p>
@@ -111,12 +119,21 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
       {result.note ? (
         <div
           className="mt-2.5 flex items-start gap-2.5 px-3.5 py-3"
-          style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
         >
-          <span className="mt-px shrink-0" style={{ color: "var(--rf-text-3)" }}>
+          <span
+            className="mt-px shrink-0"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             <RfIcon name="info" size={15} />
           </span>
-          <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="text-[12.5px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {result.note}
           </p>
         </div>
@@ -133,9 +150,15 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
         <thead>
           <tr>
             <th scope="col">Kohde</th>
-            <th scope="col" className="text-right">Kassa</th>
-            <th scope="col" className="text-right">Kate</th>
-            <th scope="col" className="text-right">Ero</th>
+            <th scope="col" className="text-right">
+              Kassa
+            </th>
+            <th scope="col" className="text-right">
+              Kate
+            </th>
+            <th scope="col" className="text-right">
+              Ero
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -167,11 +190,16 @@ function Row({
         <span className={strong ? "font-semibold" : ""}>{label}</span>
       </td>
 
-      <td className="rf-tabular text-right" style={{ color: "var(--rf-text-2)" }}>
+      <td
+        className="rf-tabular text-right"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {posCents === null ? "—" : formatMoney(posCents)}
       </td>
 
-      <td className="rf-tabular text-right font-semibold">{formatMoney(budetCents)}</td>
+      <td className="rf-tabular text-right font-semibold">
+        {formatMoney(budetCents)}
+      </td>
 
       <td
         className="rf-tabular text-right"

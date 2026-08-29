@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { formatMonth } from "@/lib/restoflow/expenses";
 import { useFormStatus } from "react-dom";
 import { closeMonth, reopenMonth, type AdminState } from "../actions";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -17,9 +19,12 @@ const initial: AdminState = {};
 export function MonthClosing({
   closedMonths,
   selectableMonths,
+  locale,
 }: {
   closedMonths: string[];
   selectableMonths: string[];
+  /** Kayttoliittyman kieli: kuukauden nimi tulee siita. */
+  locale: AppLocale;
 }) {
   const [state, action] = useActionState(closeMonth, initial);
   const open = selectableMonths.filter((m) => !closedMonths.includes(m));
@@ -32,13 +37,16 @@ export function MonthClosing({
             <li
               key={month}
               className="flex items-center justify-between gap-3 px-3.5 py-2.5"
-              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+              style={{
+                background: "var(--rf-inset)",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
               <span className="flex items-center gap-2 text-[14px] font-medium">
                 <span style={{ color: "var(--rf-green-text)" }}>
                   <RfIcon name="check" size={16} />
                 </span>
-                {formatMonth(month)}
+                {formatMonth(month, locale)}
               </span>
               <ReopenButton month={month} />
             </li>
@@ -61,11 +69,14 @@ export function MonthClosing({
               name="month"
               defaultValue={open[0]}
               className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
-              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+              style={{
+                background: "var(--rf-inset)",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
               {open.map((m) => (
                 <option key={m} value={m}>
-                  {formatMonth(m)}
+                  {formatMonth(m, locale)}
                 </option>
               ))}
             </select>
@@ -76,14 +87,20 @@ export function MonthClosing({
             placeholder="Merkintä, esim. lähetetty tilitoimistoon"
             maxLength={200}
             className="w-full px-3.5 py-2.5 text-[16px] outline-none"
-            style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
           />
 
           <Feedback state={state} />
 
           <Submit label="Sulje kuukausi" />
 
-          <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             Suljetun kuukauden kuitteja ei voi lisätä, muuttaa eikä poistaa.
             Kuluvaa kuukautta ei voi sulkea. Avaaminen onnistuu tästä samasta
             näkymästä.
@@ -190,18 +207,13 @@ function Submit({ label }: { label: string }) {
       type="submit"
       disabled={pending}
       className="rf-press w-full py-2.5 text-[14px] font-semibold disabled:opacity-50 md:w-auto md:px-5"
-      style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-accent)",
+        color: "var(--rf-on-accent)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       {pending ? "Tallennetaan…" : label}
     </button>
   );
-}
-
-function formatMonth(month: string): string {
-  const NAMES = [
-    "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-    "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu",
-  ];
-  const [year, m] = month.split("-");
-  return `${NAMES[Number(m) - 1]} ${year}`;
 }

@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -15,7 +16,6 @@ import {
   relativeChange,
   totalsByCategory,
 } from "@/lib/restoflow/expenses";
-import { CATEGORY_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import {
   BarRow,
@@ -28,17 +28,17 @@ import { CountUp } from "@/components/restoflow/count-up";
 
 export const metadata = { title: "Kulut" };
 
-
 export default async function ExpensesPage({
   searchParams,
 }: PageProps<"/admin/kulut">) {
-  const {
-    receipts, month,
-  } = await adminContext("/admin/kulut");
-  const t = adminText(await resolveLocale());
+  const { receipts, month } = await adminContext("/admin/kulut");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const params = await searchParams;
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) ? requested : month;
 
   const current = periodTotals(receipts, viewMonth);
@@ -55,7 +55,9 @@ export default async function ExpensesPage({
    * vertailu, viiva on silmäys suuntaan. Viiva piirretään vain jos
    * kuukausia on kolme joissa on kuluja — kahdesta ei näe suuntaa.
    */
-  const trend = monthlySeries(receipts, viewMonth, 6).map((point) => point.totalCents);
+  const trend = monthlySeries(receipts, viewMonth, 6).map(
+    (point) => point.totalCents,
+  );
   const hasTrend = trend.filter((value) => value > 0).length >= 3;
 
   return (
@@ -110,7 +112,7 @@ export default async function ExpensesPage({
               ? t.yleiskatsaus.noReceiptsThisMonth
               : change === null
                 ? t.yleiskatsaus.noComparison
-                : `${formatMoney(previous.totalCents)} ${monthWord(previousMonth(viewMonth))}ssa`
+                : `${formatMoney(previous.totalCents)} ${monthWord(previousMonth(viewMonth), locale)}ssa`
           }
           /*
            * Ei erillistä "kuittien summa, ei pankkitili" -riviä.
@@ -120,7 +122,11 @@ export default async function ExpensesPage({
            * Otsikko sanoo saman: kirjatut kulut on kirjattujen
            * kuittien summa, ja jalka kertoo vertailun.
            */
-          trend={hasTrend ? <Sparkline values={trend} width={64} height={20} /> : undefined}
+          trend={
+            hasTrend ? (
+              <Sparkline values={trend} width={64} height={20} />
+            ) : undefined
+          }
         />
 
         <MetricCard
@@ -132,7 +138,7 @@ export default async function ExpensesPage({
           conclusion={
             previous.receiptCount === 0
               ? t.yleiskatsaus.noComparison
-              : `${receiptCountLabel(previous.receiptCount)} ${monthWord(previousMonth(viewMonth))}ssa`
+              : `${receiptCountLabel(previous.receiptCount, locale)} ${monthWord(previousMonth(viewMonth), locale)}ssa`
           }
           href="/admin/kuitit"
           linkLabel="Kuitit"
@@ -177,19 +183,21 @@ export default async function ExpensesPage({
         <Card>
           <CardHeader
             title="Kategorioittain"
-            subtitle={`${formatMonth(viewMonth)} · ${categories.length} kategoriaa`}
+            subtitle={`${formatMonth(viewMonth, locale)} · ${categories.length} kategoriaa`}
           />
           {categories.length === 0 ? (
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>{t.kulut.noneThisMonth}</p>
+            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+              {t.kulut.noneThisMonth}
+            </p>
           ) : (
             <div className="space-y-4">
               {categories.map((c) => (
                 <BarRow
                   key={c.category}
-                  label={CATEGORY_LABELS[c.category]}
+                  label={nimet.categories[c.category]}
                   valueCents={c.totalCents}
                   share={c.share}
-                  meta={receiptCountLabel(c.receiptCount)}
+                  meta={receiptCountLabel(c.receiptCount, locale)}
                 />
               ))}
             </div>
@@ -197,10 +205,7 @@ export default async function ExpensesPage({
         </Card>
 
         <Card>
-          <CardHeader
-            title="Kulujen kehitys"
-            subtitle={t.kulut.fourMonths}
-          />
+          <CardHeader title="Kulujen kehitys" subtitle={t.kulut.fourMonths} />
           <table className="rf-table w-full text-[14px]">
             <caption className="sr-only">{t.sanat.monthlyExpenses}</caption>
             <tbody>
@@ -210,15 +215,19 @@ export default async function ExpensesPage({
                   <tr key={point.month}>
                     <td
                       className="py-3 font-medium"
-                      style={{ color: isCurrent ? "var(--rf-text)" : "var(--rf-text-2)" }}
+                      style={{
+                        color: isCurrent
+                          ? "var(--rf-text)"
+                          : "var(--rf-text-2)",
+                      }}
                     >
-                      {formatMonth(point.month)}
+                      {formatMonth(point.month, locale)}
                     </td>
                     <td
                       className="rf-tabular py-3 text-right"
                       style={{ color: "var(--rf-text-3)" }}
                     >
-                      {receiptCountLabel(point.receiptCount)}
+                      {receiptCountLabel(point.receiptCount, locale)}
                     </td>
                     <td className="rf-tabular py-3 text-right font-semibold">
                       {formatMoney(point.totalCents)}
@@ -228,10 +237,11 @@ export default async function ExpensesPage({
               })}
             </tbody>
           </table>
-          <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kulut.notSalesChart}</p>
+          <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            {t.kulut.notSalesChart}
+          </p>
         </Card>
       </div>
     </div>
   );
 }
-

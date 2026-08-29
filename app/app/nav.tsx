@@ -47,7 +47,13 @@ type Tab = (typeof TABS)[number];
  * pystypalstassa. Sticky-alapalkki flex-rivin jäsenenä ei tarttuisi
  * mihinkään.
  */
-export function AppSidebar({ userName, t }: { userName: string; t: WorkerText }) {
+export function AppSidebar({
+  userName,
+  t,
+}: {
+  userName: string;
+  t: WorkerText;
+}) {
   return <DesktopSidebar tabs={TABS} userName={userName} t={t} />;
 }
 
@@ -87,7 +93,10 @@ function DesktopSidebar({
         </Link>
       </div>
 
-      <nav aria-label={t.nav.mainNav} className="flex-1 overflow-y-auto px-2.5 pb-4">
+      <nav
+        aria-label={t.nav.mainNav}
+        className="flex-1 overflow-y-auto px-2.5 pb-4"
+      >
         <ul className="space-y-0.5">
           {tabs.map((tab) => {
             const active = isActive(tab.href);
@@ -100,7 +109,9 @@ function DesktopSidebar({
                   className="rf-press flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px]"
                   style={{
                     background: active ? "var(--rf-accent-bg)" : "transparent",
-                    color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+                    color: active
+                      ? "var(--rf-accent-strong)"
+                      : "var(--rf-text-2)",
                     fontWeight: active ? 600 : 500,
                   }}
                 >
@@ -113,7 +124,10 @@ function DesktopSidebar({
         </ul>
       </nav>
 
-      <div className="border-t px-5 py-4" style={{ borderColor: "var(--rf-line)" }}>
+      <div
+        className="border-t px-5 py-4"
+        style={{ borderColor: "var(--rf-line)" }}
+      >
         <p className="truncate text-[13px] font-medium">{userName}</p>
         <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
           {t.nav.workerView}
@@ -161,7 +175,9 @@ function MobileBar({ tabs, t }: { tabs: readonly Tab[]; t: WorkerText }) {
                   aria-current={active ? "page" : undefined}
                   className="rf-press flex flex-col items-center gap-1 pt-2 pb-2"
                   style={{
-                    color: active ? "var(--rf-accent-strong)" : "var(--rf-text-3)",
+                    color: active
+                      ? "var(--rf-accent-strong)"
+                      : "var(--rf-text-3)",
                   }}
                 >
                   {/*
@@ -176,7 +192,9 @@ function MobileBar({ tabs, t }: { tabs: readonly Tab[]; t: WorkerText }) {
                   <span
                     className="flex items-center justify-center px-4 py-1"
                     style={{
-                      background: active ? "var(--rf-accent-bg)" : "transparent",
+                      background: active
+                        ? "var(--rf-accent-bg)"
+                        : "transparent",
                       borderRadius: 10,
                     }}
                   >
@@ -197,4 +215,3 @@ function MobileBar({ tabs, t }: { tabs: readonly Tab[]; t: WorkerText }) {
     </div>
   );
 }
-

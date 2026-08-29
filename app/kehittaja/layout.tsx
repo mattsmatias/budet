@@ -20,7 +20,9 @@ export const metadata = {
  * tuijottamaan tyhjää sivua — ei turvatoimi. Turvatoimi joka on vain
  * käyttöliittymässä ei ole turvatoimi.
  */
-export default async function DevLayout({ children }: LayoutProps<"/kehittaja">) {
+export default async function DevLayout({
+  children,
+}: LayoutProps<"/kehittaja">) {
   await requireSuperAdmin();
 
   return (

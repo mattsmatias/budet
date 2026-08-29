@@ -16,15 +16,24 @@ export default async function ForgotPasswordPage() {
       <h1 className="text-[26px] font-semibold tracking-tight">
         {t.unohtui.title}
       </h1>
-      <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="mt-2 text-[14px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {t.unohtui.body}
       </p>
 
       <ResetRequestForm t={t} />
 
-      <p className="mt-6 text-center text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="mt-6 text-center text-[13px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {t.unohtui.remembered}{" "}
-        <Link href="/kirjaudu" className="font-medium underline underline-offset-4">
+        <Link
+          href="/kirjaudu"
+          className="font-medium underline underline-offset-4"
+        >
           {t.unohtui.signIn}
         </Link>
       </p>

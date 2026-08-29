@@ -16,7 +16,9 @@ export function NewTask({ users, today }: { users: User[]; today: string }) {
   const [open, setOpen] = useState(false);
 
   if (open) {
-    return <TaskForm users={users} today={today} onClose={() => setOpen(false)} />;
+    return (
+      <TaskForm users={users} today={today} onClose={() => setOpen(false)} />
+    );
   }
 
   return (

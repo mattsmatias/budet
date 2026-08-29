@@ -20,9 +20,15 @@ import { TOOLS, findTool } from "../tools";
 /** Kuten malli sen antaa: viisi päivää, kolme ruokaa kussakin. */
 const VIIKKO = {
   days: [
-    { date: "2026-08-24", items: [{ name: "Juureskeitto" }, { name: "Lihapullat ja muusi" }] },
+    {
+      date: "2026-08-24",
+      items: [{ name: "Juureskeitto" }, { name: "Lihapullat ja muusi" }],
+    },
     { date: "2026-08-25", items: [{ name: "Tomaatti-basilikakeitto" }] },
-    { date: "2026-08-26", items: [{ name: "Kanakeitto" }, { name: "Broilerpasta" }] },
+    {
+      date: "2026-08-26",
+      items: [{ name: "Kanakeitto" }, { name: "Broilerpasta" }],
+    },
     { date: "2026-08-27", items: [{ name: "Hernekeitto" }] },
     { date: "2026-08-28", items: [{ name: "Kalakeitto" }] },
   ],
@@ -46,7 +52,13 @@ describe("lounaslistan argumentit", () => {
 
     expect(
       tool.schema.safeParse({
-        days: [{ date: "2026-08-24", priceEuros: 15.5, items: [{ name: "Lohikeitto" }] }],
+        days: [
+          {
+            date: "2026-08-24",
+            priceEuros: 15.5,
+            items: [{ name: "Lohikeitto" }],
+          },
+        ],
       }).success,
     ).toBe(true);
   });
@@ -86,9 +98,10 @@ describe("lounaslistan argumentit", () => {
   it("hylkää päivän ilman ruokia", () => {
     const tool = findTool("propose_lunch_items")!;
 
-    expect(tool.schema.safeParse({ days: [{ date: "2026-08-24", items: [] }] }).success).toBe(
-      false,
-    );
+    expect(
+      tool.schema.safeParse({ days: [{ date: "2026-08-24", items: [] }] })
+        .success,
+    ).toBe(false);
   });
 });
 

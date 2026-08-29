@@ -7,6 +7,8 @@
  */
 
 import { can } from "@/lib/restoflow/permissions";
+import { labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatRate } from "@/lib/money";
 import { summarise } from "./sales-vat";
 import {
@@ -27,12 +29,7 @@ import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
 import { staffCostCents, workedBetween } from "@/lib/restoflow/timeclock";
 import { windowStartIso } from "@/lib/restoflow/clock-context";
-import {
-  CATEGORY_LABELS,
-  PAYMENT_LABELS,
-  POSITION_LABELS,
-  REVIEW_REASON_LABELS,
-} from "@/lib/restoflow/types";
+import {} from "@/lib/restoflow/types";
 
 export type ReportKind =
   | "kulut"
@@ -85,7 +82,9 @@ export async function buildReportRows(
   month: string,
   role: Parameters<typeof can>[0],
   timezone: string,
+  locale: AppLocale,
 ): Promise<string[][]> {
+  const nimet = labels(locale);
   // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
   const showsRates = can(role, "staff.rates.view");
 
@@ -135,11 +134,15 @@ export async function buildReportRows(
         ["Työntekijä", "Tehtävä", "Tunnit"],
         ...rows.map((r) => [
           r.user.name,
-          r.user.position ? POSITION_LABELS[r.user.position] : "—",
+          r.user.position ? nimet.positions[r.user.position] : "—",
           money(Math.round(r.hours * 100)),
         ]),
         [],
-        ["Yhteensä", "", money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100))],
+        [
+          "Yhteensä",
+          "",
+          money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
+        ],
       ];
     }
 
@@ -153,12 +156,15 @@ export async function buildReportRows(
     return [
       ["Kate — henkilöstökuluraportti"],
       ["Kuukausi", month],
-      ["Huom", "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja"],
+      [
+        "Huom",
+        "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja",
+      ],
       [],
       ["Työntekijä", "Tehtävä", "Tunnit", "Tuntipalkka", "Kulu"],
       ...rows.map((r) => [
         r.user.name,
-        r.user.position ? POSITION_LABELS[r.user.position] : "—",
+        r.user.position ? nimet.positions[r.user.position] : "—",
         money(Math.round(r.hours * 100)),
         money(r.user.hourlyRateCents ?? 0),
         money(r.cost),
@@ -181,18 +187,30 @@ export async function buildReportRows(
     case "kuitit": {
       const users = await fetchUsers(restaurantId);
       return [
-        ["Päivä", "Toimittaja", "Kategoria", "Maksutapa", "Kuittinumero", "Netto", "ALV", "Yhteensä", "Tila", "Syyt", "Lisännyt"],
+        [
+          "Päivä",
+          "Toimittaja",
+          "Kategoria",
+          "Maksutapa",
+          "Kuittinumero",
+          "Netto",
+          "ALV",
+          "Yhteensä",
+          "Tila",
+          "Syyt",
+          "Lisännyt",
+        ],
         ...inMonth.map((r) => [
           r.date,
           r.supplierName,
-          CATEGORY_LABELS[r.category],
-          PAYMENT_LABELS[r.paymentMethod],
+          nimet.categories[r.category],
+          nimet.payments[r.paymentMethod],
           r.receiptNumber ?? "",
           money(r.totalCents - (r.vatCents ?? 0)),
           r.vatCents === null ? "" : money(r.vatCents),
           money(r.totalCents),
           r.status === "needs_review" ? "Tarkistettava" : "Tarkistettu",
-          r.reviewReasons.map((x) => REVIEW_REASON_LABELS[x]).join(", "),
+          r.reviewReasons.map((x) => nimet.reviewReasons[x]).join(", "),
           users.find((u) => u.id === r.addedByUserId)?.name ?? "",
         ]),
       ];
@@ -204,7 +222,7 @@ export async function buildReportRows(
       return [
         ["Kategoria", "Kuitteja", "Osuus", "Yhteensä"],
         ...totals.map((t) => [
-          CATEGORY_LABELS[t.category],
+          nimet.categories[t.category],
           String(t.receiptCount),
           `${Math.round(t.share * 100)} %`,
           money(t.totalCents),
@@ -234,7 +252,7 @@ export async function buildReportRows(
       return [
         ["Kategoria", "Budjetti", "Käytetty", "Jäljellä", "Osuus", "Tila"],
         ...progress.map((p) => [
-          CATEGORY_LABELS[p.category],
+          nimet.categories[p.category],
           p.budgetCents === null ? "" : money(p.budgetCents),
           money(p.spentCents),
           p.remainingCents === null ? "" : money(p.remainingCents),
@@ -252,11 +270,14 @@ export async function buildReportRows(
       return [
         ["Kate — kuluraportti"],
         ["Kuukausi", month],
-        ["Huom", "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia"],
+        [
+          "Huom",
+          "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia",
+        ],
         [],
         ["Kategoria", "Kuitteja", "Yhteensä"],
         ...totals.map((t) => [
-          CATEGORY_LABELS[t.category],
+          nimet.categories[t.category],
           String(t.receiptCount),
           money(t.totalCents),
         ]),
@@ -264,7 +285,11 @@ export async function buildReportRows(
         ["Kirjatut kulut yhteensä", "", money(grand)],
         ["Josta ALV", "", money(vat)],
         ["Kuitteja", String(inMonth.length), ""],
-        ["Tarkistettavia", String(inMonth.filter((r) => r.status === "needs_review").length), ""],
+        [
+          "Tarkistettavia",
+          String(inMonth.filter((r) => r.status === "needs_review").length),
+          "",
+        ],
       ];
     }
   }
@@ -283,8 +308,6 @@ const STATUS_LABELS: Record<string, string> = {
 function money(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
-
-
 
 // ---------------------------------------------------------------------------
 
@@ -337,7 +360,8 @@ async function vatReportRows(
   const allLines = perDay.flatMap((entry) => entry.lines);
   const summary = summarise(allLines);
 
-  const nameOf = (id: string) => groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+  const nameOf = (id: string) =>
+    groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
   const unspecified = perDay.filter((entry) => entry.lines.length === 0);
 
   return [
@@ -385,7 +409,10 @@ async function vatReportRows(
             "Käsin kirjattu päivä on yksi luku eikä sitä voi eritellä kannoittain. Nämä eivät ole mukana yllä olevissa summissa.",
           ],
           ["Päivä", "Veroton myynti"],
-          ...unspecified.map((entry) => [entry.day.date, money(entry.day.netCents)]),
+          ...unspecified.map((entry) => [
+            entry.day.date,
+            money(entry.day.netCents),
+          ]),
         ]
       : []),
   ];
@@ -425,7 +452,17 @@ async function accountingReportRows(
     const entries = await fetchJournal(restaurantId, month, false);
 
     return [
-      ["Päivä", "Tosite", "Selite", "Tili", "Tilin nimi", "Debet", "Kredit", "ALV %", "Lähde"],
+      [
+        "Päivä",
+        "Tosite",
+        "Selite",
+        "Tili",
+        "Tilin nimi",
+        "Debet",
+        "Kredit",
+        "ALV %",
+        "Lähde",
+      ],
       ...entries.flatMap((entry) =>
         entry.lines.map((line) => [
           entry.entryDate,
@@ -470,9 +507,19 @@ async function accountingReportRows(
 
     return [
       ["Erä", "Tili", "Nimi", "Summa"],
-      ...income.revenue.map((r) => ["Tuotot", r.number, r.name, money(r.amountCents)]),
+      ...income.revenue.map((r) => [
+        "Tuotot",
+        r.number,
+        r.name,
+        money(r.amountCents),
+      ]),
       ["Tuotot yhteensä", "", "", money(income.revenueTotalCents)],
-      ...income.expenses.map((r) => ["Kulut", r.number, r.name, money(r.amountCents)]),
+      ...income.expenses.map((r) => [
+        "Kulut",
+        r.number,
+        r.name,
+        money(r.amountCents),
+      ]),
       ["Kulut yhteensä", "", "", money(income.expenseTotalCents)],
       ["Tulos", "", "", money(income.resultCents)],
     ];
@@ -484,9 +531,19 @@ async function accountingReportRows(
 
   return [
     ["Erä", "Tili", "Nimi", "Summa"],
-    ...balance.assets.map((r) => ["Vastaavaa", r.number, r.name, money(r.amountCents)]),
+    ...balance.assets.map((r) => [
+      "Vastaavaa",
+      r.number,
+      r.name,
+      money(r.amountCents),
+    ]),
     ["Vastaavaa yhteensä", "", "", money(balance.assetsTotalCents)],
-    ...balance.liabilities.map((r) => ["Vastattavaa", r.number, r.name, money(r.amountCents)]),
+    ...balance.liabilities.map((r) => [
+      "Vastattavaa",
+      r.number,
+      r.name,
+      money(r.amountCents),
+    ]),
     ["Tilikauden tulos", "", "", money(balance.resultCents)],
     ["Vastattavaa yhteensä", "", "", money(balance.balancesTotalCents)],
     ["Täsmää", "", "", balance.balanced ? "kyllä" : "ei"],
