@@ -1,4 +1,13 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import {
+  formatDayIn,
+  weekdayShortIn,
+  formatDayShortIn,
+} from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { formatMonth } from "@/lib/restoflow/expenses";
@@ -23,7 +32,10 @@ import {
   fetchSalesLines,
 } from "@/lib/restoflow/queries";
 
-export const metadata = { title: "Myynti" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.myynti.salesWord };
+}
 
 /**
  * Päivän myynti.
@@ -37,6 +49,7 @@ export const metadata = { title: "Myynti" };
 export default async function SalesPage({
   searchParams,
 }: PageProps<"/admin/myynti">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const {
     restaurant,
@@ -86,7 +99,7 @@ export default async function SalesPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Päivän veroton myynti kassan päiväraportista
+            {t.myynti.netFromReport}
           </p>
         </div>
       </header>
@@ -102,18 +115,22 @@ export default async function SalesPage({
       {canManage && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            Kuvaa kassan päiväraportti
+            {t.myynti.shootDailyReport}
           </h2>
           <p
             className="mt-[3px] text-[12.5px]"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Poiminta lukee päivän, myynnin, ALV:n ja kuittien määrän. Tarkistat
-            luvut ennen tallennusta.
+            {t.myynti.extractionHint}
           </p>
 
           <div className="mt-3.5">
-            <ReportCapture today={today} groups={groups} mappings={mappings} />
+            <ReportCapture
+              t={t}
+              today={today}
+              groups={groups}
+              mappings={mappings}
+            />
           </div>
         </Card>
       ) : null}
@@ -121,11 +138,10 @@ export default async function SalesPage({
       {canManage && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            {todayRow
-              ? "Muuta tämän päivän myyntiä"
-              : "Kirjaa päivän myynti käsin"}
+            {todayRow ? t.myynti.editThisDay : t.myynti.enterManually}
           </h2>
           <SalesForm
+            t={t}
             defaultDate={today}
             defaultNet={todayRow ? centsToInput(todayRow.netCents) : ""}
             defaultTarget={
@@ -145,17 +161,18 @@ export default async function SalesPage({
       {todayLines.length > 0 && todayRow && kuluva ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            Täsmäytys kassaan
+            {t.myynti.reconciliation}
           </h2>
           <p
             className="mt-[3px] text-[12.5px]"
             style={{ color: "var(--rf-text-2)" }}
           >
-            {formatDay(today)} · kassan päiväraportti vs. Katen laskelma
+            {formatDay(today, locale)} · kassan päiväraportti vs. Katen laskelma
           </p>
 
           <div className="mt-3.5">
             <ReconciliationPanel
+              t={t}
               result={reconcileWithPos({
                 posGrossCents: todayRow.posGrossCents,
                 posVatCents: todayRow.posVatCents,
@@ -182,17 +199,18 @@ export default async function SalesPage({
             </span>
             <div>
               <p className="text-[15px] font-medium">
-                Eiliseltä puuttuu myynti
+                {t.myynti.yesterdayMissing}
               </p>
               <p
                 className="mt-1 text-[13px] leading-relaxed"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                {formatDay(yesterday)} on kirjaamatta. Ilman sitä viikon
+                {formatDay(yesterday, locale)} on kirjaamatta. Ilman sitä viikon
                 vertailut ja työvoiman osuus jäävät vajaiksi.
               </p>
               <div className="mt-3">
                 <SalesForm
+                  t={t}
                   defaultDate={yesterday}
                   defaultNet=""
                   defaultTarget=""
@@ -213,15 +231,23 @@ export default async function SalesPage({
         sivun näyttämään kahdesta eri sovelluksesta kootulta.
       */}
       <Panel
-        title="Kirjatut päivät"
-        subtitle={`${formatMonth(month, locale)} · ${inMonth.length} ${inMonth.length === 1 ? "päivä" : "päivää"}`}
+        title={t.myynti.recordedDays}
+        subtitle={fill(
+          inMonth.length === 1 ? t.myynti.monthDaysOne : t.myynti.monthDaysMany,
+          {
+            kuukausi: formatMonth(month, locale),
+            maara: String(inMonth.length),
+          },
+        )}
       >
         {inMonth.length === 0 ? (
           <PanelEmpty
             text={
               sales.length === 0
-                ? "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Kate alkaa verrata päiviä toisiinsa."
-                : `Tältä kuukaudelta ei ole kirjattua myyntiä. Muilta kuukausilta löytyy ${sales.length} päivää.`
+                ? t.myynti.noSalesYet
+                : fill(t.myynti.noSalesThisMonth, {
+                    maara: String(sales.length),
+                  })
             }
           />
         ) : (
@@ -230,18 +256,20 @@ export default async function SalesPage({
             <table className="rf-table w-full min-w-[34rem]">
               <thead>
                 <tr>
-                  <th>Päivä</th>
-                  <th className="text-right">Veroton</th>
-                  <th className="text-right">Kuitteja</th>
-                  <th className="text-right">Keskiostos</th>
-                  <th className="text-right">Tavoite</th>
-                  <th>Vertailu</th>
+                  <th>{t.myynti.dayWord}</th>
+                  <th className="text-right">{t.myynti.withoutTax}</th>
+                  <th className="text-right">{t.myynti.receiptsWord}</th>
+                  <th className="text-right">{t.myynti.averageWord}</th>
+                  <th className="text-right">{t.myynti.target}</th>
+                  <th>{t.myynti.comparison}</th>
                   <th />
                 </tr>
               </thead>
               <tbody>
                 {inMonth.map((row) => (
                   <Row
+                    locale={locale}
+                    t={t}
                     key={row.date}
                     row={row}
                     history={sales}
@@ -259,8 +287,7 @@ export default async function SalesPage({
         className="px-1 text-[12px] leading-relaxed"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Veroton summa, koska työvoiman osuus myynnistä lasketaan siitä.
-        Verollisella luvulla suhde olisi järjestelmällisesti liian pieni.
+        {t.myynti.netReason}
       </p>
     </div>
   );
@@ -269,11 +296,15 @@ export default async function SalesPage({
 // ---------------------------------------------------------------------------
 
 function Row({
+  locale,
+  t,
   row,
   history,
   today,
   canManage,
 }: {
+  locale: AppLocale;
+  t: AdminText;
   row: DailySales;
   history: DailySales[];
   today: string;
@@ -289,7 +320,7 @@ function Row({
     >
       <td>
         <span className="flex items-center gap-2">
-          <span>{formatDay(row.date)}</span>
+          <span>{formatDay(row.date, locale)}</span>
 
           {/*
             Raportista luettu päivä merkitään.
@@ -300,8 +331,8 @@ function Row({
           */}
           {row.source === "report" ? (
             <span
-              aria-label="Luettu päiväraportista"
-              title="Luettu päiväraportista"
+              aria-label={t.myynti.readFromReport}
+              title={t.myynti.readFromReport}
               style={{ color: "var(--rf-text-3)" }}
             >
               <RfIcon name="camera" size={14} />
@@ -310,7 +341,7 @@ function Row({
 
           {row.date === today ? (
             <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              tänään
+              {t.myynti.todayWord}
             </span>
           ) : null}
         </span>
@@ -344,7 +375,7 @@ function Row({
       <td>
         {comparison.kind === "none" ? (
           <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-            Ei vertailukohtaa
+            {t.myynti.noComparison}
           </span>
         ) : (
           <Pill
@@ -359,7 +390,7 @@ function Row({
             {percent(comparison.ratio)}{" "}
             {comparison.kind === "target"
               ? "tavoitteesta"
-              : "vs. sama viikonpäivä"}
+              : t.myynti.vsSameWeekday}
           </Pill>
         )}
       </td>
@@ -375,7 +406,9 @@ function Row({
           */}
           <Link
             href={`/admin/myynti/${row.date}`}
-            aria-label={`Avaa ${formatDay(row.date)}`}
+            aria-label={fill(t.myynti.openDay, {
+              paiva: formatDayIn(row.date, locale),
+            })}
             className="rf-press flex h-7 w-7 items-center justify-center"
             style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
           >
@@ -383,7 +416,7 @@ function Row({
           </Link>
 
           {canManage ? (
-            <DeleteDay date={row.date} label={formatDay(row.date)} />
+            <DeleteDay date={row.date} label={formatDay(row.date, locale)} />
           ) : null}
         </span>
       </td>
@@ -398,11 +431,8 @@ function percent(ratio: number): string {
   return `${change > 0 ? "+" : "−"}${Math.abs(change)} %`;
 }
 
-const DAYS = ["su", "ma", "ti", "ke", "to", "pe", "la"];
-
-function formatDay(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  return `${DAYS[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+function formatDay(isoDate: string, locale: AppLocale): string {
+  return `${weekdayShortIn(isoDate, locale)} ${formatDayShortIn(isoDate, locale)}`;
 }
 
 function addDays(isoDate: string, days: number): string {

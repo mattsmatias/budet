@@ -9,6 +9,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -56,15 +59,15 @@ export async function saveDailySales(
   _prev: SalesState,
   formData: FormData,
 ): Promise<SalesState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "sales.manage"))
-    return { error: "Ei oikeutta kirjata myyntiä." };
+  if (!can(role, "sales.manage")) return { error: t.myynti.noRightRecord };
 
   const date = String(formData.get("date") ?? "");
-  if (!ISO_DATE.test(date)) return { error: "Tarkista päivämäärä." };
+  if (!ISO_DATE.test(date)) return { error: t.myynti.checkDate };
 
   const net = parseEuros(formData.get("net"));
-  if (net === null) return { error: "Syötä päivän veroton myynti." };
+  if (net === null) return { error: t.myynti.enterNetSales };
 
   const target = parseEuros(formData.get("target"));
   const note = String(formData.get("note") ?? "").trim() || null;
@@ -89,8 +92,7 @@ export async function saveDailySales(
    */
   if (gross !== null && gross < net) {
     return {
-      error:
-        "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut.",
+      error: t.myynti.grossBelowNet,
     };
   }
 
@@ -127,7 +129,9 @@ export async function saveDailySales(
     .single();
 
   if (error || !saved) {
-    return { error: `Myynnin tallennus epäonnistui: ${error?.message ?? ""}` };
+    return {
+      error: fill(t.myynti.salesSaveFailed, { viesti: error?.message ?? "" }),
+    };
   }
 
   /*
@@ -141,7 +145,7 @@ export async function saveDailySales(
   const linesJson = String(formData.get("lines") ?? "");
   const submitted = linesJson === "" ? [] : parseLines(linesJson);
 
-  if (submitted === null) return { error: "Myyntirivit olivat virheellisiä." };
+  if (submitted === null) return { error: t.myynti.badRows };
 
   const lines =
     submitted.length === 0
@@ -150,7 +154,7 @@ export async function saveDailySales(
 
   if (lines === null) {
     return {
-      error: "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen.",
+      error: t.myynti.unknownSalesGroup,
     };
   }
 
@@ -190,7 +194,7 @@ export async function saveDailySales(
 
       if (lineError) {
         return {
-          error: `Myyntirivien tallennus epäonnistui: ${lineError.message}`,
+          error: fill(t.myynti.rowsSaveFailed, { viesti: lineError.message }),
         };
       }
     }
@@ -225,7 +229,7 @@ export async function saveDailySales(
 
       if (vatError) {
         return {
-          error: `ALV-erittelyn tallennus epäonnistui: ${vatError.message}`,
+          error: fill(t.myynti.vatSaveFailed, { viesti: vatError.message }),
         };
       }
     }
@@ -234,7 +238,7 @@ export async function saveDailySales(
   // Myynti muuttaa yleiskuvan, raportit ja budjetin, joten koko
   // hallintapuoli on päivitettävä eikä vain tämä sivu.
   revalidatePath("/admin", "layout");
-  return { notice: "Myynti tallennettu." };
+  return { notice: t.myynti.salesSaved };
 }
 
 /** Poistaa päivän merkinnän. Väärin kirjattu luku on pahempi kuin puuttuva. */

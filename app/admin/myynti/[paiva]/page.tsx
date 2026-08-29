@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { formatDayIn, weekdayLongIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { notFound } from "next/navigation";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
@@ -16,7 +21,11 @@ import { Card } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { ReconciliationPanel } from "../reconciliation";
 
-export const metadata = { title: "Päivän myynti" };
+export async function generateMetadata() {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  return { title: t.myynti.daySales };
+}
 
 /**
  * Yhden päivän myynti ja täsmäytys.
@@ -36,6 +45,8 @@ export default async function SalesDayPage({
 }: {
   params: Promise<{ paiva: string }>;
 }) {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
   const { paiva } = await params;
   if (!ISO_DATE.test(paiva)) notFound();
 
@@ -62,7 +73,7 @@ export default async function SalesDayPage({
 
   const average = averageCheckCents(day.grossCents, day.transactions);
   const nameOf = (id: string) =>
-    groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+    groups.find((g) => g.id === id)?.name ?? t.myynti.unknownGroup;
 
   return (
     <div className="rf-enter space-y-4">
@@ -72,7 +83,7 @@ export default async function SalesDayPage({
         style={{ color: "var(--rf-text-2)" }}
       >
         <RfIcon name="back" size={14} />
-        Myynti
+        {t.myynti.salesWord}
       </Link>
 
       {/*
@@ -85,34 +96,36 @@ export default async function SalesDayPage({
       */}
       <Card>
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-          {formatDay(paiva)}
+          {formatDay(paiva, locale)}
         </h2>
         <p
           className="mt-[3px] text-[12.5px]"
           style={{ color: "var(--rf-text-2)" }}
         >
           {day.source === "report"
-            ? "Luettu kassan päiväraportista"
-            : "Kirjattu käsin"}
+            ? t.myynti.readFromRegister
+            : t.myynti.enteredByHand}
           {day.transactions !== null ? ` · ${day.transactions} kuittia` : ""}
-          {average !== null ? ` · keskiostos ${formatMoney(average)}` : ""}
+          {average !== null
+            ? fill(t.myynti.averageSuffix, { summa: formatMoney(average) })
+            : ""}
         </p>
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
           <Figure
-            label="Verollinen myynti"
+            label={t.myynti.taxedSales}
             value={day.grossCents ?? summary.grossCents}
-            hint="Mitä asiakas maksoi"
+            hint={t.myynti.whatCustomerPaid}
           />
           <Figure
             label="ALV"
             value={day.vatCents ?? summary.vatCents}
-            hint="Osuus joka menee verottajalle"
+            hint={t.myynti.goesToTax}
           />
           <Figure
-            label="Veroton myynti"
+            label={t.myynti.netSales}
             value={day.netCents}
-            hint="Tästä lasketaan työvoiman osuus"
+            hint={t.myynti.labourShareBase}
             strong
           />
         </dl>
@@ -121,34 +134,33 @@ export default async function SalesDayPage({
       {lines.length > 0 ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-            Myynti ryhmittäin
+            {t.myynti.salesByGroup}
           </h2>
           <p
             className="mt-[3px] text-[12.5px]"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi
-            asetusmuutos ei muuta tätä riviä.
+            {t.myynti.rateWhenRecorded}
           </p>
 
           <div className="-mx-[18px] -mb-4 mt-[14px] overflow-x-auto rounded-b-[var(--rf-r-card)]">
             <table className="rf-table w-full">
-              <caption className="sr-only">Myynti ryhmittäin</caption>
+              <caption className="sr-only">{t.myynti.salesByGroup}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Ryhmä</th>
-                  <th scope="col">Kassan nimi</th>
+                  <th scope="col">{t.myynti.group}</th>
+                  <th scope="col">{t.myynti.registerName}</th>
                   <th scope="col" className="text-right">
                     ALV %
                   </th>
                   <th scope="col" className="text-right">
-                    Verollinen
+                    {t.myynti.withTax}
                   </th>
                   <th scope="col" className="text-right">
                     ALV
                   </th>
                   <th scope="col" className="text-right">
-                    Veroton
+                    {t.myynti.withoutTax}
                   </th>
                 </tr>
               </thead>
@@ -189,17 +201,17 @@ export default async function SalesDayPage({
 
       <Card>
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-          Täsmäytys kassaan
+          {t.myynti.reconciliation}
         </h2>
         <p
           className="mt-[3px] text-[12.5px]"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Kassan päiväraportti vasemmalla, Katen laskelma oikealla.
+          {t.myynti.registerLeftKateRight}
         </p>
 
         <div className="mt-3.5">
-          <ReconciliationPanel result={check} />
+          <ReconciliationPanel t={t} result={check} />
         </div>
       </Card>
     </div>
@@ -246,18 +258,6 @@ function Figure({
   );
 }
 
-const DAYS = [
-  "sunnuntai",
-  "maanantai",
-  "tiistai",
-  "keskiviikko",
-  "torstai",
-  "perjantai",
-  "lauantai",
-];
-
-function formatDay(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  const name = DAYS[d.getUTCDay()];
-  return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.${d.getUTCFullYear()}`;
+function formatDay(isoDate: string, locale: AppLocale): string {
+  return `${weekdayLongIn(isoDate, locale)} ${formatDayIn(isoDate, locale)}`;
 }

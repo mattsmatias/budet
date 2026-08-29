@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { saveDailySales, type SalesState } from "./actions";
 
@@ -18,11 +19,13 @@ const initial: SalesState = {};
  * hetkessä yllättävän suuri este.
  */
 export function SalesForm({
+  t,
   defaultDate,
   defaultNet,
   defaultTarget,
   compact,
 }: {
+  t: AdminText;
   defaultDate: string;
   defaultNet: string;
   defaultTarget: string;
@@ -42,8 +45,8 @@ export function SalesForm({
         }
       >
         <Field
-          label="Veroton myynti"
-          hint={compact ? undefined : "Kassan päiväraportin summa ilman ALV:tä"}
+          label={t.myynti.netSales}
+          hint={compact ? undefined : t.myynti.reportSum}
         >
           <input
             name="net"
@@ -57,10 +60,7 @@ export function SalesForm({
         </Field>
 
         {compact ? null : (
-          <Field
-            label="Tavoite"
-            hint="Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan."
-          >
+          <Field label={t.myynti.target} hint={t.myynti.targetHint}>
             <input
               name="target"
               inputMode="decimal"
@@ -72,7 +72,7 @@ export function SalesForm({
           </Field>
         )}
 
-        {compact ? <Submit /> : null}
+        {compact ? <Submit t={t} /> : null}
       </div>
 
       {state.error ? (
@@ -91,7 +91,7 @@ export function SalesForm({
         </p>
       ) : null}
 
-      {compact ? null : <Submit />}
+      {compact ? null : <Submit t={t} />}
     </form>
   );
 }
@@ -132,7 +132,7 @@ function Field({
   );
 }
 
-function Submit() {
+function Submit({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -147,7 +147,7 @@ function Submit() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna myynti"}
+      {pending ? t.myynti.savingEllipsis : t.myynti.saveSales}
     </button>
   );
 }

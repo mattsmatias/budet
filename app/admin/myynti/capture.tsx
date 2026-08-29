@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { RfIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
@@ -44,10 +46,12 @@ type Phase =
 const initial: SalesState = {};
 
 export function ReportCapture({
+  t,
   today,
   groups,
   mappings,
 }: {
+  t: AdminText;
   today: string;
   groups: SalesGroup[];
   mappings: PosMapping[];
@@ -75,7 +79,10 @@ export function ReportCapture({
     const label =
       pages.length === 1
         ? file.name
-        : `${file.name} + ${extraPages.length} ${extraPages.length === 1 ? "sivu" : "sivua"}`;
+        : fill(extraPages.length === 1 ? t.myynti.pageOne : t.myynti.pageMany, {
+            nimi: file.name,
+            maara: String(extraPages.length),
+          });
 
     try {
       const result = await salesExtractor.extract({
@@ -90,7 +97,7 @@ export function ReportCapture({
         message:
           error instanceof SalesExtractionError
             ? error.message
-            : "Raportin luku epäonnistui.",
+            : t.myynti.readFailed,
         retryable:
           error instanceof SalesExtractionError ? error.retryable : true,
       });
@@ -100,6 +107,7 @@ export function ReportCapture({
   if (phase.at === "review") {
     return (
       <ReviewForm
+        t={t}
         result={phase.result}
         today={today}
         groups={groups}
@@ -215,12 +223,14 @@ export function ReportCapture({
  * juuri siihen kohtaan jossa käyttäjä on jo huomannut virheen.
  */
 function ReviewForm({
+  t,
   result,
   today,
   groups,
   mappings,
   onDiscard,
 }: {
+  t: AdminText;
   result: SalesExtraction;
   today: string;
   groups: SalesGroup[];
@@ -302,9 +312,7 @@ function ReviewForm({
       />
 
       {result.imageQuality === "poor" ? (
-        <Banner tone="warn">
-          Kuva on epäselvä. Tarkista jokainen luku raportista ennen tallennusta.
-        </Banner>
+        <Banner tone="warn">{t.myynti.blurryImage}</Banner>
       ) : null}
 
       {amounts.mismatch ? (
@@ -313,104 +321,109 @@ function ReviewForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="Myyntipäivä"
+          t={t}
+          label={t.myynti.salesDay}
           name="date"
           type="date"
           defaultValue={result.date.value ?? today}
           uncertain={result.date.value === null}
           hint={
-            result.date.value === null ? "Ei löytynyt raportista" : undefined
+            result.date.value === null ? t.myynti.notFoundInReport : undefined
           }
           required
         />
 
         <Field
-          label="Kuitteja"
+          t={t}
+          label={t.myynti.receiptsWord}
           name="transactions"
           inputMode="numeric"
           defaultValue={result.transactions.value?.toString() ?? ""}
           uncertain={result.transactions.confidence === "low"}
           hint={
             average !== null
-              ? `Keskiostos ${formatMoney(average)}`
-              : "Vapaaehtoinen"
+              ? fill(t.myynti.averagePurchase, { summa: formatMoney(average) })
+              : t.myynti.optional
           }
         />
 
         <Field
-          label="Verollinen myynti"
+          t={t}
+          label={t.myynti.taxedSales}
           name="gross"
           inputMode="decimal"
           defaultValue={euros(amounts.grossCents)}
           uncertain={result.grossCents.confidence === "low"}
           hint={
             amounts.derived.includes("grossCents")
-              ? "Laskettu: veroton + ALV"
+              ? t.myynti.calcNetPlusVat
               : undefined
           }
         />
 
         <Field
-          label="ALV yhteensä"
+          t={t}
+          label={t.myynti.vatTotal}
           name="vat"
           inputMode="decimal"
           defaultValue={euros(amounts.vatCents)}
           uncertain={result.vatCents.confidence === "low"}
           hint={
             amounts.derived.includes("vatCents")
-              ? "Laskettu: verollinen − veroton"
+              ? t.myynti.calcGrossMinusNet
               : undefined
           }
         />
 
         <Field
-          label="Veroton myynti"
+          t={t}
+          label={t.myynti.netSales}
           name="net"
           inputMode="decimal"
           defaultValue={euros(amounts.netCents)}
           uncertain={result.netCents.confidence === "low"}
           hint={
             amounts.derived.includes("netCents")
-              ? "Laskettu: verollinen − ALV"
-              : "Tästä lasketaan työvoiman osuus"
+              ? t.myynti.calcGrossMinusVat
+              : t.myynti.labourShareBase
           }
           required
         />
 
         <Field
-          label="Tavoite"
+          t={t}
+          label={t.myynti.target}
           name="target"
           inputMode="decimal"
           defaultValue=""
-          hint="Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan."
+          hint={t.myynti.targetHint}
         />
       </div>
 
       {mapped.lines.length > 0 ? (
         <div>
-          <h3 className="text-[13.5px] font-bold">Myynti ryhmittäin</h3>
+          <h3 className="text-[13.5px] font-bold">{t.myynti.salesByGroup}</h3>
           <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            Verokanta tulee myyntiryhmän asetuksesta. Rivi tallentaa käytetyn
-            kannan, joten myöhempi asetusmuutos ei muuta tätä päivää.
+            {t.myynti.rateFromGroup}
           </p>
 
           <table className="rf-table mt-2.5 w-full">
-            <caption className="sr-only">Myynti ryhmittäin</caption>
+            <caption className="sr-only">{t.myynti.salesByGroup}</caption>
             <thead>
               <tr>
-                <th scope="col">Ryhmä</th>
-                <th scope="col">Kassan nimi</th>
+                <th scope="col">{t.myynti.group}</th>
+                <th scope="col">{t.myynti.registerName}</th>
                 <th scope="col" className="text-right">
                   ALV %
                 </th>
                 <th scope="col" className="text-right">
-                  Verollinen
+                  {t.myynti.withTax}
                 </th>
                 <th scope="col" className="text-right">
                   ALV
                 </th>
                 <th scope="col" className="text-right">
-                  Veroton
+                  {t.myynti.withoutTax}
                 </th>
               </tr>
             </thead>
@@ -418,7 +431,7 @@ function ReviewForm({
               {mapped.lines.map((l) => (
                 <tr key={l.salesGroupId} className="rf-row">
                   <td className="font-semibold">
-                    {nameOf(groups, l.salesGroupId)}
+                    {nameOf(groups, l.salesGroupId, t)}
                   </td>
                   <td style={{ color: "var(--rf-text-2)" }}>
                     {l.posName ?? "—"}
@@ -463,7 +476,7 @@ function ReviewForm({
           ) : null}
 
           <div className="mt-4">
-            <ReconciliationPanel result={check} />
+            <ReconciliationPanel t={t} result={check} />
           </div>
         </div>
       ) : null}
@@ -489,7 +502,7 @@ function ReviewForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Submit />
+        <Submit t={t} />
 
         <button
           type="button"
@@ -497,7 +510,7 @@ function ReviewForm({
           className="rf-press px-3 py-2 text-[13px] font-semibold"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Hylkää ja kuvaa uudelleen
+          {t.myynti.rejectAndRetake}
         </button>
       </div>
     </form>
@@ -507,8 +520,8 @@ function ReviewForm({
 // ---------------------------------------------------------------------------
 
 /** Myyntiryhmän nimi tunnuksesta. */
-function nameOf(groups: SalesGroup[], id: string): string {
-  return groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+function nameOf(groups: SalesGroup[], id: string, t: AdminText): string {
+  return groups.find((g) => g.id === id)?.name ?? t.myynti.unknownGroup;
 }
 
 /** Sentit lomakkeen euromuotoon. Tyhjä pysyy tyhjänä. */
@@ -517,12 +530,14 @@ function euros(cents: number | null): string {
 }
 
 function Field({
+  t,
   label,
   name,
   hint,
   uncertain,
   ...rest
 }: {
+  t: AdminText;
   label: string;
   name: string;
   hint?: string;
@@ -547,7 +562,7 @@ function Field({
               borderRadius: 999,
             }}
           >
-            Tarkista
+            {t.myynti.check}
           </span>
         ) : null}
       </label>
@@ -598,7 +613,7 @@ function Banner({
   );
 }
 
-function Submit() {
+function Submit({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -613,7 +628,7 @@ function Submit() {
         minHeight: 36,
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna päivän myynti"}
+      {pending ? t.myynti.savingEllipsis : t.myynti.saveDaySales}
     </button>
   );
 }

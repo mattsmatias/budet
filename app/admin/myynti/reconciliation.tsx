@@ -1,4 +1,5 @@
 import { RfIcon } from "@/components/restoflow/icons";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { formatMoney } from "@/lib/money";
 import type { Reconciliation } from "@/lib/restoflow/sales-vat";
 
@@ -25,7 +26,13 @@ import type { Reconciliation } from "@/lib/restoflow/sales-vat";
  * selitetään omassa laatikossaan eikä punaisella otsikolla: hälytys
  * asiasta jota ei voi korjata opettaa ohittamaan hälytykset.
  */
-export function ReconciliationPanel({ result }: { result: Reconciliation }) {
+export function ReconciliationPanel({
+  t,
+  result,
+}: {
+  t: AdminText;
+  result: Reconciliation;
+}) {
   if (result.status === "unknown") {
     return (
       <div
@@ -42,8 +49,7 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
           className="text-[12.5px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Kassan lukuja ei ole, joten päivää ei ole täsmäytetty. Kuvaa
-          päiväraportti, niin Kate vertaa oman laskelmansa siihen.
+          {t.myynti.noRegisterFigures}
         </p>
       </div>
     );
@@ -64,12 +70,12 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
     result.byRate.some((r) => r.status === "mismatch");
 
   const heading = ok
-    ? "Täsmää kassan päiväraporttiin"
+    ? t.myynti.matchesReport
     : salesOff && vatOff
-      ? "Myynti ja ALV eivät täsmää kassaan"
+      ? t.myynti.salesAndVatMismatch
       : salesOff
-        ? "Myynti ei täsmää kassaan"
-        : "ALV ei täsmää kassaan";
+        ? t.myynti.salesMismatch
+        : t.myynti.vatMismatch;
 
   return (
     <div>
@@ -146,18 +152,18 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
         lukijan tarkistaa itse, ja juuri se on täsmäytyksen tarkoitus.
       */}
       <table className="rf-table mt-3 w-full">
-        <caption className="sr-only">Kassan ja Katen vertailu</caption>
+        <caption className="sr-only">{t.myynti.registerVsKate}</caption>
         <thead>
           <tr>
-            <th scope="col">Kohde</th>
+            <th scope="col">{t.myynti.subject}</th>
             <th scope="col" className="text-right">
-              Kassa
+              {t.myynti.register}
             </th>
             <th scope="col" className="text-right">
-              Kate
+              {t.myynti.kate}
             </th>
             <th scope="col" className="text-right">
-              Ero
+              {t.myynti.difference}
             </th>
           </tr>
         </thead>
