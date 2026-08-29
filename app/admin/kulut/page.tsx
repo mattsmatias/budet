@@ -1,4 +1,6 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import {
@@ -33,6 +35,7 @@ export default async function ExpensesPage({
   const {
     receipts, month,
   } = await adminContext("/admin/kulut");
+  const t = adminText(await resolveLocale());
 
   const params = await searchParams;
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
@@ -104,9 +107,9 @@ export default async function ExpensesPage({
           }
           conclusion={
             current.receiptCount === 0
-              ? "Ei kuitteja tässä kuussa"
+              ? t.yleiskatsaus.noReceiptsThisMonth
               : change === null
-                ? "Ei vertailukohtaa"
+                ? t.yleiskatsaus.noComparison
                 : `${formatMoney(previous.totalCents)} ${monthWord(previousMonth(viewMonth))}ssa`
           }
           /*
@@ -128,7 +131,7 @@ export default async function ExpensesPage({
           tone="muted"
           conclusion={
             previous.receiptCount === 0
-              ? "Ei vertailukohtaa"
+              ? t.yleiskatsaus.noComparison
               : `${receiptCountLabel(previous.receiptCount)} ${monthWord(previousMonth(viewMonth))}ssa`
           }
           href="/admin/kuitit"
@@ -136,12 +139,12 @@ export default async function ExpensesPage({
         />
 
         <MetricCard
-          label="ALV yhteensä"
+          label={t.kulut.vatTotal}
           icon={<RfIcon name="report" size={17} />}
           tileTone="violet"
           value={<CountUp to={current.vatCents} format="money" />}
           tone="muted"
-          conclusion="Vain kuitit joissa ALV on tiedossa"
+          conclusion={t.kulut.onlyKnownVat}
         />
 
         <MetricCard
@@ -152,8 +155,8 @@ export default async function ExpensesPage({
           tone={current.needsReviewCount > 0 ? "warn" : "muted"}
           conclusion={
             current.needsReviewCount > 0
-              ? "Puuttuvia tai epävarmoja tietoja"
-              : "Kaikki kuitit tarkistettu"
+              ? t.kulut.missingOrUncertain
+              : t.kulut.allChecked
           }
           /*
            * Linkki vie suoraan suodatettuun listaan.
@@ -177,9 +180,7 @@ export default async function ExpensesPage({
             subtitle={`${formatMonth(viewMonth)} · ${categories.length} kategoriaa`}
           />
           {categories.length === 0 ? (
-            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Ei kuitteja tältä kuukaudelta.
-            </p>
+            <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>{t.kulut.noneThisMonth}</p>
           ) : (
             <div className="space-y-4">
               {categories.map((c) => (
@@ -198,7 +199,7 @@ export default async function ExpensesPage({
         <Card>
           <CardHeader
             title="Kulujen kehitys"
-            subtitle="Neljä kuukautta · kirjatut kulut"
+            subtitle={t.kulut.fourMonths}
           />
           <table className="rf-table w-full text-[14px]">
             <caption className="sr-only">Kirjatut kulut kuukausittain</caption>
@@ -227,10 +228,7 @@ export default async function ExpensesPage({
               })}
             </tbody>
           </table>
-          <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            Tämä ei ole myyntigraafi. Se kertoo vain kuinka paljon kuluja on
-            kirjattu järjestelmään.
-          </p>
+          <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kulut.notSalesChart}</p>
         </Card>
       </div>
     </div>

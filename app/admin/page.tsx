@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import Link from "next/link";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -81,6 +84,7 @@ export default async function AdminDashboard({
     openShifts, sales,
     month, today, now, monthlyHours, restaurant, role, categories: customCategories,
   } = await adminContext("/admin");
+  const t = adminText(await resolveLocale());
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
@@ -140,7 +144,7 @@ export default async function AdminDashboard({
   const emptyForMonth = elsewhere
     ? {
         text:
-          `${formatMonth(viewMonth)} ei sisällä yhtään kuittia. ` +
+          `${fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth) })} ` +
           `Viimeisin kirjattu kuitti on ${formatFullDate(elsewhere.date)}.`,
         cta: `Avaa ${formatMonth(elsewhere.date.slice(0, 7)).toLowerCase()}`,
         href: `/admin?kuukausi=${elsewhere.date.slice(0, 7)}`,
@@ -156,13 +160,13 @@ export default async function AdminDashboard({
    * ovat nyt ensimmäisessä paneelissa; loput toteavat vain tyhjyyden.
    */
   const emptyShort = elsewhere
-    ? { text: `${formatMonth(viewMonth)} ei sisällä yhtään kuittia.` }
+    ? { text: fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth) }) }
     : null;
 
   /*
    * Tyhjä kuukausi ei tarkoita tyhjää järjestelmää.
    *
-   * "Lisää ensimmäinen kuitti" neljän kuitin jälkeen väittää että
+   * t.yleiskatsaus.addFirstReceipt neljän kuitin jälkeen väittää että
    * tallennus on epäonnistunut. Ero kuukauden tyhjyyden ja aidon
    * alkutilan välillä on kerrottava.
    */
@@ -410,11 +414,11 @@ export default async function AdminDashboard({
           }
           conclusion={
             emptyMonthOnly
-              ? "Ei kuitteja tässä kuussa"
+              ? t.yleiskatsaus.noReceiptsThisMonth
               : totals.receiptCount === 0
-                ? "Lisää ensimmäinen kuitti"
+                ? t.yleiskatsaus.addFirstReceipt
                 : comparison.baseMonth === null
-                  ? "Ei vertailukohtaa"
+                  ? t.yleiskatsaus.noComparison
                   : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth)}ssa`
           }
           trend={hasTrend ? <Sparkline values={trend} width={64} height={20} /> : undefined}
@@ -423,13 +427,13 @@ export default async function AdminDashboard({
 
 {pulse ? (
           <StatCard
-            label="Myynti tänään"
+            label={t.yleiskatsaus.salesToday}
             tileTone="green"
             value={
               pulse.sales.cents === null ? "—" : <CountUp to={pulse.sales.cents} format="money" />
             }
             /*
-             * Puuttuva myynti ei ole nolla. "—" ja "Ei vielä kirjattu"
+             * Puuttuva myynti ei ole nolla. "—" ja t.yleiskatsaus.notRecordedYet
              * kertovat sen; nolla väittäisi ettei tänään myyty mitään.
              */
             delta={
@@ -453,14 +457,16 @@ export default async function AdminDashboard({
                     Math.abs(posCheck.total.diffCents ?? posCheck.vat.diffCents ?? 0),
                   )}`
                 : posCheck?.status === "match"
-                  ? "Täsmää kassan päiväraporttiin"
+                  ? t.yleiskatsaus.matchesDailyReport
                   : pulse.sales.cents === null
-                    ? "Ei vielä kirjattu"
+                    ? t.yleiskatsaus.notRecordedYet
                     : pulse.sales.comparison.kind === "target"
                       ? `Tavoite ${formatMoney(pulse.sales.comparison.targetCents)}`
                       : pulse.sales.comparison.kind === "weekday"
-                        ? `${formatMoney(pulse.sales.comparison.averageCents)} saman viikonpäivän keskiarvo`
-                        : "Ei vertailukohtaa"
+                        ? fill(t.yleiskatsaus.weekdayAverage, {
+              summa: formatMoney(pulse.sales.comparison.averageCents),
+            })
+                        : t.yleiskatsaus.noComparison
             }
             tone={
               posCheck?.status === "mismatch"
@@ -492,7 +498,7 @@ export default async function AdminDashboard({
             delta={
               receipts_.pending > 0 ? { text: `${receipts_.pending} kesken` } : undefined
             }
-            conclusion={emptyMonthOnly ? "Ei kuitteja tässä kuussa" : receipts_.label}
+            conclusion={emptyMonthOnly ? t.yleiskatsaus.noReceiptsThisMonth : receipts_.label}
             tone={receipts_.pending > 0 ? "warn" : "neutral"}
             icon={<RfIcon name="receipt" size={17} />}
             href="/admin/kuitit"
@@ -501,7 +507,7 @@ export default async function AdminDashboard({
         )}
 
         <StatCard
-          label="Budjetti jäljellä"
+          label={t.yleiskatsaus.budgetLeft}
           tileTone="violet"
           value={budgetTotal === 0 ? "—" : <CountUp to={budgetLeft} format="money" />}
           delta={
@@ -527,7 +533,7 @@ export default async function AdminDashboard({
           }
           conclusion={
             budgetTotal === 0
-              ? "Budjetteja ei ole määritetty"
+              ? t.yleiskatsaus.noBudgets
               : `${formatMoney(budgetSpent)} / ${formatMoney(budgetTotal)}`
           }
           tone={
@@ -546,7 +552,7 @@ export default async function AdminDashboard({
 
         {onDuty !== null ? (
           <StatCard
-            label="Töissä nyt"
+            label={t.yleiskatsaus.atWorkNow}
             tileTone="blue"
             value={`${onDuty} / ${staffTotal}`}
             delta={upcomingToday > 0 ? { text: `${upcomingToday} tulossa` } : undefined}
@@ -554,8 +560,8 @@ export default async function AdminDashboard({
               nextToday
                 ? `Seuraava: ${users.find((u) => u.id === nextToday.sh.userId)?.name ?? "vuoro"} ${nextToday.sh.startTime}`
                 : onDuty === 0
-                  ? "Kukaan ei ole leimannut sisään"
-                  : "Ei enempää vuoroja tänään"
+                  ? t.yleiskatsaus.nobodyClockedIn
+                  : t.yleiskatsaus.noMoreShiftsToday
             }
             tone="muted"
             icon={<RfIcon name="staff" size={17} />}
@@ -564,7 +570,7 @@ export default async function AdminDashboard({
           />
         ) : (
           <StatCard
-            label="Työtunnit"
+            label={t.yleiskatsaus.hours}
             tileTone="blue"
             value={totalHours === null ? "—" : <CountUp to={totalHours} format="hours" />}
             conclusion={
@@ -600,8 +606,8 @@ export default async function AdminDashboard({
           {categories.length === 0 ? (
             <PanelEmpty
               {...(emptyForMonth ?? {
-                text: "Lisää kuitteja nähdäksesi kulujakauman.",
-                cta: "Lisää kuitti",
+                text: t.yleiskatsaus.addForBreakdown,
+                cta: t.kuori.addReceipt,
                 href: "/admin/kuitit/uusi",
               })}
             />
@@ -640,11 +646,11 @@ export default async function AdminDashboard({
         </Panel>
 
         <Panel
-          title="Myynti ja kulut"
+          title={t.yleiskatsaus.salesAndExpenses}
           action={
             <div
               role="group"
-              aria-label="Aikaväli"
+              aria-label={t.yleiskatsaus.range}
               className="flex gap-0.5 p-[3px]"
               style={{ background: "var(--rf-inset)", borderRadius: 980 }}
             >
@@ -672,7 +678,7 @@ export default async function AdminDashboard({
           }
         >
           {flow.labels.length < 2 ? (
-            <PanelEmpty text="Kehitys näkyy täällä kun aineistoa on kahdelta kuukaudelta." />
+            <PanelEmpty text={t.yleiskatsaus.trendNeedsTwoMonths} />
           ) : (
             <>
               <AreaChart
@@ -702,9 +708,7 @@ export default async function AdminDashboard({
                   Kulut
                 </li>
                 {flow.salesMissing ? (
-                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
-                    Myynti puuttuu osalta kuukausia — viiva katkeaa siitä.
-                  </li>
+                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>{t.yleiskatsaus.salesGapNote}</li>
                 ) : null}
               </ul>
             </>
@@ -739,16 +743,16 @@ export default async function AdminDashboard({
 
       {/* 9. Viimeisimmät kuitit */}
       <Panel
-        title="Viimeisimmät kuitit"
+        title={t.yleiskatsaus.latestReceipts}
         subtitle={formatMonth(viewMonth)}
         href="/admin/kuitit"
-        linkLabel="Näytä kaikki kuitit"
+        linkLabel={t.yleiskatsaus.showAllReceipts}
       >
         {recent.length === 0 ? (
           <PanelEmpty
             {...(emptyShort ?? {
-              text: "Ensimmäinen kuittisi näkyy täällä.",
-              cta: "Lisää kuitti",
+              text: t.yleiskatsaus.firstReceiptHere,
+              cta: t.kuori.addReceipt,
               href: "/admin/kuitit/uusi",
             })}
           />
@@ -774,14 +778,14 @@ export default async function AdminDashboard({
             */}
             <div className="-mx-[18px] -mb-4 mt-[14px] hidden overflow-hidden rounded-b-[var(--rf-r-card)] md:block">
               <table className="rf-table w-full">
-                <caption className="sr-only">Viimeisimmät kuitit</caption>
+                <caption className="sr-only">{t.yleiskatsaus.latestReceipts}</caption>
                 <thead>
                   <tr>
                     <th scope="col">Toimittaja</th>
                     <th scope="col">Kategoria</th>
                     <th scope="col">Summa</th>
                     <th scope="col">Tila</th>
-                    <th scope="col">Päivä</th>
+                    <th scope="col">{t.yleiskatsaus.day}</th>
                   </tr>
                 </thead>
                 <tbody>

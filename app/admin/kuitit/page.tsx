@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText, type AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   filterReceipts,
@@ -27,17 +30,24 @@ import { ReceiptSearch } from "./search";
 
 export const metadata = { title: "Kuitit" };
 
-const FILTERS: { key: ReceiptFilter; label: string }[] = [
-  { key: "all", label: "Kaikki" },
-  { key: "needs_review", label: "Tarkistettavat" },
-  { key: "food", label: "Ruoka" },
-  { key: "alcohol", label: "Alkoholi" },
-  { key: "soft_drinks", label: "Alkoholittomat" },
-  { key: "kitchen_supplies", label: "Keittiö" },
-  { key: "packaging", label: "Pakkaus" },
-  { key: "cleaning", label: "Siivous" },
-  { key: "transport", label: "Kuljetus" },
-  { key: "other", label: "Muut" },
+/*
+ * Suodattimet ovat tehdas, ei vakio.
+ *
+ * Avain on datan asia ja pysyy; otsikko on käännettävää tekstiä eikä
+ * sitä voi lukita moduulin latausaikaan, jolloin kieltä ei vielä
+ * tiedetä.
+ */
+const suodattimet = (t: AdminText): { key: ReceiptFilter; label: string }[] => [
+  { key: "all", label: t.kuitit.all },
+  { key: "needs_review", label: t.luokat.needsReview },
+  { key: "food", label: t.luokat.food },
+  { key: "alcohol", label: t.luokat.alcohol },
+  { key: "soft_drinks", label: t.luokat.softDrinks },
+  { key: "kitchen_supplies", label: t.luokat.kitchenSupplies },
+  { key: "packaging", label: t.luokat.packaging },
+  { key: "cleaning", label: t.luokat.cleaning },
+  { key: "transport", label: t.luokat.transport },
+  { key: "other", label: t.luokat.other },
 ];
 
 export default async function AdminReceiptsPage({
@@ -46,6 +56,7 @@ export default async function AdminReceiptsPage({
   const params = await searchParams;
   const { receipts, users, role, suppliers, merchants, merchantCategories, month: nykyinen } =
     await adminContext("/admin/kuitit");
+  const t = adminText(await resolveLocale());
 
   const month = monthFromParams(params, nykyinen);
 
@@ -178,10 +189,7 @@ export default async function AdminReceiptsPage({
                   ? "Mahdollinen kaksoiskappale"
                   : `${duplicateGroups.length} mahdollista kaksoiskappaletta`}
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-                Sama toimittaja, sama summa, sama tai viereinen päivä. Jos
-                kyseessä on kaksi erillistä ostosta, jätä molemmat.
-              </p>
+              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>{t.kuitit.duplicateHint}</p>
 
               <ul className="mt-3 space-y-3">
                 {duplicateGroups.map((group) => (
@@ -216,7 +224,7 @@ export default async function AdminReceiptsPage({
 
       <nav aria-label="Suodattimet" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <ul className="flex gap-2 pb-1 md:flex-wrap">
-          {FILTERS.map((f) => {
+          {suodattimet(t).map((f) => {
             const active = filter === f.key;
             const search = new URLSearchParams();
             if (f.key !== "all") search.set("suodatin", f.key);
@@ -264,17 +272,20 @@ export default async function AdminReceiptsPage({
            */
           title={
             elsewhere > 0
-              ? "Ei osumia tältä kuukaudelta"
+              ? t.kuitit.noHitsThisMonth
               : query
-                ? "Ei osumia"
-                : "Ei kuitteja tältä kuukaudelta"
+                ? t.kuitit.noHits
+                : t.kuitit.noneThisMonth
           }
           description={
             elsewhere > 0
-              ? `Hakusana löytyy muualta: ${elsewhere} ${elsewhere === 1 ? "kuitti" : "kuittia"} muilta kuukausilta. Vaihda kuukautta yläpalkista.`
+              ? fill(t.kuitit.foundElsewhere, {
+              maara: String(elsewhere),
+              yksikko: elsewhere === 1 ? t.kuitit.receiptOne : t.kuitit.receiptMany,
+            })
               : query
                 ? "Kokeile toista hakusanaa."
-                : "Lisää ensimmäinen kuitti yllä olevasta painikkeesta."
+                : t.kuitit.addFromButton
           }
         />
       ) : (
@@ -339,7 +350,7 @@ export default async function AdminReceiptsPage({
                       <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                         ALV{" "}
                         {receipt.vatCents === null ? "puuttuu" : formatMoney(receipt.vatCents)}
-                        {receipt.items.length > 0 ? ` · ${receipt.items.length} riviä` : ""} ·
+                        {receipt.items.length > 0 ? ` · ${fill(t.kuitit.rows, { maara: String(receipt.items.length) })}` : ""} ·
                         lisännyt{" "}
                         {users.find((u) => u.id === receipt.addedByUserId)?.name ?? "—"}
                       </p>
@@ -383,8 +394,8 @@ export default async function AdminReceiptsPage({
                         </span>
                         <span style={{ color: "var(--rf-blue)" }}>
                           {receipt.items.length === 1
-                            ? "Näytä 1 rivi"
-                            : `Näytä ${receipt.items.length} riviä`}
+                            ? t.kuitit.showOneRow
+                            : fill(t.kuitit.showRows, { maara: String(receipt.items.length) })}
                         </span>
                       </summary>
 
@@ -421,7 +432,7 @@ export default async function AdminReceiptsPage({
                           Kuva liitetty
                         </>
                       ) : (
-                        "Ei kuvaa"
+                        t.kuitit.noImage
                       )}
                     </span>
                     <Link

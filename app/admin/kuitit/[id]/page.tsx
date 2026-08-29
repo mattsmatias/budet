@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
+import { monthName } from "@/lib/i18n/format";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { notFound, redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
@@ -43,6 +48,8 @@ export default async function AdminReceiptDetailPage({
 }: PageProps<"/admin/kuitit/[id]">) {
   const { id } = await params;
   const { restaurant, role } = await requireContext("/admin/kuitit");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
 
   if (!can(role, "receipts.view")) redirect("/admin");
 
@@ -208,9 +215,7 @@ export default async function AdminReceiptDetailPage({
                     {tradeLabel}
                   </p>
                 ) : (
-                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                    Kauppaa ei tunnistettu
-                  </p>
+                  <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.merchantNotRecognised}</p>
                 )}
               </div>
             </div>
@@ -255,8 +260,8 @@ export default async function AdminReceiptDetailPage({
                     : ledger.state === "proposed"
                       ? "Odottaa kirjausta"
                       : ledger.state === "rejected"
-                        ? "Ei kirjata"
-                        : "Ei kirjanpidossa"}
+                        ? t.kuitit.notBooked
+                        : t.kuitit.notInAccounting}
                 </Pill>
               ) : null}
             </div>
@@ -267,7 +272,7 @@ export default async function AdminReceiptDetailPage({
 
             <dl className="mt-4 grid grid-cols-3 gap-3">
               <Stat
-                label={`Ostoksia ${monthWord(month)}`}
+                label={fill(t.kuitit.purchasesIn, { kuukausi: monthWord(month, locale) })}
                 value={formatMoney(monthTotal)}
               />
               <Stat label="Kuitteja" value={String(merchantReceipts.length)} />
@@ -282,8 +287,8 @@ export default async function AdminReceiptDetailPage({
             <p className="mb-1 text-[13px] font-semibold">Kuittitiedot</p>
             <dl>
               <Row label="Toimittaja" value={receipt.supplierName} />
-              <Row label="Päivämäärä" value={formatDate(receipt.date)} />
-              <Row label="Yhteensä" value={formatMoney(receipt.totalCents)} />
+              <Row label={t.kuitit.date} value={formatDate(receipt.date)} />
+              <Row label={t.kuitit.total} value={formatMoney(receipt.totalCents)} />
               <Row
                 label="ALV"
                 value={receipt.vatCents === null ? "—" : formatMoney(receipt.vatCents)}
@@ -293,8 +298,8 @@ export default async function AdminReceiptDetailPage({
               <Row label="Maksutapa" value={PAYMENT_LABELS[receipt.paymentMethod]} />
               <Row label="Kuittinumero" value={receipt.receiptNumber ?? "—"} />
               <Row label="Muistiinpano" value={receipt.note ?? "—"} />
-              <Row label="Lisännyt" value={addedBy?.name ?? "—"} />
-              <Row label="Lisätty" value={formatDateTime(receipt.addedAt)} last />
+              <Row label={t.kuitit.addedBy} value={addedBy?.name ?? "—"} />
+              <Row label={t.kuitit.addedAt} value={formatDateTime(receipt.addedAt)} last />
             </dl>
 
             {/*
@@ -323,7 +328,7 @@ export default async function AdminReceiptDetailPage({
                     {rateBreakdown.map((rate) => (
                       <tr key={rate.rate ?? "tuntematon"} className="rf-row">
                         <td className="font-semibold">
-                          {rate.rate === null ? "Ei kantaa" : formatRate(rate.rate)}
+                          {rate.rate === null ? t.kuitit.noVatRate : formatRate(rate.rate)}
                         </td>
                         <td className="rf-tabular text-right">{formatMoney(rate.grossCents)}</td>
                         <td className="rf-tabular text-right">
@@ -338,10 +343,7 @@ export default async function AdminReceiptDetailPage({
                 </table>
 
                 {rateBreakdown.some((r) => r.rate === null) ? (
-                  <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>
-                    Osalla riveistä ei ole verokantaa. Niiden veroa ei ole
-                    laskettu eikä oletettu — tarkista ne kuitista.
-                  </p>
+                  <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>{t.kuitit.missingVatNote}</p>
                 ) : null}
               </div>
             ) : null}
@@ -380,10 +382,7 @@ export default async function AdminReceiptDetailPage({
               </ul>
 
               {mixed ? (
-                <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-                  Tämä kuitti jakautuu useaan kategoriaan. Kulut kirjautuvat
-                  rivikohtaisesti, ei koko summa yhteen kategoriaan.
-                </p>
+                <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.multiCategoryNote}</p>
               ) : null}
             </Card>
           ) : null}
@@ -402,26 +401,20 @@ export default async function AdminReceiptDetailPage({
             ) : (
               <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
                 {receipt.hasImage
-                  ? "Kuva on tallennettu, mutta sitä ei juuri nyt saatu haettua."
-                  : "Tähän kuittiin ei liitetty kuvaa."}
+                  ? t.kuitit.imageNotLoaded
+                  : t.kuitit.noImageAttached}
               </p>
             )}
 
             {receipt.imageQuality === "poor" ? (
-              <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>
-                Kuva arvioitiin epäselväksi. Tarkista luvut erityisen
-                huolellisesti.
-              </p>
+              <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-amber-text)" }}>{t.kuitit.unclearImage}</p>
             ) : null}
           </Card>
 
           {canReview ? (
             <Card>
               <p className="mb-2 text-[13px] font-semibold">Poista kuitti</p>
-              <p className="mb-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-                Poisto on peruuttamaton. Jos kyseessä on kaksoiskappale,
-                poista se — jos erillinen ostos, jätä molemmat.
-              </p>
+              <p className="mb-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.deleteWarning}</p>
               <DeleteReceipt receiptId={receipt.id} />
             </Card>
           ) : null}
@@ -477,14 +470,16 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-const MONTH_WORDS = [
-  "tammikuussa", "helmikuussa", "maaliskuussa", "huhtikuussa",
-  "toukokuussa", "kesäkuussa", "heinäkuussa", "elokuussa",
-  "syyskuussa", "lokakuussa", "marraskuussa", "joulukuussa",
-];
-
-function monthWord(month: string): string {
-  return MONTH_WORDS[Number(month.slice(5, 7)) - 1] ?? "kuussa";
+/*
+ * Kuukauden nimi Intl:ltä, ei listasta.
+ *
+ * Tässä oli suomen inessiivimuodot ("kesäkuussa") kovakoodattuna.
+ * Ne eivät ole vain kääntämättömiä vaan suomen kieliopin muoto, jota
+ * muissa kielissä ei ole — englanniksi lause kuuluu "in June", ja
+ * sijapääte katoaa. Nimi tulee nyt Intl:ltä ja lause sanakirjasta.
+ */
+function monthWord(month: string, locale: AppLocale): string {
+  return monthName(month, locale);
 }
 
 function formatDate(isoDate: string): string {
