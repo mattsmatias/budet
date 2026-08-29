@@ -11,6 +11,7 @@
  */
 
 import type { IconName } from "@/components/restoflow/icons";
+import type { NavKey } from "@/lib/i18n/admin-text";
 import type { Role } from "./types";
 
 export type Capability =
@@ -236,24 +237,31 @@ export const ROUTE_ACCESS: RouteAccess[] = [
  * käyttöliittymässä, jotta uuden kohdan lisääjä joutuu päättämään
  * mihin se kuuluu.
  */
+/*
+ * Osaston nimi tulee sanakirjasta, ei tästä.
+ *
+ * Lista kertoo mitä osastoja on ja missä järjestyksessä — se on
+ * käyttöoikeus- ja rakenneasia. Otsikko on käännettävää tekstiä.
+ */
 export const NAV_SECTIONS = [
-  { id: "main", label: "Päävalikko" },
-  { id: "finance", label: "Talous" },
-  { id: "staff", label: "Henkilöstö" },
+  { id: "main", key: "sectionMain" },
+  { id: "finance", key: "sectionFinance" },
+  { id: "staff", key: "sectionStaff" },
   /*
    * Ravintola ja Raportointi olivat kaksi omaa osastoaan, joissa
    * kummassakin oli yksi rivi. Yhden rivin osasto ei ryhmittele
    * mitään — se vain jakaa listan pienempiin paloihin. Nyt ne ovat
    * yhtä: kaikki mikä ei ole rahaa eikä väkeä.
    */
-  { id: "restaurant", label: "Muut" },
+  { id: "restaurant", key: "sectionOther" },
 ] as const;
 
 export type NavSection = (typeof NAV_SECTIONS)[number]["id"];
 
 export interface NavEntry {
   href: string;
-  label: string;
+  /** Otsikon avain sanakirjassa (lib/i18n/admin-text.ts). */
+  key: NavKey;
   /** Ikoni-avain components/restoflow/icons.tsx:n sarjasta. */
   icon: IconName;
   requires: Capability;
@@ -277,7 +285,7 @@ export interface NavEntry {
  * kellokuvakkeesta ja tunnusvalikosta.
  */
 export const ADMIN_NAV: NavEntry[] = [
-  { href: "/admin", label: "Yleiskatsaus", icon: "overview", requires: "expenses.view", section: "main" },
+  { href: "/admin", key: "overview", icon: "overview", requires: "expenses.view", section: "main" },
 
   /*
    * Myynti on valikossa, ja se on TALOUDEN ensimmäinen kohta.
@@ -290,11 +298,11 @@ export const ADMIN_NAV: NavEntry[] = [
    * paljonko tuli. Jälkimmäinen tulee ensin, koska ilman sitä
    * ensimmäisellä ei ole mittakaavaa.
    */
-  { href: "/admin/myynti", label: "Myynti", icon: "sales", requires: "sales.view", section: "finance" },
+  { href: "/admin/myynti", key: "sales", icon: "sales", requires: "sales.view", section: "finance" },
 
-  { href: "/admin/kuitit", label: "Kuitit", icon: "receipt", requires: "receipts.view", section: "finance" },
-  { href: "/admin/kulut", label: "Kulut", icon: "expenses", requires: "expenses.view", section: "finance" },
-  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
+  { href: "/admin/kuitit", key: "receipts", icon: "receipt", requires: "receipts.view", section: "finance" },
+  { href: "/admin/kulut", key: "expenses", icon: "expenses", requires: "expenses.view", section: "finance" },
+  { href: "/admin/budjetit", key: "budgets", icon: "budget", requires: "budgets.view", section: "finance" },
 
   /*
    * Toimittajat on valikossa.
@@ -304,7 +312,7 @@ export const ADMIN_NAV: NavEntry[] = [
    * toimittajan haluaa. Sivu vastaa kysymykseen "kenelle raha
    * menee", ja se on kysymys jota ei osaa esittää linkin kautta.
    */
-  { href: "/admin/toimittajat", label: "Toimittajat", icon: "suppliers", requires: "suppliers.view", section: "finance" },
+  { href: "/admin/toimittajat", key: "suppliers", icon: "suppliers", requires: "suppliers.view", section: "finance" },
 
   /*
    * Kirjanpito on talouden viimeinen kohta.
@@ -316,7 +324,7 @@ export const ADMIN_NAV: NavEntry[] = [
    * Se on omalla sivullaan muttei oma tietosiilonsa: sivu ei kysy
    * käyttäjältä mitään mitä Kate jo tietää.
    */
-  { href: "/admin/kirjanpito", label: "Kirjanpito", icon: "report", requires: "accounting.view", section: "finance" },
+  { href: "/admin/kirjanpito", key: "accounting", icon: "report", requires: "accounting.view", section: "finance" },
 
   /*
    * Tehtävät ovat päivittäinen kohta, ei arkisto.
@@ -330,15 +338,15 @@ export const ADMIN_NAV: NavEntry[] = [
    * hallinta. Ilman tätä eroa työntekijä ohjautuisi kirjautuessaan
    * hallinnan tehtäväsivulle.
    */
-  { href: "/admin/tehtavat", label: "Tehtävät", icon: "check", requires: "tasks.manage", section: "main" },
+  { href: "/admin/tehtavat", key: "tasks", icon: "check", requires: "tasks.manage", section: "main" },
 
-  { href: "/admin/tyovuorot", label: "Työvuorot", icon: "calendar", requires: "shifts.view.all", section: "staff" },
-  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
-  { href: "/admin/palkat", label: "Palkat", icon: "payroll", requires: "payroll.view", section: "staff" },
+  { href: "/admin/tyovuorot", key: "shifts", icon: "calendar", requires: "shifts.view.all", section: "staff" },
+  { href: "/admin/tyontekijat", key: "staff", icon: "staff", requires: "staff.view", section: "staff" },
+  { href: "/admin/palkat", key: "payroll", icon: "payroll", requires: "payroll.view", section: "staff" },
 
-  { href: "/admin/lounas", label: "Lounas", icon: "lunch", requires: "lunch.view", section: "restaurant" },
+  { href: "/admin/lounas", key: "lunch", icon: "lunch", requires: "lunch.view", section: "restaurant" },
 
-  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "restaurant" },
+  { href: "/admin/raportit", key: "reports", icon: "report", requires: "reports.view", section: "restaurant" },
 ];
 
 /*
@@ -356,9 +364,9 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
-  { href: "/admin/tyontekijat", label: "Työntekijät", icon: "staff", requires: "staff.view", section: "staff" },
-  { href: "/admin/budjetit", label: "Budjetit", icon: "budget", requires: "budgets.view", section: "finance" },
-  { href: "/admin/raportit", label: "Raportointi", icon: "report", requires: "reports.view", section: "restaurant" },
+  { href: "/admin/tyontekijat", key: "staff", icon: "staff", requires: "staff.view", section: "staff" },
+  { href: "/admin/budjetit", key: "budgets", icon: "budget", requires: "budgets.view", section: "finance" },
+  { href: "/admin/raportit", key: "reports", icon: "report", requires: "reports.view", section: "restaurant" },
 ];
 
 export function adminNavFor(role: Role): NavEntry[] {
@@ -374,12 +382,12 @@ export function adminNavFor(role: Role): NavEntry[] {
  */
 export function adminNavSectionsFor(
   role: Role,
-): { id: NavSection; label: string; items: NavEntry[] }[] {
+): { id: NavSection; key: NavKey; items: NavEntry[] }[] {
   const items = adminNavFor(role);
 
   return NAV_SECTIONS.map((section) => ({
     id: section.id,
-    label: section.label,
+    key: section.key,
     items: items.filter((item) => item.section === section.id),
   })).filter((section) => section.items.length > 0);
 }

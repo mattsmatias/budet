@@ -9,6 +9,7 @@ import { personInitials } from "@/lib/restoflow/initials";
 import { severityColor } from "@/components/restoflow/ui";
 import { alertIcon } from "@/lib/restoflow/alert-icons";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Yläpalkin valikot.
@@ -125,11 +126,13 @@ function Dropdown({
  * että jokin on tehty, vaikka kuitti olisi yhä tarkistamatta.
  */
 function NotificationMenu({
+  t,
   alerts,
   open,
   onToggle,
   onClose,
 }: {
+  t: AdminText;
   alerts: Alert[];
   open: boolean;
   onToggle: () => void;
@@ -176,7 +179,7 @@ function NotificationMenu({
                     {alerts.length > critical ? ` · ${alerts.length - critical} muuta` : ""}
                   </>
                 ) : (
-                  "Ei kiireellisiä"
+                  t.kuori.noUrgent
                 )}
               </p>
             ) : null}
@@ -286,6 +289,7 @@ function NotificationMenu({
  * työkaluja; tämä valikko koskee vain tätä.
  */
 function UserMenu({
+  t,
   userName,
   restaurantName,
   role,
@@ -294,6 +298,7 @@ function UserMenu({
   onToggle,
   onClose,
 }: {
+  t: AdminText;
   userName: string;
   restaurantName: string;
   role: Role;
@@ -349,7 +354,7 @@ function UserMenu({
               <span style={{ color: "var(--rf-text-3)" }}>
                 <RfIcon name="clock" size={17} />
               </span>
-              Työntekijänäkymä
+              {t.kuori.workerView}
             </Link>
 
             {canOpenSettings ? (
@@ -363,7 +368,7 @@ function UserMenu({
                 <span style={{ color: "var(--rf-text-3)" }}>
                   <RfIcon name="settings" size={17} />
                 </span>
-                Asetukset
+                {t.kuori.settings}
               </Link>
             ) : null}
 
@@ -375,7 +380,7 @@ function UserMenu({
                 style={{ color: "var(--rf-red-text)" }}
               >
                 <RfIcon name="logout" size={17} />
-                Kirjaudu ulos
+                {t.kuori.signOut}
               </button>
             </form>
           </div>
@@ -395,6 +400,7 @@ function UserMenu({
  * syöttötavalla.
  */
 export function HeaderMenus({
+  t,
   alerts,
   userName,
   restaurantName,
@@ -402,6 +408,8 @@ export function HeaderMenus({
   canOpenSettings,
   showUser = true,
 }: {
+  /** Kuoren tekstit. */
+  t: AdminText;
   alerts: Alert[];
   userName: string;
   restaurantName: string;
@@ -422,6 +430,7 @@ export function HeaderMenus({
   return (
     <div className="flex shrink-0 items-center gap-2">
       <NotificationMenu
+        t={t}
         alerts={alerts}
         open={openMenu === "alerts"}
         onToggle={() =>
@@ -432,6 +441,7 @@ export function HeaderMenus({
 
       {showUser ? (
       <UserMenu
+        t={t}
         userName={userName}
         restaurantName={restaurantName}
         role={role}

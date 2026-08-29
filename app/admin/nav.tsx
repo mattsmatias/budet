@@ -13,6 +13,7 @@ import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MattiPanel } from "./matti/panel";
 import type { Briefing } from "@/lib/matti/briefing";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Hallintanavigaatio.
@@ -30,8 +31,11 @@ export function AdminNav({
   briefing,
   greeting,
   restaurantName,
+  t,
 }: {
   role: Role;
+  /** Kuoren tekstit; navigaation otsikot tulevat näistä. */
+  t: AdminText;
   /** Näkyy kiskon tunnuslohkon alarivillä, kuten konsolissa. */
   restaurantName: string;
   /** Matin tilannekatsaus — johdettu samasta aineistosta kuin hälytykset. */
@@ -55,11 +59,12 @@ export function AdminNav({
         sections={sections}
         counts={counts}
         restaurantName={restaurantName}
+        t={t}
         matti={can(role, "matti.use")}
         briefing={briefing}
         greeting={greeting}
       />
-      <MobileBar items={primary} />
+      <MobileBar items={primary} t={t} />
     </>
   );
 }
@@ -81,10 +86,12 @@ function DesktopSidebar({
   briefing,
   greeting,
   restaurantName,
+  t,
 }: {
   briefing: Briefing;
   greeting: string;
   restaurantName: string;
+  t: AdminText;
   sections: ReturnType<typeof adminNavSectionsFor>;
   counts: Record<string, number>;
   /** Onko roolilla oikeus Mattiin. */
@@ -150,16 +157,21 @@ function DesktopSidebar({
                 className="rf-rail-head px-[11px] pb-1 pt-3 text-[10.5px] font-bold uppercase"
                 style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
               >
-                {section.label}
+                {t.nav[section.key]}
               </p>
             )}
 
             <ul
-              aria-label={section.id === "main" ? section.label : undefined}
+              aria-label={section.id === "main" ? t.nav[section.key] : undefined}
               aria-labelledby={section.id === "main" ? undefined : `rf-nav-${section.id}`}
             >
               {section.items.map((item) => (
-                <NavLink key={item.href} item={item} count={counts[item.href] ?? 0} />
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  count={counts[item.href] ?? 0}
+                  t={t}
+                />
               ))}
             </ul>
           </div>
@@ -187,7 +199,15 @@ function DesktopSidebar({
   );
 }
 
-function NavLink({ item, count }: { item: NavEntry; count: number }) {
+function NavLink({
+  item,
+  count,
+  t,
+}: {
+  item: NavEntry;
+  count: number;
+  t: AdminText;
+}) {
   const isActive = useActive();
   const active = isActive(item.href);
 
@@ -212,7 +232,7 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
         }}
       >
         <RfIcon name={item.icon} size={17} strokeWidth={1.8} />
-        <span className="flex-1">{item.label}</span>
+        <span className="flex-1">{t.nav[item.key]}</span>
 
         {count > 0 ? (
           <span
@@ -240,7 +260,7 @@ function NavLink({ item, count }: { item: NavEntry; count: number }) {
  * Viisi tärkeintä kohtaa; loput löytyvät "Lisää"-välilehdeltä. Kuusi
  * kohtaa alapalkissa tekee kosketuskohteista liian kapeita.
  */
-function MobileBar({ items }: { items: NavItems }) {
+function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
   const isActive = useActive();
   const primary = items;
   // Lisää on aina mukana: sen takana ovat asetukset ja uloskirjautuminen.
@@ -274,7 +294,7 @@ function MobileBar({ items }: { items: NavItems }) {
                 style={{ color: active ? "var(--rf-accent)" : "var(--rf-text-3)" }}
               >
                 <RfIcon name={item.icon} size={22} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium">{t.nav[item.key]}</span>
               </Link>
             </li>
           );
@@ -291,7 +311,7 @@ function MobileBar({ items }: { items: NavItems }) {
               }}
             >
               <RfIcon name="more" size={22} />
-              <span className="text-[10px] font-medium">Lisää</span>
+              <span className="text-[10px] font-medium">{t.nav.more}</span>
             </Link>
           </li>
         ) : null}

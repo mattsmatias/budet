@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { ADMIN_NAV } from "@/lib/restoflow/permissions";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Sivun nimi yläpalkkiin.
@@ -33,10 +34,19 @@ const EXTRA: { href: string; label: string }[] = [
   { href: "/admin/loki", label: "Toimintaloki" },
 ];
 
-export function PageTitle({ fallback }: { fallback: string }) {
+export function PageTitle({
+  fallback,
+  t,
+}: {
+  fallback: string;
+  t: AdminText;
+}) {
   const pathname = usePathname();
 
-  const routes = [...ADMIN_NAV.map((e) => ({ href: e.href, label: e.label })), ...EXTRA];
+  const routes = [
+    ...ADMIN_NAV.map((e) => ({ href: e.href, label: t.nav[e.key] })),
+    ...EXTRA,
+  ];
 
   const match = routes
     .filter((r) => pathname === r.href || pathname.startsWith(`${r.href}/`))

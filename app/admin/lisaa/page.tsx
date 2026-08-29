@@ -6,6 +6,8 @@ import { landingFor, moreNavFor } from "@/lib/restoflow/permissions";
 import { ROLE_LABELS } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
 
 export const metadata = { title: "Lisää" };
 
@@ -17,6 +19,7 @@ export const metadata = { title: "Lisää" };
  */
 export default async function AdminMorePage() {
   const { user, restaurant, role } = await requireContext("/admin/lisaa");
+  const t = adminText(await resolveLocale());
 
   const items = moreNavFor(role);
 
@@ -56,7 +59,7 @@ export default async function AdminMorePage() {
                     <span style={{ color: "var(--rf-text-2)" }}>
                       <RfIcon name={item.icon} size={20} />
                     </span>
-                    <span className="flex-1 text-[15px] font-medium">{item.label}</span>
+                    <span className="flex-1 text-[15px] font-medium">{t.nav[item.key]}</span>
                     <span style={{ color: "var(--rf-text-3)" }}>
                       <RfIcon name="chevron" size={16} />
                     </span>

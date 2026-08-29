@@ -3,6 +3,7 @@ import { PageTitle } from "./page-title";
 import { MonthScope } from "./month-scope";
 import { LanguagePicker } from "@/components/i18n/language-picker";
 import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { Search, type SearchItem } from "./search";
 import { ButtonLink } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -41,6 +42,7 @@ export function TopBar({
   months,
   month,
   locale,
+  t,
 }: {
   restaurantName: string;
   /** "MA 24.08.2026" — ravintolan ajassa. */
@@ -58,6 +60,8 @@ export function TopBar({
   month: string;
   /** Kayttajan kieli kielivalitsinta varten. */
   locale: AppLocale;
+  /** Kuoren tekstit. */
+  t: AdminText;
 }) {
   return (
     <header
@@ -76,11 +80,11 @@ export function TopBar({
           {restaurantName} · {date}
         </p>
         <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
-          <PageTitle fallback="Hallinta" />
+          <PageTitle fallback={t.kuori.admin} t={t} />
         </h1>
       </div>
 
-      <Search items={search} />
+      <Search items={search} t={t} />
 
       {/*
         Kuukausi on palkissa eikä sivulla.
@@ -102,11 +106,12 @@ export function TopBar({
           size="sm"
           icon={<RfIcon name="plus" size={15} />}
         >
-          Lisää kuitti
+          {t.kuori.addReceipt}
         </ButtonLink>
       ) : null}
 
       <HeaderMenus
+        t={t}
         alerts={alerts}
         userName={userName}
         restaurantName={restaurantName}

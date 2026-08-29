@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Haku.
@@ -37,7 +38,7 @@ export interface SearchItem {
 /** Montako osumaa näytetään. Pidempi lista ei ole enää hakutulos. */
 const LIMIT = 8;
 
-export function Search({ items }: { items: SearchItem[] }) {
+export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -120,7 +121,7 @@ export function Search({ items }: { items: SearchItem[] }) {
       >
         <RfIcon name="search" size={16} />
         <span className="min-w-0 flex-1 truncate">
-          Etsi kuitteja, toimittajia, työntekijöitä…
+          {t.kuori.searchPlaceholder}
         </span>
         <kbd
           suppressHydrationWarning
@@ -220,7 +221,7 @@ export function Search({ items }: { items: SearchItem[] }) {
           {results.length === 0 ? (
             <p className="px-4 py-5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
               {query.trim() === ""
-                ? "Kirjoita nimi tai sivun nimi."
+                ? t.kuori.searchHint
                 : `Ei osumaa haulle “${query.trim()}”.`}
             </p>
           ) : (

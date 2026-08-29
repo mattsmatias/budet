@@ -13,6 +13,7 @@ import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
 import { MobileMonthBar } from "./month-scope";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import type { SearchItem } from "./search";
 import type { StaffPosition } from "@/lib/restoflow/types";
 
@@ -25,6 +26,9 @@ import type { StaffPosition } from "@/lib/restoflow/types";
  */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { user, restaurant, role } = await requireContext("/admin");
+
+  const locale = await resolveLocale();
+  const t = adminText(locale);
 
   const data = await fetchRestaurantData(restaurant.id);
   const month = monthIn(restaurant.timezone);
@@ -63,7 +67,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     today,
   });
 
-  const userName = user.fullName ?? user.email ?? "Käyttäjä";
+  const userName = user.fullName ?? user.email ?? t.kuori.user;
 
   /*
    * Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
@@ -116,6 +120,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           role={role}
           counts={counts}
           restaurantName={restaurant.name}
+          t={t}
           briefing={briefing}
           greeting={greeting(new Date(now), restaurant.timezone)}
         />
@@ -138,6 +143,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </p>
           </Link>
           <HeaderMenus
+            t={t}
             alerts={alerts}
             userName={userName}
             restaurantName={restaurant.name}
@@ -170,12 +176,13 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           alerts={alerts}
           userName={userName}
           role={role}
-          search={searchItems(role, data.suppliers, data.users)}
+          search={searchItems(role, data.suppliers, data.users, t)}
           canAddReceipt={can(role, "receipts.add")}
           canOpenSettings={can(role, "settings.view")}
           months={months}
           month={month}
-          locale={await resolveLocale()}
+          locale={locale}
+          t={t}
         />
 
         <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">
@@ -228,27 +235,28 @@ function searchItems(
   role: Parameters<typeof adminNavFor>[0],
   suppliers: { id: string; name: string }[],
   users: { id: string; name: string; position: StaffPosition | null; active: boolean }[],
+  t: AdminText,
 ): SearchItem[] {
-  const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, s.label]));
+  const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, t.nav[s.key]]));
 
   const pages: SearchItem[] = adminNavFor(role).map((entry) => ({
     id: `page-${entry.href}`,
-    label: entry.label,
+    label: t.nav[entry.key],
     // Osaston nimi eikä polku: "/admin/kuitit" on osoite, ei selitys.
-    detail: sectionLabel.get(entry.section) ?? "Hallinta",
+    detail: sectionLabel.get(entry.section) ?? t.kuori.admin,
     href: entry.href,
     icon: entry.icon,
-    group: "Sivu",
+    group: t.kuori.groupPage,
   }));
 
   const supplierItems: SearchItem[] = can(role, "suppliers.view")
     ? suppliers.map((supplier) => ({
         id: `supplier-${supplier.id}`,
         label: supplier.name,
-        detail: "Toimittaja",
+        detail: t.kuori.groupSupplier,
         href: `/admin/toimittajat/${supplier.id}`,
         icon: "suppliers" as const,
-        group: "Toimittaja",
+        group: t.kuori.groupSupplier,
       }))
     : [];
 
@@ -258,10 +266,12 @@ function searchItems(
         .map((person) => ({
           id: `staff-${person.id}`,
           label: person.name,
-          detail: person.position ? POSITION_LABELS[person.position] : "Työntekijä",
+          detail: person.position
+            ? POSITION_LABELS[person.position]
+            : t.kuori.employee,
           href: "/admin/tyontekijat",
           icon: "staff" as const,
-          group: "Henkilö",
+          group: t.kuori.groupPerson,
         }))
     : [];
 
