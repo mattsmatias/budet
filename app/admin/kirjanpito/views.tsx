@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { formatMoney } from "@/lib/money";
 import { formatRate } from "@/lib/restoflow/vat";
 import {
@@ -35,17 +37,19 @@ import { CorrectEntryForm, PostEntryButton, RejectEntryButton } from "./controls
  * kortti jossa viennit ovat allekkain — samat luvut, eri muoto.
  */
 export function Paivakirja({
+  t,
   entries,
   saaKirjata,
 }: {
+  t: AdminText;
   entries: LedgerEntry[];
   saaKirjata: boolean;
 }) {
   if (entries.length === 0) {
     return (
       <EmptyState
-        title="Ei tositteita tässä kuussa"
-        description="Hae tapahtumat yhteenvedosta, niin Kate muodostaa kirjausesitykset kuiteista ja myyntipäivistä."
+        title={t.kirjanpito.noVouchers}
+        description={t.kirjanpito2.fetchFirst}
       />
     );
   }
@@ -98,8 +102,8 @@ export function Paivakirja({
       <Card padded={false} className="hidden md:block">
         <div className="px-5 pt-5">
           <CardHeader
-            title="Päiväkirja"
-            subtitle={`${entries.length} tositetta aikajärjestyksessä`}
+            title={t.kirjanpito.journal}
+            subtitle={fill(t.kirjanpito.voucherCount, { maara: String(entries.length) })}
           />
         </div>
 
@@ -111,18 +115,18 @@ export function Paivakirja({
           }}
         >
           <table className="rf-table w-full min-w-[60rem] text-[14px]">
-            <caption className="sr-only">Kirjanpidon päiväkirja</caption>
+            <caption className="sr-only">{t.kirjanpito.journalTitle}</caption>
             <thead>
               <tr>
-                <th scope="col">Päivä</th>
-                <th scope="col">Tosite</th>
-                <th scope="col">Selite</th>
-                <th scope="col">Tili</th>
-                <th scope="col" className="text-right">Debet</th>
-                <th scope="col" className="text-right">Kredit</th>
-                <th scope="col" className="text-right">ALV</th>
-                <th scope="col">Lähde</th>
-                <th scope="col">Tila</th>
+                <th scope="col">{t.yleiskatsaus.day}</th>
+                <th scope="col">{t.kirjanpito.voucher}</th>
+                <th scope="col">{t.kirjanpito.description}</th>
+                <th scope="col">{t.kirjanpito.account}</th>
+                <th scope="col" className="text-right">{t.kirjanpito.debit}</th>
+                <th scope="col" className="text-right">{t.kirjanpito.credit}</th>
+                <th scope="col" className="text-right">{t.kuitti2.vat}</th>
+                <th scope="col">{t.kirjanpito.source}</th>
+                <th scope="col">{t.sanat.status}</th>
               </tr>
             </thead>
 
@@ -137,7 +141,7 @@ export function Paivakirja({
                         <span className="flex items-center gap-2">
                           {entry.description}
                           {!isBalanced(entry) ? (
-                            <span title="Tosite ei täsmää" style={{ color: "var(--rf-red-text)" }}>
+                            <span title={t.kirjanpito.voucherMismatch} style={{ color: "var(--rf-red-text)" }}>
                               <RfIcon name="alert" size={14} />
                             </span>
                           ) : null}
@@ -197,8 +201,8 @@ export function Paivakirja({
           {entries.filter((e) => e.status === "posted").length > 0 ? (
             <Card className="mt-3">
               <CardHeader
-                title="Korjaus"
-                subtitle="Kirjattua tositetta ei muuteta. Korjaus on uusi tosite joka kumoaa alkuperäisen."
+                title={t.kirjanpito.correction}
+                subtitle={t.kirjanpito.correctionNote}
               />
               <div className="mt-3 space-y-2">
                 {entries
@@ -245,14 +249,20 @@ function TilaMerkki({ entry }: { entry: LedgerEntry }) {
  * myyntipäivään. Ilman sitä pääkirjan luku on vain luku, eikä
  * kysymykseen "mistä tämä tulee" voi vastata.
  */
-export function Paakirja({ accounts }: { accounts: GeneralLedgerAccount[] }) {
+export function Paakirja({
+  accounts,
+  t,
+}: {
+  accounts: GeneralLedgerAccount[];
+  t: AdminText;
+}) {
   const kaytossa = accounts.filter((a) => a.lineCount > 0);
 
   if (kaytossa.length === 0) {
     return (
       <EmptyState
-        title="Ei tapahtumia tässä kuussa"
-        description="Pääkirja täyttyy kun kuukauden tositteet on muodostettu."
+        title={t.kirjanpito.noEntries}
+        description={t.kirjanpito2.ledgerFills}
       />
     );
   }
@@ -268,7 +278,7 @@ export function Paakirja({ accounts }: { accounts: GeneralLedgerAccount[] }) {
               </p>
               <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                 {ACCOUNT_TYPE_LABELS[account.type]} · {account.lineCount}{" "}
-                {account.lineCount === 1 ? "vienti" : "vientiä"}
+                {account.lineCount === 1 ? "vienti" : t.kirjanpito2.entry}
               </p>
             </div>
             <p className="rf-tabular text-[15px] font-bold">
@@ -336,12 +346,18 @@ function LahdeLinkki({
 // Tilikartta
 // ---------------------------------------------------------------------------
 
-export function Tilikartta({ accounts }: { accounts: LedgerAccount[] }) {
+export function Tilikartta({
+  accounts,
+  t,
+}: {
+  accounts: LedgerAccount[];
+  t: AdminText;
+}) {
   if (accounts.length === 0) {
     return (
       <EmptyState
-        title="Tilikarttaa ei ole vielä luotu"
-        description="Tilikartta syntyy kun haet kuukauden tapahtumat ensimmäisen kerran."
+        title={t.kirjanpito.noChart}
+        description={t.kirjanpito2.chartAppears}
       />
     );
   }
@@ -357,7 +373,7 @@ export function Tilikartta({ accounts }: { accounts: LedgerAccount[] }) {
           <div className="px-5 pt-4">
             <CardHeader
               title={ACCOUNT_TYPE_LABELS[ryhma.type]}
-              subtitle={`${ryhma.rows.length} tiliä`}
+              subtitle={fill(t.kirjanpito.accountCount, { maara: String(ryhma.rows.length) })}
             />
           </div>
 
@@ -374,7 +390,7 @@ export function Tilikartta({ accounts }: { accounts: LedgerAccount[] }) {
                   {account.name}
                 </span>
                 <span className="shrink-0">
-                  {!account.active ? <Pill tone="info">ei käytössä</Pill> : null}
+                  {!account.active ? <Pill tone="info">{t.kirjanpito.unused}</Pill> : null}
                 </span>
               </li>
             ))}
@@ -382,11 +398,7 @@ export function Tilikartta({ accounts }: { accounts: LedgerAccount[] }) {
         </Card>
       ))}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Tilikartta on ravintolakohtainen ja muokattavissa. Perustilit ovat
-        lähtökohta jonka kirjanpitäjä tarkistaa, ei väite oikeasta
-        tilikartasta.
-      </p>
+      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kirjanpito.chartNote}</p>
     </div>
   );
 }
@@ -405,7 +417,7 @@ export function Tilikartta({ accounts }: { accounts: LedgerAccount[] }) {
  * täsmäävät, sen näkee yhdellä silmäyksellä; jos eivät, erotus on
  * luettavissa eikä piilotettu.
  */
-export function Alv({ vat }: { vat: VatSummary }) {
+export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
   const myyntiEro = vat.salesVatSource - vat.salesVatLedger;
   const ostoEro = vat.purchaseVatSource - vat.purchaseVatLedger;
 
@@ -413,15 +425,15 @@ export function Alv({ vat }: { vat: VatSummary }) {
     <div className="space-y-4">
       <Card>
         <CardHeader
-          title="Verokauden yhteenveto"
+          title={t.kirjanpito.periodSummary}
           subtitle={monthLabel(vat.month)}
         />
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Luku label="Myynnin ALV" value={formatMoney(vat.salesVatLedger)} />
-          <Luku label="Vähennettävä ALV" value={formatMoney(vat.purchaseVatLedger)} />
+          <Luku label={t.kirjanpito.salesVat} value={formatMoney(vat.salesVatLedger)} />
+          <Luku label={t.kirjanpito.deductibleVat} value={formatMoney(vat.purchaseVatLedger)} />
           <Luku
-            label="Maksettava"
+            label={t.kirjanpito.payable}
             value={formatMoney(vat.payableCents)}
             korosta
           />
@@ -432,8 +444,8 @@ export function Alv({ vat }: { vat: VatSummary }) {
         <Card padded={false}>
           <div className="px-5 pt-4">
             <CardHeader
-              title="Myynti verokannoittain"
-              subtitle="Kassan oma ALV-erittely"
+              title={t.kirjanpito.salesByRate}
+              subtitle={t.kirjanpito.tillVatBreakdown}
             />
           </div>
 
@@ -445,13 +457,13 @@ export function Alv({ vat }: { vat: VatSummary }) {
             }}
           >
             <table className="rf-table w-full text-[14px]">
-              <caption className="sr-only">Myynti verokannoittain</caption>
+              <caption className="sr-only">{t.kirjanpito.salesByRate}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Verokanta</th>
-                  <th scope="col" className="text-right">Verollinen</th>
-                  <th scope="col" className="text-right">Vero</th>
-                  <th scope="col" className="text-right">Veroton</th>
+                  <th scope="col">{t.kirjanpito.taxRate}</th>
+                  <th scope="col" className="text-right">{t.kirjanpito.taxable}</th>
+                  <th scope="col" className="text-right">{t.kirjanpito.tax}</th>
+                  <th scope="col" className="text-right">{t.kirjanpito.exclTax}</th>
                 </tr>
               </thead>
               <tbody>
@@ -466,7 +478,7 @@ export function Alv({ vat }: { vat: VatSummary }) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Yhteensä</td>
+                  <td>{t.kuitit.total}</td>
                   <td className="num">
                     {formatMoney(vat.byRate.reduce((s, r) => s + r.grossCents, 0))}
                   </td>
@@ -485,25 +497,28 @@ export function Alv({ vat }: { vat: VatSummary }) {
 
       <Card>
         <CardHeader
-          title="Täsmäytys"
-          subtitle="Lähdedata ja kirjanpito vierekkäin"
+          title={t.kirjanpito.reconciliation}
+          subtitle={t.kirjanpito.sideBySide}
         />
 
         <div className="mt-4 space-y-3">
           <Tasmays
-            label="Myynnin ALV"
+            t={t}
+            label={t.kirjanpito.salesVat}
             lahde={vat.salesVatSource}
             kirjanpito={vat.salesVatLedger}
             ero={myyntiEro}
           />
           <Tasmays
-            label="Vähennettävä ALV"
+            t={t}
+            label={t.kirjanpito.deductibleVat}
             lahde={vat.purchaseVatSource}
             kirjanpito={vat.purchaseVatLedger}
             ero={ostoEro}
           />
           <Tasmays
-            label="Myynti yhteensä"
+            t={t}
+            label={t.kirjanpito.salesTotal}
             lahde={vat.salesGrossSource}
             kirjanpito={vat.salesGrossLedger}
             ero={vat.salesGrossSource - vat.salesGrossLedger}
@@ -519,11 +534,13 @@ function Tasmays({
   lahde,
   kirjanpito,
   ero,
+  t,
 }: {
   label: string;
   lahde: number;
   kirjanpito: number;
   ero: number;
+  t: AdminText;
 }) {
   const ok = ero === 0;
 
@@ -546,7 +563,7 @@ function Tasmays({
         <span style={{ color: "var(--rf-text-2)" }}>Lähde {formatMoney(lahde)}</span>
         <span style={{ color: "var(--rf-text-2)" }}>Kirjanpito {formatMoney(kirjanpito)}</span>
         <span className="font-bold" style={{ color: ok ? "var(--rf-text-3)" : "var(--rf-amber-text)" }}>
-          {ok ? "täsmää" : `erotus ${formatMoney(Math.abs(ero))}`}
+          {ok ? t.kirjanpito2.matches : fill(t.kirjanpito.difference, { summa: formatMoney(Math.abs(ero)) })}
         </span>
       </span>
     </div>
@@ -582,10 +599,12 @@ function Luku({
 // ---------------------------------------------------------------------------
 
 export function Raportit({
+  t,
   income,
   balance,
   month,
 }: {
+  t: AdminText;
   income: IncomeStatement | null;
   balance: BalanceSheet | null;
   month: string;
@@ -605,16 +624,16 @@ export function Raportit({
       */}
       <Card>
         <CardHeader
-          title="Lataa kirjanpito"
-          subtitle="Tiedostoissa vain kirjatut tositteet, ei kirjausesityksiä"
+          title={t.kirjanpito.download}
+          subtitle={t.kirjanpito.downloadNote}
         />
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            { kind: "paivakirja", label: "Päiväkirja" },
-            { kind: "paakirja", label: "Pääkirja" },
-            { kind: "tuloslaskelma", label: "Tuloslaskelma" },
-            { kind: "tase", label: "Tase" },
+            { kind: "paivakirja", label: t.kirjanpito.journal },
+            { kind: "paakirja", label: t.kirjanpito2.generalLedger },
+            { kind: "tuloslaskelma", label: t.kirjanpito.incomeStatement },
+            { kind: "tase", label: t.kirjanpito.balanceSheet },
           ].map((r) => (
             <div key={r.kind} className="flex flex-wrap items-center gap-2">
               <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium">
@@ -637,8 +656,10 @@ export function Raportit({
         <Card padded={false}>
           <div className="px-5 pt-4">
             <CardHeader
-              title="Tuloslaskelma"
-              subtitle={`${monthLabel(month)}${income.includesProposed ? " · sisältää kirjausesitykset" : " · vain kirjatut"}`}
+              title={t.kirjanpito.incomeStatement}
+              subtitle={`${monthLabel(month)}${
+          income.includesProposed ? t.kirjanpito.withProposed : t.kirjanpito.onlyBooked
+        }`}
             />
           </div>
 
@@ -646,13 +667,13 @@ export function Raportit({
             {income.revenue.map((row) => (
               <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
             ))}
-            <Summa label="Tuotot yhteensä" cents={income.revenueTotalCents} />
+            <Summa label={t.kirjanpito.revenueTotal} cents={income.revenueTotalCents} />
 
             {income.expenses.map((row) => (
               <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
             ))}
-            <Summa label="Kulut yhteensä" cents={income.expenseTotalCents} />
-            <Summa label="Tulos" cents={income.resultCents} korosta />
+            <Summa label={t.kirjanpito.expensesTotal} cents={income.expenseTotalCents} />
+            <Summa label={t.kirjanpito.result} cents={income.resultCents} korosta />
           </ul>
         </Card>
       ) : null}
@@ -661,8 +682,8 @@ export function Raportit({
         <Card padded={false}>
           <div className="px-5 pt-4">
             <CardHeader
-              title="Tase"
-              subtitle={`Tilanne ${suomiPvm(balance.asOf)}`}
+              title={t.kirjanpito.balanceSheet}
+              subtitle={fill(t.kirjanpito.asOf, { paiva: suomiPvm(balance.asOf) })}
             />
           </div>
 
@@ -670,18 +691,18 @@ export function Raportit({
             {balance.assets.map((row) => (
               <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
             ))}
-            <Summa label="Vastaavaa yhteensä" cents={balance.assetsTotalCents} />
+            <Summa label={t.kirjanpito.assetsTotal} cents={balance.assetsTotalCents} />
 
             {balance.liabilities.map((row) => (
               <Rivi key={row.number} number={row.number} name={row.name} cents={row.amountCents} />
             ))}
             <Rivi number="" name="Tilikauden tulos" cents={balance.resultCents} />
-            <Summa label="Vastattavaa yhteensä" cents={balance.balancesTotalCents} />
+            <Summa label={t.kirjanpito.liabilitiesTotal} cents={balance.balancesTotalCents} />
           </ul>
 
           <div className="px-5 pb-4 pt-3">
             <Pill tone={balance.balanced ? "ok" : "risk"} dot>
-              {balance.balanced ? "Tase täsmää" : "Tase ei täsmää"}
+              {balance.balanced ? t.kirjanpito2.balanceOk : t.kirjanpito2.balanceOff}
             </Pill>
           </div>
         </Card>
@@ -689,8 +710,8 @@ export function Raportit({
 
       {!income && !balance ? (
         <EmptyState
-          title="Ei raportoitavaa"
-          description="Raportit muodostuvat kun kuukaudessa on tositteita."
+          title={t.kirjanpito.nothingToReport}
+          description={t.kirjanpito2.reportsAppear}
         />
       ) : null}
     </div>
@@ -796,10 +817,12 @@ function Lataus({ href, label }: { href: string; label: string }) {
  * muuttuu, eikä sen muuttaminen saa vaatia julkaisua.
  */
 export function Veroasiat({
+  t,
   guides,
   vat,
   month,
 }: {
+  t: AdminText;
   guides: TaxGuide[];
   vat: VatSummary;
   month: string;
@@ -817,35 +840,28 @@ export function Veroasiat({
         <span aria-hidden="true" className="mt-0.5 shrink-0">
           <RfIcon name="alert" size={16} />
         </span>
-        <p>
-          Kate ei lähetä veroilmoituksia. Se laskee luvut kirjanpidosta ja
-          kertoo mitä niillä tehdään — ilmoituksen teet itse OmaVerossa.
-        </p>
+        <p>{t.kirjanpito.noFilingNote}</p>
       </div>
 
       <Card>
         <CardHeader
-          title="Mitä Kate on laskenut"
-          subtitle={`${monthLabel(month)} · luvut kirjanpidosta`}
+          title={t.kirjanpito.whatComputed}
+          subtitle={fill(t.kirjanpito.figuresFromBooks, { kuukausi: monthLabel(month) })}
         />
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Luku label="Myynnin ALV" value={formatMoney(vat.salesVatLedger)} />
-          <Luku label="Vähennettävä ALV" value={formatMoney(vat.purchaseVatLedger)} />
-          <Luku label="Maksettava" value={formatMoney(vat.payableCents)} korosta />
+          <Luku label={t.kirjanpito.salesVat} value={formatMoney(vat.salesVatLedger)} />
+          <Luku label={t.kirjanpito.deductibleVat} value={formatMoney(vat.purchaseVatLedger)} />
+          <Luku label={t.kirjanpito.payable} value={formatMoney(vat.payableCents)} korosta />
         </dl>
 
-        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Luvut ovat kirjatuista tositteista. Jos kuukaudessa on
-          hyväksymättömiä kirjausesityksiä tai täsmäytys ei mene läpi, nämä
-          eivät ole vielä lopulliset — yhteenveto kertoo kumpi on kyseessä.
-        </p>
+        <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kirjanpito.figuresNote}</p>
       </Card>
 
       {guides.length === 0 ? (
         <EmptyState
-          title="Ohjeita ei ole saatavilla"
-          description="Veroasioiden ohjeet päivitetään erikseen. Tarkista tiedot Verohallinnon sivuilta."
+          title={t.kirjanpito.noGuides}
+          description={t.kirjanpito2.guidesNote}
         />
       ) : (
         guides.map((guide) => (

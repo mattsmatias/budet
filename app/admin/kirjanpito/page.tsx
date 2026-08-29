@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
@@ -68,6 +70,7 @@ export default async function AccountingPage({
 }: PageProps<"/admin/kirjanpito">) {
   const params = await searchParams;
   const { restaurant, role, month: nykyinen } = await adminContext("/admin/kirjanpito");
+  const t = adminText(await resolveLocale());
 
   const pyydetty = typeof params.kuukausi === "string" ? params.kuukausi : nykyinen;
   const month = ISO_MONTH.test(pyydetty) ? pyydetty : nykyinen;
@@ -160,27 +163,29 @@ export default async function AccountingPage({
 
       {tab === "paivakirja" ? (
         <Paivakirja
+          t={t}
           entries={await fetchJournal(restaurant.id, month)}
           saaKirjata={saaKirjata}
         />
       ) : null}
 
       {tab === "paakirja" ? (
-        <Paakirja accounts={await fetchGeneralLedger(restaurant.id, month)} />
+        <Paakirja t={t} accounts={await fetchGeneralLedger(restaurant.id, month)} />
       ) : null}
 
       {tab === "tilikartta" ? (
-        <Tilikartta accounts={await fetchAccounts(restaurant.id)} />
+        <Tilikartta t={t} accounts={await fetchAccounts(restaurant.id)} />
       ) : null}
 
-      {tab === "alv" ? <Alv vat={state.vat} /> : null}
+      {tab === "alv" ? <Alv t={t} vat={state.vat} /> : null}
 
       {tab === "veroasiat" ? (
-        <Veroasiat guides={await fetchTaxGuides()} vat={state.vat} month={month} />
+        <Veroasiat t={t} guides={await fetchTaxGuides()} vat={state.vat} month={month} />
       ) : null}
 
       {tab === "raportit" ? (
         <Raportit
+          t={t}
           income={await fetchIncomeStatement(restaurant.id, month, true)}
           balance={await fetchBalanceSheet(restaurant.id, month, true)}
           month={month}
