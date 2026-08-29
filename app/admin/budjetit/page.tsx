@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -44,6 +47,7 @@ export default async function BudgetsPage({
   searchParams,
 }: PageProps<"/admin/budjetit">) {
   const { receipts, budgets, month: nykyinen, role } = await adminContext("/admin/budjetit");
+  const t = adminText(await resolveLocale());
 
   const month = monthFromParams(await searchParams, nykyinen);
 
@@ -73,11 +77,11 @@ export default async function BudgetsPage({
       {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
       {budgeted.length > 0 ? (
         <section
-          aria-label="Avainluvut"
+          aria-label={t.sanat.keyFigures}
           className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
         >
           <MetricCard
-            label="Budjetoitu"
+            label={t.budjetit.budgeted}
             icon={<RfIcon name="budget" size={17} />}
             tileTone="brand"
             tone="muted"
@@ -85,19 +89,23 @@ export default async function BudgetsPage({
             conclusion="Kuukausibudjetit yhteensä"
           />
           <MetricCard
-            label="Käytetty"
+            label={t.budjetit.used}
             icon={<RfIcon name="expenses" size={17} />}
             tileTone="green"
             tone="muted"
             value={<CountUp to={summary.totalSpentCents} format="money" />}
             conclusion={
               summary.totalBudgetCents > 0
-                ? `${Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100)} % kokonaisbudjetista`
+                ? fill(t.budjetit.shareOfTotal, {
+                osuus: String(
+                  Math.round((summary.totalSpentCents / summary.totalBudgetCents) * 100),
+                ),
+              })
                 : "Budjetteja ei ole asetettu"
             }
           />
           <MetricCard
-            label="Ylitetty"
+            label={t.budjetit.exceeded}
             icon={<RfIcon name="alert" size={17} />}
             tileTone="violet"
             value={<CountUp to={summary.exceededCount} format="integer" />}
@@ -105,19 +113,21 @@ export default async function BudgetsPage({
             conclusion={summary.exceededCount > 0 ? "Kategoriaa yli rajan" : "Ei ylityksiä"}
           />
           <MetricCard
-            label="Lähestyy rajaa"
+            label={t.budjetit.nearLimit}
             icon={<RfIcon name="trend" size={17} />}
             tileTone="blue"
             value={<CountUp to={summary.warningCount} format="integer" />}
             tone={summary.warningCount > 0 ? "warn" : "muted"}
-            conclusion={`Yli ${Math.round(WARNING_THRESHOLD * 100)} % käytetty`}
+            conclusion={fill(t.budjetit.overThreshold, {
+                osuus: String(Math.round(WARNING_THRESHOLD * 100)),
+              })}
           />
         </section>
       ) : null}
 
       {budgeted.length === 0 ? (
         <EmptyState
-          title="Ei budjetteja"
+          title={t.budjetit.none}
           description={
             canEdit
               ? "Aseta kuukausibudjetti kategorialle, niin näet miten kulut suhteutuvat siihen ja saat hälytyksen ennen kuin raja ylittyy."
@@ -126,7 +136,7 @@ export default async function BudgetsPage({
         />
       ) : (
         <Card>
-          <CardHeader title="Kategoriat" subtitle="Ylitykset ja varoitukset ensin" />
+          <CardHeader title={t.toimittajat.categories} subtitle={t.budjetit.overFirst} />
           <ul className="space-y-5">
             {budgeted.map((p) => {
               const pct = Math.round((p.ratio ?? 0) * 100);
@@ -145,7 +155,7 @@ export default async function BudgetsPage({
                       {p.status === "exceeded" ? (
                         <Pill tone="risk" dot>ylitetty</Pill>
                       ) : p.status === "warning" ? (
-                        <Pill tone="warn" dot>lähestyy</Pill>
+                        <Pill tone="warn" dot>{t.budjetit.approaching}</Pill>
                       ) : (
                         <Pill tone="ok" dot>ok</Pill>
                       )}
@@ -173,8 +183,8 @@ export default async function BudgetsPage({
                       style={{ color: over ? "var(--rf-red-text)" : "var(--rf-text-3)" }}
                     >
                       {over
-                        ? `${formatMoney(Math.abs(p.remainingCents ?? 0))} yli`
-                        : `${formatMoney(p.remainingCents ?? 0)} jäljellä`}
+                        ? fill(t.budjetit.overBy, { summa: formatMoney(Math.abs(p.remainingCents ?? 0)) })
+                        : fill(t.budjetit.remaining, { summa: formatMoney(p.remainingCents ?? 0) })}
                     </span>
                   </div>
                 </li>
@@ -193,8 +203,10 @@ export default async function BudgetsPage({
       {unbudgeted.length > 0 ? (
         <Card>
           <CardHeader
-            title="Ilman budjettia"
-            subtitle={`${formatMoney(summary.unbudgetedCents)} kuluja kategorioissa joille ei ole asetettu budjettia`}
+            title={t.budjetit.withoutBudget}
+            subtitle={fill(t.budjetit.unbudgetedAmount, {
+                summa: formatMoney(summary.unbudgetedCents),
+              })}
           />
           <ul className="space-y-2.5">
             {unbudgeted.map((p) => (
@@ -220,32 +232,26 @@ export default async function BudgetsPage({
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Budjetoimaton kulu ei katoa näkyvistä. Se näytetään tässä, jotta
-            kokonaiskuva pysyy täytenä.
-          </p>
+          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.budjetit.unbudgetedNote}</p>
         </Card>
       ) : null}
 
       <Card>
-        <CardHeader title="Miten budjetit toimivat" />
+        <CardHeader title={t.budjetit.howItWorks} />
         <ul className="space-y-2 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
           <li>
             <strong>ok</strong> — alle {Math.round(WARNING_THRESHOLD * 100)} % käytetty
           </li>
           <li>
-            <strong>lähestyy</strong> — {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
+            <strong>{t.budjetit.approaching}</strong> — {Math.round(WARNING_THRESHOLD * 100)} % tai enemmän
           </li>
           <li>
-            <strong>ylitetty</strong> — yli 100 %, hälytys nousee yleiskuvaan
-          </li>
+            <strong>ylitetty</strong>{t.budjetit.overNote}</li>
         </ul>
         <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
           Sekakuitti jakautuu rivikohtaisesti useaan budjettiin. Kuitti jolla on
           ruokaa ja pesuainetta ei kirjaudu kokonaan ruokabudjettiin.{" "}
-          <Link href="/admin/kuitit" className="underline underline-offset-4">
-            Katso kuitit
-          </Link>
+          <Link href="/admin/kuitit" className="underline underline-offset-4">{t.budjetit.seeReceipts}</Link>
         </p>
       </Card>
     </div>

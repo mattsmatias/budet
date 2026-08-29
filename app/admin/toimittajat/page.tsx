@@ -1,4 +1,7 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { RfIcon } from "@/components/restoflow/icons";
 import Link from "next/link";
@@ -35,6 +38,7 @@ export default async function SuppliersPage({
   const {
     receipts, month: nykyinen,
   } = await adminContext("/admin/toimittajat");
+  const t = adminText(await resolveLocale());
 
   const month = monthFromParams(await searchParams, nykyinen);
 
@@ -67,11 +71,11 @@ export default async function SuppliersPage({
         tässä se mitä luetaan.
       */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.sanat.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
       >
         <MetricCard
-          label="Toimittajia"
+          label={t.toimittajat.count}
           value={<CountUp to={totals.length} format="integer" />}
           icon={<RfIcon name="suppliers" size={17} />}
           tileTone="brand"
@@ -84,7 +88,7 @@ export default async function SuppliersPage({
         />
 
         <MetricCard
-          label="Kirjatut kulut"
+          label={t.sanat.recordedExpenses}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="green"
           value={<CountUp to={grandTotal} format="money" />}
@@ -95,7 +99,7 @@ export default async function SuppliersPage({
         />
 
         <MetricCard
-          label="Suurin toimittaja"
+          label={t.toimittajat.biggest}
           icon={<RfIcon name="trend" size={17} />}
           tileTone="violet"
           /*
@@ -120,7 +124,10 @@ export default async function SuppliersPage({
           tone="muted"
           conclusion={
             biggest
-              ? `${formatMoney(biggest.totalCents)} · ${Math.round(biggest.share * 100)} % kuluista`
+              ? fill(t.toimittajat.shareOfExpenses, {
+                summa: formatMoney(biggest.totalCents),
+                osuus: String(Math.round(biggest.share * 100)),
+              })
               : "Ei kuitteja tässä kuussa"
           }
           href={biggest ? `/admin/toimittajat/${biggest.supplierId}` : undefined}
@@ -130,15 +137,15 @@ export default async function SuppliersPage({
 
       {totals.length === 0 ? (
         <EmptyState
-          title="Ei toimittajia"
+          title={t.toimittajat.none}
           description="Toimittajat syntyvät kuiteista. Lisää kuitteja niin näkymä täyttyy."
         />
       ) : (
         <Card padded={false}>
           <div className="px-5 pt-5">
             <CardHeader
-              title="Kaikki toimittajat"
-              subtitle="Suurin ensin · muutos edelliseen kuukauteen"
+              title={t.toimittajat.all}
+              subtitle={t.toimittajat.biggestFirst}
             />
           </div>
           <ul className="space-y-3 px-5 pb-5 md:hidden">
@@ -208,7 +215,7 @@ export default async function SuppliersPage({
               className="flex items-baseline justify-between gap-3 border-t pt-3 text-[15px] font-semibold"
               style={{ borderColor: "var(--rf-line-strong)" }}
             >
-              <span>Yhteensä</span>
+              <span>{t.kuitit.total}</span>
               <span className="rf-tabular">{formatMoney(grandTotal)}</span>
             </li>
           </ul>
@@ -233,15 +240,15 @@ export default async function SuppliersPage({
             }}
           >
             <table className="rf-table w-full min-w-[52rem] text-[14px]">
-              <caption className="sr-only">Toimittajat ja kulut</caption>
+              <caption className="sr-only">{t.toimittajat.listTitle}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Toimittaja</th>
-                  <th scope="col">Kategoriat</th>
-                  <th scope="col" className="text-right">Kuitteja</th>
-                  <th scope="col" className="text-right">Keskiarvo</th>
-                  <th scope="col" className="text-right">Muutos</th>
-                  <th scope="col" className="text-right">Yhteensä</th>
+                  <th scope="col">{t.sanat.supplier}</th>
+                  <th scope="col">{t.toimittajat.categories}</th>
+                  <th scope="col" className="text-right">{t.sanat.receiptCount}</th>
+                  <th scope="col" className="text-right">{t.toimittajat.average}</th>
+                  <th scope="col" className="text-right">{t.toimittajat.change}</th>
+                  <th scope="col" className="text-right">{t.kuitit.total}</th>
                   <th scope="col" />
                 </tr>
               </thead>
@@ -306,7 +313,7 @@ export default async function SuppliersPage({
                       <td className="num">
                         <Link
                           href={`/admin/toimittajat/${s.supplierId}`}
-                          aria-label={`Avaa ${s.name}`}
+                          aria-label={fill(t.toimittajat.openSupplier, { nimi: s.name })}
                           style={{ color: "var(--rf-text-3)" }}
                         >
                           <RfIcon name="chevron" size={16} />
@@ -318,7 +325,7 @@ export default async function SuppliersPage({
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Yhteensä</td>
+                  <td>{t.kuitit.total}</td>
                   <td />
                   <td className="num">{inMonth.length}</td>
                   <td />
