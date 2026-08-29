@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="28" height="28">
+  <!--
+    Katen tunnus selaimen välilehdelle.
+
+    SAMA GEOMETRIA KUIN components/brand/logo.tsx.
+
+    Favicon on oltava staattinen tiedosto, joten polut ovat väistämättä
+    kahdessa paikassa. Juuri se kaatoi edellisen tunnuksen: B oli
+    kirjoitettu kolmeen paikkaan ja ne erosivat toisistaan. Siksi
+    __tests__/logo.test.ts vertaa näitä kahta ja kaatuu jos ne
+    ajautuvat erilleen — älä muuta toista ilman toista.
+  -->
+  <rect width="28" height="28" rx="7.5" fill="#0f1729" />
+  <rect x="7.3" y="6.5" width="4.84" height="15" rx="0.6" fill="#fff" />
+  <path
+    d="M16.09 6.5h4.64a8.59 8.59 0 0 1-8.59 8.59v-4.64a3.95 3.95 0 0 0 3.95-3.95Z"
+    fill="#fff"
+  />
+  <path
+    d="M16.09 21.5h4.64a8.59 8.59 0 0 0-8.59-8.59v4.64a3.95 3.95 0 0 1 3.95 3.95Z"
+    fill="#fff"
+  />
+  <path d="M10.65 14h5.6" stroke="#0f1729" stroke-width="0.45" stroke-linecap="round" />
+</svg>
