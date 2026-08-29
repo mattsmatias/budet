@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import QRCode from "qrcode";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -31,7 +35,13 @@ import {
 import { can } from "@/lib/restoflow/permissions";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
-import { Button, Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
+import {
+  Button,
+  Card,
+  CardHeader,
+  EmptyState,
+  Pill,
+} from "@/components/restoflow/ui";
 import { openLunchWeek } from "./actions";
 import {
   DeleteLunchItem,
@@ -51,7 +61,10 @@ import {
   WeekStatusButton,
 } from "./week-actions";
 
-export const metadata = { title: "Lounas" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.lounas.lunchWord };
+}
 
 /**
  * Lounaslistan hallinta.
@@ -63,13 +76,12 @@ export const metadata = { title: "Lounas" };
 export default async function LunchPage({
   searchParams,
 }: PageProps<"/admin/lounas">) {
+  const t = adminText(await resolveLocale());
   const params = await searchParams;
   const { restaurant, role, today } = await adminContext("/admin/lounas");
 
   const requested = typeof params.viikko === "string" ? params.viikko : today;
-  const weekStart = weekStartOf(
-    ISO_DATE.test(requested) ? requested : today,
-  );
+  const weekStart = weekStartOf(ISO_DATE.test(requested) ? requested : today);
 
   const [week, previous, diets, allergens, history] = await Promise.all([
     fetchLunchWeek(restaurant.id, weekStart),
@@ -114,7 +126,7 @@ export default async function LunchPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <WeekNav weekStart={weekStart} thisWeek={thisWeek} />
+          <WeekNav t={t} weekStart={weekStart} thisWeek={thisWeek} />
 
           <Link
             href={`/lounas/${restaurant.slug}?viikko=${weekStart}&esikatselu=1`}
@@ -129,7 +141,7 @@ export default async function LunchPage({
             }}
           >
             <RfIcon name="search" size={16} />
-            Esikatsele
+            {t.lounas.preview}
           </Link>
 
           {/*
@@ -145,9 +157,10 @@ export default async function LunchPage({
           */}
           {canManage && needsPublish(week) ? (
             <PublishWeek
+              t={t}
               menuId={week?.id ?? null}
               weekLabel={formatWeekRange(weekStart)}
-              label={dirty ? "Julkaise muutokset" : "Julkaise"}
+              label={dirty ? t.lounas.publishChanges : t.lounas.publish}
             />
           ) : null}
         </div>
@@ -170,8 +183,8 @@ export default async function LunchPage({
                   menuId={week.id}
                   name={DEFAULT_PRICE_NAME}
                   cents={
-                    week.prices.find((p) => p.name === DEFAULT_PRICE_NAME)?.cents ??
-                    null
+                    week.prices.find((p) => p.name === DEFAULT_PRICE_NAME)
+                      ?.cents ?? null
                   }
                 />
               ) : (
@@ -185,6 +198,7 @@ export default async function LunchPage({
 
             {canManage ? (
               <LunchIncludes
+                t={t}
                 menuId={week.id}
                 dessert={week.includesDessert}
                 coffee={week.includesCoffee}
@@ -212,7 +226,10 @@ export default async function LunchPage({
                   <div key={name}>
                     <p
                       className="text-[11px] font-medium uppercase"
-                      style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+                      style={{
+                        color: "var(--rf-text-3)",
+                        letterSpacing: "0.05em",
+                      }}
                     >
                       {name}
                     </p>
@@ -220,18 +237,24 @@ export default async function LunchPage({
                       menuId={week.id}
                       name={name}
                       compact
-                      cents={week.prices.find((p) => p.name === name)?.cents ?? null}
+                      cents={
+                        week.prices.find((p) => p.name === name)?.cents ?? null
+                      }
                     />
                   </div>
                 ))}
               </div>
-            ) : week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME).length > 0 ? (
+            ) : week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME)
+                .length > 0 ? (
               <dl className="flex flex-wrap gap-x-5 gap-y-1">
                 {week.prices
                   .filter((p) => p.name !== DEFAULT_PRICE_NAME)
                   .map((price) => (
                     <div key={price.id}>
-                      <dt className="text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+                      <dt
+                        className="text-[11px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         {price.name}
                       </dt>
                       <dd className="rf-tabular text-[15px] font-medium">
@@ -253,7 +276,7 @@ export default async function LunchPage({
 
           {week.publishedAt ? (
             <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              Viimeksi julkaistu {formatTimestamp(week.publishedAt)}
+              Viimeksi julkaistu {formatTimestamp(week.publishedAt, t)}
             </span>
           ) : null}
         </div>
@@ -274,8 +297,7 @@ export default async function LunchPage({
           }}
         >
           <p className="text-[13px] leading-relaxed">
-            Julkaistuun lounaslistaan on tehty muutoksia. Asiakkaat näkevät
-            yhä edellisen version.
+            {t.lounas.unpublishedChanges}
           </p>
         </div>
       ) : null}
@@ -283,6 +305,7 @@ export default async function LunchPage({
       {/* --- Viikon sisältö --- */}
       {week === null ? (
         <EmptyWeek
+          t={t}
           weekStart={weekStart}
           previousWeekStart={previousWeek(weekStart)}
           hasPrevious={previous !== null && hasContent(previous)}
@@ -291,6 +314,7 @@ export default async function LunchPage({
       ) : (
         <>
           <WeekDays
+            t={t}
             week={week}
             diets={diets}
             allergens={allergens}
@@ -301,6 +325,7 @@ export default async function LunchPage({
             <div className="flex flex-wrap gap-2">
               {previous !== null && hasContent(previous) ? (
                 <CopyPreviousWeek
+                  t={t}
                   fromWeek={previous.weekStart}
                   toWeek={weekStart}
                   fromLabel={formatWeekRange(previous.weekStart)}
@@ -309,9 +334,9 @@ export default async function LunchPage({
               ) : null}
 
               {week.status !== "archived" ? (
-                <WeekStatusButton menuId={week.id} status="archived" />
+                <WeekStatusButton t={t} menuId={week.id} status="archived" />
               ) : (
-                <WeekStatusButton menuId={week.id} status="draft" />
+                <WeekStatusButton t={t} menuId={week.id} status="draft" />
               )}
             </div>
           ) : null}
@@ -321,17 +346,19 @@ export default async function LunchPage({
       {/* --- Jakaminen --- */}
       <Card>
         <CardHeader
-          title="Julkinen lounassivu"
-          subtitle="Asiakas näkee vain julkaistun viikon"
+          title={t.lounas.publicLunchPage}
+          subtitle={t.lounas.customerSeesPublished}
         />
 
         <div className="grid gap-5 sm:grid-cols-[1fr_auto] sm:items-start">
           <div className="space-y-3">
-            <CopyPublicLink url={publicUrl} />
+            <CopyPublicLink t={t} url={publicUrl} />
 
-            <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-              Sivu aukeaa ilman kirjautumista ja näyttää kuluvan viikon
-              lounaslistan. Luonnokset eivät näy siellä lainkaan.
+            <p
+              className="text-[13px] leading-relaxed"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              {t.lounas.publicPageHint}
             </p>
 
             <Link
@@ -342,7 +369,7 @@ export default async function LunchPage({
               className="-my-3 inline-flex items-center gap-1.5 py-3 text-[13px] font-semibold"
               style={{ color: "var(--rf-accent)" }}
             >
-              Avaa sivu
+              {t.lounas.openPage}
               <RfIcon name="chevron" size={13} />
             </Link>
 
@@ -362,6 +389,7 @@ export default async function LunchPage({
             {canManage ? (
               <div className="pt-2">
                 <LunchChannels
+                  t={t}
                   publicUrl={publicUrl}
                   previewUrl={`${publicUrl}?viikko=${weekStart}&esikatselu=1`}
                   embedUrl={`${publicUrl}/upota`}
@@ -388,8 +416,11 @@ export default async function LunchPage({
               dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
 
-            <p className="mt-2 max-w-[180px] text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-              Tallenna kuva hiiren oikealla ja tulosta pöytään tai oveen.
+            <p
+              className="mt-2 max-w-[180px] text-[11px] leading-relaxed"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              {t.lounas.qrHint}
             </p>
           </div>
         </div>
@@ -399,7 +430,10 @@ export default async function LunchPage({
       {history.length > 0 ? (
         <Card padded={false}>
           <div className="px-5 pt-5">
-            <CardHeader title="Lounashistoria" subtitle="Aiemmat viikot" />
+            <CardHeader
+              title={t.lounas.lunchHistory}
+              subtitle={t.lounas.earlierWeeks}
+            />
           </div>
 
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
@@ -413,13 +447,19 @@ export default async function LunchPage({
                     <p className="text-[14px] font-medium">
                       Viikko {isoWeekNumber(entry.weekStart)}
                     </p>
-                    <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                      {formatWeekRange(entry.weekStart)} · {entry.itemCount} ruokaa
+                    <p
+                      className="rf-tabular text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {formatWeekRange(entry.weekStart)} · {entry.itemCount}{" "}
+                      ruokaa
                     </p>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">
-                    <Pill tone={entry.status === "published" ? "ok" : "neutral"}>
+                    <Pill
+                      tone={entry.status === "published" ? "ok" : "neutral"}
+                    >
                       {LUNCH_STATUS_LABELS[entry.status]}
                     </Pill>
                     <span style={{ color: "var(--rf-text-3)" }}>
@@ -438,26 +478,38 @@ export default async function LunchPage({
 
 // ---------------------------------------------------------------------------
 
-function WeekNav({ weekStart, thisWeek }: { weekStart: string; thisWeek: string }) {
+function WeekNav({
+  t,
+  weekStart,
+  thisWeek,
+}: {
+  t: AdminText;
+  weekStart: string;
+  thisWeek: string;
+}) {
   return (
-    <nav aria-label="Viikon valinta" className="flex items-center gap-1">
-      <WeekLink week={previousWeek(weekStart)} label="Edellinen viikko" back />
+    <nav aria-label={t.lounas.weekChoice} className="flex items-center gap-1">
+      <WeekLink week={previousWeek(weekStart)} label={t.lounas.prevWeek} back />
 
       <Link
         href="/admin/lounas"
         aria-current={weekStart === thisWeek ? "page" : undefined}
         className="rf-press px-3 py-2.5 text-[13px] font-medium"
         style={{
-          background: weekStart === thisWeek ? "var(--rf-accent-bg)" : "var(--rf-card)",
-          color: weekStart === thisWeek ? "var(--rf-accent-strong)" : "var(--rf-text)",
+          background:
+            weekStart === thisWeek ? "var(--rf-accent-bg)" : "var(--rf-card)",
+          color:
+            weekStart === thisWeek
+              ? "var(--rf-accent-strong)"
+              : "var(--rf-text)",
           border: "1px solid var(--rf-line)",
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Tämä viikko
+        {t.lounas.thisWeek}
       </Link>
 
-      <WeekLink week={nextWeek(weekStart)} label="Seuraava viikko" />
+      <WeekLink week={nextWeek(weekStart)} label={t.lounas.nextWeek} />
     </nav>
   );
 }
@@ -483,7 +535,10 @@ function WeekLink({
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      <span aria-hidden="true" style={{ transform: back ? "rotate(180deg)" : undefined }}>
+      <span
+        aria-hidden="true"
+        style={{ transform: back ? "rotate(180deg)" : undefined }}
+      >
         <RfIcon name="chevron" size={16} />
       </span>
     </Link>
@@ -493,11 +548,13 @@ function WeekLink({
 // ---------------------------------------------------------------------------
 
 function EmptyWeek({
+  t,
   weekStart,
   previousWeekStart,
   hasPrevious,
   canManage,
 }: {
+  t: AdminText;
   weekStart: string;
   previousWeekStart: string;
   hasPrevious: boolean;
@@ -506,32 +563,37 @@ function EmptyWeek({
   if (!canManage) {
     return (
       <EmptyState
-        title="Ei lounaslistaa"
-        description="Tälle viikolle ei ole vielä tehty lounaslistaa."
+        title={t.lounas.noMenu}
+        description={t.lounas.noMenuForWeek}
       />
     );
   }
 
   return (
     <Card>
-      <p className="text-[15px] font-semibold">
-        Tällä viikolla ei ole vielä lounaslistaa
-      </p>
-      <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-        Aloita tyhjästä tai kopioi viime viikon lista pohjaksi. Kopio on aina
-        luonnos, joten se ei julkaise mitään itsestään.
+      <p className="text-[15px] font-semibold">{t.lounas.noMenuThisWeek}</p>
+      <p
+        className="mt-1.5 max-w-xl text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        {t.lounas.startHint}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <form action={openLunchWeek}>
           <input type="hidden" name="weekStart" value={weekStart} />
-          <Button type="submit" tone="primary" icon={<RfIcon name="plus" size={16} />}>
-            Aloita viikko
+          <Button
+            type="submit"
+            tone="primary"
+            icon={<RfIcon name="plus" size={16} />}
+          >
+            {t.lounas.startWeek}
           </Button>
         </form>
 
         {hasPrevious ? (
           <CopyPreviousWeek
+            t={t}
             fromWeek={previousWeekStart}
             toWeek={weekStart}
             fromLabel={formatWeekRange(previousWeekStart)}
@@ -546,11 +608,13 @@ function EmptyWeek({
 // ---------------------------------------------------------------------------
 
 function WeekDays({
+  t,
   week,
   diets,
   allergens,
   canManage,
 }: {
+  t: AdminText;
   week: LunchWeek;
   diets: DietType[];
   allergens: { id: string; label: string }[];
@@ -570,6 +634,7 @@ function WeekDays({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {weekdays.map((day) => (
           <DayCard
+            t={t}
             key={day.id}
             day={day}
             week={week}
@@ -590,12 +655,13 @@ function WeekDays({
           className="cursor-pointer px-1 py-2 text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Viikonloppu
+          {t.lounas.weekend}
         </summary>
 
         <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {weekend.map((day) => (
             <DayCard
+              t={t}
               key={day.id}
               day={day}
               week={week}
@@ -611,12 +677,14 @@ function WeekDays({
 }
 
 function DayCard({
+  t,
   day,
   week,
   diets,
   allergens,
   canManage,
 }: {
+  t: AdminText;
   day: LunchDay;
   week: LunchWeek;
   diets: DietType[];
@@ -629,10 +697,16 @@ function DayCard({
   return (
     <Card>
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-[13px] font-semibold uppercase" style={{ letterSpacing: "0.04em" }}>
+        <h2
+          className="text-[13px] font-semibold uppercase"
+          style={{ letterSpacing: "0.04em" }}
+        >
           {weekdayName(day.date)}
         </h2>
-        <span className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        <span
+          className="rf-tabular text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {formatDayShort(day.date)}
         </span>
       </div>
@@ -686,6 +760,7 @@ function DayCard({
                   {/* Järjestysnuolet vain kun järjestettävää on. */}
                   {day.items.length > 1 ? (
                     <MoveLunchItem
+                      t={t}
                       item={item}
                       first={index === 0}
                       last={index === day.items.length - 1}
@@ -693,6 +768,7 @@ function DayCard({
                   ) : null}
 
                   <LunchItemDialog
+                    t={t}
                     dayId={day.id}
                     dayLabel={dayLabel}
                     item={item}
@@ -700,7 +776,7 @@ function DayCard({
                     allergens={allergens}
                     trigger="edit"
                   />
-                  <DeleteLunchItem item={item} />
+                  <DeleteLunchItem t={t} item={item} />
                 </span>
               ) : null}
             </div>
@@ -710,13 +786,14 @@ function DayCard({
 
       {day.items.length === 0 ? (
         <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Ei ruokia.
+          {t.lounas.noItems}
         </p>
       ) : null}
 
       {canManage ? (
         <div className="mt-3 space-y-2">
           <LunchItemDialog
+            t={t}
             dayId={day.id}
             dayLabel={dayLabel}
             diets={diets}
@@ -726,6 +803,7 @@ function DayCard({
 
           {day.items.length > 0 ? (
             <CopyDay
+              t={t}
               dayId={day.id}
               dayLabel={weekdayName(day.date)}
               targets={week.days
@@ -758,18 +836,23 @@ async function siteOrigin(): Promise<string> {
   const { headers } = await import("next/headers");
   const list = await headers();
 
-  const host = list.get("x-forwarded-host") ?? list.get("host") ?? "localhost:3000";
-  const protocol = list.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const host =
+    list.get("x-forwarded-host") ?? list.get("host") ?? "localhost:3000";
+  const protocol =
+    list.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") ? "http" : "https");
 
   return `${protocol}://${host}`;
 }
 
-function formatTimestamp(iso: string): string {
+function formatTimestamp(iso: string, t: AdminText): string {
   const date = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
     `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ` +
-    `klo ${pad(date.getHours())}.${pad(date.getMinutes())}`
+    fill(t.lounas.atTime, {
+      aika: `${pad(date.getHours())}.${pad(date.getMinutes())}`,
+    })
   );
 }

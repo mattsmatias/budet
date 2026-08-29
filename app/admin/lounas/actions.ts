@@ -10,6 +10,10 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
@@ -29,7 +33,11 @@ export interface LunchState {
  * näytetään sellaisenaan. Tuntematon virhe saa yleisen tekstin: Postgresin
  * oma viesti kertoisi käyttäjälle sarakenimiä eikä mitään hyödyllistä.
  */
-function explain(error: { message?: string } | null, fallback: string): string {
+function explain(
+  error: { message?: string } | null,
+  fallback: string,
+  t: AdminText,
+): string {
   const message = error?.message ?? "";
 
   if (message.includes("Vain esihenkilö")) return message;
@@ -38,14 +46,13 @@ function explain(error: { message?: string } | null, fallback: string): string {
   if (message.includes("Hinta ei voi")) return message;
   if (message.includes("ei löytynyt")) return message;
 
-  return `${fallback} Yritä uudelleen.`;
+  return fill(t.lounas.retrySuffix, { syy: fallback });
 }
 
 function revalidate(): void {
   revalidatePath("/admin/lounas");
   revalidatePath("/lounas", "layout");
 }
-
 
 // ---------------------------------------------------------------------------
 // Viikko
@@ -77,29 +84,33 @@ export async function publishLunchWeek(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const menuId = String(formData.get("menuId") ?? "");
-  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
+  if (!menuId) return { error: t.lounas.weekNotCreated };
 
   await requireContext("/admin/lounas");
   const supabase = await createClient();
 
-  const { error } = await supabase.rpc("publish_lunch_week", { p_menu: menuId });
-  if (error) return { error: explain(error, "Julkaisu epäonnistui.") };
+  const { error } = await supabase.rpc("publish_lunch_week", {
+    p_menu: menuId,
+  });
+  if (error) return { error: explain(error, t.lounas.publishFailed, t) };
 
   revalidate();
-  return { notice: "Lounaslista julkaistu." };
+  return { notice: t.lounas.publishedNotice };
 }
 
 export async function setLunchWeekStatus(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const menuId = String(formData.get("menuId") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
+  if (!menuId) return { error: t.lounas.weekNotCreated };
   if (status !== "draft" && status !== "archived") {
-    return { error: "Tuntematon tila." };
+    return { error: t.lounas.unknownStatus };
   }
 
   await requireContext("/admin/lounas");
@@ -109,11 +120,12 @@ export async function setLunchWeekStatus(
     p_menu: menuId,
     p_status: status,
   });
-  if (error) return { error: explain(error, "Tilan vaihto epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.statusChangeFailed, t) };
 
   revalidate();
   return {
-    notice: status === "archived" ? "Viikko arkistoitu." : "Viikko palautettu luonnokseksi.",
+    notice:
+      status === "archived" ? t.lounas.weekArchived : t.lounas.weekBackToDraft,
   };
 }
 
@@ -125,13 +137,14 @@ export async function copyLunchWeek(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const from = String(formData.get("fromWeek") ?? "");
   const to = String(formData.get("toWeek") ?? "");
 
   if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) {
-    return { error: "Tarkista viikot." };
+    return { error: t.lounas.checkWeeks };
   }
-  if (from === to) return { error: "Viikkoa ei voi kopioida itseensä." };
+  if (from === to) return { error: t.lounas.cannotCopyToSelf };
 
   const { restaurant } = await requireContext("/admin/lounas");
   const supabase = await createClient();
@@ -144,24 +157,25 @@ export async function copyLunchWeek(
 
   if (error) {
     if (error.message?.includes("Kopioitavaa viikkoa ei löytynyt")) {
-      return { error: "Kopioitavalla viikolla ei ole lounaslistaa." };
+      return { error: t.lounas.sourceWeekEmpty };
     }
-    return { error: explain(error, "Kopiointi epäonnistui.") };
+    return { error: explain(error, t.lounas.copyFailed, t) };
   }
 
   revalidate();
-  return { notice: "Lounaslista kopioitu. Uusi viikko on luonnos." };
+  return { notice: t.lounas.weekCopied };
 }
 
 export async function copyLunchDay(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const from = String(formData.get("fromDay") ?? "");
   const to = String(formData.get("toDay") ?? "");
 
-  if (!from || !to) return { error: "Valitse päivä johon kopioidaan." };
-  if (from === to) return { error: "Päivää ei voi kopioida itseensä." };
+  if (!from || !to) return { error: t.lounas.chooseTargetDay };
+  if (from === to) return { error: t.lounas.dayCannotCopySelf };
 
   await requireContext("/admin/lounas");
   const supabase = await createClient();
@@ -170,34 +184,36 @@ export async function copyLunchDay(
     p_from: from,
     p_to: to,
   });
-  if (error) return { error: explain(error, "Kopiointi epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.copyFailed, t) };
 
   revalidate();
-  return { notice: "Päivä kopioitu." };
+  return { notice: t.lounas.dayCopied };
 }
 
 // ---------------------------------------------------------------------------
 // Ruoat
 // ---------------------------------------------------------------------------
 
-const itemSchema = z.object({
-  dayId: z.string().uuid("Päivää ei löytynyt."),
-  itemId: z.string().uuid().nullable(),
-  name: z
-    .string()
-    .trim()
-    .min(1, "Ruoan nimi puuttuu.")
-    .max(120, "Nimi on liian pitkä."),
-  description: z.string().trim().max(400, "Kuvaus on liian pitkä.").nullable(),
-  diets: z.array(z.string()),
-  allergens: z.array(z.string()),
-});
+const itemSchema = (t: AdminText) =>
+  z.object({
+    dayId: z.string().uuid(t.lounas.dayNotFound),
+    itemId: z.string().uuid().nullable(),
+    name: z
+      .string()
+      .trim()
+      .min(1, t.lounas.itemNameMissing)
+      .max(120, t.lounas.nameTooLong),
+    description: z.string().trim().max(400, t.lounas.descTooLong).nullable(),
+    diets: z.array(z.string()),
+    allergens: z.array(z.string()),
+  });
 
 export async function saveLunchItem(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
-  const parsed = itemSchema.safeParse({
+  const t = adminText(await resolveLocale());
+  const parsed = itemSchema(t).safeParse({
     dayId: formData.get("dayId"),
     itemId: (formData.get("itemId") as string) || null,
     name: formData.get("name"),
@@ -221,10 +237,12 @@ export async function saveLunchItem(
     p_allergens: parsed.data.allergens,
   });
 
-  if (error) return { error: explain(error, "Ruoan tallennus epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.itemSaveFailed, t) };
 
   revalidate();
-  return { notice: parsed.data.itemId ? "Ruoka päivitetty." : "Ruoka lisätty." };
+  return {
+    notice: parsed.data.itemId ? t.lounas.itemUpdated : t.lounas.itemAdded,
+  };
 }
 
 export async function deleteLunchItem(formData: FormData): Promise<void> {
@@ -266,9 +284,10 @@ export async function setLunchTheme(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const theme = String(formData.get("theme") ?? "");
 
-  if (!isLunchTheme(theme)) return { error: "Tuntematon teema." };
+  if (!isLunchTheme(theme)) return { error: t.lounas.unknownTheme };
 
   const { restaurant } = await requireContext("/admin/lounas");
   const supabase = await createClient();
@@ -278,10 +297,10 @@ export async function setLunchTheme(
     p_theme: theme,
   });
 
-  if (error) return { error: explain(error, "Teeman vaihto epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.themeChangeFailed, t) };
 
   revalidate();
-  return { notice: "Teema vaihdettu." };
+  return { notice: t.lounas.themeChanged };
 }
 
 // ---------------------------------------------------------------------------
@@ -300,8 +319,9 @@ export async function setLunchIncludes(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const menuId = String(formData.get("menuId") ?? "");
-  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
+  if (!menuId) return { error: t.lounas.weekNotCreated };
 
   await requireContext("/admin/lounas");
   const supabase = await createClient();
@@ -312,10 +332,10 @@ export async function setLunchIncludes(
     p_coffee: formData.get("coffee") === "on",
   });
 
-  if (error) return { error: explain(error, "Tallennus epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.saveFailed, t) };
 
   revalidate();
-  return { notice: "Tallennettu." };
+  return { notice: t.lounas.savedNotice };
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +349,10 @@ export async function setLunchIncludes(
  * sovelluksessa, eikä lounas ole poikkeus.
  */
 function parseEuros(value: FormDataEntryValue | null): number | null {
-  const raw = String(value ?? "").trim().replace(",", ".").replace(/\s/g, "");
+  const raw = String(value ?? "")
+    .trim()
+    .replace(",", ".")
+    .replace(/\s/g, "");
   if (raw === "") return null;
 
   const parsed = Number.parseFloat(raw);
@@ -342,19 +365,20 @@ export async function setLunchPrice(
   _prev: LunchState,
   formData: FormData,
 ): Promise<LunchState> {
+  const t = adminText(await resolveLocale());
   const menuId = String(formData.get("menuId") ?? "");
   const name = String(formData.get("priceName") ?? "").trim();
   const raw = String(formData.get("price") ?? "").trim();
 
-  if (!menuId) return { error: "Viikkoa ei ole vielä luotu." };
-  if (name === "") return { error: "Hinnan nimi puuttuu." };
+  if (!menuId) return { error: t.lounas.weekNotCreated };
+  if (name === "") return { error: t.lounas.priceNameMissing };
 
   const cents = parseEuros(raw);
 
   // Tyhjä poistaa hinnan; kelvoton teksti on virhe. Ilman tätä eroa
   // kirjoitusvirhe poistaisi hinnan hiljaa.
   if (raw !== "" && cents === null) {
-    return { error: "Tarkista hinta." };
+    return { error: t.lounas.checkPrice };
   }
 
   await requireContext("/admin/lounas");
@@ -369,8 +393,10 @@ export async function setLunchPrice(
     p_sort: priceSortOrder(name),
   });
 
-  if (error) return { error: explain(error, "Hinnan tallennus epäonnistui.") };
+  if (error) return { error: explain(error, t.lounas.priceSaveFailed, t) };
 
   revalidate();
-  return { notice: cents === null ? "Hinta poistettu." : "Hinta tallennettu." };
+  return {
+    notice: cents === null ? t.lounas.priceRemoved : t.lounas.priceSaved,
+  };
 }

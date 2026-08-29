@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import {
   copyLunchDay,
@@ -62,10 +64,12 @@ function Notice({ state }: { state: LunchState }) {
  * julkaiseminen on juuri se virhe joka tässä halutaan estää.
  */
 export function PublishWeek({
+  t,
   menuId,
   weekLabel,
   label,
 }: {
+  t: AdminText;
   menuId: string | null;
   weekLabel: string;
   label: string;
@@ -99,16 +103,21 @@ export function PublishWeek({
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      <p className="text-[13px] font-medium">Julkaistaanko viikon lounaslista?</p>
+      <p className="text-[13px] font-medium">{t.lounas.publishConfirm}</p>
       <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {weekLabel}
       </p>
 
       <form action={action} className="mt-3 flex gap-2">
         <input type="hidden" name="menuId" value={menuId} />
-        <PublishSubmit />
-        <Button type="button" tone="ghost" size="sm" onClick={() => setAsking(false)}>
-          Peruuta
+        <PublishSubmit t={t} />
+        <Button
+          type="button"
+          tone="ghost"
+          size="sm"
+          onClick={() => setAsking(false)}
+        >
+          {t.lounas.cancel}
         </Button>
       </form>
 
@@ -117,26 +126,28 @@ export function PublishWeek({
   );
 }
 
-function PublishSubmit() {
+function PublishSubmit({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" tone="primary" size="sm" disabled={pending}>
-      {pending ? "Julkaistaan…" : "Julkaise"}
+      {pending ? t.lounas.publishing : t.lounas.publish}
     </Button>
   );
 }
 
 /** Arkistointi ja palautus luonnokseksi. */
 export function WeekStatusButton({
+  t,
   menuId,
   status,
 }: {
+  t: AdminText;
   menuId: string;
   status: "draft" | "archived";
 }) {
   const [state, action] = useActionState(setLunchWeekStatus, initial);
-  const { } = state;
+  const {} = state;
 
   return (
     <form action={action}>
@@ -144,7 +155,7 @@ export function WeekStatusButton({
       <input type="hidden" name="status" value={status} />
 
       <Button type="submit" tone="ghost" size="sm">
-        {status === "archived" ? "Arkistoi" : "Palauta luonnokseksi"}
+        {status === "archived" ? t.lounas.archive : t.lounas.backToDraft}
       </Button>
 
       <Notice state={state} />
@@ -157,12 +168,14 @@ export function WeekStatusButton({
 // ---------------------------------------------------------------------------
 
 export function CopyPreviousWeek({
+  t,
   fromWeek,
   toWeek,
   fromLabel,
   toLabel,
   tone = "ghost",
 }: {
+  t: AdminText;
   fromWeek: string;
   toWeek: string;
   fromLabel: string;
@@ -181,7 +194,7 @@ export function CopyPreviousWeek({
           onClick={() => setAsking(true)}
           icon={<RfIcon name="file" size={16} />}
         >
-          Kopioi viime viikko
+          {t.lounas.copyLastWeek}
         </Button>
         <Notice state={state} />
       </div>
@@ -191,23 +204,36 @@ export function CopyPreviousWeek({
   return (
     <div
       className="px-3.5 py-3"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
-      <p className="text-[13px] font-medium">Kopioidaanko lounaslista?</p>
-      <p className="mt-0.5 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p className="text-[13px] font-medium">{t.lounas.copyConfirm}</p>
+      <p
+        className="mt-0.5 text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {fromLabel} → {toLabel}
       </p>
-      <p className="mt-1.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Kohdeviikon nykyinen sisältö korvataan. Kopio on luonnos eikä se
-        julkaise mitään.
+      <p
+        className="mt-1.5 text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {t.lounas.copyWeekNote}
       </p>
 
       <form action={action} className="mt-3 flex gap-2">
         <input type="hidden" name="fromWeek" value={fromWeek} />
         <input type="hidden" name="toWeek" value={toWeek} />
-        <CopySubmit />
-        <Button type="button" tone="ghost" size="sm" onClick={() => setAsking(false)}>
-          Peruuta
+        <CopySubmit t={t} />
+        <Button
+          type="button"
+          tone="ghost"
+          size="sm"
+          onClick={() => setAsking(false)}
+        >
+          {t.lounas.cancel}
         </Button>
       </form>
 
@@ -216,22 +242,24 @@ export function CopyPreviousWeek({
   );
 }
 
-function CopySubmit() {
+function CopySubmit({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" tone="primary" size="sm" disabled={pending}>
-      {pending ? "Kopioidaan…" : "Kopioi"}
+      {pending ? t.lounas.copying : t.lounas.copy}
     </Button>
   );
 }
 
 /** Päivän kopiointi toiseen päivään samalla viikolla. */
 export function CopyDay({
+  t,
   dayId,
   dayLabel,
   targets,
 }: {
+  t: AdminText;
   dayId: string;
   dayLabel: string;
   targets: { id: string; label: string }[];
@@ -250,7 +278,7 @@ export function CopyDay({
         className="rf-press -my-3 py-3 text-[12px] font-medium"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Kopioi toiseen päivään
+        {t.lounas.copyToDay}
       </button>
     );
   }
@@ -259,8 +287,11 @@ export function CopyDay({
     <form action={action} className="space-y-2">
       <input type="hidden" name="fromDay" value={dayId} />
 
-      <label htmlFor={`copy-${dayId}`} className="block text-[12px] font-medium">
-        {`Kopioi ${dayLabel} päivään`}
+      <label
+        htmlFor={`copy-${dayId}`}
+        className="block text-[12px] font-medium"
+      >
+        {fill(t.lounas.copyToDayNamed, { paiva: dayLabel })}
       </label>
 
       <select
@@ -269,10 +300,13 @@ export function CopyDay({
         required
         defaultValue=""
         className="w-full px-3 py-2 text-[14px] outline-none"
-        style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
       >
         <option value="" disabled>
-          Valitse päivä…
+          {t.lounas.chooseDay}
         </option>
         {targets.map((target) => (
           <option key={target.id} value={target.id}>
@@ -281,16 +315,24 @@ export function CopyDay({
         ))}
       </select>
 
-      <p className="text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Kohdepäivän nykyinen sisältö korvataan.
+      <p
+        className="text-[11px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {t.lounas.copyDayNote}
       </p>
 
       <div className="flex gap-2">
         <Button type="submit" tone="secondary" size="sm">
-          Kopioi
+          {t.lounas.copy}
         </Button>
-        <Button type="button" tone="ghost" size="sm" onClick={() => setOpen(false)}>
-          Peruuta
+        <Button
+          type="button"
+          tone="ghost"
+          size="sm"
+          onClick={() => setOpen(false)}
+        >
+          {t.lounas.cancel}
         </Button>
       </div>
 
@@ -304,7 +346,7 @@ export function CopyDay({
 // ---------------------------------------------------------------------------
 
 /** Julkisen osoitteen kopiointi leikepöydälle. */
-export function CopyPublicLink({ url }: { url: string }) {
+export function CopyPublicLink({ t, url }: { t: AdminText; url: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -337,7 +379,7 @@ export function CopyPublicLink({ url }: { url: string }) {
           }
         }}
       >
-        {copied ? "Kopioitu" : "Kopioi linkki"}
+        {copied ? t.lounas.copied : t.lounas.copyLink}
       </Button>
     </div>
   );

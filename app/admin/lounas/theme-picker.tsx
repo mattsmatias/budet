@@ -48,7 +48,11 @@ export function LunchThemePicker({ current }: { current: LunchTheme }) {
       </div>
 
       {state.error ? (
-        <p role="alert" className="mt-2 text-[12px]" style={{ color: "var(--rf-red-text)" }}>
+        <p
+          role="alert"
+          className="mt-2 text-[12px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </p>
       ) : null}
@@ -96,8 +100,14 @@ function ThemeOption({
             >
               MAANANTAI
             </span>
-            <span className="mt-1 block h-1 w-full rounded-full" style={{ background: tokens.line }} />
-            <span className="mt-1 block h-1 w-3/4 rounded-full" style={{ background: tokens.line }} />
+            <span
+              className="mt-1 block h-1 w-full rounded-full"
+              style={{ background: tokens.line }}
+            />
+            <span
+              className="mt-1 block h-1 w-3/4 rounded-full"
+              style={{ background: tokens.line }}
+            />
           </span>
         </span>
 

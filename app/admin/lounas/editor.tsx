@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import {
   deleteLunchItem,
@@ -33,6 +35,7 @@ const initial: LunchState = {};
  * lomakkeen ainoa hankala osa.
  */
 export function LunchItemDialog({
+  t,
   dayId,
   dayLabel,
   item,
@@ -40,6 +43,7 @@ export function LunchItemDialog({
   allergens,
   trigger,
 }: {
+  t: AdminText;
   dayId: string;
   dayLabel: string;
   item?: LunchItem;
@@ -74,16 +78,19 @@ export function LunchItemDialog({
           type="button"
           onClick={show}
           className="rf-press flex w-full items-center justify-center gap-2 rounded-[10px] border border-dashed py-2.5 text-[13px] font-medium"
-          style={{ borderColor: "var(--rf-line-strong)", color: "var(--rf-text-2)" }}
+          style={{
+            borderColor: "var(--rf-line-strong)",
+            color: "var(--rf-text-2)",
+          }}
         >
           <RfIcon name="plus" size={15} />
-          Lisää lounasruoka
+          {t.lounas.addLunchItem}
         </button>
       ) : (
         <button
           type="button"
           onClick={show}
-          aria-label={`Muokkaa: ${item?.name ?? ""}`}
+          aria-label={fill(t.lounas.editNamed, { nimi: item?.name ?? "" })}
           // rf-hit: ikoni pysyy 28 px, kosketusalue on 44. Ks. theme.css.
           className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
           style={{ color: "var(--rf-text-3)" }}
@@ -95,7 +102,7 @@ export function LunchItemDialog({
       <dialog
         ref={dialog}
         onClose={() => setOpen(false)}
-        aria-label={item ? "Muokkaa lounasruokaa" : "Lisää lounasruoka"}
+        aria-label={item ? t.lounas.editLunchItem : t.lounas.addLunchItem}
         /*
          * m-auto keskittää dialogin.
          *
@@ -116,14 +123,19 @@ export function LunchItemDialog({
         {open ? (
           <form action={action} className="p-5">
             <input type="hidden" name="dayId" value={dayId} />
-            {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
+            {item ? (
+              <input type="hidden" name="itemId" value={item.id} />
+            ) : null}
 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-[17px] font-semibold">
-                  {item ? "Muokkaa lounasruokaa" : "Lisää lounasruoka"}
+                  {item ? t.lounas.editLunchItem : t.lounas.addLunchItem}
                 </h2>
-                <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                <p
+                  className="mt-0.5 text-[13px]"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
                   {dayLabel}
                 </p>
               </div>
@@ -131,7 +143,7 @@ export function LunchItemDialog({
               <button
                 type="button"
                 onClick={hide}
-                aria-label="Sulje"
+                aria-label={t.lounas.close}
                 className="rf-press rf-icon-btn flex h-9 w-9 items-center justify-center rounded-[9px]"
                 style={{ color: "var(--rf-text-2)" }}
               >
@@ -140,14 +152,14 @@ export function LunchItemDialog({
             </div>
 
             <div className="mt-4 space-y-3.5">
-              <Field label="Nimi" htmlFor="li-name" required>
+              <Field label={t.lounas.nameLabel} htmlFor="li-name" required>
                 <input
                   id="li-name"
                   name="name"
                   required
                   maxLength={120}
                   defaultValue={item?.name ?? ""}
-                  placeholder="Lohikeitto"
+                  placeholder={t.lounas.namePlaceholder}
                   autoFocus
                   className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                   style={{
@@ -157,13 +169,13 @@ export function LunchItemDialog({
                 />
               </Field>
 
-              <Field label="Kuvaus" htmlFor="li-desc">
+              <Field label={t.lounas.descriptionLabel} htmlFor="li-desc">
                 <input
                   id="li-desc"
                   name="description"
                   maxLength={400}
                   defaultValue={item?.description ?? ""}
-                  placeholder="Kermainen lohikeitto, saaristolaisleipää"
+                  placeholder={t.lounas.descPlaceholder}
                   className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                   style={{
                     background: "var(--rf-inset)",
@@ -173,14 +185,14 @@ export function LunchItemDialog({
               </Field>
 
               <CheckGroup
-                legend="Ruokavaliot"
+                legend={t.lounas.diets}
                 name="diets"
                 options={diets.map((d) => ({ id: d.id, label: d.label }))}
                 selected={item?.diets ?? []}
               />
 
               <CheckGroup
-                legend="Allergeenit"
+                legend={t.lounas.allergens}
                 name="allergens"
                 options={allergens.map((a) => ({ id: a.id, label: a.label }))}
                 selected={item?.allergens ?? []}
@@ -202,9 +214,9 @@ export function LunchItemDialog({
             ) : null}
 
             <div className="mt-5 flex gap-2.5">
-              <Submit label={item ? "Tallenna" : "Lisää"} />
+              <Submit t={t} label={item ? t.lounas.save : t.lounas.add} />
               <Button type="button" tone="ghost" onClick={hide}>
-                Peruuta
+                {t.lounas.cancel}
               </Button>
             </div>
           </form>
@@ -289,12 +301,12 @@ function CheckGroup({
   );
 }
 
-function Submit({ label }: { label: string }) {
+function Submit({ t, label }: { t: AdminText; label: string }) {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" tone="primary" disabled={pending}>
-      {pending ? "Tallennetaan…" : label}
+      {pending ? t.lounas.savingEllipsis : label}
     </Button>
   );
 }
@@ -310,7 +322,13 @@ function Submit({ label }: { label: string }) {
  * mainitaan kysymyksessä, jotta väärän rivin poistaminen huomataan
  * ennen kuin se tapahtuu.
  */
-export function DeleteLunchItem({ item }: { item: LunchItem }) {
+export function DeleteLunchItem({
+  t,
+  item,
+}: {
+  t: AdminText;
+  item: LunchItem;
+}) {
   const [asking, setAsking] = useState(false);
 
   if (!asking) {
@@ -318,7 +336,7 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
       <button
         type="button"
         onClick={() => setAsking(true)}
-        aria-label={`Poista: ${item.name}`}
+        aria-label={fill(t.lounas.removeNamed, { nimi: item.name })}
         className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
         style={{ color: "var(--rf-text-3)" }}
       >
@@ -332,7 +350,7 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
       <input type="hidden" name="itemId" value={item.id} />
 
       <span className="text-[12px]" style={{ color: "var(--rf-text-2)" }}>
-        Poistetaanko?
+        {t.lounas.deleteQ}
       </span>
 
       <button
@@ -344,7 +362,7 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Poista
+        {t.lounas.remove}
       </button>
 
       <button
@@ -353,7 +371,7 @@ export function DeleteLunchItem({ item }: { item: LunchItem }) {
         className="rf-press px-2.5 py-1 text-[12px]"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Peruuta
+        {t.lounas.cancel}
       </button>
     </form>
   );
@@ -379,24 +397,28 @@ export function MoveLunchItem({
   item,
   first,
   last,
+  t,
 }: {
   item: LunchItem;
   first: boolean;
   last: boolean;
+  t: AdminText;
 }) {
   return (
     <>
-      <MoveButton item={item} direction="up" disabled={first} />
-      <MoveButton item={item} direction="down" disabled={last} />
+      <MoveButton t={t} item={item} direction="up" disabled={first} />
+      <MoveButton t={t} item={item} direction="down" disabled={last} />
     </>
   );
 }
 
 function MoveButton({
+  t,
   item,
   direction,
   disabled,
 }: {
+  t: AdminText;
   item: LunchItem;
   direction: "up" | "down";
   disabled: boolean;
@@ -411,8 +433,8 @@ function MoveButton({
         disabled={disabled}
         aria-label={
           direction === "up"
-            ? `Siirrä ylemmäs: ${item.name}`
-            : `Siirrä alemmas: ${item.name}`
+            ? fill(t.lounas.moveUpNamed, { nimi: item.name })
+            : fill(t.lounas.moveDownNamed, { nimi: item.name })
         }
         className="rf-press flex h-7 w-6 items-center justify-center rounded-[7px] disabled:opacity-20"
         style={{ color: "var(--rf-text-3)" }}
@@ -460,7 +482,8 @@ export function LunchPriceField({
 }) {
   const [state, action] = useActionState(setLunchPrice, initial);
   const form = useRef<HTMLFormElement>(null);
-  const saved = cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
+  const saved =
+    cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
 
   const [value, setValue] = useState(saved);
   const [lastSaved, setLastSaved] = useState(saved);
@@ -507,12 +530,20 @@ export function LunchPriceField({
         style={{ color: "var(--rf-text)" }}
       />
 
-      <span className={compact ? "text-[13px] font-semibold" : "text-[18px] font-semibold"}>
+      <span
+        className={
+          compact ? "text-[13px] font-semibold" : "text-[18px] font-semibold"
+        }
+      >
         €
       </span>
 
       {state.error ? (
-        <span role="alert" className="text-[12px]" style={{ color: "var(--rf-red-text)" }}>
+        <span
+          role="alert"
+          className="text-[12px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </span>
       ) : null}
@@ -535,10 +566,12 @@ export function LunchPriceField({
  * lähetettynä toinen nollautuisi joka kerta.
  */
 export function LunchIncludes({
+  t,
   menuId,
   dessert,
   coffee,
 }: {
+  t: AdminText;
   menuId: string;
   dessert: boolean;
   coffee: boolean;
@@ -555,19 +588,19 @@ export function LunchIncludes({
           className="text-[11px] font-medium uppercase"
           style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
         >
-          Hintaan sisältyy
+          {t.lounas.includedInPrice}
         </legend>
 
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           <IncludeToggle
             name="dessert"
-            label="Jälkiruoka"
+            label={t.lounas.dessert}
             checked={dessert}
             onToggle={() => form.current?.requestSubmit()}
           />
           <IncludeToggle
             name="coffee"
-            label="Kahvi"
+            label={t.lounas.coffee}
             checked={coffee}
             onToggle={() => form.current?.requestSubmit()}
           />
@@ -575,7 +608,11 @@ export function LunchIncludes({
       </fieldset>
 
       {state.error ? (
-        <p role="alert" className="mt-1 text-[12px]" style={{ color: "var(--rf-red-text)" }}>
+        <p
+          role="alert"
+          className="mt-1 text-[12px]"
+          style={{ color: "var(--rf-red-text)" }}
+        >
           {state.error}
         </p>
       ) : null}
