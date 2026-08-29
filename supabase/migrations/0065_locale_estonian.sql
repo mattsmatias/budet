@@ -1,0 +1,27 @@
+-- 0065 — Viro kielivalikoimaan
+--
+-- KAKSI LISTAA OLIVAT AJAUTUNEET ERILLEEN.
+--
+-- Julkisilla sivuilla oli kuusi kieltä (fi, en, sv, da, tr, et) ja
+-- sovelluksessa oma kolmenkymmenen kielen luettelo. Viro oli vain
+-- ensimmäisessä: sivu oli olemassa, mutta sitä ei voinut valita
+-- sovelluksessa eikä app_locale-enum tuntenut arvoa.
+--
+-- Sovelluksen lista on nyt johdettu julkisten sivujen listasta
+-- (lib/i18n/app-locales.ts lukee locales.ts:stä), joten ne eivät voi
+-- enää erota. Kanta tarvitsee silti puuttuvan arvon.
+--
+-- ENUMISTA EI POISTETA MITÄÄN.
+--
+-- Samassa yhteydessä sovelluksesta poistettiin 25 kieltä, joita ei
+-- ollut käännetty. Niiden arvot jäävät enumiin, koska Postgresissa
+-- enum-arvon poisto vaatii koko tyypin uudelleenluonnin ja kaikkien
+-- sitä käyttävien sarakkeiden muuntamisen. Enum on siis sovelluksen
+-- listan ylijoukko, ja se on turvallinen suunta: kanta hyväksyy
+-- arvon jota sovellus ei tarjoa, muttei päinvastoin.
+--
+-- Tarkistettu ennen ajoa: profiles.locale ja restaurants.default_locale
+-- olivat kaikilla riveillä 'fi', joten yhdenkään käyttäjän kieli ei
+-- jäänyt kelvottomaksi.
+
+alter type app_locale add value if not exists 'et';

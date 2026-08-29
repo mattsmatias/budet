@@ -8,20 +8,28 @@ import {
   localesForMenu,
   matchBrowserLocale,
 } from "../app-locales";
+import { LOCALES, LOCALE_NAMES, LOCALE_TAGS } from "../locales";
 import { date, decimal, money, percent } from "../format";
 
 describe("kielirekisteri", () => {
-  it("sisältää kolmekymmentä kieltä", () => {
-    expect(APP_LOCALES).toHaveLength(30);
-    expect(new Set(APP_LOCALES).size).toBe(30);
+  /*
+   * Tämä on koko tiedoston tärkein testi.
+   *
+   * Sovelluksessa oli oma kolmenkymmenen kielen luettelo ja julkisilla
+   * sivuilla kuuden. Ne olivat jo ehtineet erota: virosta oli sivu
+   * muttei valintaa sovelluksessa. Nyt lista on johdettu, ja tämä
+   * kaatuu jos joku palauttaa kopion.
+   */
+  it("on sama lista kuin julkisilla sivuilla", () => {
+    expect(APP_LOCALES).toBe(LOCALES);
   });
 
   it("kuvailee jokaisen kielen", () => {
     for (const code of APP_LOCALES) {
       const info = LOCALE_INFO[code];
-      expect(info?.name, code).toBeTruthy();
+      expect(info?.name, code).toBe(LOCALE_NAMES[code]);
+      expect(info.tag, code).toBe(LOCALE_TAGS[code]);
       expect(info.dir, code).toMatch(/^(ltr|rtl)$/);
-      expect(info.tag, code).toBeTruthy();
     }
   });
 
@@ -38,16 +46,24 @@ describe("kielirekisteri", () => {
     }
   });
 
-  it("merkitsee arabian ja heprean oikealta vasemmalle", () => {
-    expect(isRtl("ar")).toBe(true);
-    expect(isRtl("he")).toBe(true);
-    expect(isRtl("fi")).toBe(false);
-    expect(isRtl("ja")).toBe(false);
+  /*
+   * Kaikki kuusi kirjoitetaan vasemmalta oikealle. Testi on silti
+   * olemassa: jos joku lisää arabian eikä merkitse sitä RTL-joukkoon,
+   * tämä ei huomaa sitä — mutta jos joku rikkoo isRtl-funktion, huomaa.
+   */
+  it("ei merkitse yhtäkään nykyistä kieltä oikealta vasemmalle", () => {
+    for (const code of APP_LOCALES) {
+      expect(isRtl(code), code).toBe(false);
+    }
   });
 
   it("tunnistaa kelvollisen ja hylkää kelvottoman", () => {
     expect(isAppLocale("tr")).toBe(true);
-    expect(isAppLocale("zh-CN")).toBe(true);
+    expect(isAppLocale("et")).toBe(true);
+    // Poistettu kieli ei saa kelvata: valinta jäisi näkymään mutta
+    // mikään ei kääntyisi.
+    expect(isAppLocale("de")).toBe(false);
+    expect(isAppLocale("zh-CN")).toBe(false);
     expect(isAppLocale("klingon")).toBe(false);
     expect(isAppLocale(null)).toBe(false);
   });
@@ -60,8 +76,8 @@ describe("valikon järjestys", () => {
 
   it("sisältää kaikki kielet kerran", () => {
     const menu = localesForMenu();
-    expect(menu).toHaveLength(30);
-    expect(new Set(menu.map((l) => l.code)).size).toBe(30);
+    expect(menu).toHaveLength(APP_LOCALES.length);
+    expect(new Set(menu.map((l) => l.code)).size).toBe(APP_LOCALES.length);
   });
 });
 
@@ -75,26 +91,17 @@ describe("selaimen kielitoive", () => {
   });
 
   it("noudattaa laatupainoja eikä järjestystä", () => {
-    expect(matchBrowserLocale("xx;q=0.5,de;q=0.9")).toBe("de");
+    expect(matchBrowserLocale("xx;q=0.5,sv;q=0.9")).toBe("sv");
   });
 
   it("pudottaa tuntemattoman alueen peruskieleen", () => {
-    expect(matchBrowserLocale("de-AT")).toBe("de");
-    expect(matchBrowserLocale("pt-PT")).toBe("pt");
+    expect(matchBrowserLocale("sv-FI")).toBe("sv");
+    expect(matchBrowserLocale("et-EE")).toBe("et");
   });
 
-  it("säilyttää omat alueelliset kielensä", () => {
-    expect(matchBrowserLocale("pt-BR")).toBe("pt-BR");
-    expect(matchBrowserLocale("zh-CN")).toBe("zh-CN");
-  });
-
-  // "zh" yksin on yleisin tapa pyytää kiinaa.
-  it("ohjaa kiinan yksinkertaistettuun", () => {
-    expect(matchBrowserLocale("zh")).toBe("zh-CN");
-    expect(matchBrowserLocale("zh-TW")).toBe("zh-CN");
-  });
-
-  it("palauttaa nullin kun mikään ei osu", () => {
+  it("palauttaa nullin kun kieltä ei enää tueta", () => {
+    expect(matchBrowserLocale("de-AT")).toBeNull();
+    expect(matchBrowserLocale("ja")).toBeNull();
     expect(matchBrowserLocale("xx,yy")).toBeNull();
     expect(matchBrowserLocale(null)).toBeNull();
   });
@@ -125,7 +132,7 @@ describe("locale-muotoilu", () => {
   it("muotoilee päivän ilman aikavyöhykesiirtymää", () => {
     // Keskiyö UTC:ssä siirtyisi edelliseen päivään lännessä.
     for (const code of APP_LOCALES) {
-      expect(date("2026-08-28", code), code).toMatch(/28|٢٨|28日/);
+      expect(date("2026-08-28", code), code).toContain("28");
     }
   });
 

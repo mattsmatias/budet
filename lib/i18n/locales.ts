@@ -1,12 +1,19 @@
 /**
- * Julkisten sivujen kielet.
+ * Kielet.
  *
- * VAIN MARKKINOINTISIVUT.
+ * TÄMÄ ON KOKO TUOTTEEN KIELILISTA.
  *
- * Hallintasovellus on suomeksi. Sen kääntäminen on eri kokoluokan työ —
- * satoja merkkijonoja kahdellakymmenelläviidellä sivulla — eikä sitä
- * kannata aloittaa vahingossa siitä että etusivulle lisättiin
- * kielivalitsin.
+ * Nimi puhuu julkisista sivuista, koska tiedosto tehtiin niitä varten.
+ * Nyt myös sovellus lukee tästä: app-locales.ts johtaa oman listansa
+ * suoraan LOCALES-vakiosta eikä kopioi sitä.
+ *
+ * Syy on kokemus. Sovelluksella oli hetken oma kolmenkymmenen kielen
+ * luettelo, ja kaksi listaa ehti erota ennen kuin kukaan huomasi:
+ * virolla oli sivu muttei valintaa sovelluksessa, ja sovelluksessa
+ * saattoi valita japanin jolla ei ole yhtään merkkijonoa.
+ *
+ * Kielen lisääminen tapahtuu siis täällä ja vain täällä — ja se on
+ * lupaus siitä että kieli myös käännetään.
  *
  * SUOMI EI OLE ETULIITTEEN TAKANA.
  *

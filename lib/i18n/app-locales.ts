@@ -1,27 +1,36 @@
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  LOCALE_NAMES,
+  LOCALE_TAGS,
+  type Locale,
+} from "./locales";
+
 /**
  * Sovelluksen kielet.
  *
- * KOLMEKYMMENTÄ KIELTÄ, YKSI LUETTELO.
+ * SAMA LISTA KUIN JULKISILLA SIVUILLA — JOHDETTU, EI KOPIOITU.
  *
- * Tämä on ainoa paikka jossa kielen tunnus, natiivi nimi, kirjoitus­
- * suunta ja Intl-tunniste on määritelty. Kielivalitsin, kielen
- * ratkaisu, muotoilu ja Matti lukevat kaikki tästä — kaksi luetteloa
- * ajautuisi erilleen ensimmäisen lisätyn kielen kohdalla.
+ * Tässä oli aiemmin oma kolmenkymmenen kielen luettelo. Se antoi
+ * käyttäjälle valita esimerkiksi japanin, vaikka sovelluksessa ei ole
+ * yhtään japaninkielistä merkkijonoa — valinta vaihtoi vain numeroiden
+ * muodon ja Matin vastauskielen, ja näkymä jäi suomeksi. Valitsin
+ * lupasi enemmän kuin sovellus osasi pitää.
+ *
+ * Kaksi luetteloa ehti myös ajautua erilleen: julkisilla sivuilla oli
+ * viro, sovelluksessa ei. Nyt lista tulee locales.ts:stä, joten sitä
+ * ei voi enää lisätä vain toiseen paikkaan.
  *
  * NATIIVI NIMI, EI KÄÄNNETTY.
  *
- * Kielivalikossa lukee "Français" eikä "ranska". Valikkoa lukee se
- * joka etsii omaa kieltään, eikä hän välttämättä osaa sitä kieltä
- * jolla käyttöliittymä nyt on.
+ * Kielivalikossa lukee "Eesti" eikä "viro". Valikkoa lukee se joka
+ * etsii omaa kieltään, eikä hän välttämättä osaa sitä kieltä jolla
+ * käyttöliittymä nyt on.
  */
 
-export const APP_LOCALES = [
-  "fi", "en", "sv", "de", "fr", "es", "it", "pt", "nl", "da",
-  "no", "is", "pl", "cs", "sk", "hu", "ro", "bg", "tr", "el",
-  "uk", "ru", "ar", "he", "hi", "zh-CN", "ja", "ko", "vi", "pt-BR",
-] as const;
+export const APP_LOCALES = LOCALES;
 
-export type AppLocale = (typeof APP_LOCALES)[number];
+export type AppLocale = Locale;
 
 /**
  * Oletuskieli.
@@ -30,7 +39,7 @@ export type AppLocale = (typeof APP_LOCALES)[number];
  * merkkijono on suomea. Englanti oletuksena tarkoittaisi että
  * kääntämätön näkymä on sekoitus kahta kieltä.
  */
-export const DEFAULT_APP_LOCALE: AppLocale = "fi";
+export const DEFAULT_APP_LOCALE: AppLocale = DEFAULT_LOCALE;
 
 /**
  * Varakieli kun käännös puuttuu.
@@ -44,50 +53,33 @@ export const FALLBACK_CHAIN: AppLocale[] = ["en", "fi"];
 export interface LocaleInfo {
   /** Kielen nimi omalla kielellään. */
   name: string;
-  /** Kirjoitussuunta. Arabia ja heprea oikealta vasemmalle. */
+  /** Kirjoitussuunta. */
   dir: "ltr" | "rtl";
-  /**
-   * BCP-47-tunniste Intl-muotoiluun ja html lang -attribuuttiin.
-   *
-   * Useimmiten sama kuin avain, mutta ei aina: norjan bokmål on "nb",
-   * ja alueelliset variantit tarvitsevat maan mukaan.
-   */
+  /** BCP-47-tunniste Intl-muotoiluun ja html lang -attribuuttiin. */
   tag: string;
 }
 
-export const LOCALE_INFO: Record<AppLocale, LocaleInfo> = {
-  fi: { name: "Suomi", dir: "ltr", tag: "fi-FI" },
-  en: { name: "English", dir: "ltr", tag: "en-GB" },
-  sv: { name: "Svenska", dir: "ltr", tag: "sv-SE" },
-  de: { name: "Deutsch", dir: "ltr", tag: "de-DE" },
-  fr: { name: "Français", dir: "ltr", tag: "fr-FR" },
-  es: { name: "Español", dir: "ltr", tag: "es-ES" },
-  it: { name: "Italiano", dir: "ltr", tag: "it-IT" },
-  pt: { name: "Português", dir: "ltr", tag: "pt-PT" },
-  nl: { name: "Nederlands", dir: "ltr", tag: "nl-NL" },
-  da: { name: "Dansk", dir: "ltr", tag: "da-DK" },
-  /* Bokmål on norjan yleisin kirjakieli ja Intlin tuntema tunniste. */
-  no: { name: "Norsk", dir: "ltr", tag: "nb-NO" },
-  is: { name: "Íslenska", dir: "ltr", tag: "is-IS" },
-  pl: { name: "Polski", dir: "ltr", tag: "pl-PL" },
-  cs: { name: "Čeština", dir: "ltr", tag: "cs-CZ" },
-  sk: { name: "Slovenčina", dir: "ltr", tag: "sk-SK" },
-  hu: { name: "Magyar", dir: "ltr", tag: "hu-HU" },
-  ro: { name: "Română", dir: "ltr", tag: "ro-RO" },
-  bg: { name: "Български", dir: "ltr", tag: "bg-BG" },
-  tr: { name: "Türkçe", dir: "ltr", tag: "tr-TR" },
-  el: { name: "Ελληνικά", dir: "ltr", tag: "el-GR" },
-  uk: { name: "Українська", dir: "ltr", tag: "uk-UA" },
-  ru: { name: "Русский", dir: "ltr", tag: "ru-RU" },
-  ar: { name: "العربية", dir: "rtl", tag: "ar" },
-  he: { name: "עברית", dir: "rtl", tag: "he-IL" },
-  hi: { name: "हिन्दी", dir: "ltr", tag: "hi-IN" },
-  "zh-CN": { name: "简体中文", dir: "ltr", tag: "zh-Hans-CN" },
-  ja: { name: "日本語", dir: "ltr", tag: "ja-JP" },
-  ko: { name: "한국어", dir: "ltr", tag: "ko-KR" },
-  vi: { name: "Tiếng Việt", dir: "ltr", tag: "vi-VN" },
-  "pt-BR": { name: "Português (Brasil)", dir: "ltr", tag: "pt-BR" },
-};
+/**
+ * Oikealta vasemmalle kirjoitettavat kielet.
+ *
+ * Tyhjä juuri nyt: kaikki kuusi kirjoitetaan vasemmalta oikealle.
+ * Joukko on silti olemassa, koska kirjoitussuunta on kielen
+ * ominaisuus eikä sitä pidä päätellä uudelleen jokaisessa
+ * kutsupaikassa — ja koska arabian tai heprean lisääminen listaan ei
+ * saa vaatia muuta kuin yhden rivin tänne.
+ */
+const RTL: ReadonlySet<string> = new Set<string>();
+
+export const LOCALE_INFO: Record<AppLocale, LocaleInfo> = Object.fromEntries(
+  LOCALES.map((code) => [
+    code,
+    {
+      name: LOCALE_NAMES[code],
+      dir: RTL.has(code) ? "rtl" : "ltr",
+      tag: LOCALE_TAGS[code],
+    },
+  ]),
+) as Record<AppLocale, LocaleInfo>;
 
 export function isAppLocale(value: unknown): value is AppLocale {
   return (
@@ -111,8 +103,8 @@ export function isRtl(locale: AppLocale): boolean {
  * selataan nimillä. Suomi on silti ensimmäisenä, koska se on
  * sovelluksen kieli ja useimmiten etsitty.
  *
- * Vertailu tehdään Intl.Collatorilla, koska "Č", "Ü" ja "Å" eivät
- * mene oikein tavujärjestyksessä.
+ * Vertailu tehdään Intl.Collatorilla, koska "Ü" ja "Å" eivät mene
+ * oikein tavujärjestyksessä.
  */
 export function localesForMenu(): { code: AppLocale; name: string }[] {
   const collator = new Intl.Collator("en");
@@ -131,11 +123,11 @@ export function localesForMenu(): { code: AppLocale; name: string }[] {
  * Selaimen kielitoiveesta lähin tuettu kieli.
  *
  * Accept-Language antaa listan kuten "tr-TR,tr;q=0.9,en;q=0.8".
- * Tarkka osuma ensin, sitten pelkkä kielikoodi: "pt-PT" ei ole tuettu
- * mutta "pt" on, ja "de-AT" päätyy saksaan.
+ * Tarkka osuma ensin, sitten pelkkä kielikoodi: "sv-FI" ei ole tuettu
+ * mutta "sv" on.
  *
  * Palauttaa nullin jos mikään ei osu — kutsuja päättää mitä silloin
- * tehdään.
+ * tehdään. Käytännössä se tarkoittaa oletuskieltä.
  */
 export function matchBrowserLocale(header: string | null): AppLocale | null {
   if (!header) return null;
@@ -152,16 +144,8 @@ export function matchBrowserLocale(header: string | null): AppLocale | null {
   for (const { tag } of wanted) {
     if (isAppLocale(tag)) return tag;
 
-    // "zh-CN" ja "pt-BR" ovat omia kieliään; muut alueet putoavat
-    // peruskieleen.
     const base = tag.split("-")[0];
     if (isAppLocale(base)) return base;
-
-    /*
-     * Kiina ilman aluetta tai yksinkertaistetulla kirjoituksella
-     * ohjataan zh-CN:ään. "zh" yksin on yleisin tapa pyytää sitä.
-     */
-    if (base === "zh") return "zh-CN";
   }
 
   return null;
