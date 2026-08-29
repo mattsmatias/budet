@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
 import { redirect } from "next/navigation";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchExpenseCategories, fetchSuppliers } from "@/lib/restoflow/queries";
@@ -7,7 +9,10 @@ import { isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CaptureFlow } from "./capture";
 
-export const metadata = { title: "Uusi kuitti" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.kuva.newReceipt };
+}
 
 /**
  * Kuitin lisäys.
@@ -17,6 +22,7 @@ export const metadata = { title: "Uusi kuitti" };
  * myös vastaa sen oikeellisuudesta.
  */
 export default async function NewReceiptPage() {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext("/admin/kuitit/uusi");
 
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
@@ -32,7 +38,7 @@ export default async function NewReceiptPage() {
       <header className="flex items-center gap-2">
         <Link
           href="/admin/kuitit"
-          aria-label="Takaisin"
+          aria-label={t.kuva.back}
           className="rf-press -ml-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
@@ -41,6 +47,7 @@ export default async function NewReceiptPage() {
       </header>
 
       <CaptureFlow
+        t={t}
         restaurantId={restaurant.id}
         suppliers={suppliers}
         categories={categories}

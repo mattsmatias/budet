@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -48,11 +50,13 @@ const initial: AdminState = {};
  * pyyntökokorajaan.
  */
 export function CaptureFlow({
+  t,
   restaurantId,
   suppliers,
   categories,
   extractionEnabled,
 }: {
+  t: AdminText;
   restaurantId: string;
   suppliers: Supplier[];
   categories: CustomCategory[];
@@ -185,7 +189,7 @@ export function CaptureFlow({
       await upload;
 
       setExtractionError(
-        error instanceof Error ? error.message : "Kuvan luku epäonnistui.",
+        error instanceof Error ? error.message : t.kuva.readFailed,
       );
       setResult(emptyResult());
       setDate(new Date().toISOString().slice(0, 10));
@@ -235,7 +239,7 @@ export function CaptureFlow({
       setPreviews((current) => [...current, ...chosen.map(previewUrl)]);
     } catch (error) {
       setUploadError(
-        error instanceof Error ? error.message : "Sivun tallennus epäonnistui.",
+        error instanceof Error ? error.message : t.kuva.pageSaveFailed,
       );
     } finally {
       setAdding(false);
@@ -299,29 +303,26 @@ export function CaptureFlow({
         >
           <RfIcon name="camera" size={38} />
           <span className="text-[17px] font-semibold">
-            {extractionEnabled ? "Kuvaa kuitti" : "Kuvaa ja täytä tiedot"}
+            {extractionEnabled ? t.kuva.shootReceipt : t.kuva.shootAndFill}
           </span>
         </button>
 
-        <ChooseButton icon="image" label="Valitse kuvat" onClick={() => fileRef.current?.click()} />
-        <ChooseButton icon="file" label="Lataa tiedosto" onClick={() => fileRef.current?.click()} />
+        <ChooseButton icon="image" label={t.kuva.chooseImages} onClick={() => fileRef.current?.click()} />
+        <ChooseButton icon="file" label={t.kuva.uploadFile} onClick={() => fileRef.current?.click()} />
 
         <p className="px-1 pt-2 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
           {extractionEnabled
-            ? "Kone ehdottaa, ihminen vahvistaa: kaikki kentät ovat muokattavissa ennen tallennusta ja epävarmat on merkitty."
-            : "Kuvan luku ei ole käytössä tässä ympäristössä. Kuva tallentuu, mutta tiedot täytetään käsin — sovellus ei arvaa niitä puolestasi."}
+            ? t.kuva.machineSuggests
+            : t.kuva.noExtractor}
         </p>
 
-        <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Monisivuisesta kuitista voi kuvata tai valita kaikki sivut kerralla.
-          Sivuja voi lisätä myös tarkistusvaiheessa.
-        </p>
+        <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuva.multiPage}</p>
       </div>
     );
   }
 
-  if (phase === "analyzing") return <Analyzing fileName={fileName} preview={preview} />;
-  if (phase === "saved") return <Saved receiptId={state.receiptId} />;
+  if (phase === "analyzing") return <Analyzing t={t} fileName={fileName} preview={preview} />;
+  if (phase === "saved") return <Saved t={t} receiptId={state.receiptId} />;
   if (!result) return null;
 
   // Kun poimintaa ei ole, mikään kenttä ei ole "epävarma" — se on vain
@@ -395,12 +396,12 @@ export function CaptureFlow({
         </span>
         <p>
           {extractionError
-            ? "Täytä tiedot kuitista itse."
+            ? t.kuva.fillYourself
             : !extractionEnabled
-            ? "Kuvan luku ei ole käytössä, joten täytä tiedot kuitista itse. Kuva tallentuu ja näkyy kuitin sivulla."
+            ? t.kuva.noExtractorShort
             : reasons.length > 0
-              ? "Osa tiedoista jäi epävarmaksi. Tarkista korostetut kentät ennen tallennusta."
-              : "Kaikki kentät tunnistettiin. Tarkista silti että ne täsmäävät kuittiin."}
+              ? t.kuva.someUncertain
+              : t.kuva.allRecognised}
         </p>
       </div>
 
@@ -442,12 +443,12 @@ export function CaptureFlow({
               onClick={() => setZoomed(0)}
               className="rf-press shrink-0 overflow-hidden"
               style={{ borderRadius: "var(--rf-r-control)" }}
-              aria-label="Suurenna kuitin kuva"
+              aria-label={t.kuva.zoomImage}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview}
-                alt="Kuitti"
+                alt={t.kuva.receipt}
                 className="h-20 w-16 object-cover"
                 style={{ background: "var(--rf-inset)" }}
               />
@@ -464,14 +465,14 @@ export function CaptureFlow({
             </p>
 
             <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              {date ? formatDate(date) : "Päivämäärä puuttuu"}
+              {date ? formatDate(date) : t.kuva.dateMissing}
               {category === "" ? "" : ` · ${CATEGORY_LABELS[category]}`}
             </p>
 
             <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               {vatEuros.trim() === ""
-                ? "ALV ei näy kuitissa"
-                : `ALV ${vatEuros} €`}
+                ? t.kuva.vatMissing
+                : fill(t.kuva.vatEuros, { maara: vatEuros })}
             </p>
           </div>
         </div>
@@ -487,10 +488,7 @@ export function CaptureFlow({
           >
             <span aria-hidden="true" className="mt-0.5 shrink-0">
               <RfIcon name="alert" size={14} />
-            </span>
-            Poiminta ei ole varma kaikista kentistä. Avaa tiedot ja
-            tarkista korostetut.
-          </p>
+            </span>{t.kuva.uncertainFields}</p>
         ) : null}
 
         <button
@@ -504,7 +502,7 @@ export function CaptureFlow({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {showFields ? "Piilota tiedot" : "Muokkaa tietoja"}
+          {showFields ? t.kuva.hideDetails : t.kuva.editDetails}
           <span
             aria-hidden="true"
             style={{
@@ -528,13 +526,11 @@ export function CaptureFlow({
       <Card>
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-[15px] font-medium">
-            {previews.length <= 1 ? "Kuitin kuva" : `Sivut · ${previews.length}`}
+            {previews.length <= 1 ? t.kuva.receiptImage : fill(t.kuva.pagesCount, { n: String(previews.length) })}
           </p>
 
           {adding ? (
-            <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-              Tallennetaan…
-            </span>
+            <span className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.saving}</span>
           ) : null}
         </div>
 
@@ -550,7 +546,7 @@ export function CaptureFlow({
                   borderRadius: "var(--rf-r-control)",
                   background: "var(--rf-inset)",
                 }}
-                aria-label={`Suurenna sivu ${index + 1}`}
+                aria-label={fill(t.kuva.zoomPage, { n: String(index + 1) })}
               >
                 {url === "" ? (
                   /* PDF:stä ei synny esikatselua selaimessa. */
@@ -564,7 +560,7 @@ export function CaptureFlow({
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={url}
-                    alt={`Sivu ${index + 1}`}
+                    alt={fill(t.kuva.pageN, { n: String(index + 1) })}
                     className="h-full w-full object-cover"
                   />
                 )}
@@ -591,7 +587,7 @@ export function CaptureFlow({
                   borderRadius: "999px",
                   boxShadow: "var(--rf-shadow-sm, 0 1px 3px rgba(0,0,0,0.2))",
                 }}
-                aria-label={`Poista sivu ${index + 1}`}
+                aria-label={fill(t.kuva.removePage, { n: String(index + 1) })}
               >
                 <RfIcon name="trash" size={13} />
               </button>
@@ -610,7 +606,7 @@ export function CaptureFlow({
             }}
           >
             <RfIcon name="plus" size={18} />
-            <span className="text-[11px] font-medium">Lisää sivu</span>
+            <span className="text-[11px] font-medium">{t.kuva.addPage}</span>
           </button>
         </div>
 
@@ -639,7 +635,7 @@ export function CaptureFlow({
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Kuitin kuva"
+          aria-label={t.kuva.receiptImage}
           onClick={() => setZoomed(null)}
           className="rf-z-modal fixed inset-0 flex flex-col items-center justify-center gap-3 p-4"
           style={{ background: "rgba(0,0,0,0.82)" }}
@@ -647,7 +643,7 @@ export function CaptureFlow({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previews[zoomed]}
-            alt={`Kuitti, sivu ${zoomed + 1}`}
+            alt={fill(t.kuva.receiptPage, { n: String(zoomed + 1) })}
             className="max-h-full max-w-full object-contain"
           />
 
@@ -665,7 +661,7 @@ export function CaptureFlow({
       <div hidden={!showFields}>
       <Card>
         <TextField
-          label="Toimittaja"
+          label={t.kuva.supplier}
           name="supplier"
           value={supplier}
           onChange={setSupplier}
@@ -673,7 +669,7 @@ export function CaptureFlow({
           hint={result.supplier.hint}
         />
         <TextField
-          label="Päivämäärä"
+          label={t.kuva.date}
           name="date"
           type="date"
           value={date}
@@ -682,7 +678,7 @@ export function CaptureFlow({
           hint={result.date.hint}
         />
         <TextField
-          label="Yhteensä"
+          label={t.kuva.total}
           name="total"
           value={totalEuros}
           onChange={setTotalEuros}
@@ -691,7 +687,7 @@ export function CaptureFlow({
           uncertain={uncertain.has("totalCents")}
           hint={result.totalCents.hint}
         />
-        <VatField
+        <VatField t={t}
           totalEuros={totalEuros}
           value={vatEuros}
           onChange={setVatEuros}
@@ -701,7 +697,7 @@ export function CaptureFlow({
         />
 
         <SelectField
-          label="Kategoria"
+          label={t.kuva.category}
           name="category"
           value={category}
           onChange={(v) => setCategory(v as ExpenseCategory)}
@@ -712,9 +708,7 @@ export function CaptureFlow({
 
         {categories.length > 0 ? (
           <div>
-            <label htmlFor="rf-custom-category" className="block text-[13px] font-medium">
-              Oma kategoria
-            </label>
+            <label htmlFor="rf-custom-category" className="block text-[13px] font-medium">{t.kuva.ownCategory}</label>
             <select
               id="rf-custom-category"
               name="categoryId"
@@ -722,7 +716,7 @@ export function CaptureFlow({
               className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
               style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
             >
-              <option value="">Ei omaa kategoriaa</option>
+              <option value="">{t.kuva.noOwnCategory}</option>
               {categories
                 .filter((c) => c.active)
                 .map((c) => (
@@ -731,10 +725,7 @@ export function CaptureFlow({
                   </option>
                 ))}
             </select>
-            <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-              Tarkennus raportteja varten. ALV ja budjetti tulevat yllä
-              valitusta perusluokasta.
-            </p>
+            <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuva.ownCategoryHint}</p>
           </div>
         ) : null}
 
@@ -747,8 +738,7 @@ export function CaptureFlow({
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <p className="text-[13px] leading-relaxed">
-              Ehdotus: <strong>{CATEGORY_LABELS[suggestion.category]}</strong>.{" "}
+            <p className="text-[13px] leading-relaxed">{t.kuva.suggestion}<strong>{CATEGORY_LABELS[suggestion.category]}</strong>.{" "}
               {suggestion.reason}
             </p>
             <button
@@ -760,20 +750,18 @@ export function CaptureFlow({
                 color: "var(--rf-blue-text)",
                 borderRadius: "var(--rf-r-control)",
               }}
-            >
-              Käytä
-            </button>
+            >{t.kuva.use}</button>
           </div>
         ) : null}
         <SelectField
-          label="Maksutapa"
+          label={t.kuva.paymentMethod}
           name="payment"
           value={payment}
           onChange={(v) => setPayment(v as PaymentMethod)}
           uncertain={uncertain.has("paymentMethod")}
           options={Object.entries(PAYMENT_LABELS)}
         />
-        <TextField label="Muistiinpano" name="note" value={note} onChange={setNote} last />
+        <TextField label={t.kuva.note} name="note" value={note} onChange={setNote} last />
       </Card>
       </div>
 
@@ -827,12 +815,10 @@ export function CaptureFlow({
         </p>
       ) : null}
 
-      <SaveButton disabled={!ready} />
+      <SaveButton t={t} disabled={!ready} />
 
       {!ready ? (
-        <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Toimittaja, summa ja kategoria vaaditaan.
-        </p>
+        <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.requiredFields}</p>
       ) : null}
     </form>
   );
@@ -917,11 +903,11 @@ function ChooseButton({
   );
 }
 
-const STEPS = [
-  "Tallennetaan kuva",
-  "Luetaan toimittaja ja päivämäärä",
-  "Etsitään loppusumma ja ALV",
-  "Tarkistetaan verotiedot",
+const vaiheet = (t: AdminText) => [
+  t.kuva.stepSaving,
+  t.kuva.stepSupplier,
+  t.kuva.stepTotal,
+  t.kuva.stepVat,
 ];
 
 /**
@@ -933,23 +919,26 @@ const STEPS = [
  * kuvan näkeminen kertoo että oikea kuitti lähti matkaan.
  */
 function Analyzing({
+  t,
   fileName,
   preview,
 }: {
+  t: AdminText;
   fileName: string;
   preview: string | null;
 }) {
   const [step, setStep] = useState(0);
+  const vaiheita = vaiheet(t).length;
 
   useEffect(() => {
     // Viimeiseen vaiheeseen jäädään odottamaan, ei kierretä ympäri:
     // täyttyvä palkki joka alkaa alusta näyttäisi jumittumiselta.
     const timer = setInterval(() => {
-      setStep((current) => Math.min(current + 1, STEPS.length - 1));
+      setStep((current) => Math.min(current + 1, vaiheita - 1));
     }, 1400);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [vaiheita]);
 
   return (
     <div className="rf-enter flex flex-col items-center py-10">
@@ -957,7 +946,7 @@ function Analyzing({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={preview}
-          alt="Kuvattu kuitti"
+          alt={t.kuva.shotReceipt}
           className="max-h-52 w-auto"
           style={{
             borderRadius: "var(--rf-r-control)",
@@ -977,7 +966,7 @@ function Analyzing({
         </div>
       )}
 
-      <p className="mt-6 text-[17px] font-semibold">Luetaan kuittia…</p>
+      <p className="mt-6 text-[17px] font-semibold">{t.kuva.reading}</p>
       <p
         className="mt-1 max-w-[16rem] break-all text-center text-[13px]"
         style={{ color: "var(--rf-text-2)" }}
@@ -986,7 +975,7 @@ function Analyzing({
       </p>
 
       <ul className="mt-7 w-full max-w-[18rem] space-y-2.5">
-        {STEPS.map((label, index) => {
+        {vaiheet(t).map((label, index) => {
           const done = index < step;
           const active = index === step;
 
@@ -1021,7 +1010,9 @@ function Analyzing({
   );
 }
 
-function Saved({ receiptId }: { receiptId?: string }) {
+function Saved({
+  t, receiptId }: {
+  t: AdminText; receiptId?: string }) {
   return (
     <div className="rf-enter flex flex-col items-center justify-center py-20">
       <div
@@ -1040,13 +1031,11 @@ function Saved({ receiptId }: { receiptId?: string }) {
         </svg>
       </div>
 
-      <p className="mt-6 text-[17px] font-semibold">Kuitti tallennettu</p>
+      <p className="mt-6 text-[17px] font-semibold">{t.kuva.savedTitle}</p>
       <p
         className="mt-2 max-w-[18rem] text-center text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
-      >
-        Se näkyy nyt kuittilistassa ja kulunäkymässä.
-      </p>
+      >{t.kuva.savedBody}</p>
 
       <div className="mt-7 flex gap-2.5">
         {receiptId ? (
@@ -1058,9 +1047,7 @@ function Saved({ receiptId }: { receiptId?: string }) {
               color: "var(--rf-on-accent)",
               borderRadius: "var(--rf-r-control)",
             }}
-          >
-            Avaa kuitti
-          </Link>
+          >{t.kuva.openReceipt}</Link>
         ) : null}
         <Link
           href="/admin/kuitit"
@@ -1070,15 +1057,15 @@ function Saved({ receiptId }: { receiptId?: string }) {
             color: "var(--rf-text)",
             borderRadius: "var(--rf-r-control)",
           }}
-        >
-          Kaikki kuitit
-        </Link>
+        >{t.kuva.allReceipts}</Link>
       </div>
     </div>
   );
 }
 
-function SaveButton({ disabled }: { disabled: boolean }) {
+function SaveButton({
+  t, disabled }: {
+  t: AdminText; disabled: boolean }) {
   const { pending } = useFormStatus();
 
   return (
@@ -1092,7 +1079,7 @@ function SaveButton({ disabled }: { disabled: boolean }) {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna kuitti"}
+      {pending ? t.kuva.saving : t.kuva.saveReceipt}
     </button>
   );
 }
@@ -1170,6 +1157,7 @@ function TextField({
  * se voittaa lasketun — laskettu arvo on apu, ei totuus.
  */
 function VatField({
+  t,
   totalEuros,
   value,
   onChange,
@@ -1177,6 +1165,7 @@ function VatField({
   uncertain,
   hint,
 }: {
+  t: AdminText;
   totalEuros: string;
   value: string;
   onChange: (v: string) => void;
@@ -1232,9 +1221,7 @@ function VatField({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Laske kannasta:
-        </span>
+        <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.calcFromBase}</span>
         {RATE_CHOICES.map((rate) => (
           <button
             key={rate}
@@ -1258,18 +1245,16 @@ function VatField({
       </div>
 
       {totalCents === null ? (
-        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Täytä ensin loppusumma, niin ALV voidaan laskea kannasta.
-        </p>
+        <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>{t.kuva.fillTotalFirst}</p>
       ) : inferred !== null ? (
         <p
           className="mt-1.5 text-[12px]"
           style={{ color: mismatch ? "var(--rf-amber-text)" : "var(--rf-text-3)" }}
         >
-          {computed ? "Laskettu — tarkista kuitista. " : ""}
+          {computed ? t.kuva.calculated + " " : ""}
           Vastaa {formatRate(inferred)} kantaa
           {mismatch
-            ? `, odotettu ${expected.map(formatRate).join(" tai ")}`
+            ? fill(t.kuva.expectedRate, { kannat: expected.map(formatRate).join(t.kuva.orSep) })
             : ""}
           .
         </p>
