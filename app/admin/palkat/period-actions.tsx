@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import { approvePeriod, reopenPeriod, type PayrollState } from "./actions";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -16,6 +18,7 @@ const initial: PayrollState = {};
  * ennen painiketta, jotta harmaana oleva nappi ei jää arvoitukseksi.
  */
 export function PeriodActions({
+  t,
   startsOn,
   endsOn,
   approvedCount,
@@ -23,6 +26,7 @@ export function PeriodActions({
   issueCount,
   locked,
 }: {
+  t: AdminText;
   startsOn: string;
   endsOn: string;
   approvedCount: number;
@@ -33,24 +37,41 @@ export function PeriodActions({
   const [approveState, approve] = useActionState(approvePeriod, initial);
   const [reopenState, reopen] = useActionState(reopenPeriod, initial);
 
-  const state = approveState.error || approveState.notice ? approveState : reopenState;
-  const ready = issueCount === 0 && totalCount > 0 && approvedCount >= totalCount;
+  const state =
+    approveState.error || approveState.notice ? approveState : reopenState;
+  const ready =
+    issueCount === 0 && totalCount > 0 && approvedCount >= totalCount;
 
   return (
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkkakauden hyväksyntä</h2>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            {t.palkka.periodApproval}
+          </h2>
+          <p
+            className="mt-1 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {locked
-              ? "Kausi on hyväksytty ja lukittu. Laskelmat eivät muutu ennen kuin kausi avataan."
-              : `Hyväksytty ${approvedCount}/${totalCount} laskelmaa.` +
-                (issueCount > 0 ? ` Tarkistettavia kohtia ${issueCount}.` : "")}
+              ? t.palkka.periodLockedNote
+              : fill(t.palkka.approvedOf, {
+                  hyvaksytty: String(approvedCount),
+                  kaikki: String(totalCount),
+                }) +
+                (issueCount > 0
+                  ? " " +
+                    fill(t.palkka.issueCount, { maara: String(issueCount) })
+                  : "")}
           </p>
         </div>
 
         <Pill tone={locked ? "ok" : ready ? "info" : "neutral"}>
-          {locked ? "Hyväksytty" : ready ? "Valmis hyväksyttäväksi" : "Kesken"}
+          {locked
+            ? t.palkka.approvedWord
+            : ready
+              ? t.palkka.readyForApproval
+              : t.palkka.inProgress}
         </Pill>
       </div>
 
@@ -61,7 +82,10 @@ export function PeriodActions({
       ) : null}
 
       {state.notice ? (
-        <p className="mt-3 text-[13px]" style={{ color: "var(--rf-green-text)" }}>
+        <p
+          className="mt-3 text-[13px]"
+          style={{ color: "var(--rf-green-text)" }}
+        >
           {state.notice}
         </p>
       ) : null}
@@ -71,7 +95,11 @@ export function PeriodActions({
           <form action={reopen}>
             <input type="hidden" name="startsOn" value={startsOn} />
             <input type="hidden" name="endsOn" value={endsOn} />
-            <Submit tone="ghost" label="Avaa kausi" pending="Avataan…" />
+            <Submit
+              tone="ghost"
+              label={t.palkka.openPeriod}
+              pending={t.palkka.opening}
+            />
           </form>
         ) : (
           <form action={approve}>
@@ -79,20 +107,21 @@ export function PeriodActions({
             <input type="hidden" name="endsOn" value={endsOn} />
             <Submit
               tone="primary"
-              label="Hyväksy palkkakausi"
-              pending="Hyväksytään…"
+              label={t.palkka.approvePeriod}
+              pending={t.palkka.approving}
               disabled={!ready}
             />
           </form>
         )}
 
-        <PayButton locked={locked} />
+        <PayButton t={t} locked={locked} />
       </div>
 
-      <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Bruttopalkka ei sisällä ennakonpidätystä, muita vähennyksiä eikä
-        työnantajan sivukuluja. Kate ei ole palkkahallinto-ohjelma eikä
-        korvaa sellaista.
+      <p
+        className="mt-3 text-[12px] leading-relaxed"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {t.palkka.grossNote}
       </p>
     </Card>
   );
@@ -105,7 +134,7 @@ export function PeriodActions({
  * pidä. Rakenne on valmis maksupalveluintegraatiolle, mutta siihen asti
  * tämä kertoo tilanteen sen sijaan että vihjaisisi muuta.
  */
-function PayButton({ locked }: { locked: boolean }) {
+function PayButton({ t, locked }: { t: AdminText; locked: boolean }) {
   return (
     <span
       className="inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium"
@@ -115,15 +144,13 @@ function PayButton({ locked }: { locked: boolean }) {
         border: "1px solid var(--rf-line)",
         borderRadius: "var(--rf-r-control)",
       }}
-      title="Palkanmaksu tulee käyttöön maksupalveluintegraation kautta."
+      title={t.palkka.payoutComing}
     >
       <RfIcon name="payroll" size={16} />
-      Maksa palkat
-      <span className="text-[11px]">— ei vielä käytössä</span>
+      {t.palkka.payWages}
+      <span className="text-[11px]">{t.palkka.notYetAvailable}</span>
       <span className="sr-only">
-        {locked
-          ? "Palkanmaksu tulee käyttöön maksupalveluintegraation kautta."
-          : "Hyväksy kausi ensin. Palkanmaksu tulee käyttöön maksupalveluintegraation kautta."}
+        {locked ? t.palkka.payoutComing : t.palkka.approveFirstThenPay}
       </span>
     </span>
   );

@@ -14,6 +14,10 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -31,16 +35,34 @@ export interface PayrollState {
 
 const PATH = "/admin/palkat";
 
-function explain(error: { message?: string }, fallback: string): string {
+/*
+ * Kannan virhe luettavaksi.
+ *
+ * Vertailu on suomeksi eika sanakirjasta: tietokantafunktio nostaa
+ * suomenkielisen poikkeuksen kayttoliittyman kielesta riippumatta,
+ * joten kaannetty vertailu ei osuisi koskaan.
+ */
+function explain(
+  error: { message?: string },
+  fallback: string,
+  t: AdminText,
+): string {
   const message = error.message ?? "";
   if (message.includes("Palkkakausi on hyväksytty")) {
-    return "Palkkakausi on hyväksytty. Avaa kausi ennen muutosta.";
+    return t.palkka.periodApprovedBody;
   }
-  return `${fallback}: ${message || "tuntematon virhe"}`;
+  return fill(t.palkka.failedWithReason, {
+    syy: fallback,
+    viesti: message || t.palkka.unknownError,
+  });
 }
 
 /** "10:02" ja päivä ravintolan ajassa → UTC-aikaleima. */
-function localToIso(date: string, hhmm: string, timezone: string): string | null {
+function localToIso(
+  date: string,
+  hhmm: string,
+  timezone: string,
+): string | null {
   if (!/^\d{2}:\d{2}$/.test(hhmm)) return null;
 
   /*
@@ -57,13 +79,22 @@ function localToIso(date: string, hhmm: string, timezone: string): string | null
 
   const asLocal = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   }).formatToParts(guess);
 
-  const part = (type: string) => Number(asLocal.find((p) => p.type === type)?.value ?? 0);
+  const part = (type: string) =>
+    Number(asLocal.find((p) => p.type === type)?.value ?? 0);
   const localMs = Date.UTC(
-    part("year"), part("month") - 1, part("day"), part("hour"), part("minute"),
+    part("year"),
+    part("month") - 1,
+    part("day"),
+    part("hour"),
+    part("minute"),
   );
 
   const offset = localMs - guess.getTime();
@@ -85,8 +116,9 @@ export async function correctWorkTime(
   _prev: PayrollState,
   formData: FormData,
 ): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "payroll.manage")) return { error: "Ei oikeutta korjata työaikaa." };
+  if (!can(role, "payroll.manage")) return { error: t.palkka.noRightCorrect };
 
   const userId = String(formData.get("userId") ?? "");
   const date = String(formData.get("date") ?? "");
@@ -95,18 +127,19 @@ export async function correctWorkTime(
   const reason = String(formData.get("reason") ?? "").trim();
   const breakMinutes = Number(formData.get("breakMinutes") ?? 0);
 
-  if (!userId || !ISO_DATE.test(date)) return { error: "Puutteelliset tiedot." };
-  if (!reason) return { error: "Kerro miksi aikaa korjataan." };
+  if (!userId || !ISO_DATE.test(date))
+    return { error: t.palkka.incompleteData };
+  if (!reason) return { error: t.palkka.tellWhy };
 
   const correctedIn = localToIso(date, from, restaurant.timezone);
   const correctedOut = localToIso(date, to, restaurant.timezone);
 
-  if (!correctedIn || !correctedOut) return { error: "Kellonaika on virheellinen." };
+  if (!correctedIn || !correctedOut) return { error: t.palkka.badClockTime };
   if (Date.parse(correctedOut) <= Date.parse(correctedIn)) {
-    return { error: "Lopetusajan on oltava aloitusajan jälkeen." };
+    return { error: t.palkka.endAfterStart };
   }
   if (!Number.isFinite(breakMinutes) || breakMinutes < 0) {
-    return { error: "Tauko ei voi olla negatiivinen." };
+    return { error: t.palkka.breakNotNegative };
   }
 
   /*
@@ -146,10 +179,10 @@ export async function correctWorkTime(
     { onConflict: "restaurant_id,user_id,work_date" },
   );
 
-  if (error) return { error: explain(error, "Korjaus epäonnistui") };
+  if (error) return { error: explain(error, t.palkka.correctionFailed, t) };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Työaika korjattu." };
+  return { notice: t.palkka.timeCorrected };
 }
 
 /** Poistaa korjauksen, jolloin leimaukset palaavat voimaan. */
@@ -211,23 +244,30 @@ export async function approvePayslip(
   _prev: PayrollState,
   formData: FormData,
 ): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "payroll.manage")) return { error: "Ei oikeutta hyväksyä palkkoja." };
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightApprovePay };
 
   const userId = String(formData.get("userId") ?? "");
   const startsOn = String(formData.get("startsOn") ?? "");
   const endsOn = String(formData.get("endsOn") ?? "");
 
   if (!userId || !ISO_DATE.test(startsOn) || !ISO_DATE.test(endsOn)) {
-    return { error: "Palkkakausi puuttuu." };
+    return { error: t.palkka.periodMissing };
   }
 
   const period = { startsOn, endsOn };
   const nowIso = new Date().toISOString();
 
-  const data = await loadPayroll(restaurant.id, restaurant.timezone, period, nowIso);
+  const data = await loadPayroll(
+    restaurant.id,
+    restaurant.timezone,
+    period,
+    nowIso,
+  );
   const slip = data.slips.find((s) => s.userId === userId);
-  if (!slip) return { error: "Palkkalaskelmaa ei löytynyt." };
+  if (!slip) return { error: t.palkka.slipNotFound };
 
   /*
    * Epäselvästä työvuorosta ei muodosteta lopullista palkkaa.
@@ -238,12 +278,12 @@ export async function approvePayslip(
    */
   if (slip.issues.length > 0) {
     return {
-      error: `Korjaa ensin: ${slip.issues[0].message}`,
+      error: fill(t.palkka.fixFirst, { viesti: slip.issues[0].message }),
     };
   }
 
   const row = await periodRow(restaurant.id, period);
-  if (!row) return { error: "Palkkakauden luonti epäonnistui." };
+  if (!row) return { error: t.palkka.periodCreateFailed };
 
   const supabase = await createClient();
 
@@ -270,7 +310,8 @@ export async function approvePayslip(
     .select("id")
     .single();
 
-  if (error || !saved) return { error: explain(error ?? {}, "Hyväksyntä epäonnistui") };
+  if (error || !saved)
+    return { error: explain(error ?? {}, t.palkka.approveFailed, t) };
 
   const payslipId = (saved as { id: string }).id;
 
@@ -293,11 +334,12 @@ export async function approvePayslip(
       })),
     );
 
-    if (lineError) return { error: explain(lineError, "Rivien tallennus epäonnistui") };
+    if (lineError)
+      return { error: explain(lineError, t.palkka.rowsSaveFailed, t) };
   }
 
   revalidatePath(PATH, "layout");
-  return { notice: "Palkka hyväksytty." };
+  return { notice: t.palkka.payApproved };
 }
 
 /** Hyväksyy koko kauden. Sen jälkeen laskelmat lukkiutuvat. */
@@ -305,33 +347,43 @@ export async function approvePeriod(
   _prev: PayrollState,
   formData: FormData,
 ): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "payroll.manage")) return { error: "Ei oikeutta hyväksyä palkkakautta." };
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightApprovePeriod };
 
   const startsOn = String(formData.get("startsOn") ?? "");
   const endsOn = String(formData.get("endsOn") ?? "");
   if (!ISO_DATE.test(startsOn) || !ISO_DATE.test(endsOn)) {
-    return { error: "Palkkakausi puuttuu." };
+    return { error: t.palkka.periodMissing };
   }
 
   const nowIso = new Date().toISOString();
   const data = await loadPayroll(
-    restaurant.id, restaurant.timezone, { startsOn, endsOn }, nowIso,
+    restaurant.id,
+    restaurant.timezone,
+    { startsOn, endsOn },
+    nowIso,
   );
 
   if (data.issues.length > 0) {
-    return { error: `Kaudella on ${data.issues.length} tarkistettavaa kohtaa.` };
+    return {
+      error: fill(t.palkka.periodIssues, { maara: String(data.issues.length) }),
+    };
   }
 
   const row = await periodRow(restaurant.id, { startsOn, endsOn });
-  if (!row) return { error: "Palkkakautta ei löytynyt." };
+  if (!row) return { error: t.palkka.periodNotFound };
 
   const paid = data.slips.filter((s) => s.workedMinutes > 0);
   const approved = await countApproved(row.id);
 
   if (approved < paid.length) {
     return {
-      error: `Hyväksy ensin kaikki palkkalaskelmat (${approved}/${paid.length}).`,
+      error: fill(t.palkka.approveAllFirst, {
+        hyvaksytty: String(approved),
+        kaikki: String(paid.length),
+      }),
     };
   }
 
@@ -341,10 +393,10 @@ export async function approvePeriod(
     .update({ status: "approved", approved_at: nowIso, approved_by: user.id })
     .eq("id", row.id);
 
-  if (error) return { error: explain(error, "Kauden hyväksyntä epäonnistui") };
+  if (error) return { error: explain(error, t.palkka.periodApproveFailed, t) };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Palkkakausi hyväksytty ja lukittu." };
+  return { notice: t.palkka.periodApprovedLocked };
 }
 
 async function countApproved(periodId: string): Promise<number> {
@@ -363,13 +415,15 @@ export async function reopenPeriod(
   _prev: PayrollState,
   formData: FormData,
 ): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "payroll.manage")) return { error: "Ei oikeutta avata palkkakautta." };
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightOpenPeriod };
 
   const startsOn = String(formData.get("startsOn") ?? "");
   const endsOn = String(formData.get("endsOn") ?? "");
   if (!ISO_DATE.test(startsOn) || !ISO_DATE.test(endsOn)) {
-    return { error: "Palkkakausi puuttuu." };
+    return { error: t.palkka.periodMissing };
   }
 
   const supabase = await createClient();
@@ -380,10 +434,10 @@ export async function reopenPeriod(
     .eq("starts_on", startsOn)
     .eq("ends_on", endsOn);
 
-  if (error) return { error: explain(error, "Avaaminen epäonnistui") };
+  if (error) return { error: explain(error, t.palkka.openFailed, t) };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Palkkakausi avattu. Laskelmat vaativat uuden hyväksynnän." };
+  return { notice: t.palkka.periodOpened };
 }
 
 // ---------------------------------------------------------------------------
@@ -402,20 +456,23 @@ export async function savePayComponent(
   _prev: PayrollState,
   formData: FormData,
 ): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "payroll.manage")) return { error: "Ei oikeutta muokata palkkalajeja." };
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightComponents };
 
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) return { error: "Anna palkkalajille nimi." };
+  if (!name) return { error: t.palkka.componentNeedsName };
 
   const unit = String(formData.get("unit") ?? "per_hour");
   if (!["per_hour", "percent", "fixed"].includes(unit)) {
-    return { error: "Tuntematon yksikkö." };
+    return { error: t.palkka.unknownUnit };
   }
 
   const raw = String(formData.get("value") ?? "").replace(",", ".");
   const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0) return { error: "Arvo puuttuu." };
+  if (!Number.isFinite(parsed) || parsed <= 0)
+    return { error: t.palkka.valueMissing };
 
   // per_hour ja fixed sentteinä, percent prosentteina.
   const value = unit === "percent" ? parsed : Math.round(parsed * 100);
@@ -428,7 +485,7 @@ export async function savePayComponent(
   const from = toMinuteOfDay(formData.get("from"));
   const to = toMinuteOfDay(formData.get("to"));
   if ((from === null) !== (to === null)) {
-    return { error: "Anna ikkunalle sekä alku että loppu, tai jätä molemmat tyhjiksi." };
+    return { error: t.palkka.windowBothOrNeither };
   }
 
   const supabase = await createClient();
@@ -456,10 +513,10 @@ export async function savePayComponent(
     ? await supabase.from("pay_components").update(row).eq("id", id)
     : await supabase.from("pay_components").insert(row);
 
-  if (error) return { error: explain(error, "Palkkalajin tallennus epäonnistui") };
+  if (error) return { error: explain(error, t.palkka.componentSaveFailed, t) };
 
   revalidatePath(PATH, "layout");
-  return { notice: id ? "Palkkalaji päivitetty." : "Palkkalaji lisätty." };
+  return { notice: id ? t.palkka.componentUpdated : t.palkka.componentAdded };
 }
 
 /**
@@ -468,7 +525,9 @@ export async function savePayComponent(
  * Rivi jää kantaan, koska hyväksytyt palkkalaskelmat viittaavat siihen.
  * Poistettu laji tekisi vanhasta laskelmasta lukukelvottoman.
  */
-export async function deactivatePayComponent(formData: FormData): Promise<void> {
+export async function deactivatePayComponent(
+  formData: FormData,
+): Promise<void> {
   const { restaurant, role } = await requireContext(PATH);
   if (!can(role, "payroll.manage")) return;
 

@@ -1,8 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
-import { correctWorkTime, removeCorrection, type PayrollState } from "../actions";
+import {
+  correctWorkTime,
+  removeCorrection,
+  type PayrollState,
+} from "../actions";
 import { RfIcon } from "@/components/restoflow/icons";
 
 const initial: PayrollState = {};
@@ -19,6 +24,7 @@ const initial: PayrollState = {};
  * oleva luku jota kukaan ei osaa selittää on pahempi kuin puuttuva luku.
  */
 export function CorrectionRow({
+  t,
   date,
   label,
   times,
@@ -31,6 +37,7 @@ export function CorrectionRow({
   canManage,
   startOpen,
 }: {
+  t: AdminText;
   date: string;
   label: string;
   times: string;
@@ -54,7 +61,10 @@ export function CorrectionRow({
   return (
     <div
       className="px-3.5 py-3"
-      style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+      style={{
+        background: "var(--rf-inset)",
+        borderRadius: "var(--rf-r-control)",
+      }}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
@@ -63,18 +73,26 @@ export function CorrectionRow({
             {corrected ? (
               <span
                 className="ml-2 text-[11px] font-semibold uppercase"
-                style={{ color: "var(--rf-amber-text)", letterSpacing: "0.04em" }}
+                style={{
+                  color: "var(--rf-amber-text)",
+                  letterSpacing: "0.04em",
+                }}
               >
-                Korjattu
+                {t.palkka.corrected}
               </span>
             ) : null}
           </p>
-          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-0.5 text-[13px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {times} · {duration}
           </p>
         </div>
 
-        <p className="rf-tabular shrink-0 text-[14px] font-semibold">{amount}</p>
+        <p className="rf-tabular shrink-0 text-[14px] font-semibold">
+          {amount}
+        </p>
       </div>
 
       {extras.length > 0 ? (
@@ -112,7 +130,11 @@ export function CorrectionRow({
             className="rf-press -my-3 py-3 text-[12px] font-medium"
             style={{ color: "var(--rf-blue)" }}
           >
-            {open ? "Peruuta" : corrected ? "Muuta korjausta" : "Korjaa toteutunut aika"}
+            {open
+              ? t.palkka.cancel
+              : corrected
+                ? t.palkka.changeCorrection
+                : t.palkka.correctWorkedTime}
           </button>
 
           {correction ? (
@@ -123,7 +145,7 @@ export function CorrectionRow({
                 className="rf-press -my-3 py-3 text-[12px] font-medium"
                 style={{ color: "var(--rf-text-3)" }}
               >
-                Palauta leimaukset
+                {t.palkka.restoreClockings}
               </button>
             </form>
           ) : null}
@@ -142,13 +164,13 @@ export function CorrectionRow({
           <input type="hidden" name="date" value={date} />
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Field label="Sisään">
+            <Field label={t.palkka.inWord}>
               <input name="from" type="time" required className={inputClass} />
             </Field>
-            <Field label="Ulos">
+            <Field label={t.palkka.outWord}>
               <input name="to" type="time" required className={inputClass} />
             </Field>
-            <Field label="Tauko (min)">
+            <Field label={t.palkka.breakMin}>
               <input
                 name="breakMinutes"
                 type="number"
@@ -160,23 +182,28 @@ export function CorrectionRow({
           </div>
 
           <label className="block">
-            <span className="block text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-              Miksi aikaa korjataan?
+            <span
+              className="block text-[12px] font-medium"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              {t.palkka.whyCorrecting}
             </span>
             <input
               name="reason"
               required
-              placeholder="Ulosleima unohtui"
+              placeholder={t.palkka.forgotClockOut}
               className={`mt-1 ${inputClass}`}
             />
           </label>
 
-          <p className="text-[11px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Alkuperäisiä leimauksia ei muuteta. Korjaus tallennetaan omana
-            merkintänään, ja siihen jää nimesi, aika ja perustelu.
+          <p
+            className="text-[11px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkka.correctionNote}
           </p>
 
-          <SaveButton />
+          <SaveButton t={t} />
         </form>
       ) : null}
     </div>
@@ -189,10 +216,19 @@ const inputClass =
   "w-full px-3 py-2.5 text-[14px] [border-radius:var(--rf-r-control)] " +
   "[background:var(--rf-card)] [border:1px_solid_var(--rf-line-strong)]";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="block text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+      <span
+        className="block text-[12px] font-medium"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </span>
       <span className="mt-1 block">{children}</span>
@@ -200,7 +236,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function SaveButton() {
+function SaveButton({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -215,7 +251,7 @@ function SaveButton() {
       }}
     >
       <RfIcon name="check" size={15} />
-      {pending ? "Tallennetaan…" : "Tallenna korjaus"}
+      {pending ? t.palkka.savingEllipsis : t.palkka.saveCorrection}
     </button>
   );
 }

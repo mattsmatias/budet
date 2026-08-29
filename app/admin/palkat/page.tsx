@@ -6,19 +6,34 @@ import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { formatMonth, previousMonth } from "@/lib/restoflow/expenses";
-import { halfMonthPeriods, monthPeriod, type PeriodBounds } from "@/lib/restoflow/payroll";
-import { formatHours, loadPayroll, summarise } from "@/lib/restoflow/payroll-data";
+import {
+  halfMonthPeriods,
+  monthPeriod,
+  type PeriodBounds,
+} from "@/lib/restoflow/payroll";
+import {
+  formatHours,
+  loadPayroll,
+  summarise,
+} from "@/lib/restoflow/payroll-data";
 import { fetchPayPeriods, fetchPayslips } from "@/lib/restoflow/queries";
 import { formatMoney } from "@/lib/money";
 import { CountUp } from "@/components/restoflow/count-up";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, Pill } from "@/components/restoflow/ui";
-import { Panel, PanelEmpty, StatCard } from "@/components/restoflow/dashboard-ui";
+import {
+  Panel,
+  PanelEmpty,
+  StatCard,
+} from "@/components/restoflow/dashboard-ui";
 import { PeriodPicker } from "./period-picker";
 import { PeriodActions } from "./period-actions";
 import { PayComponents } from "./components-editor";
 
-export const metadata = { title: "Palkat" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.palkka.payTitle };
+}
 
 /**
  * Palkat.
@@ -34,11 +49,14 @@ export default async function PayrollPage({
   searchParams,
 }: PageProps<"/admin/palkat">) {
   const params = await searchParams;
-  const { restaurant, role, month, now, users } = await adminContext("/admin/palkat");
+  const { restaurant, role, month, now, users } =
+    await adminContext("/admin/palkat");
   const t = adminText(await resolveLocale());
 
-  const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
-  const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
+  const requested =
+    typeof params.kuukausi === "string" ? params.kuukausi : month;
+  const viewMonth =
+    ISO_MONTH.test(requested) && requested <= month ? requested : month;
 
   const selectable: string[] = [];
   let cursor = month;
@@ -56,16 +74,20 @@ export default async function PayrollPage({
    */
   const halves = halfMonthPeriods(viewMonth);
   const options: { key: string; label: string; bounds: PeriodBounds }[] = [
-    { key: "koko", label: "Koko kuukausi", bounds: monthPeriod(viewMonth) },
+    { key: "koko", label: t.palkka.wholeMonth, bounds: monthPeriod(viewMonth) },
     { key: "1", label: "1.–15.", bounds: halves[0] },
     { key: "2", label: "16.–", bounds: halves[1] },
   ];
 
-  const chosen =
-    options.find((o) => o.key === params.kausi) ?? options[0];
+  const chosen = options.find((o) => o.key === params.kausi) ?? options[0];
   const period = chosen.bounds;
 
-  const data = await loadPayroll(restaurant.id, restaurant.timezone, period, now);
+  const data = await loadPayroll(
+    restaurant.id,
+    restaurant.timezone,
+    period,
+    now,
+  );
   const summary = summarise(data);
 
   const periods = await fetchPayPeriods(restaurant.id);
@@ -84,7 +106,8 @@ export default async function PayrollPage({
     .filter((s) => s.workedMinutes > 0)
     .sort((a, b) => b.grossCents - a.grossCents);
 
-  const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? t.palkat.unnamed;
+  const nameOf = (id: string) =>
+    users.find((u) => u.id === id)?.name ?? t.palkat.unnamed;
 
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
@@ -122,7 +145,11 @@ export default async function PayrollPage({
           label={t.palkat.employeeCount}
           tileTone="brand"
           value={<CountUp to={summary.staffCount} format="integer" />}
-          conclusion={summary.staffCount === 0 ? t.palkat.noHoursInPeriod : "Palkkaa kertynyt"}
+          conclusion={
+            summary.staffCount === 0
+              ? t.palkat.noHoursInPeriod
+              : t.palkka.payAccrued
+          }
           tone="muted"
           icon={<RfIcon name="staff" size={17} />}
           href="/admin/tyontekijat"
@@ -140,11 +167,11 @@ export default async function PayrollPage({
            * Animaatio ei ole väärän luvun arvoinen.
            */
           value={formatHours(summary.workedMinutes)}
-          conclusion="Leimauksista laskettu"
+          conclusion={t.palkka.fromClockings}
           tone="muted"
           icon={<RfIcon name="clock" size={17} />}
           href="/admin/tyovuorot"
-          linkLabel="Vuorot"
+          linkLabel={t.palkka.shiftsWord}
         />
 
         <StatCard
@@ -169,7 +196,9 @@ export default async function PayrollPage({
           tileTone="blue"
           value={<CountUp to={summary.needsReview} format="integer" />}
           conclusion={
-            summary.needsReview === 0 ? "Ei huomautettavaa" : "Vaatii korjauksen"
+            summary.needsReview === 0
+              ? t.palkka.nothingToNote
+              : t.palkka.needsCorrection
           }
           tone={summary.needsReview > 0 ? "warn" : "muted"}
           icon={<RfIcon name="alert" size={17} />}
@@ -179,7 +208,9 @@ export default async function PayrollPage({
       {/* Varoitukset ennen listaa: ne muuttavat sitä mitä listassa lukee. */}
       {data.issues.length > 0 ? (
         <Card>
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{t.sanat.toCheck}</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            {t.sanat.toCheck}
+          </h2>
           <ul className="mt-3 space-y-2">
             {data.issues.slice(0, 8).map((issue, index) => (
               <li
@@ -196,21 +227,29 @@ export default async function PayrollPage({
                   >
                     {nameOf(issue.userId)}
                   </Link>{" "}
-                  <span style={{ color: "var(--rf-text-2)" }}>{issue.message}</span>
+                  <span style={{ color: "var(--rf-text-2)" }}>
+                    {issue.message}
+                  </span>
                 </span>
               </li>
             ))}
           </ul>
 
           {data.issues.length > 8 ? (
-            <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+            <p
+              className="mt-3 text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
               ja {data.issues.length - 8} muuta.
             </p>
           ) : null}
         </Card>
       ) : null}
 
-      <Panel title={t.palkat.accrual} subtitle={`${period.startsOn} – ${period.endsOn}`}>
+      <Panel
+        title={t.palkat.accrual}
+        subtitle={`${period.startsOn} – ${period.endsOn}`}
+      >
         {paid.length === 0 ? (
           <PanelEmpty text={t.palkat.emptyBody} />
         ) : (
@@ -222,10 +261,18 @@ export default async function PayrollPage({
                 <thead>
                   <tr>
                     <th>{t.palkat.employee}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t.sanat.hours}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t.palkat2.basePay}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t.palkat.supplements}</th>
-                    <th className="px-4 py-3 text-right font-medium">{t.palkat2.gross}</th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      {t.sanat.hours}
+                    </th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      {t.palkat2.basePay}
+                    </th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      {t.palkat.supplements}
+                    </th>
+                    <th className="px-4 py-3 text-right font-medium">
+                      {t.palkat2.gross}
+                    </th>
                     <th className="py-3 pl-4 font-medium">{t.sanat.status}</th>
                   </tr>
                 </thead>
@@ -241,22 +288,24 @@ export default async function PayrollPage({
                           href={`/admin/palkat/${slip.userId}?alkaa=${period.startsOn}&paattyy=${period.endsOn}`}
                           className="rf-hit flex items-center gap-2.5 font-medium underline-offset-4 hover:underline"
                         >
-                          <Avatar initials={initialsOf(nameOf(slip.userId))} size={26} />
+                          <Avatar
+                            initials={initialsOf(nameOf(slip.userId))}
+                            size={26}
+                          />
                           {nameOf(slip.userId)}
                         </Link>
                       </td>
-                      <td className="num">
-                        {formatHours(slip.workedMinutes)}
+                      <td className="num">{formatHours(slip.workedMinutes)}</td>
+                      <td className="num">{formatMoney(slip.baseCents)}</td>
+                      <td
+                        className="rf-tabular px-4 py-3 text-right"
+                        style={{ color: "var(--rf-text-2)" }}
+                      >
+                        {slip.supplementsCents === 0
+                          ? "—"
+                          : formatMoney(slip.supplementsCents)}
                       </td>
-                      <td className="num">
-                        {formatMoney(slip.baseCents)}
-                      </td>
-                      <td className="rf-tabular px-4 py-3 text-right" style={{ color: "var(--rf-text-2)" }}>
-                        {slip.supplementsCents === 0 ? "—" : formatMoney(slip.supplementsCents)}
-                      </td>
-                      <td className="num">
-                        {formatMoney(slip.grossCents)}
-                      </td>
+                      <td className="num">{formatMoney(slip.grossCents)}</td>
                       <td className="py-3 pl-4">
                         <StatusPill
                           issues={slip.issues.length}
@@ -281,16 +330,24 @@ export default async function PayrollPage({
                       borderRadius: "var(--rf-r-control)",
                     }}
                   >
-                    <Avatar initials={initialsOf(nameOf(slip.userId))} size={34} />
+                    <Avatar
+                      initials={initialsOf(nameOf(slip.userId))}
+                      size={34}
+                    />
 
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium">
                         {nameOf(slip.userId)}
                       </span>
-                      <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                      <span
+                        className="block text-[12px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
                         {formatHours(slip.workedMinutes)}
                         {slip.supplementsCents > 0
-                          ? fill(t.lauseet.supplementsSuffix, { summa: formatMoney(slip.supplementsCents) })
+                          ? fill(t.lauseet.supplementsSuffix, {
+                              summa: formatMoney(slip.supplementsCents),
+                            })
                           : ""}
                       </span>
                     </span>
@@ -315,6 +372,7 @@ export default async function PayrollPage({
 
       {canManage ? (
         <PeriodActions
+          t={t}
           startsOn={period.startsOn}
           endsOn={period.endsOn}
           approvedCount={approvedIds.size}
@@ -324,7 +382,7 @@ export default async function PayrollPage({
         />
       ) : null}
 
-      {canManage ? <PayComponents components={data.components} /> : null}
+      {canManage ? <PayComponents t={t} components={data.components} /> : null}
     </div>
   );
 }

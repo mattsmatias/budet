@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import {
   deactivatePayComponent,
@@ -14,14 +16,20 @@ import { formatMoney } from "@/lib/money";
 
 const initial: PayrollState = {};
 
-const DAYS = [
-  { value: 1, label: "Ma" },
-  { value: 2, label: "Ti" },
-  { value: 3, label: "Ke" },
-  { value: 4, label: "To" },
-  { value: 5, label: "Pe" },
-  { value: 6, label: "La" },
-  { value: 7, label: "Su" },
+/*
+ * Viikonpaivien lyhenteet.
+ *
+ * Tehdas eika vakio: moduulitason taulukko lukitsisi lyhenteet
+ * suomeksi jo latautuessa, ennen kuin kieli on tiedossa.
+ */
+const paivat = (t: AdminText) => [
+  { value: 1, label: t.palkka.mon },
+  { value: 2, label: t.palkka.tue },
+  { value: 3, label: t.palkka.wed },
+  { value: 4, label: t.palkka.thu },
+  { value: 5, label: t.palkka.fri },
+  { value: 6, label: t.palkka.sat },
+  { value: 7, label: t.palkka.sun },
 ];
 
 /**
@@ -31,7 +39,13 @@ const DAYS = [
  * väärä palkka on pahempi kuin puuttuva ominaisuus — oikeat arvot tulevat
  * työehtosopimuksesta jota Kate ei tunne.
  */
-export function PayComponents({ components }: { components: PayComponent[] }) {
+export function PayComponents({
+  t,
+  components,
+}: {
+  t: AdminText;
+  components: PayComponent[];
+}) {
   const [state, action] = useActionState(savePayComponent, initial);
   const [open, setOpen] = useState(false);
 
@@ -41,10 +55,14 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkkalajit</h2>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-            Ilta-, yö- ja viikonloppulisät. Kate ei tunne työehtosopimusta,
-            joten arvot syötetään itse.
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            {t.palkka.components}
+          </h2>
+          <p
+            className="mt-1 text-[13px] leading-relaxed"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {t.palkka.componentsIntro}
           </p>
         </div>
 
@@ -60,13 +78,13 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
           }}
         >
           <RfIcon name="plus" size={15} />
-          Lisää palkkalaji
+          {t.palkka.addComponent}
         </button>
       </div>
 
       {active.length === 0 ? (
         <p className="mt-4 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-          Ei palkkalajeja. Peruspalkka lasketaan silti tuntipalkasta.
+          {t.palkka.noComponents}
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
@@ -74,12 +92,20 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
             <li
               key={component.id}
               className="flex flex-wrap items-center gap-3 px-3.5 py-3"
-              style={{ background: "var(--rf-inset)", borderRadius: "var(--rf-r-control)" }}
+              style={{
+                background: "var(--rf-inset)",
+                borderRadius: "var(--rf-r-control)",
+              }}
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-medium">{component.name}</span>
-                <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                  {describe(component)}
+                <span className="block text-[14px] font-medium">
+                  {component.name}
+                </span>
+                <span
+                  className="block text-[12px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {describe(component, t)}
                 </span>
               </span>
 
@@ -87,7 +113,9 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
                 <input type="hidden" name="componentId" value={component.id} />
                 <button
                   type="submit"
-                  aria-label={`Poista käytöstä: ${component.name}`}
+                  aria-label={fill(t.palkka.disableNamed, {
+                    nimi: component.name,
+                  })}
                   className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
                   style={{ color: "var(--rf-text-3)" }}
                 >
@@ -108,30 +136,39 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
       {open ? (
         <form action={action} className="rf-enter mt-4 space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Nimi">
-              <input name="name" required placeholder="Iltalisä" className={inputClass} />
+            <Field label={t.palkka.nameLabel}>
+              <input
+                name="name"
+                required
+                placeholder={t.palkka.eveningSupp}
+                className={inputClass}
+              />
             </Field>
 
-            <Field label="Tyyppi">
+            <Field label={t.palkka.typeLabel}>
               <select name="code" defaultValue="evening" className={inputClass}>
-                <option value="evening">Iltalisä</option>
-                <option value="night">Yölisä</option>
-                <option value="saturday">Lauantailisä</option>
-                <option value="sunday">Sunnuntailisä</option>
-                <option value="overtime">Ylityö</option>
-                <option value="other">Muu lisä</option>
+                <option value="evening">{t.palkka.eveningSupp}</option>
+                <option value="night">{t.palkka.nightSupp}</option>
+                <option value="saturday">{t.palkka.saturdaySupp}</option>
+                <option value="sunday">{t.palkka.sundaySupp}</option>
+                <option value="overtime">{t.palkka.overtime}</option>
+                <option value="other">{t.palkka.otherSupp}</option>
               </select>
             </Field>
 
-            <Field label="Yksikkö">
-              <select name="unit" defaultValue="per_hour" className={inputClass}>
-                <option value="per_hour">€ tunnilta</option>
-                <option value="percent">% peruspalkasta</option>
-                <option value="fixed">€ kertakorvaus</option>
+            <Field label={t.palkka.unitLabel}>
+              <select
+                name="unit"
+                defaultValue="per_hour"
+                className={inputClass}
+              >
+                <option value="per_hour">{t.palkka.unitPerHour}</option>
+                <option value="percent">{t.palkka.unitPercent}</option>
+                <option value="fixed">{t.palkka.unitFixed}</option>
               </select>
             </Field>
 
-            <Field label="Arvo">
+            <Field label={t.palkka.valueLabel}>
               <input
                 name="value"
                 required
@@ -141,21 +178,24 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
               />
             </Field>
 
-            <Field label="Alkaa klo" hint="Tyhjä = koko vuorokausi">
+            <Field label={t.palkka.startsAt} hint="Tyhjä = koko vuorokausi">
               <input name="from" type="time" className={inputClass} />
             </Field>
 
-            <Field label="Päättyy klo" hint="Yön yli käy: 23:00 → 06:00">
+            <Field label={t.palkka.endsAt} hint={t.palkka.overnightHint}>
               <input name="to" type="time" className={inputClass} />
             </Field>
           </div>
 
           <fieldset>
-            <legend className="text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-              Viikonpäivät — valitsematta jättäminen tarkoittaa kaikkia
+            <legend
+              className="text-[12px] font-medium"
+              style={{ color: "var(--rf-text-2)" }}
+            >
+              {t.palkka.weekdaysHint}
             </legend>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {DAYS.map((day) => (
+              {paivat(t).map((day) => (
                 <label
                   key={day.value}
                   className="rf-press inline-flex cursor-pointer items-center gap-1.5 px-3 py-2 text-[13px]"
@@ -174,23 +214,26 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
 
           <label className="flex items-center gap-2.5 text-[13px]">
             <input type="checkbox" name="stackable" defaultChecked />
-            Voi yhdistyä muihin lisiin
+            {t.palkka.canCombine}
           </label>
 
-          <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Jos lisä ei yhdisty, samalta minuutilta maksetaan vain arvokkain.
+          <p
+            className="text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkka.combineHint}
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Voimassa alkaen">
+            <Field label={t.palkka.validFrom}>
               <input name="validFrom" type="date" className={inputClass} />
             </Field>
-            <Field label="Voimassa asti" hint="Tyhjä = toistaiseksi">
+            <Field label={t.palkka.validUntil} hint="Tyhjä = toistaiseksi">
               <input name="validTo" type="date" className={inputClass} />
             </Field>
           </div>
 
-          <SaveButton />
+          <SaveButton t={t} />
         </form>
       ) : null}
     </Card>
@@ -214,12 +257,18 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="block text-[12px] font-medium" style={{ color: "var(--rf-text-2)" }}>
+      <span
+        className="block text-[12px] font-medium"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {label}
       </span>
       <span className="mt-1 block">{children}</span>
       {hint ? (
-        <span className="mt-1 block text-[11px]" style={{ color: "var(--rf-text-3)" }}>
+        <span
+          className="mt-1 block text-[11px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
           {hint}
         </span>
       ) : null}
@@ -227,7 +276,7 @@ function Field({
   );
 }
 
-function SaveButton() {
+function SaveButton({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -241,27 +290,27 @@ function SaveButton() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna palkkalaji"}
+      {pending ? t.palkka.savingEllipsis : t.palkka.saveComponent}
     </button>
   );
 }
 
 /** "1,50 € / h · ma–pe 18:00–23:00" */
-function describe(component: PayComponent): string {
+function describe(component: PayComponent, t: AdminText): string {
   const amount =
     component.unit === "percent"
       ? `+${component.value} %`
       : component.unit === "per_hour"
-        ? `${formatMoney(component.value)} / h`
-        : `${formatMoney(component.value)} kertakorvaus`;
+        ? fill(t.palkka.perHour, { summa: formatMoney(component.value) })
+        : fill(t.palkka.oneOff, { summa: formatMoney(component.value) });
 
   const days =
     component.weekdays.length === 0
-      ? "kaikki päivät"
+      ? t.palkka.allDays
       : component.weekdays
           .slice()
           .sort((a, b) => a - b)
-          .map((d) => DAYS.find((x) => x.value === d)?.label ?? d)
+          .map((d) => paivat(t).find((x) => x.value === d)?.label ?? d)
           .join(", ");
 
   const window =

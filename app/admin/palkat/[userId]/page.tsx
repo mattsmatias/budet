@@ -1,11 +1,18 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { notFound } from "next/navigation";
 import { ISO_DATE, monthFromParams } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { monthPeriod } from "@/lib/restoflow/payroll";
 import { formatHours, loadPayroll } from "@/lib/restoflow/payroll-data";
-import { fetchCorrectionHistory, fetchPayPeriods, fetchPayslips } from "@/lib/restoflow/queries";
+import {
+  fetchCorrectionHistory,
+  fetchPayPeriods,
+  fetchPayslips,
+} from "@/lib/restoflow/queries";
 import { formatDuration } from "@/lib/restoflow/timeclock";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -13,7 +20,10 @@ import { Card, Pill } from "@/components/restoflow/ui";
 import { ApprovePayslip } from "./approve";
 import { CorrectionRow } from "./correction";
 
-export const metadata = { title: "Palkkalaskelma" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.palkka.payslip };
+}
 
 /**
  * Yhden työntekijän palkkalaskelma.
@@ -27,9 +37,11 @@ export default async function PayslipPage({
   params,
   searchParams,
 }: PageProps<"/admin/palkat/[userId]">) {
+  const t = adminText(await resolveLocale());
   const { userId } = await params;
   const query = await searchParams;
-  const { restaurant, role, month, now, users } = await adminContext("/admin/palkat");
+  const { restaurant, role, month, now, users } =
+    await adminContext("/admin/palkat");
 
   /*
    * Kuukausi kelpaa varaksi jaksolle.
@@ -53,18 +65,29 @@ export default async function PayslipPage({
       : fallback.endsOn;
 
   const period = { startsOn, endsOn };
-  const data = await loadPayroll(restaurant.id, restaurant.timezone, period, now);
+  const data = await loadPayroll(
+    restaurant.id,
+    restaurant.timezone,
+    period,
+    now,
+  );
 
   const slip = data.slips.find((s) => s.userId === userId);
   const person = users.find((u) => u.id === userId);
   if (!slip || !person) notFound();
 
   const periods = await fetchPayPeriods(restaurant.id);
-  const stored = periods.find((p) => p.startsOn === startsOn && p.endsOn === endsOn);
+  const stored = periods.find(
+    (p) => p.startsOn === startsOn && p.endsOn === endsOn,
+  );
   const slipsInDb = stored ? await fetchPayslips(stored.id) : [];
   const saved = slipsInDb.find((s) => s.userId === userId);
 
-  const corrections = await fetchCorrectionHistory(restaurant.id, startsOn, endsOn);
+  const corrections = await fetchCorrectionHistory(
+    restaurant.id,
+    startsOn,
+    endsOn,
+  );
   const mine = new Map(
     corrections.filter((c) => c.userId === userId).map((c) => [c.workDate, c]),
   );
@@ -78,7 +101,10 @@ export default async function PayslipPage({
    * Palkkalaskelmassa lukee "Iltalisät 12 h", ei kahtatoista erillistä
    * riviä. Päiväkohtainen erittely on alempana omana osionaan.
    */
-  const byComponent = new Map<string, { name: string; minutes: number; cents: number }>();
+  const byComponent = new Map<
+    string,
+    { name: string; minutes: number; cents: number }
+  >();
   for (const line of slip.lines) {
     if (line.componentId === null) continue;
     const row = byComponent.get(line.componentId) ?? {
@@ -102,7 +128,7 @@ export default async function PayslipPage({
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={15} />
-          Palkat
+          {t.palkka.payTitle}
         </Link>
 
         <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
@@ -116,11 +142,11 @@ export default async function PayslipPage({
           </div>
 
           {saved?.status === "approved" ? (
-            <Pill tone="ok">Hyväksytty</Pill>
+            <Pill tone="ok">{t.palkka.approvedWord}</Pill>
           ) : slip.issues.length > 0 ? (
-            <Pill tone="warn">Tarkista</Pill>
+            <Pill tone="warn">{t.palkka.check}</Pill>
           ) : (
-            <Pill tone="neutral">Odottaa hyväksyntää</Pill>
+            <Pill tone="neutral">{t.palkka.awaitingApproval}</Pill>
           )}
         </div>
       </header>
@@ -128,7 +154,7 @@ export default async function PayslipPage({
       {/* Varoitukset ensin: ne kertovat miksi summa voi olla väärä. */}
       {slip.issues.length > 0 ? (
         <Card>
-          <h2 className="text-[15px] font-semibold">Tarkistettavaa</h2>
+          <h2 className="text-[15px] font-semibold">{t.palkka.toCheck}</h2>
           <ul className="mt-2.5 space-y-2">
             {slip.issues.map((issue, index) => (
               <li
@@ -142,9 +168,11 @@ export default async function PayslipPage({
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Palkkaa ei hyväksytä ennen kuin nämä on korjattu. Korjaus tehdään
-            alla olevasta erittelystä.
+          <p
+            className="mt-3 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkka.notApprovedUntilFixed}
           </p>
         </Card>
       ) : null}
@@ -152,12 +180,22 @@ export default async function PayslipPage({
       {/* --- Työaika --------------------------------------------------- */}
 
       <Card>
-        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Työaika</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          {t.palkka.workTime}
+        </h2>
 
         <dl className="mt-3 space-y-2 text-[14px]">
-          <Row label="Perustunnit" value={formatHours(slip.workedMinutes)} />
+          <Row
+            label={t.palkka.baseHours}
+            value={formatHours(slip.workedMinutes)}
+          />
           {[...byComponent.values()].map((row) => (
-            <Row key={row.name} label={row.name} value={formatHours(row.minutes)} muted />
+            <Row
+              key={row.name}
+              label={row.name}
+              value={formatHours(row.minutes)}
+              muted
+            />
           ))}
         </dl>
       </Card>
@@ -165,17 +203,22 @@ export default async function PayslipPage({
       {/* --- Palkka ------------------------------------------------------ */}
 
       <Card>
-        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkka</h2>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          {t.palkka.payWord}
+        </h2>
 
         <dl className="mt-3 space-y-3 text-[14px]">
           <div className="flex items-baseline justify-between gap-4">
             <dt>
-              Peruspalkka
-              <span className="mt-0.5 block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+              {t.palkka.basePay}
+              <span
+                className="mt-0.5 block text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 {formatHours(slip.workedMinutes)} ×{" "}
                 {slip.hourlyRateCents === null
                   ? "— tuntipalkka puuttuu"
-                  : `${formatMoney(slip.hourlyRateCents)} / h`}
+                  : fill(t.palkka.perHour, { summa: formatMoney(slip.hourlyRateCents) })}
               </span>
             </dt>
             <dd className="rf-tabular shrink-0 font-medium">
@@ -184,14 +227,22 @@ export default async function PayslipPage({
           </div>
 
           {[...byComponent.values()].map((row) => (
-            <div key={row.name} className="flex items-baseline justify-between gap-4">
+            <div
+              key={row.name}
+              className="flex items-baseline justify-between gap-4"
+            >
               <dt>
                 {row.name}
-                <span className="mt-0.5 block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                <span
+                  className="mt-0.5 block text-[12px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
                   {formatHours(row.minutes)}
                 </span>
               </dt>
-              <dd className="rf-tabular shrink-0 font-medium">{formatMoney(row.cents)}</dd>
+              <dd className="rf-tabular shrink-0 font-medium">
+                {formatMoney(row.cents)}
+              </dd>
             </div>
           ))}
         </dl>
@@ -200,30 +251,36 @@ export default async function PayslipPage({
           className="mt-4 flex items-baseline justify-between gap-4 border-t pt-4"
           style={{ borderColor: "var(--rf-line)" }}
         >
-          <span className="text-[15px] font-semibold">Bruttopalkka</span>
+          <span className="text-[15px] font-semibold">{t.palkka.grossPay}</span>
           <span className="rf-tabular text-[22px] font-semibold">
             {formatMoney(slip.grossCents)}
           </span>
         </div>
 
-        <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Ei sisällä ennakonpidätystä, muita vähennyksiä eikä työnantajan
-          sivukuluja.
+        <p
+          className="mt-3 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.palkka.grossExcludes}
         </p>
       </Card>
 
       {/* --- Mistä summa muodostui --------------------------------------- */}
 
       <Card>
-        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Mistä tämä summa muodostui?</h2>
-        <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-          Jokainen rivi on yksi työpäivä. Aika on leimauksista, ei
-          suunnitellusta vuorosta.
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          {t.palkka.howFormed}
+        </h2>
+        <p
+          className="mt-1 text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          {t.palkka.eachRowIsDay}
         </p>
 
         {baseLines.length === 0 ? (
           <p className="mt-4 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-            Kaudella ei ole toteutunutta työaikaa.
+            {t.palkka.noWorkedTime}
           </p>
         ) : (
           <ul className="mt-4 space-y-2">
@@ -236,6 +293,7 @@ export default async function PayslipPage({
               return (
                 <li key={line.date}>
                   <CorrectionRow
+                    t={t}
                     date={line.date}
                     label={fi(line.date)}
                     times={line.description}
@@ -274,6 +332,7 @@ export default async function PayslipPage({
             {canManage && !locked ? (
               <div className="mt-3">
                 <CorrectionRow
+                  t={t}
                   date={issue.date}
                   label={fi(issue.date)}
                   times="? – ?"
@@ -293,6 +352,7 @@ export default async function PayslipPage({
 
       {canManage ? (
         <ApprovePayslip
+          t={t}
           userId={userId}
           startsOn={startsOn}
           endsOn={endsOn}

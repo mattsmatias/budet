@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { approvePayslip, type PayrollState } from "../actions";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -16,6 +17,7 @@ const initial: PayrollState = {};
  * palkan voisi asettaa lomakekentästä.
  */
 export function ApprovePayslip({
+  t,
   userId,
   startsOn,
   endsOn,
@@ -24,6 +26,7 @@ export function ApprovePayslip({
   locked,
   changed,
 }: {
+  t: AdminText;
   userId: string;
   startsOn: string;
   endsOn: string;
@@ -47,8 +50,7 @@ export function ApprovePayslip({
           style={{ color: "var(--rf-amber-text)" }}
         >
           <RfIcon name="alert" size={15} />
-          Työaikaa on muutettu hyväksynnän jälkeen. Tallennettu summa ei enää
-          vastaa laskelmaa, joten se on hyväksyttävä uudelleen.
+          {t.palkka.changedAfterApproval}
         </p>
       ) : null}
 
@@ -59,15 +61,20 @@ export function ApprovePayslip({
       ) : null}
 
       {state.notice ? (
-        <p className="mb-3 text-[13px]" style={{ color: "var(--rf-green-text)" }}>
+        <p
+          className="mb-3 text-[13px]"
+          style={{ color: "var(--rf-green-text)" }}
+        >
           {state.notice}
         </p>
       ) : null}
 
       {locked ? (
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-          Palkkakausi on hyväksytty ja lukittu. Avaa kausi Palkat-sivulta jos
-          laskelmaa pitää muuttaa.
+        <p
+          className="text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          {t.palkka.periodLockedOpenFromPay}
         </p>
       ) : (
         <form action={action} className="flex flex-wrap items-center gap-3">
@@ -76,13 +83,16 @@ export function ApprovePayslip({
           <input type="hidden" name="endsOn" value={endsOn} />
 
           <Submit
-            label={approved && !changed ? "Hyväksytty" : "Hyväksy palkka"}
+            t={t}
+            label={
+              approved && !changed ? t.palkka.approvedWord : t.palkka.approvePay
+            }
             disabled={blocked || (approved && !changed)}
           />
 
           {blocked ? (
             <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              Korjaa ensin tarkistettavat kohdat.
+              {t.palkka.fixIssuesFirst}
             </span>
           ) : null}
         </form>
@@ -91,7 +101,15 @@ export function ApprovePayslip({
   );
 }
 
-function Submit({ label, disabled }: { label: string; disabled: boolean }) {
+function Submit({
+  t,
+  label,
+  disabled,
+}: {
+  t: AdminText;
+  label: string;
+  disabled: boolean;
+}) {
   const { pending } = useFormStatus();
 
   return (
@@ -106,7 +124,7 @@ function Submit({ label, disabled }: { label: string; disabled: boolean }) {
       }}
     >
       <RfIcon name="check" size={16} />
-      {pending ? "Hyväksytään…" : label}
+      {pending ? t.palkka.approving : label}
     </button>
   );
 }
