@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { isConfigured } from "@/utils/supabase/server";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText } from "@/lib/i18n/auth-text";
 import { SignInForm } from "./form";
 
-export const metadata = { title: "Kirjaudu" };
+export async function generateMetadata() {
+  const t = authText(await resolveLocale());
+  return { title: t.kirjaudu.metaTitle };
+}
 
 export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu">) {
   const params = await searchParams;
@@ -10,17 +15,19 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/admin";
   const linkError = typeof params.virhe === "string" ? params.virhe : null;
 
+  const t = authText(await resolveLocale());
+
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">Kirjaudu sisään</h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">{t.kirjaudu.title}</h1>
       <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-        Ei vielä tunnusta?{" "}
+        {t.kirjaudu.noAccount}{" "}
         <Link
           href="/rekisteroidy"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          Luo tunnus
+          {t.kirjaudu.createAccount}
         </Link>
       </p>
 
@@ -30,13 +37,13 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
         ravintolan johon ei ole tulossa.
       */}
       <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-        Saitko kutsukoodin?{" "}
+        {t.kirjaudu.gotCode}{" "}
         <Link
           href="/liity"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          Liity ravintolaan
+          {t.kirjaudu.joinRestaurant}
         </Link>
       </p>
 
@@ -54,7 +61,21 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
         </p>
       ) : null}
 
-      {isConfigured() ? <SignInForm next={next} /> : <NotConfigured />}
+      {isConfigured() ? (
+        <SignInForm next={next} t={t} />
+      ) : (
+        <div
+          className="mt-7 px-4 py-3.5 text-[13px] leading-relaxed"
+          style={{
+            background: "var(--rf-amber-bg)",
+            color: "var(--rf-amber-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <p className="font-semibold">{t.kirjaudu.notConfiguredTitle}</p>
+          <p className="mt-1.5">{t.kirjaudu.notConfiguredBody}</p>
+        </div>
+      )}
 
       {isConfigured() ? (
         <p className="mt-5 text-center text-[13px]">
@@ -63,30 +84,10 @@ export default async function SignInPage({ searchParams }: PageProps<"/kirjaudu"
             className="font-medium underline underline-offset-4"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Unohtuiko salasana?
+            {t.kirjaudu.forgot}
           </Link>
         </p>
       ) : null}
-    </div>
-  );
-}
-
-function NotConfigured() {
-  return (
-    <div
-      className="mt-7 px-4 py-3.5 text-[13px] leading-relaxed"
-      style={{
-        background: "var(--rf-amber-bg)",
-        color: "var(--rf-amber-text)",
-        borderRadius: "var(--rf-r-control)",
-      }}
-    >
-      <p className="font-semibold">Kirjautumista ei ole otettu käyttöön</p>
-      <p className="mt-1.5">
-        Ympäristömuuttujat <code>NEXT_PUBLIC_SUPABASE_URL</code> ja{" "}
-        <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> puuttuvat tästä
-        ympäristöstä.
-      </p>
     </div>
   );
 }

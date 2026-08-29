@@ -14,20 +14,31 @@ import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { ACTIVE_RESTAURANT_COOKIE } from "@/lib/restoflow/session";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText, fill, type AuthText } from "@/lib/i18n/auth-text";
 
 export interface FormState {
   error?: string;
   notice?: string;
 }
 
-const credentials = z.object({
-  email: z.string().trim().toLowerCase().email("Tarkista sähköpostiosoite."),
-  password: z.string().min(8, "Salasanassa on oltava vähintään 8 merkkiä."),
-});
+/*
+ * Skeemat ovat tehtaita, eivät vakioita.
+ *
+ * Validointiviesti on käyttöliittymätekstiä siinä missä otsikkokin,
+ * eikä kieltä tiedetä vielä moduulia ladattaessa. Skeema rakennetaan
+ * siis pyynnön aikana, kun kieli on ratkaistu.
+ */
+const credentials = (t: AuthText) =>
+  z.object({
+    email: z.string().trim().toLowerCase().email(t.virheet.checkEmail),
+    password: z.string().min(8, t.virheet.passwordMin),
+  });
 
-const signUpSchema = credentials.extend({
-  fullName: z.string().trim().min(1, "Nimi puuttuu.").max(120),
-});
+const signUpSchema = (t: AuthText) =>
+  credentials(t).extend({
+    fullName: z.string().trim().min(1, t.virheet.nameMissing).max(120),
+  });
 
 /** Vain saman sivuston sisäinen polku kelpaa uudelleenohjaukseen. */
 function safeNext(value: FormDataEntryValue | null, fallback: string): string {
@@ -39,7 +50,9 @@ export async function signIn(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = credentials.safeParse({
+  const t = authText(await resolveLocale());
+
+  const parsed = credentials(t).safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -50,7 +63,7 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   // Ei kerrota kumpi oli väärin — se paljastaisi onko tunnus olemassa.
-  if (error) return { error: "Sähköposti tai salasana ei täsmää." };
+  if (error) return { error: t.virheet.badCredentials };
 
   revalidatePath("/", "layout");
   redirect(safeNext(formData.get("next"), "/admin"));
@@ -60,7 +73,9 @@ export async function signUp(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = signUpSchema.safeParse({
+  const t = authText(await resolveLocale());
+
+  const parsed = signUpSchema(t).safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
     fullName: formData.get("fullName"),
@@ -75,7 +90,7 @@ export async function signUp(
     options: { data: { full_name: parsed.data.fullName } },
   });
 
-  if (error) return { error: translateSignUpError(error.message) };
+  if (error) return { error: translateSignUpError(error.message, t) };
 
   // Kutsulinkistä tullut ohjataan suoraan liittymisvälilehdelle, jottei
   // hän perusta vahingossa omaa ravintolaa.
@@ -84,10 +99,7 @@ export async function signUp(
 
   // Sähköpostivahvistuksen ollessa päällä istuntoa ei synny heti.
   if (!data.session) {
-    return {
-      notice:
-        "Lähetimme vahvistuslinkin sähköpostiisi. Avaa se ja palaa tänne kirjautumaan.",
-    };
+    return { notice: t.virheet.confirmSent };
   }
 
   revalidatePath("/", "layout");
@@ -106,27 +118,34 @@ export async function signOut(): Promise<void> {
 }
 
 
-function translateSignUpError(message: string): string {
+/*
+ * Supabasen viesti on aina englanniksi ja tarkoitettu kehittäjälle.
+ * Tunnistetaan tapaus ja kerrotaan se käyttäjän kielellä; tuntematon
+ * syy kulkee läpi sellaisenaan, koska väärä arvaus olisi pahempi kuin
+ * vieraskielinen tosiasia.
+ */
+function translateSignUpError(message: string, t: AuthText): string {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered")) {
-    return "Tällä sähköpostilla on jo tunnus. Kirjaudu sisään.";
+    return t.virheet.alreadyRegistered;
   }
   if (m.includes("password")) {
-    return "Salasana ei täytä vaatimuksia. Käytä vähintään 8 merkkiä.";
+    return t.virheet.passwordWeak;
   }
   if (m.includes("rate limit") || m.includes("too many")) {
-    return "Liian monta yritystä. Odota hetki ja yritä uudelleen.";
+    return t.virheet.rateLimit;
   }
-  return `Rekisteröityminen epäonnistui: ${message}`;
+  return fill(t.virheet.signUpFailed, { syy: message });
 }
 
 // ---------------------------------------------------------------------------
 // Salasanan palautus
 // ---------------------------------------------------------------------------
 
-const emailOnly = z.object({
-  email: z.string().trim().toLowerCase().email("Tarkista sähköpostiosoite."),
-});
+const emailOnly = (t: AuthText) =>
+  z.object({
+    email: z.string().trim().toLowerCase().email(t.virheet.checkEmail),
+  });
 
 /**
  * Lähettää palautuslinkin.
@@ -139,7 +158,9 @@ export async function requestPasswordReset(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = emailOnly.safeParse({ email: formData.get("email") });
+  const t = authText(await resolveLocale());
+
+  const parsed = emailOnly(t).safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
@@ -148,22 +169,19 @@ export async function requestPasswordReset(
     redirectTo: `${await siteUrl()}/auth/callback?seuraava=/uusi-salasana`,
   });
 
-  return {
-    notice:
-      "Jos osoitteella on tili, lähetimme sinne palautuslinkin. " +
-      "Linkki on voimassa tunnin.",
-  };
+  return { notice: t.virheet.resetSent };
 }
 
-const newPasswordSchema = z
-  .object({
-    password: z.string().min(8, "Salasanassa on oltava vähintään 8 merkkiä."),
-    confirm: z.string(),
-  })
-  .refine((data) => data.password === data.confirm, {
-    message: "Salasanat eivät täsmää.",
-    path: ["confirm"],
-  });
+const newPasswordSchema = (t: AuthText) =>
+  z
+    .object({
+      password: z.string().min(8, t.virheet.passwordMin),
+      confirm: z.string(),
+    })
+    .refine((data) => data.password === data.confirm, {
+      message: t.virheet.passwordsDiffer,
+      path: ["confirm"],
+    });
 
 /**
  * Asettaa uuden salasanan.
@@ -175,7 +193,9 @@ export async function setNewPassword(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = newPasswordSchema.safeParse({
+  const t = authText(await resolveLocale());
+
+  const parsed = newPasswordSchema(t).safeParse({
     password: formData.get("password"),
     confirm: formData.get("confirm"),
   });
@@ -189,10 +209,7 @@ export async function setNewPassword(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return {
-      error:
-        "Palautuslinkki on vanhentunut tai jo käytetty. Pyydä uusi linkki.",
-    };
+    return { error: t.virheet.resetExpired };
   }
 
   const { error } = await supabase.auth.updateUser({
@@ -202,8 +219,8 @@ export async function setNewPassword(
   if (error) {
     return {
       error: error.message.includes("same as the old")
-        ? "Uusi salasana ei voi olla sama kuin vanha."
-        : "Salasanan vaihto ei onnistunut. Yritä uudelleen.",
+        ? t.virheet.samePassword
+        : t.virheet.changeFailed,
     };
   }
 

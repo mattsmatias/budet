@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { checkInvite } from "./actions";
 import type { InviteState } from "./invite";
+import type { AuthText } from "@/lib/i18n/auth-text";
 
 const initial: InviteState = {};
 
@@ -14,14 +15,14 @@ const initial: InviteState = {};
  * paperilta merkki kerrallaan, ja tiivis pikkuteksti tekee nollasta ja
  * O-kirjaimesta saman näköisiä.
  */
-export function CodeForm() {
+export function CodeForm({ t }: { t: AuthText }) {
   const [state, action] = useActionState(checkInvite, initial);
 
   return (
     <form action={action} className="mt-6 space-y-3">
       <label className="block">
         <span className="block text-[13px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-          Kutsukoodi
+          {t.liity.codeLabel}
         </span>
         <input
           name="code"
@@ -55,12 +56,12 @@ export function CodeForm() {
         </p>
       ) : null}
 
-      <Submit />
+      <Submit t={t} />
     </form>
   );
 }
 
-function Submit() {
+function Submit({ t }: { t: AuthText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -75,7 +76,7 @@ function Submit() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tarkistetaan…" : "Jatka"}
+      {pending ? t.liity.busy : t.liity.idle}
     </button>
   );
 }

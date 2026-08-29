@@ -3,16 +3,17 @@
 import { useActionState } from "react";
 import { requestPasswordReset, type FormState } from "../actions";
 import { Field, Message, Submit } from "../fields";
+import type { AuthText } from "@/lib/i18n/auth-text";
 
 const initial: FormState = {};
 
-export function ResetRequestForm() {
+export function ResetRequestForm({ t }: { t: AuthText }) {
   const [state, action] = useActionState(requestPasswordReset, initial);
 
   return (
     <form action={action} className="mt-6 space-y-4">
       <Field
-        label="Sähköposti"
+        label={t.kentat.email}
         name="email"
         type="email"
         autoComplete="email"
@@ -21,11 +22,10 @@ export function ResetRequestForm() {
 
       <Message state={state} />
 
-      <Submit idle="Lähetä palautuslinkki" busy="Lähetetään…" />
+      <Submit idle={t.unohtui.idle} busy={t.unohtui.busy} />
 
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Vastaus on sama riippumatta siitä onko osoitteella tiliä. Näin
-        kukaan ei voi selvittää kokeilemalla kenellä on tunnus.
+        {t.unohtui.privacyNote}
       </p>
     </form>
   );

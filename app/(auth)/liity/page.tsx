@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText } from "@/lib/i18n/auth-text";
 import { CodeForm } from "./form";
 
-export const metadata = { title: "Liity ravintolaan" };
+export async function generateMetadata() {
+  const t = authText(await resolveLocale());
+  return { title: t.liity.metaTitle };
+}
 
 /**
  * Kutsukoodi ensin.
@@ -14,38 +19,37 @@ export const metadata = { title: "Liity ravintolaan" };
  * Nyt koodi tarkistetaan ensin, ja seuraava näkymä kertoo ravintolan
  * nimen ennen kuin mitään omaa tarvitsee luovuttaa.
  */
-export default function JoinPage() {
+export default async function JoinPage() {
+  const t = authText(await resolveLocale());
+
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">
-        Liity ravintolaan
-      </h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">{t.liity.title}</h1>
       <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-        Sait kutsukoodin esihenkilöltäsi. Syötä se tähän, niin näet mihin
-        olet liittymässä.
+        {t.liity.body}
       </p>
 
-      <CodeForm />
+      <CodeForm t={t} />
 
       <p className="mt-7 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-        Onko sinulla jo tunnus?{" "}
+        {t.liity.haveAccount}{" "}
         <Link
           href="/kirjaudu"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          Kirjaudu
+          {t.liity.signIn}
         </Link>
       </p>
 
       <p className="mt-2 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-        Perustatko oman ravintolan?{" "}
+        {t.liity.ownRestaurant}{" "}
         <Link
           href="/rekisteroidy"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          Luo tunnus
+          {t.rekisteroidy.title}
         </Link>
       </p>
     </div>

@@ -4,8 +4,13 @@ import { readInvite } from "../liity/actions";
 import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import type { Role, StaffPosition } from "@/lib/restoflow/types";
 import { SignUpForm } from "./form";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText } from "@/lib/i18n/auth-text";
 
-export const metadata = { title: "Luo tunnus" };
+export async function generateMetadata() {
+  const t = authText(await resolveLocale());
+  return { title: t.rekisteroidy.metaTitle };
+}
 
 export default async function SignUpPage({
   searchParams,
@@ -26,18 +31,19 @@ export default async function SignUpPage({
    * sähköpostinsa ja salasanansa.
    */
   const invite = joining ? await readInvite() : null;
+  const t = authText(await resolveLocale());
 
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">Luo tunnus</h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">{t.rekisteroidy.title}</h1>
       <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-        Onko sinulla jo tunnus?{" "}
+        {t.rekisteroidy.haveAccount}{" "}
         <Link
           href="/kirjaudu"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          Kirjaudu
+          {t.rekisteroidy.signIn}
         </Link>
       </p>
 
@@ -50,7 +56,7 @@ export default async function SignUpPage({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          <p className="text-[13px]">Liityt ravintolaan</p>
+          <p className="text-[13px]">{t.rekisteroidy.joiningLabel}</p>
           <p className="mt-0.5 text-[17px] font-semibold">
             {invite.preview.restaurantName}
           </p>
@@ -60,8 +66,7 @@ export default async function SignUpPage({
               : ROLE_LABELS[invite.preview.role as Role]}
           </p>
           <p className="mt-2 text-[12px] leading-relaxed">
-            Luo tunnus, niin liitäminen tapahtuu automaattisesti. Koodia ei
-            tarvitse syöttää uudelleen.
+            {t.rekisteroidy.joiningNote}
           </p>
         </div>
       ) : joining ? (
@@ -73,16 +78,15 @@ export default async function SignUpPage({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Kutsukoodi puuttuu tai on vanhentunut.{" "}
+          {t.rekisteroidy.inviteMissing}{" "}
           <Link href="/liity" className="font-medium underline underline-offset-4">
-            Syötä koodi uudelleen
+            {t.rekisteroidy.enterCodeAgain}
           </Link>
-          .
         </p>
       ) : null}
 
       {isConfigured() ? (
-        <SignUpForm joining={joining} />
+        <SignUpForm joining={joining} t={t} />
       ) : (
         <div
           className="mt-7 px-4 py-3.5 text-[13px] leading-relaxed"
@@ -92,7 +96,7 @@ export default async function SignUpPage({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Rekisteröitymistä ei ole otettu käyttöön tässä ympäristössä.
+          {t.rekisteroidy.notConfigured}
         </div>
       )}
     </div>

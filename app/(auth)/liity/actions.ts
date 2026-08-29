@@ -12,6 +12,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getUser } from "@/lib/restoflow/session";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText } from "@/lib/i18n/auth-text";
 import {
   INVITE_COOKIE,
   INVITE_TTL_SECONDS,
@@ -59,8 +61,10 @@ export async function checkInvite(
   _prev: InviteState,
   formData: FormData,
 ): Promise<InviteState> {
+  const t = authText(await resolveLocale());
+
   const code = String(formData.get("code") ?? "").trim().toUpperCase();
-  if (code.length < 4) return { error: "Syötä kutsukoodi." };
+  if (code.length < 4) return { error: t.virheet.enterCode };
 
   const preview = await lookup(code);
   if (!preview) {
@@ -70,9 +74,7 @@ export async function checkInvite(
      * "Koodia ei ole" ja "koodi on käytetty" erottelisivat olemassa
      * olevat koodit olemattomista, mikä auttaisi arvaamaan niitä.
      */
-    return {
-      error: "Koodi ei kelpaa. Tarkista se esihenkilöltäsi — koodi voi olla myös jo käytetty tai vanhentunut.",
-    };
+    return { error: t.virheet.badCode };
   }
 
   const store = await cookies();

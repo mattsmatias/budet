@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { getUser } from "@/lib/restoflow/session";
 import { NewPasswordForm } from "./form";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { authText, fill } from "@/lib/i18n/auth-text";
 
-export const metadata = { title: "Uusi salasana" };
+export async function generateMetadata() {
+  const t = authText(await resolveLocale());
+  return { title: t.uusiSalasana.metaTitle };
+}
 
 /**
  * Uuden salasanan asetus.
@@ -13,16 +18,16 @@ export const metadata = { title: "Uusi salasana" };
  */
 export default async function NewPasswordPage() {
   const user = await getUser();
+  const t = authText(await resolveLocale());
 
   if (!user) {
     return (
       <div className="rf-enter">
         <h1 className="text-[26px] font-semibold tracking-tight">
-          Linkki ei kelpaa
+          {t.uusiSalasana.invalidTitle}
         </h1>
         <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-          Palautuslinkki on vanhentunut tai se on jo käytetty. Linkki toimii
-          kerran ja on voimassa tunnin.
+          {t.uusiSalasana.invalidBody}
         </p>
 
         <Link
@@ -34,7 +39,7 @@ export default async function NewPasswordPage() {
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Pyydä uusi linkki
+          {t.uusiSalasana.requestNew}
         </Link>
       </div>
     );
@@ -42,12 +47,14 @@ export default async function NewPasswordPage() {
 
   return (
     <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">Uusi salasana</h1>
+      <h1 className="text-[26px] font-semibold tracking-tight">
+        {t.uusiSalasana.title}
+      </h1>
       <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-        Asetat salasanan tunnukselle {user.email}.
+        {fill(t.uusiSalasana.forAccount, { email: user.email ?? "" })}
       </p>
 
-      <NewPasswordForm />
+      <NewPasswordForm t={t} />
     </div>
   );
 }
