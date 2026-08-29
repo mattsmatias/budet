@@ -239,7 +239,7 @@ function DayRow({
 
       {day.segments.length === 0 ? (
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-          Ei vielä leimausta
+          {t.tyoaika.noStamp}
         </p>
       ) : many ? (
         <>

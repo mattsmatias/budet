@@ -1,11 +1,16 @@
 import { employeeContext } from "@/lib/restoflow/page-context";
 import { fetchColleagues } from "@/lib/restoflow/queries";
 import { birthdaysToday, formatBirthday } from "@/lib/restoflow/workplace";
-import { POSITION_LABELS } from "@/lib/restoflow/types";
 import { Avatar } from "@/components/restoflow/ui";
 import { Empty, PageHeader, SectionTitle, Surface } from "../ui";
 
-export const metadata = { title: "Työyhteisö" };
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
+
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.tyoyhteiso.title };
+}
 
 /**
  * Työyhteisö.
@@ -23,22 +28,25 @@ export default async function WorkplacePage() {
   const colleagues = await fetchColleagues(restaurant.id);
   const birthdays = birthdaysToday(colleagues, now, restaurant.timezone);
   const birthdayIds = new Set(birthdays.map((c) => c.id));
+  const t = workerText(await resolveLocale());
 
   return (
     <div className="rf-enter space-y-6">
       <PageHeader
-        title="Työyhteisö"
-        subtitle={`${colleagues.length} ${colleagues.length === 1 ? "työkaveri" : "työkaveria"}`}
+        title={t.tyoyhteiso.title}
+        subtitle={`${colleagues.length} ${
+          colleagues.length === 1 ? t.koti.colleagueOne : t.koti.colleagueMany
+        }`}
       />
 
       {colleagues.length === 0 ? (
         <Empty
-          title="Ei työkavereita"
-          description="Ravintolaan ei ole vielä lisätty muita työntekijöitä."
+          title={t.tyoyhteiso.emptyTitle}
+          description={t.tyoyhteiso.emptyBody}
         />
       ) : (
         <section className="space-y-2">
-          <SectionTitle>Työkaverit</SectionTitle>
+          <SectionTitle>{t.tyoyhteiso.colleagues}</SectionTitle>
 
           <Surface padded={false}>
             <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
@@ -50,13 +58,15 @@ export default async function WorkplacePage() {
                     <p className="truncate text-[15px] font-medium">
                       {person.name}
                       {birthdayIds.has(person.id) ? (
-                        <span className="ml-2" aria-label="syntymäpäivä tänään">
+                        <span className="ml-2" aria-label={t.tyoyhteiso.birthdayToday}>
                           🎂
                         </span>
                       ) : null}
                     </p>
                     <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                      {person.position ? POSITION_LABELS[person.position] : "Työntekijä"}
+                      {person.position
+                        ? t.asemat[person.position]
+                        : t.yleinen.employee}
                     </p>
                   </div>
 
@@ -79,8 +89,7 @@ export default async function WorkplacePage() {
           </Surface>
 
           <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Syntymäpäivän voi lisätä tai poistaa omista asetuksista. Vuotta ei
-            kysytä eikä tallenneta.
+            {t.lisatiedot.birthdayNote}
           </p>
         </section>
       )}

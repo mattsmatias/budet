@@ -6,7 +6,13 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar } from "@/components/restoflow/ui";
 import { List, PageHeader, Row, SectionTitle, Surface } from "../ui";
 
-export const metadata = { title: "Lisää" };
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
+
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.lisaa.title };
+}
 
 /**
  * Lisää.
@@ -23,11 +29,12 @@ export const metadata = { title: "Lisää" };
 export default async function MorePage() {
   const { user, restaurant, role } = await employeeContext("/app/lisaa");
 
-  const name = user.fullName ?? user.email ?? "Käyttäjä";
+  const t = workerText(await resolveLocale());
+  const name = user.fullName ?? user.email ?? t.yleinen.user;
 
   return (
     <div className="rf-enter space-y-6">
-      <PageHeader title="Lisää" />
+      <PageHeader title={t.lisaa.title} />
 
       <Surface>
         <div className="flex items-center gap-3.5">
@@ -46,11 +53,11 @@ export default async function MorePage() {
       </Surface>
 
       <section className="space-y-2">
-        <SectionTitle>Tili</SectionTitle>
+        <SectionTitle>{t.lisaa.account}</SectionTitle>
         <List>
-          <Row href="/app/palkka" icon="payroll" title="Palkkani" />
-          <Row href="/app/ilmoitukset" icon="bell" title="Ilmoitukset" />
-          <Row href="/app/asetukset" icon="settings" title="Asetukset" />
+          <Row href="/app/palkka" icon="payroll" title={t.lisatiedot.payTitle} />
+          <Row href="/app/ilmoitukset" icon="bell" title={t.ilmoitukset.title} />
+          <Row href="/app/asetukset" icon="settings" title={t.asetukset.title} />
         </List>
       </section>
 
@@ -60,9 +67,9 @@ export default async function MorePage() {
       */}
       {can(role, "expenses.view") ? (
         <section className="space-y-2">
-          <SectionTitle>Sovellus</SectionTitle>
+          <SectionTitle>{t.lisaa.app}</SectionTitle>
           <List>
-            <Row href="/admin" icon="overview" title="Hallintanäkymä" />
+            <Row href="/admin" icon="overview" title={t.lisaa.adminView} />
           </List>
         </section>
       ) : null}
@@ -80,12 +87,12 @@ export default async function MorePage() {
           }}
         >
           <RfIcon name="logout" size={17} />
-          Kirjaudu ulos
+          {t.lisaa.signOut}
         </button>
       </form>
 
       <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Kate · työntekijänäkymä
+        {t.lisaa.footer}
       </p>
     </div>
   );

@@ -4,10 +4,23 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { cancelAbsence, reportAbsence, type ActionState } from "../actions";
 import { ABSENCE_LABELS, type Absence, type AbsenceKind } from "@/lib/restoflow/types";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
 
 const initial: ActionState = {};
+
+/**
+ * Poissaolon lajit kaannettyina.
+ *
+ * ABSENCE_LABELS on jaettu vakio ja suomeksi; hallintanakyma kayttaa
+ * sita yha. Tyontekijanakyma lukee omansa sanakirjasta.
+ */
+const lajit = (t: WorkerText): Record<Absence["kind"], string> => ({
+  sick: t.poissaolo.kindSick,
+  other: t.poissaolo.kindOther,
+  cannot_attend: t.poissaolo.kindCannotAttend,
+});
 
 const KINDS: AbsenceKind[] = ["sick", "cannot_attend", "other"];
 
@@ -21,9 +34,11 @@ const KINDS: AbsenceKind[] = ["sick", "cannot_attend", "other"];
 export function AbsenceReporter({
   defaultDate,
   absences,
+  t,
 }: {
   defaultDate: string;
   absences: Absence[];
+  t: WorkerText;
 }) {
   const [state, action] = useActionState(reportAbsence, initial);
   const [open, setOpen] = useState(false);
@@ -48,14 +63,14 @@ export function AbsenceReporter({
                   <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                     {absence.kind === "sick"
                       ? absence.certificateSeenAt
-                        ? "Todistus merkitty nähdyksi"
-                        : "Todistusta ei ole vielä merkitty nähdyksi"
-                      : absence.note || "Ei lisätietoa"}
+                        ? t.poissaolo.certificateSeen
+                        : t.poissaolo.certificateNotSeen
+                      : absence.note || t.poissaolo.noExtra}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Pill tone="warn">{ABSENCE_LABELS[absence.kind]}</Pill>
-                  <CancelButton id={absence.id} />
+                  <Pill tone="warn">{lajit(t)[absence.kind]}</Pill>
+                  <CancelButton id={absence.id} t={t} />
                 </div>
               </li>
             ))}
@@ -79,13 +94,13 @@ export function AbsenceReporter({
 
       {open ? (
         <Card className="mt-3">
-          <p className="text-[15px] font-semibold">Ilmoita poissaolo</p>
+          <p className="text-[15px] font-semibold">{t.asetukset.reportAbsence}</p>
 
           <form action={action} className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <label htmlFor="ab-date" className="block text-[13px] font-medium">
-                  Alkaa
+                  {t.poissaolo.starts}
                 </label>
                 <input
                   id="ab-date"
@@ -101,7 +116,7 @@ export function AbsenceReporter({
 
               <div>
                 <label htmlFor="ab-end" className="block text-[13px] font-medium">
-                  Päättyy
+                  {t.poissaolo.ends}
                 </label>
                 {/* min estää jakson joka päättyy ennen alkuaan jo
                     selaimessa. Sama tarkistus on palvelimella. */}
@@ -117,7 +132,7 @@ export function AbsenceReporter({
             </div>
 
             <p className="-mt-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-              Jätä päättymispäivä tyhjäksi jos olet poissa vain yhden päivän.
+              {t.poissaolo.endHint}
             </p>
 
             <div>
@@ -141,7 +156,7 @@ export function AbsenceReporter({
 
             <div>
               <label htmlFor="ab-note" className="block text-[13px] font-medium">
-                Lisätieto
+                {t.poissaolo.extraInfo}
               </label>
               <input
                 id="ab-note"
@@ -168,10 +183,8 @@ export function AbsenceReporter({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              <strong className="font-semibold">Sairauslomatodistus</strong>{" "}
-              toimitetaan esihenkilölle erikseen silloin kun se on olemassa —
-              ilmoita poissaolosta jo nyt. Todistusta ei liitetä Kateen,
-              vaan esihenkilö merkitsee tähän ilmoitukseen nähneensä sen.
+              <strong className="font-semibold">{t.poissaolo.sickNoteTitle}</strong>{" "}
+              {t.poissaolo.sickNoteBody}
             </div>
 
             {state.error ? (
@@ -189,7 +202,7 @@ export function AbsenceReporter({
             ) : null}
 
             <div className="grid grid-cols-2 gap-2.5">
-              <Submit />
+              <Submit t={t} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -232,7 +245,7 @@ export function AbsenceReporter({
 
 // ---------------------------------------------------------------------------
 
-function CancelButton({ id }: { id: string }) {
+function CancelButton({ id, t }: { id: string; t: WorkerText }) {
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -240,7 +253,7 @@ function CancelButton({ id }: { id: string }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        aria-label="Peru ilmoitus"
+        aria-label={t.poissaolo.cancelReport}
         className="rf-press p-1.5"
         style={{ color: "var(--rf-text-3)" }}
       >
@@ -267,7 +280,7 @@ function CancelButton({ id }: { id: string }) {
   );
 }
 
-function Submit() {
+function Submit({ t }: { t: WorkerText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -277,7 +290,7 @@ function Submit() {
       className="rf-press py-2.5 text-[14px] font-semibold disabled:opacity-50"
       style={{ background: "var(--rf-accent)", color: "var(--rf-on-accent)", borderRadius: "var(--rf-r-control)" }}
     >
-      {pending ? "Lähetetään…" : "Ilmoita"}
+      {pending ? t.yleinen.sending : t.asetukset.report}
     </button>
   );
 }

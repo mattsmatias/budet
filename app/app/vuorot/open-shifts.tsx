@@ -10,6 +10,7 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { SectionTitle, Surface, shortDay } from "../ui";
 import type { WorkerText } from "@/lib/i18n/worker-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
+import { fill } from "@/lib/i18n/auth-text";
 
 const initial: ActionState = {};
 
@@ -155,12 +156,10 @@ function Row({
           style={{ background: "var(--rf-inset)", borderRadius: 12 }}
         >
           <p className="text-[13px] leading-relaxed">
-            {t.vuorot.confirmTakeLead}{" "}
-            <strong>{shortDay(shift.date, locale)}</strong> {t.vuorot.at}{" "}
-            <strong className="rf-tabular">
-              {shift.startTime}–{shift.endTime}
-            </strong>
-            {t.vuorot.confirmTake}
+            {fill(t.vuorot.confirmTake, {
+              paiva: shortDay(shift.date, locale),
+              ajat: `${shift.startTime}–${shift.endTime}`,
+            })}
           </p>
 
           <div className="mt-3 flex gap-2">

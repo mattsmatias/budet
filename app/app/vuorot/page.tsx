@@ -177,7 +177,7 @@ export default async function ShiftsPage() {
 
       <section className="space-y-2">
         <SectionTitle>Poissaolot</SectionTitle>
-        <AbsenceReporter defaultDate={today} absences={absences} />
+        <AbsenceReporter defaultDate={today} absences={absences} t={t} />
       </section>
     </div>
   );

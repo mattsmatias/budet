@@ -14,6 +14,8 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerErrors, type WorkerErrors } from "@/lib/i18n/worker-errors";
 import type { ClockEventType } from "@/lib/restoflow/types";
 
 export interface ActionState {
@@ -46,9 +48,11 @@ export async function recordClockEvent(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const v = workerErrors(await resolveLocale());
+
   const type = String(formData.get("type") ?? "") as ClockEventType;
   if (!CLOCK_TYPES.includes(type)) {
-    return { error: "Tuntematon leimaustyyppi." };
+    return { error: v.unknownClockType };
   }
 
   const { restaurant } = await requireContext("/app/tyoaika");
@@ -63,34 +67,29 @@ export async function recordClockEvent(
     // Kanta on ainoa joka tietää onko vuoroa. Käännetään sen sanoma
     // ihmisen kielelle sen sijaan että näytettäisiin poikkeus.
     if (error.message?.includes("Ei voimassa olevaa työvuoroa")) {
-      return {
-        error:
-          "Sinulla ei ole juuri nyt voimassa olevaa työvuoroa. " +
-          "Leimaus avautuu vuoron alkaessa.",
-      };
+      return { error: v.noActiveShift };
     }
     if (error.message?.includes("ei ole mahdollinen")) {
-      return {
-        error:
-          "Leimaus ei käy nykyisessä tilassa. Tilanne on päivitetty — " +
-          "se on saattanut muuttua toisessa välilehdessä.",
-      };
+      return { error: v.badState };
     }
-    return { error: explain(error, "Leimaus epäonnistui") };
+    return { error: explain(error, v.clockFailed, v) };
   }
 
   revalidatePath("/app", "layout");
   revalidatePath("/admin", "layout");
 
-  return { notice: LABELS[type], clocked: { type, at: new Date().toISOString() } };
+  return {
+    notice: kuittaukset(v)[type],
+    clocked: { type, at: new Date().toISOString() },
+  };
 }
 
-const LABELS: Record<ClockEventType, string> = {
-  in: "Sisäänleimaus kirjattu.",
-  break_start: "Tauko alkoi.",
-  break_end: "Takaisin töissä.",
-  out: "Uloskirjaus kirjattu.",
-};
+const kuittaukset = (v: WorkerErrors): Record<ClockEventType, string> => ({
+  in: v.clockedIn,
+  break_start: v.breakStarted,
+  break_end: v.backAtWork,
+  out: v.clockedOut,
+});
 
 // ---------------------------------------------------------------------------
 // Poissaolot
@@ -104,22 +103,25 @@ const LABELS: Record<ClockEventType, string> = {
  * on silti tavallisin. Pakollinen loppupäivä lisäisi kentän joka
  * täytettäisiin joka kerta samalla arvolla kuin alku.
  */
-const absenceSchema = z
-  .object({
-    date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
-    endDate: z.string().regex(ISO_DATE, "Tarkista loppupäivä.").nullable(),
-    kind: z.enum(["sick", "other", "cannot_attend"]),
-    note: z.string().trim().max(300).nullable(),
-  })
-  .refine((value) => value.endDate === null || value.endDate >= value.date, {
-    message: "Poissaolo ei voi päättyä ennen kuin se alkaa.",
-  });
+const absenceSchema = (v: WorkerErrors) =>
+  z
+    .object({
+      date: z.string().regex(ISO_DATE, v.checkDate),
+      endDate: z.string().regex(ISO_DATE, v.checkEndDate).nullable(),
+      kind: z.enum(["sick", "other", "cannot_attend"]),
+      note: z.string().trim().max(300).nullable(),
+    })
+    .refine((value) => value.endDate === null || value.endDate >= value.date, {
+      message: v.endBeforeStart,
+    });
 
 export async function reportAbsence(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = absenceSchema.safeParse({
+  const v = workerErrors(await resolveLocale());
+
+  const parsed = absenceSchema(v).safeParse({
     date: formData.get("date"),
     endDate: (formData.get("endDate") as string) || null,
     kind: formData.get("kind"),
@@ -140,12 +142,12 @@ export async function reportAbsence(
     note: parsed.data.note,
   });
 
-  if (error) return { error: explain(error, "Ilmoituksen tallennus epäonnistui") };
+  if (error) return { error: explain(error, v.absenceSaveFailed, v) };
 
   revalidatePath("/app", "layout");
   revalidatePath("/admin", "layout");
 
-  return { notice: "Poissaolo ilmoitettu." };
+  return { notice: v.absenceReported };
 }
 
 /** Peruu oman poissaoloilmoituksen. */
@@ -166,9 +168,10 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
 // Oma profiili
 // ---------------------------------------------------------------------------
 
-const nameSchema = z.object({
-  fullName: z.string().trim().min(1, "Nimi puuttuu.").max(120),
-});
+const nameSchema = (v: WorkerErrors) =>
+  z.object({
+    fullName: z.string().trim().min(1, v.nameMissing).max(120),
+  });
 
 /**
  * Oman nimen muutos.
@@ -181,7 +184,9 @@ export async function updateProfile(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = nameSchema.safeParse({ fullName: formData.get("fullName") });
+  const v = workerErrors(await resolveLocale());
+
+  const parsed = nameSchema(v).safeParse({ fullName: formData.get("fullName") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { user } = await requireContext("/app/asetukset");
@@ -192,25 +197,26 @@ export async function updateProfile(
     .update({ full_name: parsed.data.fullName })
     .eq("id", user.id);
 
-  if (error) return { error: explain(error, "Nimen tallennus epäonnistui") };
+  if (error) return { error: explain(error, v.nameSaveFailed, v) };
 
   await supabase.auth.updateUser({ data: { full_name: parsed.data.fullName } });
 
   revalidatePath("/app", "layout");
   revalidatePath("/admin", "layout");
 
-  return { notice: "Nimi tallennettu." };
+  return { notice: v.nameSaved };
 }
 
-const passwordSchema = z
-  .object({
-    password: z.string().min(8, "Salasanassa on oltava vähintään 8 merkkiä."),
-    confirm: z.string(),
-  })
-  .refine((data) => data.password === data.confirm, {
-    message: "Salasanat eivät täsmää.",
-    path: ["confirm"],
-  });
+const passwordSchema = (v: WorkerErrors) =>
+  z
+    .object({
+      password: z.string().min(8, v.passwordMin),
+      confirm: z.string(),
+    })
+    .refine((data) => data.password === data.confirm, {
+      message: v.passwordsDiffer,
+      path: ["confirm"],
+    });
 
 /**
  * Salasanan vaihto kirjautuneena.
@@ -223,7 +229,9 @@ export async function changePassword(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = passwordSchema.safeParse({
+  const v = workerErrors(await resolveLocale());
+
+  const parsed = passwordSchema(v).safeParse({
     password: formData.get("password"),
     confirm: formData.get("confirm"),
   });
@@ -240,12 +248,12 @@ export async function changePassword(
   if (error) {
     return {
       error: error.message.includes("same as the old")
-        ? "Uusi salasana ei voi olla sama kuin vanha."
-        : "Salasanan vaihto ei onnistunut. Kirjaudu ulos ja takaisin sisään, ja yritä uudelleen.",
+        ? v.samePassword
+        : v.passwordChangeFailed,
     };
   }
 
-  return { notice: "Salasana vaihdettu." };
+  return { notice: v.passwordChanged };
 }
 
 // ---------------------------------------------------------------------------
@@ -256,24 +264,32 @@ export async function changePassword(
  * Yleinen "yritä uudelleen" piilottaisi syyn, jolloin käyttäjä ei voi tehdä
  * mitään. Tuntematon virhe näytetään sellaisenaan.
  */
+/**
+ * Kannan virhe ihmisen kielella.
+ *
+ * Tunnetut tapaukset kaannetaan; tuntemattoman perassa kulkee kannan
+ * oma viesti sellaisenaan, koska vaara arvaus olisi pahempi kuin
+ * vieraskielinen tosiasia.
+ */
 function explain(
   error: { code?: string; message?: string } | null,
   prefix: string,
+  v: WorkerErrors,
 ): string {
   const code = error?.code ?? "";
   const message = error?.message ?? "";
 
   if (code === "PGRST202" || message.includes("schema cache")) {
-    return "Tietokannan rakenteet puuttuvat. Aja migraatiot ensin.";
+    return v.migrationsMissing;
   }
   if (code === "42501" || message.includes("row-level security")) {
-    return "Sinulla ei ole oikeutta tähän toimintoon.";
+    return v.noPermission;
   }
   if (message.includes("Kirjautuminen vaaditaan")) {
-    return "Istunto on vanhentunut. Kirjaudu uudelleen sisään.";
+    return v.sessionExpired;
   }
   if (message.includes("Vain vuoron tilan")) {
-    return "Vuoron aikoja voi muuttaa vain esihenkilö.";
+    return v.onlyManagerTimes;
   }
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;
@@ -296,6 +312,8 @@ export async function updateBirthday(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const v = workerErrors(await resolveLocale());
+
   const { user } = await requireContext("/app/asetukset");
 
   const raw = String(formData.get("birthday") ?? "").trim();
@@ -307,7 +325,7 @@ export async function updateBirthday(
     // Selaimen date-kenttä antaa muodon "2000-08-24". Vuosi jätetään
     // lukematta: se on kentän pakko, ei meidän tarpeemme.
     const match = raw.match(/^\d{4}-(\d{2})-(\d{2})$/);
-    if (!match) return { error: "Tarkista päivämäärä." };
+    if (!match) return { error: v.checkDate };
 
     month = Number(match[1]);
     day = Number(match[2]);
@@ -319,10 +337,10 @@ export async function updateBirthday(
     .update({ birth_day: day, birth_month: month })
     .eq("id", user.id);
 
-  if (error) return { error: explain(error, "Syntymäpäivän tallennus epäonnistui") };
+  if (error) return { error: explain(error, v.birthdaySaveFailed, v) };
 
   revalidatePath("/app", "layout");
-  return { notice: raw === "" ? "Syntymäpäivä poistettu." : "Syntymäpäivä tallennettu." };
+  return { notice: raw === "" ? v.birthdayRemoved : v.birthdaySaved };
 }
 
 // ---------------------------------------------------------------------------
@@ -345,9 +363,11 @@ export async function claimOpenShift(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const v = workerErrors(await resolveLocale());
+
   const shiftId = String(formData.get("shiftId") ?? "");
   if (!UUID.test(shiftId)) {
-    return { error: "Tuntematon työvuoro." };
+    return { error: v.unknownShift };
   }
 
   await requireContext("/app/vuorot");
@@ -360,31 +380,31 @@ export async function claimOpenShift(
 
     if (message.includes("Joku ehti ensin") || message.includes("jo tekijä")) {
       return {
-        error: "Joku ehti ensin — vuoro on jo otettu.",
+        error: v.someoneFirst,
       };
     }
     if (message.includes("samaan aikaan")) {
       return {
-        error: "Sinulla on jo työvuoro samaan aikaan. Kysy esihenkilöltä.",
+        error: v.overlappingShift,
       };
     }
     if (message.includes("jo päättynyt")) {
-      return { error: "Työvuoro on jo päättynyt." };
+      return { error: v.shiftEnded };
     }
     if (message.includes("toiselle asemalle")) {
-      return { error: "Työvuoro on toiselle asemalle." };
+      return { error: v.otherPosition };
     }
     if (message.includes("ei ole käytössä")) {
-      return { error: "Vuorojen ottaminen ei ole käytössä tässä ravintolassa." };
+      return { error: v.claimingDisabled };
     }
 
-    return { error: explain(error, "Vuoron ottaminen epäonnistui") };
+    return { error: explain(error, v.claimFailed, v) };
   }
 
   revalidatePath("/app", "layout");
   revalidatePath("/admin", "layout");
 
-  return { notice: "Työvuoro on nyt sinun." };
+  return { notice: v.shiftIsYours };
 }
 
 /** Tunniste tulee lomakkeelta, joten muoto tarkistetaan ennen kantaa. */

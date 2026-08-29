@@ -8,16 +8,17 @@ import {
   updateProfile,
   type ActionState,
 } from "../actions";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 const initial: ActionState = {};
 
-export function ProfileForm({ fullName }: { fullName: string }) {
+export function ProfileForm({ fullName, t }: { fullName: string; t: WorkerText }) {
   const [state, action] = useActionState(updateProfile, initial);
 
   return (
     <form action={action} className="mt-3 space-y-3">
       <Field
-        label="Nimi"
+        label={t.asetukset.name}
         name="fullName"
         defaultValue={fullName}
         autoComplete="name"
@@ -25,10 +26,10 @@ export function ProfileForm({ fullName }: { fullName: string }) {
       />
 
       <Feedback state={state} />
-      <Submit idle="Tallenna nimi" busy="Tallennetaan…" />
+      <Submit idle={t.asetukset.saveName} busy={t.yleinen.saving} />
 
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Nimi näkyy esihenkilölle työvuoroissa ja työaikakirjauksissa.
+        {t.asetukset.nameHint}
       </p>
     </form>
   );
@@ -41,22 +42,22 @@ export function ProfileForm({ fullName }: { fullName: string }) {
  * istunnon, joten kutsuja on jo todistanut olevansa kirjautunut.
  * Kysytty mutta tarkistamaton vanha salasana olisi teatteria.
  */
-export function PasswordForm() {
+export function PasswordForm({ t }: { t: WorkerText }) {
   const [state, action] = useActionState(changePassword, initial);
 
   return (
     <form action={action} className="mt-3 space-y-3">
       <Field
-        label="Uusi salasana"
+        label={t.asetukset.newPassword}
         name="password"
         type="password"
         autoComplete="new-password"
         required
-        hint="Vähintään 8 merkkiä."
+        hint={t.yleinen.min8}
       />
 
       <Field
-        label="Uusi salasana uudelleen"
+        label={t.asetukset.newPasswordAgain}
         name="confirm"
         type="password"
         autoComplete="new-password"
@@ -64,7 +65,7 @@ export function PasswordForm() {
       />
 
       <Feedback state={state} />
-      <Submit idle="Vaihda salasana" busy="Vaihdetaan…" />
+      <Submit idle={t.asetukset.changePassword} busy={t.asetukset.changing} />
     </form>
   );
 }
@@ -175,9 +176,11 @@ function Submit({ idle, busy }: { idle: string; busy: string }) {
 export function BirthdayForm({
   birthDay,
   birthMonth,
+  t,
 }: {
   birthDay: number | null;
   birthMonth: number | null;
+  t: WorkerText;
 }) {
   const [state, action] = useActionState(updateBirthday, initial);
 
@@ -192,7 +195,7 @@ export function BirthdayForm({
     <form action={action} className="mt-3 space-y-3">
       <label className="block">
         <span className="block text-[13px] font-medium" style={{ color: "var(--rf-text-2)" }}>
-          Syntymäpäivä
+          {t.asetukset.birthday}
         </span>
         <input
           type="date"
@@ -208,11 +211,10 @@ export function BirthdayForm({
       </label>
 
       <Feedback state={state} />
-      <Submit idle="Tallenna syntymäpäivä" busy="Tallennetaan…" />
+      <Submit idle={t.asetukset.saveBirthday} busy={t.yleinen.saving} />
 
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Työkaverit näkevät päivän ja kuukauden. Vuotta ei tallenneta.
-        Tyhjennä kenttä ja tallenna, jos et halua näkyä.
+        {t.asetukset.birthdayNote}
       </p>
     </form>
   );

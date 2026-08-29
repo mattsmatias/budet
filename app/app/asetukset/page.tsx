@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { employeeContext } from "@/lib/restoflow/page-context";
-import { POSITION_LABELS, ROLE_LABELS } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
 import { BirthdayForm, PasswordForm, ProfileForm } from "./forms";
 import { fetchColleagues } from "@/lib/restoflow/queries";
 
-export const metadata = { title: "Asetukset" };
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
+
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.asetukset.title };
+}
 
 export default async function EmployeeSettingsPage() {
   const { user, restaurant, role } = await employeeContext("/app/asetukset");
@@ -19,11 +24,12 @@ export default async function EmployeeSettingsPage() {
   // Oma syntymäpäivä luetaan samasta listasta kuin työyhteisösivu, jotta
   // näytetty arvo on varmasti sama.
   const me = (await fetchColleagues(restaurant.id)).find((c) => c.id === user.id);
+  const t = workerText(await resolveLocale());
 
   return (
     <div className="rf-enter space-y-5">
       <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">Asetukset</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight">{t.asetukset.title}</h1>
       </header>
 
       <Card>
@@ -34,8 +40,8 @@ export default async function EmployeeSettingsPage() {
               {name || user.email}
             </p>
             <p className="truncate text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              {ROLE_LABELS[role]}
-              {restaurant.position ? ` · ${POSITION_LABELS[restaurant.position]}` : ""}
+              {t.roolit[role]}
+              {restaurant.position ? ` · ${t.asemat[restaurant.position]}` : ""}
             </p>
             <p className="truncate text-[13px]" style={{ color: "var(--rf-text-3)" }}>
               {restaurant.name}
@@ -45,44 +51,48 @@ export default async function EmployeeSettingsPage() {
       </Card>
 
       <section>
-        <SectionLabel>Omat tiedot</SectionLabel>
+        <SectionLabel>{t.asetukset.ownInfo}</SectionLabel>
         <Card>
-          <ProfileForm fullName={name} />
+          <ProfileForm fullName={name} t={t} />
 
           <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
-            <Row label="Sähköposti" value={user.email ?? "—"} />
+            <Row label={t.asetukset.email} value={user.email ?? "—"} />
             <Row
-              label="Tuntipalkka"
-              value={rate === null || rate === undefined ? "Ei asetettu" : formatMoney(rate)}
+              label={t.asetukset.hourlyRate}
+              value={
+                rate === null || rate === undefined
+                  ? t.yleinen.notSet
+                  : formatMoney(rate)
+              }
               last
             />
             <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-              Sähköpostin ja tuntipalkan muuttaa esihenkilö. Tuntipalkka
-              näkyy tässä vain sinulle.
+              {t.lisatiedot.settingsNote}
             </p>
           </div>
         </Card>
       </section>
 
       <section>
-        <SectionLabel>Työyhteisö</SectionLabel>
+        <SectionLabel>{t.asetukset.community}</SectionLabel>
         <Card>
           <BirthdayForm
             birthDay={me?.birthDay ?? null}
             birthMonth={me?.birthMonth ?? null}
+            t={t}
           />
         </Card>
       </section>
 
       <section>
-        <SectionLabel>Salasana</SectionLabel>
+        <SectionLabel>{t.asetukset.password}</SectionLabel>
         <Card>
-          <PasswordForm />
+          <PasswordForm t={t} />
         </Card>
       </section>
 
       <section>
-        <SectionLabel>Muuta</SectionLabel>
+        <SectionLabel>{t.asetukset.other}</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             <li>
@@ -90,7 +100,7 @@ export default async function EmployeeSettingsPage() {
                 <span style={{ color: "var(--rf-text-2)" }}>
                   <RfIcon name="bell" size={20} />
                 </span>
-                <span className="flex-1 text-[15px] font-medium">Ilmoitukset</span>
+                <span className="flex-1 text-[15px] font-medium">{t.asetukset.notifications}</span>
                 <span style={{ color: "var(--rf-text-3)" }}>
                   <RfIcon name="chevron" size={16} />
                 </span>
@@ -112,7 +122,7 @@ export default async function EmployeeSettingsPage() {
           }}
         >
           <RfIcon name="logout" size={17} />
-          Kirjaudu ulos
+          {t.lisaa.signOut}
         </button>
       </form>
     </div>

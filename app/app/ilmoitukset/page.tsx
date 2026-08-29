@@ -4,7 +4,14 @@ import { buildEmployeeAlerts } from "@/lib/restoflow/employee-alerts";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Ilmoitukset" };
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
+import { fill } from "@/lib/i18n/auth-text";
+
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.ilmoitukset.title };
+}
 
 /**
  * Työntekijän ilmoitukset.
@@ -23,24 +30,27 @@ export default async function EmployeeAlertsPage() {
     timezone: restaurant.timezone,
   });
   const actionable = alerts.filter((alert) => alert.severity === "action");
+  const t = workerText(await resolveLocale());
 
   return (
     <div className="rf-enter space-y-4">
       <header className="px-1 pt-2">
-        <h1 className="text-[28px] font-semibold tracking-tight">Ilmoitukset</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight">{t.ilmoitukset.title}</h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {alerts.length === 0
-            ? "Ei ilmoituksia"
+            ? t.ilmoitukset.emptyTitle
             : actionable.length === 0
-              ? `${alerts.length} tiedoksi`
-              : `${actionable.length} vaatii toimenpiteen`}
+              ? fill(t.lisatiedot.forInfo, { maara: String(alerts.length) })
+              : fill(t.lisatiedot.needsAction, {
+                  maara: String(actionable.length),
+                })}
         </p>
       </header>
 
       {alerts.length === 0 ? (
         <EmptyState
-          title="Ei ilmoituksia"
-          description="Kun saat työvuoron hyväksyttäväksi tai vuoro muuttuu, näet sen täällä. Ilmoitukset katoavat itsestään kun asia on hoidettu."
+          title={t.ilmoitukset.emptyTitle}
+          description={t.ilmoitukset.emptyBody}
         />
       ) : (
         <ul className="space-y-3">
@@ -92,9 +102,7 @@ export default async function EmployeeAlertsPage() {
       )}
 
       <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Ilmoitukset lasketaan omista vuoroistasi ja leimauksistasi joka
-        kerta kun avaat sivun. Niitä ei tallenneta, joten hoidettu asia
-        katoaa listalta itsestään.
+        {t.lisatiedot.noticesNote}
       </p>
     </div>
   );

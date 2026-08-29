@@ -13,6 +13,8 @@ import { formatMonth } from "@/lib/restoflow/expenses";
 import { windowStartIso } from "@/lib/restoflow/clock-context";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
 import { PageHeader, Surface } from "../ui";
 import type { User } from "@/lib/restoflow/types";
 
@@ -31,6 +33,7 @@ export const metadata = { title: "Palkkani" };
  */
 export default async function MyPayPage() {
   const { user, restaurant, month, now } = await employeeContext("/app/palkka");
+  const t = workerText(await resolveLocale());
 
   const period = monthPeriod(month);
 
@@ -60,7 +63,7 @@ export default async function MyPayPage() {
   const me: User = {
     id: user.id,
     restaurantId: restaurant.id,
-    name: user.fullName ?? user.email ?? "Minä",
+    name: user.fullName ?? user.email ?? t.palkka.me,
     role: restaurant.role,
     position: restaurant.position,
     hourlyRateCents: restaurant.hourlyRateCents,
@@ -97,11 +100,11 @@ export default async function MyPayPage() {
 
   return (
     <div className="rf-enter space-y-6">
-      <PageHeader title="Palkkani" subtitle={formatMonth(month)} />
+      <PageHeader title={t.lisatiedot.payTitle} subtitle={formatMonth(month)} />
 
       <Surface>
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Kertynyt tässä kuussa
+          {t.palkka.accrued}
         </p>
         <p className="rf-tabular mt-1 text-[34px] font-semibold tracking-tight">
           {formatMoney(slip.grossCents)}
@@ -116,7 +119,7 @@ export default async function MyPayPage() {
         {supplements.size > 0 ? (
           <dl className="mt-4 space-y-1.5 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
             <div className="flex justify-between text-[13px]">
-              <dt style={{ color: "var(--rf-text-2)" }}>Peruspalkka</dt>
+              <dt style={{ color: "var(--rf-text-2)" }}>{t.palkka.basePay}</dt>
               <dd className="rf-tabular">{formatMoney(slip.baseCents)}</dd>
             </div>
             {[...supplements.values()].map((row) => (
@@ -131,14 +134,13 @@ export default async function MyPayPage() {
         ) : null}
 
         <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Laskettu leimauksistasi. Bruttosumma ilman ennakonpidätystä ja muita
-          vähennyksiä — ei palkkalaskelma eikä palkkatodistus.
+          {t.lisatiedot.payDisclaimer}
         </p>
       </Surface>
 
       {slip.issues.length > 0 ? (
         <Surface>
-          <h2 className="text-[15px] font-semibold">Tarkistettavaa</h2>
+          <h2 className="text-[15px] font-semibold">{t.palkka.toCheck}</h2>
           <ul className="mt-2 space-y-2">
             {slip.issues.map((issue, index) => (
               <li key={index} className="flex items-start gap-2.5 text-[13px] leading-relaxed">
@@ -150,8 +152,7 @@ export default async function MyPayPage() {
             ))}
           </ul>
           <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Kerro esihenkilölle, niin hän korjaa ajan. Sinä et voi muuttaa
-            omaa työaikaasi jälkikäteen.
+            {t.lisatiedot.payIssuesNote}
           </p>
         </Surface>
       ) : null}
@@ -159,15 +160,15 @@ export default async function MyPayPage() {
       <section>
         <Surface padded={false}>
           <div className="px-5 pt-5">
-            <h2 className="text-[15px] font-semibold">Päivät</h2>
+            <h2 className="text-[15px] font-semibold">{t.palkka.days}</h2>
             <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              Aika on leimauksistasi, ei suunnitellusta vuorosta.
+              {t.palkka.fromStamps}
             </p>
           </div>
 
           {days.length === 0 ? (
             <p className="px-5 pt-3 pb-5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-              Ei vielä työaikaa tässä kuussa.
+              {t.palkka.empty}
             </p>
           ) : (
             <ul className="mt-3 divide-y" style={{ borderColor: "var(--rf-line)" }}>
