@@ -9,6 +9,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText, type AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { lineVatCents } from "@/lib/restoflow/vat";
 import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
 import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
@@ -62,6 +65,7 @@ export async function createInvitation(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant } = await requireContext("/admin/tyontekijat");
 
   const rawPosition = String(formData.get("position") ?? "");
@@ -82,10 +86,10 @@ export async function createInvitation(
     p_label: parsed.data.label,
   });
 
-  if (error) return { error: explain(error, "Kutsun luonti epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.inviteFailed, t) };
 
   revalidatePath("/admin/tyontekijat");
-  return { code: data as string, notice: "Kutsukoodi luotu." };
+  return { code: data as string, notice: t.toiminnot.inviteCreated };
 }
 
 export async function revokeInvitation(formData: FormData): Promise<void> {
@@ -104,22 +108,23 @@ export async function acceptInvitation(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const code = String(formData.get("code") ?? "").trim().toUpperCase();
-  if (code.length < 4) return { error: "Syötä kutsukoodi." };
+  if (code.length < 4) return { error: t.toiminnot.enterCode };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("accept_invitation", { p_code: code });
 
   if (error) {
     const message = error.message ?? "";
-    if (message.includes("ei löytynyt")) return { error: "Koodia ei löytynyt." };
-    if (message.includes("jo käytetty")) return { error: "Koodi on jo käytetty." };
-    if (message.includes("vanhentunut")) return { error: "Koodi on vanhentunut." };
-    return { error: explain(error, "Liittyminen epäonnistui") };
+    if (message.includes(t.toiminnot.notFound)) return { error: t.toiminnot.codeNotFound };
+    if (message.includes(t.toiminnot.alreadyUsed)) return { error: t.toiminnot.codeUsed };
+    if (message.includes("vanhentunut")) return { error: t.toiminnot.codeExpired };
+    return { error: explain(error, t.toiminnot.joinFailed, t) };
   }
 
   revalidatePath("/", "layout");
-  return { notice: "Liityit ravintolaan." };
+  return { notice: t.toiminnot.joined };
 }
 
 // ---------------------------------------------------------------------------
@@ -137,6 +142,7 @@ export async function updateMembership(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant } = await requireContext("/admin/tyontekijat");
 
   const rawPosition = String(formData.get("position") ?? "");
@@ -147,7 +153,7 @@ export async function updateMembership(
     active: formData.get("active") !== "false",
   });
 
-  if (!parsed.success) return { error: "Tarkista syötetyt tiedot." };
+  if (!parsed.success) return { error: t.toiminnot.checkInput };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_membership", {
@@ -160,18 +166,17 @@ export async function updateMembership(
   });
 
   if (error) {
-    if (error.message?.includes("vähintään yksi omistaja")) {
+    if (error.message?.includes(t.toiminnot.needOwner)) {
       return {
         error:
-          "Ravintolalla on oltava vähintään yksi omistaja. Nimitä joku toinen " +
-          "omistajaksi ennen kuin muutat omaa rooliasi.",
+          t.toiminnot.needOwnerBody,
       };
     }
-    return { error: explain(error, "Tallennus epäonnistui") };
+    return { error: explain(error, t.toiminnot.saveFailed, t) };
   }
 
   revalidatePath("/admin", "layout");
-  return { notice: "Tiedot tallennettu." };
+  return { notice: t.toiminnot.saved };
 }
 
 // ---------------------------------------------------------------------------
@@ -182,10 +187,11 @@ export async function setBudget(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant } = await requireContext("/admin/budjetit");
 
   const category = String(formData.get("category") ?? "") as ExpenseCategory;
-  if (!category) return { error: "Kategoria puuttuu." };
+  if (!category) return { error: t.toiminnot.categoryMissing };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_budget", {
@@ -194,10 +200,10 @@ export async function setBudget(
     p_amount_cents: parseEuros(formData.get("amount")) ?? 0,
   });
 
-  if (error) return { error: explain(error, "Budjetin tallennus epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.budgetSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
-  return { notice: "Budjetti tallennettu." };
+  return { notice: t.toiminnot.budgetSaved };
 }
 
 // ---------------------------------------------------------------------------
@@ -208,8 +214,9 @@ export async function reviewReceipt(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const receiptId = String(formData.get("receiptId") ?? "");
-  if (!receiptId) return { error: "Kuittia ei löytynyt." };
+  if (!receiptId) return { error: t.toiminnot.receiptNotFound };
 
   await requireContext("/admin/kuitit");
   const supabase = await createClient();
@@ -227,14 +234,14 @@ export async function reviewReceipt(
     p_note: (formData.get("note") as string) || null,
   });
 
-  if (error) return { error: explain(error, "Tarkistus epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.reviewFailed, t) };
 
   revalidatePath("/admin", "layout");
   return {
     notice:
       formData.get("action") === "reject"
-        ? "Kuitti jätettiin tarkistusjonoon."
-        : "Kuitti hyväksytty.",
+        ? t.toiminnot.leftInQueue
+        : t.toiminnot.receiptApproved,
   };
 }
 
@@ -253,10 +260,11 @@ export async function deleteReceipt(formData: FormData): Promise<void> {
 // Työvuorot
 // ---------------------------------------------------------------------------
 
-const shiftSchema = z.object({
-  date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
-  start: z.string().regex(/^\d{2}:\d{2}$/, "Tarkista alkuaika."),
-  end: z.string().regex(/^\d{2}:\d{2}$/, "Tarkista loppuaika."),
+const shiftSchema = (t: AdminText) =>
+  z.object({
+  date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
+  start: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkStart),
+  end: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkEnd),
   location: z.string().trim().max(80),
 });
 
@@ -264,9 +272,10 @@ export async function saveShift(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant } = await requireContext("/admin/tyovuorot");
 
-  const parsed = shiftSchema.safeParse({
+  const parsed = shiftSchema(t).safeParse({
     date: formData.get("date"),
     start: formData.get("start"),
     end: formData.get("end"),
@@ -276,7 +285,7 @@ export async function saveShift(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   if (parsed.data.start === parsed.data.end) {
-    return { error: "Alku- ja loppuaika ovat samat." };
+    return { error: t.toiminnot.sameTimes };
   }
 
   const userId = String(formData.get("userId") ?? "");
@@ -310,14 +319,14 @@ export async function saveShift(
     p_note: note || null,
   });
 
-  if (error) return { error: explain(error, "Vuoron tallennus epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.shiftSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
   return {
     notice: shiftId
-      ? "Vuoro päivitetty."
+      ? t.toiminnot.shiftUpdated
       : /*
          * Uusi vuoro syntyy luonnoksena.
          *
@@ -326,7 +335,7 @@ export async function saveShift(
          * työntekijän kalenteriin. Viesti sanoo sen ääneen, jottei
          * kukaan jää odottamaan että vuoro ilmestyisi itsestään.
          */
-        "Vuoro luotu luonnoksena. Se näkyy työntekijälle vasta kun julkaiset.",
+        t.toiminnot.shiftDraft,
   };
 }
 
@@ -342,11 +351,12 @@ export async function publishShifts(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return { error: "Ei oikeutta julkaista vuoroja." };
+  if (!can(role, "shifts.manage")) return { error: t.toiminnot.noPublishRight };
 
   const month = String(formData.get("month") ?? "");
-  if (!ISO_MONTH.test(month)) return { error: "Tarkista kuukausi." };
+  if (!ISO_MONTH.test(month)) return { error: t.toiminnot.checkMonth };
 
   const [year, m] = month.split("-").map(Number);
   const from = `${month}-01`;
@@ -359,7 +369,7 @@ export async function publishShifts(
     p_to: to,
   });
 
-  if (error) return { error: explain(error, "Julkaisu epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.publishFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
@@ -369,8 +379,11 @@ export async function publishShifts(
   return {
     notice:
       count === 0
-        ? "Ei julkaistavia luonnoksia."
-        : `${count} ${count === 1 ? "vuoro" : "vuoroa"} julkaistu. Ne näkyvät nyt työntekijöille.`,
+        ? t.toiminnot.noDrafts
+        : fill(t.toiminnot.shiftsPublished, {
+            maara: String(count),
+            yksikko: count === 1 ? t.toiminnot.shiftOne : t.toiminnot.shiftMany,
+          }),
   };
 }
 
@@ -411,12 +424,13 @@ export async function deleteShift(formData: FormData): Promise<void> {
 // Kuitit
 // ---------------------------------------------------------------------------
 
-const receiptSchema = z.object({
-  supplier: z.string().trim().min(1, "Toimittaja puuttuu.").max(160),
-  date: z.string().regex(ISO_DATE, "Tarkista päivämäärä."),
-  totalCents: z.number().int().min(0, "Loppusumma puuttuu."),
+const receiptSchema = (t: AdminText) =>
+  z.object({
+  supplier: z.string().trim().min(1, t.toiminnot.supplierMissing).max(160),
+  date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
+  totalCents: z.number().int().min(0, t.toiminnot.totalMissing),
   vatCents: z.number().int().min(0).nullable(),
-  category: z.string().min(1, "Valitse kategoria."),
+  category: z.string().min(1, t.toiminnot.chooseCategory),
   payment: z.string().min(1),
   receiptNumber: z.string().trim().max(64).nullable(),
   note: z.string().trim().max(500).nullable(),
@@ -434,15 +448,16 @@ export async function saveReceipt(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext("/admin/kuitit");
 
   // Kuitti on ravintolan kirjanpitoaineistoa, ei työntekijän ilmoitus.
   // Tietokanta torjuu tämän joka tapauksessa; tässä virheestä saa luettavan.
   if (!canAddReceipts(role)) {
-    return { error: "Vain ravintolan esihenkilö voi lisätä kuitteja." };
+    return { error: t.toiminnot.onlyManagerReceipts };
   }
 
-  const parsed = receiptSchema.safeParse({
+  const parsed = receiptSchema(t).safeParse({
     supplier: formData.get("supplier"),
     date: formData.get("date"),
     totalCents: parseEuros(formData.get("total")) ?? -1,
@@ -491,11 +506,10 @@ export async function saveReceipt(
     if (error.code === "23505" || error.message?.includes("receipts_hash_unique")) {
       return {
         error:
-          "Tämä sama tiedosto on jo tallennettu. Jos kyseessä on eri ostos, " +
-          "kuvaa kuitti uudelleen.",
+          t.toiminnot.duplicateFile,
       };
     }
-    return { error: explain(error, "Kuitin tallennus epäonnistui") };
+    return { error: explain(error, t.toiminnot.receiptSaveFailed, t) };
   }
 
   /*
@@ -520,8 +534,9 @@ export async function saveReceipt(
       revalidatePath("/admin", "layout");
       return {
         notice:
-          `Kuitti tallennettu, mutta ${pages.length - 1} lisäsivua jäi ` +
-          "liittämättä. Avaa kuitti ja lisää sivut uudelleen.",
+          fill(t.toiminnot.extraPagesLost, {
+            maara: String(pages.length - 1),
+          }),
         receiptId: data as string,
       };
     }
@@ -540,7 +555,7 @@ export async function saveReceipt(
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
-  return { notice: "Kuitti tallennettu.", receiptId: data as string };
+  return { notice: t.toiminnot.receiptSaved, receiptId: data as string };
 }
 
 interface ItemInput {
@@ -654,9 +669,10 @@ async function linkSupplierToMerchant(
 // Asetukset
 // ---------------------------------------------------------------------------
 
-const restaurantSchema = z.object({
-  name: z.string().trim().min(1, "Nimi puuttuu.").max(120),
-  timezone: z.string().trim().min(1, "Valitse aikavyöhyke."),
+const restaurantSchema = (t: AdminText) =>
+  z.object({
+  name: z.string().trim().min(1, t.toiminnot.nameMissing).max(120),
+  timezone: z.string().trim().min(1, t.toiminnot.chooseTimezone),
 });
 
 /**
@@ -678,7 +694,8 @@ export async function updateRestaurant(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
-  const parsed = restaurantSchema.safeParse({
+  const t = adminText(await resolveLocale());
+  const parsed = restaurantSchema(t).safeParse({
     name: formData.get("name"),
     timezone: formData.get("timezone"),
   });
@@ -694,12 +711,12 @@ export async function updateRestaurant(
     p_timezone: parsed.data.timezone,
   });
 
-  if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
-  return { notice: "Ravintolan tiedot tallennettu." };
+  return { notice: t.toiminnot.restaurantSaved };
 }
 
 /**
@@ -714,10 +731,11 @@ export async function updateShiftRules(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const minutes = Number(formData.get("clockInEarlyMinutes"));
 
   if (!Number.isInteger(minutes) || minutes < 0 || minutes > 240) {
-    return { error: "Leimausikkuna on 0–240 minuuttia." };
+    return { error: t.toiminnot.clockWindowRange };
   }
 
   const { restaurant } = await requireContext("/admin/asetukset");
@@ -732,12 +750,12 @@ export async function updateShiftRules(
     p_clock_in_early_minutes: minutes,
   });
 
-  if (error) return { error: explain(error, "Asetusten tallennus epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
 
-  return { notice: "Vuoroasetukset tallennettu." };
+  return { notice: t.toiminnot.shiftSettingsSaved };
 }
 
 // ---------------------------------------------------------------------------
@@ -756,11 +774,12 @@ export async function closeMonth(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const month = String(formData.get("month") ?? "");
   const note = String(formData.get("note") ?? "");
 
   if (!/^[0-9]{4}-[0-9]{2}$/.test(month)) {
-    return { error: "Valitse kuukausi." };
+    return { error: t.toiminnot.chooseMonth };
   }
 
   const { restaurant } = await requireContext("/admin/asetukset");
@@ -772,10 +791,10 @@ export async function closeMonth(
     p_note: note || null,
   });
 
-  if (error) return { error: explain(error, "Kuukauden sulkeminen epäonnistui") };
+  if (error) return { error: explain(error, t.toiminnot.closeMonthFailed, t) };
 
   revalidatePath("/admin", "layout");
-  return { notice: `Kuukausi ${month} suljettu.` };
+  return { notice: fill(t.toiminnot.monthClosedOk, { kuukausi: month }) };
 }
 
 /** Avaa suljetun kuukauden uudelleen. Vain omistaja. */
@@ -842,9 +861,10 @@ export async function markAbsenceCertificate(formData: FormData): Promise<void> 
 // Omat kulukategoriat
 // ---------------------------------------------------------------------------
 
-const categorySchema = z.object({
+const categorySchema = (t: AdminText) =>
+  z.object({
   id: z.string().uuid().nullable(),
-  name: z.string().trim().min(1, "Nimi puuttuu.").max(60),
+  name: z.string().trim().min(1, t.toiminnot.nameMissing).max(60),
   base: z.enum([
     "food", "alcohol", "soft_drinks", "cleaning", "kitchen_supplies",
     "packaging", "staff", "transport", "other",
@@ -863,7 +883,8 @@ export async function saveCategory(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
-  const parsed = categorySchema.safeParse({
+  const t = adminText(await resolveLocale());
+  const parsed = categorySchema(t).safeParse({
     id: (formData.get("categoryId") as string) || null,
     name: formData.get("name"),
     base: formData.get("base"),
@@ -885,13 +906,13 @@ export async function saveCategory(
 
   if (error) {
     if (error.code === "23505") {
-      return { error: "Samanniminen kategoria on jo olemassa." };
+      return { error: t.toiminnot.categoryExists };
     }
-    return { error: explain(error, "Kategorian tallennus epäonnistui") };
+    return { error: explain(error, t.toiminnot.categorySaveFailed, t) };
   }
 
   revalidatePath("/admin", "layout");
-  return { notice: "Kategoria tallennettu." };
+  return { notice: t.toiminnot.categorySaved };
 }
 
 /** Poistaa kategorian. Kuitit säilyvät ja palaavat perusluokkaan. */
@@ -908,48 +929,56 @@ export async function deleteCategory(formData: FormData): Promise<void> {
 
 // ---------------------------------------------------------------------------
 
+/*
+ * Kannan virheen tulkinta.
+ *
+ * TUNNISTUS ON SUOMEKSI, VASTAUS KAANNETAAN.
+ *
+ * Ehdot vertaavat siihen mita Postgres-funktiot palauttavat, ja ne
+ * puhuvat suomea riippumatta kayttoliittyman kielesta. Jos naista
+ * tekisi kaannettavia, tunnistus lakkaisi toimimasta heti kun
+ * kayttaja vaihtaa kielta.
+ */
 function explain(
   error: { code?: string; message?: string } | null,
   prefix: string,
+  t: AdminText,
 ): string {
   const code = error?.code ?? "";
   const message = error?.message ?? "";
 
   if (code === "PGRST202" || message.includes("schema cache")) {
-    return "Tietokannan rakenteet puuttuvat. Aja migraatiot 0004 ja 0005.";
+    return t.toiminnot.migrationsMissing;
   }
   if (code === "42501" || message.includes("row-level security")) {
-    return "Sinulla ei ole oikeutta tähän toimintoon.";
+    return t.toiminnot.noRight;
   }
   if (message.includes("Vain omistaja")) {
-    return "Vain omistaja voi tehdä tämän.";
+    return t.toiminnot.ownerOnlyBody;
   }
   if (message.includes("Vain esihenkilö")) {
-    return "Vain esihenkilö voi tehdä tämän.";
+    return t.toiminnot.managerOnlyBody;
   }
   if (message.includes("Mennyttä vuoroa")) {
-    return "Mennyttä vuoroa ei voi poistaa.";
+    return t.toiminnot.pastShiftBody;
   }
   // Postgresin oma teksti "numeric field overflow" ei kerro käyttäjälle
   // mitään. Se tarkoittaa että jokin luku ei mahdu sarakkeeseensa, ja
   // käytännössä se on aina poimitussa rivissä.
   if (code === "22003" || message.includes("numeric field overflow")) {
-    return (
-      "Jokin poimittu luku ei kelpaa — todennäköisesti rivin ALV-kanta " +
-      "tai määrä. Poista kuittirivit tai korjaa luvut ja tallenna uudelleen."
-    );
+    return t.toiminnot.badNumbers;
   }
   if (message.includes("Kuukausi on suljettu")) {
-    return "Kuukausi on suljettu kirjanpitoon. Avaa se asetuksista jos muutos on välttämätön.";
+    return t.toiminnot.monthClosedBody;
   }
   if (message.includes("Tuntematon aikavyöhyke")) {
-    return "Tuntematon aikavyöhyke.";
+    return t.toiminnot.unknownTimezoneBody;
   }
   if (message.includes("Kuluvaa tai tulevaa")) {
-    return "Kuluvaa tai tulevaa kuukautta ei voi sulkea.";
+    return t.toiminnot.currentOrFutureBody;
   }
   if (message.includes("hallita kategorioita")) {
-    return "Vain omistaja voi hallita kategorioita.";
+    return t.toiminnot.ownerOnlyCategories;
   }
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;
