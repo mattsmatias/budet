@@ -1,4 +1,5 @@
 import { formatDuration } from "@/lib/restoflow/timeclock";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 /**
  * Viikon työaika.
@@ -12,14 +13,14 @@ import { formatDuration } from "@/lib/restoflow/timeclock";
  * ole. Keksitty 37,5 tuntia näyttäisi tavoitteelta jota kukaan ei ole
  * asettanut, ja osa-aikaiselle se olisi väärä joka viikko.
  */
-export function WeeklyHours({ workedMs }: { workedMs: number }) {
+export function WeeklyHours({ workedMs, t }: { workedMs: number; t: WorkerText }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <p
         className="text-[12px] font-semibold uppercase"
         style={{ letterSpacing: "0.07em", color: "var(--rf-text-3)" }}
       >
-        Tämä viikko
+        {t.yleinen.thisWeek}
       </p>
       <p className="rf-tabular text-[20px] font-semibold" suppressHydrationWarning>
         {formatDuration(workedMs)}

@@ -53,12 +53,19 @@ export function birthdaysToday(
  * "Minna täyttää tänään vuosia" on yhtä luonteva ja käyttää nimeä
  * perusmuodossa. Silloin sitä ei voi taivuttaa väärin.
  */
-export function birthdaySentence(names: string[]): string {
+export function birthdaySentence(
+  names: string[],
+  teksti: { yksi: string; monta: string },
+): string {
   const first = names.map((n) => n.split(" ")[0]).filter(Boolean);
 
   if (first.length === 0) return "";
-  if (first.length === 1) return `${first[0]} täyttää tänään vuosia!`;
+  if (first.length === 1) return teksti.yksi.split("{nimi}").join(first[0]);
 
   const head = first.slice(0, -1).join(", ");
-  return `${head} ja ${first[first.length - 1]} täyttävät tänään vuosia!`;
+  return teksti.monta
+    .split("{nimet}")
+    .join(head)
+    .split("{viimeinen}")
+    .join(first[first.length - 1]);
 }

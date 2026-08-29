@@ -17,6 +17,11 @@ function person(partial: Partial<Colleague> = {}): Colleague {
   };
 }
 
+const SUOMI = {
+  yksi: "{nimi} täyttää tänään vuosia!",
+  monta: "{nimet} ja {viimeinen} täyttävät tänään vuosia!",
+};
+
 describe("syntymäpäivän muotoilu", () => {
   it("näyttää päivän ja kuukauden ilman vuotta", () => {
     expect(formatBirthday(24, 8)).toBe("24. elokuuta");
@@ -65,28 +70,28 @@ describe("onnittelulause", () => {
    * jonka omistaja huomaa heti.
    */
   it("käyttää nimeä perusmuodossa", () => {
-    expect(birthdaySentence(["Minna Virtanen"])).toBe("Minna täyttää tänään vuosia!");
+    expect(birthdaySentence(["Minna Virtanen"], SUOMI)).toBe("Minna täyttää tänään vuosia!");
   });
 
   it("ei taivuta myöskään astevaihtelullista nimeä", () => {
-    const lause = birthdaySentence(["Mikko Nieminen"]);
+    const lause = birthdaySentence(["Mikko Nieminen"], SUOMI);
     expect(lause).toBe("Mikko täyttää tänään vuosia!");
     expect(lause).not.toContain("Mikkon");
   });
 
   it("yhdistää kaksi nimeä ja-sanalla", () => {
-    expect(birthdaySentence(["Minna V", "Mikko N"])).toBe(
+    expect(birthdaySentence(["Minna V", "Mikko N"], SUOMI)).toBe(
       "Minna ja Mikko täyttävät tänään vuosia!",
     );
   });
 
   it("luettelee useamman pilkuin", () => {
-    expect(birthdaySentence(["Minna V", "Mikko N", "Laura L"])).toBe(
+    expect(birthdaySentence(["Minna V", "Mikko N", "Laura L"], SUOMI)).toBe(
       "Minna, Mikko ja Laura täyttävät tänään vuosia!",
     );
   });
 
   it("kestää tyhjän listan", () => {
-    expect(birthdaySentence([])).toBe("");
+    expect(birthdaySentence([], SUOMI)).toBe("");
   });
 });

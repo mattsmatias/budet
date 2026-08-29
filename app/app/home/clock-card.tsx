@@ -13,6 +13,8 @@ import {
 import { timeIn } from "@/lib/restoflow/clock-context";
 import type { ClockEvent, ClockEventType } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
+import { fill } from "@/lib/i18n/auth-text";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 const initial: ActionState = {};
 
@@ -52,9 +54,11 @@ export function ClockCard({
   todayEvents,
   timezone,
   clockIn,
+  t,
 }: {
   todayEvents: ClockEvent[];
   timezone: string;
+  t: WorkerText;
   /**
    * Saako sisään leimata, ja jos ei niin miksi.
    *
@@ -163,12 +167,13 @@ export function ClockCard({
 
   if (celebrating) {
     return (
-      <Surface active={celebrating.type !== "out"}>
+      <Surface active={celebrating.type !== "out"} t={t}>
         <Success
           type={celebrating.type}
           at={celebrating.at}
           timezone={timezone}
           workedMs={worked.workedMs}
+          t={t}
         />
       </Surface>
     );
@@ -178,7 +183,7 @@ export function ClockCard({
   const onBreak = clockState === "on_break";
 
   return (
-    <Surface active={working}>
+    <Surface active={working} t={t}>
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden="true"
@@ -199,23 +204,23 @@ export function ClockCard({
           style={{ letterSpacing: "0.07em", color: "var(--rf-text-2)" }}
         >
           {working
-            ? "Työ käynnissä"
+            ? t.kello.working
             : onBreak
-              ? "Tauolla"
+              ? t.kello.onBreak
               : clockIn.kind === "no-shift"
-                ? "Ei työvuoroa"
-                : "Et ole töissä"}
+                ? t.kello.noShift
+                : t.kello.notAtWork}
         </p>
       </div>
 
       <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
         {working && startedAt
-          ? `Aloitettu ${timeIn(timezone, startedAt)}`
+          ? fill(t.kello.startedAt, { aika: timeIn(timezone, startedAt) })
           : onBreak
-            ? "Työaika ei kerry tauolla"
+            ? t.kello.noAccrualOnBreak
             : clockIn.kind === "open"
-              ? `Työvuoro ${clockIn.shift}`
-              : "Tänään"}
+              ? fill(t.kello.shiftLabel, { vuoro: clockIn.shift })
+              : t.yleinen.today}
       </p>
 
       {/* suppressHydrationWarning: palvelin ja selain laskevat eri
@@ -269,10 +274,10 @@ export function ClockCard({
           }}
         >
           {clockIn.kind === "too-early"
-            ? `Sisäänleimaus avautuu klo ${clockIn.opensAt}. Työvuoro ${clockIn.shift}.`
+            ? fill(t.kello.opensAt, { aika: clockIn.opensAt, vuoro: clockIn.shift })
             : clockIn.next
-              ? `Sinulle ei ole työvuoroa juuri nyt. Seuraava vuoro: ${clockIn.next}.`
-              : "Sinulle ei ole suunniteltu työvuoroa. Esihenkilö lisää vuorot."}
+              ? fill(t.kello.nextShiftIs, { vuoro: clockIn.next })
+              : t.kello.noShiftPlanned}
         </p>
       ) : null}
 
@@ -290,11 +295,16 @@ export function ClockCard({
         <PrimaryAction
           working={working || onBreak}
           blocked={!working && !onBreak && clockIn.kind !== "open"}
+          t={t}
         />
 
         {/* Tauko on toissijainen: pienempi, hillitympi, oman rivinsä. */}
-        {working ? <SecondaryAction type="break_start" label="Aloita tauko" /> : null}
-        {onBreak ? <SecondaryAction type="break_end" label="Jatka työtä" /> : null}
+        {working ? (
+          <SecondaryAction type="break_start" label={t.kello.startBreak} />
+        ) : null}
+        {onBreak ? (
+          <SecondaryAction type="break_end" label={t.kello.endBreak} />
+        ) : null}
       </form>
     </Surface>
   );
@@ -309,10 +319,18 @@ export function ClockCard({
  * taustassa. Kokonaan vihreä kortti huutaisi; tässä riittää että silmä
  * huomaa eron ohi kulkiessaan.
  */
-function Surface({ active, children }: { active: boolean; children: React.ReactNode }) {
+function Surface({
+  active,
+  children,
+  t,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  t: WorkerText;
+}) {
   return (
     <section
-      aria-label="Työajan leimaus"
+      aria-label={t.kello.label}
       className="px-5 py-6 sm:px-7 sm:py-7"
       style={{
         background: active
@@ -340,11 +358,13 @@ function Success({
   at,
   timezone,
   workedMs,
+  t,
 }: {
   type: ClockEventType;
   at: string;
   timezone: string;
   workedMs: number;
+  t: WorkerText;
 }) {
   const ended = type === "out";
 
@@ -357,7 +377,7 @@ function Success({
         >
           <RfIcon name="check" size={16} />
         </span>
-        <p className="text-[17px] font-semibold">{SUCCESS_TITLES[type]}</p>
+        <p className="text-[17px] font-semibold">{otsikot(t)[type]}</p>
       </div>
 
       <p className="rf-tabular mt-4 text-[44px] font-semibold leading-none" style={{ letterSpacing: "-0.03em" }}>
@@ -367,7 +387,7 @@ function Success({
       {ended ? (
         <div className="mt-5">
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Tämän päivän työaika
+            {t.kello.todaysHours}
           </p>
           <p className="rf-tabular mt-0.5 text-[24px] font-semibold" suppressHydrationWarning>
             {formatDuration(workedMs)}
@@ -375,26 +395,26 @@ function Success({
         </div>
       ) : (
         <p className="mt-4 text-[15px]" style={{ color: "var(--rf-text-2)" }}>
-          {SUCCESS_NOTES[type]}
+          {huomiot(t)[type]}
         </p>
       )}
     </div>
   );
 }
 
-const SUCCESS_TITLES: Record<ClockEventType, string> = {
-  in: "Työvuoro aloitettu",
-  break_start: "Tauko alkoi",
-  break_end: "Takaisin töissä",
-  out: "Työvuoro päättyi",
-};
+const otsikot = (t: WorkerText): Record<ClockEventType, string> => ({
+  in: t.kello.doneIn,
+  break_start: t.kello.doneBreakStart,
+  break_end: t.kello.doneBreakEnd,
+  out: t.kello.doneOut,
+});
 
-const SUCCESS_NOTES: Record<ClockEventType, string> = {
-  in: "Hyvää työvuoroa!",
-  break_start: "Työaika ei kerry tauon aikana.",
-  break_end: "Työaika kertyy taas.",
+const huomiot = (t: WorkerText): Record<ClockEventType, string> => ({
+  in: t.kello.noteIn,
+  break_start: t.kello.noteBreakStart,
+  break_end: t.kello.noteBreakEnd,
   out: "",
-};
+});
 
 /**
  * Päätoiminto.
@@ -407,9 +427,11 @@ const SUCCESS_NOTES: Record<ClockEventType, string> = {
 function PrimaryAction({
   working,
   blocked,
+  t,
 }: {
   working: boolean;
   blocked: boolean;
+  t: WorkerText;
 }) {
   const { pending } = useFormStatus();
 
@@ -437,11 +459,11 @@ function PrimaryAction({
       }}
     >
       {pending ? (
-        "Kirjataan…"
+        t.kello.recording
       ) : (
         <>
           <RfIcon name={working ? "check" : "clock"} size={20} />
-          {working ? "Lopeta työvuoro" : "Aloita työvuoro"}
+          {working ? t.kello.stop : t.kello.start}
         </>
       )}
     </button>

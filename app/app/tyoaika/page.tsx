@@ -9,8 +9,15 @@ import {
 } from "@/lib/restoflow/timeclock";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Empty, PageHeader, SectionTitle, Surface, Tag, shortDay } from "../ui";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText, type WorkerText } from "@/lib/i18n/worker-text";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 
-export const metadata = { title: "Työaika" };
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.tyoaika.title };
+}
 
 /**
  * Työaika.
@@ -52,17 +59,20 @@ export default async function TimePage() {
    * kellona — samaan aikaan kun Koti-sivu sanoi ettei käyttäjä ole
    * töissä. Kaksi sivua väitti eri asiaa samasta hetkestä.
    */
+  const locale = await resolveLocale();
+  const t = workerText(locale);
+
   const running = days.find((d) => d.open && !d.stale);
   const unclosed = days.filter((d) => d.stale);
 
   return (
     <div className="rf-enter space-y-6">
-      <PageHeader title="Työaika" subtitle="Leimauksesi ja tehdyt tunnit" />
+      <PageHeader title={t.tyoaika.title} subtitle={t.tyoaika.subtitle} />
 
       <div className="grid grid-cols-2 gap-3">
         <Surface>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Tämä viikko
+            {t.yleinen.thisWeek}
           </p>
           <p className="rf-tabular mt-1 text-[22px] font-semibold" suppressHydrationWarning>
             {formatDuration(week.workedMs)}
@@ -71,7 +81,7 @@ export default async function TimePage() {
 
         <Surface>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Tämä kuukausi
+            {t.yleinen.thisMonth}
           </p>
           <p className="rf-tabular mt-1 text-[22px] font-semibold" suppressHydrationWarning>
             {formatDuration(monthWorked.workedMs)}
@@ -94,7 +104,7 @@ export default async function TimePage() {
                   className="rf-pulse-dot"
                   style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--rf-green)" }}
                 />
-                <p className="text-[15px] font-medium">Avoin työaika</p>
+                <p className="text-[15px] font-medium">{t.tyoaika.open}</p>
               </div>
               {/*
                 Aloitusaika on käynnissä olevan jakson alku, ei päivän
@@ -102,12 +112,12 @@ export default async function TimePage() {
                 päivä kertoisi muuten väärän kellonajan.
               */}
               <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-                {shortDay(running.date)}
+                {shortDay(running.date, locale)}
                 {running.segments.length > 0
-                  ? ` · aloitettu ${timeIn(
+                  ? ` · ${fill(t.tyoaika.startedAt, { aika: timeIn(
                       zone,
                       new Date(running.segments[running.segments.length - 1].startMs).toISOString(),
-                    )}`
+                    ) })}`
                   : ""}
               </p>
             </div>
@@ -143,12 +153,14 @@ export default async function TimePage() {
             <div className="min-w-0">
               <p className="text-[15px] font-medium">
                 {unclosed.length === 1
-                  ? "Yhdeltä päivältä puuttuu uloskirjaus"
-                  : `${unclosed.length} päivältä puuttuu uloskirjaus`}
+                  ? t.tyoaika.missingOutOneDay
+                  : fill(t.tyoaika.missingOutMany, {
+                      maara: String(unclosed.length),
+                    })}
               </p>
               <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-                {unclosed.map((d) => shortDay(d.date)).join(", ")}. Esihenkilö
-                korjaa työajan — älä leimaa uudelleen.
+                {unclosed.map((d) => shortDay(d.date, locale)).join(", ")}.{" "}
+                {t.tyoaika.managerFixes}
               </p>
             </div>
           </div>
@@ -156,17 +168,24 @@ export default async function TimePage() {
       ) : null}
 
       <section className="space-y-2">
-        <SectionTitle>Historia</SectionTitle>
+        <SectionTitle>{t.tyoaika.history}</SectionTitle>
 
         {days.length === 0 ? (
           <Empty
-            title="Ei vielä leimauksia"
-            description="Työaikasi näkyvät täällä, kun olet tehnyt ensimmäisen leimauksen Koti-sivulla."
+            title={t.tyoaika.emptyTitle}
+            description={t.tyoaika.emptyBody}
           />
         ) : (
           <div className="space-y-2">
             {days.map((day) => (
-              <DayRow key={day.date} day={day} timezone={zone} today={today} />
+              <DayRow
+                key={day.date}
+                day={day}
+                timezone={zone}
+                today={today}
+                t={t}
+                locale={locale}
+              />
             ))}
           </div>
         )}
@@ -188,10 +207,14 @@ function DayRow({
   day,
   timezone,
   today,
+  t,
+  locale,
 }: {
   day: DaySummary;
   timezone: string;
   today: string;
+  t: WorkerText;
+  locale: AppLocale;
 }) {
   const many = day.segments.length > 1;
 
@@ -201,10 +224,10 @@ function DayRow({
     <Surface>
       <div className="flex items-baseline justify-between gap-4">
         <p className="text-[15px] font-medium">
-          {shortDay(day.date)}
+          {shortDay(day.date, locale)}
           {day.date === today ? (
             <span className="ml-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              tänään
+              {t.yleinen.today.toLocaleLowerCase(locale)}
             </span>
           ) : null}
         </p>
@@ -280,9 +303,9 @@ function DayRow({
       {day.open ? (
         <div className="mt-2">
           {day.date === today ? (
-            <Tag tone="ok">Käynnissä</Tag>
+            <Tag tone="ok">{t.yleinen.running}</Tag>
           ) : (
-            <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+            <Tag tone="warn">{t.yleinen.missingOut}</Tag>
           )}
         </div>
       ) : null}

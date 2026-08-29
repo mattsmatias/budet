@@ -4,13 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
 import { Logo } from "@/components/brand/logo";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
+/*
+ * Otsikko tulee sanakirjasta, ei listasta.
+ *
+ * Lista kertoo mitä sivuja on ja missä järjestyksessä; teksti on
+ * käännettävää ja kuuluu sanakirjaan. Avain sitoo ne yhteen niin että
+ * puuttuva käännös kaatuu tyypintarkistuksessa.
+ */
 const TABS = [
-  { href: "/app", label: "Koti", icon: "overview" },
-  { href: "/app/vuorot", label: "Vuorot", icon: "calendar" },
-  { href: "/app/tyoaika", label: "Työaika", icon: "clock" },
-  { href: "/app/lisaa", label: "Lisää", icon: "more" },
-] as const satisfies readonly { href: string; label: string; icon: IconName }[];
+  { href: "/app", key: "home", icon: "overview" },
+  { href: "/app/vuorot", key: "shifts", icon: "calendar" },
+  { href: "/app/tyoaika", key: "time", icon: "clock" },
+  { href: "/app/lisaa", key: "more", icon: "more" },
+] as const satisfies readonly {
+  href: string;
+  key: keyof WorkerText["nav"];
+  icon: IconName;
+}[];
 
 type Tab = (typeof TABS)[number];
 
@@ -35,13 +47,13 @@ type Tab = (typeof TABS)[number];
  * pystypalstassa. Sticky-alapalkki flex-rivin jäsenenä ei tarttuisi
  * mihinkään.
  */
-export function AppSidebar({ userName }: { userName: string }) {
-  return <DesktopSidebar tabs={TABS} userName={userName} />;
+export function AppSidebar({ userName, t }: { userName: string; t: WorkerText }) {
+  return <DesktopSidebar tabs={TABS} userName={userName} t={t} />;
 }
 
 /** Alapalkki puhelimeen. Sijoitetaan sisältöpalstan pohjalle. */
-export function AppBottomNav() {
-  return <MobileBar tabs={TABS} />;
+export function AppBottomNav({ t }: { t: WorkerText }) {
+  return <MobileBar tabs={TABS} t={t} />;
 }
 
 function useActive() {
@@ -55,9 +67,11 @@ function useActive() {
 function DesktopSidebar({
   tabs,
   userName,
+  t,
 }: {
   tabs: readonly Tab[];
   userName: string;
+  t: WorkerText;
 }) {
   const isActive = useActive();
 
@@ -73,7 +87,7 @@ function DesktopSidebar({
         </Link>
       </div>
 
-      <nav aria-label="Päänavigaatio" className="flex-1 overflow-y-auto px-2.5 pb-4">
+      <nav aria-label={t.nav.mainNav} className="flex-1 overflow-y-auto px-2.5 pb-4">
         <ul className="space-y-0.5">
           {tabs.map((tab) => {
             const active = isActive(tab.href);
@@ -91,7 +105,7 @@ function DesktopSidebar({
                   }}
                 >
                   <RfIcon name={tab.icon} size={19} />
-                  <span className="flex-1">{tab.label}</span>
+                  <span className="flex-1">{t.nav[tab.key]}</span>
                 </Link>
               </li>
             );
@@ -102,7 +116,7 @@ function DesktopSidebar({
       <div className="border-t px-5 py-4" style={{ borderColor: "var(--rf-line)" }}>
         <p className="truncate text-[13px] font-medium">{userName}</p>
         <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Työntekijänäkymä
+          {t.nav.workerView}
         </p>
       </div>
     </aside>
@@ -127,7 +141,7 @@ function DesktopSidebar({
  * Palkki pysyy sticky-elementtinä, joten se varaa oman tilansa
  * pystysuunnassa eikä peitä viimeistä riviä.
  */
-function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
+function MobileBar({ tabs, t }: { tabs: readonly Tab[]; t: WorkerText }) {
   const isActive = useActive();
 
   return (
@@ -135,7 +149,7 @@ function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
       className="sticky bottom-0 z-20 px-3 pt-2 pb-3 lg:hidden"
       style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
     >
-      <nav aria-label="Päänavigaatio" className="bd-app-bar mx-auto max-w-md">
+      <nav aria-label={t.nav.mainNav} className="bd-app-bar mx-auto max-w-md">
         <ul className="flex">
           {tabs.map((tab) => {
             const active = isActive(tab.href);
@@ -172,7 +186,7 @@ function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
                     className="text-[10px]"
                     style={{ fontWeight: active ? 600 : 500 }}
                   >
-                    {tab.label}
+                    {t.nav[tab.key]}
                   </span>
                 </Link>
               </li>

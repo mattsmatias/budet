@@ -3,6 +3,8 @@ import { timeIn } from "@/lib/restoflow/clock-context";
 import { formatDuration, type DaySummary } from "@/lib/restoflow/timeclock";
 import { RfIcon } from "@/components/restoflow/icons";
 import { SectionTitle, Tag, shortDay } from "../ui";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 /**
  * Viimeisimmät leimaukset.
@@ -18,10 +20,14 @@ export function RecentDays({
   days,
   timezone,
   today,
+  t,
+  locale,
 }: {
   days: DaySummary[];
   timezone: string;
   today: string;
+  t: WorkerText;
+  locale: AppLocale;
 }) {
   return (
     <section className="space-y-1.5">
@@ -33,13 +39,13 @@ export function RecentDays({
               className="rf-press rf-hit inline-flex items-center gap-1 text-[13px] font-medium"
               style={{ color: "var(--rf-blue)" }}
             >
-              Näytä kaikki
+              {t.yleinen.showAll}
               <RfIcon name="chevron" size={13} />
             </Link>
           ) : undefined
         }
       >
-        Viimeisimmät leimaukset
+        {t.koti.recentStamps}
       </SectionTitle>
 
       {days.length === 0 ? (
@@ -47,7 +53,7 @@ export function RecentDays({
           className="px-1 text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Työaikasi näkyvät täällä, kun olet tehnyt ensimmäisen leimauksen.
+          {t.koti.noStampsYet}
         </p>
       ) : (
         <ul className="px-1">
@@ -58,7 +64,7 @@ export function RecentDays({
               style={{ borderColor: "var(--rf-line)" }}
             >
               <div className="min-w-0">
-                <p className="text-[14px] font-medium">{shortDay(day.date)}</p>
+                <p className="text-[14px] font-medium">{shortDay(day.date, locale)}</p>
                 <p className="rf-tabular mt-0.5 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
                   {day.firstIn ? timeIn(timezone, day.firstIn) : "—"}
                   {" → "}
@@ -88,9 +94,9 @@ export function RecentDays({
                 {day.open ? (
                   <span className="mt-1 inline-block">
                     {day.date === today ? (
-                      <Tag tone="ok">Käynnissä</Tag>
+                      <Tag tone="ok">{t.yleinen.running}</Tag>
                     ) : (
-                      <Tag tone="warn">Uloskirjaus puuttuu</Tag>
+                      <Tag tone="warn">{t.yleinen.missingOut}</Tag>
                     )}
                   </span>
                 ) : null}

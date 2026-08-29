@@ -1,6 +1,8 @@
 import { completeTask } from "@/app/admin/tehtavat/actions";
 import { daysLate, isOpen, sortTasks, statusOf, type Task } from "@/lib/restoflow/tasks";
 import { RfIcon } from "@/components/restoflow/icons";
+import { fill } from "@/lib/i18n/auth-text";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 /**
  * Työntekijän omat tehtävät.
@@ -15,15 +17,23 @@ import { RfIcon } from "@/components/restoflow/icons";
  * henkilöstölle merkityt. Talous- ja hallintotehtävät eivät tule
  * tänne asti.
  */
-export function MyTasks({ tasks, today }: { tasks: Task[]; today: string }) {
+export function MyTasks({
+  tasks,
+  today,
+  t,
+}: {
+  tasks: Task[];
+  today: string;
+  t: WorkerText;
+}) {
   const open = sortTasks(tasks.filter(isOpen), today).slice(0, 6);
 
   if (open.length === 0) return null;
 
   return (
-    <section aria-label="Omat tehtävät" className="space-y-2.5">
+    <section aria-label={t.tehtavat.label} className="space-y-2.5">
       <h2 className="px-1 text-[15px] font-bold tracking-[-0.0075em]">
-        Sinun tehtäväsi
+        {t.tehtavat.heading}
       </h2>
 
       <ul className="space-y-2">
@@ -80,10 +90,15 @@ export function MyTasks({ tasks, today }: { tasks: Task[]; today: string }) {
                   >
                     {status === "overdue"
                       ? late === 0
-                        ? `Myöhässä tänään klo ${task.dueTime}`
-                        : `Myöhässä ${late} ${late === 1 ? "päivä" : "päivää"}`
+                        ? fill(t.tehtavat.overdueToday, { aika: task.dueTime ?? "" })
+                        : fill(t.tehtavat.overdueDays, {
+                            maara: String(late),
+                            yksikko:
+                              late === 1 ? t.tehtavat.dayOne : t.tehtavat.dayMany,
+                          })
                       : status === "due_today"
-                        ? `Tänään${task.dueTime ? ` klo ${task.dueTime}` : ""}`
+                        ? t.yleinen.today +
+                          (task.dueTime ? ` ${task.dueTime}` : "")
                         : formatDate(task.dueOn)}
                   </p>
 

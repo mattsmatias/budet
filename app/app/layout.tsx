@@ -1,4 +1,6 @@
 import { requireContext } from "@/lib/restoflow/session";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
 import { AppBottomNav, AppSidebar } from "./nav";
 import "../worker.css";
 
@@ -24,10 +26,11 @@ import "../worker.css";
  */
 export default async function EmployeeAppLayout({ children }: LayoutProps<"/app">) {
   const { user } = await requireContext("/app");
+  const t = workerText(await resolveLocale());
 
   return (
     <div className="bd-app flex min-h-screen justify-center lg:justify-start">
-      <AppSidebar userName={user.fullName ?? user.email ?? "Käyttäjä"} />
+      <AppSidebar userName={user.fullName ?? user.email ?? t.yleinen.user} t={t} />
 
       <div
         className="relative flex min-h-screen w-full max-w-md flex-col lg:max-w-none"
@@ -45,7 +48,7 @@ export default async function EmployeeAppLayout({ children }: LayoutProps<"/app"
           {children}
         </main>
 
-        <AppBottomNav />
+        <AppBottomNav t={t} />
       </div>
     </div>
   );

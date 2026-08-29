@@ -8,6 +8,8 @@ import { formatHoursMinutes } from "@/lib/restoflow/timeclock";
 import type { OpenShift } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { SectionTitle, Surface, shortDay } from "../ui";
+import type { WorkerText } from "@/lib/i18n/worker-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 
 const initial: ActionState = {};
 
@@ -30,7 +32,15 @@ const initial: ActionState = {};
  * esihenkilölle syyn — erillinen "vapauta vuoro" tekisi otetusta
  * vuorosta varauksen, jonka voi purkaa hiljaa edellisenä iltana.
  */
-export function OpenShifts({ shifts }: { shifts: OpenShift[] }) {
+export function OpenShifts({
+  shifts,
+  t,
+  locale,
+}: {
+  shifts: OpenShift[];
+  t: WorkerText;
+  locale: AppLocale;
+}) {
   const [state, action] = useActionState(claimOpenShift, initial);
   const [confirming, setConfirming] = useState<string | null>(null);
 
@@ -45,7 +55,7 @@ export function OpenShifts({ shifts }: { shifts: OpenShift[] }) {
 
   return (
     <section className="space-y-2">
-      <SectionTitle>Avoimet vuorot</SectionTitle>
+      <SectionTitle>{t.vuorot.openShifts}</SectionTitle>
 
       {state.error ? (
         <p
@@ -72,6 +82,8 @@ export function OpenShifts({ shifts }: { shifts: OpenShift[] }) {
                   action={action}
                   confirming={confirming === shift.id}
                   onAsk={() => setConfirming(shift.id)}
+                  t={t}
+                  locale={locale}
                   onCancel={() => setConfirming(null)}
                 />
               ))}
@@ -79,8 +91,7 @@ export function OpenShifts({ shifts }: { shifts: OpenShift[] }) {
           </Surface>
 
           <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Otettu vuoro on sinun heti. Jos et pääsekään, ilmoita poissaolo —
-            älä jätä sitä esihenkilön huomattavaksi.
+            {t.vuorot.takenNote}
           </p>
         </>
       )}
@@ -96,12 +107,16 @@ function Row({
   confirming,
   onAsk,
   onCancel,
+  t,
+  locale,
 }: {
   shift: OpenShift;
   action: (formData: FormData) => void;
   confirming: boolean;
   onAsk: () => void;
   onCancel: () => void;
+  t: WorkerText;
+  locale: AppLocale;
 }) {
   const length = formatHoursMinutes(shiftLengthMinutes(shift) * 60_000);
 
@@ -109,7 +124,7 @@ function Row({
     <div className="px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-medium">{shortDay(shift.date)}</p>
+          <p className="text-[14px] font-medium">{shortDay(shift.date, locale)}</p>
           <p className="rf-tabular mt-0.5 text-[15px]">
             {shift.startTime}–{shift.endTime}
             <span className="ml-2 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
@@ -129,7 +144,7 @@ function Row({
               borderRadius: 10,
             }}
           >
-            Ota vuoro
+            {t.vuorot.takeShift}
           </button>
         )}
       </div>
@@ -140,11 +155,12 @@ function Row({
           style={{ background: "var(--rf-inset)", borderRadius: 12 }}
         >
           <p className="text-[13px] leading-relaxed">
-            Otatko vuoron <strong>{shortDay(shift.date)}</strong> klo{" "}
+            {t.vuorot.confirmTakeLead}{" "}
+            <strong>{shortDay(shift.date, locale)}</strong> {t.vuorot.at}{" "}
             <strong className="rf-tabular">
               {shift.startTime}–{shift.endTime}
             </strong>
-            ? Se on sinun heti.
+            {t.vuorot.confirmTake}
           </p>
 
           <div className="mt-3 flex gap-2">
@@ -156,7 +172,7 @@ function Row({
               className="rf-press rf-hit px-3.5 py-2.5 text-[13px] font-medium"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Peruuta
+              {t.vuorot.cancel}
             </button>
           </div>
         </div>

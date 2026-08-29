@@ -2,6 +2,8 @@ import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
 import { SHIFT_STATUS_LABELS, type Shift } from "@/lib/restoflow/types";
 import { Empty, Surface, Tag, shortDay } from "../ui";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { WorkerText } from "@/lib/i18n/worker-text";
 
 /**
  * Seuraava työvuoro.
@@ -13,13 +15,20 @@ import { Empty, Surface, Tag, shortDay } from "../ui";
  * Pinta ja tilamerkintä tulevat jaetusta kirjastosta, jotta tämä
  * näyttää samalta kuin Vuorot-sivun rivit.
  */
-export function NextShift({ shift, today }: { shift: Shift | null; today: string }) {
+export function NextShift({
+  shift,
+  today,
+  t,
+  locale,
+}: {
+  shift: Shift | null;
+  today: string;
+  t: WorkerText;
+  locale: AppLocale;
+}) {
   if (!shift) {
     return (
-      <Empty
-        title="Ei tulevia työvuoroja"
-        description="Sinulle ei ole vielä lisätty tulevia työvuoroja."
-      />
+      <Empty title={t.koti.nextShiftEmpty} description={t.koti.nextShiftEmptyBody} />
     );
   }
 
@@ -29,7 +38,7 @@ export function NextShift({ shift, today }: { shift: Shift | null; today: string
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-              {shift.date === today ? "Tänään" : shortDay(shift.date)}
+              {shift.date === today ? t.yleinen.today : shortDay(shift.date, locale)}
             </p>
             <p className="rf-tabular mt-0.5 text-[20px] font-semibold tracking-tight">
               {shift.startTime}–{shift.endTime}
@@ -45,7 +54,7 @@ export function NextShift({ shift, today }: { shift: Shift | null; today: string
             {shift.status === "accepted" ? (
               <Tag tone="ok">
                 <RfIcon name="check" size={12} />
-                Vahvistettu
+                {t.vuorot.confirmed}
               </Tag>
             ) : (
               <Tag tone={shift.status === "changed" ? "info" : "neutral"}>

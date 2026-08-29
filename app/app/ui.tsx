@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
+import { dateShortWeekday } from "@/lib/i18n/format";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 
 /**
  * Työntekijänäkymän rakennuspalikat.
@@ -234,12 +236,16 @@ export function Tag({
 // Päivämäärät
 // ---------------------------------------------------------------------------
 
-const SHORT_DAYS = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
-
-/** "Ma 24.8." */
-export function shortDay(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  return `${SHORT_DAYS[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+/**
+ * "ma 24.8." kielen mukaan.
+ *
+ * Tässä oli kovakoodattu suomalainen viikonpäivälista. Se ei ollut
+ * pelkkä käännöspuute vaan väärä tieto: englanniksi "Ma" ei ole
+ * maanantai. Intl osaa lyhenteen jokaisella kielellä, eikä listaa
+ * tarvitse ylläpitää.
+ */
+export function shortDay(isoDate: string, locale: AppLocale): string {
+  return dateShortWeekday(isoDate, locale);
 }
 
 /** "24.8." */

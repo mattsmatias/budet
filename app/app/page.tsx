@@ -10,6 +10,8 @@ import { WeeklyHours } from "./home/weekly-hours";
 import { RecentDays } from "./home/recent-days";
 import { Workplace } from "./home/workplace";
 import { Surface, shortDay } from "./ui";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
 import {
   clockInState,
   formatMinuteOfDay,
@@ -38,6 +40,8 @@ export default async function EmployeeHome() {
     await employeeContext("/app");
 
   const zone = restaurant.timezone;
+  const locale = await resolveLocale();
+  const t = workerText(locale);
 
   /*
    * Historia haetaan erikseen ja vain tälle sivulle.
@@ -97,7 +101,11 @@ export default async function EmployeeHome() {
         : {
             kind: "no-shift" as const,
             next: clockIn.next
-              ? `${clockIn.next.date === today ? "tänään" : shortDay(clockIn.next.date)} ${label(clockIn.next)}`
+              ? `${
+                  clockIn.next.date === today
+                    ? t.yleinen.today.toLocaleLowerCase(locale)
+                    : shortDay(clockIn.next.date, locale)
+                } ${label(clockIn.next)}`
               : null,
           };
 
@@ -113,7 +121,9 @@ export default async function EmployeeHome() {
     <div className="space-y-6">
       <header className="bd-app-rise px-1 pt-1">
         <h1 className="text-[30px] font-semibold" style={{ letterSpacing: "-0.03em" }}>
-          Hei{firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
+          {t.koti.hello}
+          {firstName ? `, ${firstName}` : ""}{" "}
+          <span aria-hidden="true">👋</span>
         </h1>
         <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {restaurant.name}
@@ -125,13 +135,18 @@ export default async function EmployeeHome() {
         Leimaus on leveämpi myös rinnakkain: se on pääasia eikä puolikas.
       */}
       <div className="bd-app-rise bd-app-d1 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <ClockCard todayEvents={todayEvents} timezone={zone} clockIn={clockInProps} />
+        <ClockCard
+          todayEvents={todayEvents}
+          timezone={zone}
+          clockIn={clockInProps}
+          t={t}
+        />
 
         <div className="space-y-4">
-          <NextShift shift={nextShift} today={today} />
+          <NextShift shift={nextShift} today={today} t={t} locale={locale} />
 
           <Surface>
-            <WeeklyHours workedMs={week.workedMs} />
+            <WeeklyHours workedMs={week.workedMs} t={t} />
           </Surface>
         </div>
       </div>
@@ -144,15 +159,15 @@ export default async function EmployeeHome() {
         työyhteisöä ja historiaa.
       */}
       <div className="bd-app-rise bd-app-d2">
-        <MyTasks tasks={tasks} today={today} />
+        <MyTasks tasks={tasks} today={today} t={t} />
       </div>
 
       <div className="bd-app-rise bd-app-d3">
-        <Workplace colleagues={colleagues} birthdays={birthdays} />
+        <Workplace colleagues={colleagues} birthdays={birthdays} t={t} />
       </div>
 
       <div className="bd-app-rise bd-app-d4">
-        <RecentDays days={recent} timezone={zone} today={today} />
+        <RecentDays days={recent} timezone={zone} today={today} t={t} locale={locale} />
       </div>
     </div>
   );

@@ -7,7 +7,14 @@ import { AbsenceReporter } from "./absence";
 import { OpenShifts } from "./open-shifts";
 import { Empty, PageHeader, SectionTitle, Surface, Tag, shortDate } from "../ui";
 
-export const metadata = { title: "Vuorot" };
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { workerText } from "@/lib/i18n/worker-text";
+import { fill } from "@/lib/i18n/auth-text";
+
+export async function generateMetadata() {
+  const t = workerText(await resolveLocale());
+  return { title: t.vuorot.title };
+}
 
 /** Montako viikkoa eteenpäin listataan. */
 const WEEKS_AHEAD = 4;
@@ -32,6 +39,8 @@ const WEEKS_AHEAD = 4;
  */
 export default async function ShiftsPage() {
   const { shifts, absences, claimable, today } = await employeeContext("/app/vuorot");
+  const locale = await resolveLocale();
+  const t = workerText(locale);
 
   /*
    * Peruttu vuoro ei ole vuoro.
@@ -70,7 +79,7 @@ export default async function ShiftsPage() {
 
   return (
     <div className="rf-enter space-y-6">
-      <PageHeader title="Vuorot" subtitle="Tulevat työvuorosi" />
+      <PageHeader title={t.vuorot.title} subtitle={t.vuorot.subtitle} />
 
       {changed.length > 0 ? (
         <div className="space-y-2">
@@ -81,7 +90,7 @@ export default async function ShiftsPage() {
                   <RfIcon name="alert" size={18} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-medium">Työvuoro muuttui</p>
+                  <p className="text-[15px] font-medium">{t.vuorot.changed}</p>
                   <p className="rf-tabular mt-1 text-[14px]">
                     <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
                     <s style={{ color: "var(--rf-text-3)" }}>
@@ -110,7 +119,7 @@ export default async function ShiftsPage() {
                   <RfIcon name="alert" size={18} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[15px] font-medium">Työvuoro peruttu</p>
+                  <p className="text-[15px] font-medium">{t.vuorot.cancelled}</p>
                   <p className="rf-tabular mt-1 text-[14px]">
                     <span style={{ color: "var(--rf-text-3)" }}>{shortDate(shift.date)} </span>
                     <s style={{ color: "var(--rf-text-3)" }}>
@@ -128,12 +137,12 @@ export default async function ShiftsPage() {
         </div>
       ) : null}
 
-      <OpenShifts shifts={claimable} />
+      <OpenShifts shifts={claimable} t={t} locale={locale} />
 
       {!hasAny ? (
         <Empty
-          title="Ei tulevia työvuoroja"
-          description="Sinulle ei ole vielä lisätty tulevia työvuoroja. Saat ilmoituksen kun esihenkilö merkitsee vuoron."
+          title={t.vuorot.emptyTitle}
+          description={t.vuorot.emptyBody}
         />
       ) : (
         weeks.map((week) => {
@@ -143,7 +152,9 @@ export default async function ShiftsPage() {
           return (
             <section key={week.days[0]} className="space-y-2">
               <SectionTitle>
-                {week.index === 0 ? "Tämä viikko" : `Viikko ${week.label}`}
+                {week.index === 0
+                  ? t.yleinen.thisWeek
+                  : fill(t.yleinen.week, { numero: week.label })}
               </SectionTitle>
 
               <Surface padded={false}>
