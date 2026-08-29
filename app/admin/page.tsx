@@ -375,11 +375,11 @@ export default async function AdminDashboard({
       */}
       {/* 2. KPI-kortit */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.sanat.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatCard
-          label="Kirjatut kulut"
+          label={t.sanat.recordedExpenses}
           value={<CountUp to={totals.totalCents} format="money" />}
           icon={<RfIcon name="receipt" size={17} />}
           /*
@@ -488,11 +488,11 @@ export default async function AdminDashboard({
                   : "/admin/myynti"
                 : undefined
             }
-            linkLabel={posCheck?.status === "mismatch" ? "Katso ero" : "Myynti"}
+            linkLabel={posCheck?.status === "mismatch" ? "Katso ero" : t.sanat.sales}
           />
         ) : (
           <StatCard
-            label="Kuitit"
+            label={t.sanat.receipts}
             tileTone="green"
             value={<CountUp to={receipts_.total} format="integer" />}
             delta={
@@ -502,7 +502,7 @@ export default async function AdminDashboard({
             tone={receipts_.pending > 0 ? "warn" : "neutral"}
             icon={<RfIcon name="receipt" size={17} />}
             href="/admin/kuitit"
-            linkLabel="Kuitit"
+            linkLabel={t.sanat.receipts}
           />
         )}
 
@@ -602,7 +602,7 @@ export default async function AdminDashboard({
         vierekkäin ne luetaan yhtenä silmäyksenä.
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-        <Panel title="Kulujakauma" href="/admin/kulut">
+        <Panel title={t.sanat.expenseBreakdown} href="/admin/kulut">
           {categories.length === 0 ? (
             <PanelEmpty
               {...(emptyForMonth ?? {
@@ -684,8 +684,8 @@ export default async function AdminDashboard({
               <AreaChart
                 labels={flow.labels}
                 series={[
-                  { label: "Myynti", color: SALES_COLOR, points: flow.sales },
-                  { label: "Kulut", color: COST_COLOR, points: flow.costs },
+                  { label: t.sanat.sales, color: SALES_COLOR, points: flow.sales },
+                  { label: t.sanat.expenses, color: COST_COLOR, points: flow.costs },
                 ]}
                 format={(value) => `${Math.round(value / 100000)} k`}
               />
@@ -696,17 +696,13 @@ export default async function AdminDashboard({
                     aria-hidden="true"
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: SALES_COLOR }}
-                  />
-                  Myynti
-                </li>
+                  />{t.sanat.sales}</li>
                 <li className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: COST_COLOR }}
-                  />
-                  Kulut
-                </li>
+                  />{t.sanat.expenses}</li>
                 {flow.salesMissing ? (
                   <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>{t.yleiskatsaus.salesGapNote}</li>
                 ) : null}
@@ -781,10 +777,10 @@ export default async function AdminDashboard({
                 <caption className="sr-only">{t.yleiskatsaus.latestReceipts}</caption>
                 <thead>
                   <tr>
-                    <th scope="col">Toimittaja</th>
-                    <th scope="col">Kategoria</th>
-                    <th scope="col">Summa</th>
-                    <th scope="col">Tila</th>
+                    <th scope="col">{t.sanat.supplier}</th>
+                    <th scope="col">{t.sanat.category}</th>
+                    <th scope="col">{t.sanat.amount}</th>
+                    <th scope="col">{t.sanat.status}</th>
                     <th scope="col">{t.yleiskatsaus.day}</th>
                   </tr>
                 </thead>
@@ -838,9 +834,9 @@ export default async function AdminDashboard({
 
                       <td>
                         {receipt.status === "needs_review" ? (
-                          <StatusChip tone="warn">Tarkistettava</StatusChip>
+                          <StatusChip tone="warn">{t.sanat.toBeChecked}</StatusChip>
                         ) : (
-                          <StatusChip tone="ok">Tarkistettu</StatusChip>
+                          <StatusChip tone="ok">{t.sanat.checked}</StatusChip>
                         )}
                       </td>
 
@@ -878,13 +874,9 @@ export default async function AdminDashboard({
                       </span>
                       <span className="mt-1 block">
                         {receipt.status === "needs_review" ? (
-                          <Pill tone="warn" dot>
-                            Tarkistettava
-                          </Pill>
+                          <Pill tone="warn" dot>{t.sanat.toBeChecked}</Pill>
                         ) : (
-                          <Pill tone="ok" dot>
-                            Tarkistettu
-                          </Pill>
+                          <Pill tone="ok" dot>{t.sanat.checked}</Pill>
                         )}
                       </span>
                     </span>

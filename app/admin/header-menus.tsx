@@ -10,6 +10,7 @@ import { severityColor } from "@/components/restoflow/ui";
 import { alertIcon } from "@/lib/restoflow/alert-icons";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 
 /**
  * Yläpalkin valikot.
@@ -143,7 +144,7 @@ function NotificationMenu({
 
   return (
     <Dropdown
-      label={alerts.length > 0 ? `Huomiot, ${alerts.length} uutta` : "Huomiot"}
+      label={alerts.length > 0 ? fill(t.kuori2.alertsLabel, { maara: String(alerts.length) }) : "Huomiot"}
       badge={alerts.length}
       width={380}
       open={open}
@@ -191,8 +192,7 @@ function NotificationMenu({
                 <RfIcon name="check" size={16} />
               </span>
               <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-                Ei huomioita juuri nyt. Ne ilmestyvät tänne itsestään kun
-                aineistossa on jotain tarkistettavaa.
+                {t.kuori2.noObservations}
               </p>
             </div>
           ) : (
@@ -261,7 +261,7 @@ function NotificationMenu({
               style={{ borderColor: "var(--rf-line)", color: "var(--rf-accent)" }}
             >
               {alerts.length > shown.length
-                ? `Näytä kaikki ${alerts.length} huomiota`
+                ? fill(t.kuori2.showAllAlerts, { maara: String(alerts.length) })
                 : "Avaa huomiot"}{" "}
               <span aria-hidden="true">→</span>
             </Link>

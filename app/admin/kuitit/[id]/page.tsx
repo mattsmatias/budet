@@ -133,7 +133,7 @@ export default async function AdminReceiptDetailPage({
       <header className="flex items-center gap-2">
         <Link
           href="/admin/kuitit"
-          aria-label="Takaisin kuittilistaan"
+          aria-label={t.kuitti2.backToList}
           className="rf-press -ml-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
@@ -231,9 +231,7 @@ export default async function AdminReceiptDetailPage({
                   </Pill>
                 ))
               ) : (
-                <Pill tone="ok" dot>
-                  Tarkistettu
-                </Pill>
+                <Pill tone="ok" dot>{t.sanat.checked}</Pill>
               )}
 
               {/*
@@ -275,29 +273,29 @@ export default async function AdminReceiptDetailPage({
                 label={fill(t.kuitit.purchasesIn, { kuukausi: monthWord(month, locale) })}
                 value={formatMoney(monthTotal)}
               />
-              <Stat label="Kuitteja" value={String(merchantReceipts.length)} />
+              <Stat label={t.sanat.receiptCount} value={String(merchantReceipts.length)} />
               <Stat
-                label="Viimeisin"
+                label={t.kuitti2.latest}
                 value={latestVisit ? formatDate(latestVisit) : "—"}
               />
             </dl>
           </Card>
 
           <Card>
-            <p className="mb-1 text-[13px] font-semibold">Kuittitiedot</p>
+            <p className="mb-1 text-[13px] font-semibold">{t.kuitti2.details}</p>
             <dl>
-              <Row label="Toimittaja" value={receipt.supplierName} />
+              <Row label={t.sanat.supplier} value={receipt.supplierName} />
               <Row label={t.kuitit.date} value={formatDate(receipt.date)} />
               <Row label={t.kuitit.total} value={formatMoney(receipt.totalCents)} />
               <Row
-                label="ALV"
+                label={t.kuitti2.vat}
                 value={receipt.vatCents === null ? "—" : formatMoney(receipt.vatCents)}
                 warn={receipt.vatCents === null}
               />
-              <Row label="Kategoria" value={CATEGORY_LABELS[receipt.category]} />
-              <Row label="Maksutapa" value={PAYMENT_LABELS[receipt.paymentMethod]} />
-              <Row label="Kuittinumero" value={receipt.receiptNumber ?? "—"} />
-              <Row label="Muistiinpano" value={receipt.note ?? "—"} />
+              <Row label={t.sanat.category} value={CATEGORY_LABELS[receipt.category]} />
+              <Row label={t.kuitti2.paymentMethod} value={PAYMENT_LABELS[receipt.paymentMethod]} />
+              <Row label={t.kuitti2.receiptNumber} value={receipt.receiptNumber ?? "—"} />
+              <Row label={t.kuitti2.note} value={receipt.note ?? "—"} />
               <Row label={t.kuitit.addedBy} value={addedBy?.name ?? "—"} />
               <Row label={t.kuitit.addedAt} value={formatDateTime(receipt.addedAt)} last />
             </dl>
@@ -312,16 +310,16 @@ export default async function AdminReceiptDetailPage({
             */}
             {rateBreakdown.length > 1 ? (
               <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--rf-line)" }}>
-                <h3 className="text-[13.5px] font-bold">ALV verokannoittain</h3>
+                <h3 className="text-[13.5px] font-bold">{t.kuitti2.vatByRate}</h3>
 
                 <table className="rf-table mt-2.5 w-full">
-                  <caption className="sr-only">ALV verokannoittain</caption>
+                  <caption className="sr-only">{t.kuitti2.vatByRate}</caption>
                   <thead>
                     <tr>
-                      <th scope="col">Kanta</th>
-                      <th scope="col" className="text-right">Verollinen</th>
-                      <th scope="col" className="text-right">ALV</th>
-                      <th scope="col" className="text-right">Veroton</th>
+                      <th scope="col">{t.kuitti2.rate}</th>
+                      <th scope="col" className="text-right">{t.kuitti2.withVat}</th>
+                      <th scope="col" className="text-right">{t.kuitti2.vat}</th>
+                      <th scope="col" className="text-right">{t.kuitti2.withoutVat}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -413,7 +411,7 @@ export default async function AdminReceiptDetailPage({
 
           {canReview ? (
             <Card>
-              <p className="mb-2 text-[13px] font-semibold">Poista kuitti</p>
+              <p className="mb-2 text-[13px] font-semibold">{t.kuitti2.deleteReceipt}</p>
               <p className="mb-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.kuitit.deleteWarning}</p>
               <DeleteReceipt receiptId={receipt.id} />
             </Card>

@@ -222,7 +222,7 @@ export default async function AdminReceiptsPage({
         </Card>
       ) : null}
 
-      <nav aria-label="Suodattimet" className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <nav aria-label={t.sanat.filters} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {suodattimet(t).map((f) => {
             const active = filter === f.key;
@@ -428,9 +428,7 @@ export default async function AdminReceiptsPage({
                     <span className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                       {receipt.hasImage ? (
                         <>
-                          <RfIcon name="image" size={14} />
-                          Kuva liitetty
-                        </>
+                          <RfIcon name="image" size={14} />{t.sanat.imageAttached}</>
                       ) : (
                         t.kuitit.noImage
                       )}
@@ -439,9 +437,7 @@ export default async function AdminReceiptsPage({
                       href={`/admin/kuitit/${receipt.id}`}
                       className="rf-press -my-3 flex items-center gap-1 py-3 text-[13px] font-medium"
                       style={{ color: "var(--rf-blue)" }}
-                    >
-                      Avaa
-                      <RfIcon name="chevron" size={14} />
+                    >{t.sanat.open}<RfIcon name="chevron" size={14} />
                     </Link>
                   </div>
 

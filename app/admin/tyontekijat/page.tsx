@@ -1,4 +1,7 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { fetchInvitations } from "@/lib/restoflow/queries";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { staffCostCents } from "@/lib/restoflow/timeclock";
@@ -10,11 +13,15 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { CountUp } from "@/components/restoflow/count-up";
 import { InviteForm, MemberForm } from "./forms";
 
-export const metadata = { title: "Työntekijät" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.henkilosto.title };
+}
 
 export default async function StaffPage() {
   const { users, shifts, monthlyHours, role, restaurant } =
     await adminContext("/admin/tyontekijat");
+  const t = adminText(await resolveLocale());
 
   const canManage = can(role, "staff.manage");
   const showsRates = seesPayRates(role);
@@ -50,11 +57,11 @@ export default async function StaffPage() {
 
       {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.sanat.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
       >
         <MetricCard
-          label="Työtunnit"
+          label={t.henkilosto.hours}
           icon={<RfIcon name="clock" size={17} />}
           tileTone="brand"
           tone="muted"
@@ -64,21 +71,21 @@ export default async function StaffPage() {
 
         {showsRates ? (
           <MetricCard
-            label="Henkilöstökulut"
+            label={t.henkilosto.staffCost}
             icon={<RfIcon name="payroll" size={17} />}
             tileTone="green"
             value={<CountUp to={totalCost} format="money" />}
             tone={missingRates > 0 ? "warn" : "muted"}
             conclusion={
               missingRates > 0
-                ? `${missingRates} ilman tuntipalkkaa`
+                ? fill(t.lauseet.missingRates, { maara: String(missingRates) })
                 : "Tunnit × tuntipalkka"
             }
           />
         ) : null}
 
         <MetricCard
-          label="Keskimäärin"
+          label={t.henkilosto.average}
           icon={<RfIcon name="staff" size={17} />}
           tileTone="violet"
           tone="muted"
@@ -89,7 +96,7 @@ export default async function StaffPage() {
               <CountUp to={totalHours / users.length} format="hours" />
             )
           }
-          conclusion="Käyttäjää kohti"
+          conclusion={t.henkilosto.perUser}
         />
       </section>
 
@@ -97,11 +104,8 @@ export default async function StaffPage() {
 
       {invitations.length > 0 ? (
         <Card>
-          <p className="text-[15px] font-semibold">Avoimet kutsut</p>
-          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-            Koodia ei voi näyttää uudelleen — kannassa on vain sen tiiviste.
-            Jos koodi katosi, mitätöi kutsu ja luo uusi.
-          </p>
+          <p className="text-[15px] font-semibold">{t.henkilosto2.openInvites}</p>
+          <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>{t.henkilosto.codeOnce}</p>
           <ul className="mt-3 divide-y" style={{ borderColor: "var(--rf-line)" }}>
             {invitations.map((inv) => (
               <li
@@ -131,9 +135,7 @@ export default async function StaffPage() {
                       color: "var(--rf-red-text)",
                       borderRadius: "var(--rf-r-control)",
                     }}
-                  >
-                    Mitätöi
-                  </button>
+                  >{t.henkilosto.revoke}</button>
                 </form>
               </li>
             ))}
@@ -159,10 +161,10 @@ export default async function StaffPage() {
               </div>
 
               <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <Stat label="Tunnit" value={`${hours} h`} />
-                <Stat label="Vuoroja" value={String(shiftCount)} />
+                <Stat label={t.sanat.hours} value={`${hours} h`} />
+                <Stat label={t.henkilosto2.shiftCount} value={String(shiftCount)} />
                 <Stat
-                  label={showsRates ? "Kulu" : "Kuitit"}
+                  label={showsRates ? t.henkilosto2.cost : "Kuitit"}
                   value={
                     showsRates
                       ? formatMoney(cost)
@@ -182,19 +184,17 @@ export default async function StaffPage() {
       <Card padded={false} className="hidden md:block">
         <div className="overflow-x-auto">
           <table className="rf-table w-full min-w-[44rem] text-[14px]">
-            <caption className="sr-only">Käyttäjät ja työtunnit</caption>
+            <caption className="sr-only">{t.henkilosto.usersAndHours}</caption>
             <thead>
               <tr>
-                <th scope="col">Käyttäjä</th>
-                <th scope="col">Rooli</th>
-                <th scope="col" className="text-right">Tunnit</th>
-                <th scope="col" className="text-right">Vuoroja</th>
+                <th scope="col">{t.henkilosto.user}</th>
+                <th scope="col">{t.sanat.role}</th>
+                <th scope="col" className="text-right">{t.sanat.hours}</th>
+                <th scope="col" className="text-right">{t.henkilosto2.shiftCount}</th>
                 {showsRates ? (
                   <>
-                    <th scope="col" className="text-right">
-                      Tuntipalkka
-                    </th>
-                    <th scope="col" className="text-right">Kulu</th>
+                    <th scope="col" className="text-right">{t.henkilosto2.hourlyRate}</th>
+                    <th scope="col" className="text-right">{t.henkilosto2.cost}</th>
                   </>
                 ) : null}
               </tr>

@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
+import { monthName } from "@/lib/i18n/format";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { RfIcon } from "@/components/restoflow/icons";
 import {
@@ -44,11 +48,16 @@ import { cancelAbsence, markAbsenceCertificate } from "../actions";
 import { PublishBar } from "./publish-bar";
 import { EditShift, NewShiftButton } from "./shift-form";
 
-export const metadata = { title: "Työvuorot" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.vuorot.title };
+}
 
 export default async function AdminShiftsPage() {
   const { users, shifts, openShifts, clockEvents, absences, today, now, role, restaurant } =
     await adminContext("/admin/tyovuorot");
+  const locale = await resolveLocale();
+  const t = adminText(locale);
 
   const canManage = can(role, "shifts.manage");
 
@@ -148,7 +157,7 @@ export default async function AdminShiftsPage() {
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {upcoming.length} tulevaa
-            {openShifts.length > 0 ? ` · ${openShifts.length} avointa` : ""}
+            {openShifts.length > 0 ? fill(t.lauseet.openSuffix, { maara: String(openShifts.length) }) : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -169,9 +178,7 @@ export default async function AdminShiftsPage() {
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <RfIcon name="calendar" size={15} />
-            Kalenteri
-          </Link>
+            <RfIcon name="calendar" size={15} />{t.sanat.calendar}</Link>
 
           <Link
             href="/admin/tyovuorot/lista"
@@ -183,9 +190,7 @@ export default async function AdminShiftsPage() {
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            <RfIcon name="report" size={15} />
-            Kuukauden lista
-          </Link>
+            <RfIcon name="report" size={15} />{t.vuorot2.monthList}</Link>
 
           <NewShiftButton users={users} defaultDate={today} />
         </div>
@@ -210,7 +215,10 @@ export default async function AdminShiftsPage() {
                  * pääte on aina sama n. Erillistä taivutustaulukkoa ei
                  * tarvita, eikä sellainen ehtisi vanhentua.
                  */
-                monthLabel={`${monthWord(draftMonth)}n ${draftMonth.slice(0, 4)}`}
+                monthLabel={fill(t.lauseet.monthYear, {
+                  kuukausi: monthName(draftMonth, locale),
+                  vuosi: draftMonth.slice(0, 4),
+                })}
                 drafts={drafts.length}
                 people={plan.people}
                 hours={formatPlanned(plan.plannedMinutes)}
@@ -229,8 +237,8 @@ export default async function AdminShiftsPage() {
       {overlapping.length > 0 ? (
         <Card>
           <CardHeader
-            title="Päällekkäiset vuorot"
-            subtitle="Sama ihminen kahdessa paikassa samaan aikaan"
+            title={t.vuorot.overlapping}
+            subtitle={t.vuorot2.samePersonTwice}
           />
           <ul className="space-y-3">
             {overlapping.map((pair) => (
@@ -253,9 +261,7 @@ export default async function AdminShiftsPage() {
                   </div>
                 </div>
 
-                <Pill tone="risk" dot>
-                  päällekkäin
-                </Pill>
+                <Pill tone="risk" dot>{t.vuorot.overlap}</Pill>
               </li>
             ))}
           </ul>
@@ -265,8 +271,8 @@ export default async function AdminShiftsPage() {
       {upcomingAbsences.length > 0 ? (
         <Card>
           <CardHeader
-            title="Poissaoloilmoitukset"
-            subtitle="Ilmoitus ei peru vuoroa — vuoro on yhä tekijällä"
+            title={t.vuorot2.absenceNotices}
+            subtitle={t.vuorot.noticeDoesNotCancel}
           />
           <ul className="space-y-3">
             {upcomingAbsences.map((absence) => {
@@ -296,7 +302,7 @@ export default async function AdminShiftsPage() {
                         {absence.date === absence.endDate
                           ? formatShortDate(absence.date)
                           : `${formatShortDate(absence.date)}–${formatShortDate(absence.endDate)}`}
-                        {shift ? ` · vuoro ${shift.startTime}–${shift.endTime}` : " · ei vuoroa"}
+                        {shift ? fill(t.lauseet.shiftSuffix, { alku: shift.startTime, loppu: shift.endTime }) : " · ei vuoroa"}
                         {absence.note ? ` · ${absence.note}` : ""}
                       </p>
                     </div>
@@ -339,8 +345,8 @@ export default async function AdminShiftsPage() {
                             <RfIcon name="check" size={14} />
                           ) : null}
                           {absence.certificateSeenAt
-                            ? "Todistus nähty"
-                            : "Merkitse todistus nähdyksi"}
+                            ? t.vuorot.certificateSeen
+                            : t.vuorot.markCertificateSeen}
                         </button>
                       </form>
                     ) : null}
@@ -355,9 +361,7 @@ export default async function AdminShiftsPage() {
                           color: "var(--rf-text-2)",
                           borderRadius: "var(--rf-r-control)",
                         }}
-                      >
-                        Kuittaa
-                      </button>
+                      >{t.vuorot2.acknowledge}</button>
                     </form>
                   </div>
                 </li>
@@ -377,8 +381,8 @@ export default async function AdminShiftsPage() {
       {deviations.length > 0 ? (
         <Card>
           <CardHeader
-            title="Poikkeamat"
-            subtitle="Suunniteltu ja toteutunut eivät kohdanneet"
+            title={t.vuorot2.deviations}
+            subtitle={t.vuorot.plannedVsActual}
           />
           <ul className="space-y-3">
             {deviations.slice(0, 12).map((poikkeama, index) => (
@@ -425,8 +429,8 @@ export default async function AdminShiftsPage() {
       {declined.length > 0 ? (
         <Card>
           <CardHeader
-            title="Kieltäytyneet"
-            subtitle="Nämä vuorot ovat auki — merkitse joku muu tai jätä avoimeksi"
+            title={t.vuorot.declined}
+            subtitle={t.vuorot.openShiftsNote}
           />
           <ul className="space-y-3">
             {declined.map((shift) => (
@@ -437,51 +441,50 @@ export default async function AdminShiftsPage() {
       ) : null}
 
       {comparisons.length > 0 ? (
-        <section aria-label="Toteutunut työaika" className="space-y-3">
+        <section aria-label={t.vuorot.actualHours} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <MetricCard
-              label="Suunniteltu"
+              label={t.vuorot2.planned}
               icon={<RfIcon name="calendar" size={17} />}
               tileTone="brand"
               value={formatDuration(labour.plannedMs)}
-              hint={`${labour.shiftCount} mennyttä vuoroa`}
+              hint={fill(t.lauseet.pastShifts, { maara: String(labour.shiftCount) })}
             />
             <MetricCard
-              label="Toteutunut"
+              label={t.vuorot2.actual}
               icon={<RfIcon name="clock" size={17} />}
               tileTone="green"
               value={formatDuration(labour.actualMs)}
-              hint={`${formatVariance(labour.varianceMs)} suunniteltuun`}
+              hint={fill(t.lauseet.varianceToPlan, { ero: formatVariance(labour.varianceMs) })}
             />
             {showsRates ? (
               <MetricCard
-                label="Työvoimakustannus"
+                label={t.vuorot.labourCost}
                 icon={<RfIcon name="payroll" size={17} />}
                 tileTone="violet"
                 value={formatMoney(labour.actualCostCents)}
                 hint={
                   labour.varianceCostCents === 0
                     ? "Suunnitelman mukainen"
-                    : `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))} suunniteltuun`
+                    : fill(t.lauseet.varianceToPlan, {
+                    ero: `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))}`,
+                  })
                 }
               />
             ) : null}
           </div>
-          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Laskennallinen. Ei palkkalaskelma — ei sisällä lisiä,
-            lomakorvauksia eikä sivukuluja.
-          </p>
+          <p className="px-1 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.vuorot.estimateNote}</p>
         </section>
       ) : null}
 
       {upcoming.length === 0 && openShifts.length === 0 ? (
         <EmptyState
-          title="Ei tulevia vuoroja"
-          description="Luo ensimmäinen vuoro yllä olevasta painikkeesta. Tekijä saa sen hyväksyttäväkseen, ja voit myös jättää vuoron avoimeksi."
+          title={t.vuorot2.noUpcoming}
+          description={t.vuorot.emptyBody}
         />
       ) : (
         <Card>
-          <CardHeader title="Tulevat vuorot" subtitle="Aikajärjestyksessä" />
+          <CardHeader title={t.vuorot2.upcoming} subtitle={t.vuorot.chronological} />
           <ul className="space-y-3">
             {upcoming.map((shift) => (
               <ShiftRow key={shift.id} shift={shift} users={users} showEdit />
@@ -506,7 +509,7 @@ export default async function AdminShiftsPage() {
                     ?
                   </span>
                   <div>
-                    <p className="text-[14px] font-medium">Avoin vuoro</p>
+                    <p className="text-[14px] font-medium">{t.vuorot2.openShift}</p>
                     <p className="rf-tabular text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                       {formatShortDate(open.date)} · {open.startTime}–{open.endTime} ·{" "}
                       {POSITION_LABELS[open.position]}
@@ -514,9 +517,7 @@ export default async function AdminShiftsPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Pill tone="risk" dot>
-                    ei tekijää
-                  </Pill>
+                  <Pill tone="risk" dot>{t.vuorot.noAssignee}</Pill>
 
                   {/*
                     Avoin vuoro on poistettavissa.
@@ -539,8 +540,8 @@ export default async function AdminShiftsPage() {
       {patterns.length > 0 ? (
         <Card>
           <CardHeader
-            title="Toistuvat poikkeamat"
-            subtitle="Keskimääräinen ero suunniteltuun, vähintään kaksi vuoroa"
+            title={t.vuorot2.repeatedDeviations}
+            subtitle={t.vuorot.averageDiff}
           />
           <ul className="space-y-3">
             {patterns.map((pattern) => (
@@ -585,11 +586,7 @@ export default async function AdminShiftsPage() {
             ))}
           </ul>
 
-          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-            Toistuva ylitys ei ole syyte vaan merkki siitä että vuoro on
-            mitoitettu väärin. Tarkista suunniteltu pituus ennen kuin puhut
-            tekijän kanssa.
-          </p>
+          <p className="mt-4 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.vuorot.overrunNote}</p>
         </Card>
       ) : null}
 
@@ -597,20 +594,20 @@ export default async function AdminShiftsPage() {
         <Card padded={false}>
           <div className="px-5 pt-5">
             <CardHeader
-              title="Suunniteltu vs. toteutunut"
-              subtitle="Menneet vuorot · toteutunut luetaan leimauksista"
+              title={t.vuorot2.plannedVsActualTitle}
+              subtitle={t.vuorot2.pastShiftsNote}
             />
           </div>
           <div className="overflow-x-auto">
             <table className="rf-table w-full min-w-[38rem] text-[14px]">
-              <caption className="sr-only">Vuorojen toteutuma</caption>
+              <caption className="sr-only">{t.vuorot2.fulfilment}</caption>
               <thead>
                 <tr>
-                  <th scope="col">Päivä</th>
-                  <th scope="col">Tekijä</th>
-                  <th scope="col" className="text-right">Suunniteltu</th>
-                  <th scope="col" className="text-right">Toteutunut</th>
-                  <th scope="col" className="text-right">Ero</th>
+                  <th scope="col">{t.vuorot.day}</th>
+                  <th scope="col">{t.vuorot.assignee}</th>
+                  <th scope="col" className="text-right">{t.vuorot2.planned}</th>
+                  <th scope="col" className="text-right">{t.vuorot2.actual}</th>
+                  <th scope="col" className="text-right">{t.vuorot2.diff}</th>
                 </tr>
               </thead>
               <tbody>

@@ -131,7 +131,7 @@ function DesktopSidebar({
       </div>
 
       <nav
-        aria-label="Hallintanavigaatio"
+        aria-label={t.kuori2.adminNav}
         className="flex-1 overflow-y-auto px-3 pb-2"
       >
         {/*
@@ -268,7 +268,7 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
 
   return (
     <nav
-      aria-label="Hallintanavigaatio"
+      aria-label={t.kuori2.adminNav}
       className="fixed bottom-0 left-0 right-0 z-30 border-t md:hidden"
       style={{
         borderColor: "var(--rf-line)",

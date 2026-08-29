@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText, type AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
@@ -32,6 +35,7 @@ export default async function PayrollPage({
 }: PageProps<"/admin/palkat">) {
   const params = await searchParams;
   const { restaurant, role, month, now, users } = await adminContext("/admin/palkat");
+  const t = adminText(await resolveLocale());
 
   const requested = typeof params.kuukausi === "string" ? params.kuukausi : month;
   const viewMonth = ISO_MONTH.test(requested) && requested <= month ? requested : month;
@@ -80,7 +84,7 @@ export default async function PayrollPage({
     .filter((s) => s.workedMinutes > 0)
     .sort((a, b) => b.grossCents - a.grossCents);
 
-  const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? "Nimetön";
+  const nameOf = (id: string) => users.find((u) => u.id === id)?.name ?? t.palkat.unnamed;
 
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
@@ -111,22 +115,22 @@ export default async function PayrollPage({
         kortilta.
       */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.sanat.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatCard
-          label="Työntekijöitä"
+          label={t.palkat.employeeCount}
           tileTone="brand"
           value={<CountUp to={summary.staffCount} format="integer" />}
-          conclusion={summary.staffCount === 0 ? "Ei työaikaa kaudella" : "Palkkaa kertynyt"}
+          conclusion={summary.staffCount === 0 ? t.palkat.noHoursInPeriod : "Palkkaa kertynyt"}
           tone="muted"
           icon={<RfIcon name="staff" size={17} />}
           href="/admin/tyontekijat"
-          linkLabel="Työntekijät"
+          linkLabel={t.palkat.employees}
         />
 
         <StatCard
-          label="Tehdyt tunnit"
+          label={t.palkat2.hoursWorked}
           tileTone="green"
           /*
            * Tunnit eivät nouse paikalleen.
@@ -144,7 +148,7 @@ export default async function PayrollPage({
         />
 
         <StatCard
-          label="Bruttopalkat"
+          label={t.palkat2.grossTotal}
           tileTone="violet"
           value={<CountUp to={summary.grossCents} format="money" />}
           /*
@@ -155,13 +159,13 @@ export default async function PayrollPage({
            * rivin sen mukaan. Rajaus on silti kerrottava: bruttopalkka
            * luetaan helposti työnantajan kokonaiskuluna.
            */
-          conclusion="Peruspalkka ja lisät, ei vähennyksiä eikä sivukuluja"
+          conclusion={t.palkat.basePlusSupplements}
           tone="muted"
           icon={<RfIcon name="payroll" size={17} />}
         />
 
         <StatCard
-          label="Tarkistettavat"
+          label={t.palkat2.toCheckList}
           tileTone="blue"
           value={<CountUp to={summary.needsReview} format="integer" />}
           conclusion={
@@ -175,7 +179,7 @@ export default async function PayrollPage({
       {/* Varoitukset ennen listaa: ne muuttavat sitä mitä listassa lukee. */}
       {data.issues.length > 0 ? (
         <Card>
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Tarkistettavaa</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{t.sanat.toCheck}</h2>
           <ul className="mt-3 space-y-2">
             {data.issues.slice(0, 8).map((issue, index) => (
               <li
@@ -206,9 +210,9 @@ export default async function PayrollPage({
         </Card>
       ) : null}
 
-      <Panel title="Palkkakertymä" subtitle={`${period.startsOn} – ${period.endsOn}`}>
+      <Panel title={t.palkat.accrual} subtitle={`${period.startsOn} – ${period.endsOn}`}>
         {paid.length === 0 ? (
-          <PanelEmpty text="Kaudella ei ole toteutunutta työaikaa. Palkka muodostuu leimauksista." />
+          <PanelEmpty text={t.palkat.emptyBody} />
         ) : (
           <>
             {/* Työpöydällä taulukko, puhelimessa kortit: kuusi saraketta
@@ -217,12 +221,12 @@ export default async function PayrollPage({
               <table className="rf-table w-full min-w-[44rem] text-[14px]">
                 <thead>
                   <tr>
-                    <th>Työntekijä</th>
-                    <th className="px-4 py-3 text-right font-medium">Tunnit</th>
-                    <th className="px-4 py-3 text-right font-medium">Peruspalkka</th>
-                    <th className="px-4 py-3 text-right font-medium">Lisät</th>
-                    <th className="px-4 py-3 text-right font-medium">Bruttopalkka</th>
-                    <th className="py-3 pl-4 font-medium">Tila</th>
+                    <th>{t.palkat.employee}</th>
+                    <th className="px-4 py-3 text-right font-medium">{t.sanat.hours}</th>
+                    <th className="px-4 py-3 text-right font-medium">{t.palkat2.basePay}</th>
+                    <th className="px-4 py-3 text-right font-medium">{t.palkat.supplements}</th>
+                    <th className="px-4 py-3 text-right font-medium">{t.palkat2.gross}</th>
+                    <th className="py-3 pl-4 font-medium">{t.sanat.status}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -257,6 +261,7 @@ export default async function PayrollPage({
                         <StatusPill
                           issues={slip.issues.length}
                           approved={approvedIds.has(slip.userId)}
+                          t={t}
                         />
                       </td>
                     </tr>
@@ -285,7 +290,7 @@ export default async function PayrollPage({
                       <span className="block text-[12px]" style={{ color: "var(--rf-text-3)" }}>
                         {formatHours(slip.workedMinutes)}
                         {slip.supplementsCents > 0
-                          ? ` · lisät ${formatMoney(slip.supplementsCents)}`
+                          ? fill(t.lauseet.supplementsSuffix, { summa: formatMoney(slip.supplementsCents) })
                           : ""}
                       </span>
                     </span>
@@ -296,6 +301,7 @@ export default async function PayrollPage({
                         <StatusPill
                           issues={slip.issues.length}
                           approved={approvedIds.has(slip.userId)}
+                          t={t}
                         />
                       </span>
                     </span>
@@ -333,8 +339,16 @@ function initialsOf(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function StatusPill({ issues, approved }: { issues: number; approved: boolean }) {
-  if (issues > 0) return <Pill tone="warn">Tarkista</Pill>;
-  if (approved) return <Pill tone="ok">Hyväksytty</Pill>;
-  return <Pill tone="neutral">Odottaa</Pill>;
+function StatusPill({
+  issues,
+  approved,
+  t,
+}: {
+  issues: number;
+  approved: boolean;
+  t: AdminText;
+}) {
+  if (issues > 0) return <Pill tone="warn">{t.sanat.check}</Pill>;
+  if (approved) return <Pill tone="ok">{t.palkat.approved}</Pill>;
+  return <Pill tone="neutral">{t.sanat.waiting}</Pill>;
 }

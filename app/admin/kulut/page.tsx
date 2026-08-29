@@ -77,11 +77,11 @@ export default async function ExpensesPage({
         saman luvun näyttämään kahdelta eri luvulta.
       */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.sanat.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <MetricCard
-          label="Kirjatut kulut"
+          label={t.sanat.recordedExpenses}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
           value={<CountUp to={current.totalCents} format="money" />}
@@ -124,7 +124,7 @@ export default async function ExpensesPage({
         />
 
         <MetricCard
-          label="Kuitteja"
+          label={t.sanat.receiptCount}
           value={<CountUp to={current.receiptCount} format="integer" />}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="green"
@@ -202,7 +202,7 @@ export default async function ExpensesPage({
             subtitle={t.kulut.fourMonths}
           />
           <table className="rf-table w-full text-[14px]">
-            <caption className="sr-only">Kirjatut kulut kuukausittain</caption>
+            <caption className="sr-only">{t.sanat.monthlyExpenses}</caption>
             <tbody>
               {series.map((point) => {
                 const isCurrent = point.month === viewMonth;
