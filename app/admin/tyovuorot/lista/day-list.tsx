@@ -1,4 +1,6 @@
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { shiftLabel, weekdayName, type Roster } from "@/lib/restoflow/roster";
 
 /**
@@ -13,19 +15,29 @@ import { shiftLabel, weekdayName, type Roster } from "@/lib/restoflow/roster";
  * paljon: ruudukon sarake kapenee jokaisesta työntekijästä, mutta
  * päivärivi vain pitenee.
  */
-export function DayList({ nimet, roster }: { nimet: Labels; roster: Roster }) {
+export function DayList({
+  locale,
+  t,
+  nimet,
+  roster,
+}: {
+  locale: AppLocale;
+  t: AdminText;
+  nimet: Labels;
+  roster: Roster;
+}) {
   return (
     <table className="rf-table w-full">
-      <caption className="sr-only">Työvuorot päivittäin</caption>
+      <caption className="sr-only">{t.vuoro.shiftsByDay}</caption>
 
       <thead>
         <tr>
           <th scope="col" style={{ width: "7.5rem" }}>
-            Päivä
+            {t.vuoro.dayView}
           </th>
-          <th scope="col">Vuorossa</th>
+          <th scope="col">{t.vuoro.onShift}</th>
           <th scope="col" className="text-right" style={{ width: "4.5rem" }}>
-            Väkeä
+            {t.vuoro.peopleCount}
           </th>
         </tr>
       </thead>
@@ -49,7 +61,7 @@ export function DayList({ nimet, roster }: { nimet: Labels; roster: Roster }) {
             >
               <th scope="row" className="text-left">
                 <span className="rf-tabular text-[13px] font-semibold">
-                  {weekdayName(day.weekday)} {day.day}.
+                  {weekdayName(day.weekday, locale)} {day.day}.
                 </span>
               </th>
 
@@ -69,7 +81,7 @@ export function DayList({ nimet, roster }: { nimet: Labels; roster: Roster }) {
                         className="text-[13px]"
                       >
                         <span className="font-medium">
-                          {row.user?.name.split(" ")[0] ?? "Avoin"}
+                          {row.user?.name.split(" ")[0] ?? t.vuoro.openWord}
                         </span>{" "}
                         <span
                           className="rf-tabular"

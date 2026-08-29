@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import { createShiftByDrop } from "../planning-actions";
 import { type User } from "@/lib/restoflow/types";
 import { Avatar } from "@/components/restoflow/ui";

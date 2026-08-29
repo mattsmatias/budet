@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import {
@@ -113,6 +114,7 @@ export default async function PublicLunchPage({
   params,
   searchParams,
 }: PageProps<"/lounas/[slug]">) {
+  const locale = await resolveLocale();
   const { slug } = await params;
   const query = await searchParams;
 
@@ -220,7 +222,7 @@ export default async function PublicLunchPage({
             style={{ color: t.text2, letterSpacing: "0.08em" }}
           >
             Vko {isoWeekNumber(week.weekStart)} (
-            {formatWeekRange(week.weekStart)})
+            {formatWeekRange(week.weekStart, locale)})
           </p>
 
           {week.prices.length > 0 ? (
@@ -297,7 +299,7 @@ export default async function PublicLunchPage({
                       letterSpacing: "0.02em",
                     }}
                   >
-                    {weekdayShort(day.date)}
+                    {weekdayShort(day.date, locale)}
                   </dt>
 
                   <dd className="min-w-0">

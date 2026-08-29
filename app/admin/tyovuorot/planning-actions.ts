@@ -9,6 +9,12 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { shiftCountLabel } from "@/lib/restoflow/expenses";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -43,16 +49,22 @@ function readResult(data: unknown): CopyResult {
  * Pelkkä "kopioitu" jättää auki kopioitiinko kaikki. Ohitettujen määrä
  * on se luku jonka takia kalenteri kannattaa katsoa läpi.
  */
-function describe({ created, skipped }: CopyResult): string {
-  if (created === 0 && skipped === 0) return "Ei kopioitavia vuoroja.";
+function describe(
+  { created, skipped }: CopyResult,
+  t: AdminText,
+  locale: AppLocale,
+): string {
+  if (created === 0 && skipped === 0) return t.vuoro.noShiftsToCopy;
 
-  const luodut = `${created} ${created === 1 ? "vuoro" : "vuoroa"} luotu luonnoksena`;
+  const luodut = fill(t.vuoro.createdAsDrafts, {
+    maara: shiftCountLabel(created, locale),
+  });
 
   if (skipped === 0) return `${luodut}.`;
 
   return (
     `${luodut}. ${skipped} ${skipped === 1 ? "ohitettiin" : "ohitettiin"} — ` +
-    "niissä tekijällä oli jo päällekkäinen vuoro."
+    t.vuoro.hadOverlap
   );
 }
 
@@ -60,20 +72,21 @@ export async function copyShiftRange(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
   const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage"))
-    return { error: "Ei oikeutta kopioida vuoroja." };
+  if (!can(role, "shifts.manage")) return { error: t.vuoro.noRightCopy };
 
   const from = String(formData.get("from") ?? "");
   const to = String(formData.get("to") ?? "");
   const offset = Number(formData.get("offset") ?? 0);
 
   if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) {
-    return { error: "Tarkista kopioitava jakso." };
+    return { error: t.vuoro.checkSourceRange };
   }
 
   if (!Number.isInteger(offset) || offset === 0) {
-    return { error: "Tarkista mihin kopioidaan." };
+    return { error: t.vuoro.checkTarget };
   }
 
   const supabase = await createClient();
@@ -84,10 +97,10 @@ export async function copyShiftRange(
     p_offset: offset,
   });
 
-  if (error) return { error: error.message ?? "Kopiointi epäonnistui." };
+  if (error) return { error: error.message ?? t.vuoro.copyFailed };
 
   revalidatePath("/admin", "layout");
-  return { notice: describe(readResult(data)) };
+  return { notice: describe(readResult(data), t, locale) };
 }
 
 /**
@@ -174,23 +187,24 @@ export async function removeShifts(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
   const { role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage"))
-    return { error: "Ei oikeutta poistaa vuoroja." };
+  if (!can(role, "shifts.manage")) return { error: t.vuoro.noRightDelete };
 
   const ids = formData
     .getAll("id")
     .map((value) => String(value))
     .filter((value) => UUID.test(value));
 
-  if (ids.length === 0) return { error: "Valitse vähintään yksi vuoro." };
+  if (ids.length === 0) return { error: t.vuoro.chooseAtLeastOne };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("bulk_remove_shifts", {
     p_ids: ids,
   });
 
-  if (error) return { error: error.message ?? "Poisto epäonnistui." };
+  if (error) return { error: error.message ?? t.vuoro.deleteFailed };
 
   const row = Array.isArray(data) ? data[0] : data;
   const result = (row ?? {}) as {
@@ -212,9 +226,7 @@ export async function removeShifts(
 
   if (parts.length === 0) {
     return {
-      error:
-        "Yhtäkään valittua vuoroa ei voitu poistaa. Mennyttä nimettyä vuoroa ei " +
-        "voi poistaa, ja jo peruttu on jo peruttu.",
+      error: t.vuoro.noneCouldBeDeletedBody,
     };
   }
 
@@ -223,7 +235,7 @@ export async function removeShifts(
       parts.join(", ") +
       "." +
       (blocked > 0
-        ? ` ${blocked} jäi koskematta: mennyt nimetty vuoro tai jo peruttu.`
+        ? " " + fill(t.vuoro.blockedNote, { maara: String(blocked) })
         : ""),
   };
 }
@@ -232,9 +244,10 @@ export async function createRecurringShifts(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
   const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage"))
-    return { error: "Ei oikeutta luoda vuoroja." };
+  if (!can(role, "shifts.manage")) return { error: t.vuoro.noRightCreate };
 
   const from = String(formData.get("from") ?? "");
   const to = String(formData.get("to") ?? "");
@@ -242,22 +255,21 @@ export async function createRecurringShifts(
   const end = String(formData.get("end") ?? "");
 
   if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) {
-    return { error: "Tarkista jakson päivämäärät." };
+    return { error: t.vuoro.checkRangeDates };
   }
 
   if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) {
-    return { error: "Tarkista kellonajat." };
+    return { error: t.vuoro.checkTimes };
   }
 
-  if (start === end) return { error: "Alku- ja loppuaika ovat samat." };
+  if (start === end) return { error: t.vuoro.sameStartEnd };
 
   const weekdays = formData
     .getAll("weekday")
     .map((value) => Number(value))
     .filter((value) => Number.isInteger(value) && value >= 1 && value <= 7);
 
-  if (weekdays.length === 0)
-    return { error: "Valitse vähintään yksi viikonpäivä." };
+  if (weekdays.length === 0) return { error: t.vuoro.chooseWeekday };
 
   const breakRaw = Number(String(formData.get("break") ?? "0").trim() || "0");
   const position = String(formData.get("position") ?? "");
@@ -278,7 +290,7 @@ export async function createRecurringShifts(
     p_note: String(formData.get("note") ?? "") || null,
   });
 
-  if (error) return { error: error.message ?? "Vuorojen luonti epäonnistui." };
+  if (error) return { error: error.message ?? t.vuoro.createFailed };
 
   const result = readResult(data);
 
@@ -287,7 +299,7 @@ export async function createRecurringShifts(
   return {
     notice:
       result.created === 0 && result.skipped === 0
-        ? "Jaksolle ei osunut yhtään valittua viikonpäivää."
-        : describe(result),
+        ? t.vuoro.noWeekdayHit
+        : describe(result, t, locale),
   };
 }

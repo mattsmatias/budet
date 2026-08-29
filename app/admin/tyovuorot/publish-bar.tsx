@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { publishShifts, type AdminState } from "../actions";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -22,12 +23,14 @@ const initial: AdminState = {};
  * tiedon — ei paluu edelliseen tilaan.
  */
 export function PublishBar({
+  t,
   month,
   monthLabel,
   drafts,
   people,
   hours,
 }: {
+  t: AdminText;
   month: string;
   monthLabel: string;
   /** Julkaisemattomien vuorojen määrä tässä kuussa. */
@@ -82,8 +85,7 @@ export function PublishBar({
             className="mt-0.5 text-[12.5px] leading-relaxed"
             style={{ color: "var(--rf-amber-text)" }}
           >
-            Luonnos ei näy työntekijälle. Julkaise, niin vuorot ilmestyvät
-            heidän kalenteriinsa.
+            {t.vuoro.draftNotVisible}
           </p>
         </div>
 
@@ -99,7 +101,7 @@ export function PublishBar({
             }}
           >
             <RfIcon name="check" size={15} />
-            Julkaise työvuorot
+            {t.vuoro.publishShifts}
           </button>
         )}
       </div>
@@ -121,14 +123,16 @@ export function PublishBar({
 
           <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[12.5px]">
             <Luku
-              label={people === 1 ? "työntekijä" : "työntekijää"}
+              label={people === 1 ? t.vuoro.personOne : t.vuoro.personMany}
               value={String(people)}
             />
             <Luku
-              label={drafts === 1 ? "työvuoro" : "työvuoroa"}
+              label={
+                drafts === 1 ? t.vuoro.shiftWordOne : t.vuoro.shiftWordMany
+              }
               value={String(drafts)}
             />
-            <Luku label="suunniteltua työaikaa" value={hours} />
+            <Luku label={t.vuoro.plannedTime} value={hours} />
           </dl>
 
           {state.error ? (
@@ -142,14 +146,14 @@ export function PublishBar({
           ) : null}
 
           <div className="mt-3 flex flex-wrap gap-2">
-            <Julkaise />
+            <Julkaise t={t} />
             <button
               type="button"
               onClick={() => setConfirming(false)}
               className="rf-press px-3.5 py-2 text-[13px] font-medium"
               style={{ color: "var(--rf-amber-text)" }}
             >
-              Peruuta
+              {t.vuoro.cancel}
             </button>
           </div>
         </form>
@@ -177,7 +181,7 @@ function Luku({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Julkaise() {
+function Julkaise({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -192,7 +196,7 @@ function Julkaise() {
         opacity: pending ? 0.6 : 1,
       }}
     >
-      {pending ? "Julkaistaan…" : "Julkaise"}
+      {pending ? t.vuoro.publishing : t.vuoro.publish}
     </button>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { labels, type Labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { monthName } from "@/lib/i18n/format";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -210,7 +211,12 @@ export default async function AdminShiftsPage() {
             {t.vuorot2.monthList}
           </Link>
 
-          <NewShiftButton nimet={nimet} users={users} defaultDate={today} />
+          <NewShiftButton
+            t={t}
+            nimet={nimet}
+            users={users}
+            defaultDate={today}
+          />
         </div>
       </div>
 
@@ -225,6 +231,7 @@ export default async function AdminShiftsPage() {
 
             return (
               <PublishBar
+                t={t}
                 key={draftMonth}
                 month={draftMonth}
                 /*
@@ -270,7 +277,7 @@ export default async function AdminShiftsPage() {
                   <Avatar initials={pair.user?.initials ?? "?"} size={36} />
                   <div className="min-w-0">
                     <p className="truncate text-[14px] font-medium">
-                      {pair.user?.name ?? "Tuntematon"}
+                      {pair.user?.name ?? t.vuoro.unknown}
                     </p>
                     <p
                       className="rf-tabular text-[12px]"
@@ -322,7 +329,7 @@ export default async function AdminShiftsPage() {
                     <Avatar initials={user?.initials ?? "?"} size={36} />
                     <div className="min-w-0">
                       <p className="truncate text-[14px] font-medium">
-                        {user?.name ?? "Tuntematon"}
+                        {user?.name ?? t.vuoro.unknown}
                       </p>
                       <p
                         className="rf-tabular text-[12px]"
@@ -490,6 +497,7 @@ export default async function AdminShiftsPage() {
           <ul className="space-y-3">
             {declined.map((shift) => (
               <ShiftRow
+                t={t}
                 nimet={nimet}
                 key={shift.id}
                 shift={shift}
@@ -530,7 +538,7 @@ export default async function AdminShiftsPage() {
                 value={formatMoney(labour.actualCostCents)}
                 hint={
                   labour.varianceCostCents === 0
-                    ? "Suunnitelman mukainen"
+                    ? t.vuoro.asPlanned
                     : fill(t.lauseet.varianceToPlan, {
                         ero: `${labour.varianceCostCents > 0 ? "+" : "−"}${formatMoney(Math.abs(labour.varianceCostCents))}`,
                       })
@@ -561,6 +569,7 @@ export default async function AdminShiftsPage() {
           <ul className="space-y-3">
             {upcoming.map((shift) => (
               <ShiftRow
+                t={t}
                 nimet={nimet}
                 key={shift.id}
                 shift={shift}
@@ -615,6 +624,7 @@ export default async function AdminShiftsPage() {
                   */}
                   {canManage ? (
                     <EditShift
+                      t={t}
                       nimet={nimet}
                       users={users}
                       shift={openAsShift(open)}
@@ -644,7 +654,7 @@ export default async function AdminShiftsPage() {
                   <Avatar initials={pattern.user?.initials ?? "?"} size={36} />
                   <div className="min-w-0">
                     <p className="truncate text-[14px] font-medium">
-                      {pattern.user?.name ?? "Tuntematon"}
+                      {pattern.user?.name ?? t.vuoro.unknown}
                     </p>
                     <p
                       className="rf-tabular text-[12px]"
@@ -764,11 +774,13 @@ export default async function AdminShiftsPage() {
 }
 
 function ShiftRow({
+  t,
   nimet,
   shift,
   users,
   showEdit,
 }: {
+  t: AdminText;
   nimet: Labels;
   shift: Shift;
   users: User[];
@@ -794,7 +806,7 @@ function ShiftRow({
         <Avatar initials={user?.initials ?? "?"} size={36} />
         <div className="min-w-0">
           <p className="truncate text-[14px] font-medium">
-            {user?.name ?? "Avoin"}
+            {user?.name ?? t.vuoro.openWord}
           </p>
           <p
             className="rf-tabular text-[12px]"
@@ -820,7 +832,7 @@ function ShiftRow({
       </Pill>
 
       {showEdit ? (
-        <EditShift nimet={nimet} users={users} shift={shift} />
+        <EditShift t={t} nimet={nimet} users={users} shift={shift} />
       ) : null}
     </li>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";

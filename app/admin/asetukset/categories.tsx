@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteCategory, saveCategory, type AdminState } from "../actions";
 import {

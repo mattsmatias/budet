@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import {
   daysWithFood,
@@ -45,6 +46,7 @@ export default async function LunchDisplayPage({
   params,
   searchParams,
 }: PageProps<"/lounas/[slug]/naytto">) {
+  const locale = await resolveLocale();
   const { slug } = await params;
   const query = await searchParams;
 
@@ -89,7 +91,7 @@ export default async function LunchDisplayPage({
           style={{ color: t.text2 }}
         >
           Viikko {isoWeekNumber(week.weekStart)} ·{" "}
-          {formatWeekRange(week.weekStart)}
+          {formatWeekRange(week.weekStart, locale)}
           {week.prices.length > 0 ? (
             <span style={{ color: t.text }}>
               {"  ·  "}
@@ -139,7 +141,7 @@ export default async function LunchDisplayPage({
                   className="text-[2.6vw] font-bold uppercase leading-none"
                   style={{ fontFamily: t.headingFont }}
                 >
-                  {weekdayShort(day.date)}
+                  {weekdayShort(day.date, locale)}
                 </dt>
 
                 <dd className="min-w-0 text-[1.7vw] leading-snug">

@@ -1,3 +1,10 @@
+import {
+  formatDayIn,
+  formatDayShortIn,
+  weekdayLongIn,
+  weekdayShortIn,
+} from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 /**
  * Lounaslistan viikkologiikka.
  *
@@ -129,29 +136,18 @@ export function isoWeekNumber(isoDate: string): number {
   );
 }
 
-const WEEKDAYS = [
-  "Maanantai",
-  "Tiistai",
-  "Keskiviikko",
-  "Torstai",
-  "Perjantai",
-  "Lauantai",
-  "Sunnuntai",
-];
-
-const WEEKDAYS_SHORT = ["MA", "TI", "KE", "TO", "PE", "LA", "SU"];
-
 function weekdayIndex(isoDate: string): number {
   const day = toDate(isoDate).getUTCDay();
   return day === 0 ? 6 : day - 1;
 }
 
-export function weekdayName(isoDate: string): string {
-  return WEEKDAYS[weekdayIndex(isoDate)];
+export function weekdayName(isoDate: string, locale: AppLocale): string {
+  return weekdayLongIn(isoDate, locale);
 }
 
-export function weekdayShort(isoDate: string): string {
-  return WEEKDAYS_SHORT[weekdayIndex(isoDate)];
+/** "MA" — kalenterin sarakeotsikko, versaalilla. */
+export function weekdayShort(isoDate: string, locale: AppLocale): string {
+  return weekdayShortIn(isoDate, locale).toUpperCase();
 }
 
 /** Onko lauantai tai sunnuntai? */
@@ -160,15 +156,13 @@ export function isWeekend(isoDate: string): boolean {
 }
 
 /** "24.8.2026" */
-export function formatDay(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.${y}`;
+export function formatDay(isoDate: string, locale: AppLocale): string {
+  return formatDayIn(isoDate, locale);
 }
 
 /** "24.8." — vuosi jätetään pois kun se on rivin muusta sisällöstä selvä. */
-export function formatDayShort(isoDate: string): string {
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.`;
+export function formatDayShort(isoDate: string, locale: AppLocale): string {
+  return formatDayShortIn(isoDate, locale);
 }
 
 /**
@@ -178,15 +172,15 @@ export function formatDayShort(isoDate: string): string {
  * Vuodenvaihteen yli menevä viikko tarvitsee molemmat vuodet, muuten
  * se väittää joulukuun kuuluvan tammikuulle.
  */
-export function formatWeekRange(weekStart: string): string {
+export function formatWeekRange(weekStart: string, locale: AppLocale): string {
   const end = addDays(weekStart, 6);
   const startYear = weekStart.slice(0, 4);
   const endYear = end.slice(0, 4);
 
   if (startYear === endYear) {
-    return `${formatDayShort(weekStart)}–${formatDay(end)}`;
+    return `${formatDayShort(weekStart, locale)}–${formatDay(end, locale)}`;
   }
-  return `${formatDay(weekStart)}–${formatDay(end)}`;
+  return `${formatDay(weekStart, locale)}–${formatDay(end, locale)}`;
 }
 
 /**

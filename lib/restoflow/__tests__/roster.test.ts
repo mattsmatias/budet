@@ -72,7 +72,7 @@ describe("monthDays", () => {
 
     // 1.8.2026 on lauantai.
     expect(days[0].weekday).toBe(6);
-    expect(weekdayName(days[0].weekday)).toBe("la");
+    expect(weekdayName(days[0].weekday, "fi")).toBe("la");
     expect(days[0].weekend).toBe(true);
 
     // 3.8.2026 on maanantai.

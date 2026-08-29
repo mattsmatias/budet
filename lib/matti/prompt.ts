@@ -36,8 +36,8 @@ Ravintola: ${ctx.restaurantName}
 Käyttäjä: ${ctx.userName} (rooli: ${ctx.role})
 Tänään: ${ctx.today}
 Kuluva kuukausi: ${ctx.month}
-Kuluva viikko: viikko ${isoWeekNumber(thisWeek)}, ${formatWeekRange(thisWeek)} (maanantai ${thisWeek})
-Ensi viikko: viikko ${isoWeekNumber(upcoming)}, ${formatWeekRange(upcoming)} (maanantai ${upcoming})
+Kuluva viikko: viikko ${isoWeekNumber(thisWeek)}, ${formatWeekRange(thisWeek, ctx.locale)} (maanantai ${thisWeek})
+Ensi viikko: viikko ${isoWeekNumber(upcoming)}, ${formatWeekRange(upcoming, ctx.locale)} (maanantai ${upcoming})
 ${ctx.currentPage ? `Käyttäjä on sivulla: ${ctx.currentPage}` : ""}
 
 # Kieli

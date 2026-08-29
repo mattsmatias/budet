@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import { RfIcon } from "@/components/restoflow/icons";
 import { type Shift } from "@/lib/restoflow/types";
 import { Empty, Surface, Tag, shortDay } from "../ui";

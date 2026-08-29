@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import type { AdminText } from "@/lib/i18n/admin-text";
@@ -76,7 +77,8 @@ export async function generateMetadata() {
 export default async function LunchPage({
   searchParams,
 }: PageProps<"/admin/lounas">) {
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
   const params = await searchParams;
   const { restaurant, role, today } = await adminContext("/admin/lounas");
 
@@ -111,7 +113,7 @@ export default async function LunchPage({
    * erilaiselta.
    */
   const publicWeek = await loadPublicWeek(restaurant.slug, weekStart);
-  const shareText = publicWeek ? weekAsText(publicWeek, publicUrl) : "";
+  const shareText = publicWeek ? weekAsText(publicWeek, publicUrl, locale) : "";
 
   const dirty = week ? hasUnpublishedChanges(week) : false;
 
@@ -121,7 +123,8 @@ export default async function LunchPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Viikko {isoWeekNumber(weekStart)} · {formatWeekRange(weekStart)}
+            Viikko {isoWeekNumber(weekStart)} ·{" "}
+            {formatWeekRange(weekStart, locale)}
           </p>
         </div>
 
@@ -159,7 +162,7 @@ export default async function LunchPage({
             <PublishWeek
               t={t}
               menuId={week?.id ?? null}
-              weekLabel={formatWeekRange(weekStart)}
+              weekLabel={formatWeekRange(weekStart, locale)}
               label={dirty ? t.lounas.publishChanges : t.lounas.publish}
             />
           ) : null}
@@ -305,6 +308,7 @@ export default async function LunchPage({
       {/* --- Viikon sisältö --- */}
       {week === null ? (
         <EmptyWeek
+          locale={locale}
           t={t}
           weekStart={weekStart}
           previousWeekStart={previousWeek(weekStart)}
@@ -314,6 +318,7 @@ export default async function LunchPage({
       ) : (
         <>
           <WeekDays
+            locale={locale}
             t={t}
             week={week}
             diets={diets}
@@ -328,8 +333,8 @@ export default async function LunchPage({
                   t={t}
                   fromWeek={previous.weekStart}
                   toWeek={weekStart}
-                  fromLabel={formatWeekRange(previous.weekStart)}
-                  toLabel={formatWeekRange(weekStart)}
+                  fromLabel={formatWeekRange(previous.weekStart, locale)}
+                  toLabel={formatWeekRange(weekStart, locale)}
                 />
               ) : null}
 
@@ -451,8 +456,8 @@ export default async function LunchPage({
                       className="rf-tabular text-[12px]"
                       style={{ color: "var(--rf-text-3)" }}
                     >
-                      {formatWeekRange(entry.weekStart)} · {entry.itemCount}{" "}
-                      ruokaa
+                      {formatWeekRange(entry.weekStart, locale)} ·{" "}
+                      {entry.itemCount} ruokaa
                     </p>
                   </div>
 
@@ -548,12 +553,14 @@ function WeekLink({
 // ---------------------------------------------------------------------------
 
 function EmptyWeek({
+  locale,
   t,
   weekStart,
   previousWeekStart,
   hasPrevious,
   canManage,
 }: {
+  locale: AppLocale;
   t: AdminText;
   weekStart: string;
   previousWeekStart: string;
@@ -596,8 +603,8 @@ function EmptyWeek({
             t={t}
             fromWeek={previousWeekStart}
             toWeek={weekStart}
-            fromLabel={formatWeekRange(previousWeekStart)}
-            toLabel={formatWeekRange(weekStart)}
+            fromLabel={formatWeekRange(previousWeekStart, locale)}
+            toLabel={formatWeekRange(weekStart, locale)}
           />
         ) : null}
       </div>
@@ -608,12 +615,14 @@ function EmptyWeek({
 // ---------------------------------------------------------------------------
 
 function WeekDays({
+  locale,
   t,
   week,
   diets,
   allergens,
   canManage,
 }: {
+  locale: AppLocale;
   t: AdminText;
   week: LunchWeek;
   diets: DietType[];
@@ -634,6 +643,7 @@ function WeekDays({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {weekdays.map((day) => (
           <DayCard
+            locale={locale}
             t={t}
             key={day.id}
             day={day}
@@ -661,6 +671,7 @@ function WeekDays({
         <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {weekend.map((day) => (
             <DayCard
+              locale={locale}
               t={t}
               key={day.id}
               day={day}
@@ -677,6 +688,7 @@ function WeekDays({
 }
 
 function DayCard({
+  locale,
   t,
   day,
   week,
@@ -684,6 +696,7 @@ function DayCard({
   allergens,
   canManage,
 }: {
+  locale: AppLocale;
   t: AdminText;
   day: LunchDay;
   week: LunchWeek;
@@ -691,7 +704,7 @@ function DayCard({
   allergens: { id: string; label: string }[];
   canManage: boolean;
 }) {
-  const dayLabel = `${weekdayName(day.date)} ${formatDayShort(day.date)}`;
+  const dayLabel = `${weekdayName(day.date, locale)} ${formatDayShort(day.date, locale)}`;
   const dietLabels = new Map(diets.map((d) => [d.id, d]));
 
   return (
@@ -701,13 +714,13 @@ function DayCard({
           className="text-[13px] font-semibold uppercase"
           style={{ letterSpacing: "0.04em" }}
         >
-          {weekdayName(day.date)}
+          {weekdayName(day.date, locale)}
         </h2>
         <span
           className="rf-tabular text-[12px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          {formatDayShort(day.date)}
+          {formatDayShort(day.date, locale)}
         </span>
       </div>
 
@@ -805,12 +818,12 @@ function DayCard({
             <CopyDay
               t={t}
               dayId={day.id}
-              dayLabel={weekdayName(day.date)}
+              dayLabel={weekdayName(day.date, locale)}
               targets={week.days
                 .filter((other) => other.id !== day.id)
                 .map((other) => ({
                   id: other.id,
-                  label: `${weekdayName(other.date)} ${formatDayShort(other.date)}`,
+                  label: `${weekdayName(other.date, locale)} ${formatDayShort(other.date, locale)}`,
                 }))}
             />
           ) : null}

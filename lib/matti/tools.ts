@@ -373,7 +373,7 @@ const getLunchWeek = defineTool({
 
     if (!menu) {
       return {
-        summary: `Viikolle ${isoWeekNumber(week)} (${formatWeekRange(week)}) ei ole lounaslistaa.`,
+        summary: `Viikolle ${isoWeekNumber(week)} (${formatWeekRange(week, ctx.locale)}) ei ole lounaslistaa.`,
         data: { weekStart: week, exists: false },
       };
     }
@@ -382,7 +382,7 @@ const getLunchWeek = defineTool({
       .filter((d) => d.items.length > 0)
       .map((d) => ({
         date: d.date,
-        weekday: weekdayName(d.date),
+        weekday: weekdayName(d.date, ctx.locale),
         items: d.items.map((i) => i.name),
       }));
 
@@ -392,7 +392,7 @@ const getLunchWeek = defineTool({
 
     return {
       card: {
-        title: `Viikko ${isoWeekNumber(week)} · ${formatWeekRange(week)}`,
+        title: `Viikko ${isoWeekNumber(week)} · ${formatWeekRange(week, ctx.locale)}`,
         value: LUNCH_STATUS_LABELS[menu.status],
         meta: [
           `${days.length} päivää`,
@@ -406,7 +406,7 @@ const getLunchWeek = defineTool({
         linkLabel: "Avaa lounaslista",
       },
       summary:
-        `Viikko ${isoWeekNumber(week)} (${formatWeekRange(week)}): tila ${menu.status}` +
+        `Viikko ${isoWeekNumber(week)} (${formatWeekRange(week, ctx.locale)}): tila ${menu.status}` +
         (hasUnpublishedChanges(menu) ? ", julkaisemattomia muutoksia" : "") +
         `. ${days.length} päivää joilla sisältöä.`,
       data: {
@@ -476,7 +476,7 @@ const getShifts = defineTool({
       data: {
         shifts: rows.map((s) => ({
           date: s.date,
-          weekday: weekdayName(s.date),
+          weekday: weekdayName(s.date, ctx.locale),
           employee: s.userId ? (names.get(s.userId) ?? "Tuntematon") : null,
           start: s.startTime,
           end: s.endTime,
@@ -647,7 +647,7 @@ const proposeLunchItems = defineTool({
         (d) => d.date === day.date,
       );
 
-      const label = `${weekdayName(day.date)} ${day.date}`;
+      const label = `${weekdayName(day.date, ctx.locale)} ${day.date}`;
 
       changes.push({
         label,
@@ -703,7 +703,7 @@ const proposeLunchPrice = defineTool({
     if (!menu) {
       return {
         summary:
-          `Viikolle ${formatWeekRange(week)} ei ole lounaslistaa. ` +
+          `Viikolle ${formatWeekRange(week, ctx.locale)} ei ole lounaslistaa. ` +
           "Viikko pitää avata ensin.",
       };
     }
@@ -717,12 +717,12 @@ const proposeLunchPrice = defineTool({
     }
 
     return {
-      summary: `Valmis ehdotus: ${name} ${formatMoney(cents)} viikolle ${formatWeekRange(week)}.`,
+      summary: `Valmis ehdotus: ${name} ${formatMoney(cents)} viikolle ${formatWeekRange(week, ctx.locale)}.`,
       preview: {
         title: "Lounashinnan muutos",
         changes: [
           {
-            label: `${name} · ${formatWeekRange(week)}`,
+            label: `${name} · ${formatWeekRange(week, ctx.locale)}`,
             from: current ? formatMoney(current.cents) : "ei hintaa",
             to: formatMoney(cents),
           },
@@ -754,7 +754,7 @@ const proposeCopyLunchWeek = defineTool({
     const source = await ctx.lunchWeek(from);
     if (!source || !hasContent(source)) {
       return {
-        summary: `Viikolla ${formatWeekRange(from)} ei ole lounaslistaa kopioitavaksi.`,
+        summary: `Viikolla ${formatWeekRange(from, ctx.locale)} ei ole lounaslistaa kopioitavaksi.`,
       };
     }
 
@@ -762,15 +762,15 @@ const proposeCopyLunchWeek = defineTool({
     const itemCount = source.days.reduce((s, d) => s + d.items.length, 0);
 
     return {
-      summary: `Valmis ehdotus: kopioidaan ${formatWeekRange(from)} → ${formatWeekRange(to)}.`,
+      summary: `Valmis ehdotus: kopioidaan ${formatWeekRange(from, ctx.locale)} → ${formatWeekRange(to, ctx.locale)}.`,
       preview: {
         title: "Lounaslistan kopiointi",
         changes: [
           {
             label: "Lähde",
-            to: `${formatWeekRange(from)} · ${itemCount} ruokaa`,
+            to: `${formatWeekRange(from, ctx.locale)} · ${itemCount} ruokaa`,
           },
-          { label: "Kohde", to: formatWeekRange(to) },
+          { label: "Kohde", to: formatWeekRange(to, ctx.locale) },
           { label: "Tila kopioinnin jälkeen", to: "Luonnos" },
         ],
         warning:
@@ -797,7 +797,7 @@ const proposePublishLunch = defineTool({
 
     if (!menu)
       return {
-        summary: `Viikolle ${formatWeekRange(week)} ei ole lounaslistaa.`,
+        summary: `Viikolle ${formatWeekRange(week, ctx.locale)} ei ole lounaslistaa.`,
       };
     if (!hasContent(menu)) {
       return {
@@ -809,13 +809,13 @@ const proposePublishLunch = defineTool({
     const itemCount = menu.days.reduce((s, d) => s + d.items.length, 0);
 
     return {
-      summary: `Valmis ehdotus: julkaistaan ${formatWeekRange(week)}.`,
+      summary: `Valmis ehdotus: julkaistaan ${formatWeekRange(week, ctx.locale)}.`,
       preview: {
         title: "Lounaslistan julkaisu",
         changes: [
           {
             label: "Viikko",
-            to: `${formatWeekRange(week)} · ${dayCount} päivää, ${itemCount} ruokaa`,
+            to: `${formatWeekRange(week, ctx.locale)} · ${dayCount} päivää, ${itemCount} ruokaa`,
           },
           {
             label: "Tila",

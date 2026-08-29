@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { setBudget, type AdminState } from "../actions";
 import { type ExpenseCategory } from "@/lib/restoflow/types";

@@ -16,6 +16,8 @@
  */
 
 import { shiftDurationMinutes } from "./shifts";
+import { weekdayByNumberIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type {
   AbsenceKind,
   Absence,
@@ -67,11 +69,9 @@ export interface Roster {
   plannedMinutes: number;
 }
 
-const WEEKDAY_NAMES = ["ma", "ti", "ke", "to", "pe", "la", "su"];
-
 /** "ma", "ti" … listan otsikkoriville. */
-export function weekdayName(weekday: number): string {
-  return WEEKDAY_NAMES[weekday - 1] ?? "";
+export function weekdayName(weekday: number, locale: AppLocale): string {
+  return weekdayByNumberIn(weekday, locale);
 }
 
 /**

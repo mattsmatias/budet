@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { type Labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { formatDayShortIn, weekdayLongIn } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import {
   formatPlanned,
   plannedMinutes,
@@ -11,16 +15,6 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { EditShift, NewShiftButton } from "../shift-form";
 import { CopyDay } from "./copy-controls";
 
-const DAYS = [
-  "sunnuntai",
-  "maanantai",
-  "tiistai",
-  "keskiviikko",
-  "torstai",
-  "perjantai",
-  "lauantai",
-];
-
 /**
  * Yhden päivän vuorot.
  *
@@ -30,6 +24,8 @@ const DAYS = [
  * selaimen paluunappi toimii.
  */
 export function DayPanel({
+  locale,
+  t,
   nimet,
   date,
   month,
@@ -37,6 +33,8 @@ export function DayPanel({
   shifts,
   canManage,
 }: {
+  locale: AppLocale;
+  t: AdminText;
   nimet: Labels;
   date: string;
   month: string;
@@ -52,18 +50,23 @@ export function DayPanel({
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <CardHeader
-          title={formatDay(date)}
+          title={formatDay(date, locale)}
           subtitle={
             shifts.length === 0
-              ? "Ei vuoroja"
-              : `${shifts.filter((s) => s.cancelledAt === null).length} vuoroa · ${formatPlanned(total)} suunniteltua työaikaa`
+              ? t.vuoro.noShifts
+              : fill(t.vuoro.dayShiftSummary, {
+                  maara: String(
+                    shifts.filter((s) => s.cancelledAt === null).length,
+                  ),
+                  aika: formatPlanned(total),
+                })
           }
         />
 
         <Link
           href={`/admin/tyovuorot/kalenteri?kuukausi=${month}`}
           scroll={false}
-          aria-label="Sulje päivä"
+          aria-label={t.vuoro.closeDay}
           className="rf-press -mt-1 flex h-8 w-8 shrink-0 items-center justify-center"
           style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
         >
@@ -92,7 +95,7 @@ export function DayPanel({
                   <Avatar initials={user?.initials ?? "?"} size={36} />
                   <div className="min-w-0">
                     <p className="truncate text-[14px] font-medium">
-                      {user?.name ?? "Avoin vuoro"}
+                      {user?.name ?? t.vuoro.openShift}
                     </p>
                     <p
                       className="rf-tabular text-[12px]"
@@ -100,7 +103,9 @@ export function DayPanel({
                     >
                       {shift.startTime}–{shift.endTime}
                       {shift.breakMinutes > 0
-                        ? ` · tauko ${shift.breakMinutes} min`
+                        ? fill(t.vuoro.breakSuffix, {
+                            maara: String(shift.breakMinutes),
+                          })
                         : ""}
                       {" · "}
                       {formatPlanned(plannedMinutes(shift))}
@@ -129,8 +134,13 @@ export function DayPanel({
 
                   {canManage && tila !== "cancelled" ? (
                     <>
-                      <CopyDay shift={shift} />
-                      <EditShift nimet={nimet} users={users} shift={shift} />
+                      <CopyDay t={t} shift={shift} />
+                      <EditShift
+                        t={t}
+                        nimet={nimet}
+                        users={users}
+                        shift={shift}
+                      />
                     </>
                   ) : null}
                 </div>
@@ -142,15 +152,18 @@ export function DayPanel({
 
       {canManage ? (
         <div className="mt-4">
-          <NewShiftButton nimet={nimet} users={users} defaultDate={date} />
+          <NewShiftButton
+            t={t}
+            nimet={nimet}
+            users={users}
+            defaultDate={date}
+          />
         </div>
       ) : null}
     </Card>
   );
 }
 
-function formatDay(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  const name = DAYS[d.getUTCDay()];
-  return `${name[0].toUpperCase()}${name.slice(1)} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+function formatDay(isoDate: string, locale: AppLocale): string {
+  return `${weekdayLongIn(isoDate, locale)} ${formatDayShortIn(isoDate, locale)}`;
 }

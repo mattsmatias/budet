@@ -1,5 +1,8 @@
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
 import { labels, type Labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
@@ -19,7 +22,10 @@ import { Card, EmptyState } from "@/components/restoflow/ui";
 import { PrintButton } from "./print-button";
 import { DayList } from "./day-list";
 
-export const metadata = { title: "Työvuorolista" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.vuoro.shiftList };
+}
 
 /**
  * Kuukauden työvuorolista.
@@ -38,6 +44,7 @@ export const metadata = { title: "Työvuorolista" };
 export default async function RosterPage({
   searchParams,
 }: PageProps<"/admin/tyovuorot/lista">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const { users, shifts, openShifts, absences, month, role, restaurant } =
@@ -105,7 +112,7 @@ export default async function RosterPage({
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={14} />
-          Työvuorot
+          {t.vuoro.shiftsTitle}
         </Link>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -118,12 +125,12 @@ export default async function RosterPage({
           >
             <Valinta
               href={`/admin/tyovuorot/lista?kuukausi=${viewMonth}`}
-              label="Työntekijöittäin"
+              label={t.vuoro.byEmployee}
               active={view === "tyontekijat"}
             />
             <Valinta
               href={`/admin/tyovuorot/lista?kuukausi=${viewMonth}&nakyma=paivat`}
-              label="Päivittäin"
+              label={t.vuoro.byDay}
               active={view === "paivat"}
             />
           </div>
@@ -148,16 +155,23 @@ export default async function RosterPage({
 
       {roster.rows.length === 0 ? (
         <EmptyState
-          title="Ei vuoroja tässä kuussa"
-          description={`${formatMonth(viewMonth, locale)} on tyhjä. Luo vuoroja työvuorosivulla, niin ne ilmestyvät tähän listaan.`}
+          title={t.vuoro.noShiftsThisMonth}
+          description={fill(t.vuoro.emptyMonthHint, {
+            kuukausi: formatMonth(viewMonth, locale),
+          })}
         />
       ) : (
         <>
           <p className="text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-            {people} {people === 1 ? "työntekijä" : "työntekijää"} ·{" "}
-            {shiftCount} {shiftCount === 1 ? "vuoro" : "vuoroa"}
-            {openCount > 0 ? ` · ${openCount} avointa` : ""} ·{" "}
-            {formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa
+            {people} {people === 1 ? t.vuoro.personOne : t.vuoro.personMany} ·{" "}
+            {fill(
+              shiftCount === 1 ? t.vuoro.shiftCountOne : t.vuoro.shiftCountMany,
+              { maara: String(shiftCount) },
+            )}
+            {openCount > 0
+              ? fill(t.vuoro.openSuffix, { maara: String(openCount) })
+              : ""}{" "}
+            · {formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa
           </p>
 
           {/*
@@ -188,7 +202,7 @@ export default async function RosterPage({
           {view === "paivat" ? (
             <Card padded={false} className="rf-print-section">
               <div className="overflow-x-auto print:overflow-visible">
-                <DayList nimet={nimet} roster={roster} />
+                <DayList locale={locale} t={t} nimet={nimet} roster={roster} />
               </div>
             </Card>
           ) : (
@@ -203,15 +217,15 @@ export default async function RosterPage({
                   <thead>
                     <tr>
                       <th scope="col" className="rf-roster-name">
-                        Työntekijä
+                        {t.vuoro.employee}
                       </th>
 
                       {roster.days.map((day) => (
-                        <DayHead key={day.date} day={day} />
+                        <DayHead locale={locale} key={day.date} day={day} />
                       ))}
 
                       <th scope="col" className="rf-roster-sum">
-                        Yht.
+                        {t.vuoro.totalAbbr}
                       </th>
                     </tr>
                   </thead>
@@ -221,7 +235,7 @@ export default async function RosterPage({
                       <tr key={row.user?.id ?? "avoin"}>
                         <th scope="row" className="rf-roster-name">
                           <span className="block truncate font-semibold">
-                            {row.user?.name ?? "Avoimet vuorot"}
+                            {row.user?.name ?? t.vuoro.openShifts}
                           </span>
                           <span
                             className="block truncate text-[10.5px] font-normal"
@@ -231,7 +245,7 @@ export default async function RosterPage({
                               ? row.user.position
                                 ? nimet.positions[row.user.position]
                                 : ""
-                              : "ei tekijää"}
+                              : t.vuoro.noDoer}
                           </span>
                         </th>
 
@@ -263,7 +277,7 @@ export default async function RosterPage({
                     <tr>
                       <th scope="row" className="rf-roster-name">
                         <span className="block truncate font-semibold">
-                          Vuorossa
+                          {t.vuoro.onShift}
                         </span>
                       </th>
 
@@ -321,9 +335,11 @@ export default async function RosterPage({
                 {" "}
                 Poissaolot:{" "}
                 {[...usedAbsences]
-                  .map(
-                    (kind) =>
-                      `${nimet.absenceShort[kind!]} = ${nimet.absences[kind!].toLowerCase()}`,
+                  .map((kind) =>
+                    fill(t.vuoro.absenceLegend, {
+                      lyhenne: nimet.absenceShort[kind!],
+                      selite: nimet.absences[kind!].toLowerCase(),
+                    }),
                   )
                   .join(", ")}
                 .
@@ -370,7 +386,7 @@ function Valinta({
   );
 }
 
-function DayHead({ day }: { day: RosterDay }) {
+function DayHead({ day, locale }: { day: RosterDay; locale: AppLocale }) {
   return (
     <th
       scope="col"
@@ -381,7 +397,7 @@ function DayHead({ day }: { day: RosterDay }) {
         className="block text-[10.5px]"
         style={{ color: "var(--rf-text-3)" }}
       >
-        {weekdayName(day.weekday)}
+        {weekdayName(day.weekday, locale)}
       </span>
       <span className="rf-tabular block font-semibold">{day.day}</span>
     </th>

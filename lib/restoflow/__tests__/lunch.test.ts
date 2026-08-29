@@ -103,9 +103,9 @@ describe("viikkonumero", () => {
 
 describe("päivien nimet", () => {
   it("nimeää viikonpäivät", () => {
-    expect(weekdayName("2026-08-24")).toBe("Maanantai");
-    expect(weekdayName("2026-08-30")).toBe("Sunnuntai");
-    expect(weekdayShort("2026-08-28")).toBe("PE");
+    expect(weekdayName("2026-08-24", "fi")).toBe("Maanantai");
+    expect(weekdayName("2026-08-30", "fi")).toBe("Sunnuntai");
+    expect(weekdayShort("2026-08-28", "fi")).toBe("PE");
   });
 
   it("tunnistaa viikonlopun", () => {
@@ -117,13 +117,13 @@ describe("päivien nimet", () => {
 
 describe("viikkoväli tekstinä", () => {
   it("kirjoittaa vuoden kerran", () => {
-    expect(formatWeekRange("2026-08-24")).toBe("24.8.–30.8.2026");
+    expect(formatWeekRange("2026-08-24", "fi")).toBe("24.8.–30.8.2026");
   });
 
   // Vuodenvaihteen yli menevä viikko tarvitsee molemmat vuodet, muuten
   // se väittäisi joulukuun kuuluvan tammikuulle.
   it("kirjoittaa molemmat vuodet vuodenvaihteessa", () => {
-    expect(formatWeekRange("2026-12-28")).toBe("28.12.2026–3.1.2027");
+    expect(formatWeekRange("2026-12-28", "fi")).toBe("28.12.2026–3.1.2027");
   });
 });
 

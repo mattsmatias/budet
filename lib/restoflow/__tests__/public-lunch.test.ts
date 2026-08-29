@@ -100,7 +100,7 @@ describe("selite", () => {
 });
 
 describe("lista tekstinä", () => {
-  const text = weekAsText(week(), "https://budet.fi/lounas/cafe-monami");
+  const text = weekAsText(week(), "https://budet.fi/lounas/cafe-monami", "fi");
 
   /*
    * Hinta verrataan samalla muotoilijalla jolla se tuotetaan.
@@ -145,7 +145,7 @@ describe("lista tekstinä", () => {
   });
 
   it("kestää hinnattoman viikon", () => {
-    const free = weekAsText(week({ prices: [] }), "https://x.fi");
+    const free = weekAsText(week({ prices: [] }), "https://x.fi", "fi");
 
     expect(free).toContain("Cafe Monami");
     expect(free).not.toContain("€");
@@ -161,6 +161,7 @@ describe("lista tekstinä", () => {
         ],
       }),
       "https://x.fi",
+      "fi",
     );
 
     expect(many).toContain(`Lounas ${formatMoney(1550)}`);

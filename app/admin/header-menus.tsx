@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
 import { useCallback, useState, type ReactNode } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { type Alert, type Role } from "@/lib/restoflow/types";

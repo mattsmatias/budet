@@ -1,6 +1,13 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import {
+  formatDayShortIn,
+  weekdayShortIn,
+} from "@/lib/i18n/labels";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { removeShifts } from "../planning-actions";
 import type { AdminState } from "../../actions";
@@ -28,11 +35,15 @@ const initial: AdminState = {};
  * ja ne näytetään ennen painallusta.
  */
 export function BulkShifts({
+  locale,
+  t,
   shifts,
   users,
   today,
   monthLabel,
 }: {
+  locale: AppLocale;
+  t: AdminText;
   shifts: Shift[];
   users: User[];
   today: string;
@@ -104,7 +115,7 @@ export function BulkShifts({
         }}
       >
         <RfIcon name="trash" size={15} />
-        Valitse ja poista
+        {t.vuoro.selectAndDelete}
       </button>
     );
   }
@@ -128,8 +139,11 @@ export function BulkShifts({
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <CardHeader
-          title="Valitse ja poista"
-          subtitle={`${monthLabel} · ${sorted.length} vuoroa`}
+          title={t.vuoro.selectAndDelete}
+          subtitle={fill(t.vuoro.monthShiftCount, {
+            kuukausi: monthLabel,
+            maara: String(sorted.length),
+          })}
         />
 
         <button
@@ -139,7 +153,7 @@ export function BulkShifts({
             setSelected(new Set());
             setConfirming(false);
           }}
-          aria-label="Sulje"
+          aria-label={t.vuoro.close}
           className="rf-press -mt-1 flex h-8 w-8 shrink-0 items-center justify-center"
           style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
         >
@@ -158,16 +172,19 @@ export function BulkShifts({
         vuorot ja koko kuukausi.
       */}
       <div className="flex flex-wrap gap-1.5">
-        <Pika label="Kaikki" onClick={() => pick(() => true)} />
+        <Pika label={t.vuoro.allWord} onClick={() => pick(() => true)} />
         <Pika
-          label="Luonnokset"
+          label={t.vuoro.draftsWord}
           onClick={() => pick((shift) => publicationOf(shift) === "draft")}
         />
         <Pika
-          label="Avoimet"
+          label={t.vuoro.openShiftsWord}
           onClick={() => pick((shift) => shift.userId === "")}
         />
-        <Pika label="Tyhjennä" onClick={() => pick(() => false)} />
+        <Pika
+          label={t.vuoro.clearSelection}
+          onClick={() => pick(() => false)}
+        />
       </div>
 
       <form action={action} className="mt-3">
@@ -202,12 +219,12 @@ export function BulkShifts({
                     className="rf-tabular w-16 shrink-0 text-[12px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    {lyhytPaiva(shift.date)}
+                    {lyhytPaiva(shift.date, locale)}
                   </span>
 
                   <span className="min-w-0 flex-1 truncate text-[13px]">
                     <span className="font-medium">
-                      {user?.name ?? "Avoin vuoro"}
+                      {user?.name ?? t.vuoro.openShift}
                     </span>{" "}
                     <span
                       className="rf-tabular"
@@ -256,7 +273,12 @@ export function BulkShifts({
             {confirming ? (
               <>
                 <p className="text-[13px] font-bold">
-                  {selected.size} {selected.size === 1 ? "vuoro" : "vuoroa"}{" "}
+                  {fill(
+                    selected.size === 1
+                      ? t.vuoro.shiftCountOne
+                      : t.vuoro.shiftCountMany,
+                    { maara: String(selected.size) },
+                  )}{" "}
                   valittu. Mitä tapahtuu:
                 </p>
 
@@ -282,6 +304,7 @@ export function BulkShifts({
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Poista
+                    t={t}
                     disabled={outcome.removed + outcome.cancelled === 0}
                   />
                   <button
@@ -290,7 +313,7 @@ export function BulkShifts({
                     className="rf-press px-3.5 py-2 text-[13px] font-medium"
                     style={{ color: "var(--rf-text-2)" }}
                   >
-                    Peruuta
+                    {t.vuoro.cancel}
                   </button>
                 </div>
               </>
@@ -333,7 +356,7 @@ function Pika({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function Poista({ disabled }: { disabled: boolean }) {
+function Poista({ t, disabled }: { t: AdminText; disabled: boolean }) {
   const { pending } = useFormStatus();
 
   return (
@@ -348,14 +371,12 @@ function Poista({ disabled }: { disabled: boolean }) {
         opacity: pending || disabled ? 0.5 : 1,
       }}
     >
-      {pending ? "Poistetaan…" : "Vahvista"}
+      {pending ? t.vuoro.deleting : t.vuoro.confirm}
     </button>
   );
 }
 
 /** "2026-08-05" → "ke 5.8.". Listassa päivä on tunniste, ei otsikko. */
-function lyhytPaiva(isoDate: string): string {
-  const nimet = ["su", "ma", "ti", "ke", "to", "pe", "la"];
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  return `${nimet[d.getUTCDay()]} ${d.getUTCDate()}.${d.getUTCMonth() + 1}.`;
+function lyhytPaiva(isoDate: string, locale: AppLocale): string {
+  return `${weekdayShortIn(isoDate, locale)} ${formatDayShortIn(isoDate, locale)}`;
 }

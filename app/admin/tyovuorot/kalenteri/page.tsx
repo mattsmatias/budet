@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
@@ -25,7 +28,10 @@ import { CopyRange, RecurringForm } from "./copy-controls";
 import { BulkShifts } from "./bulk-shifts";
 import { PublishBar } from "../publish-bar";
 
-export const metadata = { title: "Työvuorokalenteri" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.vuoro.shiftCalendar };
+}
 
 /**
  * Kuukauden työvuorokalenteri.
@@ -44,6 +50,7 @@ export const metadata = { title: "Työvuorokalenteri" };
 export default async function ShiftCalendarPage({
   searchParams,
 }: PageProps<"/admin/tyovuorot/kalenteri">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const {
@@ -151,7 +158,7 @@ export default async function ShiftCalendarPage({
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={14} />
-          Työvuorot
+          {t.vuoro.shiftsTitle}
         </Link>
 
         <Link
@@ -165,12 +172,13 @@ export default async function ShiftCalendarPage({
           }}
         >
           <RfIcon name="report" size={15} />
-          Työvuorolista
+          {t.vuoro.shiftList}
         </Link>
       </div>
 
       {canManage ? (
         <PublishBar
+          t={t}
           month={viewMonth}
           monthLabel={`${monthWord(viewMonth, locale)}n ${viewMonth.slice(0, 4)}`}
           drafts={drafts.length}
@@ -189,17 +197,21 @@ export default async function ShiftCalendarPage({
       {canManage ? (
         <div className="flex flex-wrap gap-2.5">
           <CopyRange
+            t={t}
             month={viewMonth}
             monthStart={monthStart}
             monthEnd={monthEnd}
           />
           <RecurringForm
+            t={t}
             nimet={nimet}
             users={users}
             monthStart={monthStart}
             monthEnd={monthEnd}
           />
           <BulkShifts
+            locale={locale}
+            t={t}
             shifts={monthShifts}
             users={users}
             today={today}
@@ -210,30 +222,35 @@ export default async function ShiftCalendarPage({
 
       {/* Kuukauden yhteenveto, §19. */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.vuoro.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <MetricCard
-          label="Työntekijöitä"
+          label={t.vuoro.staffCount}
           tileTone="brand"
           tone="muted"
           icon={<RfIcon name="staff" size={17} />}
           value={<CountUp to={plan.people} format="integer" />}
-          conclusion={`${plan.shiftCount} ${plan.shiftCount === 1 ? "vuoro" : "vuoroa"}`}
+          conclusion={fill(
+            plan.shiftCount === 1
+              ? t.vuoro.shiftCountOne
+              : t.vuoro.shiftCountMany,
+            { maara: String(plan.shiftCount) },
+          )}
         />
 
         <MetricCard
-          label="Suunnitellut tunnit"
+          label={t.vuoro.plannedHours}
           tileTone="green"
           tone="muted"
           icon={<RfIcon name="clock" size={17} />}
           value={formatPlanned(plan.plannedMinutes)}
-          conclusion="Tauot vähennettynä"
+          conclusion={t.vuoro.breaksDeducted}
         />
 
         {showsRates ? (
           <MetricCard
-            label="Arvioitu palkkakulu"
+            label={t.vuoro.estimatedCost}
             tileTone="violet"
             icon={<RfIcon name="payroll" size={17} />}
             value={<CountUp to={plan.labourCostCents} format="money" />}
@@ -241,14 +258,14 @@ export default async function ShiftCalendarPage({
             conclusion={
               plan.missingRates > 0
                 ? `${plan.missingRates} ilman tuntipalkkaa — arvio on vajaa`
-                : "Suunnitellut tunnit × tuntipalkka"
+                : t.vuoro.hoursTimesRate
             }
           />
         ) : null}
 
         {showsRates ? (
           <MetricCard
-            label="Henkilöstöbudjetti"
+            label={t.vuoro.staffBudget}
             tileTone="blue"
             icon={<RfIcon name="budget" size={17} />}
             value={
@@ -271,13 +288,13 @@ export default async function ShiftCalendarPage({
             }
             conclusion={
               labourBudget === null
-                ? "Aseta budjetti kategorialle Henkilöstö"
+                ? t.vuoro.setStaffBudget
                 : overBudget
-                  ? "Suunnitelma ylittää budjetin"
-                  : "Suunnitelma mahtuu budjettiin"
+                  ? t.vuoro.planOverBudget
+                  : t.vuoro.planFitsBudget
             }
             href="/admin/budjetit"
-            linkLabel="Budjetit"
+            linkLabel={t.vuoro.budgets}
           />
         ) : null}
       </section>
@@ -295,10 +312,7 @@ export default async function ShiftCalendarPage({
             <RfIcon name="alert" size={15} />
           </span>
           {overlapping.length}{" "}
-          {overlapping.length === 1
-            ? "päällekkäinen vuoro"
-            : "päällekkäistä vuoroa"}
-          :{" "}
+          {overlapping.length === 1 ? t.vuoro.overlapOne : t.vuoro.overlapMany}:{" "}
           {overlapping
             .slice(0, 3)
             .map((pair) => pair.user?.name ?? "tuntematon")
@@ -323,17 +337,17 @@ export default async function ShiftCalendarPage({
       >
         <ViewTab
           href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}`}
-          label="Kuukausi"
+          label={t.vuoro.monthView}
           active={view === "kuukausi"}
         />
         <ViewTab
           href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}&nakyma=viikko&paiva=${focusDate}`}
-          label="Viikko"
+          label={t.vuoro.weekView}
           active={view === "viikko"}
         />
         <ViewTab
           href={`/admin/tyovuorot/kalenteri?kuukausi=${viewMonth}&nakyma=paiva&paiva=${focusDate}`}
-          label="Päivä"
+          label={t.vuoro.dayView}
           active={view === "paiva"}
         />
       </div>
@@ -344,6 +358,8 @@ export default async function ShiftCalendarPage({
 
       {view === "paiva" ? (
         <DayPanel
+          locale={locale}
+          t={t}
           nimet={nimet}
           date={focusDate}
           month={viewMonth}
@@ -358,13 +374,14 @@ export default async function ShiftCalendarPage({
               <CardHeader
                 title={
                   view === "viikko"
-                    ? `Viikko ${focusWeek?.week ?? ""} · ${formatMonth(viewMonth, locale)}`
+                    ? fill(t.vuoro.weekOfMonth, {
+                        viikko: String(focusWeek?.week ?? ""),
+                        kuukausi: formatMonth(viewMonth, locale),
+                      })
                     : formatMonth(viewMonth, locale)
                 }
                 subtitle={
-                  view === "viikko"
-                    ? "Kaikki päivän vuorot näkyvissä"
-                    : "Klikkaa päivää nähdäksesi ja muokataksesi sen vuorot"
+                  view === "viikko" ? t.vuoro.allDayShifts : t.vuoro.clickDay
                 }
               />
             </div>
@@ -380,9 +397,17 @@ export default async function ShiftCalendarPage({
                 <thead>
                   <tr>
                     <th scope="col" className="rf-cal-week">
-                      Vk
+                      {t.vuoro.weekAbbr}
                     </th>
-                    {["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"].map((name) => (
+                    {[
+                      t.vuoro.mon,
+                      t.vuoro.tue,
+                      t.vuoro.wed,
+                      t.vuoro.thu,
+                      t.vuoro.fri,
+                      t.vuoro.sat,
+                      t.vuoro.sun,
+                    ].map((name) => (
                       <th key={name} scope="col">
                         {name}
                       </th>
@@ -400,6 +425,7 @@ export default async function ShiftCalendarPage({
 
                         {week.days.map((day) => (
                           <DayCell
+                            t={t}
                             key={day.date}
                             date={day.date}
                             dayNumber={day.day}
@@ -424,6 +450,8 @@ export default async function ShiftCalendarPage({
 
           {selectedDay ? (
             <DayPanel
+              locale={locale}
+              t={t}
               nimet={nimet}
               date={selectedDay}
               month={viewMonth}
@@ -448,6 +476,7 @@ export default async function ShiftCalendarPage({
  * miehitystä eniten tarkistetaan.
  */
 function DayCell({
+  t,
   date,
   dayNumber,
   inMonth,
@@ -460,6 +489,7 @@ function DayCell({
   view = "kuukausi",
   limit = 3,
 }: {
+  t: AdminText;
   date: string;
   dayNumber: number;
   inMonth: boolean;
@@ -541,7 +571,7 @@ function DayCell({
                   opacity: draft ? 0.85 : 1,
                 }}
               >
-                {user?.name.split(" ")[0] ?? "Avoin"}{" "}
+                {user?.name.split(" ")[0] ?? t.vuoro.openWord}{" "}
                 <span
                   className="rf-tabular"
                   style={{ color: "var(--rf-text-3)" }}
@@ -557,7 +587,7 @@ function DayCell({
               className="block text-[10.5px] font-medium"
               style={{ color: "var(--rf-text-3)" }}
             >
-              + {rest} muuta
+              {fill(t.vuoro.moreCount, { maara: String(rest) })}
             </span>
           ) : null}
         </span>

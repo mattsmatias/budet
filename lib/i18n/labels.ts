@@ -464,3 +464,59 @@ export function formatMonthShortIn(month: string, locale: AppLocale): string {
   const sana = monthWordIn(month, locale);
   return `${sana.charAt(0).toUpperCase()}${sana.slice(1)}`;
 }
+
+// ---------------------------------------------------------------------------
+// Viikonpäivät ja päivämäärät
+// ---------------------------------------------------------------------------
+
+/** UTC-keskipäivä: aikavyöhyke ei saa siirtää päivää edelliseksi. */
+function paivaks(isoDate: string): Date {
+  return new Date(`${isoDate}T12:00:00Z`);
+}
+
+/** "Keskiviikko" — viikonpäivä kokonaan, iso alkukirjain. */
+export function weekdayLongIn(isoDate: string, locale: AppLocale): string {
+  const sana = new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(paivaks(isoDate));
+  return `${sana.charAt(0).toUpperCase()}${sana.slice(1)}`;
+}
+
+/** "ke" — lyhenne listan tunnisteeksi, pienellä. */
+export function weekdayShortIn(isoDate: string, locale: AppLocale): string {
+  return new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" })
+    .format(paivaks(isoDate))
+    .replace(/\.$/, "")
+    .toLowerCase();
+}
+
+/**
+ * Viikonpäivä numerosta, 1 = maanantai.
+ *
+ * Vuorolistan otsikkorivi tuntee vain päivän numeron, ei päivämäärää.
+ * Numero muunnetaan tunnetuksi viikoksi jotta Intl saa oikean päivän:
+ * 2024-01-01 oli maanantai.
+ */
+export function weekdayByNumberIn(weekday: number, locale: AppLocale): string {
+  return weekdayShortIn(`2024-01-0${weekday}`, locale);
+}
+
+/** "24.8.2026" kielen omalla numeromuodolla. */
+export function formatDayIn(isoDate: string, locale: AppLocale): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(paivaks(isoDate));
+}
+
+/** "24.8." — vuosi jää pois kun se on rivin muusta sisällöstä selvä. */
+export function formatDayShortIn(isoDate: string, locale: AppLocale): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "numeric",
+    timeZone: "UTC",
+  }).format(paivaks(isoDate));
+}

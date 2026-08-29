@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatWeekRange, isoWeekNumber, weekdayShort } from "./lunch";
 import { formatMoney } from "@/lib/money";
 
@@ -102,13 +103,17 @@ export function usedDietLegend(days: PublicDay[]): Map<string, string> {
  * tekstikentät eivät tue korostuksia, ja niissä kaikki taulukoksi
  * yritetty menee rikki puhelimessa.
  */
-export function weekAsText(week: PublicWeek, publicUrl: string): string {
+export function weekAsText(
+  week: PublicWeek,
+  publicUrl: string,
+  locale: AppLocale,
+): string {
   const days = daysWithFood(week);
   const lines: string[] = [];
 
   lines.push(`${week.restaurantName} — lounas`);
   lines.push(
-    `Viikko ${isoWeekNumber(week.weekStart)} (${formatWeekRange(week.weekStart)})`,
+    `Viikko ${isoWeekNumber(week.weekStart)} (${formatWeekRange(week.weekStart, locale)})`,
   );
 
   if (week.prices.length > 0) {
@@ -138,7 +143,7 @@ export function weekAsText(week: PublicWeek, publicUrl: string): string {
       })
       .join(", ");
 
-    lines.push(`${weekdayShort(day.date)} ${dishes}`);
+    lines.push(`${weekdayShort(day.date, locale)} ${dishes}`);
   }
 
   const legend = usedDietLegend(days);

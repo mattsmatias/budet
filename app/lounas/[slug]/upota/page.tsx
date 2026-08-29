@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import {
   daysWithFood,
@@ -38,6 +39,7 @@ export default async function EmbeddedLunchPage({
   params,
   searchParams,
 }: PageProps<"/lounas/[slug]/upota">) {
+  const locale = await resolveLocale();
   const { slug } = await params;
   const query = await searchParams;
 
@@ -80,7 +82,7 @@ export default async function EmbeddedLunchPage({
 
         <p className="text-[13px]" style={{ color: t.text2 }}>
           Viikko {isoWeekNumber(week.weekStart)} ·{" "}
-          {formatWeekRange(week.weekStart)}
+          {formatWeekRange(week.weekStart, locale)}
         </p>
 
         {week.prices.length > 0 ? (
@@ -121,7 +123,7 @@ export default async function EmbeddedLunchPage({
                   className="text-[14px] font-bold uppercase"
                   style={{ fontFamily: t.headingFont }}
                 >
-                  {weekdayShort(day.date)}
+                  {weekdayShort(day.date, locale)}
                 </dt>
 
                 <dd className="min-w-0 text-[13.5px] leading-relaxed">

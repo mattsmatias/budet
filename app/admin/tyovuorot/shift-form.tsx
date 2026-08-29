@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { type Labels } from "@/lib/i18n/labels";
+import type { Labels } from "@/lib/i18n/labels";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import {
   cancelShift,
@@ -29,12 +30,14 @@ const POSITIONS: StaffPosition[] = ["waiter", "kitchen", "manager", "cleaning"];
  * työvuorolista tehdään usein ennen kuin tiedetään kuka on käytettävissä.
  */
 export function ShiftForm({
+  t,
   nimet,
   users,
   shift,
   defaultDate,
   onDone,
 }: {
+  t: AdminText;
   nimet: Labels;
   users: User[];
   shift?: Shift;
@@ -65,7 +68,7 @@ export function ShiftForm({
 
       <div>
         <label htmlFor="shift-user" className="block text-[13px] font-medium">
-          Tekijä
+          {t.vuoro.doer}
         </label>
         <select
           id="shift-user"
@@ -77,7 +80,7 @@ export function ShiftForm({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          <option value="">Avoin vuoro</option>
+          <option value="">{t.vuoro.openShift}</option>
           {users
             .filter((u) => u.position !== null)
             .map((u) => (
@@ -88,7 +91,7 @@ export function ShiftForm({
             ))}
         </select>
         <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Tekijä saa vuoron hyväksyttäväkseen. Avoin vuoro näkyy kaikille.
+          {t.vuoro.doerAccepts}
         </p>
       </div>
 
@@ -97,7 +100,7 @@ export function ShiftForm({
           htmlFor="shift-position"
           className="block text-[13px] font-medium"
         >
-          Tehtävä
+          {t.vuoro.task}
         </label>
         <select
           id="shift-position"
@@ -119,7 +122,7 @@ export function ShiftForm({
       </div>
 
       <Input
-        label="Päivä"
+        label={t.vuoro.dayView}
         name="date"
         type="date"
         defaultValue={shift?.date ?? defaultDate}
@@ -128,14 +131,14 @@ export function ShiftForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Alkaa"
+          label={t.vuoro.starts}
           name="start"
           type="time"
           defaultValue={shift?.startTime ?? "14:00"}
           required
         />
         <Input
-          label="Päättyy"
+          label={t.vuoro.ends}
           name="end"
           type="time"
           defaultValue={shift?.endTime ?? "22:00"}
@@ -153,7 +156,7 @@ export function ShiftForm({
           jälkeisestä ajasta, joten unohtunut tauko näkyy euroina.
         */}
         <Input
-          label="Tauko (min)"
+          label={t.vuoro.breakMin}
           name="break"
           type="number"
           min={0}
@@ -163,18 +166,18 @@ export function ShiftForm({
         />
 
         <Input
-          label="Paikka"
+          label={t.vuoro.place}
           name="location"
           defaultValue={shift?.location ?? ""}
-          placeholder="Sali"
+          placeholder={t.vuoro.hall}
         />
       </div>
 
       <Input
-        label="Lisätieto"
+        label={t.vuoro.extraInfo}
         name="note"
         defaultValue={shift?.note ?? ""}
-        placeholder="Avaus, tilaisuus salissa…"
+        placeholder={t.vuoro.extraPlaceholder}
       />
 
       {state.error ? (
@@ -192,7 +195,7 @@ export function ShiftForm({
       ) : null}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <Save label={shift ? "Tallenna" : "Luo vuoro"} />
+        <Save t={t} label={shift ? t.vuoro.save : t.vuoro.createShift} />
         {onDone ? (
           <button
             type="button"
@@ -204,7 +207,7 @@ export function ShiftForm({
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            Peruuta
+            {t.vuoro.cancel}
           </button>
         ) : null}
       </div>
@@ -214,8 +217,7 @@ export function ShiftForm({
           className="text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Jos muutat hyväksytyn vuoron aikoja, tekijän on hyväksyttävä se
-          uudelleen. Vanhat ajat näytetään hänelle.
+          {t.vuoro.changeNeedsReaccept}
         </p>
       ) : null}
     </form>
@@ -224,10 +226,12 @@ export function ShiftForm({
 
 /** Uuden vuoron avaava painike. */
 export function NewShiftButton({
+  t,
   nimet,
   users,
   defaultDate,
 }: {
+  t: AdminText;
   nimet: Labels;
   users: User[];
   defaultDate: string;
@@ -263,15 +267,16 @@ export function NewShiftButton({
         }}
       >
         <RfIcon name="plus" size={15} />
-        Uusi työvuoro
+        {t.vuoro.newShift}
       </button>
     );
   }
 
   return (
     <Card>
-      <p className="mb-3 text-[15px] font-semibold">Uusi työvuoro</p>
+      <p className="mb-3 text-[15px] font-semibold">{t.vuoro.newShift}</p>
       <ShiftForm
+        t={t}
         nimet={nimet}
         users={users}
         defaultDate={defaultDate}
@@ -283,10 +288,12 @@ export function NewShiftButton({
 
 /** Vuoron muokkaus ja poisto. */
 export function EditShift({
+  t,
   nimet,
   users,
   shift,
 }: {
+  t: AdminText;
   nimet: Labels;
   users: User[];
   shift: Shift;
@@ -310,7 +317,7 @@ export function EditShift({
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Muokkaa
+        {t.vuoro.edit}
       </button>
     );
   }
@@ -321,6 +328,7 @@ export function EditShift({
       style={{ borderColor: "var(--rf-line)" }}
     >
       <ShiftForm
+        t={t}
         nimet={nimet}
         users={users}
         shift={shift}
@@ -339,8 +347,7 @@ export function EditShift({
       <div className="mt-3">
         {peruttu ? (
           <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-            Vuoro on peruttu. Se säilyy listalla, jotta peruutus näkyy myös
-            jälkikäteen.
+            {t.vuoro.shiftCancelled}
           </p>
         ) : confirming ? (
           <form
@@ -357,7 +364,7 @@ export function EditShift({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              {julkaistu ? "Peru vuoro" : "Poista luonnos"}
+              {julkaistu ? t.vuoro.cancelShift : t.vuoro.deleteDraft}
             </button>
             <button
               type="button"
@@ -365,15 +372,13 @@ export function EditShift({
               className="text-[13px]"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Peruuta
+              {t.vuoro.cancel}
             </button>
             <span
               className="basis-full text-[12px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              {julkaistu
-                ? "Työntekijä on jo nähnyt tämän vuoron. Peruutus jää näkyviin hänelle ja historiaan."
-                : "Luonnosta ei ole näytetty kenellekään."}
+              {julkaistu ? t.vuoro.alreadySeen : t.vuoro.draftUnseen}
             </span>
           </form>
         ) : (
@@ -383,7 +388,7 @@ export function EditShift({
             className="text-[13px] underline underline-offset-4"
             style={{ color: "var(--rf-red-text)" }}
           >
-            {julkaistu ? "Peru vuoro" : "Poista luonnos"}
+            {julkaistu ? t.vuoro.cancelShift : t.vuoro.deleteDraft}
           </button>
         )}
       </div>
@@ -442,7 +447,7 @@ function Input({
   );
 }
 
-function Save({ label }: { label: string }) {
+function Save({ t, label }: { t: AdminText; label: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -456,7 +461,7 @@ function Save({ label }: { label: string }) {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : label}
+      {pending ? t.vuoro.savingEllipsis : label}
     </button>
   );
 }
