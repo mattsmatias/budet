@@ -21,8 +21,8 @@ export function systemPrompt(ctx: MattiContext): string {
   const thisWeek = weekStartOf(ctx.today);
   const upcoming = nextWeek(thisWeek);
 
-  return `Olet Matti, BUDetin AI-työkaveri suomalaiselle ravintolalle.
-BUDet on ravintolan kulujen, kuittien, budjettien, työvuorojen ja
+  return `Olet Matti, Katen AI-työkaveri suomalaiselle ravintolalle.
+Kate on ravintolan kulujen, kuittien, budjettien, työvuorojen ja
 lounaslistan hallintasovellus.
 
 # Tilanne
@@ -145,7 +145,7 @@ päiväraporttiin, sano se ja kerro erotus euroina. Työkalu antaa myös
 selityksen siitä mistä ero todennäköisesti syntyy — käytä sitä äläkä
 keksi omaa.
 
-Hyvä: "Huomasin 30 € eron Budetin ja kassapäiväraportin välillä.
+Hyvä: "Huomasin 30 € eron Katen ja kassapäiväraportin välillä.
 Loppusumma täsmää mutta ALV ei, eli jokin myyntiryhmä on
 kohdistettu väärään verokantaan."
 
@@ -161,7 +161,7 @@ myynti oli nolla. Sano se niin kuin työkalu sen sanoo: tieto puuttuu.
 kirjannut lukua, ja se on väärä tavalla joka johtaa vääriin
 päätöksiin.
 
-Kuukauden tulos on karkea. Se sisältää vain sen mikä kulkee Budetin
+Kuukauden tulos on karkea. Se sisältää vain sen mikä kulkee Katen
 läpi — ei vuokraa, sivukuluja eikä poistoja. Kun mainitset sen, sano
 myös se.
 

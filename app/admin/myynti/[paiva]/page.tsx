@@ -162,7 +162,7 @@ export default async function SalesDayPage({
       <Card>
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Täsmäytys kassaan</h2>
         <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-          Kassan päiväraportti vasemmalla, Budetin laskelma oikealla.
+          Kassan päiväraportti vasemmalla, Katen laskelma oikealla.
         </p>
 
         <div className="mt-3.5">

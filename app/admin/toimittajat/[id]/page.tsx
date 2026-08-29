@@ -196,7 +196,7 @@ export default async function SupplierDetailPage({
               Olet korjannut tämän toimittajan kategorian{" "}
               {supplier.categoryOverrides[0].count} kertaa muotoon{" "}
               <strong>{CATEGORY_LABELS[supplier.categoryOverrides[0].to]}</strong>.
-              Budet ehdottaa sitä jatkossa automaattisesti.
+              Kate ehdottaa sitä jatkossa automaattisesti.
             </div>
           ) : null}
         </Card>

@@ -314,14 +314,14 @@ export const ADMIN_NAV: NavEntry[] = [
    * ja kirjanpito on se mihin kaikki edellinen päätyy.
    *
    * Se on omalla sivullaan muttei oma tietosiilonsa: sivu ei kysy
-   * käyttäjältä mitään mitä Budet jo tietää.
+   * käyttäjältä mitään mitä Kate jo tietää.
    */
   { href: "/admin/kirjanpito", label: "Kirjanpito", icon: "report", requires: "accounting.view", section: "finance" },
 
   /*
    * Tehtävät ovat päivittäinen kohta, ei arkisto.
    *
-   * Ravintoloitsija avaa Budetin kysyäkseen mitä pitää tehdä. Tehtävä
+   * Ravintoloitsija avaa Katen kysyäkseen mitä pitää tehdä. Tehtävä
    * jonka määräaika lähestyy on juuri se vastaus, joten se kuuluu
    * valikkoon eikä asetusten taakse.
    *

@@ -45,7 +45,7 @@ export function TaskList({
     return (
       <EmptyState
         title="Ei tehtäviä"
-        description="Lisää ensimmäinen tehtävä, niin Budet muistuttaa siitä ennen määräaikaa eikä anna sen unohtua."
+        description="Lisää ensimmäinen tehtävä, niin Kate muistuttaa siitä ennen määräaikaa eikä anna sen unohtua."
       />
     );
   }

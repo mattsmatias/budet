@@ -72,7 +72,7 @@ export default async function PrintableReportPage({
           {restaurant.name} · {isClosed ? "kuukausi suljettu" : "kuukausi avoinna"}
         </p>
         <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Luvut ovat Budetiin kirjattuja kuluja. Raportti ei sisällä
+          Luvut ovat Kateen kirjattuja kuluja. Raportti ei sisällä
           myyntiä eikä pankkitilin tapahtumia, eikä se ole kirjanpito- tai
           veroilmoitus.
         </p>
@@ -170,7 +170,7 @@ export default async function PrintableReportPage({
         className="mt-8 border-t pt-4 text-[11px]"
         style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
       >
-        Budet · {restaurant.name} · {formatMonth(viewMonth)} · luotu{" "}
+        Kate · {restaurant.name} · {formatMonth(viewMonth)} · luotu{" "}
         {formatDate(new Date().toISOString().slice(0, 10))}
       </footer>
     </div>

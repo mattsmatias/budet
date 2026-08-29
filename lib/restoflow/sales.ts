@@ -38,7 +38,7 @@ export interface DailySales {
   /*
    * Kassan ilmoittamat luvut sellaisenaan.
    *
-   * Erillään Budetin omasta laskelmasta: täsmäytys vertaa näitä
+   * Erillään Katen omasta laskelmasta: täsmäytys vertaa näitä
    * riveiltä laskettuihin. Jos ne korvattaisiin laskennalla, vertailu
    * vertaisi lukua itseensä ja täsmäisi aina.
    */
@@ -120,7 +120,7 @@ export function labourShareOfSales(
  * Karkea tulos: myynti miinus kirjatut kulut ja työvoima.
  *
  * TÄRKEÄ RAJAUS: tämä ei ole tulos kirjanpidon mielessä. Se ei sisällä
- * vuokraa, sivukuluja, poistoja eikä mitään mikä ei kulje Budetin läpi.
+ * vuokraa, sivukuluja, poistoja eikä mitään mikä ei kulje Katen läpi.
  * Käyttöliittymän on sanottava se, jottei lukua käytetä päätöksiin
  * joihin se ei riitä.
  */

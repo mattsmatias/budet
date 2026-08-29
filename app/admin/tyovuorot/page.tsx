@@ -308,7 +308,7 @@ export default async function AdminShiftsPage() {
                     </Pill>
 
                     {/* Vain sairaudessa. Todistusta ei tallenneta
-                        Budetiin — tämä on merkintä siitä että se on
+                        Kateen — tämä on merkintä siitä että se on
                         nähty, ja se on se mitä palkanmaksuun tarvitaan. */}
                     {absence.kind === "sick" ? (
                       <form action={markAbsenceCertificate}>

@@ -13,9 +13,9 @@ const PAKETIT: RestaurantPlan[] = ["free", "pro", "business", "enterprise"];
  *
  * LASKUTUS EI OLE TÄÄLLÄ.
  *
- * Budet ei säilytä maksukorttitietoja eikä laskurivejä — ne kuuluvat
+ * Kate ei säilytä maksukorttitietoja eikä laskurivejä — ne kuuluvat
  * maksupalvelulle, joka hoitaa myös vaatimustenmukaisuuden. Tässä on
- * vain se mitä Budetin pitää tietää: minkä tasoinen paketti kullakin
+ * vain se mitä Katen pitää tietää: minkä tasoinen paketti kullakin
  * on ja milloin kokeilu päättyy.
  *
  * Paketti vaihdetaan ravintolan omalta sivulta, koska muutos koskee
@@ -42,7 +42,7 @@ export default async function DevPlansPage() {
         <h1 className="text-[22px] font-bold tracking-[-0.02em]">Tilaukset</h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Pakettien jakauma ja kokeilujen päättymiset. Laskutus hoidetaan
-          maksupalvelussa — Budet säilyttää vain paketin tason.
+          maksupalvelussa — Kate säilyttää vain paketin tason.
         </p>
       </header>
 

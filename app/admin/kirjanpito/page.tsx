@@ -47,7 +47,7 @@ type TabKey = (typeof TABS)[number]["key"];
 /**
  * Kirjanpito.
  *
- * EI KYSY MITÄÄN MITÄ BUDET JO TIETÄÄ.
+ * EI KYSY MITÄÄN MITÄ KATE JO TIETÄÄ.
  *
  * Sivu ei ota vastaan myyntejä, kuitteja eikä kuluja, eikä se pyydä
  * hakemaan niitä. Kirjaus syntyy sillä hetkellä kun lähde

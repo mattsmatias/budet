@@ -45,8 +45,8 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Budet — ravintolan kulut, kuitit ja työaika",
-    template: "%s · Budet",
+    default: "Kate — ravintolan kulut, kuitit ja työaika",
+    template: "%s · Kate",
   },
   description:
     "Ravintolan kuitit, kulut, työvuorot ja työaika yhdessä näkymässä. " +
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "fi_FI",
-    siteName: "Budet",
+    siteName: "Kate",
   },
   robots: { index: true, follow: true },
 };

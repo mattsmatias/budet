@@ -1,5 +1,5 @@
 /*
- * Budetin etusivu.
+ * Katen etusivu.
  *
  * OMA TIEDOSTONSA, EI SOVELLUKSEN TEEMAA.
  *
@@ -9,7 +9,7 @@
  * täysin eri mittakaavan, joten se saa omat mittansa — samat värit.
  *
  * Värit luetaan silti samoista arvoista kuin sovelluksessa. Kaksi
- * paikkaa joissa Budetin punainen on määritelty tarkoittaisi kahta
+ * paikkaa joissa Katen punainen on määritelty tarkoittaisi kahta
  * punaista jotka ajautuvat erilleen.
  */
 
@@ -29,7 +29,7 @@
    *
    * Selaimessa laskettuna sävy oli 21 tekstielementissä, koot 10–12,5
    * pikseliä. Mukana oli oikeaa sivutekstiä eikä pelkkää esikatselukuvan
-   * sisältöä: "Ravintolan talous. Yhdessä paikassa." ja "Budetin
+   * sisältöä: "Ravintolan talous. Yhdessä paikassa." ja "Katen
    * käyttöliittymä. Luvut ovat esimerkkejä."
    *
    * Sovelluspuolella sama ongelma oli jo ratkaistu — theme.css kertoo

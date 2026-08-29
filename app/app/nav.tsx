@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
+import { Logo } from "@/components/brand/logo";
 
 const TABS = [
   { href: "/app", label: "Koti", icon: "overview" },
@@ -67,8 +68,8 @@ function DesktopSidebar({
     >
       <div className="px-5 py-5">
         <Link href="/app" className="flex items-center gap-2.5">
-          <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">Budet</span>
+          <Logo size={28} />
+          <span className="text-[17px] font-semibold tracking-tight">Kate</span>
         </Link>
       </div>
 
@@ -183,20 +184,3 @@ function MobileBar({ tabs }: { tabs: readonly Tab[] }) {
   );
 }
 
-function Logo() {
-  return (
-    /*
-      Sama merkkivärin tekstisävy kuin leimauspainikkeessa.
-
-      --rf-on-accent on valkoinen molemmissa teemoissa, mutta tumman
-      teeman punainen on vaalea — valkoinen kirjain jäi siinä lähes
-      näkymättömäksi.
-    */
-    <span
-      className="bd-app-accent flex h-7 w-7 items-center justify-center text-[13px] font-bold"
-      style={{ borderRadius: 8 }}
-    >
-      B
-    </span>
-  );
-}

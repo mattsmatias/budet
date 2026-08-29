@@ -48,7 +48,7 @@ describe("jokainen kieli on täydellinen", () => {
  * kuulu muihin kieliin — jos sellainen löytyy, rivi on jäänyt
  * kääntämättä.
  *
- * Tuotenimi Budet ja avustajan nimi Matti ovat erikseen sallittuja:
+ * Tuotenimi Kate ja avustajan nimi Matti ovat erikseen sallittuja:
  * ne ovat nimiä eivätkä käännettävää tekstiä.
  */
 describe("mikään ei ole jäänyt suomeksi", () => {

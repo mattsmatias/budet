@@ -45,7 +45,7 @@ export function Paivakirja({
     return (
       <EmptyState
         title="Ei tositteita tässä kuussa"
-        description="Hae tapahtumat yhteenvedosta, niin Budet muodostaa kirjausesitykset kuiteista ja myyntipäivistä."
+        description="Hae tapahtumat yhteenvedosta, niin Kate muodostaa kirjausesitykset kuiteista ja myyntipäivistä."
       />
     );
   }
@@ -785,10 +785,10 @@ function Lataus({ href, label }: { href: string; label: string }) {
 /**
  * Veroasiat ja OmaVero.
  *
- * BUDET EI LÄHETÄ MITÄÄN.
+ * KATE EI LÄHETÄ MITÄÄN.
  *
  * Tämä on tärkein asia koko välilehdellä ja siksi se lukee ylimpänä.
- * Budet laskee luvut kirjanpidosta ja kertoo mitä niillä tehdään,
+ * Kate laskee luvut kirjanpidosta ja kertoo mitä niillä tehdään,
  * mutta ilmoituksen tekee ihminen OmaVerossa. Vihje siitä että
  * ohjelma olisi hoitanut asian olisi väärä ja vaarallinen.
  *
@@ -818,14 +818,14 @@ export function Veroasiat({
           <RfIcon name="alert" size={16} />
         </span>
         <p>
-          Budet ei lähetä veroilmoituksia. Se laskee luvut kirjanpidosta ja
+          Kate ei lähetä veroilmoituksia. Se laskee luvut kirjanpidosta ja
           kertoo mitä niillä tehdään — ilmoituksen teet itse OmaVerossa.
         </p>
       </div>
 
       <Card>
         <CardHeader
-          title="Mitä Budet on laskenut"
+          title="Mitä Kate on laskenut"
           subtitle={`${monthLabel(month)} · luvut kirjanpidosta`}
         />
 

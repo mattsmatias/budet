@@ -91,7 +91,7 @@ export function PeriodActions({
 
       <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
         Bruttopalkka ei sisällä ennakonpidätystä, muita vähennyksiä eikä
-        työnantajan sivukuluja. Budet ei ole palkkahallinto-ohjelma eikä
+        työnantajan sivukuluja. Kate ei ole palkkahallinto-ohjelma eikä
         korvaa sellaista.
       </p>
     </Card>

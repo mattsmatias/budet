@@ -197,7 +197,7 @@ describe("greeting", () => {
   /*
    * Ravintolan aikavyöhykkeellä.
    *
-   * Esihenkilö voi katsoa Budetia toisessa maassa, eikä "hyvää yötä"
+   * Esihenkilö voi katsoa Katea toisessa maassa, eikä "hyvää yötä"
    * ole silloin totta ravintolassa.
    */
   it("kertoo ravintolan ajan eikä katsojan", () => {

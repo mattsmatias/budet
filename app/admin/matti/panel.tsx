@@ -109,7 +109,7 @@ export function MattiPanel({
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={open}
-          aria-label="Matti, BUDet AI -työkaveri"
+          aria-label="Matti, Katen AI-työkaveri"
           title="Matti (Ctrl J)"
           className="rf-press flex h-10 w-10 items-center justify-center"
           style={{
@@ -227,7 +227,7 @@ function Overlay({
       <div
         ref={container}
         role="dialog"
-        aria-label="Matti, BUDet AI -työkaveri"
+        aria-label="Matti, Katen AI-työkaveri"
         className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
         style={{
           background: "var(--rf-card)",
@@ -620,7 +620,7 @@ function Welcome({
         Havainnot.
 
         Nämä eivät ole hälytyksiä vaan poikkeamia joita kukaan ei ole
-        pyytänyt etsimään. Jokainen on laskettu Budetin datasta ja
+        pyytänyt etsimään. Jokainen on laskettu Katen datasta ja
         jokaisella on kynnys — kolmen prosentin heilahdus ei ole
         havainto vaan kohinaa.
       */}

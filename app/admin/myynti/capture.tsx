@@ -280,7 +280,7 @@ function ReviewForm({
       {/*
         Kassan ALV-erittely sellaisenaan.
 
-        Tämä on päivän verotieto eikä Budetin laskelma: juuri nämä
+        Tämä on päivän verotieto eikä Katen laskelma: juuri nämä
         luvut menevät kirjanpitoon. Ne tallennetaan omaan tauluunsa,
         jotta ryhmistä johdettua veroa voi verrata niihin sen sijaan
         että se korvaisi ne.

@@ -170,7 +170,7 @@ export function AbsenceReporter({
             >
               <strong className="font-semibold">Sairauslomatodistus</strong>{" "}
               toimitetaan esihenkilölle erikseen silloin kun se on olemassa —
-              ilmoita poissaolosta jo nyt. Todistusta ei liitetä Budetiin,
+              ilmoita poissaolosta jo nyt. Todistusta ei liitetä Kateen,
               vaan esihenkilö merkitsee tähän ilmoitukseen nähneensä sen.
             </div>
 

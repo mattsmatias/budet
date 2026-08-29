@@ -93,7 +93,7 @@ export async function saveDailySales(
   /*
    * Kassan ilmoittamat luvut säilytetään erillään laskennasta.
    *
-   * Jos ne korvattaisiin Budetin omalla laskelmalla, täsmäytys
+   * Jos ne korvattaisiin Katen omalla laskelmalla, täsmäytys
    * vertaisi lukua itseensä ja täsmäisi aina.
    */
   const posGross = parseEuros(formData.get("posGross"));
@@ -260,7 +260,7 @@ export async function deleteDailySales(formData: FormData): Promise<void> {
  * Myyntirivien vero lasketaan palvelimella, koska selaimen lähettämään
  * veroon ei voi luottaa. Tämä on eri asia: nämä ovat kassan omia
  * lukuja, ja niiden koko tarkoitus on olla juuri sitä mitä raportissa
- * luki. Uudelleen laskettuna ne olisivat Budetin laskelma ja
+ * luki. Uudelleen laskettuna ne olisivat Katen laskelma ja
  * täsmäytys vertaisi lukua itseensä.
  *
  * Tarkistus on siksi sisäinen: vero plus veroton on verollinen.

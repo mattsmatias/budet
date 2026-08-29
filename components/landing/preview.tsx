@@ -1,5 +1,5 @@
 /**
- * Budetin käyttöliittymä etusivulla.
+ * Katen käyttöliittymä etusivulla.
  *
  * OIKEA KÄYTTÖLIITTYMÄ, ESIMERKKILUVUT.
  *
@@ -291,7 +291,7 @@ export function MonthPreview({ t }: { t: Dictionary }) {
 /**
  * "Mitä minun pitää tehdä?"
  *
- * Sovelluksen oma osio sellaisenaan. Se on Budetin selkein yksittäinen
+ * Sovelluksen oma osio sellaisenaan. Se on Katen selkein yksittäinen
  * lupaus: ravintoloitsijan ei tarvitse muistaa mitä on kesken.
  */
 export function TodoPreview({ t }: { t: Dictionary }) {

@@ -123,7 +123,7 @@ export function LunchChannels({
             pidä.
           */}
           <p>
-            Budet ei julkaise Facebookiin puolestasi — se vaatisi
+            Kate ei julkaise Facebookiin puolestasi — se vaatisi
             Facebook-sovelluksen ja sivun käyttöoikeuden. Tässä on lista
             valmiina tekstinä: kopioi ja liitä.
           </p>

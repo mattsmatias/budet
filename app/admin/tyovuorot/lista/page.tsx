@@ -291,7 +291,7 @@ export default async function RosterPage({
             className="hidden text-[10px] print:block"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Luotu Budetilla {printedAt}
+            Luotu Katella {printedAt}
           </p>
 
           <p className="text-[11.5px] leading-relaxed rf-no-print" style={{ color: "var(--rf-text-3)" }}>

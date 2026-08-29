@@ -1,5 +1,5 @@
 /**
- * Budet'n jaetut esityskomponentit.
+ * Kate'n jaetut esityskomponentit.
  *
  * Apple-henkinen pintakieli yhdessä paikassa: valkoinen kortti, suuri
  * pyöristys, hienovarainen varjo. Väriä käytetään vain tilaan.
@@ -537,7 +537,7 @@ export function ScopeNotice({ children }: { children?: ReactNode }) {
         {children ?? (
           <>
             Luvut tarkoittavat{" "}
-            <strong>Budetiin kirjattuja kuluja</strong> — sovellus ei
+            <strong>Kateen kirjattuja kuluja</strong> — sovellus ei
             näe kassaa eikä pankkitiliä.
           </>
         )}

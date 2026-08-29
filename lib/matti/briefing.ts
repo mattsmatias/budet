@@ -3,7 +3,7 @@
  *
  * MATTI EI KEKSI HAVAINTOJA.
  *
- * Jokainen rivi tässä lasketaan Budetin omasta datasta, ja jokaisella
+ * Jokainen rivi tässä lasketaan Katen omasta datasta, ja jokaisella
  * on kynnys sekä vähimmäishistoria. Kynnys on siksi, että kolmen
  * prosentin heilahdus ei ole havainto vaan kohinaa. Vähimmäishistoria
  * on siksi, että kahden viikon aineistosta laskettu "keskiarvoa
@@ -220,7 +220,7 @@ export function buildBriefing({
  * Tervehdys kellonajan mukaan.
  *
  * Ravintolan aikavyöhykkeellä eikä selaimen: esihenkilö voi katsoa
- * Budetia lomalla toisessa maassa, eikä "hyvää yötä" ole silloin
+ * Katea lomalla toisessa maassa, eikä "hyvää yötä" ole silloin
  * totta ravintolassa.
  */
 export function greeting(now: Date, timezone: string): string {

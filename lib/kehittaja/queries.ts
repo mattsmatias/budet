@@ -6,7 +6,7 @@
  * Konsoli ei lue tauluja suoraan. Syy on se ettei ravintoloiden
  * eristystä tarvitse purkaa: jos ylläpitäjälle avattaisiin
  * rivikäytännöt jokaiseen tauluun, sama oikeus olisi voimassa myös
- * silloin kun hän käyttää tavallista Budetia — ja yksi unohtunut
+ * silloin kun hän käyttää tavallista Katea — ja yksi unohtunut
  * ravintolarajaus näyttäisi väärän ravintolan luvut.
  *
  * Nyt tenanttien RLS on täsmälleen ennallaan. Konsolin funktiot ovat

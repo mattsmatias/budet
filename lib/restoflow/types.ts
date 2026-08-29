@@ -1,5 +1,5 @@
 /**
- * Budet'n domain-tyypit.
+ * Kate'n domain-tyypit.
  *
  * Rakenne:
  *   Restaurant → Membership → User (rooli)

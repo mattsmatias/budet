@@ -10,6 +10,7 @@ import {
   type MarketingPage,
 } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { Logo } from "@/components/brand/logo";
 
 /**
  * Etusivun navigaatio.
@@ -101,8 +102,8 @@ export function LandingNav({
       >
         <div className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
           <Link href={home} className="flex shrink-0 items-center gap-2.5" aria-label={t.nav.home}>
-            <Logo />
-            <span className="text-[17px] font-bold tracking-[-0.02em]">Budet</span>
+            <Logo size={26} />
+            <span className="text-[17px] font-bold tracking-[-0.02em]">Kate</span>
           </Link>
 
           <nav aria-label={t.nav.sections} className="hidden lg:block">
@@ -342,23 +343,6 @@ function Tick() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-/** Sama tunnus kuin sovelluksessa. */
-export function Logo({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      <rect width="28" height="28" rx="7.5" fill="#0f1729" />
-      <path
-        d="M9 19V9.6c0-.3.3-.6.6-.6h4.6a3 3 0 0 1 0 6H11"
-        stroke="#fff"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="m14.4 15 4.6 4" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }

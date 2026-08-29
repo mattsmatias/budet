@@ -1,4 +1,4 @@
-# RestoFlow — koko rakenne
+# Kate — koko rakenne
 
 Tämä kuvaa sovelluksen sellaisena kuin se on, ei sellaisena kuin se oli
 tarkoitus. Kaikki alla oleva on luettu koodista ja tuotantokannasta.

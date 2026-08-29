@@ -21,7 +21,7 @@ const SUODATTIMET = [
 ] as const;
 
 /**
- * Kaikki Budetin käyttäjät.
+ * Kaikki Katen käyttäjät.
  *
  * RIVI ON JÄSENYYS, EI IHMINEN.
  *

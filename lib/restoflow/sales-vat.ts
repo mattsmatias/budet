@@ -196,7 +196,7 @@ export function summarise(lines: SalesLine[]): SalesSummary {
 /**
  * Sallittu heitto.
  *
- * Kassa pyöristää ryhmittäin ja Budet kannoittain, joten sentin heitto
+ * Kassa pyöristää ryhmittäin ja Kate kannoittain, joten sentin heitto
  * on odotettavissa eikä se ole virhe. Raja kasvaa kantojen mukana:
  * jokainen kanta on oma pyöristyksensä.
  */
@@ -249,9 +249,9 @@ export interface Reconciliation {
 }
 
 /**
- * Vertaa kassan raporttia Budetin laskelmaan.
+ * Vertaa kassan raporttia Katen laskelmaan.
  *
- * Kassan luvut ovat sellaisena kuin ne raportissa lukivat. Budetin
+ * Kassan luvut ovat sellaisena kuin ne raportissa lukivat. Katen
  * luvut on laskettu samoista bruttosummista keskitetyllä
  * pyöristyssäännöllä. Ero tarkoittaa että jokin brutto on kirjattu
  * väärin tai kanta on väärä — ja selitys kertoo kumpi on
@@ -293,12 +293,12 @@ export function reconcile(input: {
   );
 
   /*
-   * Kassan ALV on Budetin ALV kun erittely on luettu.
+   * Kassan ALV on Katen ALV kun erittely on luettu.
    *
    * Kassa on kirjanpidon lähde: sen ALV-taulukko on se luku joka
-   * ilmoitetaan verottajalle. Budetin oma laskelma on tarkistus eikä
+   * ilmoitetaan verottajalle. Katen oma laskelma on tarkistus eikä
    * korvaava — ja kun tarkistus asetetaan lähteen tilalle,
-   * täsmäytyksestä tulee vertailu Budetin ja Budetin välillä.
+   * täsmäytyksestä tulee vertailu Katen ja Katen välillä.
    */
   const budetVat =
     posRates.length > 0 ? sum(posRates, (r) => r.vatCents) : summary.vatCents;
@@ -484,7 +484,7 @@ function explain(
         `liian pieni ollakseen väärä verokanta: pienimmänkin ryhmän ` +
         `siirtyminen toiselle kannalle muuttaisi ALV:tä vähintään ` +
         `${formatMoney(swap)}. Kyse on yksittäisestä tuotteesta ryhmän ` +
-        `sisällä. Kuvaa päiväraportti uudelleen, niin Budet lukee kassan ` +
+        `sisällä. Kuvaa päiväraportti uudelleen, niin Kate lukee kassan ` +
         `oman ALV-erittelyn eikä johda veroa ryhmistä.`
       );
     }
@@ -604,7 +604,7 @@ export interface MappedReport {
 }
 
 /**
- * Kassaraportin ryhmät Budetin myyntiriveiksi.
+ * Kassaraportin ryhmät Katen myyntiriveiksi.
  *
  * KAKSI KASSARYHMÄÄ VOI OLLA YKSI MYYNTIRYHMÄ.
  *

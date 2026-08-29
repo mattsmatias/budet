@@ -286,7 +286,7 @@ function explain(
 /**
  * Oma syntymäpäivä työyhteisöä varten.
  *
- * Päivä ja kuukausi, ei vuotta. Vuotta ei kysytä koska Budet ei tarvitse
+ * Päivä ja kuukausi, ei vuotta. Vuotta ei kysytä koska Kate ei tarvitse
  * ikää mihinkään, eikä tietoa jota ei ole voi vuotaa.
  *
  * Tyhjä syöte poistaa merkinnän. Syntymäpäivän kertominen on

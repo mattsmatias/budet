@@ -222,7 +222,7 @@ export interface MonthlyFlow {
  *
  * MYYNNIN PUUTTUMINEN EI OLE NOLLAMYYNTI.
  *
- * Myynti on Budetissa uusi taulu, ja historiaa on vasta siitä asti
+ * Myynti on Kateessa uusi taulu, ja historiaa on vasta siitä asti
  * kun sitä on alettu kirjata. Nollaan putoava viiva väittäisi että
  * ravintola lakkasi myymästä — kaavio katkaisee viivan sen sijaan,
  * ja siksi tässä palautetaan null eikä 0.

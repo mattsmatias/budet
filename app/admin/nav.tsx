@@ -112,7 +112,7 @@ function DesktopSidebar({
       <div className="px-[18px] pb-3 pt-[14px]">
         <Link href="/" className="block">
           <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
-            Budet
+            Kate
           </span>
           <span
             className="mt-0.5 block truncate text-[10.5px] font-bold uppercase"

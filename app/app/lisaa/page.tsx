@@ -85,7 +85,7 @@ export default async function MorePage() {
       </form>
 
       <p className="px-1 text-center text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-        Budet · työntekijänäkymä
+        Kate · työntekijänäkymä
       </p>
     </div>
   );

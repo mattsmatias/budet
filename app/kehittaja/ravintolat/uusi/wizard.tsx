@@ -182,7 +182,7 @@ export function Wizard() {
             {/*
               MIKSI TÄSSÄ EI OLE SALASANAKENTTÄÄ.
 
-              Budet ei tallenna salasanoja itse eikä ylläpitäjä aseta
+              Kate ei tallenna salasanoja itse eikä ylläpitäjä aseta
               niitä kenenkään puolesta. Omistaja rekisteröityy itse ja
               lunastaa kutsukoodin, jolloin salasana syntyy vain hänen
               ja tunnistuspalvelun välillä.

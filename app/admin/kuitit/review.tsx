@@ -148,7 +148,7 @@ export function ReviewPanel({ receipt }: { receipt: Receipt }) {
 
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
         Kategorian muutos kirjataan toimittajalle. Kun sama korjaus toistuu,
-        Budet ehdottaa sitä jatkossa.
+        Kate ehdottaa sitä jatkossa.
       </p>
     </form>
   );

@@ -19,7 +19,7 @@ export const metadata = { title: "Tehtävät" };
 /**
  * Tehtävät.
  *
- * BUDET EI VAIN SÄILYTÄ TEHTÄVIÄ.
+ * KATE EI VAIN SÄILYTÄ TEHTÄVIÄ.
  *
  * Lista on väline, ei tarkoitus. Tarkoitus on että määräaika ei mene
  * ohi: siksi näkymä alkaa siitä mikä on myöhässä tai erääntyy tänään,

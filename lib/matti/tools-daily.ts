@@ -120,7 +120,7 @@ const getBriefing = defineTool({
         `kulut ${formatMoney(pulse.expenses.cents)}. ` +
         (pulse.monthToDate.resultCents === null
           ? "Kuukauden tulosta ei voi laskea ilman myyntitietoja."
-          : `Kuukausi tähän asti ${formatMoney(pulse.monthToDate.resultCents)} (karkea: vain Budetin läpi kulkeva).`),
+          : `Kuukausi tähän asti ${formatMoney(pulse.monthToDate.resultCents)} (karkea: vain Katen läpi kulkeva).`),
       data: {
         status: { tone: status.tone, headline: status.headline, counts: status.counts },
         focus: top.map((i) => ({

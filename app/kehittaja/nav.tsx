@@ -28,7 +28,7 @@ export function DevNav() {
       <div className="px-[18px] pb-3 pt-[14px]">
         <Link href="/kehittaja" className="block">
           <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
-            Budet
+            Kate
           </span>
           <span
             className="mt-0.5 block text-[10.5px] font-bold uppercase"
@@ -94,7 +94,7 @@ export function DevNav() {
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={16} strokeWidth={1.8} />
-          Takaisin Budetiin
+          Takaisin Kateen
         </Link>
       </div>
     </aside>

@@ -8,7 +8,7 @@ import { formatDuration } from "@/lib/restoflow/timeclock";
  *
  * TAVOITETUNTEJA EI KEKSITÄ.
  *
- * Budet ei tiedä työsopimuksen tuntimäärää, joten edistymispalkkia ei
+ * Kate ei tiedä työsopimuksen tuntimäärää, joten edistymispalkkia ei
  * ole. Keksitty 37,5 tuntia näyttäisi tavoitteelta jota kukaan ei ole
  * asettanut, ja osa-aikaiselle se olisi väärä joka viikko.
  */

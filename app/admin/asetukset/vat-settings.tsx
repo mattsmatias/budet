@@ -28,7 +28,7 @@ const initial: VatState = {};
  * siihen lukuun täsmäytys kaatuisi.
  *
  * Prosentit eivät ole kovakoodattuja missään. Kanta on ravintolan oma
- * asetus, koska verokannat muuttuvat lainsäädännöllä ja Budet toimii
+ * asetus, koska verokannat muuttuvat lainsäädännöllä ja Kate toimii
  * myös muissa maissa.
  */
 export function SalesGroups({
@@ -77,7 +77,7 @@ export function SalesGroups({
 
           <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
             Ravintolamyynti 13,5 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
-            Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Budet ei
+            Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Kate ei
             seuraa verokantojen muutoksia puolestasi.
           </p>
         </div>
@@ -386,7 +386,7 @@ function DeleteGroup({
  * Kassajärjestelmän ryhmien kohdistus.
  *
  * Kassa tuntee omat nimensä — "Ruoka", "Viini", "Olut", "Take away" —
- * ja Budet tuntee myyntiryhmät. Kohdistus on ravintolakohtainen, koska
+ * ja Kate tuntee myyntiryhmät. Kohdistus on ravintolakohtainen, koska
  * kaksi ravintolaa nimeää samat asiat eri tavoin.
  *
  * Ilman kohdistusta raportin ryhmä päätyy oletusryhmään. Myynti ei siis
@@ -484,7 +484,7 @@ export function PosMappings({
           </label>
 
           <label className="block">
-            <span className="block text-[12.5px] font-semibold">Budetin myyntiryhmä</span>
+            <span className="block text-[12.5px] font-semibold">Katen myyntiryhmä</span>
             <select
               name="salesGroupId"
               required
@@ -536,7 +536,7 @@ export function PosMappings({
           RUOKA, LOUNAS, VEDET ja muut tavalliset nimet ravintolamyyntiin;
           OLUT, VIINI, ALKO ja vastaavat alkoholimyyntiin. Omat kohdistuksesi
           säilyvät ennallaan. Monitulkintaisia nimiä kuten JUOMAT tai TAKE AWAY
-          ei kohdisteta puolestasi — niistä Budet varoittaa raporttia
+          ei kohdisteta puolestasi — niistä Kate varoittaa raporttia
           luettaessa.
         </p>
       </form>

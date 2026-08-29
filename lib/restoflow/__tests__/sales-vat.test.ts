@@ -161,7 +161,7 @@ describe("reconcile", () => {
     expect(r.byRate).toHaveLength(2);
   });
 
-  /* Kassa pyöristää ryhmittäin, Budet kannoittain. Sentti ei ole virhe. */
+  /* Kassa pyöristää ryhmittäin, Kate kannoittain. Sentti ei ole virhe. */
   it("sietää sentin pyöristyseron", () => {
     const lines = [line(0.14, 300000), line(0.255, 100000)];
     const s = summarise(lines);
@@ -684,7 +684,7 @@ describe("mapReportGroups", () => {
    * KOKO KETJU: raportti → rivit → täsmäytys.
    *
    * Tämä on se mitä ominaisuus lupaa. Jos tämä menee läpi, kassan
-   * päiväraportti täsmää Budetin laskelmaan.
+   * päiväraportti täsmää Katen laskelmaan.
    */
   it("tuottaa täsmäävän tuloksen kokonaisesta raportista", () => {
     const raportti = [

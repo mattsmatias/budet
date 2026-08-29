@@ -333,7 +333,7 @@ export default async function DevRestaurantPage({
           </section>
 
           {/*
-            Käyttöluvut vastaavat kysymykseen käyttääkö asiakas Budetia.
+            Käyttöluvut vastaavat kysymykseen käyttääkö asiakas Katea.
             Nolla joka sarakkeessa on eri asia kuin nolla yhdessä:
             edellinen tarkoittaa ettei sovellusta ole otettu käyttöön.
           */}

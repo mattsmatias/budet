@@ -31,12 +31,12 @@ const fi = {
     about: "Meistä",
     login: "Kirjaudu",
     start: "Aloita ilmaiseksi",
-    openApp: "Avaa Budet",
+    openApp: "Avaa Kate",
     openMenu: "Avaa valikko",
     closeMenu: "Sulje valikko",
     sections: "Sivun osiot",
     language: "Kieli",
-    home: "Budet, etusivu",
+    home: "Kate, etusivu",
   },
 
   hero: {
@@ -45,9 +45,9 @@ const fi = {
     titleB: "Yhdessä paikassa.",
     body:
       "Kuitit, kulut, myynti, kassaraportit ja kirjanpito ilman turhaa " +
-      "käsityötä. Budet pitää taloutesi järjestyksessä.",
-    secondary: "Tutustu Budetiin",
-    previewNote: "Budetin käyttöliittymä. Luvut ovat esimerkkejä.",
+      "käsityötä. Kate pitää taloutesi järjestyksessä.",
+    secondary: "Tutustu Kateen",
+    previewNote: "Katen käyttöliittymä. Luvut ovat esimerkkejä.",
   },
 
   preview: {
@@ -72,7 +72,7 @@ const fi = {
     groupAlcohol: "Alkoholimyynti",
     groupOther: "Muu myynti",
     month: "Elokuu 2026",
-    overview: "Budet · Yleiskatsaus",
+    overview: "Kate · Yleiskatsaus",
     railOverview: "Yleiskatsaus",
     railSales: "Myynti",
     railReceipts: "Kuitit",
@@ -87,9 +87,9 @@ const fi = {
     item2: "ALV-täsmäytys tarkistettavana",
     item3: "1 kirjausesitys odottaa hyväksyntää",
     cardNote:
-      "Budet laskee nämä aineistosta joka latauksella. Kun asia on hoidettu, " +
+      "Kate laskee nämä aineistosta joka latauksella. Kun asia on hoidettu, " +
       "rivi katoaa itsestään.",
-    heading: "Budet kertoo, mitä seuraavaksi.",
+    heading: "Kate kertoo, mitä seuraavaksi.",
     body:
       "Sinun ei tarvitse muistaa kaikkea itse. Puuttuvat kuitit, " +
       "tarkistettavat kirjaukset ja täsmäämätön ALV nousevat esiin silloin " +
@@ -98,7 +98,7 @@ const fi = {
 
   benefits: {
     headingA: "Sinä pyörität ravintolaa.",
-    headingB: "Budet pitää numerot järjestyksessä.",
+    headingB: "Kate pitää numerot järjestyksessä.",
     body:
       "Myynti, kulut, kuitit ja kassaraportit kulkevat automaattisesti " +
       "samaan kokonaisuuteen.",
@@ -117,12 +117,12 @@ const fi = {
 
   flow: {
     heading: "Syötä tieto kerran.",
-    body: "Budet yhdistää saman tiedon automaattisesti oikeisiin paikkoihin.",
+    body: "Kate yhdistää saman tiedon automaattisesti oikeisiin paikkoihin.",
     step1: "Myynti",
     step1Note: "Ilta päättyy",
     step2: "Kassaraportti",
     step2Note: "Kuvaa tai kirjaa",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Yhdistää tiedot",
     step4: "Kirjanpito",
     step4Note: "Syntyy itsestään",
@@ -154,8 +154,8 @@ const fi = {
     staff: "Työntekijät",
     staffBody: "Työvuorot, työaika ja palkkalaskelmat.",
     taxNote:
-      "Budet valmistelee ALV-luvut kirjanpidosta ja kertoo mitä sinun pitää " +
-      "tehdä. Ilmoituksen teet itse OmaVerossa — Budet ei lähetä sitä " +
+      "Kate valmistelee ALV-luvut kirjanpidosta ja kertoo mitä sinun pitää " +
+      "tehdä. Ilmoituksen teet itse OmaVerossa — Kate ei lähetä sitä " +
       "puolestasi.",
   },
 
@@ -178,7 +178,7 @@ const fi = {
     titleA: "Ravintolan talous.",
     titleB: "Yksinkertaisemmin.",
     body: "Kaikki tärkeä yhdessä paikassa.",
-    secondary: "Katso miten Budet toimii",
+    secondary: "Katso miten Kate toimii",
   },
 
   footer: {
@@ -187,26 +187,26 @@ const fi = {
   },
 
   about: {
-    metaTitle: "Meistä – Budet",
+    metaTitle: "Meistä – Kate",
     metaDescription:
-      "Budet rakennetaan ihmisille, jotka pyörittävät ravintoloita joka " +
+      "Kate rakennetaan ihmisille, jotka pyörittävät ravintoloita joka " +
       "päivä. Yksi paikka ravintolan tärkeimmille asioille.",
     label: "Meistä",
     heading: "Rakennamme ravintoloille paremman tavan pyörittää arkea.",
     body:
-      "Budet syntyi ajatuksesta, että ravintolan tärkeiden asioiden ei " +
+      "Kate syntyi ajatuksesta, että ravintolan tärkeiden asioiden ei " +
       "pitäisi olla hajallaan eri järjestelmissä. Yksi paikka. Vähemmän " +
       "säätöä. Enemmän aikaa itse tekemiseen.",
-    photoAlt: "Budetin tiimi",
+    photoAlt: "Katen tiimi",
     photoPending: "Tiimikuva lisätään tähän.",
     captionA: "Pieni tiimi. Iso tavoite.",
     captionB:
-      "Rakennamme Budetia ihmisille, jotka pyörittävät ravintoloita joka päivä.",
-    teamHeading: "Ihmiset Budetin takana.",
+      "Rakennamme Katea ihmisille, jotka pyörittävät ravintoloita joka päivä.",
+    teamHeading: "Ihmiset Katen takana.",
     teamPending:
       "Tiimin esittelyt julkaistaan kun kuvat ovat valmiina. Paikat ovat " +
       "sivulla jo nyt, joten asettelu ei muutu kun tiedot lisätään.",
-    whyLabel: "Miksi Budet?",
+    whyLabel: "Miksi Kate?",
     whyHeading:
       "Ravintolan pyörittäminen ei saisi tuntua kymmenen eri järjestelmän " +
       "hallitsemiselta.",
@@ -214,7 +214,7 @@ const fi = {
       "Ravintolan arjessa myynti, kuitit, kulut, työntekijät, työvuorot, " +
       "lounaslistat ja raportointi liittyvät kaikki toisiinsa. Silti niitä " +
       "hallitaan usein eri paikoissa.",
-    whyEmphasis: "Budetin tarkoitus on tuoda nämä yhteen.",
+    whyEmphasis: "Katen tarkoitus on tuoda nämä yhteen.",
     beliefsLabel: "Mitä uskomme",
     belief1Title: "Yksinkertaisuus",
     belief1Body:
@@ -227,8 +227,8 @@ const fi = {
       "jotka säästävät aikaa ja rahaa.",
     ctaHeading: "Rakennetaan ravintoloiden arjesta vähän helpompaa.",
     ctaBody:
-      "Tutustu Budetiin ja katso, mitä kaikkea voit hallita yhdessä paikassa.",
-    cta: "Tutustu Budetiin",
+      "Tutustu Kateen ja katso, mitä kaikkea voit hallita yhdessä paikassa.",
+    cta: "Tutustu Kateen",
   },
 } as const;
 
@@ -247,12 +247,12 @@ const en: Dictionary = {
     about: "About",
     login: "Log in",
     start: "Start for free",
-    openApp: "Open Budet",
+    openApp: "Open Kate",
     openMenu: "Open menu",
     closeMenu: "Close menu",
     sections: "Page sections",
     language: "Language",
-    home: "Budet, home",
+    home: "Kate, home",
   },
   hero: {
     label: "Restaurant finances. In one place.",
@@ -260,9 +260,9 @@ const en: Dictionary = {
     titleB: "In one place.",
     body:
       "Receipts, expenses, sales, till reports and bookkeeping without the " +
-      "busywork. Budet keeps your finances in order.",
+      "busywork. Kate keeps your finances in order.",
     secondary: "See how it works",
-    previewNote: "The Budet interface. Figures are examples.",
+    previewNote: "The Kate interface. Figures are examples.",
   },
   preview: {
     today: "Today at a glance",
@@ -286,7 +286,7 @@ const en: Dictionary = {
     groupAlcohol: "Alcohol sales",
     groupOther: "Other sales",
     month: "August 2026",
-    overview: "Budet · Overview",
+    overview: "Kate · Overview",
     railOverview: "Overview",
     railSales: "Sales",
     railReceipts: "Receipts",
@@ -300,16 +300,16 @@ const en: Dictionary = {
     item2: "VAT reconciliation needs a check",
     item3: "1 draft entry is waiting for approval",
     cardNote:
-      "Budet works these out from your data on every load. Once something is " +
+      "Kate works these out from your data on every load. Once something is " +
       "handled, the line disappears on its own.",
-    heading: "Budet tells you what comes next.",
+    heading: "Kate tells you what comes next.",
     body:
       "You do not have to keep it all in your head. Missing receipts, entries " +
       "to review and VAT that does not add up surface when they matter.",
   },
   benefits: {
     headingA: "You run the restaurant.",
-    headingB: "Budet keeps the numbers straight.",
+    headingB: "Kate keeps the numbers straight.",
     body:
       "Sales, expenses, receipts and till reports all flow into the same " +
       "place automatically.",
@@ -326,12 +326,12 @@ const en: Dictionary = {
   },
   flow: {
     heading: "Enter it once.",
-    body: "Budet routes the same data to the right places automatically.",
+    body: "Kate routes the same data to the right places automatically.",
     step1: "Sales",
     step1Note: "The evening ends",
     step2: "Till report",
     step2Note: "Photograph or type",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Connects the data",
     step4: "Bookkeeping",
     step4Note: "Happens by itself",
@@ -361,9 +361,9 @@ const en: Dictionary = {
     staff: "Staff",
     staffBody: "Shifts, hours and payslips.",
     taxNote:
-      "Budet prepares your VAT figures from the ledger and tells you what to " +
+      "Kate prepares your VAT figures from the ledger and tells you what to " +
       "do. You file the return yourself in the tax authority's service — " +
-      "Budet does not submit it for you.",
+      "Kate does not submit it for you.",
   },
   pricing: {
     heading: "One price. Everything included.",
@@ -383,33 +383,33 @@ const en: Dictionary = {
     titleA: "Restaurant finances.",
     titleB: "Made simpler.",
     body: "Everything that matters, in one place.",
-    secondary: "See how Budet works",
+    secondary: "See how Kate works",
   },
   footer: {
     tagline: "Restaurant finances in one place.",
     sitemap: "Sitemap",
   },
   about: {
-    metaTitle: "About – Budet",
+    metaTitle: "About – Kate",
     metaDescription:
-      "Budet is built for the people who run restaurants every day. One place " +
+      "Kate is built for the people who run restaurants every day. One place " +
       "for what matters most.",
     label: "About",
     heading: "We are building a better way to run a restaurant day to day.",
     body:
-      "Budet started from a simple idea: the important parts of running a " +
+      "Kate started from a simple idea: the important parts of running a " +
       "restaurant should not be scattered across separate systems. One place. " +
       "Less fiddling. More time for the work itself.",
-    photoAlt: "The Budet team",
+    photoAlt: "The Kate team",
     photoPending: "The team photo goes here.",
     captionA: "A small team. A large goal.",
     captionB:
-      "We build Budet for the people who run restaurants every single day.",
-    teamHeading: "The people behind Budet.",
+      "We build Kate for the people who run restaurants every single day.",
+    teamHeading: "The people behind Kate.",
     teamPending:
       "Team profiles go live once the photographs are ready. The places are " +
       "already on the page, so nothing shifts when the details arrive.",
-    whyLabel: "Why Budet?",
+    whyLabel: "Why Kate?",
     whyHeading:
       "Running a restaurant should not feel like managing ten different " +
       "systems.",
@@ -417,7 +417,7 @@ const en: Dictionary = {
       "Sales, receipts, expenses, staff, shifts, lunch menus and reporting all " +
       "belong to the same day. They are still usually handled in separate " +
       "places.",
-    whyEmphasis: "Budet exists to bring them together.",
+    whyEmphasis: "Kate exists to bring them together.",
     beliefsLabel: "What we believe",
     belief1Title: "Simplicity",
     belief1Body: "Good software should make work easier, not more complicated.",
@@ -429,8 +429,8 @@ const en: Dictionary = {
       "We do not build features for their own sake. We build things that save " +
       "time and money.",
     ctaHeading: "Let's make restaurant work a little easier.",
-    ctaBody: "Take a look at Budet and see what you can run from one place.",
-    cta: "Explore Budet",
+    ctaBody: "Take a look at Kate and see what you can run from one place.",
+    cta: "Explore Kate",
   },
 };
 
@@ -444,12 +444,12 @@ const sv: Dictionary = {
     about: "Om oss",
     login: "Logga in",
     start: "Kom igång gratis",
-    openApp: "Öppna Budet",
+    openApp: "Öppna Kate",
     openMenu: "Öppna menyn",
     closeMenu: "Stäng menyn",
     sections: "Sidans avsnitt",
     language: "Språk",
-    home: "Budet, startsida",
+    home: "Kate, startsida",
   },
   hero: {
     label: "Restaurangens ekonomi. På ett ställe.",
@@ -457,9 +457,9 @@ const sv: Dictionary = {
     titleB: "På ett ställe.",
     body:
       "Kvitton, utgifter, försäljning, kassarapporter och bokföring utan " +
-      "onödigt handarbete. Budet håller ordning på ekonomin.",
+      "onödigt handarbete. Kate håller ordning på ekonomin.",
     secondary: "Se hur det fungerar",
-    previewNote: "Budets gränssnitt. Siffrorna är exempel.",
+    previewNote: "Kates gränssnitt. Siffrorna är exempel.",
   },
   preview: {
     today: "Dagens läge",
@@ -483,7 +483,7 @@ const sv: Dictionary = {
     groupAlcohol: "Alkoholförsäljning",
     groupOther: "Övrig försäljning",
     month: "Augusti 2026",
-    overview: "Budet · Översikt",
+    overview: "Kate · Översikt",
     railOverview: "Översikt",
     railSales: "Försäljning",
     railReceipts: "Kvitton",
@@ -497,16 +497,16 @@ const sv: Dictionary = {
     item2: "Momsavstämningen behöver kontrolleras",
     item3: "1 bokföringsförslag väntar på godkännande",
     cardNote:
-      "Budet räknar ut det här från dina uppgifter vid varje sidladdning. När " +
+      "Kate räknar ut det här från dina uppgifter vid varje sidladdning. När " +
       "något är åtgärdat försvinner raden av sig själv.",
-    heading: "Budet säger vad som står på tur.",
+    heading: "Kate säger vad som står på tur.",
     body:
       "Du behöver inte komma ihåg allt själv. Kvitton som saknas, poster som " +
       "ska granskas och moms som inte stämmer lyfts fram när det är dags.",
   },
   benefits: {
     headingA: "Du driver restaurangen.",
-    headingB: "Budet håller ordning på siffrorna.",
+    headingB: "Kate håller ordning på siffrorna.",
     body:
       "Försäljning, utgifter, kvitton och kassarapporter hamnar automatiskt " +
       "i samma helhet.",
@@ -523,12 +523,12 @@ const sv: Dictionary = {
   },
   flow: {
     heading: "Mata in en gång.",
-    body: "Budet för samma uppgift vidare till rätt ställen automatiskt.",
+    body: "Kate för samma uppgift vidare till rätt ställen automatiskt.",
     step1: "Försäljning",
     step1Note: "Kvällen tar slut",
     step2: "Kassarapport",
     step2Note: "Fotografera eller skriv",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Kopplar ihop",
     step4: "Bokföring",
     step4Note: "Sker av sig själv",
@@ -558,9 +558,9 @@ const sv: Dictionary = {
     staff: "Personal",
     staffBody: "Skift, arbetstid och lönebesked.",
     taxNote:
-      "Budet förbereder momsuppgifterna utifrån bokföringen och berättar vad " +
+      "Kate förbereder momsuppgifterna utifrån bokföringen och berättar vad " +
       "du ska göra. Deklarationen lämnar du in själv hos Skatteförvaltningen " +
-      "— Budet skickar den inte åt dig.",
+      "— Kate skickar den inte åt dig.",
   },
   pricing: {
     heading: "Ett pris. Allt ingår.",
@@ -580,39 +580,39 @@ const sv: Dictionary = {
     titleA: "Restaurangens ekonomi.",
     titleB: "Enklare.",
     body: "Allt viktigt på ett ställe.",
-    secondary: "Se hur Budet fungerar",
+    secondary: "Se hur Kate fungerar",
   },
   footer: {
     tagline: "Restaurangens ekonomi på ett ställe.",
     sitemap: "Webbplatskarta",
   },
   about: {
-    metaTitle: "Om oss – Budet",
+    metaTitle: "Om oss – Kate",
     metaDescription:
-      "Budet byggs för dem som driver restauranger varje dag. Ett ställe för " +
+      "Kate byggs för dem som driver restauranger varje dag. Ett ställe för " +
       "det som är viktigast.",
     label: "Om oss",
     heading: "Vi bygger ett bättre sätt att sköta restaurangvardagen.",
     body:
-      "Budet växte fram ur tanken att det viktigaste i en restaurang inte " +
+      "Kate växte fram ur tanken att det viktigaste i en restaurang inte " +
       "borde ligga utspritt i olika system. Ett ställe. Mindre pillande. Mer " +
       "tid för själva jobbet.",
-    photoAlt: "Budets team",
+    photoAlt: "Kates team",
     photoPending: "Teambilden kommer här.",
     captionA: "Litet team. Stort mål.",
-    captionB: "Vi bygger Budet för dem som driver restauranger varje dag.",
-    teamHeading: "Människorna bakom Budet.",
+    captionB: "Vi bygger Kate för dem som driver restauranger varje dag.",
+    teamHeading: "Människorna bakom Kate.",
     teamPending:
       "Teamet presenteras när bilderna är klara. Platserna finns redan på " +
       "sidan, så ingenting flyttar sig när uppgifterna kommer.",
-    whyLabel: "Varför Budet?",
+    whyLabel: "Varför Kate?",
     whyHeading:
       "Att driva en restaurang borde inte kännas som att sköta tio olika " +
       "system.",
     whyBody:
       "Försäljning, kvitton, utgifter, personal, skift, lunchlistor och " +
       "rapportering hör till samma dag. Ändå sköts de oftast på olika håll.",
-    whyEmphasis: "Budet finns för att föra ihop dem.",
+    whyEmphasis: "Kate finns för att föra ihop dem.",
     beliefsLabel: "Vad vi tror på",
     belief1Title: "Enkelhet",
     belief1Body: "Bra programvara ska göra jobbet lättare, inte krångligare.",
@@ -623,8 +623,8 @@ const sv: Dictionary = {
       "Vi bygger inte funktioner för sakens skull. Vi bygger sådant som sparar " +
       "tid och pengar.",
     ctaHeading: "Låt oss göra restaurangvardagen lite enklare.",
-    ctaBody: "Titta närmare på Budet och se vad du kan sköta på ett ställe.",
-    cta: "Utforska Budet",
+    ctaBody: "Titta närmare på Kate och se vad du kan sköta på ett ställe.",
+    cta: "Utforska Kate",
   },
 };
 
@@ -638,12 +638,12 @@ const da: Dictionary = {
     about: "Om os",
     login: "Log ind",
     start: "Kom i gang gratis",
-    openApp: "Åbn Budet",
+    openApp: "Åbn Kate",
     openMenu: "Åbn menuen",
     closeMenu: "Luk menuen",
     sections: "Sidens afsnit",
     language: "Sprog",
-    home: "Budet, forside",
+    home: "Kate, forside",
   },
   hero: {
     label: "Restaurantens økonomi. Ét sted.",
@@ -651,9 +651,9 @@ const da: Dictionary = {
     titleB: "Ét sted.",
     body:
       "Kvitteringer, udgifter, salg, kasserapporter og bogføring uden unødigt " +
-      "håndarbejde. Budet holder styr på økonomien.",
+      "håndarbejde. Kate holder styr på økonomien.",
     secondary: "Se hvordan det virker",
-    previewNote: "Budets brugerflade. Tallene er eksempler.",
+    previewNote: "Kates brugerflade. Tallene er eksempler.",
   },
   preview: {
     today: "Dagens status",
@@ -677,7 +677,7 @@ const da: Dictionary = {
     groupAlcohol: "Alkoholsalg",
     groupOther: "Øvrigt salg",
     month: "August 2026",
-    overview: "Budet · Overblik",
+    overview: "Kate · Overblik",
     railOverview: "Overblik",
     railSales: "Salg",
     railReceipts: "Kvitteringer",
@@ -691,16 +691,16 @@ const da: Dictionary = {
     item2: "Momsafstemningen skal kontrolleres",
     item3: "1 bogføringsforslag venter på godkendelse",
     cardNote:
-      "Budet regner det ud fra dine data ved hver indlæsning. Når noget er " +
+      "Kate regner det ud fra dine data ved hver indlæsning. Når noget er " +
       "klaret, forsvinder linjen af sig selv.",
-    heading: "Budet fortæller, hvad der er næste skridt.",
+    heading: "Kate fortæller, hvad der er næste skridt.",
     body:
       "Du behøver ikke huske det hele selv. Manglende kvitteringer, posteringer " +
       "til gennemsyn og moms, der ikke stemmer, dukker op, når det er aktuelt.",
   },
   benefits: {
     headingA: "Du driver restauranten.",
-    headingB: "Budet holder styr på tallene.",
+    headingB: "Kate holder styr på tallene.",
     body:
       "Salg, udgifter, kvitteringer og kasserapporter ender automatisk samme " +
       "sted.",
@@ -717,12 +717,12 @@ const da: Dictionary = {
   },
   flow: {
     heading: "Indtast én gang.",
-    body: "Budet sender den samme oplysning videre til de rigtige steder.",
+    body: "Kate sender den samme oplysning videre til de rigtige steder.",
     step1: "Salg",
     step1Note: "Aftenen slutter",
     step2: "Kasserapport",
     step2Note: "Fotografér eller skriv",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Samler dataene",
     step4: "Bogføring",
     step4Note: "Sker af sig selv",
@@ -752,8 +752,8 @@ const da: Dictionary = {
     staff: "Medarbejdere",
     staffBody: "Vagter, arbejdstid og lønsedler.",
     taxNote:
-      "Budet klargør momstallene ud fra bogføringen og fortæller, hvad du skal " +
-      "gøre. Angivelsen indsender du selv hos skattemyndigheden — Budet sender " +
+      "Kate klargør momstallene ud fra bogføringen og fortæller, hvad du skal " +
+      "gøre. Angivelsen indsender du selv hos skattemyndigheden — Kate sender " +
       "den ikke for dig.",
   },
   pricing: {
@@ -774,32 +774,32 @@ const da: Dictionary = {
     titleA: "Restaurantens økonomi.",
     titleB: "Enklere.",
     body: "Alt det vigtige ét sted.",
-    secondary: "Se hvordan Budet virker",
+    secondary: "Se hvordan Kate virker",
   },
   footer: {
     tagline: "Restaurantens økonomi ét sted.",
     sitemap: "Sitemap",
   },
   about: {
-    metaTitle: "Om os – Budet",
+    metaTitle: "Om os – Kate",
     metaDescription:
-      "Budet bygges til dem, der driver restauranter hver dag. Ét sted til det, " +
+      "Kate bygges til dem, der driver restauranter hver dag. Ét sted til det, " +
       "der betyder mest.",
     label: "Om os",
     heading: "Vi bygger en bedre måde at drive restaurantens hverdag på.",
     body:
-      "Budet opstod ud fra tanken om, at det vigtigste i en restaurant ikke " +
+      "Kate opstod ud fra tanken om, at det vigtigste i en restaurant ikke " +
       "burde ligge spredt i forskellige systemer. Ét sted. Mindre bøvl. Mere " +
       "tid til selve arbejdet.",
-    photoAlt: "Budet-teamet",
+    photoAlt: "Kate-teamet",
     photoPending: "Teambilledet kommer her.",
     captionA: "Lille team. Stort mål.",
-    captionB: "Vi bygger Budet til dem, der driver restauranter hver dag.",
-    teamHeading: "Menneskene bag Budet.",
+    captionB: "Vi bygger Kate til dem, der driver restauranter hver dag.",
+    teamHeading: "Menneskene bag Kate.",
     teamPending:
       "Teamet præsenteres, når billederne er klar. Pladserne er allerede på " +
       "siden, så intet flytter sig, når oplysningerne kommer.",
-    whyLabel: "Hvorfor Budet?",
+    whyLabel: "Hvorfor Kate?",
     whyHeading:
       "At drive en restaurant burde ikke føles som at styre ti forskellige " +
       "systemer.",
@@ -807,7 +807,7 @@ const da: Dictionary = {
       "Salg, kvitteringer, udgifter, medarbejdere, vagter, frokostmenuer og " +
       "rapportering hører til samme dag. Alligevel håndteres de oftest hver " +
       "for sig.",
-    whyEmphasis: "Budet findes for at samle dem.",
+    whyEmphasis: "Kate findes for at samle dem.",
     beliefsLabel: "Det tror vi på",
     belief1Title: "Enkelhed",
     belief1Body: "God software skal gøre arbejdet lettere, ikke mere indviklet.",
@@ -818,8 +818,8 @@ const da: Dictionary = {
       "Vi bygger ikke funktioner for funktionernes skyld. Vi bygger det, der " +
       "sparer tid og penge.",
     ctaHeading: "Lad os gøre restaurantens hverdag en smule lettere.",
-    ctaBody: "Kig på Budet og se, hvad du kan styre ét sted.",
-    cta: "Udforsk Budet",
+    ctaBody: "Kig på Kate og se, hvad du kan styre ét sted.",
+    cta: "Udforsk Kate",
   },
 };
 
@@ -833,12 +833,12 @@ const tr: Dictionary = {
     about: "Hakkımızda",
     login: "Giriş yap",
     start: "Ücretsiz başla",
-    openApp: "Budet'i aç",
+    openApp: "Kate'i aç",
     openMenu: "Menüyü aç",
     closeMenu: "Menüyü kapat",
     sections: "Sayfa bölümleri",
     language: "Dil",
-    home: "Budet, ana sayfa",
+    home: "Kate, ana sayfa",
   },
   hero: {
     label: "Restoran finansı. Tek yerde.",
@@ -846,9 +846,9 @@ const tr: Dictionary = {
     titleB: "Tek yerde.",
     body:
       "Fişler, giderler, satışlar, kasa raporları ve muhasebe; gereksiz elle " +
-      "iş olmadan. Budet finansınızı düzende tutar.",
+      "iş olmadan. Kate finansınızı düzende tutar.",
     secondary: "Nasıl çalıştığını gör",
-    previewNote: "Budet arayüzü. Rakamlar örnektir.",
+    previewNote: "Kate arayüzü. Rakamlar örnektir.",
   },
   preview: {
     today: "Bugünün durumu",
@@ -872,7 +872,7 @@ const tr: Dictionary = {
     groupAlcohol: "Alkol satışı",
     groupOther: "Diğer satışlar",
     month: "Ağustos 2026",
-    overview: "Budet · Genel bakış",
+    overview: "Kate · Genel bakış",
     railOverview: "Genel bakış",
     railSales: "Satış",
     railReceipts: "Fişler",
@@ -886,16 +886,16 @@ const tr: Dictionary = {
     item2: "KDV mutabakatı kontrol bekliyor",
     item3: "1 kayıt önerisi onay bekliyor",
     cardNote:
-      "Budet bunları her açılışta verilerinizden hesaplar. İş halledildiğinde " +
+      "Kate bunları her açılışta verilerinizden hesaplar. İş halledildiğinde " +
       "satır kendiliğinden kaybolur.",
-    heading: "Sırada ne olduğunu Budet söyler.",
+    heading: "Sırada ne olduğunu Kate söyler.",
     body:
       "Her şeyi aklınızda tutmanız gerekmez. Eksik fişler, gözden geçirilecek " +
       "kayıtlar ve tutmayan KDV, zamanı geldiğinde öne çıkar.",
   },
   benefits: {
     headingA: "Restoranı siz yönetirsiniz.",
-    headingB: "Rakamları Budet düzenli tutar.",
+    headingB: "Rakamları Kate düzenli tutar.",
     body:
       "Satış, gider, fiş ve kasa raporları otomatik olarak aynı yerde " +
       "toplanır.",
@@ -911,12 +911,12 @@ const tr: Dictionary = {
   },
   flow: {
     heading: "Bir kez girin.",
-    body: "Budet aynı bilgiyi otomatik olarak doğru yerlere iletir.",
+    body: "Kate aynı bilgiyi otomatik olarak doğru yerlere iletir.",
     step1: "Satış",
     step1Note: "Akşam biter",
     step2: "Kasa raporu",
     step2Note: "Fotoğraflayın ya da yazın",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Verileri birleştirir",
     step4: "Muhasebe",
     step4Note: "Kendiliğinden oluşur",
@@ -946,8 +946,8 @@ const tr: Dictionary = {
     staff: "Çalışanlar",
     staffBody: "Vardiya, çalışma saati ve bordro.",
     taxNote:
-      "Budet KDV rakamlarını muhasebeden hazırlar ve ne yapmanız gerektiğini " +
-      "söyler. Beyannameyi vergi idaresine kendiniz verirsiniz — Budet sizin " +
+      "Kate KDV rakamlarını muhasebeden hazırlar ve ne yapmanız gerektiğini " +
+      "söyler. Beyannameyi vergi idaresine kendiniz verirsiniz — Kate sizin " +
       "adınıza göndermez.",
   },
   pricing: {
@@ -968,38 +968,38 @@ const tr: Dictionary = {
     titleA: "Restoran finansı.",
     titleB: "Daha basit.",
     body: "Önemli olan her şey tek yerde.",
-    secondary: "Budet nasıl çalışır",
+    secondary: "Kate nasıl çalışır",
   },
   footer: {
     tagline: "Restoran finansı tek yerde.",
     sitemap: "Site haritası",
   },
   about: {
-    metaTitle: "Hakkımızda – Budet",
+    metaTitle: "Hakkımızda – Kate",
     metaDescription:
-      "Budet, her gün restoran işletenler için geliştiriliyor. En önemli işler " +
+      "Kate, her gün restoran işletenler için geliştiriliyor. En önemli işler " +
       "için tek bir yer.",
     label: "Hakkımızda",
     heading: "Restoranın günlük işleyişi için daha iyi bir yol kuruyoruz.",
     body:
-      "Budet, bir restoranın önemli işlerinin ayrı sistemlere dağılmaması " +
+      "Kate, bir restoranın önemli işlerinin ayrı sistemlere dağılmaması " +
       "gerektiği düşüncesinden doğdu. Tek yer. Daha az uğraş. İşin kendisine " +
       "daha çok zaman.",
-    photoAlt: "Budet ekibi",
+    photoAlt: "Kate ekibi",
     photoPending: "Ekip fotoğrafı buraya gelecek.",
     captionA: "Küçük ekip. Büyük hedef.",
-    captionB: "Budet'i her gün restoran işletenler için geliştiriyoruz.",
-    teamHeading: "Budet'in arkasındaki insanlar.",
+    captionB: "Kate'i her gün restoran işletenler için geliştiriyoruz.",
+    teamHeading: "Kate'in arkasındaki insanlar.",
     teamPending:
       "Ekip tanıtımları fotoğraflar hazır olduğunda yayınlanacak. Yerler " +
       "sayfada şimdiden hazır, bilgiler eklendiğinde düzen değişmeyecek.",
-    whyLabel: "Neden Budet?",
+    whyLabel: "Neden Kate?",
     whyHeading:
       "Bir restoranı işletmek, on ayrı sistemi yönetmek gibi hissettirmemeli.",
     whyBody:
       "Satış, fiş, gider, çalışanlar, vardiyalar, öğle menüleri ve raporlama " +
       "aynı güne aittir. Yine de çoğu zaman ayrı yerlerde yönetilir.",
-    whyEmphasis: "Budet bunları bir araya getirmek için var.",
+    whyEmphasis: "Kate bunları bir araya getirmek için var.",
     beliefsLabel: "Neye inanıyoruz",
     belief1Title: "Sadelik",
     belief1Body: "İyi yazılım işi kolaylaştırmalı, karmaşıklaştırmamalı.",
@@ -1010,8 +1010,8 @@ const tr: Dictionary = {
       "Özellikleri kendileri için geliştirmiyoruz. Zaman ve para kazandıran " +
       "şeyleri geliştiriyoruz.",
     ctaHeading: "Restoranın gününü biraz kolaylaştıralım.",
-    ctaBody: "Budet'e göz atın ve tek yerden neleri yönetebileceğinizi görün.",
-    cta: "Budet'i keşfet",
+    ctaBody: "Kate'e göz atın ve tek yerden neleri yönetebileceğinizi görün.",
+    cta: "Kate'i keşfet",
   },
 };
 
@@ -1025,12 +1025,12 @@ const et: Dictionary = {
     about: "Meist",
     login: "Logi sisse",
     start: "Alusta tasuta",
-    openApp: "Ava Budet",
+    openApp: "Ava Kate",
     openMenu: "Ava menüü",
     closeMenu: "Sulge menüü",
     sections: "Lehe osad",
     language: "Keel",
-    home: "Budet, esileht",
+    home: "Kate, esileht",
   },
   hero: {
     label: "Restorani rahaasjad. Ühes kohas.",
@@ -1038,9 +1038,9 @@ const et: Dictionary = {
     titleB: "Ühes kohas.",
     body:
       "Kviitungid, kulud, müük, kassaaruanded ja raamatupidamine ilma liigse " +
-      "käsitsitööta. Budet hoiab rahaasjad korras.",
+      "käsitsitööta. Kate hoiab rahaasjad korras.",
     secondary: "Vaata, kuidas see töötab",
-    previewNote: "Budeti kasutajaliides. Numbrid on näited.",
+    previewNote: "Kate kasutajaliides. Numbrid on näited.",
   },
   preview: {
     today: "Tänane seis",
@@ -1064,7 +1064,7 @@ const et: Dictionary = {
     groupAlcohol: "Alkoholimüük",
     groupOther: "Muu müük",
     month: "August 2026",
-    overview: "Budet · Ülevaade",
+    overview: "Kate · Ülevaade",
     railOverview: "Ülevaade",
     railSales: "Müük",
     railReceipts: "Kviitungid",
@@ -1078,16 +1078,16 @@ const et: Dictionary = {
     item2: "Käibemaksu võrdlus vajab kontrolli",
     item3: "1 kande ettepanek ootab kinnitust",
     cardNote:
-      "Budet arvutab need sinu andmetest iga laadimise ajal. Kui asi on " +
+      "Kate arvutab need sinu andmetest iga laadimise ajal. Kui asi on " +
       "tehtud, kaob rida ise ära.",
-    heading: "Budet ütleb, mis on järgmisena.",
+    heading: "Kate ütleb, mis on järgmisena.",
     body:
       "Sa ei pea kõike ise meeles pidama. Puuduvad kviitungid, ülevaatamist " +
       "vajavad kanded ja klappimata käibemaks tõusevad esile siis, kui on aeg.",
   },
   benefits: {
     headingA: "Sina juhid restorani.",
-    headingB: "Budet hoiab numbrid korras.",
+    headingB: "Kate hoiab numbrid korras.",
     body:
       "Müük, kulud, kviitungid ja kassaaruanded jõuavad automaatselt samasse " +
       "kohta.",
@@ -1103,12 +1103,12 @@ const et: Dictionary = {
   },
   flow: {
     heading: "Sisesta üks kord.",
-    body: "Budet viib sama teabe automaatselt õigetesse kohtadesse.",
+    body: "Kate viib sama teabe automaatselt õigetesse kohtadesse.",
     step1: "Müük",
     step1Note: "Õhtu lõpeb",
     step2: "Kassaaruanne",
     step2Note: "Pildista või sisesta",
-    step3: "Budet",
+    step3: "Kate",
     step3Note: "Seob andmed",
     step4: "Raamatupidamine",
     step4Note: "Tekib iseenesest",
@@ -1138,8 +1138,8 @@ const et: Dictionary = {
     staff: "Töötajad",
     staffBody: "Vahetused, tööaeg ja palgateatised.",
     taxNote:
-      "Budet valmistab käibemaksunumbrid raamatupidamisest ja ütleb, mida sul " +
-      "tuleb teha. Deklaratsiooni esitad ise maksuameti teenuses — Budet ei " +
+      "Kate valmistab käibemaksunumbrid raamatupidamisest ja ütleb, mida sul " +
+      "tuleb teha. Deklaratsiooni esitad ise maksuameti teenuses — Kate ei " +
       "saada seda sinu eest.",
   },
   pricing: {
@@ -1160,37 +1160,37 @@ const et: Dictionary = {
     titleA: "Restorani rahaasjad.",
     titleB: "Lihtsamalt.",
     body: "Kõik oluline ühes kohas.",
-    secondary: "Vaata, kuidas Budet töötab",
+    secondary: "Vaata, kuidas Kate töötab",
   },
   footer: {
     tagline: "Restorani rahaasjad ühes kohas.",
     sitemap: "Sisukaart",
   },
   about: {
-    metaTitle: "Meist – Budet",
+    metaTitle: "Meist – Kate",
     metaDescription:
-      "Budet on tehtud neile, kes peavad restorani iga päev. Üks koht kõige " +
+      "Kate on tehtud neile, kes peavad restorani iga päev. Üks koht kõige " +
       "olulisema jaoks.",
     label: "Meist",
     heading: "Ehitame restoranile paremat viisi igapäevatööks.",
     body:
-      "Budet sündis mõttest, et restorani olulised asjad ei peaks olema laiali " +
+      "Kate sündis mõttest, et restorani olulised asjad ei peaks olema laiali " +
       "eri süsteemides. Üks koht. Vähem nokitsemist. Rohkem aega tööle endale.",
-    photoAlt: "Budeti tiim",
+    photoAlt: "Kate tiim",
     photoPending: "Tiimipilt tuleb siia.",
     captionA: "Väike tiim. Suur eesmärk.",
-    captionB: "Ehitame Budetit neile, kes peavad restorani iga päev.",
-    teamHeading: "Inimesed Budeti taga.",
+    captionB: "Ehitame Katet neile, kes peavad restorani iga päev.",
+    teamHeading: "Inimesed Kate taga.",
     teamPending:
       "Tiimi tutvustused avaldatakse, kui pildid on valmis. Kohad on lehel juba " +
       "olemas, nii et paigutus ei muutu, kui andmed lisanduvad.",
-    whyLabel: "Miks Budet?",
+    whyLabel: "Miks Kate?",
     whyHeading:
       "Restorani pidamine ei peaks tunduma kümne eri süsteemi haldamisena.",
     whyBody:
       "Müük, kviitungid, kulud, töötajad, vahetused, lõunamenüüd ja aruandlus " +
       "kuuluvad samasse päeva. Ometi hallatakse neid enamasti eri kohtades.",
-    whyEmphasis: "Budet on selleks, et need kokku tuua.",
+    whyEmphasis: "Kate on selleks, et need kokku tuua.",
     beliefsLabel: "Mida usume",
     belief1Title: "Lihtsus",
     belief1Body: "Hea tarkvara peaks tööd lihtsamaks tegema, mitte keerulisemaks.",
@@ -1201,8 +1201,8 @@ const et: Dictionary = {
       "Me ei ehita võimalusi nende endi pärast. Ehitame seda, mis säästab aega " +
       "ja raha.",
     ctaHeading: "Teeme restorani päeva veidi lihtsamaks.",
-    ctaBody: "Vaata Budetit ja näe, mida saad ühest kohast juhtida.",
-    cta: "Tutvu Budetiga",
+    ctaBody: "Vaata Katet ja näe, mida saad ühest kohast juhtida.",
+    cta: "Tutvu Katega",
   },
 };
 

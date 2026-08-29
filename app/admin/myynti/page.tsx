@@ -136,7 +136,7 @@ export default async function SalesPage({
             Täsmäytys kassaan
           </h2>
           <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
-            {formatDay(today)} · kassan päiväraportti vs. Budetin laskelma
+            {formatDay(today)} · kassan päiväraportti vs. Katen laskelma
           </p>
 
           <div className="mt-3.5">
@@ -189,7 +189,7 @@ export default async function SalesPage({
           <PanelEmpty
             text={
               sales.length === 0
-                ? "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Budet alkaa verrata päiviä toisiinsa."
+                ? "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Kate alkaa verrata päiviä toisiinsa."
                 : `Tältä kuukaudelta ei ole kirjattua myyntiä. Muilta kuukausilta löytyy ${sales.length} päivää.`
             }
           />

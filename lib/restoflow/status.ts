@@ -85,7 +85,7 @@ export function overallStatus(
       tone: "unknown",
       headline: "Ei vielä arvioitavaa",
       detail:
-        "Lisää kuitteja, budjetit ja päivän myynti, jotta Budet voi kertoa " +
+        "Lisää kuitteja, budjetit ja päivän myynti, jotta Kate voi kertoa " +
         "miten menee. Tyhjä aineisto ei tarkoita että kaikki on kunnossa.",
       counts,
     };

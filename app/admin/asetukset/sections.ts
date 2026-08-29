@@ -4,7 +4,7 @@ import type { IconName } from "@/components/restoflow/icons";
  * Asetusten osastot.
  *
  * Kaikki asetukset yhdellä sivulla oli kuuden kortin ruudukko, jossa
- * ravintolan nimi oli yhtä näkyvästi esillä kuin lause siitä mitä Budet
+ * ravintolan nimi oli yhtä näkyvästi esillä kuin lause siitä mitä Kate
  * ei tee. Osasto kerrallaan tarkoittaa että näkyvissä on se mitä
  * ollaan muuttamassa, ja loput ovat yhden klikkauksen päässä.
  *

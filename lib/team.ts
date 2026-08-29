@@ -1,5 +1,5 @@
 /**
- * Budetin tiimi.
+ * Katen tiimi.
  *
  * TYHJÄ, KOSKA EN TIEDÄ KEITÄ TE OLETTE.
  *

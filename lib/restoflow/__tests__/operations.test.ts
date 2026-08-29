@@ -5,7 +5,7 @@ import type { DailySales } from "../sales";
 
 /*
  * Toiminnalliset poikkeamat ovat aikakriittisiä, ja siksi ne ovat
- * herkempiä kellolle kuin mikään muu Budetissa. Jokainen testi kiinnittää
+ * herkempiä kellolle kuin mikään muu Kateessa. Jokainen testi kiinnittää
  * nykyhetken ja vyöhykkeen, jotta epäonnistuminen kertoo säännöstä eikä
  * siitä milloin testi ajettiin.
  *
@@ -104,7 +104,7 @@ describe("myöhässä oleva sisäänleimaus", () => {
   });
 
   /*
-   * Tämä on se virhe joka on osunut Budetiin viisi kertaa.
+   * Tämä on se virhe joka on osunut Kateen viisi kertaa.
    *
    * Yövuoro alkaa 00:00 paikallista, ja sisään leimattiin 00:10. UTC:ssä
    * se hetki on edellisen päivän 21:10, joten päivän lukeminen

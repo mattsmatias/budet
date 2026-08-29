@@ -3,7 +3,7 @@
  *
  * Erillinen tiedosto ravintolan tyypeistä, koska nämä kuvaavat
  * järjestelmätasoa: asiakkuuksia, paketteja ja lippuja. Ravintolan oma
- * Budet ei tunne näitä käsitteitä eikä sen kuulukaan.
+ * Kate ei tunne näitä käsitteitä eikä sen kuulukaan.
  */
 
 /** Asiakkuuden tila. Päätös, ei datasta johdettu arvo. */

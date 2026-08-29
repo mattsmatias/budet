@@ -13,7 +13,7 @@
  *
  * MUISTUTUS ON LASKELMA, EI RIVI.
  *
- * Budetin ilmoitukset johdetaan tilasta eikä tallenneta. Sama koskee
+ * Katen ilmoitukset johdetaan tilasta eikä tallenneta. Sama koskee
  * muistutuksia: sama päivä tuottaa saman muistutuksen eikä kahta,
  * joten kaksoisilmoitus on rakenteellisesti mahdoton. Lähetetyistä
  * muistutuksista ei tarvitse pitää kirjaa.

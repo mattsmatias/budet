@@ -40,7 +40,7 @@ export interface SalesExtraction {
   /**
    * Kassan ALV-erittely verokannoittain.
    *
-   * Tämä on kassan oma verotieto eikä Budetin laskelma. Tyhjä lista
+   * Tämä on kassan oma verotieto eikä Katen laskelma. Tyhjä lista
    * tarkoittaa ettei raportissa ollut erittelyä — silloin vero
    * johdetaan ryhmistä kuten ennenkin.
    */

@@ -1,4 +1,4 @@
-# RestoFlow
+# Kate
 
 Ravintolan kuitit, kulut, työvuorot ja työaika yhdessä näkymässä.
 
@@ -8,7 +8,7 @@ Live: https://budet-app.vercel.app
 
 ---
 
-## Mitä RestoFlow tekee
+## Mitä Kate tekee
 
 Vastaa kolmeen kysymykseen:
 

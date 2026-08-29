@@ -1,5 +1,5 @@
 /**
- * Budet'n ikonisarja.
+ * Kate'n ikonisarja.
  *
  * Yksi geometria koko sovelluksessa: 24×24 ruudukko, 1,6 px viiva, pyöreät
  * päät ja liitokset, ei täyttöjä. Ikonit ovat piirretty samalle optiselle

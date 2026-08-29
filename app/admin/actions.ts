@@ -815,7 +815,7 @@ export async function cancelAbsence(formData: FormData): Promise<void> {
  *
  * Todistusta itseään ei tallenneta. Lääkärintodistus on terveystieto ja
  * siinä lukee usein diagnoosi; työnantajalle kuuluu tieto poissaolosta ja
- * sen kestosta, ei sen syystä. Budetiin jää merkintä siitä että todistus
+ * sen kestosta, ei sen syystä. Kateen jää merkintä siitä että todistus
  * on nähty ja mille ajalle poissaolo on ilmoitettu — se mitä
  * palkanmaksuun tarvitaan.
  */

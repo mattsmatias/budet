@@ -9,7 +9,7 @@
  * kokeilun ja mittaa siihen kuluneen ajan.
  *
  * Mitä ei voi mitata, sitä ei väitetä toimivaksi. Sähköposti ja
- * maksuintegraatio eivät ole Budetissa konfiguroituina, joten ne
+ * maksuintegraatio eivät ole Kateessa konfiguroituina, joten ne
  * raportoidaan "ei käytössä" eikä vihreänä.
  */
 

@@ -4,7 +4,8 @@ import { pathFor, type Locale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { TEAM, TEAM_PHOTO, TEAM_PLACEHOLDERS } from "@/lib/team";
 import { HtmlLang } from "./html-lang";
-import { LandingNav, Logo, Reveal } from "./nav";
+import { LandingNav, Reveal } from "./nav";
+import { Logo } from "@/components/brand/logo";
 
 /**
  * Meistä-sivu.
@@ -361,7 +362,7 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
         <div>
           <div className="flex items-center gap-2.5">
             <Logo size={22} />
-            <span className="text-[15px] font-bold tracking-[-0.02em]">Budet</span>
+            <span className="text-[15px] font-bold tracking-[-0.02em]">Kate</span>
           </div>
           <p className="mt-2 text-[13px]" style={{ color: "var(--bd-text-2)" }}>
             {t.footer.tagline}
@@ -383,7 +384,7 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
       </div>
 
       <p className="mx-auto mt-8 max-w-5xl text-[12px]" style={{ color: "var(--bd-text-3)" }}>
-        © {new Date().getFullYear()} Budet
+        © {new Date().getFullYear()} Kate
       </p>
     </footer>
   );

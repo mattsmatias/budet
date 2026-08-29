@@ -22,7 +22,7 @@ const PAGE_SIZE = 50;
  * Toimintaloki.
  *
  * Kun myöhemmin kysytään "kuka muutti tämän ja mikä se oli ennen",
- * Budetin on pystyttävä vastaamaan. Palkkatieto, työaikakorjaus,
+ * Katen on pystyttävä vastaamaan. Palkkatieto, työaikakorjaus,
  * verokanta ja käyttöoikeus ovat asioita joissa muistikuva ei riitä.
  *
  * LOKI EI SYNNY TÄSTÄ NÄKYMÄSTÄ.
@@ -79,7 +79,7 @@ export default async function AuditLogPage({
   return (
     <div className="rf-enter space-y-5">
       <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-        Seuraa mitä ravintolan Budetissa on tapahtunut ja kuka muutokset on
+        Seuraa mitä ravintolan Kateessa on tapahtunut ja kuka muutokset on
         tehnyt.
       </p>
 

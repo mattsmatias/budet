@@ -6,7 +6,7 @@ import { RfIcon } from "@/components/restoflow/icons";
 /**
  * Raportin toimitus kirjanpitäjälle.
  *
- * Budet EI lähetä sähköpostia eikä teeskentele lähettävänsä. Painike
+ * Kate EI lähetä sähköpostia eikä teeskentele lähettävänsä. Painike
  * jonka teksti on "Lähetä" mutta joka vain avaa jotain muuta on
  * pahempi kuin rehellinen painike: raportti on kirjanpitoa, ja jos
  * lähetys ei oikeasti tapahtunut, sen huomaa vasta kun kirjanpitäjä
@@ -59,8 +59,8 @@ export function SendToAccountant({
         className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Lataa ensin Excel yltä ja avaa sitten valmis viesti. Budet kirjoittaa
-        aiheen ja tekstin — liitä tiedosto itse, sillä Budet ei lähetä
+        Lataa ensin Excel yltä ja avaa sitten valmis viesti. Kate kirjoittaa
+        aiheen ja tekstin — liitä tiedosto itse, sillä Kate ei lähetä
         sähköpostia eikä pääse käsiksi liitteisiin.
       </p>
 

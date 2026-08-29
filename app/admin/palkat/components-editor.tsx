@@ -29,7 +29,7 @@ const DAYS = [
  *
  * Yhtään lajia ei ole valmiina. Keksitty iltalisä olisi väärä palkka, ja
  * väärä palkka on pahempi kuin puuttuva ominaisuus — oikeat arvot tulevat
- * työehtosopimuksesta jota Budet ei tunne.
+ * työehtosopimuksesta jota Kate ei tunne.
  */
 export function PayComponents({ components }: { components: PayComponent[] }) {
   const [state, action] = useActionState(savePayComponent, initial);
@@ -43,7 +43,7 @@ export function PayComponents({ components }: { components: PayComponent[] }) {
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">Palkkalajit</h2>
           <p className="mt-1 text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
-            Ilta-, yö- ja viikonloppulisät. Budet ei tunne työehtosopimusta,
+            Ilta-, yö- ja viikonloppulisät. Kate ei tunne työehtosopimusta,
             joten arvot syötetään itse.
           </p>
         </div>

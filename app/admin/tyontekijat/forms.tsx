@@ -389,7 +389,7 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   const message =
-    `Sinut on kutsuttu Budetiin (${ROLE_LABELS[role].toLowerCase()}).
+    `Sinut on kutsuttu Kateen (${ROLE_LABELS[role].toLowerCase()}).
 
 ` +
     `1. Mene osoitteeseen ${origin}/rekisteroidy?tila=liity
@@ -511,7 +511,7 @@ function InviteCode({ code, role }: { code: string; role: Role }) {
         </ol>
 
         <p className="mt-3 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-          Budet ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa
+          Kate ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa
           14 päivää, yksi käyttökerta.
         </p>
       </div>

@@ -23,7 +23,7 @@ import {
  */
 
 /**
- * Mihin "Avaa Budet" vie.
+ * Mihin "Avaa Kate" vie.
  *
  * Kohde lasketaan roolista samalla funktiolla jota kirjautuminenkin
  * käyttää. Kirjautumaton saa nullin, jolloin sivu näyttää
@@ -60,16 +60,16 @@ export function marketingMetadata(
   /*
    * Otsikko ohittaa juurilayoutin mallin.
    *
-   * Malli on "%s · Budet", ja nämä otsikot sisältävät jo tuotenimen:
+   * Malli on "%s · Kate", ja nämä otsikot sisältävät jo tuotenimen:
    * ilman absolute-muotoa selaimen välilehdessä lukisi
-   * "Meistä – Budet · Budet".
+   * "Meistä – Kate · Kate".
    *
    * Tunnuslause päättyy pisteeseen kappaleena mutta ei otsikkona,
    * joten se karsitaan tässä eikä kirjoiteta sanakirjaan kahdesti.
    */
   const tagline = t.footer.tagline.replace(/\.$/, "");
 
-  const title = page === "about" ? t.about.metaTitle : `Budet – ${tagline}`;
+  const title = page === "about" ? t.about.metaTitle : `Kate – ${tagline}`;
 
   const description =
     page === "about"
@@ -96,7 +96,7 @@ export function marketingMetadata(
       url: pathFor(locale, page),
       type: "website",
       locale: LOCALE_TAGS[locale].replace("-", "_"),
-      siteName: "Budet",
+      siteName: "Kate",
     },
   };
 }

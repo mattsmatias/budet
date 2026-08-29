@@ -1,7 +1,7 @@
 /**
  * Poikkeamien tunnistus.
  *
- * Tämä on Budet'n varsinainen arvo. "Tekoäly tunnistaa kuitin" on
+ * Tämä on Kate'n varsinainen arvo. "Tekoäly tunnistaa kuitin" on
  * kirjaustyön poistamista; poikkeamien löytäminen on sitä työtä jota
  * manageri ei ehdi tehdä itse.
  *

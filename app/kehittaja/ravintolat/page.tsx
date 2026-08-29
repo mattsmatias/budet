@@ -22,7 +22,7 @@ const SUODATTIMET = [
 ] as const;
 
 /**
- * Kaikki Budetiin luodut ravintolat.
+ * Kaikki Kateen luodut ravintolat.
  *
  * HAKU JA SUODATIN OSOITTEESSA, EI TILASSA.
  *

@@ -7,10 +7,10 @@ import { Card, CardHeader, EmptyState, MetricCard, Pill } from "@/components/res
 /*
  * absolute, koska title.template koskee lapsisegmenttejä eikä
  * segmentin omaa sivua: ilman tätä juurisivu perisi juurilayoutin
- * mallin ja lukisi "Yleiskatsaus · Budet" kuten ravintolan oma
+ * mallin ja lukisi "Yleiskatsaus · Kate" kuten ravintolan oma
  * yleiskatsaus.
  */
-export const metadata = { title: { absolute: "Budet Developer Console" } };
+export const metadata = { title: { absolute: "Kate Developer Console" } };
 
 /**
  * Järjestelmän yleiskatsaus.
@@ -51,7 +51,7 @@ export default async function DevOverviewPage() {
     <div className="rf-stagger space-y-5 md:space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-[22px] font-bold tracking-[-0.02em]">Budet System Overview</h1>
+          <h1 className="text-[22px] font-bold tracking-[-0.02em]">Kate System Overview</h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {overview.restaurants.test === 0
               ? "Koko järjestelmä yhdellä silmäyksellä."

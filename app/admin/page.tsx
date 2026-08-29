@@ -69,7 +69,7 @@ export const metadata = { title: "Yleiskatsaus" };
  * puuttuva vertailukohta sanotaan ääneen. Keksitty prosentti on pahempi
  * kuin puuttuva prosentti — se saa tekemään päätöksiä.
  *
- * Myyntiä ei näytetä, koska Budet ei näe sitä. Kannattavuutta ei
+ * Myyntiä ei näytetä, koska Kate ei näe sitä. Kannattavuutta ei
  * lasketa ilman myyntiä.
  */
 export default async function AdminDashboard({

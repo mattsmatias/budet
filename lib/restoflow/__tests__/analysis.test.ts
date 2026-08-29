@@ -680,7 +680,7 @@ describe("oikeudet", () => {
    *
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
    * Kahdestoista kohta on Tehtävät: määräaika on päivittäinen asia, ja
-   * juuri sen takia Budet avataan aamulla.
+   * juuri sen takia Kate avataan aamulla.
    *
    * Kolmastoista on Kirjanpito. Se on oma työtilansa eikä analyysiä
    * muusta, joten sitä ei voi tavoittaa toisen sivun osiosta niin

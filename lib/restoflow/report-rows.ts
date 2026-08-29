@@ -145,13 +145,13 @@ export async function buildReportRows(
 
     if (!showsRates) {
       return [
-        ["Budet — henkilöstökuluraportti"],
+        ["Kate — henkilöstökuluraportti"],
         ["Huom", "Roolisi ei salli tuntipalkkojen tarkastelua"],
       ];
     }
 
     return [
-      ["Budet — henkilöstökuluraportti"],
+      ["Kate — henkilöstökuluraportti"],
       ["Kuukausi", month],
       ["Huom", "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja"],
       [],
@@ -250,7 +250,7 @@ export async function buildReportRows(
       const vat = inMonth.reduce((s, r) => s + (r.vatCents ?? 0), 0);
 
       return [
-        ["Budet — kuluraportti"],
+        ["Kate — kuluraportti"],
         ["Kuukausi", month],
         ["Huom", "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia"],
         [],
@@ -341,7 +341,7 @@ async function vatReportRows(
   const unspecified = perDay.filter((entry) => entry.lines.length === 0);
 
   return [
-    ["Budet — ALV-raportti myynnistä"],
+    ["Kate — ALV-raportti myynnistä"],
     ["Kuukausi", month],
     [
       "Huom",

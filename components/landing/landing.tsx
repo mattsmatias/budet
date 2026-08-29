@@ -2,15 +2,16 @@ import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import { HtmlLang } from "./html-lang";
-import { LandingNav, Logo, Reveal } from "./nav";
+import { LandingNav, Reveal } from "./nav";
+import { Logo } from "@/components/brand/logo";
 import { HeroPreview, MonthPreview, TodoPreview } from "./preview";
 
 /**
- * Budetin etusivu.
+ * Katen etusivu.
  *
  * VIISI SEKUNTIA.
  *
- * Kävijän on ymmärrettävä mikä Budet on, kenelle se on, miksi sitä
+ * Kävijän on ymmärrettävä mikä Kate on, kenelle se on, miksi sitä
  * kannattaa käyttää, mitä se maksaa ja mistä pääsee alkuun. Kaikki muu
  * on tämän tiellä.
  *
@@ -21,7 +22,7 @@ import { HeroPreview, MonthPreview, TodoPreview } from "./preview";
  * MITÄÄN EI LUVATA MITÄ EI OLE.
  *
  * Jokainen tällä sivulla mainittu ominaisuus on sovelluksessa
- * olemassa. Veroasioista sanotaan mitä Budet oikeasti tekee: se
+ * olemassa. Veroasioista sanotaan mitä Kate oikeasti tekee: se
  * valmistelee luvut ja kertoo mitä pitää tehdä, muttei lähetä
  * ilmoitusta puolestasi.
  */
@@ -193,7 +194,7 @@ function Benefits({ t }: { t: Dictionary }) {
 /**
  * Automaattinen tiedonkulku.
  *
- * Budetin tärkein myyntiväite yhtenä kuvana. Ketju luetaan kerran ja
+ * Katen tärkein myyntiväite yhtenä kuvana. Ketju luetaan kerran ja
  * se on ymmärretty — kappale samasta asiasta ei olisi.
  */
 function Flow({ t }: { t: Dictionary }) {
@@ -379,7 +380,7 @@ function Features({ t }: { t: Dictionary }) {
         </div>
 
         {/*
-          Veroasioista sanotaan mitä Budet oikeasti tekee.
+          Veroasioista sanotaan mitä Kate oikeasti tekee.
 
           "Hoitaa veroasiat" olisi lupaus jota ohjelma ei lunasta:
           ilmoituksen tekee ihminen OmaVerossa. Rehellinen rajaus tässä
@@ -443,7 +444,7 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
             }}
           >
             <div className="p-7 text-center">
-              <p className="text-[14px] font-bold tracking-[-0.01em]">Budet</p>
+              <p className="text-[14px] font-bold tracking-[-0.01em]">Kate</p>
 
               <p className="mt-4">
                 <span className="bd-num text-[46px] font-bold leading-none tracking-[-0.04em]">
@@ -563,7 +564,7 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
         <div>
           <div className="flex items-center gap-2.5">
             <Logo size={22} />
-            <span className="text-[15px] font-bold tracking-[-0.02em]">Budet</span>
+            <span className="text-[15px] font-bold tracking-[-0.02em]">Kate</span>
           </div>
           <p className="mt-2 text-[13px]" style={{ color: "var(--bd-text-2)" }}>
             {t.footer.tagline}
@@ -588,7 +589,7 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
         className="mx-auto mt-8 max-w-5xl text-[12px]"
         style={{ color: "var(--bd-text-3)" }}
       >
-        © {new Date().getFullYear()} Budet
+        © {new Date().getFullYear()} Kate
       </p>
     </footer>
   );

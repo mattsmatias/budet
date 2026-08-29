@@ -3,7 +3,7 @@ import { formatMoney } from "@/lib/money";
 import type { Reconciliation } from "@/lib/restoflow/sales-vat";
 
 /**
- * Kassan ja Budetin vertailu.
+ * Kassan ja Katen vertailu.
  *
  * KOLME TILAA, EI KAHTA.
  *
@@ -37,7 +37,7 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
         </span>
         <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
           Kassan lukuja ei ole, joten päivää ei ole täsmäytetty. Kuvaa
-          päiväraportti, niin Budet vertaa oman laskelmansa siihen.
+          päiväraportti, niin Kate vertaa oman laskelmansa siihen.
         </p>
       </div>
     );
@@ -129,12 +129,12 @@ export function ReconciliationPanel({ result }: { result: Reconciliation }) {
         lukijan tarkistaa itse, ja juuri se on täsmäytyksen tarkoitus.
       */}
       <table className="rf-table mt-3 w-full">
-        <caption className="sr-only">Kassan ja Budetin vertailu</caption>
+        <caption className="sr-only">Kassan ja Katen vertailu</caption>
         <thead>
           <tr>
             <th scope="col">Kohde</th>
             <th scope="col" className="text-right">Kassa</th>
-            <th scope="col" className="text-right">Budet</th>
+            <th scope="col" className="text-right">Kate</th>
             <th scope="col" className="text-right">Ero</th>
           </tr>
         </thead>

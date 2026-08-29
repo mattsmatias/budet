@@ -1,4 +1,4 @@
-# RestoFlow
+# Kate
 
 Ravintolan kulujen, kuittien ja työajan hallinta. Next.js 16 (App Router,
 TypeScript, Tailwind), deployattu Vercelille.
@@ -9,14 +9,29 @@ TypeScript, Tailwind), deployattu Vercelille.
 - **Vercel**: project `budet-app` under team `asunyt` — deploys automatically
   on push to `main`
 
-Repo and Vercel project are still named `budet` for historical reasons. The
-product is RestoFlow. Renaming them would break the working deploy chain for
-no gain — if a deploy ever seems to ignore a push, check Vercel → Settings →
-Git before anything else.
+### The product has been renamed twice
+
+The product is **Kate**. It was Budet before that, and RestoFlow before that.
+Only user-visible text was renamed each time; internal identifiers were left
+alone on purpose. So you will find all three names in the tree and none of it
+is a bug:
+
+- `lib/restoflow/`, `components/restoflow/`, the `.restoflow` body class,
+  the `--rf-*` CSS tokens and `RfIcon` — from the RestoFlow era
+- the `--bd-*` tokens in `landing.css`/`worker.css`, `budetCents` in
+  `sales-vat.ts`, the `budet_locale` cookie and the `text/budet-user` drag
+  type — from the Budet era
+- `mattsmatias/budet` on GitHub and `budet-app` on Vercel
+
+Renaming the repo or the Vercel project would break the working deploy chain
+for no gain — if a deploy ever seems to ignore a push, check Vercel →
+Settings → Git before anything else. Renaming the cookie would silently drop
+everyone's saved language. When you rename the product again, rename the
+words people read and leave the identifiers where they are.
 
 ## Scope is enforced in the data model
 
-RestoFlow deliberately does NOT do: point of sale, sales tracking, bank
+Kate deliberately does NOT do: point of sale, sales tracking, bank
 integration, inventory, reservations, CRM, orders, delivery.
 
 **There is no field for sales anywhere in the data model.** This is not an
