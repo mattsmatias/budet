@@ -15,6 +15,8 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { Button } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 import type { Briefing } from "@/lib/matti/briefing";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 
 /**
  * Matti-paneeli.
@@ -68,8 +70,11 @@ export function MattiPanel({
   compact,
   briefing,
   greeting,
+  t,
 }: {
   enabled: boolean;
+  /** Hallinnan tekstit. */
+  t: AdminText;
   /** Tilannekatsaus palvelimelta — samasta lähteestä kuin hälytykset. */
   briefing: Briefing;
   greeting: string;
@@ -109,8 +114,8 @@ export function MattiPanel({
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={open}
-          aria-label="Matti, Katen AI-työkaveri"
-          title="Matti (Ctrl J)"
+          aria-label={t.matti.ariaLabel}
+          title={t.matti.shortcut}
           className="rf-press flex h-10 w-10 items-center justify-center"
           style={{
             background: "var(--rf-inset)",
@@ -123,6 +128,7 @@ export function MattiPanel({
 
         {open ? (
         <Overlay
+          t={t}
           container={container}
           pathname={pathname}
           close={close}
@@ -163,7 +169,7 @@ export function MattiPanel({
           Nyt rivi on saman korkuinen kuin kaikki muutkin.
         */}
         <span className="min-w-0 flex-1 font-bold" style={{ color: "var(--rf-text)" }}>
-          Matti
+          {t.matti.name}
         </span>
 
         <kbd
@@ -176,6 +182,7 @@ export function MattiPanel({
 
       {open ? (
         <Overlay
+          t={t}
           container={container}
           pathname={pathname}
           close={close}
@@ -207,7 +214,9 @@ function Overlay({
   close,
   briefing,
   greeting,
+  t,
 }: {
+  t: AdminText;
   container: React.RefObject<HTMLDivElement | null>;
   pathname: string;
   close: () => void;
@@ -227,7 +236,7 @@ function Overlay({
       <div
         ref={container}
         role="dialog"
-        aria-label="Matti, Katen AI-työkaveri"
+        aria-label={t.matti.ariaLabel}
         className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
         style={{
           background: "var(--rf-card)",
@@ -236,6 +245,7 @@ function Overlay({
         }}
       >
         <Conversation
+          t={t}
           currentPage={pathname}
           onClose={close}
           briefing={briefing}
@@ -262,11 +272,13 @@ function Conversation({
   onClose,
   briefing,
   greeting,
+  t,
 }: {
   briefing: Briefing;
   greeting: string;
   currentPage: string;
   onClose: () => void;
+  t: AdminText;
 }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -324,7 +336,7 @@ function Conversation({
 
         if (!response.ok) {
           setError({
-            text: payload.error ?? "En saanut tällä kertaa vastausta.",
+            text: payload.error ?? t.matti.noAnswer,
             // Palvelin kertoo auttaako uudelleen yrittäminen. Saldon
             // loppuessa ei auta, eikä painiketta silloin näytetä.
             retryable: payload.retryable !== false,
@@ -345,12 +357,12 @@ function Conversation({
         ]);
       } catch {
         // Verkkokatkos selaimessa. Tämä menee ohi itsestään.
-        setError({ text: "En saanut tällä kertaa vastausta.", retryable: true });
+        setError({ text: t.matti.noAnswer, retryable: true });
       } finally {
         setBusy(false);
       }
     },
-    [busy, conversationId, currentPage],
+    [busy, conversationId, currentPage, t.matti.noAnswer],
   );
 
   return (
@@ -363,13 +375,13 @@ function Conversation({
           <span style={{ color: "var(--rf-accent)" }}>
             <RfIcon name="sparkle" size={18} />
           </span>
-          <p className="text-[15px] font-semibold">Matti</p>
+          <p className="text-[15px] font-semibold">{t.matti.name}</p>
         </div>
 
         <button
           type="button"
           onClick={onClose}
-          aria-label="Sulje Matti"
+          aria-label={t.matti.close}
           className="rf-press rf-icon-btn flex h-9 w-9 items-center justify-center rounded-[9px]"
           style={{ color: "var(--rf-text-2)" }}
         >
@@ -380,6 +392,7 @@ function Conversation({
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
         {turns.length === 0 ? (
           <Welcome
+            t={t}
             currentPage={currentPage}
             onPick={send}
             briefing={briefing}
@@ -388,12 +401,12 @@ function Conversation({
         ) : (
           <div className="space-y-6">
             {turns.map((turn, index) => (
-              <TurnView key={index} turn={turn} />
+              <TurnView t={t} key={index} turn={turn} />
             ))}
           </div>
         )}
 
-        {busy ? <Working /> : null}
+        {busy ? <Working t={t} /> : null}
 
         {error ? (
           <div className="mt-5">
@@ -408,9 +421,7 @@ function Conversation({
                   setTurns((current) => current.slice(0, -1));
                   void send(lastAsked);
                 }}
-              >
-                Yritä uudelleen
-              </Button>
+              >{t.matti.retry}</Button>
             ) : null}
           </div>
         ) : null}
@@ -418,7 +429,7 @@ function Conversation({
         <div ref={bottom} />
       </div>
 
-      <Composer onSend={send} busy={busy} inputRef={input} />
+      <Composer onSend={send} busy={busy} inputRef={input} t={t} />
     </>
   );
 }
@@ -430,7 +441,7 @@ function Conversation({
  * tietokantakyselyitä vaan vastauksen; tieto siitä että
  * get_top_suppliers ajettiin on kehittäjän tieto.
  */
-function Working() {
+function Working({ t }: { t: AdminText }) {
   return (
     <p
       className="mt-5 flex items-center gap-2 text-[13px]"
@@ -438,9 +449,7 @@ function Working() {
     >
       <span className="rf-thinking" style={{ color: "var(--rf-accent)" }}>
         <RfIcon name="sparkle" size={14} />
-      </span>
-      Matti selvittää…
-    </p>
+      </span>{t.matti.thinking}</p>
   );
 }
 
@@ -459,78 +468,54 @@ function Working() {
  * ovat yli budjetin" johtaa vastaukseen jota voi käyttää; "tarkista
  * budjetit" johtaa lukuun jonka näkee jo ruudulta.
  */
-function quickActions(currentPage: string): { label: string; prompt: string }[] {
+function quickActions(
+  currentPage: string,
+  t: AdminText,
+): { label: string; prompt: string }[] {
   const yleiset = [
-    {
-      label: "Mitä minun pitää hoitaa tänään?",
-      prompt: "Mitä minun pitää hoitaa tänään?",
-    },
-    {
-      label: "Mitä on mennyt pieleen tällä viikolla?",
-      prompt: "Mitä on mennyt pieleen tällä viikolla?",
-    },
-    { label: "Analysoi tämän kuun kannattavuus", prompt: "Analysoi tämän kuun kannattavuus." },
+    { label: t.mattiKysy.todayShort, prompt: t.mattiKysy.todayShort },
+    { label: t.mattiKysy.weekWrongShort, prompt: t.mattiKysy.weekWrongShort },
+    { label: t.mattiKysy.profitShort, prompt: t.mattiKysy.profitFull },
   ];
 
   const sivukohtaiset: Record<string, { label: string; prompt: string }[]> = {
     "/admin/budjetit": [
-      {
-        label: "Miksi kulut ovat yli budjetin?",
-        prompt: "Miksi kulut ovat yli budjetin? Erittele kategorioittain.",
-      },
-      { label: "Mihin budjetti riittää loppukuussa?", prompt: "Mihin budjetti riittää loppukuussa?" },
+      { label: t.mattiKysy.overBudgetShort, prompt: t.mattiKysy.overBudgetFull },
+      { label: t.mattiKysy.budgetLeftShort, prompt: t.mattiKysy.budgetLeftShort },
     ],
     "/admin/kuitit": [
-      {
-        label: "Etsi tämän kuukauden suurimmat kulut",
-        prompt: "Etsi tämän kuukauden suurimmat kulut.",
-      },
-      { label: "Onko käsittelemättömiä kuitteja?", prompt: "Onko käsittelemättömiä kuitteja?" },
+      { label: t.mattiKysy.biggestShort, prompt: t.mattiKysy.biggestFull },
+      { label: t.mattiKysy.unhandledShort, prompt: t.mattiKysy.unhandledShort },
     ],
     "/admin/kulut": [
-      { label: "Mikä kuluerä kasvoi eniten?", prompt: "Mikä kuluerä kasvoi eniten viime kuuhun verrattuna?" },
-      { label: "Analysoi tämän kuun kulut", prompt: "Analysoi tämän kuun kulut." },
+      { label: t.mattiKysy.grewMostShort, prompt: t.mattiKysy.grewMostFull },
+      { label: t.mattiKysy.expensesShort, prompt: t.mattiKysy.expensesFull },
     ],
     "/admin/tyovuorot": [
-      {
-        label: "Onko ensi viikon vuorosuunnitelma liian kallis?",
-        prompt: "Onko ensi viikon työvuorosuunnitelma liian kallis?",
-      },
-      { label: "Onko vuoroja ilman tekijää?", prompt: "Onko ensi viikolla vuoroja ilman tekijää?" },
+      { label: t.mattiKysy.rosterCostShort, prompt: t.mattiKysy.rosterCostFull },
+      { label: t.mattiKysy.openShiftsShort, prompt: t.mattiKysy.openShiftsFull },
     ],
     "/admin/lounas": [
-      { label: "Tee ensi viikon lounaslista", prompt: "Tee ensi viikon lounaslista." },
-      { label: "Mitä lounaita on ollut eniten?", prompt: "Mitä lounasruokia on ollut eniten tarjolla?" },
+      { label: t.mattiKysy.lunchListShort, prompt: t.mattiKysy.lunchListFull },
+      { label: t.mattiKysy.lunchMostShort, prompt: t.mattiKysy.lunchMostFull },
     ],
     "/admin/myynti": [
-      { label: "Miten myynti kehittyi tässä kuussa?", prompt: "Miten myynti kehittyi tässä kuussa?" },
-      { label: "Osuuko myynti tavoitteeseen?", prompt: "Osuuko myynti tavoitteeseen tässä kuussa?" },
+      { label: t.mattiKysy.salesTrendShort, prompt: t.mattiKysy.salesTrendShort },
+      { label: t.mattiKysy.salesTargetShort, prompt: t.mattiKysy.salesTargetFull },
     ],
     "/admin/palkat": [
-      { label: "Paljonko työvoima maksoi tässä kuussa?", prompt: "Paljonko työvoima maksoi tässä kuussa?" },
+      { label: t.mattiKysy.labourCostShort, prompt: t.mattiKysy.labourCostShort },
     ],
     "/admin/tehtavat": [
-      { label: "Mitkä tehtävät ovat myöhässä?", prompt: "Mitkä tehtävät ovat myöhässä?" },
+      { label: t.mattiKysy.lateTasksShort, prompt: t.mattiKysy.lateTasksShort },
     ],
     "/admin/raportit": [
-      { label: "Tiivistä tämän kuukauden talous", prompt: "Tiivistä tämän kuukauden talous." },
+      { label: t.mattiKysy.summariseShort, prompt: t.mattiKysy.summariseFull },
     ],
   };
 
   const osuma = Object.keys(sivukohtaiset).find((polku) => currentPage.startsWith(polku));
-  const omat = osuma ? sivukohtaiset[osuma] : [];
-
-  // Sivukohtaiset ensin, yleiset perään — ja enintään viisi riviä.
-  const kaikki = [...omat, ...yleiset];
-  const nahdyt = new Set<string>();
-
-  return kaikki
-    .filter((a) => {
-      if (nahdyt.has(a.prompt)) return false;
-      nahdyt.add(a.prompt);
-      return true;
-    })
-    .slice(0, 5);
+  return osuma ? [...sivukohtaiset[osuma], ...yleiset.slice(0, 1)] : yleiset;
 }
 
 /**
@@ -548,6 +533,7 @@ function quickActions(currentPage: string): { label: string; prompt: string }[] 
  * kertoa eri tilannetta kuin muu sovellus.
  */
 function Welcome({
+  t,
   currentPage,
   onPick,
   briefing,
@@ -557,6 +543,7 @@ function Welcome({
   onPick: (prompt: string) => void;
   briefing: Briefing;
   greeting: string;
+  t: AdminText;
 }) {
   const { critical, warnings, observations } = briefing;
   const kaikkiKunnossa = critical.length === 0 && warnings.length === 0;
@@ -579,8 +566,8 @@ function Welcome({
       <p className="text-[14px] leading-relaxed">
         {greeting} 👋{" "}
         {kaikkiKunnossa
-          ? "Tällä hetkellä ei ole mitään huomautettavaa."
-          : "Tässä tämän hetken tärkeimmät asiat."}
+          ? t.matti.nothingToNote
+          : t.matti.hereAreTheMain}
       </p>
 
       {/*
@@ -611,9 +598,7 @@ function Welcome({
             aria-hidden="true"
             className="inline-block h-2 w-2 shrink-0"
             style={{ background: "var(--rf-green-text)", borderRadius: 999 }}
-          />
-          Kaikki näyttää hyvältä
-        </p>
+          />{t.matti.allGood}</p>
       ) : null}
 
       {/*
@@ -638,30 +623,24 @@ function Welcome({
             className="flex items-center gap-1.5 text-[12px] font-bold uppercase"
             style={{ color: "var(--rf-accent)", letterSpacing: "0.06em" }}
           >
-            <RfIcon name="sparkle" size={13} />
-            Matti huomasi
-          </p>
+            <RfIcon name="sparkle" size={13} />{t.matti.noticed}</p>
 
           <p className="mt-1.5 text-[13.5px] leading-relaxed">{havainto.text}</p>
 
           <button
             type="button"
-            onClick={() => onPick(`${havainto.text} Mistä se johtuu?`)}
+            onClick={() => onPick(fill(t.matti.whyIsThat, { asia: havainto.text }))}
             className="rf-press mt-2 text-[12.5px] font-bold"
             style={{ color: "var(--rf-accent)" }}
-          >
-            Selvitä miksi →
-          </button>
+          >{t.matti.whyLink}</button>
         </div>
       ))}
 
       <div>
-        <p className="text-[12.5px] font-semibold" style={{ color: "var(--rf-text-2)" }}>
-          Mitä haluat tehdä?
-        </p>
+        <p className="text-[12.5px] font-semibold" style={{ color: "var(--rf-text-2)" }}>{t.matti.whatToDo}</p>
 
         <div className="mt-2 space-y-1.5">
-          {quickActions(currentPage).map((action) => (
+          {quickActions(currentPage, t).map((action) => (
             <button
               key={action.prompt}
               type="button"
@@ -683,9 +662,7 @@ function Welcome({
         </div>
       </div>
 
-      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
-        Muutokset näytän sinulle ennen kuin mitään tapahtuu.
-      </p>
+      <p className="text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>{t.matti.changesShown}</p>
     </div>
   );
 }
@@ -754,7 +731,7 @@ function Tilanne({
 
 // ---------------------------------------------------------------------------
 
-function TurnView({ turn }: { turn: Turn }) {
+function TurnView({ turn, t }: { turn: Turn; t: AdminText }) {
   if (turn.role === "user") {
     return (
       <div className="flex justify-end">
@@ -782,10 +759,10 @@ function TurnView({ turn }: { turn: Turn }) {
       ))}
 
       {turn.actions?.map((action) => (
-        <ActionCard key={action.id} action={action} />
+        <ActionCard key={action.id} action={action} t={t} />
       ))}
 
-      {turn.steps && turn.steps.length > 0 ? <Steps steps={turn.steps} /> : null}
+      {turn.steps && turn.steps.length > 0 ? <Steps steps={turn.steps} t={t} /> : null}
     </div>
   );
 }
@@ -797,15 +774,13 @@ function TurnView({ turn }: { turn: Turn }) {
  * on kuitenkin harvinaista, joten se on yhden rivin takana eikä
  * vastauksen päällä.
  */
-function Steps({ steps }: { steps: Step[] }) {
+function Steps({ steps, t }: { steps: Step[]; t: AdminText }) {
   return (
     <details className="mt-3">
       <summary
         className="cursor-pointer list-none text-[12px]"
         style={{ color: "var(--rf-text-3)" }}
-      >
-        Katso miten Matti selvitti tämän
-      </summary>
+      >{t.matti.howSolved}</summary>
 
       <ul className="mt-2 space-y-1">
         {steps.map((step, index) => (
@@ -813,7 +788,7 @@ function Steps({ steps }: { steps: Step[] }) {
             <span className="mt-0.5 shrink-0">
               <RfIcon name="check" size={11} />
             </span>
-            {TOOL_LABELS[step.tool] ?? step.tool}
+            {tyokalut(t)[step.tool] ?? step.tool}
           </li>
         ))}
       </ul>
@@ -821,20 +796,20 @@ function Steps({ steps }: { steps: Step[] }) {
   );
 }
 
-const TOOL_LABELS: Record<string, string> = {
-  get_dashboard_summary: "Haki kuukauden yhteenvedon",
-  get_expenses_by_category: "Haki kulut kategorioittain",
-  get_top_suppliers: "Haki suurimmat toimittajat",
-  search_receipts: "Haki kuitit",
-  get_budget_status: "Tarkisti budjetit",
-  get_lunch_week: "Haki lounasviikon",
-  get_staff: "Haki työntekijät",
-  get_shifts: "Haki työvuorot",
-  propose_lunch_items: "Valmisteli lounaslistan",
-  propose_lunch_price: "Valmisteli hinnanmuutoksen",
-  propose_copy_lunch_week: "Valmisteli kopioinnin",
-  propose_publish_lunch_week: "Valmisteli julkaisun",
-};
+const tyokalut = (t: AdminText): Record<string, string> => ({
+  get_dashboard_summary: t.mattiTyo.monthSummary,
+  get_expenses_by_category: t.mattiTyo.byCategory,
+  get_top_suppliers: t.mattiTyo.topSuppliers,
+  search_receipts: t.mattiTyo.receipts,
+  get_budget_status: t.mattiTyo.budgets,
+  get_lunch_week: t.mattiTyo.lunchWeek,
+  get_staff: t.mattiTyo.staff,
+  get_shifts: t.mattiTyo.shifts,
+  propose_lunch_items: t.mattiTyo.preparedLunch,
+  propose_lunch_price: t.mattiTyo.preparedPrice,
+  propose_copy_lunch_week: t.mattiTyo.preparedCopy,
+  propose_publish_lunch_week: t.mattiTyo.preparedPublish,
+});
 
 // ---------------------------------------------------------------------------
 
@@ -927,7 +902,7 @@ const initialAction: MattiActionState = {};
  * Hyväksy suorittaa sen — ja palvelin lukee argumentit kannasta, ei
  * tästä kortista.
  */
-function ActionCard({ action }: { action: PendingAction }) {
+function ActionCard({ action, t }: { action: PendingAction; t: AdminText }) {
   const [confirmState, confirm] = useActionState(confirmMattiAction, initialAction);
   const [cancelState, cancel] = useActionState(cancelMattiAction, initialAction);
   const router = useRouter();
@@ -1034,14 +1009,12 @@ function ActionCard({ action }: { action: PendingAction }) {
         >
           <form action={confirm}>
             <input type="hidden" name="actionId" value={action.id} />
-            <ConfirmButton />
+            <ConfirmButton t={t} />
           </form>
 
           <form action={cancel}>
             <input type="hidden" name="actionId" value={action.id} />
-            <Button type="submit" tone="ghost" size="sm">
-              Peruuta
-            </Button>
+            <Button type="submit" tone="ghost" size="sm">{t.matti.cancel}</Button>
           </form>
         </div>
       )}
@@ -1049,12 +1022,12 @@ function ActionCard({ action }: { action: PendingAction }) {
   );
 }
 
-function ConfirmButton() {
+function ConfirmButton({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
     <Button type="submit" tone="primary" size="sm" disabled={pending}>
-      {pending ? "Tehdään…" : "Hyväksy"}
+      {pending ? t.matti.working : t.matti.approve}
     </Button>
   );
 }
@@ -1062,6 +1035,7 @@ function ConfirmButton() {
 // ---------------------------------------------------------------------------
 
 function Composer({
+  t,
   onSend,
   busy,
   inputRef,
@@ -1069,6 +1043,7 @@ function Composer({
   onSend: (message: string) => void;
   busy: boolean;
   inputRef: React.RefObject<HTMLTextAreaElement | null>;
+  t: AdminText;
 }) {
   const [value, setValue] = useState("");
 
@@ -1097,9 +1072,7 @@ function Composer({
           minHeight: 48,
         }}
       >
-        <label htmlFor="matti-input" className="sr-only">
-          Mitä haluat hoitaa? Kysy Matilta tai pyydä tekemään jotain.
-        </label>
+        <label htmlFor="matti-input" className="sr-only">{t.matti.placeholder}</label>
 
         <textarea
           id="matti-input"
@@ -1115,7 +1088,7 @@ function Composer({
               submit();
             }
           }}
-          placeholder="Mitä haluat hoitaa?"
+          placeholder={t.matti.shortPlaceholder}
           className="max-h-32 min-h-[2rem] w-full resize-none bg-transparent py-1 text-[15px] outline-none"
         />
 
@@ -1123,7 +1096,7 @@ function Composer({
           type="button"
           onClick={submit}
           disabled={!ready}
-          aria-label="Lähetä"
+          aria-label={t.matti.send}
           className="rf-press flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] disabled:opacity-25"
           style={{
             background: ready ? "var(--rf-accent)" : "var(--rf-line-strong)",

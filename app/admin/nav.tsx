@@ -191,7 +191,7 @@ function DesktopSidebar({
       */}
       {matti ? (
         <div className="border-t px-3 pb-2 pt-2" style={{ borderColor: "var(--rf-line)" }}>
-          <MattiPanel enabled briefing={briefing} greeting={greeting} />
+          <MattiPanel enabled t={t} briefing={briefing} greeting={greeting} />
         </div>
       ) : null}
 
