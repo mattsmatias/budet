@@ -6,7 +6,6 @@ import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import {
   deleteLunchItem,
-  moveLunchItem,
   saveLunchItem,
   setLunchIncludes,
   setLunchPrice,
@@ -380,78 +379,6 @@ export function DeleteLunchItem({
 // ---------------------------------------------------------------------------
 // Järjestys
 // ---------------------------------------------------------------------------
-
-/**
- * Järjestyksen muutos ylös ja alas.
- *
- * Ei raahausta. Raahaus vaatii hiiren tai tarkan kosketuksen, ei toimi
- * näppäimistöllä ilman erillistä toteutusta, ja puhelimessa se
- * kilpailee sivun vierityksen kanssa. Kaksi painiketta toimii
- * kaikkialla ja on ruudunlukijalle ymmärrettävä.
- *
- * Vierekkäin eikä päällekkäin: pystysuunnassa ne veivät kaksi riviä
- * korkeutta jokaiselta ruoalta, ja kapeassa kortissa korkeus on
- * niukempaa kuin leveys.
- */
-export function MoveLunchItem({
-  item,
-  first,
-  last,
-  t,
-}: {
-  item: LunchItem;
-  first: boolean;
-  last: boolean;
-  t: AdminText;
-}) {
-  return (
-    <>
-      <MoveButton t={t} item={item} direction="up" disabled={first} />
-      <MoveButton t={t} item={item} direction="down" disabled={last} />
-    </>
-  );
-}
-
-function MoveButton({
-  t,
-  item,
-  direction,
-  disabled,
-}: {
-  t: AdminText;
-  item: LunchItem;
-  direction: "up" | "down";
-  disabled: boolean;
-}) {
-  return (
-    <form action={moveLunchItem}>
-      <input type="hidden" name="itemId" value={item.id} />
-      <input type="hidden" name="direction" value={direction} />
-
-      <button
-        type="submit"
-        disabled={disabled}
-        aria-label={
-          direction === "up"
-            ? fill(t.lounas.moveUpNamed, { nimi: item.name })
-            : fill(t.lounas.moveDownNamed, { nimi: item.name })
-        }
-        className="rf-press flex h-7 w-6 items-center justify-center rounded-[7px] disabled:opacity-20"
-        style={{ color: "var(--rf-text-3)" }}
-      >
-        <span
-          aria-hidden="true"
-          style={{
-            display: "block",
-            transform: direction === "up" ? "rotate(-90deg)" : "rotate(90deg)",
-          }}
-        >
-          <RfIcon name="chevron" size={13} />
-        </span>
-      </button>
-    </form>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Päivän hinta

@@ -50,7 +50,8 @@ export type IconName =
   | "logout"
   | "sales"
   | "trend"
-  | "tables";
+  | "tables"
+  | "drag";
 
 /**
  * Ikonipolut.
@@ -93,6 +94,10 @@ const PATHS: Record<IconName, string> = {
     "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 16.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z",
 
   calendar: "M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4",
+
+  // Kaksi viivaa: raahauskahva. Kolme olisi hampurilaisvalikko, ja
+  // sama merkki kahdelle eri asialle opettaa ohittamaan molemmat.
+  drag: "M7 10h10M7 14h10",
 
   // Pyöreä pöytä ylhäältä, neljä tuolia ympärillä. Varaus koskee
   // pöytää, ei kalenteria — kalenteri on jo työvuorojen merkki.

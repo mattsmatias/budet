@@ -1710,6 +1710,7 @@ const fi = {
     morePrices: "Muut hinnat",
     shareMore: "Lisää jakotapoja ja ulkoasu",
     earlierWeeksToggle: "Aiemmat viikot",
+    dragHandle: "Siirrä: {nimi}. Raahaa tai käytä nuolinäppäimiä.",
   },
   kuva: {
     multiPage:
@@ -3986,6 +3987,7 @@ const en: AdminText = {
     morePrices: "Other prices",
     shareMore: "More ways to share, and the look",
     earlierWeeksToggle: "Earlier weeks",
+    dragHandle: "Move: {nimi}. Drag or use the arrow keys.",
   },
   kuva: {
     multiPage:
@@ -6259,6 +6261,7 @@ const sv: AdminText = {
     morePrices: "Andra priser",
     shareMore: "Fler sätt att dela, och utseendet",
     earlierWeeksToggle: "Tidigare veckor",
+    dragHandle: "Flytta: {nimi}. Dra eller använd piltangenterna.",
   },
   kuva: {
     multiPage:
@@ -8530,6 +8533,7 @@ const da: AdminText = {
     morePrices: "Andre priser",
     shareMore: "Flere måder at dele på, og udseendet",
     earlierWeeksToggle: "Tidligere uger",
+    dragHandle: "Flyt: {nimi}. Træk eller brug piletasterne.",
   },
   kuva: {
     multiPage:
@@ -10796,6 +10800,7 @@ const tr: AdminText = {
     morePrices: "Diğer fiyatlar",
     shareMore: "Daha fazla paylaşım yolu ve görünüm",
     earlierWeeksToggle: "Önceki haftalar",
+    dragHandle: "Taşı: {nimi}. Sürükle ya da ok tuşlarını kullan.",
   },
   kuva: {
     multiPage:
@@ -13054,6 +13059,7 @@ const et: AdminText = {
     morePrices: "Muud hinnad",
     shareMore: "Rohkem jagamisviise ja välimus",
     earlierWeeksToggle: "Varasemad nädalad",
+    dragHandle: "Liiguta: {nimi}. Lohista või kasuta nooleklahve.",
   },
   kuva: {
     multiPage:

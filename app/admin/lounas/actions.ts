@@ -256,16 +256,32 @@ export async function deleteLunchItem(formData: FormData): Promise<void> {
   revalidate();
 }
 
-export async function moveLunchItem(formData: FormData): Promise<void> {
-  const itemId = String(formData.get("itemId") ?? "");
-  if (!itemId) return;
+/**
+ * Päivän ruokien järjestys kerralla.
+ *
+ * Koko lista eikä yksi siirto. Raahaus pudottaa ruoan monta paikkaa
+ * kerralla, ja sarja vierekkäisvaihtoja olisi sarja kutsuja joista
+ * jokin voi epäonnistua kesken — silloin lista jäisi puolittain
+ * väärään järjestykseen.
+ *
+ * Tunnisteet tarkistetaan muodoltaan tässä ja kuuluvuudeltaan
+ * kannassa: reorder_lunch_items hylkää toisen päivän ruoan.
+ */
+export async function reorderLunchItems(
+  dayId: string,
+  itemIds: string[],
+): Promise<void> {
+  const uuid = z.string().uuid();
+  if (!uuid.safeParse(dayId).success) return;
+  if (itemIds.length === 0) return;
+  if (!itemIds.every((id) => uuid.safeParse(id).success)) return;
 
   await requireContext("/admin/lounas");
   const supabase = await createClient();
 
-  await supabase.rpc("move_lunch_item", {
-    p_item: itemId,
-    p_up: formData.get("direction") === "up",
+  await supabase.rpc("reorder_lunch_items", {
+    p_day: dayId,
+    p_items: itemIds,
   });
   revalidate();
 }

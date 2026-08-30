@@ -51,8 +51,8 @@ import {
   LunchIncludes,
   LunchItemDialog,
   LunchPriceField,
-  MoveLunchItem,
 } from "./editor";
+import { SortableItems } from "./sortable";
 import { LunchThemePicker } from "./theme-picker";
 import { LunchChannels } from "./channels";
 import { loadPublicWeek, weekAsText } from "@/lib/restoflow/public-lunch";
@@ -775,78 +775,78 @@ function DayCard({
         </span>
       </div>
 
-      {/* Ruoat. Hinta on viikossa, ei päivässä. */}
-      <ul className="mt-3 space-y-2.5">
-        {day.items.map((item, index) => (
-          <li
-            key={item.id}
-            className="border-b pb-2 last:border-0 last:pb-0"
-            style={{ borderColor: "var(--rf-line)" }}
-          >
-            {/*
-             * Nimi saa koko leveyden. Painikkeet olivat aiemmin rivin
-             * molemmilla laidoilla ja veivät 88 pikseliä kapeasta
-             * kortista, jolloin pitkä sana leikkautui kesken.
-             *
-             * break-words: yhdyssana on suomessa tavallinen eikä
-             * "Kasvispyörykät" katkea välilyönnistä.
-             */}
-            <p className="text-[14px] font-medium leading-snug break-words">
-              {item.name}
-            </p>
+      {/*
+        Ruoat. Hinta on viikossa, ei päivässä.
 
-            {item.description ? (
-              <p
-                className="mt-0.5 text-[12px] leading-relaxed break-words"
-                style={{ color: "var(--rf-text-2)" }}
-              >
-                {item.description}
+        Järjestys vaihdetaan raahaamalla, joten lista on
+        klientkomponentti. Rivin sisältö tulee silti palvelimelta:
+        muokkausdialogi ja poisto ovat omia komponenttejaan eikä niitä
+        tarvitse siirtää selaimeen järjestyksen takia.
+      */}
+      <SortableItems
+        t={t}
+        dayId={day.id}
+        enabled={canManage && day.items.length > 1}
+        items={day.items.map((item) => ({
+          id: item.id,
+          label: item.name,
+          node: (
+            <>
+              {/*
+               * Nimi saa koko leveyden. Painikkeet olivat aiemmin rivin
+               * molemmilla laidoilla ja veivät 88 pikseliä kapeasta
+               * kortista, jolloin pitkä sana leikkautui kesken.
+               *
+               * break-words: yhdyssana on suomessa tavallinen eikä
+               * "Kasvispyörykät" katkea välilyönnistä.
+               */}
+              <p className="text-[14px] font-medium leading-snug break-words">
+                {item.name}
               </p>
-            ) : null}
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-1">
-              {item.diets.map((id) => (
-                <span
-                  key={id}
-                  className="px-1.5 py-0.5 text-[10px] font-semibold"
-                  style={{
-                    background: "var(--rf-inset)",
-                    color: "var(--rf-text-2)",
-                    borderRadius: 5,
-                  }}
+              {item.description ? (
+                <p
+                  className="mt-0.5 text-[12px] leading-relaxed break-words"
+                  style={{ color: "var(--rf-text-2)" }}
                 >
-                  {dietLabels.get(id)?.label ?? id}
-                </span>
-              ))}
-
-              {canManage ? (
-                <span className="ml-auto flex items-center gap-0.5">
-                  {/* Järjestysnuolet vain kun järjestettävää on. */}
-                  {day.items.length > 1 ? (
-                    <MoveLunchItem
-                      t={t}
-                      item={item}
-                      first={index === 0}
-                      last={index === day.items.length - 1}
-                    />
-                  ) : null}
-
-                  <LunchItemDialog
-                    t={t}
-                    dayId={day.id}
-                    dayLabel={dayLabel}
-                    item={item}
-                    diets={diets}
-                    allergens={allergens}
-                    trigger="edit"
-                  />
-                  <DeleteLunchItem t={t} item={item} />
-                </span>
+                  {item.description}
+                </p>
               ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {item.diets.map((id) => (
+                  <span
+                    key={id}
+                    className="px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{
+                      background: "var(--rf-inset)",
+                      color: "var(--rf-text-2)",
+                      borderRadius: 5,
+                    }}
+                  >
+                    {dietLabels.get(id)?.label ?? id}
+                  </span>
+                ))}
+
+                {canManage ? (
+                  <span className="ml-auto flex items-center gap-0.5">
+                    <LunchItemDialog
+                      t={t}
+                      dayId={day.id}
+                      dayLabel={dayLabel}
+                      item={item}
+                      diets={diets}
+                      allergens={allergens}
+                      trigger="edit"
+                    />
+                    <DeleteLunchItem t={t} item={item} />
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ),
+        }))}
+      />
 
       {day.items.length === 0 ? (
         <p className="mt-3 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
