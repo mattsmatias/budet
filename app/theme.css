@@ -11,20 +11,46 @@
  * koskemattomana samassa sovelluksessa.
  */
 
-.restoflow {
+/*
+ * Vaalea paletti kahdella valitsimella.
+ *
+ * .restoflow on sovelluksen juuri. .rf-light on saareke: alipuu joka
+ * pysyy vaaleana vaikka sivu olisi tumma.
+ *
+ * Saareketta tarvitaan yhteen asiaan — etusivun kuvaan sovelluksesta.
+ * Se on esitys tuotteesta eikä käyttöliittymä, ja esitys ei vaihda
+ * teemaa katsojan mukana sen enempää kuin kuvakaappauskaan. Ilman
+ * saareketta puolet kuvasta kääntyisi tummaksi ja puolet jäisi
+ * vaaleaksi, koska osa sen väreistä on kovakoodattuja.
+ *
+ * Arvot ovat siis yhdessä paikassa, ja saareke on valitsin eikä kopio.
+ */
+.restoflow,
+.rf-light {
   /* ------------------------------------------------------------------
      PINNAT
 
-     Kaksi tasoa: harmaa sivu ja valkoiset kortit sen päällä. Ero on
-     pieni mutta se rajaa näkymän — sisältö loppuu johonkin sen sijaan
-     että vuotaisi ikkunan reunaan.
+     Valkoinen sivu ja valkoiset kortit sen päällä. Kortin rajaa
+     hiusviiva ja yhden pikselin varjo — ei taustaero.
+
+     Tämä on etusivun malli. Aiemmin sovelluksessa oli harmaa sivu
+     (#f4f6fa) ja etusivulla valkoinen, ja kirjautuminen oli hyppy
+     toisesta toiseen. Kahdesta oikeasta ratkaisusta valittiin se jonka
+     asiakas näkee ensin.
+
+     Hiusviiva riittää erotukseksi, koska etusivulla se on riittänyt jo
+     pitkään: .bd-card on valkoinen valkoisella, 1px reuna ja sama
+     matala varjo kuin täällä. Resepti ei ole uusi vaan siirretty.
+
+     Harmaa ei kadonnut: --rf-inset on yhä oma pintansa kentille ja
+     korttien jaloille, ja se on nyt se ainoa taustaero näkymässä.
      ------------------------------------------------------------------ */
-  --rf-bg: #f4f6fa;
+  --rf-bg: #ffffff;
   --rf-shell: #ffffff;
   --rf-sidebar: #ffffff;
   --rf-card: #ffffff;
-  --rf-card-hover: #f6f8fb;
-  --rf-inset: #f6f8fb;
+  --rf-card-hover: #f7f8fb;
+  --rf-inset: #f7f8fb;
   /* Tumma pinta: yksi per näkymä, jos sitäkään. */
   --rf-ink: #0f1729;
 
@@ -40,12 +66,22 @@
   --rf-text-3: #5c6a83;
   --rf-on-accent: #ffffff;
 
-  /* Rajat ja varjot. Varjo on ohut: kortti erottuu reunasta, ei varjosta. */
+  /*
+   * Rajat ja varjot.
+   *
+   * Kortin varjo on ohut: se erottuu reunasta eikä varjosta. Kelluvat
+   * pinnat — valikot, kuukausivalitsin, haku — nousevat sen sijaan
+   * selvästi, koska ne ovat sivun päällä eivätkä sen osa.
+   *
+   * Asteikko on etusivun. Se on syvempi kuin täällä aiemmin ollut, ja
+   * juuri sen takia valkoinen kortti valkoisella pohjalla lukeutuu
+   * omaksi pinnakseen.
+   */
   --rf-line: #e7ecf3;
   --rf-line-strong: #dde4ee;
   --rf-shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
-  --rf-shadow: 0 1px 2px rgba(15, 23, 41, 0.05);
-  --rf-shadow-lg: 0 4px 6px rgba(15, 23, 41, 0.05), 0 12px 32px rgba(15, 23, 41, 0.09);
+  --rf-shadow: 0 2px 4px rgba(15, 23, 41, 0.04), 0 8px 24px rgba(15, 23, 41, 0.06);
+  --rf-shadow-lg: 0 8px 16px rgba(15, 23, 41, 0.06), 0 32px 64px rgba(15, 23, 41, 0.12);
 
   /* ------------------------------------------------------------------
      MERKKIVÄRI
@@ -109,12 +145,21 @@
   --rf-tint-warn: #fdf1de;
   --rf-tint-bad: #fceceb;
 
-  /* Pyöristykset */
-  /* Suuret pyöristykset. Esikuvan pehmeys on enimmäkseen näissä. */
-  --rf-r-shell: 16px;
+  /* ------------------------------------------------------------------
+     PYÖRISTYKSET
+
+     Etusivun asteikko. Kortti oli jo sama 14 px molemmissa; suuri
+     pinta ja painike erosivat, ja ne on nyt otettu etusivulta:
+     --bd-r-lg oli 20 ja .bd-btn 11.
+
+     Ero oli kahden ja yhden pikselin luokkaa eikä sitä huomaa
+     rinnakkain. Sen huomaa peräkkäin — ja etusivulta sovellukseen
+     mennään aina peräkkäin.
+     ------------------------------------------------------------------ */
+  --rf-r-shell: 20px;
   --rf-r-card: 14px;
   --rf-r-stat: 14px;
-  --rf-r-control: 10px;
+  --rf-r-control: 11px;
   --rf-r-pill: 980px;
 
 }
@@ -129,6 +174,16 @@
  * Tummalla pohjalla merkkiväri vaalenee. Sama punainen jäisi
  * lukukelvottomaksi, ja tumman teeman tehtävä on olla luettavampi
  * hämärässä eikä vain tummempi.
+ *
+ * PINNAT OVAT TÄÄLLÄ KAKSITASOISET, VAIKKA VAALEALLA EIVÄT.
+ *
+ * Vaalealla sivu ja kortti ovat molemmat valkoisia, ja erotuksen
+ * kantaa hiusviiva ja ohut varjo. Tummalla varjo ei näy: musta varjo
+ * mustaa vasten ei ole varjo. Siksi sivu on #0d1117 ja kortti
+ * #161b22 — ero on vaaleudessa, koska muuta keinoa ei ole.
+ *
+ * Sama malli eri keinoin on yhtenäisempi kuin sama keino eri
+ * lopputuloksin.
  */
 .restoflow[data-theme="dark"],
 .restoflow[data-theme="dark"] * {
@@ -159,6 +214,18 @@
     --rf-accent-strong: #f8807a;
     --rf-accent-bg: #3a1f1e;
     --rf-accent-2: #9a95f0;
+
+    /*
+     * Teksti korostusvärin päällä tummenee.
+     *
+     * Vaalealla pohjalla merkkiväri on #d13831 ja valkoinen teksti
+     * antaa 4,9:1. Tummassa merkkiväri vaalenee #f4635b:hen ollakseen
+     * luettava myös linkkinä — ja silloin valkoinen teksti sen päällä
+     * putoaa 3,1:1:een. Tumma muste antaa samalla pinnalla 6,1:1.
+     *
+     * Sama koskee --rf-red-pohjaista poistopainiketta.
+     */
+    --rf-on-accent: #0d1117;
 
     --rf-green: #4ac489;
     --rf-green-text: #4ac489;
@@ -206,6 +273,18 @@
   --rf-accent-strong: #f8807a;
   --rf-accent-bg: #3a1f1e;
   --rf-accent-2: #9a95f0;
+
+  /*
+   * Teksti korostusvärin päällä tummenee.
+   *
+   * Vaalealla pohjalla merkkiväri on #d13831 ja valkoinen teksti
+   * antaa 4,9:1. Tummassa merkkiväri vaalenee #f4635b:hen ollakseen
+   * luettava myös linkkinä — ja silloin valkoinen teksti sen päällä
+   * putoaa 3,1:1:een. Tumma muste antaa samalla pinnalla 6,1:1.
+   *
+   * Sama koskee --rf-red-pohjaista poistopainiketta.
+   */
+  --rf-on-accent: #0d1117;
 
   --rf-green: #4ac489;
   --rf-green-text: #4ac489;

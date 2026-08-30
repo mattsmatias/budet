@@ -246,7 +246,7 @@ function Flow({ t }: { t: Dictionary }) {
                 <div
                   className="flex-1 rounded-[13px] px-4 py-3.5 text-center min-[900px]:w-full min-[900px]:flex-none"
                   style={{
-                    background: "#fff",
+                    background: "var(--bd-card)",
                     border: "1px solid var(--bd-line)",
                     boxShadow: "var(--bd-shadow-sm)",
                   }}
@@ -374,6 +374,8 @@ function Features({ t }: { t: Dictionary }) {
     { title: t.features.vat, body: t.features.vatBody },
     { title: t.features.reports, body: t.features.reportsBody },
     { title: t.features.staff, body: t.features.staffBody },
+    { title: t.features.lunch, body: t.features.lunchBody },
+    { title: t.features.reservations, body: t.features.reservationsBody },
   ];
 
   return (
@@ -386,7 +388,7 @@ function Features({ t }: { t: Dictionary }) {
         </Reveal>
 
         <div
-          className="mt-10 grid gap-px overflow-hidden rounded-[20px] sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-10 grid gap-px overflow-hidden rounded-[20px] sm:grid-cols-2 lg:grid-cols-5"
           style={{
             background: "var(--bd-line)",
             border: "1px solid var(--bd-line)",
@@ -394,7 +396,10 @@ function Features({ t }: { t: Dictionary }) {
         >
           {features.map((feature, i) => (
             <Reveal key={feature.title} delay={Math.min(i, 4) * 50}>
-              <div className="h-full bg-white p-5">
+              <div
+                className="h-full p-5"
+                style={{ background: "var(--bd-card)" }}
+              >
                 <h3 className="text-[15px] font-bold tracking-[-0.01em]">
                   {feature.title}
                 </h3>
@@ -440,6 +445,8 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
     t.pricing.incVat,
     t.pricing.incReports,
     t.pricing.incStaff,
+    t.pricing.incLunch,
+    t.pricing.incReservations,
     t.pricing.incAssistant,
   ];
 
@@ -471,7 +478,7 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
           <div
             className="mx-auto mt-10 max-w-md overflow-hidden rounded-[22px]"
             style={{
-              background: "#fff",
+              background: "var(--bd-card)",
               border: "1px solid var(--bd-line-2)",
               boxShadow: "var(--bd-shadow)",
             }}

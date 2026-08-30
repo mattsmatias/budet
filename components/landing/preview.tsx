@@ -81,8 +81,13 @@ function Frame({
   title: string;
 }) {
   return (
+    /*
+      rf-light bd-shot: kuva pysyy vaaleana myös tummalla sivulla.
+      Se on esitys sovelluksesta, ja esitys ei käänny katsojan teeman
+      mukana. Ks. theme.css, .rf-light.
+    */
     <div
-      className="overflow-hidden rounded-[16px]"
+      className="bd-shot rf-light overflow-hidden rounded-[16px]"
       style={{
         background: "#f4f6fa",
         border: "1px solid var(--bd-line-2)",
@@ -380,8 +385,9 @@ export function TodoPreview({ t }: { t: Dictionary }) {
   ];
 
   return (
+    /* Sama vaalea saareke kuin muissakin kuvissa. */
     <div
-      className="rounded-[16px] p-4"
+      className="bd-shot rf-light rounded-[16px] p-4"
       style={{
         background: "#fff",
         border: "1px solid var(--bd-line)",

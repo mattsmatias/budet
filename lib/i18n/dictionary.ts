@@ -157,6 +157,10 @@ const fi = {
       "Kate valmistelee ALV-luvut kirjanpidosta ja kertoo mitä sinun pitää " +
       "tehdä. Ilmoituksen teet itse OmaVerossa — Kate ei lähetä sitä " +
       "puolestasi.",
+    lunch: "Lounaslista",
+    lunchBody: "Viikko kerrallaan, oveen ja verkkoon.",
+    reservations: "Pöytävaraukset",
+    reservationsBody: "Varauslomake omalle sivulle, salinäkymä puhelimeen.",
   },
 
   pricing: {
@@ -172,6 +176,8 @@ const fi = {
     incReports: "Raportit",
     incStaff: "Työntekijät",
     incAssistant: "Matti-avustaja",
+    incLunch: "Lounaslista",
+    incReservations: "Pöytävaraukset",
   },
 
   finalCta: {
@@ -364,6 +370,10 @@ const en: Dictionary = {
       "Kate prepares your VAT figures from the ledger and tells you what to " +
       "do. You file the return yourself in the tax authority's service — " +
       "Kate does not submit it for you.",
+    lunch: "Lunch menu",
+    lunchBody: "A week at a time, for the door and the web.",
+    reservations: "Table bookings",
+    reservationsBody: "A booking form for your own site, the floor on your phone.",
   },
   pricing: {
     heading: "One price. Everything included.",
@@ -378,6 +388,8 @@ const en: Dictionary = {
     incReports: "Reports",
     incStaff: "Staff",
     incAssistant: "Matti assistant",
+    incLunch: "Lunch menu",
+    incReservations: "Table bookings",
   },
   finalCta: {
     titleA: "Restaurant finances.",
@@ -561,6 +573,10 @@ const sv: Dictionary = {
       "Kate förbereder momsuppgifterna utifrån bokföringen och berättar vad " +
       "du ska göra. Deklarationen lämnar du in själv hos Skatteförvaltningen " +
       "— Kate skickar den inte åt dig.",
+    lunch: "Lunchlista",
+    lunchBody: "En vecka i taget, till dörren och webben.",
+    reservations: "Bordsbokningar",
+    reservationsBody: "Ett bokningsformulär till egna sidan, salen i telefonen.",
   },
   pricing: {
     heading: "Ett pris. Allt ingår.",
@@ -575,6 +591,8 @@ const sv: Dictionary = {
     incReports: "Rapporter",
     incStaff: "Personal",
     incAssistant: "Matti-assistenten",
+    incLunch: "Lunchlista",
+    incReservations: "Bordsbokningar",
   },
   finalCta: {
     titleA: "Restaurangens ekonomi.",
@@ -755,6 +773,10 @@ const da: Dictionary = {
       "Kate klargør momstallene ud fra bogføringen og fortæller, hvad du skal " +
       "gøre. Angivelsen indsender du selv hos skattemyndigheden — Kate sender " +
       "den ikke for dig.",
+    lunch: "Frokostmenu",
+    lunchBody: "En uge ad gangen, til døren og nettet.",
+    reservations: "Bordbestillinger",
+    reservationsBody: "En bestillingsformular til egen side, salen i telefonen.",
   },
   pricing: {
     heading: "Én pris. Det hele er med.",
@@ -769,6 +791,8 @@ const da: Dictionary = {
     incReports: "Rapporter",
     incStaff: "Medarbejdere",
     incAssistant: "Matti-assistenten",
+    incLunch: "Frokostmenu",
+    incReservations: "Bordbestillinger",
   },
   finalCta: {
     titleA: "Restaurantens økonomi.",
@@ -951,6 +975,10 @@ const tr: Dictionary = {
       "Kate KDV rakamlarını muhasebeden hazırlar ve ne yapmanız gerektiğini " +
       "söyler. Beyannameyi vergi idaresine kendiniz verirsiniz — Kate sizin " +
       "adınıza göndermez.",
+    lunch: "Öğle menüsü",
+    lunchBody: "Haftalık olarak, kapıya ve web'e.",
+    reservations: "Masa rezervasyonları",
+    reservationsBody: "Kendi siteniz için rezervasyon formu, salon telefonunuzda.",
   },
   pricing: {
     heading: "Tek fiyat. Her şey dahil.",
@@ -965,6 +993,8 @@ const tr: Dictionary = {
     incReports: "Raporlar",
     incStaff: "Çalışanlar",
     incAssistant: "Matti asistanı",
+    incLunch: "Öğle menüsü",
+    incReservations: "Masa rezervasyonları",
   },
   finalCta: {
     titleA: "Restoran finansı.",
@@ -1143,6 +1173,10 @@ const et: Dictionary = {
       "Kate valmistab käibemaksunumbrid raamatupidamisest ja ütleb, mida sul " +
       "tuleb teha. Deklaratsiooni esitad ise maksuameti teenuses — Kate ei " +
       "saada seda sinu eest.",
+    lunch: "Lõunamenüü",
+    lunchBody: "Nädal korraga, uksele ja veebi.",
+    reservations: "Lauabroneeringud",
+    reservationsBody: "Broneerimisvorm oma lehele, saal telefonis.",
   },
   pricing: {
     heading: "Üks hind. Kõik sees.",
@@ -1157,6 +1191,8 @@ const et: Dictionary = {
     incReports: "Aruanded",
     incStaff: "Töötajad",
     incAssistant: "Matti assistent",
+    incLunch: "Lõunamenüü",
+    incReservations: "Lauabroneeringud",
   },
   finalCta: {
     titleA: "Restorani rahaasjad.",

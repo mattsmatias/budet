@@ -8,20 +8,43 @@
  * pienet kortit. Markkinointisivu tarvitsee saman värimaailman mutta
  * täysin eri mittakaavan, joten se saa omat mittansa — samat värit.
  *
- * Värit luetaan silti samoista arvoista kuin sovelluksessa. Kaksi
- * paikkaa joissa Katen punainen on määritelty tarkoittaisi kahta
- * punaista jotka ajautuvat erilleen.
+ * Värit eivät ole enää kopio vaan viittaus.
+ *
+ * Aiemmin tässä oli oma paletti samoilla arvoilla, ja tiedosto varoitti
+ * itse siitä mitä tapahtuisi jos ne ajautuisivat erilleen. Ne olivat jo
+ * ajautuneet: tilavärit oli kertaalleen jouduttu etsimään ja
+ * yhtenäistämään käsin, ja --bd-bg-2 erosi --rf-insetistä yhden
+ * numeron verran.
+ *
+ * Nyt --bd-* on aliaksia --rf-*:lle. Arvot ovat etusivun — sovelluksen
+ * pinnat, varjot ja pyöristykset otettiin täältä — mutta ne asuvat
+ * theme.css:ssä, koska se on ainoa tiedosto joka ladataan joka sivulla.
+ * Etusivun mittakaava on yhä oma: 13 pikselin työnäkymä ja
+ * markkinointisivu eivät jaa kokoja, vain värit ja muodot.
+ *
+ * Sivutuotteena etusivu sai tumman tilan. Se ei ollut tavoite vaan
+ * seuraus siitä ettei arvoja ole enää kahdesti.
  */
 
-.bd {
-  --bd-bg: #ffffff;
-  --bd-bg-2: #f7f8fb;
-  --bd-card: #ffffff;
-  --bd-line: #e7ecf3;
-  --bd-line-2: #dde4ee;
+/*
+ * Aliakset kahdella valitsimella, samasta syystä kuin theme.css:ssä.
+ *
+ * --bd-* korvautuu arvoksi siinä elementissä jossa se on määritelty,
+ * ja periytyy sen jälkeen valmiiksi laskettuna. Pelkkä .rf-light
+ * kuvan ympärillä ei siis riittäisi: --bd-line olisi laskettu jo
+ * .bd:ssä tumman paletin mukaan. .bd-shot laskee ne uudelleen
+ * paikallisesti.
+ */
+.bd,
+.bd-shot {
+  --bd-bg: var(--rf-bg);
+  --bd-bg-2: var(--rf-inset);
+  --bd-card: var(--rf-card);
+  --bd-line: var(--rf-line);
+  --bd-line-2: var(--rf-line-strong);
 
-  --bd-text: #0f1729;
-  --bd-text-2: #5a6a85;
+  --bd-text: var(--rf-text);
+  --bd-text-2: var(--rf-text-2);
   /*
    * Kolmas tekstitaso.
    *
@@ -41,12 +64,12 @@
    * hierarkia tulee koosta ja painosta niin kuin oranssin leipätekstin
    * kohdalla alempana. Väri erottaa tilaa, koko erottaa tärkeyttä.
    */
-  --bd-text-3: #5c6a83;
+  --bd-text-3: var(--rf-text-3);
 
-  /* Sama punainen kuin sovelluksessa. */
-  --bd-accent: #d13831;
-  --bd-accent-strong: #a82a24;
-  --bd-accent-bg: #fdecea;
+  /* Sama punainen kuin sovelluksessa — nyt samasta lähteestä. */
+  --bd-accent: var(--rf-accent);
+  --bd-accent-strong: var(--rf-accent-strong);
+  --bd-accent-bg: var(--rf-accent-bg);
 
   /*
    * Lämmin oranssi.
@@ -90,18 +113,21 @@
    * Nyt samat kuin theme.css:ssä. Arvot on siellä mitattu omia
    * taustojaan vasten eikä valkoista, joten ne ovat myös oikeammat.
    */
-  --bd-green: #0f7248;
-  --bd-green-bg: #e6f6ee;
-  --bd-amber: #8f5405;
-  --bd-amber-bg: #fdf1de;
+  --bd-green: var(--rf-green);
+  --bd-green-bg: var(--rf-green-bg);
+  --bd-amber: var(--rf-amber);
+  --bd-amber-bg: var(--rf-amber-bg);
 
-  --bd-shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
-  --bd-shadow: 0 2px 4px rgba(15, 23, 41, 0.04), 0 8px 24px rgba(15, 23, 41, 0.06);
-  --bd-shadow-lg: 0 8px 16px rgba(15, 23, 41, 0.06), 0 32px 64px rgba(15, 23, 41, 0.12);
+  --bd-shadow-sm: var(--rf-shadow-sm);
+  --bd-shadow: var(--rf-shadow);
+  --bd-shadow-lg: var(--rf-shadow-lg);
 
-  --bd-r: 14px;
-  --bd-r-lg: 20px;
+  /* --bd-r oli 14 px eikä sitä käyttänyt mikään. Kortin pyöristys on
+     --rf-r-card, ja se oli jo sama luku molemmissa. */
+  --bd-r-lg: var(--rf-r-shell);
+}
 
+.bd {
   background: var(--bd-bg);
   color: var(--bd-text);
   font-family: var(--font-app), ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -115,6 +141,22 @@
    * jota kukaan ei halua.
    */
   overflow-x: clip;
+}
+
+/*
+ * Kuvasaareke asettaa tekstivärin uudelleen.
+ *
+ * Muuttujat lasketaan .bd-shotissa paikallisesti, mutta color periytyy
+ * .bd:ltä jo valmiiksi laskettuna arvona — muuttujan vaihtaminen ei
+ * vaikuta siihen jälkikäteen.
+ *
+ * Ilman tätä riviä kuvan otsikot saivat tumman teeman tekstivärin
+ * vaalealla pohjalla: "Tämän päivän tilanne" mitattiin kontrastiin
+ * 1,08:1. Se on juuri se puoliksi kääntynyt tila jota saareke on
+ * tehty estämään.
+ */
+.bd-shot {
+  color: var(--bd-text);
 }
 
 /* Numerot samalla kirjasimella kuin sovelluksessa. */
@@ -192,7 +234,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 11px;
+  border-radius: var(--rf-r-control);
   font-weight: 600;
   font-size: 15px;
   line-height: 1;
@@ -211,7 +253,7 @@
 
 .bd-btn-primary {
   background: var(--bd-accent);
-  color: #fff;
+  color: var(--rf-on-accent);
   box-shadow: 0 1px 2px rgba(168, 42, 36, 0.24);
 }
 
@@ -228,7 +270,7 @@
 
 .bd-btn-ghost:hover {
   background: var(--bd-bg-2);
-  border-color: #cdd6e4;
+  border-color: var(--rf-line-strong);
 }
 
 /* Nuoli liikkuu vain osoitettaessa. */
@@ -424,6 +466,6 @@
   background-image: repeating-linear-gradient(
     -45deg,
     var(--bd-bg-2) 0 10px,
-    #eef1f6 10px 20px
+    var(--bd-line) 10px 20px
   );
 }
