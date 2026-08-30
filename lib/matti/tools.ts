@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { adminText } from "@/lib/i18n/admin-text";
 import type { Role } from "@/lib/restoflow/types";
 import { can } from "@/lib/restoflow/permissions";
 import { formatMoney } from "@/lib/money";
@@ -310,7 +311,12 @@ const getBudgets = defineTool({
   schema: z.object({ month: monthSchema.optional() }),
   async run(ctx, input) {
     const month = input.month ?? ctx.month;
-    const lines = budgetLines(ctx.data.receipts, ctx.data.budgets, month);
+    const lines = budgetLines(
+      adminText(ctx.locale),
+      ctx.data.receipts,
+      ctx.data.budgets,
+      month,
+    );
 
     if (lines.length === 0) {
       return {

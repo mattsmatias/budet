@@ -1162,8 +1162,15 @@ export function weekdayShortIn(isoDate: string, locale: AppLocale): string {
  * Numero muunnetaan tunnetuksi viikoksi jotta Intl saa oikean päivän:
  * 2024-01-01 oli maanantai.
  */
-export function weekdayByNumberIn(weekday: number, locale: AppLocale): string {
-  return weekdayShortIn(`2024-01-0${weekday}`, locale);
+export function weekdayByNumberIn(
+  weekday: number,
+  locale: AppLocale,
+  muoto: "short" | "long" = "short",
+): string {
+  const paiva = `2024-01-0${weekday}`;
+  return muoto === "long"
+    ? weekdayLongIn(paiva, locale).toLowerCase()
+    : weekdayShortIn(paiva, locale);
 }
 
 /** "24.8.2026" kielen omalla numeromuodolla. */

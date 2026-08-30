@@ -41,7 +41,7 @@ function receipt(date: string, totalCents: number): Receipt {
 }
 
 const rhythm = (receipts: Receipt[], today = TODAY) =>
-  spendRhythm(receipts, MONTH, today);
+  spendRhythm(receipts, MONTH, today, "fi");
 
 // ---------------------------------------------------------------------------
 

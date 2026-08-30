@@ -20,6 +20,8 @@
  */
 
 import { addDays, daysBetween } from "./dates";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { labels } from "@/lib/i18n/labels";
 
@@ -264,6 +266,7 @@ export interface TaskReminder {
 export function activeReminders(
   tasks: Task[],
   today: string,
+  t: AdminText,
   nowTime?: string,
 ): TaskReminder[] {
   const reminders: TaskReminder[] = [];
@@ -284,8 +287,17 @@ export function activeReminders(
         days: -late,
         text:
           late === 0
-            ? `${task.title} olisi pitänyt tehdä tänään klo ${task.dueTime}.`
-            : `${task.title} on myöhässä ${late} ${late === 1 ? "päivän" : "päivää"}.`,
+            ? fill(t.havainto.taskWasDueAt, {
+                nimi: task.title,
+                aika: task.dueTime ?? "",
+              })
+            : fill(
+                late === 1 ? t.havainto.taskLateOne : t.havainto.taskLateMany,
+                {
+                  nimi: task.title,
+                  maara: String(late),
+                },
+              ),
       });
       continue;
     }

@@ -11,6 +11,7 @@
  */
 
 import { budgetProgress, WARNING_THRESHOLD } from "./budgets";
+import { adminText } from "@/lib/i18n/admin-text";
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { findDuplicates } from "./duplicates";
@@ -102,6 +103,7 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
       today: ctx.today,
       now: ctx.now,
       timezone: ctx.timezone,
+      locale: ctx.locale,
     }),
   ].sort((a, b) => severityRank(a) - severityRank(b));
 }
@@ -117,17 +119,18 @@ function severityRank(alert: Alert): number {
 // ---------------------------------------------------------------------------
 
 function duplicateAlerts(ctx: AlertContext): Alert[] {
-  return findDuplicates(receiptsInMonth(ctx.receipts, ctx.month)).map(
-    (group) => ({
-      id: `dup-${group.receipts[0].id}`,
-      kind: "duplicate_receipt" as const,
-      severity: "critical" as const,
-      title: `Mahdollinen kaksoiskappale · ${group.supplierName}`,
-      detail: `${formatMoney(group.totalCents)} · ${group.reason}`,
-      href: `/admin/kuitit?korosta=${group.receipts[0].id}`,
-      entityId: group.receipts[0].id,
-    }),
-  );
+  return findDuplicates(
+    receiptsInMonth(ctx.receipts, ctx.month),
+    adminText(ctx.locale),
+  ).map((group) => ({
+    id: `dup-${group.receipts[0].id}`,
+    kind: "duplicate_receipt" as const,
+    severity: "critical" as const,
+    title: `Mahdollinen kaksoiskappale · ${group.supplierName}`,
+    detail: `${formatMoney(group.totalCents)} · ${group.reason}`,
+    href: `/admin/kuitit?korosta=${group.receipts[0].id}`,
+    entityId: group.receipts[0].id,
+  }));
 }
 
 function budgetAlerts(ctx: AlertContext): Alert[] {

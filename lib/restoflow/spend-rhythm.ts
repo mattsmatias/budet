@@ -17,6 +17,8 @@
  */
 
 import { receiptsInMonth } from "./expenses";
+import { weekdayByNumberIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { Receipt } from "./types";
 
 /** Montako saman viikonpäivän havaintoa tarvitaan väitteeseen. */
@@ -61,29 +63,11 @@ export interface SpendRhythm {
   busiestDay: SpendDay | null;
 }
 
-export const WEEKDAY_LABELS = [
-  "ma",
-  "ti",
-  "ke",
-  "to",
-  "pe",
-  "la",
-  "su",
-] as const;
-export const WEEKDAY_NAMES = [
-  "maanantai",
-  "tiistai",
-  "keskiviikko",
-  "torstai",
-  "perjantai",
-  "lauantai",
-  "sunnuntai",
-] as const;
-
 export function spendRhythm(
   receipts: Receipt[],
   month: string,
   today: string,
+  locale: AppLocale,
 ): SpendRhythm {
   const inMonth = receiptsInMonth(receipts, month);
 
@@ -132,7 +116,7 @@ export function spendRhythm(
     maxCents,
     totalCents,
     activeDays: past.filter((d) => d.cents > 0).length,
-    peakWeekday: findPeak(past, pastCents),
+    peakWeekday: findPeak(past, pastCents, locale),
     busiestDay: busiest,
   };
 }
@@ -152,6 +136,7 @@ export function spendRhythm(
 function findPeak(
   days: SpendDay[],
   pastCents: number,
+  locale: AppLocale,
 ): SpendRhythm["peakWeekday"] {
   if (pastCents <= 0) return null;
 
@@ -182,7 +167,7 @@ function findPeak(
 
   return {
     weekday: best.weekday,
-    label: WEEKDAY_NAMES[best.weekday - 1],
+    label: weekdayByNumberIn(best.weekday, locale, "long"),
     cents: best.cents,
     share: best.cents / pastCents,
   };
@@ -245,6 +230,7 @@ export function monthlyFlow(
   sales: { date: string; netCents: number }[],
   month: string,
   count: number,
+  locale: AppLocale,
 ): MonthlyFlow {
   const months: string[] = [];
   let cursor = month;
@@ -265,7 +251,7 @@ export function monthlyFlow(
   });
 
   return {
-    labels: months.map(shortMonth),
+    labels: months.map((m) => shortMonth(m, locale)),
     costs,
     sales: salesByMonth,
     salesMissing: salesByMonth.some((v) => v === null),
@@ -279,22 +265,16 @@ export function monthlyFlow(
  * lauseen sanoja, ja pienellä kirjoitettuina ne lukivat kaavion alla
  * kuin keskeneräinen virke.
  */
-function shortMonth(month: string): string {
-  const names = [
-    "Tam",
-    "Hel",
-    "Maa",
-    "Huh",
-    "Tou",
-    "Kes",
-    "Hei",
-    "Elo",
-    "Syy",
-    "Lok",
-    "Mar",
-    "Jou",
-  ];
-  return names[Number(month.slice(5, 7)) - 1] ?? month;
+function shortMonth(month: string, locale: AppLocale): string {
+  const [year, m] = month.split("-").map(Number);
+  const sana = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    timeZone: "UTC",
+  })
+    .format(new Date(Date.UTC(year, m - 1, 1)))
+    .replace(/\.$/, "");
+
+  return `${sana.charAt(0).toUpperCase()}${sana.slice(1)}`;
 }
 
 function previousMonthOf(month: string): string {

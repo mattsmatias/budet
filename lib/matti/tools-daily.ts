@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { adminText } from "@/lib/i18n/admin-text";
 import { formatMoney } from "@/lib/money";
 import {
   formatMonth,
@@ -93,7 +94,11 @@ const getBriefing = defineTool({
     });
 
     const items = focusItems(input, insights);
-    const status = overallStatus(items, evaluability(input).canJudge);
+    const status = overallStatus(
+      items,
+      evaluability(input).canJudge,
+      adminText(ctx.locale),
+    );
 
     const [today, month] = await Promise.all([
       labourCost(ctx.restaurantId, ctx.timezone, ctx.today, ctx.today, ctx.now),

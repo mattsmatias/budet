@@ -152,8 +152,8 @@ export default async function AdminReceiptsPage({
 
   const total = visible.reduce((s, r) => s + r.totalCents, 0);
   const reviewCount = needsReview(receiptsInMonth(receipts, month)).length;
-  const duplicates = duplicateIds(receipts);
-  const duplicateGroups = findDuplicates(receipts);
+  const duplicates = duplicateIds(receipts, t);
+  const duplicateGroups = findDuplicates(receipts, t);
   const canReview = can(role, "receipts.edit");
 
   return (

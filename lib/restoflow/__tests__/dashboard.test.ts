@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   attention,
   budgetLines,
@@ -79,6 +80,9 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
 }
 
 // ---------------------------------------------------------------------------
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 describe("arvioitavuus", () => {
   /**
@@ -182,7 +186,7 @@ describe("vertailu", () => {
 
 describe("kuittien tila", () => {
   it("sanoo kun kuitteja ei ole", () => {
-    expect(receiptSplit([], "2026-08").label).toBe("Ei vielä kuitteja");
+    expect(receiptSplit([], "2026-08", suomi).label).toBe("Ei vielä kuitteja");
   });
 
   it("erittelee tarkistetut ja odottavat", () => {
@@ -197,6 +201,7 @@ describe("kuittien tila", () => {
         }),
       ],
       "2026-08",
+      suomi,
     );
 
     expect(split.label).toBe("2 tarkistettu · 1 odottaa");
@@ -206,6 +211,7 @@ describe("kuittien tila", () => {
     const split = receiptSplit(
       [receipt({ totalCents: 1000, date: "2026-08-01" })],
       "2026-08",
+      suomi,
     );
 
     expect(split.label).toBe("Kaikki tarkistettu");
@@ -238,6 +244,7 @@ describe("budjettien tila", () => {
   /** Väri yksin ei riitä: tila on luettava myös sanoina. */
   it("antaa jokaiselle riville tekstimuotoisen tilan", () => {
     const lines = budgetLines(
+      suomi,
       [receipt({ totalCents: 90000, date: "2026-08-04" })],
       [budget("food", 100000, "2026-08")],
       "2026-08",
@@ -251,6 +258,7 @@ describe("budjettien tila", () => {
 
   it("järjestää kireimmän ensin", () => {
     const lines = budgetLines(
+      suomi,
       [
         receipt({ totalCents: 20000, date: "2026-08-04", category: "food" }),
         receipt({ totalCents: 9000, date: "2026-08-05", category: "cleaning" }),

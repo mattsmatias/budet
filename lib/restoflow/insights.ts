@@ -12,6 +12,8 @@
  */
 
 import { budgetProgress } from "./budgets";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { IconName } from "@/components/restoflow/icons";
@@ -76,6 +78,7 @@ const MIN_RECEIPTS_FOR_TREND = 3;
 const MIN_CHANGE_CENTS = 5000;
 
 export function buildInsights(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   return [
     ...spendTrend(ctx),
     ...categoryShift(ctx),
@@ -89,6 +92,7 @@ export function buildInsights(ctx: InsightContext): Insight[] {
 // ---------------------------------------------------------------------------
 
 function spendTrend(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const current = periodTotals(ctx.receipts, ctx.month);
   const before = periodTotals(ctx.receipts, previousMonth(ctx.month));
 
@@ -101,8 +105,11 @@ function spendTrend(ctx: InsightContext): Insight[] {
         id: "spend-flat",
         icon: "trend",
         tone: "good",
-        title: "Kulut pysyivät ennallaan",
-        detail: `${formatMoney(current.totalCents)} tässä kuussa, ${formatMoney(before.totalCents)} edellisessä.`,
+        title: t.havainto.spendFlat,
+        detail: fill(t.havainto.spendBody, {
+          nyt: formatMoney(current.totalCents),
+          ennen: formatMoney(before.totalCents),
+        }),
         href: "/admin/kulut",
       },
     ];
@@ -116,17 +123,27 @@ function spendTrend(ctx: InsightContext): Insight[] {
       id: "spend-trend",
       icon: "trend",
       tone: diff > 0 ? "watch" : "good",
-      title: diff > 0 ? "Kulut nousivat" : "Kulut laskivat",
+      title: diff > 0 ? t.havainto.spendUp : t.havainto.spendDown,
       detail:
-        `${diff > 0 ? "+" : "−"}${formatMoney(Math.abs(diff))}` +
-        `${percent === null ? "" : ` (${percent} %)`} edelliseen kuukauteen. ` +
-        `Kuitteja ${current.receiptCount}, edellisessä ${before.receiptCount}.`,
+        fill(t.havainto.categoryChangeBody, {
+          ero:
+            `${diff > 0 ? "+" : "−"}${formatMoney(Math.abs(diff))}` +
+            (percent === null
+              ? ""
+              : fill(t.havaintoLisa.percentSuffix, { osuus: String(percent) })),
+        }) +
+        " " +
+        fill(t.havainto.receiptCompare, {
+          nyt: String(current.receiptCount),
+          ennen: String(before.receiptCount),
+        }),
       href: "/admin/kulut",
     },
   ];
 }
 
 function categoryShift(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const current = totalsByCategory(receiptsInMonth(ctx.receipts, ctx.month));
   const before = totalsByCategory(
     receiptsInMonth(ctx.receipts, previousMonth(ctx.month)),
@@ -152,16 +169,25 @@ function categoryShift(ctx: InsightContext): Insight[] {
       id: `category-${biggest.category}`,
       icon: "expenses",
       tone: biggest.diff > 0 ? "watch" : "good",
-      title: `${labels(ctx.locale).categories[biggest.category]} ${biggest.diff > 0 ? "kasvoi" : "pieneni"}`,
+      title: fill(
+        biggest.diff > 0
+          ? t.havaintoLisa.categoryGrew
+          : t.havaintoLisa.categoryShrank,
+        { nimi: labels(ctx.locale).categories[biggest.category] },
+      ),
       detail:
-        `${biggest.diff > 0 ? "+" : "−"}${formatMoney(Math.abs(biggest.diff))} edelliseen kuukauteen. ` +
-        `Yhteensä ${formatMoney(biggest.total)}.`,
+        fill(t.havainto.categoryChangeBody, {
+          ero: `${biggest.diff > 0 ? "+" : "−"}${formatMoney(Math.abs(biggest.diff))}`,
+        }) +
+        " " +
+        fill(t.havainto.categoryTotal, { summa: formatMoney(biggest.total) }),
       href: "/admin/kulut",
     },
   ];
 }
 
 function supplierConcentration(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const totals = supplierTotalsInMonth(ctx.receipts, ctx.month);
   if (totals.length < 2) return [];
 
@@ -173,16 +199,19 @@ function supplierConcentration(ctx: InsightContext): Insight[] {
       id: "supplier-concentration",
       icon: "suppliers",
       tone: "watch",
-      title: "Yksi toimittaja hallitsee kuluja",
-      detail:
-        `${biggest.name} on ${Math.round(biggest.share * 100)} % kuukauden kuluista ` +
-        `(${formatMoney(biggest.totalCents)}). Keskittymä on riski hinnoittelussa ja saatavuudessa.`,
+      title: t.havainto.oneSupplierDominates,
+      detail: fill(t.havainto.supplierShareBody, {
+        nimi: biggest.name,
+        osuus: String(Math.round(biggest.share * 100)),
+        summa: formatMoney(biggest.totalCents),
+      }),
       href: "/admin/toimittajat",
     },
   ];
 }
 
 function budgetPace(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const rows = budgetProgress(ctx.receipts, ctx.budgets, ctx.month).filter(
     (row) => row.budgetCents !== null && row.ratio !== null,
   );
@@ -207,10 +236,11 @@ function budgetPace(ctx: InsightContext): Insight[] {
         id: "budget-pace-ok",
         icon: "budget",
         tone: "good",
-        title: "Budjetit pysyvät tahdissa",
-        detail:
-          `Kuukaudesta on kulunut ${Math.round(elapsed * 100)} %, eikä yksikään ` +
-          `${rows.length} budjetista ole selvästi edellä.`,
+        title: t.havainto.budgetsOnPace,
+        detail: fill(t.havainto.budgetsOnPaceBody, {
+          osuus: String(Math.round(elapsed * 100)),
+          maara: String(rows.length),
+        }),
         href: "/admin/budjetit",
       },
     ];
@@ -221,17 +251,22 @@ function budgetPace(ctx: InsightContext): Insight[] {
       id: `budget-pace-${ahead.category}`,
       icon: "budget",
       tone: "watch",
-      title: `${labels(ctx.locale).categories[ahead.category]} kuluu etuajassa`,
-      detail:
-        `${Math.round((ahead.ratio as number) * 100)} % budjetista käytetty, ` +
-        `kun kuukaudesta on kulunut ${Math.round(elapsed * 100)} %. ` +
-        `Käytetty ${formatMoney(ahead.spentCents)} / ${formatMoney(ahead.budgetCents ?? 0)}.`,
+      title: fill(t.havaintoLisa.budgetAhead, {
+        nimi: labels(ctx.locale).categories[ahead.category],
+      }),
+      detail: fill(t.havainto.budgetAheadBody, {
+        osuus: String(Math.round((ahead.ratio as number) * 100)),
+        kulunut: String(Math.round(elapsed * 100)),
+        kaytetty: formatMoney(ahead.spentCents),
+        budjetti: formatMoney(ahead.budgetCents ?? 0),
+      }),
       href: "/admin/budjetit",
     },
   ];
 }
 
 function labourShare(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const past = ctx.shifts.filter(
     (s) => s.date < ctx.today && s.date.startsWith(ctx.month),
   );
@@ -252,19 +287,19 @@ function labourShare(ctx: InsightContext): Insight[] {
       icon: "clock",
       tone: overtimeHours > 0 ? "watch" : "neutral",
       title:
-        overtimeHours > 0
-          ? "Toteutunut työaika ylittää suunnitellun"
-          : "Toteutunut työaika jää suunnitellusta",
-      detail:
-        `${overtimeHours > 0 ? "+" : "−"}${Math.abs(Math.round(overtimeHours * 10) / 10)} h ` +
-        `${summary.shiftCount} vuorossa. Ero on laskennallisesti ` +
-        `${summary.varianceCostCents >= 0 ? "+" : "−"}${formatMoney(Math.abs(summary.varianceCostCents))}.`,
+        overtimeHours > 0 ? t.havainto.overtimeOver : t.havainto.overtimeUnder,
+      detail: fill(t.havainto.overtimeBody, {
+        tunnit: `${overtimeHours > 0 ? "+" : "−"}${Math.abs(Math.round(overtimeHours * 10) / 10)} h`,
+        maara: String(summary.shiftCount),
+        summa: `${summary.varianceCostCents >= 0 ? "+" : "−"}${formatMoney(Math.abs(summary.varianceCostCents))}`,
+      }),
       href: "/admin/tyovuorot",
     },
   ];
 }
 
 function reviewDiscipline(ctx: InsightContext): Insight[] {
+  const t = adminText(ctx.locale);
   const inMonth = receiptsInMonth(ctx.receipts, ctx.month);
   if (inMonth.length < MIN_RECEIPTS_FOR_TREND) return [];
 
@@ -277,8 +312,10 @@ function reviewDiscipline(ctx: InsightContext): Insight[] {
         id: "review-clean",
         icon: "receipt",
         tone: "good",
-        title: "Kaikki kuukauden kuitit on tarkistettu",
-        detail: `${inMonth.length} kuittia, ei yhtään jonossa.`,
+        title: t.havainto.allReceiptsChecked,
+        detail: fill(t.havainto.allReceiptsCheckedBody, {
+          maara: String(inMonth.length),
+        }),
         href: "/admin/kuitit",
       },
     ];
@@ -291,10 +328,12 @@ function reviewDiscipline(ctx: InsightContext): Insight[] {
       id: "review-backlog",
       icon: "receipt",
       tone: "watch",
-      title: "Tarkistusjono kasvaa",
-      detail:
-        `${pending} / ${inMonth.length} kuukauden kuitista odottaa tarkistusta ` +
-        `(${Math.round(share * 100)} %). Ne ovat mukana summissa, joten luvut voivat vielä muuttua.`,
+      title: t.havainto.queueGrowing,
+      detail: fill(t.havainto.queueGrowingBody, {
+        jonossa: String(pending),
+        kaikki: String(inMonth.length),
+        osuus: String(Math.round(share * 100)),
+      }),
       href: "/admin/kuitit?suodatin=needs_review",
     },
   ];

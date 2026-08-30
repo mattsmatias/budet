@@ -138,7 +138,7 @@ export default async function AdminDashboard({
 
   const totals = periodTotals(receipts, viewMonth);
   const comparison = compareToPreviousMonth(receipts, viewMonth);
-  const receipts_ = receiptSplit(receipts, viewMonth);
+  const receipts_ = receiptSplit(receipts, viewMonth, t);
 
   const categories = totalsByCustomCategory(
     receiptsInMonth(receipts, viewMonth),
@@ -235,7 +235,7 @@ export default async function AdminDashboard({
   });
   const items = focusItems(dashboardInput, insights);
 
-  const budgets_ = budgetLines(receipts, budgets, viewMonth);
+  const budgets_ = budgetLines(t, receipts, budgets, viewMonth);
 
   // Tunnit ja henkilöstökulu lasketaan vain kuluvalle kuukaudelle:
   // monthlyHours tulee kontekstista kuluvana kuukautena, eikä
@@ -288,7 +288,7 @@ export default async function AdminDashboard({
         })
       : null;
 
-  const status = overallStatus(items, evaluability(dashboardInput).canJudge);
+  const status = overallStatus(items, evaluability(dashboardInput).canJudge, t);
 
   /*
    * Kulurytmi katsottavalta kuukaudelta.
@@ -301,6 +301,7 @@ export default async function AdminDashboard({
     receipts,
     viewMonth,
     isCurrentMonth ? today : `${viewMonth}-31`,
+    locale,
   );
 
   // Trendiviiva vain jos historiaa on. Kahden pisteen viiva näyttäisi
@@ -318,7 +319,7 @@ export default async function AdminDashboard({
    * ettei kukaan ehtinyt kirjata sitä — kaavio katkaisee viivan siitä
    * kohtaa eikä vedä sitä pohjaan.
    */
-  const flow = monthlyFlow(receipts, sales, viewMonth, chartMonths);
+  const flow = monthlyFlow(receipts, sales, viewMonth, chartMonths, locale);
 
   /*
    * Tämän päivän täsmäytys.

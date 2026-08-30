@@ -14,6 +14,8 @@
  */
 
 import type { FocusItem, FocusSeverity } from "./dashboard";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 
 export type StatusTone = "good" | "warn" | "bad" | "unknown";
 
@@ -29,6 +31,7 @@ export interface OverallStatus {
 export function overallStatus(
   items: FocusItem[],
   canJudge: boolean,
+  t: AdminText,
 ): OverallStatus {
   const counts = {
     critical: items.filter((i) => i.severity === "critical").length,
@@ -51,8 +54,8 @@ export function overallStatus(
       tone: "bad",
       headline:
         counts.critical === 1
-          ? "1 kriittinen asia vaatii huomiota"
-          : `${counts.critical} kriittistä asiaa vaatii huomiota`,
+          ? t.tila.oneCritical
+          : fill(t.tila.manyCritical, { maara: String(counts.critical) }),
       /*
        * "Kriittistä" rajaa otsikon luvun, joten se ei väitä olevansa
        * listan pituus — mutta loput on silti kerrottava, tai rivien
@@ -60,7 +63,9 @@ export function overallStatus(
        */
       detail:
         rest > 0
-          ? `Lisäksi ${rest} ${rest === 1 ? "muu kohta" : "muuta kohtaa"}.`
+          ? fill(rest === 1 ? t.tila.oneMore : t.tila.manyMore, {
+              maara: String(rest),
+            })
           : null,
       counts,
     };
@@ -70,11 +75,18 @@ export function overallStatus(
     return {
       tone: "warn",
       headline:
-        rest === 1 ? "1 asia vaatii huomiota" : `${rest} asiaa vaatii huomiota`,
+        rest === 1
+          ? t.tila.oneNeedsAttention
+          : fill(t.tila.manyNeedAttention, { maara: String(rest) }),
       detail:
         counts.info > 0
-          ? `${counts.warning} tarkistettavaa ja ${counts.info} ` +
-            `${counts.info === 1 ? "havainto" : "havaintoa"} seurattavaksi.`
+          ? fill(
+              counts.info === 1 ? t.tila.checksAndOne : t.tila.checksAndMany,
+              {
+                tarkistettavia: String(counts.warning),
+                havaintoja: String(counts.info),
+              },
+            )
           : null,
       counts,
     };
@@ -83,17 +95,15 @@ export function overallStatus(
   if (!canJudge) {
     return {
       tone: "unknown",
-      headline: "Ei vielä arvioitavaa",
-      detail:
-        "Lisää kuitteja, budjetit ja päivän myynti, jotta Kate voi kertoa " +
-        "miten menee. Tyhjä aineisto ei tarkoita että kaikki on kunnossa.",
+      headline: t.tila.nothingToJudge,
+      detail: t.tila.nothingToJudgeBody,
       counts,
     };
   }
 
   return {
     tone: "good",
-    headline: "Kaikki näyttää hyvältä",
+    headline: t.tila.allGood,
     /*
      * Havainto ei ole puute vaan suunta, joten otsikko pysyy
      * vihreänä — mutta luku on silti kerrottava, koska havainnot
@@ -101,7 +111,9 @@ export function overallStatus(
      */
     detail:
       counts.info > 0
-        ? `${counts.info} ${counts.info === 1 ? "havainto" : "havaintoa"} seurattavaksi.`
+        ? fill(counts.info === 1 ? t.tila.oneInsight : t.tila.manyInsights, {
+            maara: String(counts.info),
+          })
         : null,
     counts,
   };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { adminText } from "@/lib/i18n/admin-text";
 import { labels } from "@/lib/i18n/labels";
 import {
   activeReminders,
@@ -105,7 +106,11 @@ const getReminders = defineTool({
   requires: "tasks.manage",
   schema: z.object({}),
   async run(ctx) {
-    const reminders = activeReminders(ctx.data.tasks, ctx.today);
+    const reminders = activeReminders(
+      ctx.data.tasks,
+      ctx.today,
+      adminText(ctx.locale),
+    );
 
     if (reminders.length === 0) {
       return {

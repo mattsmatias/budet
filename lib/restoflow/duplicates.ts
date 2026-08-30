@@ -11,6 +11,7 @@
  */
 
 import type { Receipt } from "./types";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /** Kuinka monen päivän sisällä samat summat tulkitaan epäilyttäviksi. */
 const DAY_WINDOW = 1;
@@ -34,7 +35,10 @@ export interface DuplicateGroup {
  * enintään päivän päässä toisistaan. Kuittinumero kumoaa epäilyn jos
  * molemmilla on numero ja ne eroavat — silloin kyse on eri tositteista.
  */
-export function findDuplicates(receipts: Receipt[]): DuplicateGroup[] {
+export function findDuplicates(
+  receipts: Receipt[],
+  t: AdminText,
+): DuplicateGroup[] {
   const groups: DuplicateGroup[] = [];
   const claimed = new Set<string>();
 
@@ -62,7 +66,7 @@ export function findDuplicates(receipts: Receipt[]): DuplicateGroup[] {
         receipts: all,
         supplierName: a.supplierName,
         totalCents: a.totalCents,
-        reason: describeReason(a, matches[0]),
+        reason: describeReason(a, matches[0], t),
       });
     }
   }
@@ -88,11 +92,13 @@ function looksLikeSame(a: Receipt, b: Receipt): boolean {
   return true;
 }
 
-function describeReason(a: Receipt, b: Receipt): string {
-  const parts = ["sama toimittaja", "sama summa"];
-  parts.push(a.date === b.date ? "sama päivä" : "peräkkäiset päivät");
+function describeReason(a: Receipt, b: Receipt, t: AdminText): string {
+  const parts = [t.havaintoDup.sameSupplier, t.havaintoDup.sameAmount];
+  parts.push(
+    a.date === b.date ? t.havainto.sameDay : t.havainto.consecutiveDays,
+  );
   if (a.receiptNumber && a.receiptNumber === b.receiptNumber) {
-    parts.push("sama kuittinumero");
+    parts.push(t.havaintoDup.sameReceiptNumber);
   }
   return parts.join(" · ");
 }
@@ -105,9 +111,9 @@ export function daysApart(isoA: string, isoB: string): number {
 }
 
 /** Kuittien tunnisteet jotka kuuluvat johonkin epäiltyyn ryhmään. */
-export function duplicateIds(receipts: Receipt[]): Set<string> {
+export function duplicateIds(receipts: Receipt[], t: AdminText): Set<string> {
   const ids = new Set<string>();
-  for (const group of findDuplicates(receipts)) {
+  for (const group of findDuplicates(receipts, t)) {
     for (const receipt of group.receipts) ids.add(receipt.id);
   }
   return ids;

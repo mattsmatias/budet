@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   checkVat,
   dominantCategory,
@@ -104,6 +105,9 @@ function receipt(
 }
 
 // ---------------------------------------------------------------------------
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 describe("ALV-tarkistus", () => {
   it("päättelee kannan summista", () => {
@@ -359,53 +363,65 @@ describe("kaksoiskappaleet", () => {
   };
 
   it("löytää saman toimittajan saman summan samana päivänä", () => {
-    const groups = findDuplicates([receipt(base), receipt(base)]);
+    const groups = findDuplicates([receipt(base), receipt(base)], suomi);
     expect(groups).toHaveLength(1);
     expect(groups[0].receipts).toHaveLength(2);
   });
 
   it("sallii sentin heiton", () => {
-    const groups = findDuplicates([
-      receipt(base),
-      receipt({ ...base, totalCents: 8721 }),
-    ]);
+    const groups = findDuplicates(
+      [receipt(base), receipt({ ...base, totalCents: 8721 })],
+      suomi,
+    );
     expect(groups).toHaveLength(1);
   });
 
   it("ei epäile eri toimittajaa", () => {
     expect(
-      findDuplicates([
-        receipt(base),
-        receipt({ ...base, supplierId: "s-muu" }),
-      ]),
+      findDuplicates(
+        [receipt(base), receipt({ ...base, supplierId: "s-muu" })],
+        suomi,
+      ),
     ).toHaveLength(0);
   });
 
   it("ei epäile eri summaa", () => {
     expect(
-      findDuplicates([receipt(base), receipt({ ...base, totalCents: 9999 })]),
+      findDuplicates(
+        [receipt(base), receipt({ ...base, totalCents: 9999 })],
+        suomi,
+      ),
     ).toHaveLength(0);
   });
 
   it("hyväksyy peräkkäiset päivät mutta ei kaukaisempia", () => {
     expect(
-      findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-19" })]),
+      findDuplicates(
+        [receipt(base), receipt({ ...base, date: "2026-08-19" })],
+        suomi,
+      ),
     ).toHaveLength(1);
     expect(
-      findDuplicates([receipt(base), receipt({ ...base, date: "2026-08-25" })]),
+      findDuplicates(
+        [receipt(base), receipt({ ...base, date: "2026-08-25" })],
+        suomi,
+      ),
     ).toHaveLength(0);
   });
 
   it("kumoaa epäilyn kun kuittinumerot eroavat", () => {
-    const groups = findDuplicates([
-      receipt({ ...base, receiptNumber: "A-1" }),
-      receipt({ ...base, receiptNumber: "A-2" }),
-    ]);
+    const groups = findDuplicates(
+      [
+        receipt({ ...base, receiptNumber: "A-1" }),
+        receipt({ ...base, receiptNumber: "A-2" }),
+      ],
+      suomi,
+    );
     expect(groups).toHaveLength(0);
   });
 
   it("ei ehdota poistoa vaan palauttaa molemmat", () => {
-    const groups = findDuplicates([receipt(base), receipt(base)]);
+    const groups = findDuplicates([receipt(base), receipt(base)], suomi);
     // Ryhmä sisältää molemmat — päätös jää käyttäjälle.
     expect(groups[0].receipts.length).toBe(2);
   });
@@ -416,11 +432,10 @@ describe("kaksoiskappaleet", () => {
   });
 
   it("kokoaa tunnisteet korostusta varten", () => {
-    const ids = duplicateIds([
-      receipt(base),
-      receipt(base),
-      receipt({ ...base, supplierId: "s-x" }),
-    ]);
+    const ids = duplicateIds(
+      [receipt(base), receipt(base), receipt({ ...base, supplierId: "s-x" })],
+      suomi,
+    );
     expect(ids.size).toBe(2);
   });
 });

@@ -12,6 +12,8 @@
  */
 
 import { alertCounts, buildAlerts } from "./alerts";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { IconName } from "@/components/restoflow/icons";
 import { alertIcon } from "./alert-icons";
@@ -200,17 +202,24 @@ export interface ReceiptSplit {
  *
  * "13" ei kerro onko työ tehty. "12 tarkistettu · 1 odottaa" kertoo.
  */
-export function receiptSplit(receipts: Receipt[], month: string): ReceiptSplit {
+export function receiptSplit(
+  receipts: Receipt[],
+  month: string,
+  t: AdminText,
+): ReceiptSplit {
   const inMonth = receiptsInMonth(receipts, month);
   const pending = needsReview(inMonth).length;
   const reviewed = inMonth.length - pending;
 
   const label =
     inMonth.length === 0
-      ? "Ei vielä kuitteja"
+      ? t.havainto.noReceiptsYet
       : pending === 0
-        ? "Kaikki tarkistettu"
-        : `${reviewed} tarkistettu · ${pending} odottaa`;
+        ? t.havainto.allChecked
+        : fill(t.havaintoDup.checkedAndPending, {
+            tarkistettu: String(reviewed),
+            odottaa: String(pending),
+          });
 
   return { total: inMonth.length, reviewed, pending, label };
 }
@@ -249,12 +258,12 @@ export interface BudgetLine {
   label: string;
 }
 
-const TONE_LABELS: Record<BudgetTone, string> = {
-  normal: "Tahdissa",
-  warning: "Varoitus",
-  critical: "Kriittinen",
-  over: "Ylitetty",
-};
+const savynNimet = (t: AdminText): Record<BudgetTone, string> => ({
+  normal: t.havainto.onPace,
+  warning: t.havainto.warning,
+  critical: t.havainto.critical,
+  over: t.havainto.over,
+});
 
 export function budgetTone(ratio: number): BudgetTone {
   if (ratio >= 1) return "over";
@@ -264,6 +273,7 @@ export function budgetTone(ratio: number): BudgetTone {
 }
 
 export function budgetLines(
+  t: AdminText,
   receipts: Receipt[],
   budgets: Budget[],
   month: string,
@@ -281,7 +291,7 @@ export function budgetLines(
         ratio,
         percent: Math.round(ratio * 100),
         tone,
-        label: TONE_LABELS[tone],
+        label: savynNimet(t)[tone],
       };
     })
     .sort((a, b) => b.ratio - a.ratio);
@@ -307,8 +317,8 @@ export function hasChartHistory(receipts: Receipt[], month: string): boolean {
 }
 
 /** Kaksoiskappaleiden määrä yhteenvetoon. */
-export function duplicateCount(receipts: Receipt[]): number {
-  return findDuplicates(receipts).length;
+export function duplicateCount(receipts: Receipt[], t: AdminText): number {
+  return findDuplicates(receipts, t).length;
 }
 
 // ---------------------------------------------------------------------------

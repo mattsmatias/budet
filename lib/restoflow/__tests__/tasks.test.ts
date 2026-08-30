@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   activeReminders,
   countTasks,
@@ -38,6 +39,9 @@ function task(partial: Partial<Task> = {}): Task {
     ...partial,
   };
 }
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 describe("statusOf", () => {
   it("tunnistaa tulevan", () => {
@@ -207,6 +211,7 @@ describe("activeReminders", () => {
     const reminders = activeReminders(
       [task({ dueOn: "2026-08-28", remindDaysBefore: [2, 1] })],
       TODAY,
+      suomi,
     );
 
     expect(reminders).toHaveLength(1);
@@ -219,6 +224,7 @@ describe("activeReminders", () => {
     const reminders = activeReminders(
       [task({ dueOn: "2026-08-27", remindDaysBefore: [1] })],
       TODAY,
+      suomi,
     );
 
     expect(reminders[0].text).toContain("huomenna");
@@ -229,19 +235,24 @@ describe("activeReminders", () => {
       activeReminders(
         [task({ dueOn: "2026-08-29", remindDaysBefore: [1] })],
         TODAY,
+        suomi,
       ),
     ).toEqual([]);
   });
 
   it("muistuttaa eräpäivänä", () => {
-    const reminders = activeReminders([task({ dueOn: TODAY })], TODAY);
+    const reminders = activeReminders([task({ dueOn: TODAY })], TODAY, suomi);
 
     expect(reminders[0].kind).toBe("due");
     expect(reminders[0].text).toContain("erääntyy tänään");
   });
 
   it("muistuttaa myöhässä olevasta", () => {
-    const reminders = activeReminders([task({ dueOn: "2026-08-24" })], TODAY);
+    const reminders = activeReminders(
+      [task({ dueOn: "2026-08-24" })],
+      TODAY,
+      suomi,
+    );
 
     expect(reminders[0].kind).toBe("overdue");
     expect(reminders[0].days).toBe(-2);
@@ -250,13 +261,18 @@ describe("activeReminders", () => {
 
   it("kunnioittaa käyttäjän asetuksia", () => {
     expect(
-      activeReminders([task({ dueOn: TODAY, remindOnDue: false })], TODAY),
+      activeReminders(
+        [task({ dueOn: TODAY, remindOnDue: false })],
+        TODAY,
+        suomi,
+      ),
     ).toEqual([]);
 
     expect(
       activeReminders(
         [task({ dueOn: "2026-08-20", remindWhenOverdue: false })],
         TODAY,
+        suomi,
       ),
     ).toEqual([]);
   });
@@ -277,6 +293,7 @@ describe("activeReminders", () => {
           }),
         ],
         TODAY,
+        suomi,
       ),
     ).toEqual([]);
   });
@@ -289,6 +306,7 @@ describe("activeReminders", () => {
         task({ id: "tanaan", dueOn: TODAY }),
       ],
       TODAY,
+      suomi,
     );
 
     expect(reminders.map((r) => r.task.id)).toEqual([

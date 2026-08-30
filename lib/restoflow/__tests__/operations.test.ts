@@ -40,6 +40,7 @@ function ctx(partial: Partial<OperationsContext> = {}): OperationsContext {
     today: TODAY,
     now: `${TODAY}T09:00:00Z`, // 12:00 paikallista
     timezone: TZ,
+    locale: "fi",
     ...partial,
   };
 }

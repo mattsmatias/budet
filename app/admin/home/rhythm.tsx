@@ -4,11 +4,7 @@ import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatMonthShortIn } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { seriesColor } from "@/components/restoflow/dashboard-ui";
-import {
-  WEEKDAY_LABELS,
-  type SpendDay,
-  type SpendRhythm,
-} from "@/lib/restoflow/spend-rhythm";
+import { type SpendDay, type SpendRhythm } from "@/lib/restoflow/spend-rhythm";
 
 /**
  * Kuukauden kulurytmi.
@@ -118,14 +114,16 @@ export function Rhythm({
           <p style={{ color: "var(--rf-text-3)" }}>{t.loput.rhythmNeedsData}</p>
         ) : rhythm.peakWeekday ? (
           <p style={{ color: "var(--rf-text-2)" }}>
-            <strong className="font-bold" style={{ color: "var(--rf-text)" }}>
-              {Math.round(rhythm.peakWeekday.share * 100)} %
-            </strong>{" "}
-            kuluista osuu{" "}
-            {WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "la" ||
-            WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "su"
-              ? "viikonlopulle"
-              : fill(t.loput.peakWeekday, { paiva: rhythm.peakWeekday.label })}
+            {fill(t.rytmi.peakShare, {
+              osuus: String(Math.round(rhythm.peakWeekday.share * 100)),
+              kohde:
+                /* 6 = lauantai, 7 = sunnuntai. */
+                rhythm.peakWeekday.weekday >= 6
+                  ? t.rytmi.onWeekend
+                  : fill(t.loput.peakWeekday, {
+                      paiva: rhythm.peakWeekday.label,
+                    }),
+            })}
           </p>
         ) : (
           /*

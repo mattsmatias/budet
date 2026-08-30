@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { labels, type Labels } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
@@ -183,7 +184,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <TopBar
             nimet={nimet}
             restaurantName={restaurant.name}
-            date={longDate(now, restaurant.timezone)}
+            date={longDate(now, restaurant.timezone, locale)}
             alerts={alerts}
             userName={userName}
             role={role}
@@ -215,8 +216,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
  * kiintopiste eikä luettava lause: lyhennetty viikonpäivä ja numerot
  * kertovat saman kahdessatoista merkissä.
  */
-function longDate(iso: string, timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("fi-FI", {
+function longDate(iso: string, timeZone: string, locale: AppLocale): string {
+  const parts = new Intl.DateTimeFormat(locale, {
     timeZone,
     weekday: "short",
     day: "2-digit",
@@ -227,7 +228,7 @@ function longDate(iso: string, timeZone: string): string {
   const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? "";
 
-  // fi-FI antaa lyhyen viikonpäivän muodossa "ma" — pisteineen tai ilman.
+  // Lyhenne tulee kielestä: "ma", "mon", "pzt". Piste pois, isolla.
   const weekday = get("weekday").replace(".", "").toUpperCase();
 
   return `${weekday} ${get("day")}.${get("month")}.${get("year")}`;

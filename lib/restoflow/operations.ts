@@ -17,6 +17,10 @@
  */
 
 import { dayIn, minutesOfDayIn } from "./clock-context";
+import { formatDayShortIn } from "@/lib/i18n/labels";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatMoney } from "../money";
 import { compareSales, type DailySales } from "./sales";
 import { shiftBounds } from "./shift-window";
@@ -64,9 +68,12 @@ export interface OperationsContext {
   today: string;
   now: string;
   timezone: string;
+  /** Käyttöliittymän kieli: poikkeamien teksti kirjoitetaan sillä. */
+  locale: AppLocale;
 }
 
 export function operationalAlerts(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   return [
     ...lateClockIn(ctx),
     ...shiftOverrun(ctx),
@@ -89,6 +96,7 @@ export function operationalAlerts(ctx: OperationsContext): Alert[] {
  * ohittamaan hälytykset.
  */
 function taskDeadlines(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   const tasks = ctx.tasks ?? [];
   const alerts: Alert[] = [];
 
@@ -105,8 +113,10 @@ function taskDeadlines(ctx: OperationsContext): Alert[] {
         title: task.title,
         detail:
           late === 0
-            ? `Eräpäivä oli tänään klo ${task.dueTime}.`
-            : `Myöhässä ${late} ${late === 1 ? "päivän" : "päivää"}.`,
+            ? fill(t.havainto.dueTodayAt, { aika: task.dueTime ?? "" })
+            : fill(late === 1 ? t.havainto.lateByOne : t.havainto.lateByMany, {
+                maara: String(late),
+              }),
         href: "/admin/tehtavat?suodatin=myohassa",
         entityId: task.id,
       });
@@ -120,8 +130,8 @@ function taskDeadlines(ctx: OperationsContext): Alert[] {
         severity: task.priority === "critical" ? "critical" : "warning",
         title: task.title,
         detail: task.dueTime
-          ? `Erääntyy tänään klo ${task.dueTime}.`
-          : "Erääntyy tänään.",
+          ? fill(t.havainto.dueTodayAtTime, { aika: task.dueTime })
+          : t.havainto.dueToday,
         href: "/admin/tehtavat?suodatin=tanaan",
         entityId: task.id,
       });
@@ -144,6 +154,7 @@ function taskDeadlines(ctx: OperationsContext): Alert[] {
  * puuttuvat leimaukset ovat palkka-asia, ja ne näkyvät siellä.
  */
 function lateClockIn(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   const nowMinutes = minutesOfDayIn(ctx.timezone, ctx.now);
   const alerts: Alert[] = [];
 
@@ -168,10 +179,14 @@ function lateClockIn(ctx: OperationsContext): Alert[] {
       id: `late-in-${shift.id}`,
       kind: "late_clock_in",
       severity: "critical",
-      title: `${user?.name ?? "Työntekijä"} ei ole leimannut sisään`,
-      detail:
-        `Vuoro ${shift.startTime}–${shift.endTime} alkoi ${Math.round(late)} minuuttia sitten. ` +
-        `Soita tai tarkista onko hän paikalla.`,
+      title: fill(t.havainto.notClockedIn, {
+        nimi: user?.name ?? t.havainto.employeeFallback,
+      }),
+      detail: fill(t.havainto.shiftStartedAgo, {
+        alku: shift.startTime,
+        loppu: shift.endTime,
+        maara: String(Math.round(late)),
+      }),
       href: "/admin/tyovuorot",
       entityId: shift.userId,
     });
@@ -188,6 +203,7 @@ function lateClockIn(ctx: OperationsContext): Alert[] {
  * ellei sitä huomata.
  */
 function shiftOverrun(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   const nowMinutes = minutesOfDayIn(ctx.timezone, ctx.now);
   const alerts: Alert[] = [];
 
@@ -213,10 +229,13 @@ function shiftOverrun(ctx: OperationsContext): Alert[] {
       id: `overrun-${shift.id}`,
       kind: "shift_overrun",
       severity: "warning",
-      title: `${user?.name ?? "Työntekijä"} on yhä työaikana`,
-      detail:
-        `Vuoro päättyi ${shift.endTime}, eli ${hours > 0 ? `${hours} h ` : ""}` +
-        `${over % 60} min sitten. Työaika kertyy kunnes se suljetaan.`,
+      title: fill(t.havainto.stillClockedIn, {
+        nimi: user?.name ?? t.havainto.employeeFallback,
+      }),
+      detail: fill(t.havainto.shiftEndedAgo, {
+        loppu: shift.endTime,
+        kesto: `${hours > 0 ? `${hours} h ` : ""}${over % 60} min`,
+      }),
       href: "/admin/tyovuorot",
       entityId: shift.userId,
     });
@@ -232,6 +251,7 @@ function shiftOverrun(ctx: OperationsContext): Alert[] {
  * ehtii täyttyä, mutta kolmen päivän sisällä se on jo ongelma.
  */
 function unassignedShifts(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   const limit = addDays(ctx.today, OPEN_SHIFT_DAYS);
 
   return ctx.openShifts
@@ -240,8 +260,8 @@ function unassignedShifts(ctx: OperationsContext): Alert[] {
       id: `open-shift-${shift.id}`,
       kind: "unassigned_shift" as const,
       severity: "warning" as const,
-      title: "Työvuorolle ei ole tekijää",
-      detail: `${formatDate(shift.date)} · ${shift.startTime}–${shift.endTime}`,
+      title: t.havainto.noAssignee,
+      detail: `${formatDate(shift.date, ctx.locale)} · ${shift.startTime}–${shift.endTime}`,
       href: "/admin/tyovuorot",
       entityId: shift.id,
     }));
@@ -257,6 +277,7 @@ function unassignedShifts(ctx: OperationsContext): Alert[] {
  * päivän lukuun.
  */
 function salesShortfall(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   const yesterday = addDays(ctx.today, -1);
   const day = ctx.sales.find((s) => s.date === yesterday);
   if (!day) return [];
@@ -268,16 +289,26 @@ function salesShortfall(ctx: OperationsContext): Alert[] {
   const shortfall = Math.round((1 - comparison.ratio) * 100);
   const benchmark =
     comparison.kind === "target"
-      ? `tavoitteesta ${formatMoney(comparison.targetCents)}`
-      : `saman viikonpäivän keskiarvosta ${formatMoney(comparison.averageCents)}`;
+      ? fill(t.havainto.fromTarget, {
+          summa: formatMoney(comparison.targetCents),
+        })
+      : fill(t.havainto.fromWeekdayAverage, {
+          summa: formatMoney(comparison.averageCents),
+        });
 
   return [
     {
       id: `sales-short-${yesterday}`,
       kind: "sales_shortfall",
       severity: "warning",
-      title: `Eilinen myynti jäi ${shortfall} % vertailukohdasta`,
-      detail: `${formatMoney(day.netCents)} — ${shortfall} % ${benchmark}.`,
+      title: fill(t.havainto.yesterdayShortfall, {
+        osuus: String(shortfall),
+      }),
+      detail: fill(t.havainto.yesterdayShortfallBody, {
+        summa: formatMoney(day.netCents),
+        osuus: String(shortfall),
+        vertailu: benchmark,
+      }),
       href: "/admin/myynti",
       entityId: yesterday,
     },
@@ -292,6 +323,7 @@ function salesShortfall(ctx: OperationsContext): Alert[] {
  * silloin ole poikkeama.
  */
 function receiptGap(ctx: OperationsContext): Alert[] {
+  const t = adminText(ctx.locale);
   if (ctx.receipts.length === 0) return [];
 
   const latest = ctx.receipts.reduce(
@@ -311,10 +343,10 @@ function receiptGap(ctx: OperationsContext): Alert[] {
       id: `receipt-gap-${latest}`,
       kind: "receipt_gap",
       severity: "warning",
-      title: `Kuitteja ei ole kirjattu ${gap} päivään`,
-      detail:
-        `Viimeisin kuitti on ${formatDate(latest)}, mutta työvuoroja on tehty sen jälkeen. ` +
-        `Kirjaamattomat ostot puuttuvat kuluista ja budjetista.`,
+      title: fill(t.havainto.noReceiptsForDays, { maara: String(gap) }),
+      detail: fill(t.havainto.noReceiptsBody, {
+        paiva: formatDate(latest, ctx.locale),
+      }),
       href: "/admin/kuitit/uusi",
       entityId: latest,
     },
@@ -335,7 +367,6 @@ function daysBetween(from: string, to: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-function formatDate(isoDate: string): string {
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.`;
+function formatDate(isoDate: string, locale: AppLocale): string {
+  return formatDayShortIn(isoDate, locale);
 }
