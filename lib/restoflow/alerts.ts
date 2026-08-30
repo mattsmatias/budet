@@ -11,8 +11,9 @@
  */
 
 import { budgetProgress, WARNING_THRESHOLD } from "./budgets";
+import { fill } from "@/lib/i18n/auth-text";
 import { adminText } from "@/lib/i18n/admin-text";
-import { labels } from "@/lib/i18n/labels";
+import { formatDayShortIn, labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { findDuplicates } from "./duplicates";
 import { formatMoney } from "../money";
@@ -119,6 +120,7 @@ function severityRank(alert: Alert): number {
 // ---------------------------------------------------------------------------
 
 function duplicateAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   return findDuplicates(
     receiptsInMonth(ctx.receipts, ctx.month),
     adminText(ctx.locale),
@@ -126,14 +128,20 @@ function duplicateAlerts(ctx: AlertContext): Alert[] {
     id: `dup-${group.receipts[0].id}`,
     kind: "duplicate_receipt" as const,
     severity: "critical" as const,
-    title: `Mahdollinen kaksoiskappale · ${group.supplierName}`,
-    detail: `${formatMoney(group.totalCents)} · ${group.reason}`,
+    title: fill(t.havainto.possibleDuplicateNamed, {
+      nimi: group.supplierName,
+    }),
+    detail: fill(t.havainto.amountAndReason, {
+      summa: formatMoney(group.totalCents),
+      syy: group.reason,
+    }),
     href: `/admin/kuitit?korosta=${group.receipts[0].id}`,
     entityId: group.receipts[0].id,
   }));
 }
 
 function budgetAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   const progress = budgetProgress(ctx.receipts, ctx.budgets, ctx.month);
 
   return progress
@@ -147,10 +155,12 @@ function budgetAlerts(ctx: AlertContext): Alert[] {
             id: `budget-${p.category}`,
             kind: "budget_exceeded" as const,
             severity: "critical" as const,
-            title: `${label} ylitti kuukausibudjetin`,
-            detail:
-              `${formatMoney(p.spentCents)} / ${formatMoney(p.budgetCents ?? 0)} ` +
-              `· ${pct} %`,
+            title: fill(t.halytys.budgetExceeded, { nimi: label }),
+            detail: fill(t.halytys.budgetExceededBody, {
+              kaytetty: formatMoney(p.spentCents),
+              budjetti: formatMoney(p.budgetCents ?? 0),
+              osuus: String(pct),
+            }),
             href: "/admin/budjetit",
             entityId: p.category,
           }
@@ -158,8 +168,13 @@ function budgetAlerts(ctx: AlertContext): Alert[] {
             id: `budget-${p.category}`,
             kind: "budget_warning" as const,
             severity: "warning" as const,
-            title: `${label} ${pct} % budjetista`,
-            detail: `${formatMoney(p.remainingCents ?? 0)} jäljellä kuukaudesta`,
+            title: fill(t.halytys.budgetShare, {
+              nimi: label,
+              osuus: String(pct),
+            }),
+            detail: fill(t.havainto.remainingThisMonth, {
+              summa: formatMoney(p.remainingCents ?? 0),
+            }),
             href: "/admin/budjetit",
             entityId: p.category,
           };
@@ -167,6 +182,7 @@ function budgetAlerts(ctx: AlertContext): Alert[] {
 }
 
 function supplierSpikeAlerts(ctx: AlertContext): Alert[] {
+  const teksti = adminText(ctx.locale);
   return supplierTrends(ctx.receipts, ctx.month)
     .filter(
       (t) =>
@@ -178,16 +194,21 @@ function supplierSpikeAlerts(ctx: AlertContext): Alert[] {
       id: `spike-${t.supplierId}`,
       kind: "supplier_spike" as const,
       severity: "warning" as const,
-      title: `${t.name}: kulut nousivat ${Math.round((t.change ?? 0) * 100)} %`,
-      detail:
-        `${formatMoney(t.previousCents)} → ${formatMoney(t.currentCents)} ` +
-        "edelliseen kuukauteen verrattuna",
+      title: fill(teksti.havainto.supplierRose, {
+        nimi: t.name,
+        osuus: String(Math.round((t.change ?? 0) * 100)),
+      }),
+      detail: fill(teksti.halytys.comparedToPrevious, {
+        ennen: formatMoney(t.previousCents),
+        nyt: formatMoney(t.currentCents),
+      }),
       href: `/admin/toimittajat/${t.supplierId}`,
       entityId: t.supplierId,
     }));
 }
 
 function vatMismatchAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   return receiptsInMonth(ctx.receipts, ctx.month)
     .filter((r) => r.vatCents !== null)
     .map((r) => ({
@@ -199,7 +220,9 @@ function vatMismatchAlerts(ctx: AlertContext): Alert[] {
       id: `vat-${receipt.id}`,
       kind: "vat_mismatch" as const,
       severity: "warning" as const,
-      title: `ALV-tieto ei täsmää · ${receipt.supplierName}`,
+      title: fill(t.havainto.vatMismatchNamed, {
+        nimi: receipt.supplierName,
+      }),
       detail: check.explanation ?? "",
       href: `/admin/kuitit?korosta=${receipt.id}`,
       entityId: receipt.id,
@@ -207,6 +230,7 @@ function vatMismatchAlerts(ctx: AlertContext): Alert[] {
 }
 
 function receiptReviewAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   const inMonth = needsReview(receiptsInMonth(ctx.receipts, ctx.month));
 
   // ALV-ristiriidat ja duplikaatit on jo raportoitu omina hälytyksinään.
@@ -223,8 +247,13 @@ function receiptReviewAlerts(ctx: AlertContext): Alert[] {
         id: `review-${receipt.id}`,
         kind: "receipt_needs_review" as const,
         severity: "warning" as const,
-        title: `${receipt.supplierName} odottaa tarkistusta`,
-        detail: `${formatMoney(receipt.totalCents)} · ${reasons.join(" · ")}`,
+        title: fill(t.havainto.awaitsReview, {
+          nimi: receipt.supplierName,
+        }),
+        detail: fill(t.havainto.amountAndReason, {
+          summa: formatMoney(receipt.totalCents),
+          syy: reasons.join(" · "),
+        }),
         href: `/admin/kuitit?korosta=${receipt.id}`,
         entityId: receipt.id,
       };
@@ -238,6 +267,7 @@ function receiptReviewAlerts(ctx: AlertContext): Alert[] {
  * palkka on väärin. Tämä on tyypillisin työaikaseurannan virhe.
  */
 function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   const alerts: Alert[] = [];
 
   for (const user of ctx.users) {
@@ -260,8 +290,10 @@ function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
         id: `unclosed-${user.id}-${lastDay}`,
         kind: "unclosed_shift",
         severity: "warning",
-        title: `${user.name}: työaika jäi sulkematta`,
-        detail: `${formatDate(lastDay)} · leimaus on yhä auki`,
+        title: fill(t.havainto.clockLeftOpen, { nimi: user.name }),
+        detail: fill(t.havainto.clockStillOpen, {
+          paiva: formatDate(lastDay, ctx.locale),
+        }),
         href: "/admin/tyontekijat",
         entityId: user.id,
       });
@@ -272,6 +304,7 @@ function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
 }
 
 function shiftAlerts(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
   const alerts: Alert[] = [];
 
   // Poissaoloilmoitus on kriittinen: vuoro on yhä tekijällä, mutta
@@ -298,16 +331,22 @@ function shiftAlerts(ctx: AlertContext): Alert[] {
 
     const period =
       absence.date === absence.endDate
-        ? formatDate(absence.date)
-        : `${formatDate(absence.date)}–${formatDate(absence.endDate)}`;
+        ? formatDate(absence.date, ctx.locale)
+        : `${formatDate(absence.date, ctx.locale)}–${formatDate(absence.endDate, ctx.locale)}`;
 
     alerts.push({
       id: `absence-${absence.id}`,
       kind: "absence_reported",
       severity: "critical",
-      title: `${user?.name ?? "Työntekijä"} ei pääse`,
+      title: fill(t.havainto.cannotAttend, {
+        nimi: user?.name ?? t.havainto.employeeFallback,
+      }),
       detail: shift
-        ? `${period} · ${shift.startTime}–${shift.endTime} — vuoro on yhä hänellä`
+        ? fill(t.tyontekija.shiftStillTheirsPeriod, {
+            jakso: period,
+            alku: shift.startTime,
+            loppu: shift.endTime,
+          })
         : `${period} — ei vuoroa jaksolle`,
       href: "/admin/tyovuorot",
       entityId: absence.id,
@@ -335,7 +374,6 @@ export function alertCounts(alerts: Alert[]): {
 
 export { WARNING_THRESHOLD };
 
-function formatDate(isoDate: string): string {
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.`;
+function formatDate(isoDate: string, locale: AppLocale): string {
+  return formatDayShortIn(isoDate, locale);
 }

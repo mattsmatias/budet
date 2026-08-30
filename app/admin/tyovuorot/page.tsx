@@ -158,6 +158,7 @@ export default async function AdminShiftsPage() {
     shifts,
     users,
     timezone: restaurant.timezone,
+    t,
   });
 
   return (

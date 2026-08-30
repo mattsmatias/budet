@@ -403,8 +403,10 @@ const getLunchWeek = defineTool({
           `${days.length} päivää`,
           `${menu.days.reduce((n, d) => n + d.items.length, 0)} ruokaa`,
           ...(priceRange ? [`Lounas ${priceRange}`] : []),
-          ...(includedExtras(menu).length > 0
-            ? [`sis. ${includedExtras(menu).join(" ja ")}`]
+          ...(includedExtras(menu, adminText(ctx.locale)).length > 0
+            ? [
+                `sis. ${includedExtras(menu, adminText(ctx.locale)).join(" ja ")}`,
+              ]
             : []),
         ],
         href: `/admin/lounas?viikko=${week}`,
@@ -631,8 +633,8 @@ const proposeLunchItems = defineTool({
         : null,
     );
 
-    const after = includedExtras(includes);
-    const before = menu ? includedExtras(menu) : [];
+    const after = includedExtras(includes, adminText(ctx.locale));
+    const before = menu ? includedExtras(menu, adminText(ctx.locale)) : [];
 
     changes.push({
       label: "Hintaan sisältyy",

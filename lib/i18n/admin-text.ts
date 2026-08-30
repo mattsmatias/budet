@@ -64,6 +64,36 @@ const fi = {
     groupSupplier: "Toimittaja",
     groupPerson: "Henkilö",
   },
+  hinta: {
+    dessert: "jälkiruoka",
+    coffee: "kahvi",
+    includedIs: "Hintaan sisältyy {mita}.",
+    andWord: " ja ",
+    wholeWeekSuffix: "{nimi} · koko viikko",
+  },
+  tyontekija: {
+    shiftChanged: "Työvuoro muuttui",
+    shiftWasNow: "oli {ennenAlku}–{ennenLoppu}, nyt {alku}–{loppu}",
+    clockLeftOpenTitle: "Leimaus jäi auki",
+    clockLeftOpenDays: "{maara} päivää jäi leimaamatta ulos",
+    tellManager:
+      "Kerro esihenkilölle, jotta tunnit korjataan — auki jäänyt leimaus ei laske työaikaa oikein.",
+    absenceSent: "Poissaoloilmoitus lähetetty",
+    absencesSent: "{maara} poissaoloilmoitusta lähetetty",
+    absenceNoCancel:
+      "Ilmoitus ei peru vuoroa — esihenkilö etsii tilalle tekijän.",
+    shiftStillTheirsPeriod: "{jakso} · {alku}–{loppu} — vuoro on yhä hänellä",
+    priceLunch: "Lounas",
+    priceStudent: "Opiskelija",
+    priceChild: "Lapsi",
+    pricePensioner: "Eläkeläinen",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} ylitti kuukausibudjetin",
+    budgetExceededBody: "{kaytetty} / {budjetti} · {osuus} %",
+    budgetShare: "{nimi} {osuus} % budjetista",
+    comparedToPrevious: "{ennen} → {nyt} edelliseen kuukauteen verrattuna",
+  },
   rytmi: {
     peakShare: "{osuus} % kuluista osuu {kohde}",
     onWeekend: "viikonlopulle",
@@ -1946,6 +1976,37 @@ const en: AdminText = {
     groupPage: "Page",
     groupSupplier: "Supplier",
     groupPerson: "Person",
+  },
+  hinta: {
+    dessert: "dessert",
+    coffee: "coffee",
+    includedIs: "The price includes {mita}.",
+    andWord: " and ",
+    wholeWeekSuffix: "{nimi} · the whole week",
+  },
+  tyontekija: {
+    shiftChanged: "The shift changed",
+    shiftWasNow: "was {ennenAlku}–{ennenLoppu}, now {alku}–{loppu}",
+    clockLeftOpenTitle: "A clocking was left open",
+    clockLeftOpenDays: "{maara} days were left without a clock-out",
+    tellManager:
+      "Tell your manager so the hours get corrected — a clocking left open does not count the time right.",
+    absenceSent: "The absence report was sent",
+    absencesSent: "{maara} absence reports sent",
+    absenceNoCancel:
+      "The report does not cancel the shift — the manager finds a replacement.",
+    shiftStillTheirsPeriod:
+      "{jakso} · {alku}–{loppu} — the shift is still theirs",
+    priceLunch: "Lunch",
+    priceStudent: "Student",
+    priceChild: "Child",
+    pricePensioner: "Pensioner",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} exceeded the monthly budget",
+    budgetExceededBody: "{kaytetty} / {budjetti} · {osuus} %",
+    budgetShare: "{nimi} {osuus} % of the budget",
+    comparedToPrevious: "{ennen} → {nyt} compared with the previous month",
   },
   rytmi: {
     peakShare: "{osuus} % of the expenses fall {kohde}",
@@ -3834,6 +3895,37 @@ const sv: AdminText = {
     groupSupplier: "Leverantör",
     groupPerson: "Person",
   },
+  hinta: {
+    dessert: "efterrätt",
+    coffee: "kaffe",
+    includedIs: "I priset ingår {mita}.",
+    andWord: " och ",
+    wholeWeekSuffix: "{nimi} · hela veckan",
+  },
+  tyontekija: {
+    shiftChanged: "Passet ändrades",
+    shiftWasNow: "var {ennenAlku}–{ennenLoppu}, nu {alku}–{loppu}",
+    clockLeftOpenTitle: "En stämpling lämnades öppen",
+    clockLeftOpenDays: "{maara} dagar blev utan utstämpling",
+    tellManager:
+      "Berätta för chefen så att timmarna rättas — en öppen stämpling räknar inte tiden rätt.",
+    absenceSent: "Frånvaroanmälan skickad",
+    absencesSent: "{maara} frånvaroanmälningar skickade",
+    absenceNoCancel:
+      "Anmälan ställer inte in passet — chefen söker en ersättare.",
+    shiftStillTheirsPeriod:
+      "{jakso} · {alku}–{loppu} — passet är fortfarande hens",
+    priceLunch: "Lunch",
+    priceStudent: "Student",
+    priceChild: "Barn",
+    pricePensioner: "Pensionär",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} överskred månadsbudgeten",
+    budgetExceededBody: "{kaytetty} / {budjetti} · {osuus} %",
+    budgetShare: "{nimi} {osuus} % av budgeten",
+    comparedToPrevious: "{ennen} → {nyt} jämfört med föregående månad",
+  },
   rytmi: {
     peakShare: "{osuus} % av kostnaderna infaller {kohde}",
     onWeekend: "på helgen",
@@ -5717,6 +5809,36 @@ const da: AdminText = {
     groupPage: "Side",
     groupSupplier: "Leverandør",
     groupPerson: "Person",
+  },
+  hinta: {
+    dessert: "dessert",
+    coffee: "kaffe",
+    includedIs: "Prisen inkluderer {mita}.",
+    andWord: " og ",
+    wholeWeekSuffix: "{nimi} · hele ugen",
+  },
+  tyontekija: {
+    shiftChanged: "Vagten blev ændret",
+    shiftWasNow: "var {ennenAlku}–{ennenLoppu}, nu {alku}–{loppu}",
+    clockLeftOpenTitle: "En stempling blev efterladt åben",
+    clockLeftOpenDays: "{maara} dage blev uden udstempling",
+    tellManager:
+      "Fortæl det til lederen, så timerne rettes — en åben stempling tæller ikke tiden rigtigt.",
+    absenceSent: "Fraværsmeldingen er sendt",
+    absencesSent: "{maara} fraværsmeldinger sendt",
+    absenceNoCancel:
+      "Meldingen aflyser ikke vagten — lederen finder en afløser.",
+    shiftStillTheirsPeriod: "{jakso} · {alku}–{loppu} — vagten er stadig deres",
+    priceLunch: "Frokost",
+    priceStudent: "Studerende",
+    priceChild: "Barn",
+    pricePensioner: "Pensionist",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} overskred månedsbudgettet",
+    budgetExceededBody: "{kaytetty} / {budjetti} · {osuus} %",
+    budgetShare: "{nimi} {osuus} % af budgettet",
+    comparedToPrevious: "{ennen} → {nyt} sammenlignet med forrige måned",
   },
   rytmi: {
     peakShare: "{osuus} % af udgifterne falder {kohde}",
@@ -7603,6 +7725,36 @@ const tr: AdminText = {
     groupSupplier: "Tedarikçi",
     groupPerson: "Kişi",
   },
+  hinta: {
+    dessert: "tatlı",
+    coffee: "kahve",
+    includedIs: "Fiyata {mita} dahildir.",
+    andWord: " ve ",
+    wholeWeekSuffix: "{nimi} · tüm hafta",
+  },
+  tyontekija: {
+    shiftChanged: "Vardiya değişti",
+    shiftWasNow: "{ennenAlku}–{ennenLoppu} idi, şimdi {alku}–{loppu}",
+    clockLeftOpenTitle: "Bir kayıt açık kaldı",
+    clockLeftOpenDays: "{maara} gün çıkış kaydı olmadan kaldı",
+    tellManager:
+      "Saatlerin düzeltilmesi için yöneticine söyle — açık kalan kayıt süreyi doğru saymaz.",
+    absenceSent: "Devamsızlık bildirimi gönderildi",
+    absencesSent: "{maara} devamsızlık bildirimi gönderildi",
+    absenceNoCancel:
+      "Bildirim vardiyayı iptal etmez — yönetici yerine birini bulur.",
+    shiftStillTheirsPeriod: "{jakso} · {alku}–{loppu} — vardiya hâlâ onda",
+    priceLunch: "Öğle yemeği",
+    priceStudent: "Öğrenci",
+    priceChild: "Çocuk",
+    pricePensioner: "Emekli",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} aylık bütçeyi aştı",
+    budgetExceededBody: "{kaytetty} / {budjetti} · %{osuus}",
+    budgetShare: "{nimi} bütçenin %{osuus}'i",
+    comparedToPrevious: "Önceki aya göre {ennen} → {nyt}",
+  },
   rytmi: {
     peakShare: "Giderlerin %{osuus}'i {kohde} düşüyor",
     onWeekend: "hafta sonuna",
@@ -9477,6 +9629,36 @@ const et: AdminText = {
     groupPage: "Leht",
     groupSupplier: "Tarnija",
     groupPerson: "Isik",
+  },
+  hinta: {
+    dessert: "magustoit",
+    coffee: "kohv",
+    includedIs: "Hinnas sisaldub {mita}.",
+    andWord: " ja ",
+    wholeWeekSuffix: "{nimi} · terve nädal",
+  },
+  tyontekija: {
+    shiftChanged: "Vahetus muutus",
+    shiftWasNow: "oli {ennenAlku}–{ennenLoppu}, nüüd {alku}–{loppu}",
+    clockLeftOpenTitle: "Registreering jäi lahti",
+    clockLeftOpenDays: "{maara} päeva jäi väljaregistreerimata",
+    tellManager:
+      "Räägi juhatajale, et tunnid parandataks — lahtijäänud registreering ei arvesta aega õigesti.",
+    absenceSent: "Puudumisteade saadetud",
+    absencesSent: "{maara} puudumisteadet saadetud",
+    absenceNoCancel: "Teade ei tühista vahetust — juhataja otsib asendaja.",
+    shiftStillTheirsPeriod:
+      "{jakso} · {alku}–{loppu} — vahetus on endiselt tema oma",
+    priceLunch: "Lõuna",
+    priceStudent: "Õpilane",
+    priceChild: "Laps",
+    pricePensioner: "Pensionär",
+  },
+  halytys: {
+    budgetExceeded: "{nimi} ületas kuueelarve",
+    budgetExceededBody: "{kaytetty} / {budjetti} · {osuus} %",
+    budgetShare: "{nimi} {osuus} % eelarvest",
+    comparedToPrevious: "{ennen} → {nyt} võrreldes eelmise kuuga",
   },
   rytmi: {
     peakShare: "{osuus} % kuludest langeb {kohde}",

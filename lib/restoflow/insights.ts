@@ -78,7 +78,6 @@ const MIN_RECEIPTS_FOR_TREND = 3;
 const MIN_CHANGE_CENTS = 5000;
 
 export function buildInsights(ctx: InsightContext): Insight[] {
-  const t = adminText(ctx.locale);
   return [
     ...spendTrend(ctx),
     ...categoryShift(ctx),

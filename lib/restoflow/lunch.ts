@@ -5,6 +5,8 @@ import {
   weekdayShortIn,
 } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 /**
  * Lounaslistan viikkologiikka.
  *
@@ -205,7 +207,14 @@ export function daysWithContent(week: LunchWeek): LunchDay[] {
   return week.days.filter((day) => day.items.length > 0);
 }
 
-/** Oletushinnan nimi. Yhden hinnan tapauksessa tätä ei näytetä erikseen. */
+/*
+ * Oletushinnan nimi.
+ *
+ * TAMA ON TUNNISTE EIKA NAKYVA TEKSTI.
+ *
+ * Hinta tunnistetaan nimella kannassa, joten arvo pysyy suomeksi
+ * kaikilla kielilla. Nakyva nimi tulee priceLabelista.
+ */
 export const DEFAULT_PRICE_NAME = "Lounas";
 
 /**
@@ -228,6 +237,21 @@ export const EXTRA_PRICE_NAMES = [
 ] as const;
 
 export type ExtraPriceName = (typeof EXTRA_PRICE_NAMES)[number];
+
+/**
+ * Hinnan nakyva nimi.
+ *
+ * Tunniste on suomeksi kannassa; tama kaantaa sen naytolle.
+ */
+export function priceLabel(name: string, t: AdminText): string {
+  const nimet: Record<string, string> = {
+    Lounas: t.tyontekija.priceLunch,
+    Opiskelija: t.tyontekija.priceStudent,
+    Lapsi: t.tyontekija.priceChild,
+    Eläkeläinen: t.tyontekija.pricePensioner,
+  };
+  return nimet[name] ?? name;
+}
 
 /** Kaikki hinnat siinä järjestyksessä kuin ne näytetään. */
 export const PRICE_ORDER: string[] = [DEFAULT_PRICE_NAME, ...EXTRA_PRICE_NAMES];
@@ -272,13 +296,16 @@ export function needsPublish(week: LunchWeek | null): boolean {
  * ruokalistasta. Tyhjä lista tarkoittaa ettei kumpaakaan ole merkitty
  * sisältyväksi — ei sitä että tietoa ei ole.
  */
-export function includedExtras(week: {
-  includesDessert: boolean;
-  includesCoffee: boolean;
-}): string[] {
+export function includedExtras(
+  week: {
+    includesDessert: boolean;
+    includesCoffee: boolean;
+  },
+  t: AdminText,
+): string[] {
   const extras: string[] = [];
-  if (week.includesDessert) extras.push("jälkiruoka");
-  if (week.includesCoffee) extras.push("kahvi");
+  if (week.includesDessert) extras.push(t.hinta.dessert);
+  if (week.includesCoffee) extras.push(t.hinta.coffee);
   return extras;
 }
 
@@ -311,12 +338,15 @@ export function inheritedIncludes(
 }
 
 /** "Hintaan sisältyy jälkiruoka ja kahvi." tai null. */
-export function includedSentence(week: {
-  includesDessert: boolean;
-  includesCoffee: boolean;
-}): string | null {
-  const extras = includedExtras(week);
+export function includedSentence(
+  week: {
+    includesDessert: boolean;
+    includesCoffee: boolean;
+  },
+  t: AdminText,
+): string | null {
+  const extras = includedExtras(week, t);
   if (extras.length === 0) return null;
 
-  return `Hintaan sisältyy ${extras.join(" ja ")}.`;
+  return fill(t.hinta.includedIs, { mita: extras.join(t.hinta.andWord) });
 }

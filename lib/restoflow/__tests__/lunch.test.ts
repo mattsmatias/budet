@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   addDays,
   daysWithContent,
@@ -20,6 +21,9 @@ import {
   weekdayShort,
   type LunchWeek,
 } from "../lunch";
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 function week(partial: Partial<LunchWeek> = {}): LunchWeek {
   return {
@@ -205,17 +209,17 @@ describe("sisältö", () => {
 describe("mitä hintaan sisältyy", () => {
   it("luettelee molemmat", () => {
     expect(
-      includedSentence({ includesDessert: true, includesCoffee: true }),
+      includedSentence({ includesDessert: true, includesCoffee: true }, suomi),
     ).toBe("Hintaan sisältyy jälkiruoka ja kahvi.");
   });
 
   it("luettelee vain sen mikä sisältyy", () => {
     expect(
-      includedSentence({ includesDessert: false, includesCoffee: true }),
+      includedSentence({ includesDessert: false, includesCoffee: true }, suomi),
     ).toBe("Hintaan sisältyy kahvi.");
 
     expect(
-      includedSentence({ includesDessert: true, includesCoffee: false }),
+      includedSentence({ includesDessert: true, includesCoffee: false }, suomi),
     ).toBe("Hintaan sisältyy jälkiruoka.");
   });
 
@@ -225,17 +229,20 @@ describe("mitä hintaan sisältyy", () => {
    */
   it("ei tuota tyhjää lausetta", () => {
     expect(
-      includedSentence({ includesDessert: false, includesCoffee: false }),
+      includedSentence(
+        { includesDessert: false, includesCoffee: false },
+        suomi,
+      ),
     ).toBeNull();
   });
 
   it("antaa myös pelkän listan", () => {
     expect(
-      includedExtras({ includesDessert: true, includesCoffee: false }),
+      includedExtras({ includesDessert: true, includesCoffee: false }, suomi),
     ).toEqual(["jälkiruoka"]);
 
     expect(
-      includedExtras({ includesDessert: false, includesCoffee: false }),
+      includedExtras({ includesDessert: false, includesCoffee: false }, suomi),
     ).toEqual([]);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   findDeviations,
   isRetroactive,
@@ -7,6 +8,9 @@ import {
 } from "../deviations";
 import type { ShiftComparison } from "../shifts";
 import type { Shift, User } from "../types";
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 const TZ = "Europe/Helsinki";
 
@@ -76,6 +80,7 @@ const base = {
   shifts: [shift()],
   users: [ali],
   timezone: TZ,
+  t: suomi,
 };
 
 describe("findDeviations", () => {
@@ -270,6 +275,7 @@ describe("jälkikäteen kirjattu vuoro", () => {
       shifts: [s],
       users: [ali],
       timezone: TZ,
+      t: suomi,
     });
 
     expect(found).toEqual([]);
@@ -287,6 +293,7 @@ describe("jälkikäteen kirjattu vuoro", () => {
       shifts: [s],
       users: [ali],
       timezone: TZ,
+      t: suomi,
     });
 
     expect(found.map((d) => d.kind)).toEqual(["no_clock_in"]);
@@ -310,6 +317,7 @@ describe("jälkikäteen kirjattu vuoro", () => {
       shifts: [s],
       users: [ali],
       timezone: TZ,
+      t: suomi,
     });
 
     expect(found.map((d) => d.kind)).toEqual(["no_clock_in"]);

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
@@ -251,9 +252,9 @@ export default async function PublicLunchPage({
             </p>
           ) : null}
 
-          {includedSentence(week) ? (
+          {includedSentence(week, adminText(locale)) ? (
             <p className="mt-1 text-[13px]" style={{ color: t.text2 }}>
-              {includedSentence(week)}
+              {includedSentence(week, adminText(locale))}
             </p>
           ) : null}
         </header>

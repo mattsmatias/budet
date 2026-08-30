@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import {
@@ -97,9 +98,9 @@ export default async function EmbeddedLunchPage({
           </p>
         ) : null}
 
-        {includedSentence(week) ? (
+        {includedSentence(week, adminText(locale)) ? (
           <p className="text-[12px]" style={{ color: t.text2 }}>
-            {includedSentence(week)}
+            {includedSentence(week, adminText(locale))}
           </p>
         ) : null}
       </header>

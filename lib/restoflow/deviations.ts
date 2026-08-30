@@ -19,6 +19,8 @@
  */
 
 import { shiftDurationMinutes, type ShiftComparison } from "./shifts";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { publicationOf } from "./shift-planning";
 import { dayIn } from "./clock-context";
 import type { Shift, User } from "./types";
@@ -86,7 +88,10 @@ export function findDeviations(input: {
   shifts: Shift[];
   users: User[];
   timezone: string;
+  /** Kayttoliittyman kieli: poikkeaman teksti kirjoitetaan silla. */
+  t: AdminText;
 }): Deviation[] {
+  const t = input.t;
   const found: Deviation[] = [];
 
   for (const row of input.comparisons) {
@@ -125,7 +130,11 @@ export function findDeviations(input: {
         severity: "critical",
         user: user ?? null,
         date: shift.date,
-        text: `${user?.name ?? "Tuntematon"} ei leimannut sisään vuoroon ${shift.startTime}–${shift.endTime}.`,
+        text: fill(t.havainto.devNoClockIn, {
+          nimi: user?.name ?? t.havainto.unknownPerson,
+          alku: shift.startTime,
+          loppu: shift.endTime,
+        }),
         minutes: null,
         shiftId: shift.id,
       });
@@ -142,7 +151,11 @@ export function findDeviations(input: {
         severity: "warning",
         user: user ?? null,
         date: shift.date,
-        text: `${user?.name ?? "Tuntematon"} myöhästyi ${late} min vuorosta ${shift.startTime}.`,
+        text: fill(t.havainto.devLate, {
+          nimi: user?.name ?? t.havainto.unknownPerson,
+          maara: String(late),
+          alku: shift.startTime,
+        }),
         minutes: late,
         shiftId: shift.id,
       });
@@ -156,7 +169,12 @@ export function findDeviations(input: {
         severity: "warning",
         user: user ?? null,
         date: shift.date,
-        text: `${user?.name ?? "Tuntematon"} ylitti suunnitellun ajan ${overrunMinutes} min vuorossa ${shift.startTime}–${shift.endTime}.`,
+        text: fill(t.havainto.devOverrun, {
+          nimi: user?.name ?? t.havainto.unknownPerson,
+          maara: String(overrunMinutes),
+          alku: shift.startTime,
+          loppu: shift.endTime,
+        }),
         minutes: overrunMinutes,
         shiftId: shift.id,
       });
@@ -186,7 +204,9 @@ export function findDeviations(input: {
       severity: "critical",
       user,
       date: clocked.date,
-      text: `${user?.name ?? "Tuntematon"} teki työaikaa ilman työvuoroa.`,
+      text: fill(t.havainto.devNoShift, {
+        nimi: user?.name ?? t.havainto.unknownPerson,
+      }),
       minutes: null,
       shiftId: null,
     });

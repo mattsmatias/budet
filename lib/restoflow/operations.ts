@@ -73,7 +73,6 @@ export interface OperationsContext {
 }
 
 export function operationalAlerts(ctx: OperationsContext): Alert[] {
-  const t = adminText(ctx.locale);
   return [
     ...lateClockIn(ctx),
     ...shiftOverrun(ctx),

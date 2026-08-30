@@ -16,6 +16,7 @@ import {
 } from "@/lib/restoflow/queries";
 import {
   DEFAULT_PRICE_NAME,
+  priceLabel,
   EXTRA_PRICE_NAMES,
   formatDayShort,
   formatWeekRange,
@@ -179,7 +180,9 @@ export default async function LunchPage({
                 className="text-[11px] font-medium uppercase"
                 style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
               >
-                {DEFAULT_PRICE_NAME} · koko viikko
+                {fill(t.hinta.wholeWeekSuffix, {
+                  nimi: priceLabel(DEFAULT_PRICE_NAME, t),
+                })}
               </p>
 
               {canManage ? (
@@ -207,9 +210,9 @@ export default async function LunchPage({
                 dessert={week.includesDessert}
                 coffee={week.includesCoffee}
               />
-            ) : includedSentence(week) ? (
+            ) : includedSentence(week, t) ? (
               <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                {includedSentence(week)}
+                {includedSentence(week, t)}
               </p>
             ) : null}
 
