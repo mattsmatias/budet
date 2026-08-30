@@ -7,6 +7,8 @@
  */
 
 import { can } from "@/lib/restoflow/permissions";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatRate } from "@/lib/money";
@@ -85,6 +87,7 @@ export async function buildReportRows(
   locale: AppLocale,
 ): Promise<string[][]> {
   const nimet = labels(locale);
+  const t = adminText(locale);
   // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
   const showsRates = can(role, "staff.rates.view");
 
@@ -96,11 +99,11 @@ export async function buildReportRows(
    * tauluista.
    */
   if (kind === "alv") {
-    return vatReportRows(restaurantId, month);
+    return vatReportRows(restaurantId, month, t);
   }
 
   if (ACCOUNTING_KINDS.includes(kind)) {
-    return accountingReportRows(kind, restaurantId, month);
+    return accountingReportRows(kind, restaurantId, month, t);
   }
 
   if (kind === "tyoaika" || kind === "henkilostokulut") {
@@ -131,7 +134,7 @@ export async function buildReportRows(
 
     if (kind === "tyoaika") {
       return [
-        ["Työntekijä", "Tehtävä", "Tunnit"],
+        [t.vienti.employee, t.vienti.position, t.vienti.hours],
         ...rows.map((r) => [
           r.user.name,
           r.user.position ? nimet.positions[r.user.position] : "—",
@@ -139,7 +142,7 @@ export async function buildReportRows(
         ]),
         [],
         [
-          "Yhteensä",
+          t.vienti.total,
           "",
           money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
         ],
@@ -147,21 +150,21 @@ export async function buildReportRows(
     }
 
     if (!showsRates) {
-      return [
-        ["Kate — henkilöstökuluraportti"],
-        ["Huom", "Roolisi ei salli tuntipalkkojen tarkastelua"],
-      ];
+      return [[t.vienti.labourReport], [t.vienti.note, t.vienti.noRateAccess]];
     }
 
     return [
-      ["Kate — henkilöstökuluraportti"],
-      ["Kuukausi", month],
-      [
-        "Huom",
-        "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja",
-      ],
+      [t.vienti.labourReport],
+      [t.vienti.month, month],
+      [t.vienti.note, t.vienti.calculatedNote],
       [],
-      ["Työntekijä", "Tehtävä", "Tunnit", "Tuntipalkka", "Kulu"],
+      [
+        t.vienti.employee,
+        t.vienti.position,
+        t.vienti.hours,
+        t.vienti.hourlyRate,
+        t.vienti.cost,
+      ],
       ...rows.map((r) => [
         r.user.name,
         r.user.position ? nimet.positions[r.user.position] : "—",
@@ -171,7 +174,7 @@ export async function buildReportRows(
       ]),
       [],
       [
-        "Yhteensä",
+        t.vienti.total,
         "",
         money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
         "",
@@ -188,17 +191,17 @@ export async function buildReportRows(
       const users = await fetchUsers(restaurantId);
       return [
         [
-          "Päivä",
-          "Toimittaja",
-          "Kategoria",
-          "Maksutapa",
-          "Kuittinumero",
-          "Netto",
+          t.vienti.day,
+          t.vienti.supplier,
+          t.vienti.category,
+          t.vienti.paymentMethod,
+          t.vienti.receiptNumber,
+          t.vienti.net,
           "ALV",
-          "Yhteensä",
-          "Tila",
-          "Syyt",
-          "Lisännyt",
+          t.vienti.total,
+          t.vienti.status,
+          t.vienti.reasons,
+          t.vienti.addedBy,
         ],
         ...inMonth.map((r) => [
           r.date,
@@ -209,7 +212,7 @@ export async function buildReportRows(
           money(r.totalCents - (r.vatCents ?? 0)),
           r.vatCents === null ? "" : money(r.vatCents),
           money(r.totalCents),
-          r.status === "needs_review" ? "Tarkistettava" : "Tarkistettu",
+          r.status === "needs_review" ? t.vienti.toCheck : t.vienti.checked,
           r.reviewReasons.map((x) => nimet.reviewReasons[x]).join(", "),
           users.find((u) => u.id === r.addedByUserId)?.name ?? "",
         ]),
@@ -220,7 +223,12 @@ export async function buildReportRows(
       const totals = totalsByCategory(inMonth);
       const grand = inMonth.reduce((s, r) => s + r.totalCents, 0);
       return [
-        ["Kategoria", "Kuitteja", "Osuus", "Yhteensä"],
+        [
+          t.vienti.category,
+          t.vienti.receiptCount,
+          t.vienti.share,
+          t.vienti.total,
+        ],
         ...totals.map((t) => [
           nimet.categories[t.category],
           String(t.receiptCount),
@@ -228,14 +236,20 @@ export async function buildReportRows(
           money(t.totalCents),
         ]),
         [],
-        ["Yhteensä", String(inMonth.length), "100 %", money(grand)],
+        [t.vienti.total, String(inMonth.length), "100 %", money(grand)],
       ];
     }
 
     case "toimittajat": {
       const totals = totalsBySupplier(inMonth);
       return [
-        ["Toimittaja", "Kuitteja", "Keskiarvo", "Osuus", "Yhteensä"],
+        [
+          t.vienti.supplier,
+          t.vienti.receiptCount,
+          t.vienti.average,
+          t.vienti.share,
+          t.vienti.total,
+        ],
         ...totals.map((t) => [
           t.name,
           String(t.receiptCount),
@@ -250,7 +264,14 @@ export async function buildReportRows(
       const budgets = await fetchBudgets(restaurantId);
       const progress = budgetProgress(receipts, budgets, month);
       return [
-        ["Kategoria", "Budjetti", "Käytetty", "Jäljellä", "Osuus", "Tila"],
+        [
+          t.vienti.category,
+          t.vienti.budget,
+          t.vienti.used,
+          t.vienti.remaining,
+          t.vienti.share,
+          t.vienti.status,
+        ],
         ...progress.map((p) => [
           nimet.categories[p.category],
           p.budgetCents === null ? "" : money(p.budgetCents),
@@ -268,25 +289,22 @@ export async function buildReportRows(
       const vat = inMonth.reduce((s, r) => s + (r.vatCents ?? 0), 0);
 
       return [
-        ["Kate — kuluraportti"],
-        ["Kuukausi", month],
-        [
-          "Huom",
-          "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia",
-        ],
+        [t.vienti.expenseReport],
+        [t.vienti.month, month],
+        [t.vienti.note, t.vienti.scopeNote],
         [],
-        ["Kategoria", "Kuitteja", "Yhteensä"],
+        [t.vienti.category, t.vienti.receiptCount, t.vienti.total],
         ...totals.map((t) => [
           nimet.categories[t.category],
           String(t.receiptCount),
           money(t.totalCents),
         ]),
         [],
-        ["Kirjatut kulut yhteensä", "", money(grand)],
-        ["Josta ALV", "", money(vat)],
-        ["Kuitteja", String(inMonth.length), ""],
+        [t.vienti.recordedTotal, "", money(grand)],
+        [t.vienti.ofWhichVat, "", money(vat)],
+        [t.vienti.receiptCount, String(inMonth.length), ""],
         [
-          "Tarkistettavia",
+          t.vienti.toCheckCount,
           String(inMonth.filter((r) => r.status === "needs_review").length),
           "",
         ],
@@ -324,6 +342,7 @@ function money(cents: number): string {
 async function vatReportRows(
   restaurantId: string,
   month: string,
+  t: AdminText,
 ): Promise<string[][]> {
   const [year, m] = month.split("-").map(Number);
   const lastDay = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
@@ -354,19 +373,16 @@ async function vatReportRows(
   const summary = summarise(allLines);
 
   const nameOf = (id: string) =>
-    groups.find((g) => g.id === id)?.name ?? "Tuntematon ryhmä";
+    groups.find((g) => g.id === id)?.name ?? t.vienti.unknownGroup;
   const unspecified = perDay.filter((entry) => entry.lines.length === 0);
 
   return [
-    ["Kate — ALV-raportti myynnistä"],
-    ["Kuukausi", month],
-    [
-      "Huom",
-      "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta menneitä rivejä.",
-    ],
+    [t.vienti.vatReport],
+    [t.vienti.month, month],
+    [t.vienti.note, t.vienti.vatRateNote],
     [],
 
-    ["Verokanta", "Verollinen", "ALV", "Veroton"],
+    [t.vienti.vatRate, t.vienti.withTax, "ALV", t.vienti.withoutTax],
     ...summary.byRate.map((rate) => [
       formatRate(rate.vatRate),
       money(rate.grossCents),
@@ -374,14 +390,21 @@ async function vatReportRows(
       money(rate.netCents),
     ]),
     [
-      "Yhteensä",
+      t.vienti.total,
       money(summary.grossCents),
       money(summary.vatCents),
       money(summary.netCents),
     ],
     [],
 
-    ["Päivä", "Myyntiryhmä", "Verokanta", "Verollinen", "ALV", "Veroton"],
+    [
+      t.vienti.day,
+      t.vienti.salesGroup,
+      t.vienti.vatRate,
+      t.vienti.withTax,
+      "ALV",
+      t.vienti.withoutTax,
+    ],
     ...perDay.flatMap((entry) =>
       entry.lines.map((line) => [
         entry.day.date,
@@ -396,12 +419,9 @@ async function vatReportRows(
     ...(unspecified.length > 0
       ? [
           [],
-          ["Erittelemättömät päivät"],
-          [
-            "Huom",
-            "Käsin kirjattu päivä on yksi luku eikä sitä voi eritellä kannoittain. Nämä eivät ole mukana yllä olevissa summissa.",
-          ],
-          ["Päivä", "Veroton myynti"],
+          [t.vienti.unbrokenDays],
+          [t.vienti.note, t.vienti.unbrokenNote],
+          [t.vienti.day, t.vienti.netSales],
           ...unspecified.map((entry) => [
             entry.day.date,
             money(entry.day.netCents),
@@ -433,6 +453,7 @@ async function accountingReportRows(
   kind: ReportKind,
   restaurantId: string,
   month: string,
+  t: AdminText,
 ): Promise<string[][]> {
   const {
     fetchBalanceSheet,
@@ -446,15 +467,15 @@ async function accountingReportRows(
 
     return [
       [
-        "Päivä",
-        "Tosite",
-        "Selite",
-        "Tili",
-        "Tilin nimi",
-        "Debet",
-        "Kredit",
+        t.vienti.day,
+        t.vienti.voucher,
+        t.vienti.explanation,
+        t.vienti.account,
+        t.vienti.accountName,
+        t.vienti.debit,
+        t.vienti.credit,
         "ALV %",
-        "Lähde",
+        t.vienti.source,
       ],
       ...entries.flatMap((entry) =>
         entry.lines.map((line) => [
@@ -476,7 +497,16 @@ async function accountingReportRows(
     const accounts = await fetchGeneralLedger(restaurantId, month, false);
 
     return [
-      ["Tili", "Nimi", "Laji", "Päivä", "Tosite", "Selite", "Debet", "Kredit"],
+      [
+        t.vienti.account,
+        t.vienti.name,
+        t.vienti.kind,
+        t.vienti.day,
+        t.vienti.voucher,
+        t.vienti.explanation,
+        t.vienti.debit,
+        t.vienti.credit,
+      ],
       ...accounts
         .filter((a) => a.lineCount > 0)
         .flatMap((account) =>
@@ -496,49 +526,49 @@ async function accountingReportRows(
 
   if (kind === "tuloslaskelma") {
     const income = await fetchIncomeStatement(restaurantId, month, false);
-    if (!income) return [["Tuloslaskelma"], ["Ei tietoja"]];
+    if (!income) return [[t.vienti.incomeStatement], [t.vienti.noData]];
 
     return [
-      ["Erä", "Tili", "Nimi", "Summa"],
+      [t.vienti.item, t.vienti.account, t.vienti.name, t.vienti.amount],
       ...income.revenue.map((r) => [
-        "Tuotot",
+        t.vienti.revenue,
         r.number,
         r.name,
         money(r.amountCents),
       ]),
-      ["Tuotot yhteensä", "", "", money(income.revenueTotalCents)],
+      [t.vienti.revenueTotal, "", "", money(income.revenueTotalCents)],
       ...income.expenses.map((r) => [
-        "Kulut",
+        t.vienti.expenses,
         r.number,
         r.name,
         money(r.amountCents),
       ]),
-      ["Kulut yhteensä", "", "", money(income.expenseTotalCents)],
-      ["Tulos", "", "", money(income.resultCents)],
+      [t.vienti.expensesTotal, "", "", money(income.expenseTotalCents)],
+      [t.vienti.result, "", "", money(income.resultCents)],
     ];
   }
 
   // tase
   const balance = await fetchBalanceSheet(restaurantId, month, false);
-  if (!balance) return [["Tase"], ["Ei tietoja"]];
+  if (!balance) return [[t.vienti.balanceSheet], [t.vienti.noData]];
 
   return [
-    ["Erä", "Tili", "Nimi", "Summa"],
+    [t.vienti.item, t.vienti.account, t.vienti.name, t.vienti.amount],
     ...balance.assets.map((r) => [
-      "Vastaavaa",
+      t.vienti.assets,
       r.number,
       r.name,
       money(r.amountCents),
     ]),
-    ["Vastaavaa yhteensä", "", "", money(balance.assetsTotalCents)],
+    [t.vienti.assetsTotal, "", "", money(balance.assetsTotalCents)],
     ...balance.liabilities.map((r) => [
-      "Vastattavaa",
+      t.vienti.liabilities,
       r.number,
       r.name,
       money(r.amountCents),
     ]),
-    ["Tilikauden tulos", "", "", money(balance.resultCents)],
-    ["Vastattavaa yhteensä", "", "", money(balance.balancesTotalCents)],
-    ["Täsmää", "", "", balance.balanced ? "kyllä" : "ei"],
+    [t.vienti.periodResult, "", "", money(balance.resultCents)],
+    [t.vienti.liabilitiesTotal, "", "", money(balance.balancesTotalCents)],
+    [t.vienti.balances, "", "", balance.balanced ? "kyllä" : "ei"],
   ];
 }
