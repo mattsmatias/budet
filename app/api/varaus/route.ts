@@ -28,9 +28,16 @@
  * missään muodossa.
  */
 
-import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { ISO_DATE } from "@/lib/restoflow/dates";
+import { emailConfigured, looksLikeEmail, sendEmail } from "@/lib/restoflow/email";
+import {
+  confirmationEmail,
+  toEmailLocale,
+} from "@/lib/restoflow/reservation-email";
+import { siteOrigin } from "@/lib/restoflow/site-origin";
 import {
   cancelPublicReservation,
   createPublicReservation,
@@ -100,6 +107,16 @@ const LuoSchema = z.object({
   phone: z.string().trim().min(1).max(40),
   email: z.string().trim().max(160).optional().nullable(),
   note: z.string().trim().max(500).optional().nullable(),
+
+  /*
+   * Kieli vahvistusviestiä varten.
+   *
+   * Widget tietää millä kielellä asiakas asioi; palvelin ei. Ilman
+   * tätä vahvistus lähtisi suomeksi asiakkaalle joka varasi
+   * englanniksi. Tuntematon arvo palautuu suomeen, joten vanha
+   * widget-versio toimii yhä.
+   */
+  locale: z.string().trim().max(10).optional().nullable(),
 });
 
 const PeruSchema = z.object({
@@ -195,8 +212,91 @@ export async function POST(request: Request): Promise<Response> {
       note: parsed.data.note ?? null,
     });
 
+    if (result.ok && result.cancelToken) {
+      await lahetaVahvistus(parsed.data, result);
+    }
+
     return ok(result, result.ok ? 200 : 409);
   }
 
   return ok({ ok: false, error: "unknown_action" }, 400);
+}
+
+// ---------------------------------------------------------------------------
+// Vahvistusviesti
+// ---------------------------------------------------------------------------
+
+/**
+ * Vahvistus asiakkaan sähköpostiin.
+ *
+ * Tämän ainoa tärkeä tehtävä on toimittaa peruutuslinkki paikkaan
+ * josta se löytyy myöhemmin. Kannassa on vain tunnuksen tiiviste,
+ * joten vahvistusruudulla näytetty linkki katosi lopullisesti
+ * välilehden mukana — asiakkaan ainoa keino perua oli soittaa.
+ *
+ * ---------------------------------------------------------------------
+ * VARAUS ON JO TEHTY
+ * ---------------------------------------------------------------------
+ *
+ * Kutsutaan vasta kun kanta on vahvistanut varauksen. Mikään tässä ei
+ * saa muuttaa lopputulosta: jos posti ei lähde, varaus on silti
+ * voimassa ja asiakas näkee linkin ruudulla kuten ennenkin.
+ *
+ * after() ajaa lähetyksen vastauksen jälkeen, joten asiakas ei odota
+ * postipalvelinta. Osoite luetaan silti ennen sitä: pyynnön otsakkeet
+ * ovat luettavissa vain pyynnön aikana.
+ */
+async function lahetaVahvistus(
+  input: z.infer<typeof LuoSchema>,
+  result: Awaited<ReturnType<typeof createPublicReservation>>,
+): Promise<void> {
+  const osoite = (input.email ?? "").trim();
+
+  /* Ilman osoitetta tai asetuksia ei ole mitään tehtävää. */
+  if (!osoite || !looksLikeEmail(osoite) || !emailConfigured()) return;
+
+  const token = result.cancelToken;
+  if (!token) return;
+
+  const viesti = confirmationEmail({
+    locale: toEmailLocale(input.locale),
+    restaurantName: result.restaurantName ?? "",
+    date: result.date ?? input.date,
+    time: result.time ?? input.time,
+    partySize: result.partySize ?? input.partySize,
+    tables: result.tables ?? [],
+    guestName: input.name,
+    cancelUrl: `${await siteOrigin()}/varaus/${token}`,
+  });
+
+  /*
+   * Idempotenssiavain on tunnuksen tiiviste, ei tunnus.
+   *
+   * Postipalvelu näkee linkin viestin sisällössä joka tapauksessa,
+   * mutta avain päätyy myös sen lokeihin ja hallintanäkymään. Tiiviste
+   * erottaa lähetykset toisistaan yhtä hyvin paljastamatta tunnusta
+   * paikassa jossa sitä ei tarvita.
+   */
+  const avain = createHash("sha256").update(token).digest("hex").slice(0, 32);
+
+  after(async () => {
+    const lahetys = await sendEmail({
+      to: osoite,
+      subject: viesti.subject,
+      text: viesti.text,
+      html: viesti.html,
+      idempotencyKey: `varaus-${avain}`,
+    });
+
+    /*
+     * Epäonnistuminen lokiin, ei asiakkaalle.
+     *
+     * Asiakas on jo saanut vastauksen ja hänen varauksensa on
+     * voimassa. Yleisin syy on 403: verkkotunnusta ei ole varmistettu
+     * postipalvelussa, ja se on ravintolan ylläpitäjän korjattava.
+     */
+    if (!lahetys.ok) {
+      console.error("[varaus] vahvistusviesti ei lahtenyt:", lahetys.reason);
+    }
+  });
 }

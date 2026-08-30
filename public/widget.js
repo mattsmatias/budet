@@ -759,6 +759,8 @@
           name: nimi.value.trim(),
           phone: puhelin.value.trim(),
           email: sposti.value.trim() || null,
+          /* Vahvistus lähtee samalla kielellä jolla asiakas varasi. */
+          locale: kieli,
           note: toive.value.trim() || null,
         }),
       })
