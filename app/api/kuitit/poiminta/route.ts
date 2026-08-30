@@ -21,6 +21,11 @@ import { z } from "zod";
 import { requireContext } from "@/lib/restoflow/session";
 import { parseBusinessId } from "@/lib/restoflow/merchants";
 import { explainAiError } from "@/lib/matti/errors";
+import {
+  checkUploads,
+  filesFrom,
+  toContentBlocks,
+} from "@/lib/restoflow/extract-upload";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import {
   DEFAULT_MODEL,
@@ -41,32 +46,17 @@ import {
 /** Poiminta voi kestää: iso kuva ja tarkka luku vievät aikaa. */
 export const maxDuration = 60;
 
-const MAX_BYTES = 20 * 1024 * 1024;
-
-/**
- * Kaikkien sivujen yhteiskoko.
+/*
+ * Tiedostojen koko, tyyppi ja muunnos ovat extract-uploadissa.
  *
- * Sivumäärää ei rajata — kuitissa on niin monta sivua kuin siinä on.
- * Pyyntö ei silti voi olla mielivaltaisen suuri, joten raja on
- * kokonaiskoossa ja siitä kerrotaan luettavalla lauseella.
- */
-const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
-
-/**
- * Mallin näkemät kuvamuodot.
+ * Sama tarkistus tehdään kolmella reitillä: kuitit, kassaraportit ja
+ * laskut. HEIC-viesti on juuri sellainen jota myöhemmin tarkennetaan,
+ * ja kolmesta kopiosta kaksi jäisi tarkentamatta.
  *
- * HEIC ei ole listalla, koska rajapinta ei tue sitä — ja juuri sitä
- * iPhone tuottaa oletuksena. Selain muuntaa kuvan JPEG:ksi ennen
- * lähetystä, joten tänne ei pitäisi päätyä HEIC:iä; jos päätyy, siitä
- * kerrotaan suoraan eikä anneta mallin hylätä sitä puolestamme.
+ * Viestit ovat yhä täällä, koska ne eivät ole samat: kuitille
+ * sanotaan "kuvaa se uudelleen", raportille "kuvaa raportti
+ * uudelleen".
  */
-const IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-]);
-const PDF_TYPE = "application/pdf";
 
 /*
  * Avaimet tulevat tyyppilistoista eivat nimikkeista.
@@ -140,81 +130,28 @@ export async function POST(request: Request) {
    *
    * Vanha nimi "file" kelpaa yhä, jottei yksi vanha kutsu hajoa.
    */
-  const files = [...form.getAll("pages"), ...form.getAll("file")].filter(
-    (entry): entry is File => entry instanceof File,
-  );
+  const files = filesFrom(form, "pages", "file");
 
-  if (files.length === 0) {
-    return NextResponse.json({ error: "Tiedosto puuttuu." }, { status: 400 });
-  }
+  const ongelma = checkUploads(files, {
+    missing: "Tiedosto puuttuu.",
+    tooLarge: "Yksi sivuista on liian suuri. Kuvaa se uudelleen.",
+    tooLargeTotal:
+      "Sivut ovat yhteensä liian suuria ({mb} MB). " +
+      "Poista muutama sivu ja lisää ne omana kuittinaan, tai kuvaa ne pienemmällä tarkkuudella.",
+    heic:
+      "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG).",
+    unsupported:
+      "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
+  });
 
-  let total = 0;
-
-  for (const file of files) {
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json(
-        { error: "Yksi sivuista on liian suuri. Kuvaa se uudelleen." },
-        { status: 413 },
-      );
-    }
-
-    total += file.size;
-
-    if (!IMAGE_TYPES.has(file.type) && file.type !== PDF_TYPE) {
-      return NextResponse.json(
-        {
-          error:
-            file.type === "image/heic" || file.type === "image/heif"
-              ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
-              : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
-        },
-        { status: 415 },
-      );
-    }
-  }
-
-  /*
-   * Sivumäärää ei rajata, kokonaiskokoa rajataan.
-   *
-   * Raja on fysiikkaa eikä politiikkaa: rajapinnan pyyntö ei voi olla
-   * mielivaltaisen suuri. Sanotaan se selvästi sen sijaan että pyyntö
-   * epäonnistuisi tuntemattomaan virheeseen.
-   */
-  if (total > MAX_TOTAL_BYTES) {
+  if (ongelma) {
     return NextResponse.json(
-      {
-        error:
-          `Sivut ovat yhteensä liian suuria (${Math.round(total / 1024 / 1024)} MB). ` +
-          "Poista muutama sivu ja lisää ne omana kuittinaan, tai kuvaa ne pienemmällä tarkkuudella.",
-      },
-      { status: 413 },
+      { error: ongelma.error },
+      { status: ongelma.status },
     );
   }
 
-  const sources = await Promise.all(
-    files.map(async (file) => {
-      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-
-      return file.type === PDF_TYPE
-        ? {
-            type: "document" as const,
-            source: {
-              type: "base64" as const,
-              media_type: "application/pdf" as const,
-              data: base64,
-            },
-          }
-        : {
-            type: "image" as const,
-            source: {
-              type: "base64" as const,
-              media_type: file.type as
-                "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: base64,
-            },
-          };
-    }),
-  );
+  const sources = await toContentBlocks(files);
 
   const client = new Anthropic();
 

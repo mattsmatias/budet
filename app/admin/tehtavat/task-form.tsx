@@ -11,6 +11,8 @@ import type { User } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card } from "@/components/restoflow/ui";
 import { CONTROL, CONTROL_STYLE } from "@/app/admin/asetukset/form-parts";
+import type { TaskDraft } from "@/lib/restoflow/invoice";
+import { InvoiceScan, ScanNotice } from "./invoice-scan";
 
 const initial: AdminState = {};
 
@@ -40,6 +42,28 @@ export function TaskForm({
 }) {
   const [state, action] = useActionState(saveTask, initial);
   const [showMore, setShowMore] = useState(task !== undefined);
+
+  /*
+   * Luetun laskun kentät.
+   *
+   * Lomake on hallitsematon: kenttä pitää oman arvonsa ja
+   * defaultValue luetaan vain kerran. Kasvava luku avaimessa pakottaa
+   * Reactin luomaan kentät uudelleen, jolloin uudet oletusarvot
+   * tulevat voimaan — ilman että koko lomakkeesta tehdään hallittua
+   * kolmen kentän takia.
+   */
+  const [draft, setDraft] = useState<TaskDraft | null>(null);
+  const [quality, setQuality] = useState<"good" | "poor">("good");
+  const [scanNo, setScanNo] = useState(0);
+
+  function otaLasku(luettu: TaskDraft, laatu: "good" | "poor") {
+    setDraft(luettu);
+    setQuality(laatu);
+    setScanNo((n) => n + 1);
+
+    /* Kuvaus on lisätietojen takana, ja siihen tuli juuri sisältöä. */
+    if (luettu.description) setShowMore(true);
+  }
 
   /*
    * Sulkeminen on sivuvaikutus, ei renderin osa.
@@ -76,16 +100,30 @@ export function TaskForm({
           </button>
         </div>
 
+        {/*
+          Laskun luku on uuden tehtävän oikotie, ei muokkauksen.
+          Olemassa olevaa tehtävää ei aloiteta alusta kuvasta.
+        */}
+        {task === undefined ? (
+          <div className="space-y-2">
+            <InvoiceScan t={t} onDraft={otaLasku} />
+            {draft ? (
+              <ScanNotice t={t} draft={draft} quality={quality} />
+            ) : null}
+          </div>
+        ) : null}
+
         <label className="block">
           <span className="block text-[12.5px] font-semibold">
             {t.tiimi.position}
           </span>
           <input
+            key={`title-${scanNo}`}
             name="title"
             required
             maxLength={200}
             autoFocus
-            defaultValue={task?.title ?? ""}
+            defaultValue={draft?.title || (task?.title ?? "")}
             placeholder={t.tiimi.taskPlaceholder}
             className={`${CONTROL} mt-1.5`}
             style={CONTROL_STYLE}
@@ -98,10 +136,11 @@ export function TaskForm({
               {t.tiimi.dueDate}
             </span>
             <input
+              key={`due-${scanNo}`}
               type="date"
               name="dueOn"
               required
-              defaultValue={task?.dueOn ?? today}
+              defaultValue={draft?.dueOn ?? task?.dueOn ?? today}
               className={`${CONTROL} mt-1.5`}
               style={CONTROL_STYLE}
             />
@@ -114,7 +153,7 @@ export function TaskForm({
                 className="ml-1 font-normal"
                 style={{ color: "var(--rf-text-3)" }}
               >
-                valinnainen
+                {t.tiimi.optional}
               </span>
             </span>
             <input
@@ -136,14 +175,15 @@ export function TaskForm({
                   className="ml-1 font-normal"
                   style={{ color: "var(--rf-text-3)" }}
                 >
-                  valinnainen
+                  {t.tiimi.optional}
                 </span>
               </span>
               <textarea
+                key={`desc-${scanNo}`}
                 name="description"
-                rows={2}
+                rows={draft?.description ? 3 : 2}
                 maxLength={2000}
-                defaultValue={task?.description ?? ""}
+                defaultValue={draft?.description || (task?.description ?? "")}
                 className={`${CONTROL} mt-1.5`}
                 style={{ ...CONTROL_STYLE, height: "auto" }}
               />

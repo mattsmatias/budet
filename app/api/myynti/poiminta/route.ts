@@ -19,6 +19,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireContext } from "@/lib/restoflow/session";
 import { explainAiError } from "@/lib/matti/errors";
+import {
+  checkUploads,
+  filesFrom,
+  toContentBlocks,
+} from "@/lib/restoflow/extract-upload";
 import { can } from "@/lib/restoflow/permissions";
 import { DEFAULT_MODEL, isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import {
@@ -32,18 +37,11 @@ import type { Extracted } from "@/lib/restoflow/types";
 /** Poiminta voi kestää: iso kuva ja tarkka luku vievät aikaa. */
 export const maxDuration = 60;
 
-const MAX_BYTES = 20 * 1024 * 1024;
-
-/** Yhden pyynnön yhteiskoko. Sivuja saa olla monta, tavuja ei rajatta. */
-const MAX_TOTAL_BYTES = 28 * 1024 * 1024;
-
-const IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-]);
-const PDF_TYPE = "application/pdf";
+/*
+ * Tiedostojen koko, tyyppi ja muunnos ovat extract-uploadissa.
+ * Viestit ovat yhä täällä: raportille sanotaan "kuvaa raportti
+ * uudelleen", kuitille jotain muuta.
+ */
 
 /**
  * Ylin summa jonka päiväraportti voi näyttää.
@@ -156,81 +154,28 @@ export async function POST(request: Request) {
    * lukematta. Vanha "file"-kenttä kelpaa yhä: se on sama pyyntö
    * yhdellä sivulla.
    */
-  const files = [...form.getAll("pages"), ...form.getAll("file")].filter(
-    (entry): entry is File => entry instanceof File,
-  );
+  const files = filesFrom(form, "pages", "file");
 
-  if (files.length === 0) {
-    return NextResponse.json({ error: "Tiedosto puuttuu." }, { status: 400 });
-  }
+  const ongelma = checkUploads(files, {
+    missing: "Tiedosto puuttuu.",
+    tooLarge: "Tiedosto on liian suuri. Kuvaa raportti uudelleen.",
+    tooLargeTotal:
+      "Kuvat ovat yhteensä liian suuret. Kuvaa raportti harvempana " +
+      "sivuna tai pienemmällä tarkkuudella.",
+    heic:
+      "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG).",
+    unsupported:
+      "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
+  });
 
-  let totalBytes = 0;
-
-  for (const file of files) {
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json(
-        { error: "Tiedosto on liian suuri. Kuvaa raportti uudelleen." },
-        { status: 413 },
-      );
-    }
-
-    totalBytes += file.size;
-
-    if (file.type !== PDF_TYPE && !IMAGE_TYPES.has(file.type)) {
-      return NextResponse.json(
-        {
-          error:
-            file.type === "image/heic" || file.type === "image/heif"
-              ? "Kuvamuotoa HEIC ei voi lukea. Valitse puhelimen kamera-asetuksista Yhteensopivin (JPEG)."
-              : "Tätä tiedostomuotoa ei voi lukea. Käytä JPEG-, PNG- tai PDF-tiedostoa.",
-        },
-        { status: 415 },
-      );
-    }
-  }
-
-  /*
-   * Sivumäärää ei rajata, yhteiskokoa rajataan.
-   *
-   * Raportissa on niin monta sivua kuin siinä on, mutta yksi pyyntö ei
-   * saa kasvaa rajatta: liian suuri pyyntö epäonnistuu vasta
-   * rajapinnassa, ja silloin virhe on siellä eikä täällä.
-   */
-  if (totalBytes > MAX_TOTAL_BYTES) {
+  if (ongelma) {
     return NextResponse.json(
-      {
-        error:
-          "Kuvat ovat yhteensä liian suuret. Kuvaa raportti harvempana " +
-          "sivuna tai pienemmällä tarkkuudella.",
-      },
-      { status: 413 },
+      { error: ongelma.error },
+      { status: ongelma.status },
     );
   }
 
-  const sources = await Promise.all(
-    files.map(async (file) => {
-      const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
-
-      return file.type === PDF_TYPE
-        ? {
-            type: "document" as const,
-            source: {
-              type: "base64" as const,
-              media_type: "application/pdf" as const,
-              data: base64,
-            },
-          }
-        : {
-            type: "image" as const,
-            source: {
-              type: "base64" as const,
-              media_type: file.type as
-                "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: base64,
-            },
-          };
-    }),
-  );
+  const sources = await toContentBlocks(files);
 
   const client = new Anthropic();
 
