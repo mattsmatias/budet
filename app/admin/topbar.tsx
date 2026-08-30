@@ -100,7 +100,7 @@ export function TopBar({
         luvuista. Kuukausi koskee useaa sivua, joten se kuuluu samaan
         palkkiin kuin haku.
       */}
-      <MonthScope value={month} months={months} locale={locale} />
+      <MonthScope t={t} value={month} months={months} locale={locale} />
 
       {/* Kieli tunnusvalikon vieressa: se on tilin asetus. */}
       <LanguagePicker current={locale} />

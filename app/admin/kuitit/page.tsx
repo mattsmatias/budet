@@ -238,7 +238,7 @@ export default async function AdminReceiptsPage({
                             {users.find((u) => u.id === r.addedByUserId)
                               ?.name ?? "—"}
                           </span>
-                          <DeleteReceipt receiptId={r.id} />
+                          <DeleteReceipt t={t} receiptId={r.id} />
                         </li>
                       ))}
                     </ul>
@@ -506,7 +506,7 @@ export default async function AdminReceiptsPage({
                   </div>
 
                   {canReview && receipt.status === "needs_review" ? (
-                    <ReviewPanel nimet={nimet} receipt={receipt} />
+                    <ReviewPanel t={t} nimet={nimet} receipt={receipt} />
                   ) : null}
                 </Card>
               </li>

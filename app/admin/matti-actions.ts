@@ -23,6 +23,10 @@
  */
 
 import { revalidatePath } from "next/cache";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -50,8 +54,9 @@ export async function cancelMattiAction(
   _prev: MattiActionState,
   formData: FormData,
 ): Promise<MattiActionState> {
+  const t = adminText(await resolveLocale());
   const parsed = idSchema.safeParse(formData.get("actionId"));
-  if (!parsed.success) return { error: "Tuntematon ehdotus." };
+  if (!parsed.success) return { error: t.loput.unknownProposal };
 
   const supabase = await createClient();
   await supabase.rpc("ai_resolve_action", {
@@ -59,15 +64,16 @@ export async function cancelMattiAction(
     p_status: "cancelled",
   });
 
-  return { ok: false, message: "Peruutettu. Mitään ei muutettu." };
+  return { ok: false, message: t.loput.cancelledNothing };
 }
 
 export async function confirmMattiAction(
   _prev: MattiActionState,
   formData: FormData,
 ): Promise<MattiActionState> {
+  const t = adminText(await resolveLocale());
   const parsed = idSchema.safeParse(formData.get("actionId"));
-  if (!parsed.success) return { error: "Tuntematon ehdotus." };
+  if (!parsed.success) return { error: t.loput.unknownProposal };
 
   const { restaurant, role } = await requireContext("/admin");
   const supabase = await createClient();
@@ -84,7 +90,7 @@ export async function confirmMattiAction(
   const action = normalizeRow(rows);
 
   if (claimError || !action) {
-    return { error: "Ehdotus on jo käsitelty tai se ei ole enää voimassa." };
+    return { error: t.loput.proposalHandled };
   }
 
   const tool = findTool(action.tool);
@@ -97,9 +103,9 @@ export async function confirmMattiAction(
       null,
       null,
       false,
-      "Tuntematon työkalu",
+      t.loput.unknownTool,
     );
-    return { error: "Tuntematon toiminto." };
+    return { error: t.loput.unknownAction };
   }
 
   // Oikeus tarkistetaan uudelleen suoritushetkellä. Rooli on voinut
@@ -112,9 +118,9 @@ export async function confirmMattiAction(
       null,
       null,
       false,
-      "Ei oikeutta",
+      t.loput.noRight,
     );
-    return { error: "Sinulla ei ole oikeutta tähän toimintoon." };
+    return { error: t.loput.noRightBody };
   }
 
   /*
@@ -135,9 +141,9 @@ export async function confirmMattiAction(
       null,
       null,
       false,
-      args.error.issues[0]?.message ?? "Virheelliset argumentit",
+      args.error.issues[0]?.message ?? t.loput.badArguments,
     );
-    return { error: "Ehdotuksen tiedot eivät kelpaa. Mitään ei tallennettu." };
+    return { error: t.loput.badArgumentsBody };
   }
 
   try {
@@ -173,7 +179,7 @@ export async function confirmMattiAction(
     await log(supabase, action, restaurant.id, null, null, false, message);
 
     return {
-      error: readable(message),
+      error: readable(message, t),
     };
   }
 }
@@ -232,6 +238,7 @@ async function execute(
   action: PendingRow,
   args: Record<string, unknown>,
 ): Promise<ExecutionResult> {
+  const t = adminText(await resolveLocale());
   switch (action.tool) {
     case "propose_lunch_items": {
       const { days, replace, priceEuros, includesDessert, includesCoffee } =
@@ -293,7 +300,7 @@ async function execute(
         for (const menuId of menuIds) {
           const { error } = await supabase.rpc("set_lunch_price", {
             p_menu: menuId,
-            p_name: "Lounas",
+            p_name: t.loput.lunchWord,
             p_cents: Math.round(priceEuros * 100),
           });
           if (error) throw new Error(error.message);
@@ -352,7 +359,8 @@ async function execute(
 
       for (const day of days) {
         const row = await lunchDay(supabase, day.date);
-        if (!row) throw new Error(`Päivää ${day.date} ei löytynyt`);
+        if (!row)
+          throw new Error(fill(t.loput.dayNotFound, { paiva: day.date }));
 
         touched.push(row.id);
 
@@ -382,13 +390,17 @@ async function execute(
 
       return {
         message:
-          `Valmis. Lisäsin ${added} ruokaa ${days.length} päivälle. ` +
-          "Lista on luonnos — julkaise se kun se on valmis.",
+          fill(t.loput.doneAddedDishes, {
+            maara: String(added),
+            paivat: String(days.length),
+          }) +
+          " " +
+          t.loput.listIsDraft,
         target: touched.join(","),
         before: null,
         after: { days: days.length, items: added, weekStart: week },
         href: `/admin/lounas?viikko=${week}`,
-        linkLabel: "Avaa lounaslista",
+        linkLabel: t.loput.openLunchList,
       };
     }
 
@@ -404,11 +416,11 @@ async function execute(
       };
 
       const week = weekStartOf(rawWeek);
-      const name = priceName ?? "Lounas";
+      const name = priceName ?? t.loput.lunchWord;
       const cents = Math.round(euros * 100);
 
       const menu = await lunchMenu(supabase, week);
-      if (!menu) throw new Error("Viikkoa ei löytynyt");
+      if (!menu) throw new Error(t.loput.weekNotFound);
 
       const { error } = await supabase.rpc("set_lunch_price", {
         p_menu: menu.id,
@@ -418,12 +430,15 @@ async function execute(
       if (error) throw new Error(error.message);
 
       return {
-        message: `Valmis. ${name} on nyt ${formatMoney(cents)} koko viikolle.`,
+        message: fill(t.loput.donePriceSet, {
+          nimi: name,
+          summa: formatMoney(cents),
+        }),
         target: menu.id,
         before: { cents: menu.priceCents },
         after: { cents },
         href: `/admin/lounas?viikko=${week}`,
-        linkLabel: "Avaa lounaslista",
+        linkLabel: t.loput.openLunchList,
       };
     }
 
@@ -443,12 +458,12 @@ async function execute(
       if (error) throw new Error(error.message);
 
       return {
-        message: "Valmis. Lounaslista kopioitiin luonnokseksi.",
+        message: t.loput.doneCopiedDraft,
         target: weekStartOf(toWeekStart),
         before: null,
         after: { weekStart: weekStartOf(toWeekStart), status: "draft" },
         href: `/admin/lounas?viikko=${weekStartOf(toWeekStart)}`,
-        linkLabel: "Avaa luonnos",
+        linkLabel: t.loput.openDraft,
       };
     }
 
@@ -457,7 +472,7 @@ async function execute(
 
       const week = weekStartOf(weekStart);
       const menu = await lunchMenu(supabase, week);
-      if (!menu) throw new Error("Viikkoa ei löytynyt");
+      if (!menu) throw new Error(t.loput.weekNotFound);
 
       const { error } = await supabase.rpc("publish_lunch_week", {
         p_menu: menu.id,
@@ -465,17 +480,17 @@ async function execute(
       if (error) throw new Error(error.message);
 
       return {
-        message: "Valmis. Lounaslista on julkaistu.",
+        message: t.loput.donePublished,
         target: menu.id,
         before: { status: menu.status },
         after: { status: "published" },
         href: `/admin/lounas?viikko=${week}`,
-        linkLabel: "Avaa lounaslista",
+        linkLabel: t.loput.openLunchList,
       };
     }
 
     default:
-      throw new Error("Tuntematon toiminto");
+      throw new Error(t.loput.unknownActionShort);
   }
 }
 
@@ -506,6 +521,7 @@ async function lunchMenu(
   supabase: Awaited<ReturnType<typeof createClient>>,
   weekStart: string,
 ): Promise<{ id: string; status: string; priceCents: number | null } | null> {
+  const t = adminText(await resolveLocale());
   const { data } = await supabase
     .from("lunch_menus")
     .select("id, status, lunch_prices ( name, price_cents )")
@@ -521,7 +537,8 @@ async function lunchMenu(
   return {
     id: data.id as string,
     status: data.status as string,
-    priceCents: prices.find((p) => p.name === "Lounas")?.price_cents ?? null,
+    priceCents:
+      prices.find((p) => p.name === t.loput.lunchWord)?.price_cents ?? null,
   };
 }
 
@@ -555,10 +572,10 @@ async function log(
 }
 
 /** Kannan virheteksti luettavaksi. */
-function readable(message: string): string {
+function readable(message: string, t: AdminText): string {
   if (message.includes("Vain esihenkilö")) return message;
   if (message.includes("Tyhjää lounaslistaa")) return message;
   if (message.includes("ei löytynyt")) return message;
 
-  return "En saanut muutosta tehtyä. Mitään ei tallennettu.";
+  return t.loput.couldNotChange;
 }

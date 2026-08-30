@@ -28,7 +28,10 @@ import {
 } from "@/components/restoflow/ui";
 import { AddBudget, BudgetEditor } from "./editor";
 
-export const metadata = { title: "Budjetit" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.budgetsTitle };
+}
 
 /**
  * Budjettinäkymä.
@@ -91,7 +94,7 @@ export default async function BudgetsPage({
             tileTone="brand"
             tone="muted"
             value={<CountUp to={summary.totalBudgetCents} format="money" />}
-            conclusion="Kuukausibudjetit yhteensä"
+            conclusion={t.loput.monthlyBudgetsTotal}
           />
           <MetricCard
             label={t.budjetit.used}
@@ -109,7 +112,7 @@ export default async function BudgetsPage({
                       ),
                     ),
                   })
-                : "Budjetteja ei ole asetettu"
+                : t.loput.noBudgetsSet
             }
           />
           <MetricCard
@@ -120,8 +123,8 @@ export default async function BudgetsPage({
             tone={summary.exceededCount > 0 ? "bad" : "muted"}
             conclusion={
               summary.exceededCount > 0
-                ? "Kategoriaa yli rajan"
-                : "Ei ylityksiä"
+                ? t.loput.categoriesOverLimit
+                : t.loput.noOverruns
             }
           />
           <MetricCard
@@ -140,11 +143,7 @@ export default async function BudgetsPage({
       {budgeted.length === 0 ? (
         <EmptyState
           title={t.budjetit.none}
-          description={
-            canEdit
-              ? "Aseta kuukausibudjetti kategorialle, niin näet miten kulut suhteutuvat siihen ja saat hälytyksen ennen kuin raja ylittyy."
-              : "Omistaja ei ole vielä asettanut budjetteja."
-          }
+          description={canEdit ? t.loput.setBudgetHint : t.loput.ownerHasNotSet}
         />
       ) : (
         <Card>
@@ -185,6 +184,7 @@ export default async function BudgetsPage({
                       </span>
                       {canEdit ? (
                         <BudgetEditor
+                          t={t}
                           nimet={nimet}
                           category={p.category}
                           currentCents={p.budgetCents}
@@ -231,6 +231,7 @@ export default async function BudgetsPage({
       {canEdit ? (
         <Card>
           <AddBudget
+            t={t}
             nimet={nimet}
             categories={available as ExpenseCategory[]}
             spend={spend}
@@ -264,6 +265,7 @@ export default async function BudgetsPage({
                   </span>
                   {canEdit ? (
                     <BudgetEditor
+                      t={t}
                       nimet={nimet}
                       category={p.category}
                       currentCents={null}

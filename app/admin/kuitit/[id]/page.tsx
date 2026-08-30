@@ -291,7 +291,7 @@ export default async function AdminReceiptDetailPage({
             </div>
 
             {canReview && receipt.status === "needs_review" ? (
-              <ReviewPanel nimet={nimet} receipt={receipt} />
+              <ReviewPanel t={t} nimet={nimet} receipt={receipt} />
             ) : null}
 
             <dl className="mt-4 grid grid-cols-3 gap-3">
@@ -525,7 +525,7 @@ export default async function AdminReceiptDetailPage({
               >
                 {t.kuitit.deleteWarning}
               </p>
-              <DeleteReceipt receiptId={receipt.id} />
+              <DeleteReceipt t={t} receiptId={receipt.id} />
             </Card>
           ) : null}
         </aside>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { monthFromParams } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -18,7 +20,10 @@ import {
   ScopeNotice,
 } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Havainnot" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.insights };
+}
 
 /**
  * Havainnot.
@@ -31,6 +36,7 @@ export const metadata = { title: "Havainnot" };
 export default async function InsightsPage({
   searchParams,
 }: PageProps<"/admin/havainnot">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const {
     receipts,
@@ -77,15 +83,12 @@ export default async function InsightsPage({
         </p>
       </div>
 
-      <ScopeNotice>
-        Havainnot lasketaan aineistosta joka latauksella. Ne eivät ole
-        ennusteita eivätkä neuvoja — ne kertovat mitä luvuissa on jo tapahtunut.
-      </ScopeNotice>
+      <ScopeNotice>{t.loput.insightsIntro}</ScopeNotice>
 
       {insights.length === 0 ? (
         <EmptyState
-          title="Ei vielä havaintoja"
-          description="Havainnot syntyvät vertaamalla kuukausia toisiinsa. Kun aineistoa on kahdelta kuukaudelta, tämä näkymä täyttyy."
+          title={t.loput.noInsightsYet}
+          description={t.loput.insightsNeedTwoMonths}
         />
       ) : (
         <ul className="grid gap-3 md:grid-cols-2 md:gap-4">
@@ -100,8 +103,8 @@ export default async function InsightsPage({
       {series.length > 1 ? (
         <Card>
           <CardHeader
-            title="Kulut kuudelta kuukaudelta"
-            subtitle="Kirjatut kulut · sama lähde kuin kulunäkymässä"
+            title={t.loput.sixMonthExpenses}
+            subtitle={t.loput.sameSourceAsExpenses}
           />
           <div className="space-y-4">
             {series.map((point) => (
@@ -110,7 +113,9 @@ export default async function InsightsPage({
                 label={formatMonth(point.month, locale)}
                 valueCents={point.totalCents}
                 share={point.totalCents / peak}
-                meta={`${point.receiptCount} kuittia`}
+                meta={fill(t.loput.receiptsCountShort, {
+                  maara: String(point.receiptCount),
+                })}
                 muted={point.month !== month}
                 shareLabel="kuuden kuukauden suurimmasta"
               />
@@ -120,9 +125,7 @@ export default async function InsightsPage({
             className="mt-4 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Palkin pituus on suhteessa kuuden kuukauden suurimpaan, ei
-            budjettiin. Kuluva kuukausi on kesken, joten sen palkki kasvaa
-            vielä.
+            {t.loput.barIsRelative}
           </p>
         </Card>
       ) : null}

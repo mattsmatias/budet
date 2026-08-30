@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { MonthPicker } from "./month-picker";
 
 /**
@@ -69,17 +70,19 @@ function useMonthly(): boolean {
 
 /** Työpöydän yläpalkkiin. */
 export function MonthScope({
+  t,
   value,
   months,
   locale,
 }: {
+  t: AdminText;
   value: string;
   months: string[];
   locale: AppLocale;
 }) {
   if (!useMonthly()) return null;
 
-  return <MonthPicker value={value} months={months} locale={locale} />;
+  return <MonthPicker t={t} value={value} months={months} locale={locale} />;
 }
 
 /**
@@ -101,10 +104,12 @@ export function MonthScope({
  * kokonaan kaikilta kuukausisivuilta.
  */
 export function MobileMonthBar({
+  t,
   value,
   months,
   locale,
 }: {
+  t: AdminText;
   value: string;
   months: string[];
   locale: AppLocale;
@@ -116,7 +121,7 @@ export function MobileMonthBar({
       className="rf-no-print flex justify-center border-b px-4 py-2.5 md:hidden"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
-      <MonthPicker value={value} months={months} locale={locale} />
+      <MonthPicker t={t} value={value} months={months} locale={locale} />
     </div>
   );
 }

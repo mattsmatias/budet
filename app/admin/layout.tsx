@@ -171,7 +171,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           kuukausisivulla. Oma rivi näkyy vain niillä sivuilla joilla
           valitsin oikeasti tekee jotain.
         */}
-          <MobileMonthBar value={month} months={months} locale={locale} />
+          <MobileMonthBar t={t} value={month} months={months} locale={locale} />
 
           {/*
           Työpöydän yläpalkki.

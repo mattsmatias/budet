@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { labels } from "@/lib/i18n/labels";
 import { monthFromParams } from "@/lib/restoflow/dates";
@@ -27,12 +29,16 @@ import {
   SeverityDot,
 } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Toimittaja" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.supplier };
+}
 
 export default async function SupplierDetailPage({
   params,
   searchParams,
 }: PageProps<"/admin/toimittajat/[id]">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const { id } = await params;
@@ -67,7 +73,7 @@ export default async function SupplierDetailPage({
       <div className="flex items-center gap-2">
         <Link
           href="/admin/toimittajat"
-          aria-label="Takaisin"
+          aria-label={t.loput.back}
           className="rf-press -ml-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
@@ -92,11 +98,11 @@ export default async function SupplierDetailPage({
 
       {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
       <section
-        aria-label="Avainluvut"
+        aria-label={t.loput.keyFigures}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <MetricCard
-          label="Kuitteja"
+          label={t.loput.receiptCount}
           value={<CountUp to={inMonth.length} format="integer" />}
           icon={<RfIcon name="receipt" size={17} />}
           tileTone="brand"
@@ -104,23 +110,23 @@ export default async function SupplierDetailPage({
           conclusion={formatMonth(month, locale)}
         />
         <MetricCard
-          label="Yhteensä"
+          label={t.loput.total}
           value={<CountUp to={monthTotal} format="money" />}
           icon={<RfIcon name="expenses" size={17} />}
           tileTone="green"
           tone="muted"
-          conclusion="Kuittien summa tässä kuussa"
+          conclusion={t.loput.receiptSumThisMonth}
         />
         <MetricCard
-          label="Keskimääräinen kuitti"
+          label={t.loput.averageReceipt}
           value={<CountUp to={average} format="money" />}
           icon={<RfIcon name="budget" size={17} />}
           tileTone="violet"
           tone="muted"
-          conclusion="Yhteensä jaettuna kuittien määrällä"
+          conclusion={t.loput.totalDividedByCount}
         />
         <MetricCard
-          label="Muutos"
+          label={t.loput.change}
           icon={<RfIcon name="trend" size={17} />}
           tileTone="blue"
           /*
@@ -133,8 +139,11 @@ export default async function SupplierDetailPage({
           tone="muted"
           conclusion={
             trend && trend.change !== null
-              ? `${formatMoney(trend.previousCents)} → ${formatMoney(trend.currentCents)}`
-              : "Ei vertailukohtaa edelliseltä kuukaudelta"
+              ? fill(t.loput.trendArrow, {
+                  ennen: formatMoney(trend.previousCents),
+                  nyt: formatMoney(trend.currentCents),
+                })
+              : t.loput.noComparisonPrev
           }
         />
       </section>
@@ -142,8 +151,8 @@ export default async function SupplierDetailPage({
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader
-            title="Kulut kuukausittain"
-            subtitle="Neljä viimeisintä kuukautta"
+            title={t.loput.expensesByMonth}
+            subtitle={t.loput.lastFourMonths}
           />
           <ul className="space-y-3">
             {series.map((point) => (
@@ -163,7 +172,10 @@ export default async function SupplierDetailPage({
                   className="mt-1.5 h-1.5 w-full overflow-hidden"
                   style={{ background: "var(--rf-inset)", borderRadius: 999 }}
                   role="img"
-                  aria-label={`${formatMonth(point.month, locale)}: ${formatMoney(point.totalCents)}`}
+                  aria-label={fill(t.loput.monthAmount, {
+                    kuukausi: formatMonth(point.month, locale),
+                    summa: formatMoney(point.totalCents),
+                  })}
                 >
                   <div
                     className="h-full"
@@ -189,10 +201,7 @@ export default async function SupplierDetailPage({
         </Card>
 
         <Card>
-          <CardHeader
-            title="Mihin tämän toimittajan rahat menevät"
-            subtitle="Rivikohtaisesti"
-          />
+          <CardHeader title={t.loput.whereMoneyGoes} subtitle={t.loput.byRow} />
           {totals && totals.categories.length > 0 ? (
             <ul className="space-y-3">
               {totals.categories.map((c) => (
@@ -216,7 +225,7 @@ export default async function SupplierDetailPage({
             </ul>
           ) : (
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-              Ei kuluja tältä kuukaudelta.
+              {t.loput.noExpensesThisMonth}
             </p>
           )}
 
@@ -234,7 +243,7 @@ export default async function SupplierDetailPage({
               <strong>
                 {nimet.categories[supplier.categoryOverrides[0].to]}
               </strong>
-              . Kate ehdottaa sitä jatkossa automaattisesti.
+              {t.loput.kateSuggestsAhead}
             </div>
           ) : null}
         </Card>
@@ -242,21 +251,24 @@ export default async function SupplierDetailPage({
 
       <Card padded={false}>
         <div className="px-5 pt-5">
-          <CardHeader title="Kuitit" subtitle={`${all.length} kaikkiaan`} />
+          <CardHeader
+            title={t.loput.receiptsWord}
+            subtitle={`${all.length} kaikkiaan`}
+          />
         </div>
         <div className="overflow-x-auto">
           <table className="rf-table w-full min-w-[40rem] text-[14px]">
-            <caption className="sr-only">Toimittajan kuitit</caption>
+            <caption className="sr-only">{t.loput.supplierReceipts}</caption>
             <thead>
               <tr>
-                <th scope="col">Päivä</th>
-                <th scope="col">Kuittinumero</th>
-                <th scope="col">Maksutapa</th>
+                <th scope="col">{t.loput.dayWord}</th>
+                <th scope="col">{t.loput.receiptNumber}</th>
+                <th scope="col">{t.loput.paymentMethod}</th>
                 <th scope="col" className="text-right">
-                  Rivejä
+                  {t.loput.rows}
                 </th>
                 <th scope="col" className="text-right">
-                  Yhteensä
+                  {t.loput.total}
                 </th>
               </tr>
             </thead>

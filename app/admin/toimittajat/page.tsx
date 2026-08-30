@@ -27,7 +27,10 @@ import {
 } from "@/components/restoflow/ui";
 import { CountUp } from "@/components/restoflow/count-up";
 
-export const metadata = { title: "Toimittajat" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.suppliersTitle };
+}
 
 /**
  * Toimittajanäkymä.
@@ -88,8 +91,8 @@ export default async function SuppliersPage({
           tone="muted"
           conclusion={
             totals.length === 0
-              ? "Toimittajat syntyvät kuiteista"
-              : "Joilta on kirjattu kuitteja"
+              ? t.loput.suppliersFromReceipts
+              : t.loput.withRecordedReceipts
           }
         />
 
@@ -101,7 +104,7 @@ export default async function SuppliersPage({
           tone="muted"
           conclusion={receiptCountLabel(inMonth.length, locale)}
           href="/admin/kulut"
-          linkLabel="Kulut"
+          linkLabel={t.loput.expensesWord}
         />
 
         <MetricCard
@@ -134,19 +137,19 @@ export default async function SuppliersPage({
                   summa: formatMoney(biggest.totalCents),
                   osuus: String(Math.round(biggest.share * 100)),
                 })
-              : "Ei kuitteja tässä kuussa"
+              : t.loput.noReceiptsThisMonth
           }
           href={
             biggest ? `/admin/toimittajat/${biggest.supplierId}` : undefined
           }
-          linkLabel="Avaa"
+          linkLabel={t.loput.open}
         />
       </section>
 
       {totals.length === 0 ? (
         <EmptyState
           title={t.toimittajat.none}
-          description="Toimittajat syntyvät kuiteista. Lisää kuitteja niin näkymä täyttyy."
+          description={t.loput.suppliersEmptyHint}
         />
       ) : (
         <Card padded={false}>

@@ -1,4 +1,5 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -26,7 +27,10 @@ import {
 import { Sparkline } from "@/components/restoflow/dashboard-ui";
 import { CountUp } from "@/components/restoflow/count-up";
 
-export const metadata = { title: "Kulut" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.expensesWord };
+}
 
 export default async function ExpensesPage({
   searchParams,
@@ -112,7 +116,10 @@ export default async function ExpensesPage({
               ? t.yleiskatsaus.noReceiptsThisMonth
               : change === null
                 ? t.yleiskatsaus.noComparison
-                : `${formatMoney(previous.totalCents)} ${monthWord(previousMonth(viewMonth), locale)}ssa`
+                : fill(t.loput.inMonth, {
+                    summa: formatMoney(previous.totalCents),
+                    kuukausi: monthWord(previousMonth(viewMonth), locale),
+                  })
           }
           /*
            * Ei erillistä "kuittien summa, ei pankkitili" -riviä.
@@ -138,10 +145,13 @@ export default async function ExpensesPage({
           conclusion={
             previous.receiptCount === 0
               ? t.yleiskatsaus.noComparison
-              : `${receiptCountLabel(previous.receiptCount, locale)} ${monthWord(previousMonth(viewMonth), locale)}ssa`
+              : fill(t.loput.inMonth, {
+                  summa: receiptCountLabel(previous.receiptCount, locale),
+                  kuukausi: monthWord(previousMonth(viewMonth), locale),
+                })
           }
           href="/admin/kuitit"
-          linkLabel="Kuitit"
+          linkLabel={t.loput.receiptsWord}
         />
 
         <MetricCard
@@ -154,7 +164,7 @@ export default async function ExpensesPage({
         />
 
         <MetricCard
-          label="Tarkistettavia"
+          label={t.loput.toCheckWord}
           icon={<RfIcon name="alert" size={17} />}
           tileTone="blue"
           value={<CountUp to={current.needsReviewCount} format="integer" />}
@@ -175,15 +185,18 @@ export default async function ExpensesPage({
               ? "/admin/kuitit?suodatin=needs_review"
               : undefined
           }
-          linkLabel="Tarkista"
+          linkLabel={t.loput.check}
         />
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader
-            title="Kategorioittain"
-            subtitle={`${formatMonth(viewMonth, locale)} · ${categories.length} kategoriaa`}
+            title={t.loput.byCategory}
+            subtitle={fill(t.loput.monthCategoryCount, {
+              kuukausi: formatMonth(viewMonth, locale),
+              maara: String(categories.length),
+            })}
           />
           {categories.length === 0 ? (
             <p className="text-[14px]" style={{ color: "var(--rf-text-2)" }}>
@@ -205,7 +218,10 @@ export default async function ExpensesPage({
         </Card>
 
         <Card>
-          <CardHeader title="Kulujen kehitys" subtitle={t.kulut.fourMonths} />
+          <CardHeader
+            title={t.loput.expenseTrend}
+            subtitle={t.kulut.fourMonths}
+          />
           <table className="rf-table w-full text-[14px]">
             <caption className="sr-only">{t.sanat.monthlyExpenses}</caption>
             <tbody>

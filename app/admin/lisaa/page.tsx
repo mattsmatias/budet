@@ -9,7 +9,10 @@ import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 
-export const metadata = { title: "Lisää" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.more };
+}
 
 /**
  * Ylivuotonäkymä puhelimen alapalkille.
@@ -28,7 +31,7 @@ export default async function AdminMorePage() {
   // Ilman yhtäkään hallintanäkymää tämä sivu on tyhjä kuori.
   if (items.length === 0) redirect(landingFor(role));
   const overflow = items;
-  const name = user.fullName ?? user.email ?? "Käyttäjä";
+  const name = user.fullName ?? user.email ?? t.loput.user;
 
   return (
     <div className="rf-enter space-y-5">
@@ -54,7 +57,7 @@ export default async function AdminMorePage() {
 
       {overflow.length > 0 ? (
         <section>
-          <SectionLabel>Näkymät</SectionLabel>
+          <SectionLabel>{t.loput.views}</SectionLabel>
           <Card padded={false}>
             <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
               {overflow.map((item) => (
@@ -89,7 +92,7 @@ export default async function AdminMorePage() {
         työkaluja.
       */}
       <section>
-        <SectionLabel>Muuta</SectionLabel>
+        <SectionLabel>{t.loput.change}</SectionLabel>
         <Card padded={false}>
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             <li>
@@ -100,7 +103,9 @@ export default async function AdminMorePage() {
                 <span style={{ color: "var(--rf-text-2)" }}>
                   <RfIcon name="bell" size={20} />
                 </span>
-                <span className="flex-1 text-[15px] font-medium">Huomiot</span>
+                <span className="flex-1 text-[15px] font-medium">
+                  {t.loput.notes}
+                </span>
                 <span style={{ color: "var(--rf-text-3)" }}>
                   <RfIcon name="chevron" size={16} />
                 </span>
@@ -122,7 +127,7 @@ export default async function AdminMorePage() {
           }}
         >
           <RfIcon name="logout" size={17} />
-          Kirjaudu ulos
+          {t.loput.signOut}
         </button>
       </form>
     </div>

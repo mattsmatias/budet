@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { setBudget, type AdminState } from "../actions";
@@ -18,11 +20,13 @@ const initial: AdminState = {};
  * ylitetty ja hälyttäisi turhaan.
  */
 export function BudgetEditor({
+  t,
   nimet,
   category,
   currentCents,
   spentCents,
 }: {
+  t: AdminText;
   nimet: Labels;
   category: ExpenseCategory;
   currentCents: number | null;
@@ -36,7 +40,9 @@ export function BudgetEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`Muokkaa budjettia: ${nimet.categories[category]}`}
+        aria-label={fill(t.loput.editBudgetNamed, {
+          nimi: nimet.categories[category],
+        })}
         className="rf-press px-3 py-1.5 text-[13px] font-medium"
         style={{
           background: "var(--rf-inset)",
@@ -44,7 +50,7 @@ export function BudgetEditor({
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        {currentCents === null ? "Aseta" : "Muokkaa"}
+        {currentCents === null ? t.loput.set : t.loput.edit}
       </button>
     );
   }
@@ -104,7 +110,7 @@ export function BudgetEditor({
       ) : null}
 
       <div className="mt-3 grid grid-cols-2 gap-2.5">
-        <Save />
+        <Save t={t} />
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -115,7 +121,7 @@ export function BudgetEditor({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Peruuta
+          {t.loput.cancel}
         </button>
       </div>
     </form>
@@ -129,10 +135,12 @@ export function BudgetEditor({
  * siinä ei ole palkkia eikä prosenttia, vain kulu ja kutsu asettaa raja.
  */
 export function AddBudget({
+  t,
   nimet,
   categories,
   spend,
 }: {
+  t: AdminText;
   nimet: Labels;
   categories: ExpenseCategory[];
   spend: Record<string, number>;
@@ -156,7 +164,7 @@ export function AddBudget({
         }}
       >
         <RfIcon name="plus" size={17} />
-        Lisää budjetti
+        {t.loput.addBudget}
       </button>
     );
   }
@@ -168,7 +176,7 @@ export function AddBudget({
           htmlFor="new-budget-category"
           className="block text-[13px] font-medium"
         >
-          Kategoria
+          {t.loput.category}
         </label>
         <select
           id="new-budget-category"
@@ -181,7 +189,7 @@ export function AddBudget({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          <option value="">Valitse…</option>
+          <option value="">{t.loput.chooseEllipsis}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {nimet.categories[c]}
@@ -195,7 +203,7 @@ export function AddBudget({
           htmlFor="new-budget-amount"
           className="block text-[13px] font-medium"
         >
-          Kuukausibudjetti
+          {t.loput.monthlyBudget}
         </label>
         <div className="mt-1.5 flex items-center gap-2">
           <input
@@ -242,7 +250,7 @@ export function AddBudget({
       ) : null}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <Save />
+        <Save t={t} />
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -253,14 +261,14 @@ export function AddBudget({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Peruuta
+          {t.loput.cancel}
         </button>
       </div>
     </form>
   );
 }
 
-function Save() {
+function Save({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -274,7 +282,7 @@ function Save() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna"}
+      {pending ? t.loput.savingEllipsis : t.loput.save}
     </button>
   );
 }

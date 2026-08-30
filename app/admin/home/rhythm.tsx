@@ -1,4 +1,8 @@
 import { formatMoney } from "@/lib/money";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { formatMonthShortIn } from "@/lib/i18n/labels";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { seriesColor } from "@/components/restoflow/dashboard-ui";
 import {
   WEEKDAY_LABELS,
@@ -26,7 +30,15 @@ import {
  * pelkkä ääriviiva: siltä ei puutu mitään, se ei vain ole vielä
  * tullut.
  */
-export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
+export function Rhythm({
+  locale,
+  t,
+  rhythm,
+}: {
+  locale: AppLocale;
+  t: AdminText;
+  rhythm: SpendRhythm;
+}) {
   /*
    * Tyhjä kuukausi piirretään silti.
    *
@@ -39,7 +51,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
 
   return (
     <section
-      aria-label="Kulurytmi"
+      aria-label={t.loput.spendRhythm}
       className="px-[18px] pb-4 pt-[15px]"
       style={{
         background: "var(--rf-card)",
@@ -50,7 +62,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
     >
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h3 className="text-[15px] font-bold tracking-[-0.0075em]">
-          Kulurytmi
+          {t.loput.spendRhythm}
         </h3>
 
         {/*
@@ -59,12 +71,12 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
           sivulla jossa kuukausi vaihtuu yläpalkista.
         */}
         <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-          {monthName(rhythm)}
+          {monthName(rhythm, locale)}
           {empty
             ? " · ei ostoja"
             : rhythm.activeDays === 1
-              ? " · 1 ostopäivä"
-              : ` · ${rhythm.activeDays} ostopäivää`}
+              ? t.loput.oneBuyingDay
+              : fill(t.loput.buyingDays, { maara: String(rhythm.activeDays) })}
         </p>
       </div>
 
@@ -76,6 +88,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
       <ol className="mt-[14px] flex h-[84px] items-end gap-[3px]">
         {rhythm.days.map((day, index) => (
           <Column
+            t={t}
             key={day.date}
             day={day}
             max={rhythm.maxCents}
@@ -102,9 +115,7 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">
         {empty ? (
-          <p style={{ color: "var(--rf-text-3)" }}>
-            Rytmi näkyy kun kuukaudessa on ostoja useammalta päivältä.
-          </p>
+          <p style={{ color: "var(--rf-text-3)" }}>{t.loput.rhythmNeedsData}</p>
         ) : rhythm.peakWeekday ? (
           <p style={{ color: "var(--rf-text-2)" }}>
             <strong className="font-bold" style={{ color: "var(--rf-text)" }}>
@@ -114,16 +125,14 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
             {WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "la" ||
             WEEKDAY_LABELS[rhythm.peakWeekday.weekday - 1] === "su"
               ? "viikonlopulle"
-              : `${rhythm.peakWeekday.label}sin`}
+              : fill(t.loput.peakWeekday, { paiva: rhythm.peakWeekday.label })}
           </p>
         ) : (
           /*
            * Vaikeneminen on tulos sekin. Ilman tätä lausetta lukija
            * jäisi arvailemaan onko rytmiä etsitty vai ei.
            */
-          <p style={{ color: "var(--rf-text-3)" }}>
-            Kulut jakautuvat tasaisesti viikonpäiville
-          </p>
+          <p style={{ color: "var(--rf-text-3)" }}>{t.loput.evenAcrossWeek}</p>
         )}
 
         {rhythm.busiestDay && rhythm.busiestDay.cents > 0 ? (
@@ -142,10 +151,12 @@ export function Rhythm({ rhythm }: { rhythm: SpendRhythm }) {
 // ---------------------------------------------------------------------------
 
 function Column({
+  t,
   day,
   max,
   index,
 }: {
+  t: AdminText;
   day: SpendDay;
   max: number;
   index: number;
@@ -162,7 +173,7 @@ function Column({
   const weekend = day.weekday >= 6;
 
   const label = day.isFuture
-    ? `${day.day}. — ei vielä`
+    ? fill(t.loput.dayNothingYet, { paiva: String(day.day) })
     : `${day.day}. ${formatMoney(day.cents)}${day.receipts > 0 ? ` · ${day.receipts} kuittia` : ""}`;
 
   return (
@@ -220,24 +231,9 @@ function Column({
 
 // ---------------------------------------------------------------------------
 
-const MONTHS = [
-  "Tammikuu",
-  "Helmikuu",
-  "Maaliskuu",
-  "Huhtikuu",
-  "Toukokuu",
-  "Kesäkuu",
-  "Heinäkuu",
-  "Elokuu",
-  "Syyskuu",
-  "Lokakuu",
-  "Marraskuu",
-  "Joulukuu",
-];
-
 /** Kuukauden nimi rytmin ensimmäisestä päivästä. */
-function monthName(rhythm: SpendRhythm): string {
+function monthName(rhythm: SpendRhythm, locale: AppLocale): string {
   const first = rhythm.days[0]?.date;
   if (!first) return "";
-  return MONTHS[Number(first.slice(5, 7)) - 1] ?? "";
+  return formatMonthShortIn(first.slice(0, 7), locale);
 }

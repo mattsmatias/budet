@@ -60,7 +60,10 @@ import {
 } from "@/lib/restoflow/clock-context";
 import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
 
-export const metadata = { title: "Yleiskatsaus" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.overview };
+}
 
 /**
  * Yleiskuva.
@@ -117,7 +120,7 @@ export default async function AdminDashboard({
   const CHART_RANGES = [
     { months: 3, label: "3 kk" },
     { months: 6, label: "6 kk" },
-    { months: 12, label: "Vuosi" },
+    { months: 12, label: t.loput.year },
   ] as const;
 
   const requestedChart = Number(params.kaavio);
@@ -166,8 +169,15 @@ export default async function AdminDashboard({
     ? {
         text:
           `${fill(t.yleiskatsaus.monthNoReceipts, { kuukausi: formatMonth(viewMonth, locale) })} ` +
-          `Viimeisin kirjattu kuitti on ${formatFullDate(elsewhere.date)}.`,
-        cta: `Avaa ${formatMonth(elsewhere.date.slice(0, 7), locale).toLowerCase()}`,
+          fill(t.loput.lastReceiptWas, {
+            paiva: formatFullDate(elsewhere.date),
+          }),
+        cta: fill(t.loput.openMonth, {
+          kuukausi: formatMonth(
+            elsewhere.date.slice(0, 7),
+            locale,
+          ).toLowerCase(),
+        }),
         href: `/admin?kuukausi=${elsewhere.date.slice(0, 7)}`,
       }
     : null;
@@ -461,7 +471,12 @@ export default async function AdminDashboard({
                 ? t.yleiskatsaus.addFirstReceipt
                 : comparison.baseMonth === null
                   ? t.yleiskatsaus.noComparison
-                  : `${formatMoney(periodTotals(receipts, comparison.baseMonth).totalCents)} ${monthWord(comparison.baseMonth, locale)}ssa`
+                  : fill(t.loput.inMonth, {
+                      summa: formatMoney(
+                        periodTotals(receipts, comparison.baseMonth).totalCents,
+                      ),
+                      kuukausi: monthWord(comparison.baseMonth, locale),
+                    })
           }
           trend={
             hasTrend ? (
@@ -544,7 +559,9 @@ export default async function AdminDashboard({
                 : undefined
             }
             linkLabel={
-              posCheck?.status === "mismatch" ? "Katso ero" : t.sanat.sales
+              posCheck?.status === "mismatch"
+                ? t.loput.seeDifference
+                : t.sanat.sales
             }
           />
         ) : (
@@ -622,7 +639,7 @@ export default async function AdminDashboard({
           }
           icon={<RfIcon name="budget" size={17} />}
           href="/admin/budjetit"
-          linkLabel="Budjetit"
+          linkLabel={t.loput.budgetsTitle}
         />
 
         {onDuty !== null ? (
@@ -632,12 +649,21 @@ export default async function AdminDashboard({
             value={`${onDuty} / ${staffTotal}`}
             delta={
               upcomingToday > 0
-                ? { text: `${upcomingToday} tulossa` }
+                ? {
+                    text: fill(t.loput.upcomingToday, {
+                      maara: String(upcomingToday),
+                    }),
+                  }
                 : undefined
             }
             conclusion={
               nextToday
-                ? `Seuraava: ${users.find((u) => u.id === nextToday.sh.userId)?.name ?? "vuoro"} ${nextToday.sh.startTime}`
+                ? fill(t.loput.nextShift, {
+                    nimi:
+                      users.find((u) => u.id === nextToday.sh.userId)?.name ??
+                      t.loput.shiftFallback,
+                    aika: nextToday.sh.startTime,
+                  })
                 : onDuty === 0
                   ? t.yleiskatsaus.nobodyClockedIn
                   : t.yleiskatsaus.noMoreShiftsToday
@@ -645,7 +671,7 @@ export default async function AdminDashboard({
             tone="muted"
             icon={<RfIcon name="staff" size={17} />}
             href="/admin/tyovuorot"
-            linkLabel="Vuorot"
+            linkLabel={t.loput.shifts}
           />
         ) : (
           <StatCard
@@ -660,8 +686,8 @@ export default async function AdminDashboard({
             }
             conclusion={
               totalHours === null
-                ? "Vain kuluvalta kuukaudelta"
-                : "Leimauksista laskettu"
+                ? t.loput.currentMonthOnly
+                : t.loput.fromClockings
             }
             tone="muted"
             icon={<RfIcon name="clock" size={17} />}
@@ -834,7 +860,7 @@ export default async function AdminDashboard({
           items={items}
           canAddReceipt={can(role, "receipts.add")}
         />
-        <Rhythm rhythm={rhythm} />
+        <Rhythm locale={locale} t={t} rhythm={rhythm} />
       </div>
 
       {/*

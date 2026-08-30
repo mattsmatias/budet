@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { useCallback, useState, useTransition } from "react";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -23,10 +25,12 @@ import { formatMonth } from "@/lib/restoflow/expenses";
  * huonompi kuin natiivi, ja ulkonäkö ei ole sen arvoinen.
  */
 export function MonthPicker({
+  t,
   value: fallback,
   months,
   locale,
 }: {
+  t: AdminText;
   /** Kayttoliittyman kieli: kuukauden nimi tulee siita. */
   locale: AppLocale;
   /**
@@ -129,7 +133,7 @@ export function MonthPicker({
       onKeyDown={onKeyDown}
     >
       <StepButton
-        label="Edellinen kuukausi"
+        label={t.loput.previousMonth}
         icon="back"
         month={older}
         onSelect={select}
@@ -143,7 +147,9 @@ export function MonthPicker({
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Kuukausi: ${formatMonth(value, locale)}`}
+        aria-label={fill(t.loput.monthNamed, {
+          kuukausi: formatMonth(value, locale),
+        })}
         // Kiinteä korkeus eikä pehmuste: askelnapit ovat 40 px, ja
         // pehmusteesta laskettu korkeus jäi kolme pikseliä suuremmaksi.
         // Ero näkyi rivissä epätasaisuutena.
@@ -177,7 +183,7 @@ export function MonthPicker({
       </button>
 
       <StepButton
-        label="Seuraava kuukausi"
+        label={t.loput.nextMonth}
         icon="chevron"
         month={newer}
         onSelect={select}
@@ -186,7 +192,7 @@ export function MonthPicker({
       {open ? (
         <ul
           role="listbox"
-          aria-label="Kuukausi"
+          aria-label={t.loput.monthWord}
           className="rf-enter absolute right-0 top-[calc(100%+8px)] z-40 max-h-[19rem] w-52 overflow-y-auto p-1.5"
           style={{
             background: "var(--rf-card)",

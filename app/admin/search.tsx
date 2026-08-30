@@ -89,7 +89,7 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
     if (open) input.current?.focus();
   }, [open]);
 
-  const results = useMemo(() => match(items, query), [items, query]);
+  const results = useMemo(() => match(items, query, t), [items, query, t]);
 
   const go = (href: string) => {
     close();
@@ -109,8 +109,8 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Haku"
-        title={mac ? "Haku (⌘K)" : "Haku (Ctrl K)"}
+        aria-label={t.loput.searchWord}
+        title={mac ? t.loput.searchCmdK : t.loput.searchCtrlK}
         className="rf-press hidden w-[340px] shrink items-center gap-[9px] px-[13px] py-2 text-left text-[14px] xl:flex"
         style={{
           background: "var(--rf-inset)",
@@ -149,8 +149,8 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Haku"
-        title={mac ? "Haku (⌘K)" : "Haku (Ctrl K)"}
+        aria-label={t.loput.searchWord}
+        title={mac ? t.loput.searchCmdK : t.loput.searchCtrlK}
         className="rf-press flex h-10 w-10 shrink-0 items-center justify-center xl:hidden"
         style={{
           background: "var(--rf-inset)",
@@ -200,8 +200,8 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
                   go(results[active].href);
                 }
               }}
-              placeholder="Etsi…"
-              aria-label="Haku"
+              placeholder={t.loput.searchPlaceholder}
+              aria-label={t.loput.searchWord}
               className="w-full bg-transparent text-[15px] outline-none"
             />
             <kbd
@@ -292,11 +292,13 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
  * Tyhjä haku näyttää sivut. Se on tyhjän tilan tehtävä: kertoa mitä
  * täällä voi tehdä, ei olla tyhjä.
  */
-function match(items: SearchItem[], query: string): SearchItem[] {
+function match(items: SearchItem[], query: string, t: AdminText): SearchItem[] {
   const needle = query.trim().toLowerCase();
 
   if (needle === "") {
-    return items.filter((item) => item.group === "Sivu").slice(0, LIMIT);
+    return items
+      .filter((item) => item.group === t.kuori.groupPage)
+      .slice(0, LIMIT);
   }
 
   return items

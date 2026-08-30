@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteReceipt, reviewReceipt, type AdminState } from "../actions";
@@ -18,9 +19,11 @@ const initial: AdminState = {};
  * hyväksytty mutta vanhoilla arvoilla.
  */
 export function ReviewPanel({
+  t,
   nimet,
   receipt,
 }: {
+  t: AdminText;
   nimet: Labels;
   receipt: Receipt;
 }) {
@@ -56,7 +59,7 @@ export function ReviewPanel({
         }}
       >
         <RfIcon name="check" size={16} />
-        Tarkista
+        {t.loput.check}
       </button>
     );
   }
@@ -66,12 +69,12 @@ export function ReviewPanel({
       <input type="hidden" name="receiptId" value={receipt.id} />
 
       <Field
-        label="Toimittaja"
+        label={t.loput.supplier}
         name="supplier"
         defaultValue={receipt.supplierName}
       />
       <Field
-        label="Päivämäärä"
+        label={t.loput.date}
         name="date"
         type="date"
         defaultValue={receipt.date}
@@ -79,7 +82,7 @@ export function ReviewPanel({
 
       <div className="grid grid-cols-2 gap-3">
         <Field
-          label="Yhteensä"
+          label={t.loput.total}
           name="total"
           inputMode="decimal"
           defaultValue={euros(receipt.totalCents)}
@@ -96,13 +99,13 @@ export function ReviewPanel({
       </div>
 
       <SelectField
-        label="Kategoria"
+        label={t.loput.category}
         name="category"
         defaultValue={receipt.category}
         options={Object.entries(nimet.categories)}
       />
       <SelectField
-        label="Maksutapa"
+        label={t.loput.paymentMethod}
         name="payment"
         defaultValue={receipt.paymentMethod}
         options={Object.entries(nimet.payments)}
@@ -135,13 +138,13 @@ export function ReviewPanel({
       <div className="grid gap-2.5 sm:grid-cols-3">
         <ActionButton
           value="approve"
-          label="Hyväksy"
+          label={t.loput.approve}
           background="var(--rf-green)"
           color="#fff"
         />
         <ActionButton
           value="reject"
-          label="Jätä jonoon"
+          label={t.loput.leaveInQueue}
           background="var(--rf-inset)"
           color="var(--rf-text)"
         />
@@ -155,7 +158,7 @@ export function ReviewPanel({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Peruuta
+          {t.loput.cancel}
         </button>
       </div>
 
@@ -163,8 +166,7 @@ export function ReviewPanel({
         className="text-[12px] leading-relaxed"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Kategorian muutos kirjataan toimittajalle. Kun sama korjaus toistuu,
-        Kate ehdottaa sitä jatkossa.
+        {t.loput.categoryChangeLearned}
       </p>
     </form>
   );
@@ -176,7 +178,13 @@ export function ReviewPanel({
  * Erillinen lomake, koska poisto on peruuttamaton eikä se saa olla
  * klikkauksen päässä tarkistuksesta.
  */
-export function DeleteReceipt({ receiptId }: { receiptId: string }) {
+export function DeleteReceipt({
+  t,
+  receiptId,
+}: {
+  t: AdminText;
+  receiptId: string;
+}) {
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -191,7 +199,7 @@ export function DeleteReceipt({ receiptId }: { receiptId: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Poista
+        {t.loput.remove}
       </button>
     );
   }
@@ -208,7 +216,7 @@ export function DeleteReceipt({ receiptId }: { receiptId: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Poista lopullisesti
+        {t.loput.removeForGood}
       </button>
       <button
         type="button"
@@ -216,7 +224,7 @@ export function DeleteReceipt({ receiptId }: { receiptId: string }) {
         className="rf-press px-3 py-1.5 text-[13px] font-medium"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Peruuta
+        {t.loput.cancel}
       </button>
     </form>
   );

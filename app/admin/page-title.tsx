@@ -15,23 +15,23 @@ import type { AdminText } from "@/lib/i18n/admin-text";
  * Pisin osuma voittaa, jotta /admin/kuitit/uusi saa nimensä
  * Kuiteilta eikä Yleiskatsaukselta.
  */
-const EXTRA: { href: string; label: string }[] = [
-  { href: "/admin/havainnot", label: "Havainnot" },
-  { href: "/admin/ilmoitukset", label: "Ilmoitukset" },
-  { href: "/admin/asetukset", label: "Asetukset" },
-  { href: "/admin/myynti", label: "Myynti" },
-  { href: "/admin/toimittajat", label: "Toimittajat" },
-  { href: "/admin/lisaa", label: "Lisää" },
+const lisasivut = (t: AdminText): { href: string; label: string }[] => [
+  { href: "/admin/havainnot", label: t.loput.insights },
+  { href: "/admin/ilmoitukset", label: t.loput.notifications },
+  { href: "/admin/asetukset", label: t.loput.settings },
+  { href: "/admin/myynti", label: t.loput.sales },
+  { href: "/admin/toimittajat", label: t.loput.suppliersTitle },
+  { href: "/admin/lisaa", label: t.loput.more },
   /*
    * Kuitin lisäys on oma nimensä.
    *
-   * Pisin osuma antaisi sille "Kuitit", ja lomake näyttäisi
+   * Pisin osuma antaisi sille t.loput.receiptsWord, ja lomake näyttäisi
    * kuittilistalta. Sivun nimi on ainoa asia joka erottaa ne, kun
    * sivu ei enää kirjoita omaa otsikkoaan.
    */
-  { href: "/admin/kuitit/uusi", label: "Uusi kuitti" },
+  { href: "/admin/kuitit/uusi", label: t.loput.newReceipt },
   /* Toimintaloki ei ole valikossa: se löytyy asetuksista. */
-  { href: "/admin/loki", label: "Toimintaloki" },
+  { href: "/admin/loki", label: t.loput.activityLog },
 ];
 
 export function PageTitle({ fallback, t }: { fallback: string; t: AdminText }) {
@@ -39,7 +39,7 @@ export function PageTitle({ fallback, t }: { fallback: string; t: AdminText }) {
 
   const routes = [
     ...ADMIN_NAV.map((e) => ({ href: e.href, label: t.nav[e.key] })),
-    ...EXTRA,
+    ...lisasivut(t),
   ];
 
   const match = routes

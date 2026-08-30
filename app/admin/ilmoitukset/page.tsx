@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -9,7 +11,10 @@ import { type Alert } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Ilmoitukset" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.loput.notifications };
+}
 
 /**
  * Ilmoitukset.
@@ -31,6 +36,7 @@ export const metadata = { title: "Ilmoitukset" };
  * ilmoitus jäisi roikkumaan senkin jälkeen kun asia on hoidettu.
  */
 export default async function NotificationsPage() {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const data = await adminContext("/admin/ilmoitukset");
@@ -62,15 +68,17 @@ export default async function NotificationsPage() {
     <div className="rf-enter space-y-5">
       <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {alerts.length === 0
-          ? "Ei mitään huomautettavaa"
+          ? t.loput.nothingToNote
           : `${alerts.length} ${alerts.length === 1 ? "asia" : "asiaa"} vaatii huomiota` +
-            (critical.length > 0 ? ` · ${critical.length} kiireellistä` : "")}
+            (critical.length > 0
+              ? fill(t.loput.urgentSuffix, { maara: String(critical.length) })
+              : "")}
       </p>
 
       {alerts.length === 0 ? (
         <EmptyState
-          title="Kaikki kunnossa"
-          description="Kuitit on käsitelty, vuoroilla on tekijät eikä määräaikoja ole ohitettu. Ilmoitukset ilmestyvät tähän itsestään kun jotain vaatii huomiota."
+          title={t.loput.allInOrder}
+          description={t.loput.allInOrderBody}
         />
       ) : (
         <>
@@ -83,16 +91,16 @@ export default async function NotificationsPage() {
           */}
           {critical.length > 0 ? (
             <Ryhma
-              title="Vaatii huomiota nyt"
-              subtitle="Nämä eivät odota huomiseen"
+              title={t.loput.needsAttentionNow}
+              subtitle={t.loput.notTomorrow}
               alerts={critical}
             />
           ) : null}
 
           {rest.length > 0 ? (
             <Ryhma
-              title="Muut huomiot"
-              subtitle="Hoidettavissa kun ehtii"
+              title={t.loput.otherNotes}
+              subtitle={t.loput.whenYouHaveTime}
               alerts={rest}
             />
           ) : null}
@@ -109,7 +117,7 @@ export default async function NotificationsPage() {
       {reasons.length > 0 ? (
         <Card>
           <CardHeader
-            title="Miksi kuitit ovat jonossa"
+            title={t.loput.whyInQueue}
             subtitle={`${review.length} ${review.length === 1 ? "kuitti" : "kuittia"} odottaa tarkistusta`}
           />
           <ul className="space-y-2">
@@ -132,8 +140,7 @@ export default async function NotificationsPage() {
         className="text-[12px] leading-relaxed"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Ilmoitukset johdetaan aineiston tilasta joka latauksella, eikä niitä
-        tallenneta. Kun asia on hoidettu, ilmoitus katoaa itsestään.
+        {t.loput.alertsDerived}
       </p>
     </div>
   );
