@@ -714,7 +714,11 @@ export default async function AdminDashboard({
         vierekkäin ne luetaan yhtenä silmäyksenä.
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-        <Panel title={t.sanat.expenseBreakdown} href="/admin/kulut">
+        <Panel
+          title={t.sanat.expenseBreakdown}
+          href="/admin/kulut"
+          linkLabel={t.sanat.expenses}
+        >
           {categories.length === 0 ? (
             <PanelEmpty
               {...(emptyForMonth ?? {

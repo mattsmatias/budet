@@ -73,7 +73,7 @@ export function Panel({
   title,
   subtitle,
   href,
-  linkLabel = "Kaikki",
+  linkLabel,
   action,
   children,
 }: {
@@ -501,106 +501,4 @@ export interface AttentionEntry {
   title: string;
   detail: string;
   href: string;
-}
-
-/**
- * "Vaatii huomiota" -paneeli.
- *
- * Lämmin pohja erottaa sen muusta sivusta ilman että se huutaa.
- * Punainen paneeli tekisi jokaisesta tarkistamattomasta kuitista
- * hälytyksen, ja käyttäjä oppisi ohittamaan sen viikossa.
- *
- * Kohteet ovat rinnakkain omina kortteinaan: pystylista näyttää
- * jonolta jota pitää käydä läpi järjestyksessä, kortit näyttävät
- * asioilta joista voi valita.
- */
-export function AttentionPanel({
-  items,
-  href = "/admin/ilmoitukset",
-}: {
-  items: AttentionEntry[];
-  href?: string;
-}) {
-  const dot = (severity: AttentionEntry["severity"]) =>
-    severity === "critical"
-      ? "var(--rf-red)"
-      : severity === "warning"
-        ? "var(--rf-amber)"
-        : "var(--rf-accent)";
-
-  return (
-    <section
-      className="px-[18px] pb-4 pt-[15px]"
-      style={{
-        background: "var(--rf-amber-bg)",
-        border: "1px solid rgba(245, 158, 11, 0.22)",
-        borderRadius: "var(--rf-r-card)",
-      }}
-    >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2.5 text-[15px] font-bold tracking-[-0.0075em]">
-          <span
-            aria-hidden="true"
-            className="flex h-7 w-7 items-center justify-center"
-            style={{
-              background: "var(--rf-amber)",
-              color: "var(--rf-on-accent)",
-              borderRadius: "50%",
-            }}
-          >
-            <RfIcon name="alert" size={16} strokeWidth={2} />
-          </span>
-          Vaatii huomiota · {items.length}
-        </h2>
-
-        <Link
-          href={href}
-          className="shrink-0 whitespace-nowrap text-[13px] font-medium"
-          style={{ color: "var(--rf-text-2)" }}
-        >
-          Näytä kaikki →
-        </Link>
-      </div>
-
-      <ul className="rf-stagger grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {items.slice(0, 6).map((item) => (
-          <li key={item.id}>
-            <Link
-              href={item.href}
-              className="rf-press flex h-full items-start gap-2.5 px-3.5 py-3"
-              style={{
-                background: "var(--rf-card)",
-                borderRadius: "var(--rf-r-control)",
-              }}
-            >
-              <span
-                aria-hidden="true"
-                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                style={{ background: dot(item.severity) }}
-              />
-
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13.5px] font-medium leading-snug">
-                  {item.title}
-                </span>
-                <span
-                  className="mt-0.5 block text-[12px] leading-snug"
-                  style={{ color: "var(--rf-text-2)" }}
-                >
-                  {item.detail}
-                </span>
-              </span>
-
-              <span
-                className="mt-0.5 shrink-0"
-                style={{ color: "var(--rf-text-3)" }}
-              >
-                <RfIcon name="chevron" size={14} />
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }

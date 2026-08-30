@@ -195,7 +195,14 @@ export default async function BudgetsPage({
                   </div>
 
                   <div className="mt-2">
-                    <BudgetBar ratio={p.ratio} status={p.status} />
+                    <BudgetBar
+                      ratio={p.ratio}
+                      status={p.status}
+                      emptyLabel={t.loput.noBudgetSet}
+                      usedLabel={fill(t.loput.percentOfBudget, {
+                        osuus: String(Math.round((p.ratio ?? 0) * 100)),
+                      })}
+                    />
                   </div>
 
                   <div className="mt-1.5 flex flex-wrap justify-between gap-3 text-[13px]">

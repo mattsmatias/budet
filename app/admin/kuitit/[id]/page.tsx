@@ -495,6 +495,7 @@ export default async function AdminReceiptDetailPage({
 
             {imageUrls.length > 0 ? (
               <ReceiptImage
+                t={t}
                 urls={imageUrls}
                 alt={fill(t.viimeiset.receiptNamed, {
                   nimi: receipt.supplierName,

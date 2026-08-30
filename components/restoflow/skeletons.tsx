@@ -1,3 +1,4 @@
+import { LoadingLabel } from "./loading-label";
 /**
  * Latausluurangot.
  *
@@ -35,7 +36,7 @@ function Otsikko() {
 export function CardsAndListSkeleton({ cards = 4 }: { cards?: number }) {
   return (
     <div className="space-y-5 md:space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <Otsikko />
 
@@ -58,7 +59,7 @@ export function CardsAndListSkeleton({ cards = 4 }: { cards?: number }) {
 export function ListSkeleton({ cards = 0 }: { cards?: number }) {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <Otsikko />
 
@@ -91,7 +92,7 @@ export function ListSkeleton({ cards = 0 }: { cards?: number }) {
 export function TwoColumnSkeleton() {
   return (
     <div className="rf-enter space-y-4" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,244px)_minmax(0,1fr)] lg:gap-6">
         <Rivi height="h-[320px]" />
@@ -105,7 +106,7 @@ export function TwoColumnSkeleton() {
 export function CalendarSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <Otsikko />
 
@@ -130,7 +131,7 @@ export function CalendarSkeleton() {
 export function DetailSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <div className="rf-skeleton-block h-5 w-56" />
 
@@ -149,7 +150,7 @@ export function DetailSkeleton() {
 export function StackSkeleton({ cards = 3 }: { cards?: number }) {
   return (
     <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <div className="rf-skeleton-block h-5 w-56" />
 
@@ -164,7 +165,7 @@ export function StackSkeleton({ cards = 3 }: { cards?: number }) {
 export function TableSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <Otsikko />
       <Rivi height="h-[620px]" />
@@ -180,7 +181,7 @@ export function NarrowSkeleton() {
       aria-busy="true"
       aria-live="polite"
     >
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       <div className="rf-skeleton-block h-5 w-40" />
       <Rivi height="h-72" />

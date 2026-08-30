@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { RfIcon } from "@/components/restoflow/icons";
 
 /**
@@ -20,7 +22,15 @@ import { RfIcon } from "@/components/restoflow/icons";
  * ladattava uudelleen jos se on ollut kauan auki. Se on parempi kuin
  * pysyvä linkki ravintolan kuittikuvaan.
  */
-export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
+export function ReceiptImage({
+  t,
+  urls,
+  alt,
+}: {
+  t: AdminText;
+  urls: string[];
+  alt: string;
+}) {
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState<Set<number>>(new Set());
@@ -46,8 +56,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
     <>
       {failed.has(index) ? (
         <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-          Sivua ei voitu ladata. Osoite on voinut vanhentua — lataa sivu
-          uudelleen.
+          {t.kuvake.pageLoadFailed}
         </p>
       ) : isPdf ? (
         <a
@@ -62,7 +71,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
           }}
         >
           <RfIcon name="file" size={17} />
-          Avaa PDF
+          {t.kuvake.openPdf}
         </a>
       ) : (
         <button
@@ -73,7 +82,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
             borderRadius: "var(--rf-r-control)",
             background: "var(--rf-inset)",
           }}
-          aria-label={`Suurenna ${label.toLowerCase()}`}
+          aria-label={fill(t.kuvake.zoomNamed, { nimi: label.toLowerCase() })}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -103,7 +112,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
                 outlineOffset: "1px",
                 opacity: i === index ? 1 : 0.6,
               }}
-              aria-label={`Näytä sivu ${i + 1}`}
+              aria-label={fill(t.kuvake.showPage, { numero: String(i + 1) })}
               aria-current={i === index}
             >
               {pageUrl.includes(".pdf") ? (
@@ -164,7 +173,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
                   e.stopPropagation();
                   step(-1);
                 }}
-                aria-label="Edellinen sivu"
+                aria-label={t.kuvake.previousPage}
                 className="absolute left-4 flex h-11 w-11 items-center justify-center"
                 style={{
                   background: "rgba(255,255,255,0.16)",
@@ -181,7 +190,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
                   e.stopPropagation();
                   step(1);
                 }}
-                aria-label="Seuraava sivu"
+                aria-label={t.kuvake.nextPage}
                 className="absolute right-4 flex h-11 w-11 items-center justify-center"
                 style={{
                   background: "rgba(255,255,255,0.16)",
@@ -201,7 +210,7 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Sulje"
+            aria-label={t.kuvake.close}
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center"
             style={{
               background: "rgba(255,255,255,0.16)",

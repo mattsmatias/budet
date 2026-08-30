@@ -158,7 +158,7 @@ export function MetricCard({
   tileTone,
   icon,
   href,
-  linkLabel = "Näytä",
+  linkLabel,
   highlight,
 }: {
   label: string;
@@ -480,8 +480,13 @@ export function BarRow({
   icon?: ReactNode;
   /** Vaimennettu palkki: vertailukohta, ei tarkastelun kohde. */
   muted?: boolean;
-  /** Mihin osuus suhteutuu. Oletus: kirjatut kulut. */
-  shareLabel?: string;
+  /**
+   * Palkin selite ruudunlukijalle, valmiiksi kaannettyna.
+   *
+   * Teksti tulee kutsujalta eika taalta: sama komponentti piirretaan
+   * kolmessa nakymassa, joilla on eri sanakirja.
+   */
+  shareLabel: string;
 }) {
   const pct = Math.round(share * 100);
 
@@ -504,7 +509,7 @@ export function BarRow({
         className="mt-2 h-1.5 w-full overflow-hidden"
         style={{ background: "var(--rf-inset)", borderRadius: 999 }}
         role="img"
-        aria-label={`${label}: ${pct} prosenttia ${shareLabel ?? "kirjatuista kuluista"}`}
+        aria-label={shareLabel}
       >
         <div
           className="h-full"
@@ -563,7 +568,7 @@ export function EmptyState({
  * puuttuva selite — kirjautunut käyttäjä ei saa lukea että hänen omat
  * numeronsa ovat keksittyjä.
  */
-export function ScopeNotice({ children }: { children?: ReactNode }) {
+export function ScopeNotice({ children }: { children: ReactNode }) {
   return (
     <div
       className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
@@ -576,14 +581,7 @@ export function ScopeNotice({ children }: { children?: ReactNode }) {
       <span aria-hidden="true" className="mt-0.5 shrink-0 font-semibold">
         i
       </span>
-      <p>
-        {children ?? (
-          <>
-            Luvut tarkoittavat <strong>Kateen kirjattuja kuluja</strong> —
-            sovellus ei näe kassaa eikä pankkitiliä.
-          </>
-        )}
-      </p>
+      <p>{children}</p>
     </div>
   );
 }
@@ -666,9 +664,15 @@ export function CategoryBubble({
 export function BudgetBar({
   ratio,
   status,
+  emptyLabel,
+  usedLabel,
 }: {
   ratio: number | null;
   status: "ok" | "warning" | "exceeded" | "none";
+  /** Selite kun budjettia ei ole asetettu. */
+  emptyLabel: string;
+  /** Selite kaytetylle osuudelle, valmiiksi kaannettyna. */
+  usedLabel: string;
 }) {
   if (ratio === null) {
     return (
@@ -676,7 +680,7 @@ export function BudgetBar({
         className="h-1.5 w-full"
         style={{ background: "var(--rf-inset)", borderRadius: 999 }}
         role="img"
-        aria-label="Ei budjettia asetettu"
+        aria-label={emptyLabel}
       />
     );
   }
@@ -693,7 +697,7 @@ export function BudgetBar({
       className="relative h-1.5 w-full overflow-hidden"
       style={{ background: "var(--rf-inset)", borderRadius: 999 }}
       role="img"
-      aria-label={`${Math.round(ratio * 100)} prosenttia budjetista`}
+      aria-label={usedLabel}
     >
       <div
         className="h-full"

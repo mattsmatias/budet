@@ -210,6 +210,10 @@ export default async function ExpensesPage({
                   label={nimet.categories[c.category]}
                   valueCents={c.totalCents}
                   share={c.share}
+                  shareLabel={fill(t.loput.shareOfExpenses, {
+                    nimi: nimet.categories[c.category],
+                    osuus: String(Math.round(c.share * 100)),
+                  })}
                   meta={receiptCountLabel(c.receiptCount, locale)}
                 />
               ))}
