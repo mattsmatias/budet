@@ -1,3 +1,5 @@
+import { LoadingLabel } from "@/components/restoflow/loading-label";
+
 /**
  * Latausnäkymä hallintasivuille.
  *
@@ -19,7 +21,7 @@
 export default function AdminLoading() {
   return (
     <div className="space-y-5 md:space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan…</span>
+      <LoadingLabel />
 
       {/*
         Neljä avainlukua.

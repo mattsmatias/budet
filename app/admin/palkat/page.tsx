@@ -121,6 +121,7 @@ export default async function PayrollPage({
 
         <div className="flex flex-wrap items-center gap-2">
           <PeriodPicker
+            t={t}
             month={viewMonth}
             current={chosen.key}
             options={options.map((o) => ({ key: o.key, label: o.label }))}

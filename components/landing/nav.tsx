@@ -101,9 +101,15 @@ export function LandingNav({
         }}
       >
         <div className="flex items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
-          <Link href={home} className="flex shrink-0 items-center gap-2.5" aria-label={t.nav.home}>
+          <Link
+            href={home}
+            className="flex shrink-0 items-center gap-2.5"
+            aria-label={t.nav.home}
+          >
             <Logo size={26} />
-            <span className="text-[17px] font-bold tracking-[-0.02em]">Kate</span>
+            <span className="text-[17px] font-bold tracking-[-0.02em]">
+              Kate
+            </span>
           </Link>
 
           <nav aria-label={t.nav.sections} className="hidden lg:block">
@@ -122,19 +128,34 @@ export function LandingNav({
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <LanguagePicker locale={locale} page={page} label={t.nav.language} />
+            <LanguagePicker
+              locale={locale}
+              page={page}
+              label={t.nav.language}
+            />
 
             {appHref !== null ? (
-              <Link href={appHref} className="bd-btn bd-btn-primary !py-[11px] !text-[14px]">
+              <Link
+                href={appHref}
+                className="bd-btn bd-btn-primary !py-[11px] !text-[14px]"
+              >
                 {t.nav.openApp}
-                <span className="bd-arrow" aria-hidden="true">→</span>
+                <span className="bd-arrow" aria-hidden="true">
+                  →
+                </span>
               </Link>
             ) : (
               <>
-                <Link href="/kirjaudu" className="bd-navlink rounded-[9px] px-3 py-2 text-[14px] font-medium">
+                <Link
+                  href="/kirjaudu"
+                  className="bd-navlink rounded-[9px] px-3 py-2 text-[14px] font-medium"
+                >
                   {t.nav.login}
                 </Link>
-                <Link href="/rekisteroidy" className="bd-btn bd-btn-primary !py-[11px] !text-[14px]">
+                <Link
+                  href="/rekisteroidy"
+                  className="bd-btn bd-btn-primary !py-[11px] !text-[14px]"
+                >
                   {t.nav.start}
                 </Link>
               </>
@@ -147,11 +168,16 @@ export function LandingNav({
             aria-expanded={open}
             aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] lg:hidden"
-            style={{ border: "1px solid var(--bd-line-2)", background: "var(--bd-card)" }}
+            style={{
+              border: "1px solid var(--bd-line-2)",
+              background: "var(--bd-card)",
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path
-                d={open ? "M4 4l10 10M14 4L4 14" : "M2.5 5h13M2.5 9h13M2.5 13h13"}
+                d={
+                  open ? "M4 4l10 10M14 4L4 14" : "M2.5 5h13M2.5 9h13M2.5 13h13"
+                }
                 stroke="currentColor"
                 strokeWidth="1.7"
                 strokeLinecap="round"
@@ -162,7 +188,10 @@ export function LandingNav({
         </div>
 
         {open ? (
-          <div className="border-t px-3 pb-3 pt-2 lg:hidden" style={{ borderColor: "var(--bd-line)" }}>
+          <div
+            className="border-t px-3 pb-3 pt-2 lg:hidden"
+            style={{ borderColor: "var(--bd-line)" }}
+          >
             <ul className="flex flex-col">
               {links.map((link) => (
                 <li key={link.href}>
@@ -184,7 +213,10 @@ export function LandingNav({
                 </Link>
               ) : (
                 <>
-                  <Link href="/rekisteroidy" className="bd-btn bd-btn-primary w-full">
+                  <Link
+                    href="/rekisteroidy"
+                    className="bd-btn bd-btn-primary w-full"
+                  >
                     {t.nav.start}
                   </Link>
                   <Link href="/kirjaudu" className="bd-btn bd-btn-ghost w-full">
@@ -201,8 +233,14 @@ export function LandingNav({
               Kuusi lyhyttä nimeä mahtuu kahdelle riville, ja valittu on
               merkitty — silloin listan näkeminen riittää.
             */}
-            <div className="mt-3 border-t pt-3" style={{ borderColor: "var(--bd-line)" }}>
-              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.07em]" style={{ color: "var(--bd-text-3)" }}>
+            <div
+              className="mt-3 border-t pt-3"
+              style={{ borderColor: "var(--bd-line)" }}
+            >
+              <p
+                className="px-1 text-[11px] font-semibold uppercase tracking-[0.07em]"
+                style={{ color: "var(--bd-text-3)" }}
+              >
                 {t.nav.language}
               </p>
               <ul className="mt-1.5 flex flex-wrap gap-1">
@@ -216,7 +254,10 @@ export function LandingNav({
                       className="block rounded-[9px] px-3 py-2 text-[14px] font-medium"
                       style={
                         code === locale
-                          ? { background: "var(--bd-accent-bg)", color: "var(--bd-accent-strong)" }
+                          ? {
+                              background: "var(--bd-accent-bg)",
+                              color: "var(--bd-accent-strong)",
+                            }
                           : { color: "var(--bd-text-2)" }
                       }
                     >
@@ -262,7 +303,8 @@ function LanguagePicker({
       if (e.key === "Escape") setOpen(false);
     };
     const onClick = (e: MouseEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
+      if (box.current && !box.current.contains(e.target as Node))
+        setOpen(false);
     };
 
     document.addEventListener("keydown", onKey);
@@ -310,7 +352,11 @@ function LanguagePicker({
                 className="flex items-center justify-between rounded-[8px] px-3 py-2 text-[14px]"
                 style={
                   code === locale
-                    ? { background: "var(--bd-accent-bg)", color: "var(--bd-accent-strong)", fontWeight: 600 }
+                    ? {
+                        background: "var(--bd-accent-bg)",
+                        color: "var(--bd-accent-strong)",
+                        fontWeight: 600,
+                      }
                     : { color: "var(--bd-text)" }
                 }
               >
@@ -327,7 +373,13 @@ function LanguagePicker({
 
 function Globe() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
       <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" />
       <path
         d="M8 1.8c1.7 1.7 2.6 3.9 2.6 6.2S9.7 12.5 8 14.2C6.3 12.5 5.4 10.3 5.4 8S6.3 3.5 8 1.8ZM2 8h12"
@@ -341,8 +393,20 @@ function Globe() {
 
 function Tick() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m3.5 8.5 3 3 6-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

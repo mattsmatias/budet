@@ -856,6 +856,7 @@ export default async function AdminDashboard({
       */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <StatusHeader
+          t={t}
           status={status}
           items={items}
           canAddReceipt={can(role, "receipts.add")}

@@ -73,7 +73,11 @@ export function ListSkeleton({ cards = 0 }: { cards?: number }) {
       {/* Suodatinrivi ja haku ovat molemmilla listasivuilla. */}
       <div className="flex flex-wrap gap-2">
         {[64, 72, 88, 68, 76].map((w, i) => (
-          <div key={i} className="rf-skeleton-block h-[30px]" style={{ width: w }} />
+          <div
+            key={i}
+            className="rf-skeleton-block h-[30px]"
+            style={{ width: w }}
+          />
         ))}
       </div>
 
@@ -171,7 +175,11 @@ export function TableSkeleton() {
 /** Kapea lomake keskellä: uusi kuitti. */
 export function NarrowSkeleton() {
   return (
-    <div className="mx-auto max-w-lg space-y-5" aria-busy="true" aria-live="polite">
+    <div
+      className="mx-auto max-w-lg space-y-5"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <span className="sr-only">Ladataan…</span>
 
       <div className="rf-skeleton-block h-5 w-40" />

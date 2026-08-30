@@ -61,7 +61,9 @@ export function SectionHeading({
         ) : null}
       </div>
 
-      {action ? <div className="flex flex-wrap items-center gap-2">{action}</div> : null}
+      {action ? (
+        <div className="flex flex-wrap items-center gap-2">{action}</div>
+      ) : null}
     </div>
   );
 }
@@ -106,9 +108,14 @@ export function Panel({
     >
       <div className="mb-[13px] flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{title}</h2>
+          <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+            {title}
+          </h2>
           {subtitle ? (
-            <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+            <p
+              className="mt-[3px] text-[12.5px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {subtitle}
             </p>
           ) : null}
@@ -160,7 +167,10 @@ export function PanelEmpty({
 }) {
   return (
     <div className="py-2">
-      <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+      <p
+        className="text-[13px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
         {text}
       </p>
 
@@ -326,7 +336,6 @@ export function Sparkline({
 
 // ---------------------------------------------------------------------------
 
-
 /**
  * Jakauman värit.
  *
@@ -415,18 +424,22 @@ export function Donut({
 
   // Siirtymät lasketaan valmiiksi: muuttujan kasvattaminen renderin
   // aikana tuottaa eri tuloksen eri renderöinneillä.
-  const arcs = slices.reduce<{ slice: DonutSlice; length: number; offset: number }[]>(
-    (all, slice) => {
-      const previous = all[all.length - 1];
-      const offset = previous ? previous.offset + previous.length : 0;
-      return [...all, { slice, length: slice.share * circumference, offset }];
-    },
-    [],
-  );
+  const arcs = slices.reduce<
+    { slice: DonutSlice; length: number; offset: number }[]
+  >((all, slice) => {
+    const previous = all[all.length - 1];
+    const offset = previous ? previous.offset + previous.length : 0;
+    return [...all, { slice, length: slice.share * circumference, offset }];
+  }, []);
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden="true"
+      >
         <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
           <circle
             cx={size / 2}
@@ -578,7 +591,10 @@ export function AttentionPanel({
                 </span>
               </span>
 
-              <span className="mt-0.5 shrink-0" style={{ color: "var(--rf-text-3)" }}>
+              <span
+                className="mt-0.5 shrink-0"
+                style={{ color: "var(--rf-text-3)" }}
+              >
                 <RfIcon name="chevron" size={14} />
               </span>
             </Link>

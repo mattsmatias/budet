@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Palkkakauden valinta.
@@ -7,10 +8,12 @@ import Link from "next/link";
  * jakaa ja selaimen paluunappi toimii. Ei selainkoodia lainkaan.
  */
 export function PeriodPicker({
+  t,
   month,
   current,
   options,
 }: {
+  t: AdminText;
   month: string;
   current: string;
   options: { key: string; label: string }[];
@@ -18,7 +21,7 @@ export function PeriodPicker({
   return (
     <div
       role="group"
-      aria-label="Palkkakausi"
+      aria-label={t.viimeiset.payPeriod}
       className="inline-flex items-center gap-0.5 p-1"
       style={{
         background: "var(--rf-inset)",

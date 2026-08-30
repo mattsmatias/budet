@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { createShiftByDrop } from "../planning-actions";
 import { type User } from "@/lib/restoflow/types";
@@ -29,7 +31,15 @@ import { Avatar } from "@/components/restoflow/ui";
  * lähes aina samaa vuoroa. Vuoro syntyy luonnoksena, joten väärä
  * arvaus ei mene kenellekään.
  */
-export function DragStaff({ nimet, users }: { nimet: Labels; users: User[] }) {
+export function DragStaff({
+  t,
+  nimet,
+  users,
+}: {
+  t: AdminText;
+  nimet: Labels;
+  users: User[];
+}) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const overRef = useRef<HTMLElement | null>(null);
@@ -136,7 +146,7 @@ export function DragStaff({ nimet, users }: { nimet: Labels; users: User[] }) {
       <p className="mb-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
         Raahaa työntekijä päivälle, niin vuoro syntyy luonnoksena hänen
         viimeisimmän vuoronsa kellonajoilla.
-        {pending ? " Luodaan…" : ""}
+        {pending ? " " + t.viimeiset.creating : ""}
       </p>
 
       <ul className="flex flex-wrap gap-2">
@@ -161,7 +171,7 @@ export function DragStaff({ nimet, users }: { nimet: Labels; users: User[] }) {
                 borderRadius: "var(--rf-r-control)",
                 opacity: dragging === user.id ? 0.5 : 1,
               }}
-              title={`Raahaa ${user.name} päivälle`}
+              title={fill(t.viimeiset.dragToDay, { nimi: user.name })}
             >
               <Avatar initials={user.initials} size={22} />
               <span className="text-[12.5px] font-semibold">{user.name}</span>

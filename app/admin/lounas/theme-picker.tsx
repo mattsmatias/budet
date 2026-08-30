@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { setLunchTheme, type LunchState } from "./actions";
@@ -21,9 +22,11 @@ const ORDER: LunchTheme[] = ["light", "dark", "classic"];
  * kuva ajautuisi erilleen heti kun jokin sävy muuttuu.
  */
 export function LunchThemePicker({
+  t,
   nimet,
   current,
 }: {
+  t: AdminText;
   nimet: Labels;
   current: LunchTheme;
 }) {
@@ -35,7 +38,7 @@ export function LunchThemePicker({
         className="text-[11px] font-medium uppercase"
         style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
       >
-        Julkisen sivun teema
+        {t.viimeiset.publicPageTheme}
       </p>
 
       <div className="mt-2 grid gap-2 sm:grid-cols-3">

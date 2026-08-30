@@ -69,7 +69,10 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
           type="button"
           onClick={() => setOpen(true)}
           className="rf-press block w-full overflow-hidden"
-          style={{ borderRadius: "var(--rf-r-control)", background: "var(--rf-inset)" }}
+          style={{
+            borderRadius: "var(--rf-r-control)",
+            background: "var(--rf-inset)",
+          }}
           aria-label={`Suurenna ${label.toLowerCase()}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -163,7 +166,11 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
                 }}
                 aria-label="Edellinen sivu"
                 className="absolute left-4 flex h-11 w-11 items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.16)", color: "#fff", borderRadius: "50%" }}
+                style={{
+                  background: "rgba(255,255,255,0.16)",
+                  color: "#fff",
+                  borderRadius: "50%",
+                }}
               >
                 <RfIcon name="back" size={20} />
               </button>
@@ -176,7 +183,11 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
                 }}
                 aria-label="Seuraava sivu"
                 className="absolute right-4 flex h-11 w-11 items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.16)", color: "#fff", borderRadius: "50%" }}
+                style={{
+                  background: "rgba(255,255,255,0.16)",
+                  color: "#fff",
+                  borderRadius: "50%",
+                }}
               >
                 <RfIcon name="chevron" size={20} />
               </button>
@@ -192,7 +203,11 @@ export function ReceiptImage({ urls, alt }: { urls: string[]; alt: string }) {
             onClick={() => setOpen(false)}
             aria-label="Sulje"
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.16)", color: "var(--rf-on-accent)", borderRadius: "50%" }}
+            style={{
+              background: "rgba(255,255,255,0.16)",
+              color: "var(--rf-on-accent)",
+              borderRadius: "50%",
+            }}
           >
             <span style={{ transform: "rotate(45deg)", display: "block" }}>
               <RfIcon name="plus" size={20} />

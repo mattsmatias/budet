@@ -385,6 +385,7 @@ export default async function LunchPage({
             {canManage ? (
               <div className="pt-2">
                 <LunchThemePicker
+                  t={t}
                   nimet={nimet}
                   current={restaurant.lunchTheme}
                 />

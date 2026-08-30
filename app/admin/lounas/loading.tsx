@@ -1,3 +1,5 @@
+import { LoadingLabel } from "@/components/restoflow/loading-label";
+
 /**
  * Lounassivun latausnäkymä.
  *
@@ -10,7 +12,7 @@
 export default function LunchLoading() {
   return (
     <div className="space-y-5" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Ladataan lounaslistaa…</span>
+      <LoadingLabel kind="lounas" />
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">

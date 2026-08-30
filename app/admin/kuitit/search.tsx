@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { RfIcon } from "@/components/restoflow/icons";
 
@@ -25,7 +26,13 @@ import { RfIcon } from "@/components/restoflow/icons";
  *   omaa merkintäänsä selaimen historiaan — muuten paluunuoli kävisi
  *   hakusanan läpi kirjain kerrallaan.
  */
-export function ReceiptSearch({ initial }: { initial: string }) {
+export function ReceiptSearch({
+  t,
+  initial,
+}: {
+  t: AdminText;
+  initial: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -71,7 +78,7 @@ export function ReceiptSearch({ initial }: { initial: string }) {
       </span>
 
       <label htmlFor="admin-search" className="sr-only">
-        Hae kuitteja
+        {t.viimeiset.searchReceipts}
       </label>
 
       <input
@@ -80,7 +87,7 @@ export function ReceiptSearch({ initial }: { initial: string }) {
         name="haku"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Toimittaja, tuote tai summa"
+        placeholder={t.viimeiset.searchReceiptsHint}
         className="w-full py-2.5 pl-10 pr-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
         style={{
           background: "var(--rf-card)",

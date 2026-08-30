@@ -416,7 +416,11 @@ function Row({
           </Link>
 
           {canManage ? (
-            <DeleteDay date={row.date} label={formatDay(row.date, locale)} />
+            <DeleteDay
+              t={t}
+              date={row.date}
+              label={formatDay(row.date, locale)}
+            />
           ) : null}
         </span>
       </td>

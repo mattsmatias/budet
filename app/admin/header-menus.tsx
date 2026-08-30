@@ -148,7 +148,7 @@ function NotificationMenu({
       label={
         alerts.length > 0
           ? fill(t.kuori2.alertsLabel, { maara: String(alerts.length) })
-          : "Huomiot"
+          : t.viimeiset.notesWord
       }
       badge={alerts.length}
       width={380}
@@ -287,7 +287,7 @@ function NotificationMenu({
             >
               {alerts.length > shown.length
                 ? fill(t.kuori2.showAllAlerts, { maara: String(alerts.length) })
-                : "Avaa huomiot"}{" "}
+                : t.viimeiset.openNotes}{" "}
               <span aria-hidden="true">→</span>
             </Link>
           ) : null}
@@ -336,7 +336,7 @@ function UserMenu({
 }) {
   return (
     <Dropdown
-      label={`Tunnus: ${userName}`}
+      label={fill(t.viimeiset.accountNamed, { nimi: userName })}
       width={240}
       open={open}
       onToggle={onToggle}

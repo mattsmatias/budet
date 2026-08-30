@@ -46,7 +46,8 @@ export function LanguagePicker({
       if (e.key === "Escape") setOpen(false);
     };
     const onClick = (e: MouseEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
+      if (box.current && !box.current.contains(e.target as Node))
+        setOpen(false);
     };
 
     document.addEventListener("keydown", onKey);
@@ -64,11 +65,14 @@ export function LanguagePicker({
 
   const all = localesForMenu();
   const q = query.trim().toLowerCase();
-  const shown = q === ""
-    ? all
-    : all.filter(
-        (l) => l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q),
-      );
+  const shown =
+    q === ""
+      ? all
+      : all.filter(
+          (l) =>
+            l.name.toLowerCase().includes(q) ||
+            l.code.toLowerCase().includes(q),
+        );
 
   function pick(code: AppLocale) {
     setOpen(false);
@@ -187,7 +191,13 @@ export function LanguagePicker({
 
 function Globe() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
       <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" />
       <path
         d="M8 1.8c1.7 1.7 2.6 3.9 2.6 6.2S9.7 12.5 8 14.2C6.3 12.5 5.4 10.3 5.4 8S6.3 3.5 8 1.8ZM2 8h12"

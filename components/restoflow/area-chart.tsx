@@ -53,7 +53,9 @@ export function AreaChart({
   /** Korostettava piste, oletuksena viimeinen jolla on arvo. */
   highlight?: number;
 }) {
-  const all = series.flatMap((s) => s.points).filter((v): v is number => v !== null);
+  const all = series
+    .flatMap((s) => s.points)
+    .filter((v): v is number => v !== null);
   if (all.length < 2) return null;
 
   /*
@@ -82,7 +84,14 @@ export function AreaChart({
     >
       <defs>
         {series.map((s, i) => (
-          <linearGradient key={i} id={`rf-area-${i}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient
+            key={i}
+            id={`rf-area-${i}`}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
             <stop offset="0%" stopColor={s.color} stopOpacity="0.28" />
             <stop offset="100%" stopColor={s.color} stopOpacity="0" />
           </linearGradient>
@@ -122,7 +131,10 @@ export function AreaChart({
         if (!path) return null;
         return (
           <g key={i}>
-            <path d={`${path} ${closePath(s.points, x)}`} fill={`url(#rf-area-${i})`} />
+            <path
+              d={`${path} ${closePath(s.points, x)}`}
+              fill={`url(#rf-area-${i})`}
+            />
             <path
               d={path}
               fill="none"

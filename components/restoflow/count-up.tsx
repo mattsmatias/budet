@@ -87,7 +87,10 @@ export function CountUp({
         return;
       }
 
-      setProgress({ target: to, value: start + (to - start) * easeOut(elapsed) });
+      setProgress({
+        target: to,
+        value: start + (to - start) * easeOut(elapsed),
+      });
       frame.current = requestAnimationFrame(step);
     }
 

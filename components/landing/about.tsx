@@ -111,7 +111,10 @@ function TeamPhoto({ t }: { t: Dictionary }) {
               />
             ) : (
               <div className="bd-photo-empty h-full w-full">
-                <p className="px-6 text-center text-[13px]" style={{ color: "var(--bd-text-3)" }}>
+                <p
+                  className="px-6 text-center text-[13px]"
+                  style={{ color: "var(--bd-text-3)" }}
+                >
                   {t.about.photoPending}
                 </p>
               </div>
@@ -165,10 +168,19 @@ function People({ t }: { t: Dictionary }) {
             ? Array.from({ length: TEAM_PLACEHOLDERS }, (_, i) => (
                 <Reveal key={i} delay={i * 70}>
                   <div>
-                    <div className="bd-photo bd-photo-person bd-photo-empty" aria-hidden="true" />
+                    <div
+                      className="bd-photo bd-photo-person bd-photo-empty"
+                      aria-hidden="true"
+                    />
                     <div className="mt-4 space-y-2" aria-hidden="true">
-                      <div className="h-[14px] w-28 rounded-full" style={{ background: "var(--bd-bg-2)" }} />
-                      <div className="h-[12px] w-20 rounded-full" style={{ background: "var(--bd-bg-2)" }} />
+                      <div
+                        className="h-[14px] w-28 rounded-full"
+                        style={{ background: "var(--bd-bg-2)" }}
+                      />
+                      <div
+                        className="h-[12px] w-20 rounded-full"
+                        style={{ background: "var(--bd-bg-2)" }}
+                      />
                     </div>
                   </div>
                 </Reveal>
@@ -187,8 +199,13 @@ function People({ t }: { t: Dictionary }) {
                     </div>
 
                     <figcaption className="mt-4">
-                      <p className="text-[16px] font-bold tracking-[-0.01em]">{person.name}</p>
-                      <p className="mt-0.5 text-[13.5px]" style={{ color: "var(--bd-text-3)" }}>
+                      <p className="text-[16px] font-bold tracking-[-0.01em]">
+                        {person.name}
+                      </p>
+                      <p
+                        className="mt-0.5 text-[13.5px]"
+                        style={{ color: "var(--bd-text-3)" }}
+                      >
                         {person.role}
                       </p>
                       <p
@@ -213,7 +230,10 @@ function Why({ t }: { t: Dictionary }) {
   return (
     <section
       className="px-4 py-20 sm:px-6 sm:py-28"
-      style={{ background: "var(--bd-bg-2)", borderBlock: "1px solid var(--bd-line)" }}
+      style={{
+        background: "var(--bd-bg-2)",
+        borderBlock: "1px solid var(--bd-line)",
+      }}
     >
       <div className="mx-auto max-w-3xl">
         <Reveal>
@@ -339,7 +359,9 @@ function Cta({
               style={{ background: "#fff", color: "var(--bd-orange-strong)" }}
             >
               {appHref !== null ? t.nav.openApp : t.about.cta}
-              <span className="bd-arrow" aria-hidden="true">→</span>
+              <span className="bd-arrow" aria-hidden="true">
+                →
+              </span>
             </Link>
           </div>
         </div>
@@ -356,13 +378,18 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
   return (
     <footer
       className="px-4 py-10 sm:px-6"
-      style={{ borderTop: "1px solid var(--bd-line)", background: "var(--bd-bg-2)" }}
+      style={{
+        borderTop: "1px solid var(--bd-line)",
+        background: "var(--bd-bg-2)",
+      }}
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5">
             <Logo size={22} />
-            <span className="text-[15px] font-bold tracking-[-0.02em]">Kate</span>
+            <span className="text-[15px] font-bold tracking-[-0.02em]">
+              Kate
+            </span>
           </div>
           <p className="mt-2 text-[13px]" style={{ color: "var(--bd-text-2)" }}>
             {t.footer.tagline}
@@ -374,16 +401,29 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
             className="flex flex-wrap gap-x-6 gap-y-2 text-[13.5px]"
             style={{ color: "var(--bd-text-2)" }}
           >
-            <li><Link href={`${home}#tuote`}>{t.nav.product}</Link></li>
-            <li><Link href={`${home}#ominaisuudet`}>{t.nav.features}</Link></li>
-            <li><Link href={`${home}#hinta`}>{t.nav.pricing}</Link></li>
-            <li><Link href={pathFor(locale, "about")}>{t.nav.about}</Link></li>
-            <li><Link href="/kirjaudu">{t.nav.login}</Link></li>
+            <li>
+              <Link href={`${home}#tuote`}>{t.nav.product}</Link>
+            </li>
+            <li>
+              <Link href={`${home}#ominaisuudet`}>{t.nav.features}</Link>
+            </li>
+            <li>
+              <Link href={`${home}#hinta`}>{t.nav.pricing}</Link>
+            </li>
+            <li>
+              <Link href={pathFor(locale, "about")}>{t.nav.about}</Link>
+            </li>
+            <li>
+              <Link href="/kirjaudu">{t.nav.login}</Link>
+            </li>
           </ul>
         </nav>
       </div>
 
-      <p className="mx-auto mt-8 max-w-5xl text-[12px]" style={{ color: "var(--bd-text-3)" }}>
+      <p
+        className="mx-auto mt-8 max-w-5xl text-[12px]"
+        style={{ color: "var(--bd-text-3)" }}
+      >
         © {new Date().getFullYear()} Kate
       </p>
     </footer>

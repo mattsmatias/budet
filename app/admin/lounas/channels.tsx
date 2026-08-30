@@ -98,7 +98,7 @@ export function LunchChannels({
           <CopyBox
             t={t}
             label={t.lounas.embedCode}
-            value={`<iframe src="${embedUrl}" title={t.lounas.lunchList} style="width:100%;border:0;min-height:420px" loading="lazy"></iframe>`}
+            value={`<iframe src="${embedUrl}" title="${t.lounas.lunchList}" style="width:100%;border:0;min-height:420px" loading="lazy"></iframe>`}
           />
           <Hint>
             {t.lounas.embedNote}

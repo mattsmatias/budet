@@ -28,7 +28,8 @@ export function MerchantBadge({
   size?: number;
 }) {
   const color = merchant?.brandColor ?? UNKNOWN_MERCHANT.brandColor;
-  const background = merchant?.brandBackground ?? UNKNOWN_MERCHANT.brandBackground;
+  const background =
+    merchant?.brandBackground ?? UNKNOWN_MERCHANT.brandBackground;
   const initial = merchantInitial(merchant?.name ?? fallbackName);
 
   return (

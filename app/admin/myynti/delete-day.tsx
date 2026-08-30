@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { deleteDailySales } from "./actions";
 
@@ -15,11 +17,19 @@ import { deleteDailySales } from "./actions";
  * KAKSI PAINALLUSTA, EI DIALOGIA.
  *
  * Vahvistus tapahtuu samassa rivissä: ensimmäinen painallus paljastaa
- * "Poista", toinen tekee sen. Erillinen ikkuna keskeyttäisi
+ * t.viimeiset.remove, toinen tekee sen. Erillinen ikkuna keskeyttäisi
  * taulukon selaamisen, ja "oletko varma" -kysymykseen vastataan
  * lukematta.
  */
-export function DeleteDay({ date, label }: { date: string; label: string }) {
+export function DeleteDay({
+  t,
+  date,
+  label,
+}: {
+  t: AdminText;
+  date: string;
+  label: string;
+}) {
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -27,8 +37,8 @@ export function DeleteDay({ date, label }: { date: string; label: string }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        aria-label={`Poista ${label}`}
-        title={`Poista ${label}`}
+        aria-label={fill(t.viimeiset.removeNamed, { nimi: label })}
+        title={fill(t.viimeiset.removeNamed, { nimi: label })}
         className="rf-press flex h-7 w-7 items-center justify-center"
         style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
       >
@@ -50,7 +60,7 @@ export function DeleteDay({ date, label }: { date: string; label: string }) {
             borderRadius: 8,
           }}
         >
-          Poista
+          {t.viimeiset.remove}
         </button>
       </form>
 
@@ -60,7 +70,7 @@ export function DeleteDay({ date, label }: { date: string; label: string }) {
         className="rf-press whitespace-nowrap px-1.5 py-1 text-[12px]"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Peruuta
+        {t.viimeiset.cancel}
       </button>
     </span>
   );

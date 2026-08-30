@@ -135,7 +135,7 @@ export default async function RosterPage({
             />
           </div>
 
-          <PrintButton />
+          <PrintButton t={t} />
         </div>
       </div>
 

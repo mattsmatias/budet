@@ -21,7 +21,10 @@ function Euro({ value }: { value: string }) {
   return (
     <span className="bd-num">
       {value}
-      <span className="ml-[3px] font-medium" style={{ color: "var(--bd-text-3)" }}>
+      <span
+        className="ml-[3px] font-medium"
+        style={{ color: "var(--bd-text-3)" }}
+      >
         €
       </span>
     </span>
@@ -45,16 +48,24 @@ function Metric({
       className="min-w-0 rounded-[12px] p-3"
       style={{ background: "#fff", border: "1px solid var(--bd-line)" }}
     >
-      <p className="truncate text-[10.5px] font-medium" style={{ color: "var(--bd-text-2)" }}>
+      <p
+        className="truncate text-[10.5px] font-medium"
+        style={{ color: "var(--bd-text-2)" }}
+      >
         {label}
       </p>
       <p
         className="mt-1 truncate text-[19px] font-bold leading-tight tracking-[-0.03em]"
-        style={{ color: tone === "good" ? "var(--bd-green)" : "var(--bd-text)" }}
+        style={{
+          color: tone === "good" ? "var(--bd-green)" : "var(--bd-text)",
+        }}
       >
         {value}
       </p>
-      <p className="mt-0.5 truncate text-[10px]" style={{ color: "var(--bd-text-3)" }}>
+      <p
+        className="mt-0.5 truncate text-[10px]"
+        style={{ color: "var(--bd-text-3)" }}
+      >
         {hint}
       </p>
     </div>
@@ -62,7 +73,13 @@ function Metric({
 }
 
 /** Kehys: selainikkuna jossa sovellus on. */
-function Frame({ children, title }: { children: React.ReactNode; title: string }) {
+function Frame({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title: string;
+}) {
   return (
     <div
       className="overflow-hidden rounded-[16px]"
@@ -78,9 +95,18 @@ function Frame({ children, title }: { children: React.ReactNode; title: string }
         style={{ background: "#fff", borderBottom: "1px solid var(--bd-line)" }}
       >
         <span className="flex gap-1.5" aria-hidden="true">
-          <i className="block h-[9px] w-[9px] rounded-full" style={{ background: "#e8ebf1" }} />
-          <i className="block h-[9px] w-[9px] rounded-full" style={{ background: "#e8ebf1" }} />
-          <i className="block h-[9px] w-[9px] rounded-full" style={{ background: "#e8ebf1" }} />
+          <i
+            className="block h-[9px] w-[9px] rounded-full"
+            style={{ background: "#e8ebf1" }}
+          />
+          <i
+            className="block h-[9px] w-[9px] rounded-full"
+            style={{ background: "#e8ebf1" }}
+          />
+          <i
+            className="block h-[9px] w-[9px] rounded-full"
+            style={{ background: "#e8ebf1" }}
+          />
         </span>
         <span
           className="ml-1 truncate text-[10.5px] font-medium"
@@ -118,7 +144,10 @@ function Rail({ t }: { t: Dictionary }) {
           className="truncate rounded-[8px] px-2.5 py-[7px] text-[11px] font-medium"
           style={
             i === 0
-              ? { background: "var(--bd-accent-bg)", color: "var(--bd-accent-strong)" }
+              ? {
+                  background: "var(--bd-accent-bg)",
+                  color: "var(--bd-accent-strong)",
+                }
               : { color: "var(--bd-text-2)" }
           }
         >
@@ -143,10 +172,15 @@ export function HeroPreview({ t }: { t: Dictionary }) {
 
         <div className="min-w-0 flex-1 p-3.5 sm:p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[12.5px] font-bold tracking-[-0.01em]">{t.preview.today}</p>
+            <p className="text-[12.5px] font-bold tracking-[-0.01em]">
+              {t.preview.today}
+            </p>
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[10px] font-semibold"
-              style={{ background: "var(--bd-green-bg)", color: "var(--bd-green)" }}
+              style={{
+                background: "var(--bd-green-bg)",
+                color: "var(--bd-green)",
+              }}
             >
               <i
                 className="block h-[5px] w-[5px] rounded-full"
@@ -158,15 +192,27 @@ export function HeroPreview({ t }: { t: Dictionary }) {
           </div>
 
           <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <Metric label={t.preview.sales} value={<Euro value="5 240" />} hint={t.preview.salesHint} />
-            <Metric label={t.preview.expenses} value={<Euro value="1 820" />} hint={t.preview.expensesHint} />
+            <Metric
+              label={t.preview.sales}
+              value={<Euro value="5 240" />}
+              hint={t.preview.salesHint}
+            />
+            <Metric
+              label={t.preview.expenses}
+              value={<Euro value="1 820" />}
+              hint={t.preview.expensesHint}
+            />
             <Metric
               label={t.preview.result}
               value={<Euro value="3 420" />}
               hint={t.preview.resultHint}
               tone="good"
             />
-            <Metric label={t.preview.receipts} value={<span className="bd-num">24</span>} hint={t.preview.receiptsHint} />
+            <Metric
+              label={t.preview.receipts}
+              value={<span className="bd-num">24</span>}
+              hint={t.preview.receiptsHint}
+            />
           </div>
 
           {/* Viivakaavio. SVG eikä kirjasto: yksi polku ei tarvitse kolmeasataa kilotavua. */}
@@ -174,7 +220,10 @@ export function HeroPreview({ t }: { t: Dictionary }) {
             className="mt-2.5 rounded-[12px] p-3"
             style={{ background: "#fff", border: "1px solid var(--bd-line)" }}
           >
-            <p className="text-[10.5px] font-medium" style={{ color: "var(--bd-text-2)" }}>
+            <p
+              className="text-[10.5px] font-medium"
+              style={{ color: "var(--bd-text-2)" }}
+            >
               {t.preview.salesWeek}
             </p>
             <svg
@@ -227,10 +276,15 @@ export function MonthPreview({ t }: { t: Dictionary }) {
     <Frame title={t.preview.overview}>
       <div className="p-3.5 sm:p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <p className="text-[12.5px] font-bold tracking-[-0.01em]">{t.preview.month}</p>
+          <p className="text-[12.5px] font-bold tracking-[-0.01em]">
+            {t.preview.month}
+          </p>
           <span
             className="inline-flex items-center gap-1.5 rounded-full px-2 py-[3px] text-[10px] font-semibold"
-            style={{ background: "var(--bd-green-bg)", color: "var(--bd-green)" }}
+            style={{
+              background: "var(--bd-green-bg)",
+              color: "var(--bd-green)",
+            }}
           >
             <i
               className="block h-[5px] w-[5px] rounded-full"
@@ -242,22 +296,37 @@ export function MonthPreview({ t }: { t: Dictionary }) {
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
-          <Metric label={t.preview.sales} value={<Euro value="58 420" />} hint={t.preview.ledgerRevenue} />
-          <Metric label={t.preview.expenses} value={<Euro value="41 840" />} hint={t.preview.ledgerExpenses} />
+          <Metric
+            label={t.preview.sales}
+            value={<Euro value="58 420" />}
+            hint={t.preview.ledgerRevenue}
+          />
+          <Metric
+            label={t.preview.expenses}
+            value={<Euro value="41 840" />}
+            hint={t.preview.ledgerExpenses}
+          />
           <Metric
             label={t.preview.result}
             value={<Euro value="16 580" />}
             hint={t.preview.resultHint}
             tone="good"
           />
-          <Metric label={t.preview.vat} value={<Euro value="5 240" />} hint={t.preview.vatHint} />
+          <Metric
+            label={t.preview.vat}
+            value={<Euro value="5 240" />}
+            hint={t.preview.vatHint}
+          />
         </div>
 
         <div
           className="mt-2.5 rounded-[12px] p-3"
           style={{ background: "#fff", border: "1px solid var(--bd-line)" }}
         >
-          <p className="text-[10.5px] font-medium" style={{ color: "var(--bd-text-2)" }}>
+          <p
+            className="text-[10.5px] font-medium"
+            style={{ color: "var(--bd-text-2)" }}
+          >
             {t.preview.salesByGroup}
           </p>
 
@@ -265,10 +334,15 @@ export function MonthPreview({ t }: { t: Dictionary }) {
             {rows.map((row) => (
               <li key={row.name}>
                 <div className="flex items-baseline justify-between gap-3 text-[11px]">
-                  <span className="truncate" style={{ color: "var(--bd-text-2)" }}>
+                  <span
+                    className="truncate"
+                    style={{ color: "var(--bd-text-2)" }}
+                  >
                     {row.name}
                   </span>
-                  <span className="bd-num shrink-0 font-semibold">{row.value} €</span>
+                  <span className="bd-num shrink-0 font-semibold">
+                    {row.value} €
+                  </span>
                 </div>
                 <div
                   className="mt-1 h-[4px] w-full overflow-hidden rounded-full"
@@ -276,7 +350,11 @@ export function MonthPreview({ t }: { t: Dictionary }) {
                 >
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${row.share}%`, background: "#d13831", opacity: 0.75 }}
+                    style={{
+                      width: `${row.share}%`,
+                      background: "#d13831",
+                      opacity: 0.75,
+                    }}
                   />
                 </div>
               </li>
@@ -311,8 +389,13 @@ export function TodoPreview({ t }: { t: Dictionary }) {
       }}
     >
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-[14px] font-bold tracking-[-0.01em]">{t.todo.cardTitle}</p>
-        <span className="bd-num text-[12px] font-bold" style={{ color: "var(--bd-accent)" }}>
+        <p className="text-[14px] font-bold tracking-[-0.01em]">
+          {t.todo.cardTitle}
+        </p>
+        <span
+          className="bd-num text-[12px] font-bold"
+          style={{ color: "var(--bd-accent)" }}
+        >
           3
         </span>
       </div>
@@ -327,7 +410,9 @@ export function TodoPreview({ t }: { t: Dictionary }) {
             <i
               aria-hidden="true"
               className="block h-[7px] w-[7px] shrink-0 rounded-full"
-              style={{ background: item.tone === "red" ? "#d13831" : "#d98511" }}
+              style={{
+                background: item.tone === "red" ? "#d13831" : "#d98511",
+              }}
             />
             <span className="min-w-0 flex-1 text-[12.5px]">{item.text}</span>
           </li>

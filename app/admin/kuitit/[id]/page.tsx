@@ -35,9 +35,10 @@ import { DeleteReceipt, ReviewPanel } from "../review";
 export async function generateMetadata({
   params,
 }: PageProps<"/admin/kuitit/[id]">) {
+  const t = adminText(await resolveLocale());
   const { id } = await params;
   const receipt = await fetchReceipt(id);
-  return { title: receipt?.supplierName ?? "Kuitti" };
+  return { title: receipt?.supplierName ?? t.viimeiset.receiptWord };
 }
 
 /**
@@ -280,9 +281,11 @@ export default async function AdminReceiptDetailPage({
                   dot
                 >
                   {ledger.state === "posted"
-                    ? `Kirjattu · tosite ${ledger.entryNumber}`
+                    ? fill(t.viimeiset.postedVoucher, {
+                        numero: String(ledger.entryNumber ?? ""),
+                      })
                     : ledger.state === "proposed"
-                      ? "Odottaa kirjausta"
+                      ? t.viimeiset.awaitingPosting
                       : ledger.state === "rejected"
                         ? t.kuitit.notBooked
                         : t.kuitit.notInAccounting}
@@ -484,14 +487,18 @@ export default async function AdminReceiptDetailPage({
           <Card>
             <p className="mb-3 text-[13px] font-semibold">
               {imageUrls.length > 1
-                ? `Kuitin sivut · ${imageUrls.length}`
-                : "Kuitin kuva"}
+                ? fill(t.viimeiset.receiptPages, {
+                    maara: String(imageUrls.length),
+                  })
+                : t.viimeiset.receiptImage}
             </p>
 
             {imageUrls.length > 0 ? (
               <ReceiptImage
                 urls={imageUrls}
-                alt={`Kuitti: ${receipt.supplierName}`}
+                alt={fill(t.viimeiset.receiptNamed, {
+                  nimi: receipt.supplierName,
+                })}
               />
             ) : (
               <p

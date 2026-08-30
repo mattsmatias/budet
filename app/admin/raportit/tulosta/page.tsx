@@ -68,7 +68,7 @@ export default async function PrintableReportPage({
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {t.raportti.printHint}
         </p>
-        <PrintButton />
+        <PrintButton t={t} />
       </div>
 
       <header

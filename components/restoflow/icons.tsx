@@ -60,7 +60,8 @@ export type IconName =
  */
 const PATHS: Record<IconName, string> = {
   // Epäsymmetrinen ruudukko — yleiskuva, ei "koti".
-  overview: "M3.5 3.5h7v7h-7zM13.5 3.5h7v4.5h-7zM13.5 12h7v8.5h-7zM3.5 14h7v6.5h-7z",
+  overview:
+    "M3.5 3.5h7v7h-7zM13.5 3.5h7v4.5h-7zM13.5 12h7v8.5h-7zM3.5 14h7v6.5h-7z",
 
   // Kuitti: repäisty alareuna tekee siitä tunnistettavan pienenäkin.
   receipt:
@@ -108,9 +109,11 @@ const PATHS: Record<IconName, string> = {
 
   clock: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.5V12l3 2",
 
-  camera: "M4 7.5h3.2l1.6-2.2h6.4l1.6 2.2H20v12H4zM12 17a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z",
+  camera:
+    "M4 7.5h3.2l1.6-2.2h6.4l1.6 2.2H20v12H4zM12 17a3.6 3.6 0 1 0 0-7.2 3.6 3.6 0 0 0 0 7.2Z",
 
-  image: "M4 5h16v14H4zM4 15.5l4.2-4.2 3.5 3.5 3-3 5.3 5.3M9 10a1.2 1.2 0 1 0 0-2.4A1.2 1.2 0 0 0 9 10Z",
+  image:
+    "M4 5h16v14H4zM4 15.5l4.2-4.2 3.5 3.5 3-3 5.3 5.3M9 10a1.2 1.2 0 1 0 0-2.4A1.2 1.2 0 0 0 9 10Z",
 
   file: "M6 3h8l4 4v14H6zM14 3v4h4",
 
@@ -126,13 +129,15 @@ const PATHS: Record<IconName, string> = {
 
   check: "m5 12.5 4.5 4.5L19 7",
 
-  alert: "M12 9v4.5M12 17h.01M10.4 4.2 2.6 17.9A1.8 1.8 0 0 0 4.2 20.6h15.6a1.8 1.8 0 0 0 1.6-2.7L13.6 4.2a1.8 1.8 0 0 0-3.2 0Z",
+  alert:
+    "M12 9v4.5M12 17h.01M10.4 4.2 2.6 17.9A1.8 1.8 0 0 0 4.2 20.6h15.6a1.8 1.8 0 0 0 1.6-2.7L13.6 4.2a1.8 1.8 0 0 0-3.2 0Z",
 
   info: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 11v5.5M12 7.6h.01",
 
   more: "M5.2 12h.01M12 12h.01M18.8 12h.01",
 
-  logout: "M9.5 20.5H5.5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h4M16 16.5l4.5-4.5L16 7.5M20.5 12H9.5",
+  logout:
+    "M9.5 20.5H5.5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h4M16 16.5l4.5-4.5L16 7.5M20.5 12H9.5",
 
   sales: "M3 12h18v8.5H3zM7 12V5.4h10V12M9.6 8.8h4.8",
 
@@ -214,7 +219,9 @@ const SHAPES: Partial<Record<IconName, ReactNode>> = {
   ),
 
   // Valuuttamerkki — palkka on rahaa, ei seteli esineenä.
-  payroll: <path d="M12 2.5v19M16.5 6.5H9.8a2.8 2.8 0 0 0 0 5.6h4.4a2.8 2.8 0 0 1 0 5.6H7" />,
+  payroll: (
+    <path d="M12 2.5v19M16.5 6.5H9.8a2.8 2.8 0 0 0 0 5.6h4.4a2.8 2.8 0 0 1 0 5.6H7" />
+  ),
 
   // Rakennus pylväineen — lounas on paikka johon tullaan.
   lunch: (
@@ -301,26 +308,32 @@ const CATEGORY_PATHS: Record<ExpenseCategory, string> = {
   alcohol: "M7.8 3.5h8.4l-.8 6.4a3.7 3.7 0 0 1-6.8 0zM12 14.3v6.2M8.6 20.5h6.8",
 
   // Pahvimuki ja pilli.
-  soft_drinks: "M6.5 7.5h11l-1.2 12.1a1.4 1.4 0 0 1-1.4 1.2H9.1a1.4 1.4 0 0 1-1.4-1.2zM7.1 12h9.8M14.6 7.5 16.8 3",
+  soft_drinks:
+    "M6.5 7.5h11l-1.2 12.1a1.4 1.4 0 0 1-1.4 1.2H9.1a1.4 1.4 0 0 1-1.4-1.2zM7.1 12h9.8M14.6 7.5 16.8 3",
 
   // Suihkepullo.
-  cleaning: "M9.3 9h5.4v11.5H9.3zM10.8 9V5.4h2.6V9M13.4 5.4h3.4M16.8 5.4v2.3M9.3 12.7h5.4",
+  cleaning:
+    "M9.3 9h5.4v11.5H9.3zM10.8 9V5.4h2.6V9M13.4 5.4h3.4M16.8 5.4v2.3M9.3 12.7h5.4",
 
   // Paistinpannu.
-  kitchen_supplies: "M3.5 11.5h11v3.2a5 5 0 0 1-5 5H8.5a5 5 0 0 1-5-5zM14.5 13h6M7.5 8.8V6.5M11 8.8V6.5",
+  kitchen_supplies:
+    "M3.5 11.5h11v3.2a5 5 0 0 1-5 5H8.5a5 5 0 0 1-5-5zM14.5 13h6M7.5 8.8V6.5M11 8.8V6.5",
 
   // Pakkauslaatikko.
-  packaging: "M12 3.5 3.8 7.8v8.4L12 20.5l8.2-4.3V7.8zM3.8 7.8 12 12.1M12 12.1v8.4M20.2 7.8 12 12.1M7.9 5.6l8.2 4.3",
+  packaging:
+    "M12 3.5 3.8 7.8v8.4L12 20.5l8.2-4.3V7.8zM3.8 7.8 12 12.1M12 12.1v8.4M20.2 7.8 12 12.1M7.9 5.6l8.2 4.3",
 
   // Henkilöstö.
-  staff: "M15.5 20.5v-1.5a3.8 3.8 0 0 0-3.8-3.8H7.3a3.8 3.8 0 0 0-3.8 3.8v1.5M9.5 12.2a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6ZM20.5 20.5v-1.5a3.8 3.8 0 0 0-2.8-3.7",
+  staff:
+    "M15.5 20.5v-1.5a3.8 3.8 0 0 0-3.8-3.8H7.3a3.8 3.8 0 0 0-3.8 3.8v1.5M9.5 12.2a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6ZM20.5 20.5v-1.5a3.8 3.8 0 0 0-2.8-3.7",
 
   // Kuorma-auto — kuljetus on liike, toimittaja on paikka.
   transport:
     "M2.5 7.5h11v9h-11zM13.5 10.5h3.4l3.1 3.1v2.9h-6.5zM6.8 19.4a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8ZM16.9 19.4a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8Z",
 
   // Hintalappu — luokittelematon erä.
-  other: "M11.4 3.5H20.5v9.1l-8.4 8.4a1.5 1.5 0 0 1-2.1 0l-7-7a1.5 1.5 0 0 1 0-2.1zM16.6 8.4h.01",
+  other:
+    "M11.4 3.5H20.5v9.1l-8.4 8.4a1.5 1.5 0 0 1-2.1 0l-7-7a1.5 1.5 0 0 1 0-2.1zM16.6 8.4h.01",
 };
 
 export function CategoryIcon({
@@ -372,10 +385,14 @@ export function ShiftStatusIcon({
 }) {
   const paths: Record<typeof status, string> = {
     draft: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Z",
-    pending: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.8V12l2.8 1.8",
-    accepted: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Zm-3.6-8.8 2.6 2.6 4.6-5",
-    declined: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6",
-    changed: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM8.5 13.5h7M8.5 13.5l2.4-2.4M15.5 10.5h-7M15.5 10.5l-2.4 2.4",
+    pending:
+      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.8V12l2.8 1.8",
+    accepted:
+      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Zm-3.6-8.8 2.6 2.6 4.6-5",
+    declined:
+      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6",
+    changed:
+      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM8.5 13.5h7M8.5 13.5l2.4-2.4M15.5 10.5h-7M15.5 10.5l-2.4 2.4",
   };
 
   return (
@@ -429,7 +446,8 @@ const GLYPH_PATHS: Record<GlyphName, string> = {
   fish: "M14.6 12c0 3.6-3.3 6.4-6.9 6.4-2.2 0-3.9-1.1-3.9-1.1s1.2-2 1.2-5.3-1.2-5.3-1.2-5.3S5.5 5.6 7.7 5.6c3.6 0 6.9 2.8 6.9 6.4ZM14.6 12l5.9-4.3v8.6zM7.4 10.4h.01",
 
   // Limppu.
-  bread: "M4.6 11.6c0-3.2 3.3-4.9 7.4-4.9s7.4 1.7 7.4 4.9c0 1.4-1.1 2.5-2.5 2.5v6.2H7.1v-6.2c-1.4 0-2.5-1.1-2.5-2.5Z",
+  bread:
+    "M4.6 11.6c0-3.2 3.3-4.9 7.4-4.9s7.4 1.7 7.4 4.9c0 1.4-1.1 2.5-2.5 2.5v6.2H7.1v-6.2c-1.4 0-2.5-1.1-2.5-2.5Z",
 
   // Viljan tähkä.
   grain:

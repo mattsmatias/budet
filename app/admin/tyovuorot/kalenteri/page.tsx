@@ -353,7 +353,7 @@ export default async function ShiftCalendarPage({
       </div>
 
       {canManage && view !== "paiva" ? (
-        <DragStaff nimet={nimet} users={users} />
+        <DragStaff t={t} nimet={nimet} users={users} />
       ) : null}
 
       {view === "paiva" ? (

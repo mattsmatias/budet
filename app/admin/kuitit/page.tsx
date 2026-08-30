@@ -25,7 +25,10 @@ import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "./review";
 import { ReceiptSearch } from "./search";
 
-export const metadata = { title: "Kuitit" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.viimeiset.receiptsTitle };
+}
 
 /*
  * Suodattimet ovat tehdas, ei vakio.
@@ -161,7 +164,7 @@ export default async function AdminReceiptsPage({
             {formatMonth(month, locale)} · {visible.length} kuittia ·{" "}
             {formatMoney(total)}
             {reviewCount > 0 && filter === "all"
-              ? ` · ${reviewCount} tarkistettavaa`
+              ? fill(t.viimeiset.toCheckSuffix, { maara: String(reviewCount) })
               : ""}
           </p>
 
@@ -186,7 +189,7 @@ export default async function AdminReceiptsPage({
           oli vain kuittisivulla.
         */}
         <div className="w-full md:w-auto">
-          <ReceiptSearch initial={query} />
+          <ReceiptSearch t={t} initial={query} />
         </div>
       </div>
 
@@ -202,8 +205,10 @@ export default async function AdminReceiptsPage({
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-semibold">
                 {duplicateGroups.length === 1
-                  ? "Mahdollinen kaksoiskappale"
-                  : `${duplicateGroups.length} mahdollista kaksoiskappaletta`}
+                  ? t.viimeiset.possibleDuplicate
+                  : fill(t.viimeiset.possibleDuplicates, {
+                      maara: String(duplicateGroups.length),
+                    })}
               </p>
               <p
                 className="mt-1 text-[13px] leading-relaxed"
@@ -318,7 +323,7 @@ export default async function AdminReceiptsPage({
                       : t.kuitit.receiptMany,
                 })
               : query
-                ? "Kokeile toista hakusanaa."
+                ? t.viimeiset.tryAnotherSearch
                 : t.kuitit.addFromButton
           }
         />

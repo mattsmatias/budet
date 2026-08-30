@@ -12,11 +12,31 @@ import { formatMoney } from "@/lib/money";
 export type Tone = "neutral" | "ok" | "info" | "warn" | "risk";
 
 const TONE_STYLES: Record<Tone, { bg: string; text: string; dot: string }> = {
-  neutral: { bg: "var(--rf-inset)", text: "var(--rf-text-2)", dot: "var(--rf-text-3)" },
-  ok: { bg: "var(--rf-green-bg)", text: "var(--rf-green-text)", dot: "var(--rf-green)" },
-  info: { bg: "var(--rf-blue-bg)", text: "var(--rf-blue-text)", dot: "var(--rf-blue)" },
-  warn: { bg: "var(--rf-amber-bg)", text: "var(--rf-amber-text)", dot: "var(--rf-amber)" },
-  risk: { bg: "var(--rf-red-bg)", text: "var(--rf-red-text)", dot: "var(--rf-red)" },
+  neutral: {
+    bg: "var(--rf-inset)",
+    text: "var(--rf-text-2)",
+    dot: "var(--rf-text-3)",
+  },
+  ok: {
+    bg: "var(--rf-green-bg)",
+    text: "var(--rf-green-text)",
+    dot: "var(--rf-green)",
+  },
+  info: {
+    bg: "var(--rf-blue-bg)",
+    text: "var(--rf-blue-text)",
+    dot: "var(--rf-blue)",
+  },
+  warn: {
+    bg: "var(--rf-amber-bg)",
+    text: "var(--rf-amber-text)",
+    dot: "var(--rf-amber)",
+  },
+  risk: {
+    bg: "var(--rf-red-bg)",
+    text: "var(--rf-red-text)",
+    dot: "var(--rf-red)",
+  },
 };
 
 export function Card({
@@ -61,7 +81,10 @@ export function CardHeader({
       <div className="min-w-0">
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">{title}</h2>
         {subtitle ? (
-          <p className="mt-[3px] text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-[3px] text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {subtitle}
           </p>
         ) : null}
@@ -226,11 +249,16 @@ export function MetricCard({
             </p>
           </div>
 
-          {delta ? <DeltaPill text={delta.text} tone={delta.tone ?? tone} /> : null}
+          {delta ? (
+            <DeltaPill text={delta.text} tone={delta.tone ?? tone} />
+          ) : null}
         </div>
 
         {aside ? (
-          <p className="mt-2.5 text-[12px] leading-relaxed" style={{ color: "var(--rf-text-3)" }}>
+          <p
+            className="mt-2.5 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
             {aside}
           </p>
         ) : null}
@@ -321,7 +349,11 @@ function DeltaPill({ text, tone }: { text: string; tone: MetricTone }) {
   return (
     <span
       className="inline-flex shrink-0 items-center px-[7px] py-[2px] text-[11px] font-bold"
-      style={{ background: skin.bg, color: skin.fg, borderRadius: "var(--rf-r-pill)" }}
+      style={{
+        background: skin.bg,
+        color: skin.fg,
+        borderRadius: "var(--rf-r-pill)",
+      }}
     >
       {text}
     </span>
@@ -351,14 +383,14 @@ function tileSkin(tone: MetricTone): { bg: string; fg: string } {
         : tone === "blue"
           ? { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" }
           : tone === "up" || tone === "warn"
-    ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
-    : tone === "down"
-      ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }
-      : tone === "bad"
-        ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
-        : tone === "accent"
-          ? { bg: "var(--rf-accent-bg)", fg: "var(--rf-accent)" }
-          : { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" };
+            ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
+            : tone === "down"
+              ? { bg: "var(--rf-green-bg)", fg: "var(--rf-green-text)" }
+              : tone === "bad"
+                ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
+                : tone === "accent"
+                  ? { bg: "var(--rf-accent-bg)", fg: "var(--rf-accent)" }
+                  : { bg: "var(--rf-blue-bg)", fg: "var(--rf-blue-text)" };
 }
 
 /**
@@ -407,16 +439,24 @@ function solidFor(tone: MetricTone): string {
  * harmaa. Vihreä nuoli laskeville kuluille olisi arvostelma jota ohjelma ei
  * voi tehdä.
  */
-export function TrendBadge({ text, direction }: { text: string; direction: "up" | "down" | "flat" | "none" }) {
+export function TrendBadge({
+  text,
+  direction,
+}: {
+  text: string;
+  direction: "up" | "down" | "flat" | "none";
+}) {
   const arrow = direction === "up" ? "↑" : direction === "down" ? "↓" : "";
   return (
-    <span className="rf-tabular text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+    <span
+      className="rf-tabular text-[13px]"
+      style={{ color: "var(--rf-text-2)" }}
+    >
       {arrow ? <span aria-hidden="true">{arrow} </span> : null}
       {text}
     </span>
   );
 }
-
 
 /**
  * Vaakapalkki kulujen jakaumaan.
@@ -476,7 +516,10 @@ export function BarRow({
           }}
         />
       </div>
-      <p className="rf-tabular mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+      <p
+        className="rf-tabular mt-1.5 text-[12px]"
+        style={{ color: "var(--rf-text-3)" }}
+      >
         {pct} %{meta ? ` · ${meta}` : ""}
       </p>
     </div>
@@ -536,9 +579,8 @@ export function ScopeNotice({ children }: { children?: ReactNode }) {
       <p>
         {children ?? (
           <>
-            Luvut tarkoittavat{" "}
-            <strong>Kateen kirjattuja kuluja</strong> — sovellus ei
-            näe kassaa eikä pankkitiliä.
+            Luvut tarkoittavat <strong>Kateen kirjattuja kuluja</strong> —
+            sovellus ei näe kassaa eikä pankkitiliä.
           </>
         )}
       </p>
@@ -557,8 +599,13 @@ export function SectionLabel({ children }: { children: ReactNode }) {
   );
 }
 
-
-export function Avatar({ initials, size = 36 }: { initials: string; size?: number }) {
+export function Avatar({
+  initials,
+  size = 36,
+}: {
+  initials: string;
+  size?: number;
+}) {
   return (
     <span
       aria-hidden="true"
@@ -584,7 +631,6 @@ export function Avatar({ initials, size = 36 }: { initials: string; size?: numbe
 
 import { CategoryIcon } from "./icons";
 import type { ExpenseCategory } from "@/lib/restoflow/types";
-
 
 /** Kategorian ikoni pyöreällä pohjalla — listojen alkuun. */
 export function CategoryBubble({
@@ -682,11 +728,7 @@ export function severityColor(severity: Severity): string {
       : "var(--rf-blue-text)";
 }
 
-export function SeverityDot({
-  severity,
-}: {
-  severity: Severity;
-}) {
+export function SeverityDot({ severity }: { severity: Severity }) {
   const color =
     severity === "critical"
       ? "var(--rf-red)"
@@ -707,7 +749,10 @@ export function SeverityDot({
 
 export type ButtonTone = "primary" | "secondary" | "ghost" | "danger";
 
-const BUTTON_TONES: Record<ButtonTone, { background: string; color: string; border?: string }> = {
+const BUTTON_TONES: Record<
+  ButtonTone,
+  { background: string; color: string; border?: string }
+> = {
   // Ensisijainen toiminto. Sininen tarkoittaa "tästä painetaan" —
   // se ei ole brändipinta eikä sitä käytetä koristeena.
   primary: { background: "var(--rf-accent)", color: "var(--rf-on-accent)" },

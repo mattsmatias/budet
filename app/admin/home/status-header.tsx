@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { severityColor } from "@/components/restoflow/ui";
 import type { FocusItem } from "@/lib/restoflow/dashboard";
@@ -19,10 +20,12 @@ import { FOCUS_LIMIT, type OverallStatus } from "@/lib/restoflow/status";
  * vakavuutta erottuu toisistaan samassa listassa.
  */
 export function StatusHeader({
+  t,
   status,
   items,
   canAddReceipt,
 }: {
+  t: AdminText;
   status: OverallStatus;
   items: FocusItem[];
   /**
@@ -39,7 +42,7 @@ export function StatusHeader({
 
   return (
     <section
-      aria-label="Tilanne"
+      aria-label={t.viimeiset.situation}
       className="flex h-full flex-col px-[18px] pb-4 pt-[15px]"
       style={{
         background: "var(--rf-card)",
@@ -85,7 +88,7 @@ export function StatusHeader({
           }}
         >
           <RfIcon name="plus" size={16} />
-          Lisää ensimmäinen kuitti
+          {t.viimeiset.addFirstReceipt}
         </Link>
       ) : null}
 

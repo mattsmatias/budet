@@ -1,6 +1,7 @@
 "use client";
 
 import { RfIcon } from "@/components/restoflow/icons";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Avaa selaimen tulostusikkunan.
@@ -9,7 +10,7 @@ import { RfIcon } from "@/components/restoflow/icons";
  * osaa sivutuksen, marginaalit ja fontit paremmin kuin mikään kirjasto
  * jonka voisimme lisätä.
  */
-export function PrintButton() {
+export function PrintButton({ t }: { t: AdminText }) {
   return (
     <button
       type="button"
@@ -22,7 +23,7 @@ export function PrintButton() {
       }}
     >
       <RfIcon name="download" size={16} />
-      Tulosta tai tallenna PDF
+      {t.viimeiset.printOrSavePdf}
     </button>
   );
 }
