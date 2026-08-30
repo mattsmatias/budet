@@ -1,4 +1,7 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -12,49 +15,55 @@ import { Avatar, Card } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { SendToAccountant } from "./send-to-accountant";
 
-export const metadata = { title: "Raportointi" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.raportti.reportingTitle };
+}
 
-const REPORTS = [
-  {
-    kind: "kulut",
-    title: "Kuluraportti",
-    description:
-      "Kuukauden kirjatut kulut kategorioittain, ALV eriteltynä ja tarkistettavien määrä.",
-  },
-  {
-    kind: "kategoriat",
-    title: "Kulut kategorioittain",
-    description:
-      "Ruoka, juomat, tarvikkeet, siivous ja muut — summat ja osuudet.",
-  },
-  {
-    kind: "kuitit",
-    title: "Kuitit",
-    description:
-      "Kaikki kuukauden kuitit riveittäin: toimittaja, kategoria, maksutapa, ALV ja tila.",
-  },
-  {
-    kind: "alv",
-    title: "ALV-raportti",
-    description:
-      "Myynnin ALV verokannoittain: verollinen, vero ja veroton. Kanta on se joka oli voimassa kun päivä kirjattiin.",
-  },
-  {
-    kind: "tyoaika",
-    title: "Työaikaraportti",
-    description: "Työntekijöiden tehdyt tunnit kuukaudessa.",
-  },
-  {
-    kind: "henkilostokulut",
-    title: "Henkilöstökulut",
-    description:
-      "Työtuntien ja tuntipalkkojen perusteella laskettu henkilöstökulu työntekijöittäin.",
-  },
-] as const;
+/*
+ * Raporttilista tehtaana.
+ *
+ * kind on osoitteen parametri eika saa kaantya; otsikko ja kuvaus
+ * ovat kayttoliittyman tekstia.
+ */
+const raportit = (t: AdminText) =>
+  [
+    {
+      kind: "kulut",
+      title: t.raportti.expenseReport,
+      description: t.raportti.expenseReportHint,
+    },
+    {
+      kind: "kategoriat",
+      title: t.raportti.expensesByCategory,
+      description: t.raportti.categoriesHint,
+    },
+    {
+      kind: "kuitit",
+      title: t.raportti.receiptsWord,
+      description: t.raportti.receiptsHint,
+    },
+    {
+      kind: "alv",
+      title: "ALV-raportti",
+      description: t.raportti.vatHint,
+    },
+    {
+      kind: "tyoaika",
+      title: t.raportti.timeReport,
+      description: t.raportti.timeReportHint,
+    },
+    {
+      kind: "henkilostokulut",
+      title: t.raportti.staffCosts,
+      description: t.raportti.staffCostsHint,
+    },
+  ] as const;
 
 export default async function ReportsPage({
   searchParams,
 }: PageProps<"/admin/raportit">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const params = await searchParams;
   const { receipts, users, month, restaurant } =
@@ -108,12 +117,12 @@ export default async function ReportsPage({
           }}
         >
           <RfIcon name="report" size={15} />
-          Kuukausiraportti
+          {t.raportti.monthlyReport}
         </Link>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        {REPORTS.map((report) => (
+        {raportit(t).map((report) => (
           <Card key={report.kind} hover>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -156,7 +165,7 @@ export default async function ReportsPage({
 
       <Card>
         <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
-          Toimitus kirjanpitäjälle
+          {t.raportti.deliveryToAccountant}
         </h2>
 
         {accountants.length > 0 ? (
@@ -166,8 +175,10 @@ export default async function ReportsPage({
               style={{ color: "var(--rf-text-2)" }}
             >
               {accountants.length === 1
-                ? "Kirjanpitäjä on jo mukana."
-                : `${accountants.length} kirjanpitäjää on jo mukana.`}{" "}
+                ? t.raportti.accountantAlready
+                : fill(t.raportti.accountantsAlready, {
+                    maara: String(accountants.length),
+                  })}{" "}
               He näkevät nämä samat luvut itse ja aina ajantasaisina, joten
               tiedostoja ei tarvitse lähettää lainkaan. Tuntipalkat ja
               henkilöstön yksityiskohdat eivät näy heille.
@@ -192,9 +203,8 @@ export default async function ReportsPage({
             style={{ color: "var(--rf-text-2)" }}
           >
             Kutsu kirjanpitäjä käyttäjäksi roolilla{" "}
-            <strong>Kirjanpitäjä</strong>, niin hän näkee kulut, ALV:t ja
-            raportit itse eikä tiedostoja tarvitse lähettää. Hän ei näe
-            tuntipalkkoja eikä henkilöstön yksityiskohtia.
+            <strong>{t.raportti.accountant}</strong>
+            {t.raportti.accountantSeesItself}
           </p>
         )}
 
@@ -202,11 +212,7 @@ export default async function ReportsPage({
           className="mt-2 max-w-2xl text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Excel-tiedostossa summat ovat lukuja, joten niillä voi laskea heti.
-          CSV:ssä kaikki on tekstiä, ja se käyttää puolipistettä erottimena sekä
-          UTF-8-tunnistetta — suomalainen Excel avaa sen suoraan oikein.
-          Molemmat rakennetaan samasta lähteestä, joten luvut eivät voi erota
-          toisistaan.
+          {t.raportti.formatsHint}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -221,7 +227,7 @@ export default async function ReportsPage({
             }}
           >
             <RfIcon name="download" size={15} />
-            Lataa koko kuukausi Excelinä
+            {t.raportti.downloadWholeMonth}
           </a>
 
           {accountants.length === 0 ? (
@@ -235,12 +241,13 @@ export default async function ReportsPage({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              Kutsu kirjanpitäjä
+              {t.raportti.inviteAccountant}
             </Link>
           ) : null}
         </div>
 
         <SendToAccountant
+          t={t}
           restaurantName={restaurant.name}
           monthLabel={formatMonth(viewMonth, locale)}
           receiptCount={totals.receiptCount}

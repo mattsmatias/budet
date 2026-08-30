@@ -1,4 +1,6 @@
 import { adminContext } from "@/lib/restoflow/page-context";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { labels } from "@/lib/i18n/labels";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
@@ -19,7 +21,10 @@ import { formatMoney } from "@/lib/money";
 import {} from "@/lib/restoflow/types";
 import { PrintButton } from "./print-button";
 
-export const metadata = { title: "Kuukausiraportti" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.raportti.monthlyReport };
+}
 
 /**
  * Tulostettava kuukausiraportti.
@@ -32,6 +37,7 @@ export const metadata = { title: "Kuukausiraportti" };
 export default async function PrintableReportPage({
   searchParams,
 }: PageProps<"/admin/raportit/tulosta">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const params = await searchParams;
@@ -60,7 +66,7 @@ export default async function PrintableReportPage({
     <div className="rf-print mx-auto max-w-3xl">
       <div className="rf-no-print mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Tulosta tai tallenna PDF:nä. Valikot ja painikkeet eivät tule mukaan.
+          {t.raportti.printHint}
         </p>
         <PrintButton />
       </div>
@@ -80,18 +86,23 @@ export default async function PrintableReportPage({
           className="mt-3 text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Luvut ovat Kateen kirjattuja kuluja. Raportti ei sisällä myyntiä eikä
-          pankkitilin tapahtumia, eikä se ole kirjanpito- tai veroilmoitus.
+          {t.raportti.scopeNote}
         </p>
       </header>
 
-      <Section title="Yhteenveto">
+      <Section title={t.raportti.summary}>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-[14px] sm:grid-cols-4">
-          <Figure label="Kulut" value={formatMoney(totals.totalCents)} />
-          <Figure label="Kuitteja" value={String(totals.receiptCount)} />
+          <Figure
+            label={t.raportti.expensesWord}
+            value={formatMoney(totals.totalCents)}
+          />
+          <Figure
+            label={t.raportti.receiptCount}
+            value={String(totals.receiptCount)}
+          />
           <Figure label="ALV" value={formatMoney(totals.vatCents)} />
           <Figure
-            label="Muutos edelliseen"
+            label={t.raportti.changeToPrevious}
             value={
               change === null
                 ? "—"
@@ -110,9 +121,15 @@ export default async function PrintableReportPage({
         ) : null}
       </Section>
 
-      <Section title="Kategorioittain">
+      <Section title={t.raportti.byCategory}>
         <Table
-          head={["Kategoria", "Kuitteja", "Osuus", "Yhteensä"]}
+          t={t}
+          head={[
+            t.raportti.categoryWord,
+            t.raportti.receiptCount,
+            t.raportti.share,
+            t.raportti.total,
+          ]}
           rows={categories.map((c) => [
             nimet.categories[c.category],
             String(c.receiptCount),
@@ -120,7 +137,7 @@ export default async function PrintableReportPage({
             formatMoney(c.totalCents),
           ])}
           total={[
-            "Yhteensä",
+            t.raportti.total,
             String(totals.receiptCount),
             "",
             formatMoney(totals.totalCents),
@@ -129,9 +146,15 @@ export default async function PrintableReportPage({
       </Section>
 
       {budgetRows.length > 0 ? (
-        <Section title="Budjetit">
+        <Section title={t.raportti.budgetsWord}>
           <Table
-            head={["Kategoria", "Budjetti", "Toteutunut", "Käytetty"]}
+            t={t}
+            head={[
+              t.raportti.categoryWord,
+              t.raportti.budgetWord,
+              t.raportti.actual,
+              t.raportti.used,
+            ]}
             rows={budgetRows.map((row) => [
               nimet.categories[row.category],
               formatMoney(row.budgetCents ?? 0),
@@ -142,9 +165,15 @@ export default async function PrintableReportPage({
         </Section>
       ) : null}
 
-      <Section title="Toimittajat">
+      <Section title={t.raportti.suppliersWord}>
         <Table
-          head={["Toimittaja", "Kuitteja", "Keskiarvo", "Yhteensä"]}
+          t={t}
+          head={[
+            t.raportti.supplierWord,
+            t.raportti.receiptCount,
+            t.raportti.average,
+            t.raportti.total,
+          ]}
           rows={suppliers.map((s) => [
             s.name,
             String(s.receiptCount),
@@ -154,15 +183,16 @@ export default async function PrintableReportPage({
         />
       </Section>
 
-      <Section title="Kuitit">
+      <Section title={t.raportti.receiptsWord}>
         <Table
+          t={t}
           head={[
-            "Päivä",
-            "Toimittaja",
-            "Kategoria",
-            "Maksutapa",
+            t.raportti.dayWord,
+            t.raportti.supplierWord,
+            t.raportti.categoryWord,
+            t.raportti.paymentMethod,
             "ALV",
-            "Yhteensä",
+            t.raportti.total,
           ]}
           rows={inMonth.map((r) => [
             formatDate(r.date),
@@ -177,7 +207,9 @@ export default async function PrintableReportPage({
 
         {inMonth.some((r) => r.reviewReasons.length > 0) ? (
           <div className="mt-4">
-            <p className="text-[13px] font-semibold">Tarkistusmerkinnät</p>
+            <p className="text-[13px] font-semibold">
+              {t.raportti.reviewMarks}
+            </p>
             <ul
               className="mt-1.5 space-y-1 text-[12px]"
               style={{ color: "var(--rf-text-2)" }}
@@ -237,10 +269,12 @@ function Figure({ label, value }: { label: string; value: string }) {
 }
 
 function Table({
+  t,
   head,
   rows,
   total,
 }: {
+  t: AdminText;
   head: string[];
   rows: string[][];
   total?: string[];
@@ -248,7 +282,7 @@ function Table({
   if (rows.length === 0) {
     return (
       <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-        Ei rivejä tältä kuukaudelta.
+        {t.raportti.noRowsThisMonth}
       </p>
     );
   }

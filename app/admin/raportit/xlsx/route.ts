@@ -10,6 +10,8 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
@@ -23,27 +25,28 @@ import {
 } from "@/lib/restoflow/report-rows";
 import { buildXlsx, type CellValue } from "@/lib/xlsx";
 
-const SHEET_NAMES: Record<ReportKind, string> = {
-  kulut: "Kulut",
-  kategoriat: "Kategoriat",
-  kuitit: "Kuitit",
-  toimittajat: "Toimittajat",
-  budjetit: "Budjetit",
-  tyoaika: "Työaika",
-  henkilostokulut: "Henkilöstökulut",
+const arkkiNimet = (t: AdminText): Record<ReportKind, string> => ({
+  kulut: t.raportti.expensesWord,
+  kategoriat: t.raportti.sheetCategories,
+  kuitit: t.raportti.receiptsWord,
+  toimittajat: t.raportti.suppliersWord,
+  budjetit: t.raportti.budgetsWord,
+  tyoaika: t.raportti.sheetHours,
+  henkilostokulut: t.raportti.staffCosts,
   alv: "ALV",
-  paivakirja: "Päiväkirja",
-  paakirja: "Pääkirja",
-  tuloslaskelma: "Tuloslaskelma",
-  tase: "Tase",
-};
+  paivakirja: t.raportti.sheetJournal,
+  paakirja: t.raportti.sheetLedger,
+  tuloslaskelma: t.raportti.sheetIncome,
+  tase: t.raportti.sheetBalance,
+});
 
 export async function GET(request: NextRequest) {
   const locale = await resolveLocale();
+  const t = adminText(locale);
   const user = await getUser();
   if (!user) {
     return NextResponse.json(
-      { error: "Kirjautuminen vaaditaan." },
+      { error: t.raportti.signInRequired },
       { status: 401 },
     );
   }
@@ -51,14 +54,14 @@ export async function GET(request: NextRequest) {
   const restaurant = await getActiveRestaurant();
   if (!restaurant) {
     return NextResponse.json(
-      { error: "Ravintolaa ei löytynyt." },
+      { error: t.raportti.restaurantNotFound },
       { status: 404 },
     );
   }
 
   if (!can(restaurant.role, "reports.export")) {
     return NextResponse.json(
-      { error: "Sinulla ei ole oikeutta viedä raportteja." },
+      { error: t.raportti.noRightExport },
       { status: 403 },
     );
   }
@@ -83,7 +86,7 @@ export async function GET(request: NextRequest) {
 
   if (kinds === null) {
     return NextResponse.json(
-      { error: "Tuntematon raporttityyppi.", allowed: REPORT_KINDS },
+      { error: t.raportti.unknownReportKind, allowed: REPORT_KINDS },
       { status: 400 },
     );
   }
@@ -109,7 +112,7 @@ export async function GET(request: NextRequest) {
     !naytaKirjanpito
   ) {
     return NextResponse.json(
-      { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
+      { error: t.raportti.noRightAccounting },
       { status: 403 },
     );
   }
@@ -128,7 +131,7 @@ export async function GET(request: NextRequest) {
       restaurant.timezone,
       locale,
     );
-    sheets.push({ name: SHEET_NAMES[kind], rows: rows.map(toCells) });
+    sheets.push({ name: arkkiNimet(t)[kind], rows: rows.map(toCells) });
   }
 
   const file = buildXlsx(sheets);

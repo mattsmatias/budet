@@ -10,6 +10,7 @@
  */
 
 import { NextResponse, type NextRequest } from "next/server";
+import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
@@ -24,10 +25,11 @@ import {
 
 export async function GET(request: NextRequest) {
   const locale = await resolveLocale();
+  const t = adminText(locale);
   const user = await getUser();
   if (!user) {
     return NextResponse.json(
-      { error: "Kirjautuminen vaaditaan." },
+      { error: t.raportti.signInRequired },
       { status: 401 },
     );
   }
@@ -35,14 +37,14 @@ export async function GET(request: NextRequest) {
   const restaurant = await getActiveRestaurant();
   if (!restaurant) {
     return NextResponse.json(
-      { error: "Ravintolaa ei löytynyt." },
+      { error: t.raportti.restaurantNotFound },
       { status: 404 },
     );
   }
 
   if (!can(restaurant.role, "reports.export")) {
     return NextResponse.json(
-      { error: "Sinulla ei ole oikeutta viedä raportteja." },
+      { error: t.raportti.noRightExport },
       { status: 403 },
     );
   }
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
 
   if (!kind || !REPORT_KINDS.includes(kind)) {
     return NextResponse.json(
-      { error: "Tuntematon raporttityyppi.", allowed: REPORT_KINDS },
+      { error: t.raportti.unknownReportKind, allowed: REPORT_KINDS },
       { status: 400 },
     );
   }
@@ -75,7 +77,7 @@ export async function GET(request: NextRequest) {
     !can(restaurant.role, "accounting.view")
   ) {
     return NextResponse.json(
-      { error: "Sinulla ei ole oikeutta kirjanpidon tietoihin." },
+      { error: t.raportti.noRightAccounting },
       { status: 403 },
     );
   }

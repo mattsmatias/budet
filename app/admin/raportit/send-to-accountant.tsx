@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 
 /**
@@ -17,11 +19,13 @@ import { RfIcon } from "@/components/restoflow/icons";
  * tiedostoa mailto-linkkiin, eikä sitä kannata luvata.
  */
 export function SendToAccountant({
+  t,
   restaurantName,
   monthLabel,
   receiptCount,
   totalLabel,
 }: {
+  t: AdminText;
   restaurantName: string;
   monthLabel: string;
   receiptCount: number;
@@ -29,22 +33,28 @@ export function SendToAccountant({
 }) {
   const [opened, setOpened] = useState(false);
 
-  const subject = `${restaurantName} — kulut ${monthLabel}`;
+  const subject = fill(t.raportti.mailSubject, {
+    ravintola: restaurantName,
+    kuukausi: monthLabel,
+  });
 
   const body = [
-    "Hei,",
+    t.raportti.mailHello,
     "",
-    `ohessa ${restaurantName}n kulut kuukaudelta ${monthLabel}.`,
+    fill(t.raportti.mailIntro, {
+      ravintola: restaurantName,
+      kuukausi: monthLabel,
+    }),
     "",
-    `Kuitteja: ${receiptCount}`,
-    `Kirjatut kulut yhteensä: ${totalLabel}`,
+    fill(t.raportti.mailReceipts, { maara: String(receiptCount) }),
+    fill(t.raportti.mailTotal, { summa: totalLabel }),
     "",
-    "Liitteenä Excel-tiedosto, jossa on kulut, kategoriat ja kuittierittely.",
+    t.raportti.mailAttachment,
     "",
-    "Huom: luvut ovat järjestelmään kirjattuja kuluja. Ne eivät sisällä",
-    "myyntiä eivätkä pankkitilin tapahtumia.",
+    t.raportti.mailNote1,
+    t.raportti.mailNote2,
     "",
-    "Terveisin",
+    t.raportti.mailRegards,
   ].join("\n");
 
   const mailto =
@@ -56,15 +66,13 @@ export function SendToAccountant({
       className="mt-5 border-t pt-4"
       style={{ borderColor: "var(--rf-line)" }}
     >
-      <p className="text-[13px] font-semibold">Jos haluat lähettää tiedostot</p>
+      <p className="text-[13px] font-semibold">{t.raportti.ifYouWantToSend}</p>
 
       <p
         className="mt-1.5 max-w-2xl text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Lataa ensin Excel yltä ja avaa sitten valmis viesti. Kate kirjoittaa
-        aiheen ja tekstin — liitä tiedosto itse, sillä Kate ei lähetä
-        sähköpostia eikä pääse käsiksi liitteisiin.
+        {t.raportti.emailHint}
       </p>
 
       <a
@@ -78,12 +86,12 @@ export function SendToAccountant({
         }}
       >
         <RfIcon name="file" size={16} />
-        Avaa valmis sähköposti
+        {t.raportti.openReadyEmail}
       </a>
 
       {opened ? (
         <p className="mt-2 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Jos mitään ei avautunut, laitteella ei ole oletussähköpostiohjelmaa.
+          {t.raportti.noMailClient}
         </p>
       ) : null}
     </div>
