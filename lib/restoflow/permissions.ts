@@ -71,11 +71,28 @@ export type Capability =
    */
   | "accounting.view"
   | "accounting.manage"
+  /*
+   * Tiedostot kahtena oikeutena.
+   *
+   * Kaappiin päätyy työsopimuksia, palkkalaskelmia ja vuokrasopimuksia.
+   * Kirjanpitäjä tarvitsee ne työhönsä ja saa lukea; työntekijä ei näe
+   * kaappia lainkaan, koska sen sisältö koskee häntä muttei kuulu
+   * hänelle. Kanta rajaa saman: luku on my_restaurant_ids(), kirjoitus
+   * is_manager().
+   *
+   * Roolirajan ja kannan on oltava samaa mieltä. Jos valikko näyttäisi
+   * kohdan jota kanta ei palvele, käyttäjä näkisi tyhjän sivun ja
+   * luulisi sitä vialliseksi.
+   */
+  | "files.view"
+  | "files.manage"
   | "audit.view"
   | "settings.view"
   | "settings.edit";
 
 const OWNER: Capability[] = [
+  "files.view",
+  "files.manage",
   "receipts.view",
   "receipts.add",
   "receipts.edit",
@@ -121,6 +138,8 @@ const OWNER: Capability[] = [
 ];
 
 const MANAGER: Capability[] = [
+  "files.view",
+  "files.manage",
   "receipts.view",
   "receipts.add",
   "receipts.edit",
@@ -189,6 +208,14 @@ const EMPLOYEE: Capability[] = [
  * raporteissa.
  */
 const ACCOUNTANT: Capability[] = [
+  /*
+   * Kirjanpitäjä lukee kaapin muttei järjestä sitä.
+   *
+   * Sopimukset ja verodokumentit ovat juuri sitä mitä hän tarvitsee.
+   * Rakenne on ravintolan oma, ja sen muuttaminen ulkopuolelta olisi
+   * sekaannus jota kukaan ei pyytänyt.
+   */
+  "files.view",
   "receipts.view",
   "expenses.view",
   "suppliers.view",
@@ -281,6 +308,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/lounas", requires: "lunch.view" },
+  { href: "/admin/tiedostot", requires: "files.view" },
   { href: "/admin/varaukset", requires: "reservations.view" },
   { href: "/admin/raportit", requires: "reports.view" },
   { href: "/admin/ilmoitukset", requires: "alerts.view" },
@@ -505,6 +533,13 @@ export const ADMIN_NAV: NavEntry[] = [
     key: "lunch",
     icon: "lunch",
     requires: "lunch.view",
+    section: "restaurant",
+  },
+  {
+    href: "/admin/tiedostot",
+    key: "files",
+    icon: "folder",
+    requires: "files.view",
     section: "restaurant",
   },
 

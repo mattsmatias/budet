@@ -38,6 +38,8 @@ export type IconName =
   | "camera"
   | "image"
   | "file"
+  | "folder"
+  | "star"
   | "plus"
   | "search"
   | "chevron"
@@ -133,6 +135,19 @@ const PATHS: Record<IconName, string> = {
     "M4 5h16v14H4zM4 15.5l4.2-4.2 3.5 3.5 3-3 5.3 5.3M9 10a1.2 1.2 0 1 0 0-2.4A1.2 1.2 0 0 0 9 10Z",
 
   file: "M6 3h8l4 4v14H6zM14 3v4h4",
+
+  /*
+   * Kansio ja tähti.
+   *
+   * Kansiossa on välilehti vasemmalla ylhäällä, koska se on se muoto
+   * jonka jokainen tunnistaa kansioksi ilman selitystä.
+   *
+   * Tähti on viisisakarainen umpimuoto ääriviivana: puolikas tai
+   * pyöristetty tähti näyttäisi kuvakekoossa läiskältä.
+   */
+  folder: "M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2.5h9A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
+
+  star: "M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z",
 
   plus: "M12 5.5v13M5.5 12h13",
 

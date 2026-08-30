@@ -184,6 +184,8 @@ const fi: Labels = {
     budget: "Budjetit",
     sales_group: "Verotus",
     time_correction: "Työajanseuranta",
+    folder: "Kansiot",
+    file: "Tiedostot",
   },
   deviation: {
     no_clock_in: "Ei leimausta",
@@ -346,6 +348,8 @@ const en: Labels = {
     budget: "Budgets",
     sales_group: "Taxation",
     time_correction: "Time tracking",
+    folder: "Folders",
+    file: "Files",
   },
   deviation: {
     no_clock_in: "No clocking",
@@ -508,6 +512,8 @@ const sv: Labels = {
     budget: "Budgetar",
     sales_group: "Beskattning",
     time_correction: "Tidsuppföljning",
+    folder: "Mappar",
+    file: "Filer",
   },
   deviation: {
     no_clock_in: "Ingen stämpling",
@@ -670,6 +676,8 @@ const da: Labels = {
     budget: "Budgetter",
     sales_group: "Beskatning",
     time_correction: "Tidsregistrering",
+    folder: "Mapper",
+    file: "Filer",
   },
   deviation: {
     no_clock_in: "Ingen stempling",
@@ -832,6 +840,8 @@ const tr: Labels = {
     budget: "Bütçeler",
     sales_group: "Vergilendirme",
     time_correction: "Zaman takibi",
+    folder: "Klasörler",
+    file: "Dosyalar",
   },
   deviation: {
     no_clock_in: "Kayıt yok",
@@ -994,6 +1004,8 @@ const et: Labels = {
     budget: "Eelarved",
     sales_group: "Maksustamine",
     time_correction: "Tööaja jälgimine",
+    folder: "Kaustad",
+    file: "Failid",
   },
   deviation: {
     no_clock_in: "Registreeringut ei ole",

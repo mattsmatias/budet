@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 74 migraatiota:
+-- Sisältää 77 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -86,6 +86,9 @@
 --   0068_reservation_admin.sql
 --   0069_lunch_reorder.sql
 --   0070_meta.sql
+--   0071_files.sql
+--   0072_file_actions.sql
+--   0073_default_folders.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -15780,4 +15783,1320 @@ $$;
 
 revoke all on function sa_meta_diagnostics from public, anon;
 grant execute on function sa_meta_diagnostics to authenticated;
+
+
+-- ===========================================================================
+-- 0071_files.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0071 — Tiedostot: ravintolan oma dokumenttikaappi
+-- ---------------------------------------------------------------------------
+--
+-- Ravintola säilyttää Katessa sopimukset, kuitit, myyntiraportit,
+-- vakuutukset, viranomaisasiakirjat ja työsopimukset — kaiken sen mitä
+-- muuten on kolmessa sähköpostilaatikossa ja yhdessä mapissa.
+--
+-- ---------------------------------------------------------------------------
+-- 1. KÄYTTÄJÄ OMISTAA RAKENTEEN
+-- ---------------------------------------------------------------------------
+--
+-- Kate luo lähtökansiot mutta ei omista niitä. Kansiolla ei ole tyyppiä
+-- eikä tarkoitusta: se on nimi ja paikka puussa. Tiedostolla ei ole
+-- kansiosidonnaista tyyppiä — mikä tahansa tiedosto saa olla missä
+-- tahansa kansiossa.
+--
+-- Tämä on tietoinen rajaus. Jos kansiolla olisi tyyppi, jokainen
+-- ravintola joutuisi sovittamaan oman järjestyksensä Katen malliin.
+-- Yksi käyttää vuosia, toinen aihepiirejä, kolmas yhtä kansiota
+-- kaikelle. Kaikkien on toimittava, eikä yhdenkään tarvitse selittää
+-- itseään tietokannalle.
+--
+-- ---------------------------------------------------------------------------
+-- 2. MIKSI OMA BUCKET EIKÄ documents
+-- ---------------------------------------------------------------------------
+--
+-- Kannassa on jo documents-bucket, mutta se kuuluu toiseen
+-- vuokralaisuusmalliin: sen käytännöt kysyvät
+-- current_user_accessible_org_ids(), eli organisaatiota. Kate on
+-- ravintolapohjainen ja käyttää my_restaurant_ids()- ja
+-- is_manager()-funktioita, kuten receipts ja social.
+--
+-- Näiden sekoittaminen samaan bucketiin tarkoittaisi kahta rinnakkaista
+-- eristyssääntöä samoille objekteille, ja niiden erot löytyisivät vasta
+-- kun jompikumpi pettää. Uusi bucket noudattaa Katen omaa mallia
+-- sellaisenaan.
+--
+-- ---------------------------------------------------------------------------
+-- 3. KANSIO EI OLE TIEDOSTOPOLUSSA
+-- ---------------------------------------------------------------------------
+--
+-- Polku on {restaurantId}/{fileId}. Kansio on sarake kannassa, ei osa
+-- polkua.
+--
+-- Jos kansio olisi polussa, tiedoston siirto olisi storage-kopio ja
+-- -poisto, siis kaksi verkkokutsua jotka voivat epäonnistua erikseen ja
+-- jättää kannan ja storagen eri mieltä siitä missä tiedosto on. Nyt
+-- siirto on yhden sarakkeen päivitys, joka joko tapahtuu tai ei.
+--
+-- Ensimmäinen polkuosa on ravintolan tunniste, koska storage-käytännöt
+-- lukevat eristyksen juuri siitä — sama kuin receipts- ja
+-- social-bucketeissa.
+--
+-- ---------------------------------------------------------------------------
+-- 4. JUURI ON NULL, EI KANSIO
+-- ---------------------------------------------------------------------------
+--
+-- Ylimmällä tasolla olevan kansion parent_folder_id on null, ja
+-- kansioimattoman tiedoston folder_id on null. Näkymätön juurikansio
+-- rivinä olisi tila jota jokainen kysely joutuisi kiertämään ja jonka
+-- käyttäjä voisi vahingossa nimetä uudelleen tai poistaa.
+
+-- ---------------------------------------------------------------------------
+-- Kansiot
+-- ---------------------------------------------------------------------------
+
+create table if not exists folders (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  /*
+   * Alikansio katoaa emonsa mukana.
+   *
+   * Vaihtoehto olisi jättää alikansiot orvoiksi juureen, mutta silloin
+   * yhden kansion poisto sirottelisi sen sisällön ylätasolle. Kansion
+   * poisto on tarkoituksellinen teko, ja funktio kysyy erikseen mitä
+   * tiedostoille tehdään.
+   */
+  parent_folder_id uuid references folders (id) on delete cascade,
+
+  name text not null,
+  sort_order integer not null default 0,
+
+  created_by uuid references profiles (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint folders_name_not_empty check (length(btrim(name)) > 0),
+
+  /*
+   * Nimen pituus on tekninen raja, ei tyylisääntö.
+   *
+   * Käyttäjä saa nimetä kansion miten haluaa. Sata kahtakymmentä
+   * merkkiä pidempi nimi ei kuitenkaan mahdu mihinkään näkymään, eikä
+   * sitä kirjoiteta vahingossa.
+   */
+  constraint folders_name_length check (length(name) <= 120),
+
+  /* Kansio ei voi olla oma emonsa. Syvemmät silmukat estää funktio. */
+  constraint folders_no_self_parent check (parent_folder_id is distinct from id)
+);
+
+/*
+ * Sama nimi samassa paikassa kahdesti on virhe, ei rakenne.
+ *
+ * Kaksi "2026"-kansiota vierekkäin ei kerro käyttäjälle mitään, ja
+ * tiedosto katoaa väärään. Eri kansioissa sama nimi on tietysti
+ * sallittu — juuri siksi kansioita on.
+ *
+ * Kaksi indeksiä, koska null ei ole yhtä suuri kuin null: yksi
+ * indeksi ei estäisi kahta samannimistä juurikansiota.
+ */
+create unique index if not exists folders_unique_name_in_parent
+  on folders (restaurant_id, parent_folder_id, lower(btrim(name)))
+  where parent_folder_id is not null;
+
+create unique index if not exists folders_unique_name_in_root
+  on folders (restaurant_id, lower(btrim(name)))
+  where parent_folder_id is null;
+
+create index if not exists folders_by_parent
+  on folders (restaurant_id, parent_folder_id, sort_order, name);
+
+-- ---------------------------------------------------------------------------
+-- Tiedostot
+-- ---------------------------------------------------------------------------
+
+create table if not exists files (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants (id) on delete cascade,
+
+  /*
+   * Kansion poisto ei hävitä tiedostoa.
+   *
+   * set null siirtää tiedoston juureen. Tiedoston hävittäminen on
+   * erillinen, tarkoituksellinen teko — kansion poisto ei saa olla
+   * tapa menettää vuokrasopimusta vahingossa.
+   */
+  folder_id uuid references folders (id) on delete set null,
+
+  /* Käyttäjälle näkyvä nimi. Storagessa oleva nimi on tunniste. */
+  file_name text not null,
+  storage_path text not null unique,
+
+  /*
+   * Tiedostotyyppi on tieto, ei sääntö.
+   *
+   * Kenttää käytetään kuvakkeen ja lajittelun valintaan. Se ei rajaa
+   * mihin kansioon tiedosto saa mennä — kuitti kelpaa Talous-kansioon
+   * ja myyntiraportti Kuitit-kansioon, jos ravintola niin haluaa.
+   */
+  file_type text not null,
+  file_size bigint not null,
+
+  uploaded_by uuid references profiles (id) on delete set null,
+  is_favorite boolean not null default false,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint files_name_not_empty check (length(btrim(file_name)) > 0),
+  constraint files_name_length check (length(file_name) <= 200),
+  constraint files_size_positive check (file_size > 0)
+);
+
+create index if not exists files_by_folder
+  on files (restaurant_id, folder_id, created_at desc);
+
+create index if not exists files_recent
+  on files (restaurant_id, created_at desc);
+
+create index if not exists files_favorites
+  on files (restaurant_id, created_at desc)
+  where is_favorite;
+
+/*
+ * Haku nimen osalla.
+ *
+ * trigram-indeksi vastaa ilike '%osa%' -hakuun, jota tavallinen
+ * b-puu ei osaa. Ravintolan tiedostomäärä on pieni, mutta haku on
+ * näkymä jota käytetään kirjoittaessa — jokainen näppäily on kysely.
+ */
+create extension if not exists pg_trgm;
+
+create index if not exists files_name_search
+  on files using gin (lower(file_name) gin_trgm_ops);
+
+-- ---------------------------------------------------------------------------
+-- Muokkausaika
+-- ---------------------------------------------------------------------------
+--
+-- touch_updated_at on 0001:stä. Sama liipaisin on kolmisenkymmenellä
+-- taululla, eikä tähän tarvita omaa.
+
+drop trigger if exists folders_touch on folders;
+create trigger folders_touch before update on folders
+  for each row execute function touch_updated_at();
+
+drop trigger if exists files_touch on files;
+create trigger files_touch before update on files
+  for each row execute function touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Rivitason käytännöt
+-- ---------------------------------------------------------------------------
+--
+-- Luku omistajalle, esihenkilölle ja kirjanpitäjälle; kirjoitus
+-- esihenkilölle.
+--
+-- Raja EI ole my_restaurant_ids(), vaikka se on Katessa tavallisin.
+-- Se kattaa myös työntekijät, ja tässä kaapissa on työsopimuksia ja
+-- palkkalaskelmia. Käyttöliittymä piilottaa sivun työntekijältä, mutta
+-- se ei ole este: kirjautuneella on voimassa oleva istunto, ja
+-- rajapintaa voi kutsua ilman käyttöliittymää.
+--
+-- can_read_finance() on täsmälleen oikea joukko — omistaja,
+-- esihenkilö ja kirjanpitäjä — ja sama joukko kuin files.view
+-- sovelluksen puolella. Kannan ja roolitaulukon on oltava samaa
+-- mieltä, tai toinen niistä on väärässä eikä kukaan huomaa kumpi.
+--
+-- Kirjoituskäytännöt ovat olemassa vaikka sovellus kulkee funktioiden
+-- kautta. Käytäntö on viimeinen sana; funktio on käyttöliittymä sille.
+
+alter table folders enable row level security;
+alter table files enable row level security;
+
+/*
+ * Oikeudet pois anonilta.
+ *
+ * Supabase myöntää anon-roolille kaikki oikeudet jokaiseen uuteen
+ * public-skeeman tauluun. RLS on suodatin, mutta oikeuksien
+ * peruuttaminen on ovi — ja näissä tauluissa on työsopimuksia ja
+ * palkkadokumentteja.
+ */
+revoke all on table folders from anon;
+revoke all on table files from anon;
+
+drop policy if exists folders_read on folders;
+create policy folders_read on folders
+  for select using (can_read_finance(restaurant_id));
+
+drop policy if exists folders_write on folders;
+create policy folders_write on folders
+  for all using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+drop policy if exists files_read on files;
+create policy files_read on files
+  for select using (can_read_finance(restaurant_id));
+
+drop policy if exists files_write on files;
+create policy files_write on files
+  for all using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+-- ---------------------------------------------------------------------------
+-- Storage
+-- ---------------------------------------------------------------------------
+--
+-- Yksityinen bucket. Tiedostot luetaan allekirjoitetuilla osoitteilla,
+-- kuten kuitit — julkinen linkki ravintolan vuokrasopimukseen olisi
+-- pysyvästi julkinen kenelle tahansa jolle se päätyy.
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'files',
+  'files',
+  false,
+
+  /*
+   * 25 megatavua.
+   *
+   * Kuitit ja documents ovat kahdessakymmenessä, mutta ne ovat kuvia ja
+   * PDF:iä. Tänne tulee myös Excel-tiedostoja, joissa on vuoden
+   * myyntirivit. Raja on siellä missä se estää vahingon eikä työtä.
+   */
+  26214400,
+
+  /*
+   * Sallitut tyypit.
+   *
+   * Storage tarkistaa nämä riippumatta siitä mitä sovellus lähettää.
+   * Suoritettavat tiedostot puuttuvat tarkoituksella: ravintolan
+   * dokumenttikaappi ei ole paikka jakaa ohjelmia.
+   */
+  array[
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+    'text/plain',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif'
+  ]
+)
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+/*
+ * Eristys luetaan polun ensimmäisestä osasta.
+ *
+ * Sama kuvio kuin receipts- ja social-bucketeissa. Polku on
+ * {restaurantId}/{fileId}, joten foldername(name)[1] on ravintola.
+ */
+drop policy if exists files_storage_read on storage.objects;
+create policy files_storage_read on storage.objects
+  for select using (
+    bucket_id = 'files'
+    and can_read_finance(((storage.foldername(name))[1])::uuid)
+  );
+
+drop policy if exists files_storage_write on storage.objects;
+create policy files_storage_write on storage.objects
+  for insert with check (
+    bucket_id = 'files'
+    and is_manager(((storage.foldername(name))[1])::uuid)
+  );
+
+drop policy if exists files_storage_update on storage.objects;
+create policy files_storage_update on storage.objects
+  for update using (
+    bucket_id = 'files'
+    and is_manager(((storage.foldername(name))[1])::uuid)
+  )
+  with check (
+    bucket_id = 'files'
+    and is_manager(((storage.foldername(name))[1])::uuid)
+  );
+
+drop policy if exists files_storage_delete on storage.objects;
+create policy files_storage_delete on storage.objects
+  for delete using (
+    bucket_id = 'files'
+    and is_manager(((storage.foldername(name))[1])::uuid)
+  );
+
+
+-- ===========================================================================
+-- 0072_file_actions.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0072 — Tiedostojen ja kansioiden toiminnot
+-- ---------------------------------------------------------------------------
+--
+-- Luku tapahtuu suorilla kyselyillä rivitason käytäntöjen läpi. Muutokset
+-- kulkevat näiden funktioiden kautta, koska niihin liittyy tarkistuksia
+-- joita käytäntö ei osaa ilmaista: silmukka kansiopuussa, syvyysraja,
+-- kansion ja tiedoston kuuluminen samaan ravintolaan, ja lokimerkintä.
+--
+-- ---------------------------------------------------------------------------
+-- RAVINTOLA LUETAAN RIVISTÄ, EI PYYNNÖSTÄ
+-- ---------------------------------------------------------------------------
+--
+-- Yksikään funktio ei luota annettuun restaurant_id-arvoon. Kun
+-- kohteena on olemassa oleva kansio tai tiedosto, ravintola haetaan
+-- siitä rivistä ja oikeus tarkistetaan sitä vastaan. Uutta luotaessa
+-- annettu tunniste kelpaa vain jos is_manager myöntää sen kutsujalle —
+-- vieraan ravintolan tunniste ei siis avaa mitään.
+--
+-- Erityisesti siirroissa tarkistetaan molemmat päät: tiedosto ja
+-- kohdekansio on kuuluttava samaan ravintolaan. Ilman sitä oman
+-- ravintolan tiedoston voisi siirtää toisen ravintolan kansioon
+-- pelkällä kansion tunnisteella.
+
+-- ---------------------------------------------------------------------------
+-- Apufunktiot
+-- ---------------------------------------------------------------------------
+
+/**
+ * Kansion syvyys juuresta. Juurikansio on 1.
+ */
+create or replace function folder_depth(p_folder uuid)
+returns integer
+language sql
+stable
+set search_path = public
+as $$
+  with recursive up as (
+    select id, parent_folder_id, 1 as depth
+    from folders
+    where id = p_folder
+
+    union all
+
+    select f.id, f.parent_folder_id, up.depth + 1
+    from folders f
+    join up on f.id = up.parent_folder_id
+    /* Rikkinäinen puu ei saa jäädä pyörimään ikuisesti. */
+    where up.depth < 50
+  )
+  select coalesce(max(depth), 0) from up;
+$$;
+
+/**
+ * Onko kohde jälkeläinen.
+ *
+ * Estää kansion siirtämisen oman alikansionsa sisään. Ilman tätä
+ * tarkistusta siirto irrottaisi haaran puusta: se ei enää löytyisi
+ * juuresta eikä siis mistään näkymästä, mutta rivit olisivat yhä
+ * kannassa.
+ */
+create or replace function folder_is_descendant(p_folder uuid, p_maybe_ancestor uuid)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  with recursive up as (
+    select id, parent_folder_id, 1 as depth
+    from folders
+    where id = p_folder
+
+    union all
+
+    select f.id, f.parent_folder_id, up.depth + 1
+    from folders f
+    join up on f.id = up.parent_folder_id
+    where up.depth < 50
+  )
+  select exists (select 1 from up where up.parent_folder_id = p_maybe_ancestor);
+$$;
+
+/**
+ * Kansiopolku tekstinä, esimerkiksi "Talous / 2026 / Elokuu".
+ *
+ * Käytetään hakutuloksessa ja lokimerkinnässä. Juuressa oleva tiedosto
+ * saa tyhjän merkkijonon, jonka käyttöliittymä korvaa "Tiedostot"-
+ * otsikolla omalla kielellään.
+ */
+create or replace function folder_path_text(p_folder uuid)
+returns text
+language sql
+stable
+set search_path = public
+as $$
+  with recursive up as (
+    select id, parent_folder_id, name, 1 as depth
+    from folders
+    where id = p_folder
+
+    union all
+
+    select f.id, f.parent_folder_id, f.name, up.depth + 1
+    from folders f
+    join up on f.id = up.parent_folder_id
+    where up.depth < 50
+  )
+  select coalesce(
+    string_agg(name, ' / ' order by depth desc),
+    ''
+  )
+  from up;
+$$;
+
+/**
+ * Murupolku käyttöliittymälle.
+ *
+ * Palauttaa juuresta kohti kansiota, jotta näkymä voi tulostaa rivit
+ * sellaisenaan. security invoker: rivitason käytännöt suodattavat, eikä
+ * tässä ole mitään mitä ne eivät jo osaisi.
+ */
+create or replace function folder_breadcrumb(p_folder uuid)
+returns table (id uuid, name text)
+language sql
+stable
+set search_path = public
+as $$
+  with recursive up as (
+    select f.id, f.parent_folder_id, f.name, 1 as depth
+    from folders f
+    where f.id = p_folder
+
+    union all
+
+    select f.id, f.parent_folder_id, f.name, up.depth + 1
+    from folders f
+    join up on f.id = up.parent_folder_id
+    where up.depth < 50
+  )
+  select up.id, up.name from up order by up.depth desc;
+$$;
+
+/*
+ * Syvyysraja.
+ *
+ * Käyttäjä saa rakentaa oman rakenteensa, eikä kymmenen tasoa tule
+ * vastaan missään todellisessa käytössä. Raja on olemassa siksi ettei
+ * ohjelmointivirhe tai vahinko voi kasvattaa puuta rajatta ja tehdä
+ * murupolusta lukukelvotonta.
+ */
+create or replace function max_folder_depth()
+returns integer
+language sql
+immutable
+as $$ select 10 $$;
+
+-- ---------------------------------------------------------------------------
+-- Kansiot
+-- ---------------------------------------------------------------------------
+
+create or replace function create_folder(
+  p_restaurant uuid,
+  p_parent uuid,
+  p_name text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid := p_restaurant;
+  v_name text := btrim(coalesce(p_name, ''));
+  v_id uuid;
+  v_order integer;
+begin
+  if v_name = '' then
+    raise exception 'Kansion nimi puuttuu';
+  end if;
+
+  /*
+   * Emokansio määrää ravintolan.
+   *
+   * Annettu tunniste on vain ehdotus. Jos emo on olemassa, ravintola
+   * luetaan siitä — muuten alikansion voisi luoda toisen ravintolan
+   * kansion alle antamalla oman tunnisteensa.
+   */
+  if p_parent is not null then
+    select restaurant_id into v_restaurant from folders where id = p_parent;
+
+    if v_restaurant is null then
+      raise exception 'Kansiota ei löydy';
+    end if;
+
+    if folder_depth(p_parent) >= max_folder_depth() then
+      raise exception 'Kansiorakenne on liian syvä';
+    end if;
+  end if;
+
+  if v_restaurant is null or not is_manager(v_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  /* Uusi kansio listan loppuun, ei alkuun. */
+  select coalesce(max(sort_order), -1) + 1 into v_order
+  from folders
+  where restaurant_id = v_restaurant
+    and parent_folder_id is not distinct from p_parent;
+
+  insert into folders (restaurant_id, parent_folder_id, name, sort_order, created_by)
+  values (v_restaurant, p_parent, v_name, v_order, auth.uid())
+  returning id into v_id;
+
+  perform write_audit(
+    v_restaurant, 'created', 'folder', v_id, v_name,
+    'Loi kansion ' || v_name
+  );
+
+  return v_id;
+end;
+$$;
+
+create or replace function rename_folder(p_folder uuid, p_name text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_old text;
+  v_name text := btrim(coalesce(p_name, ''));
+begin
+  if v_name = '' then
+    raise exception 'Kansion nimi puuttuu';
+  end if;
+
+  select restaurant_id, name into v_restaurant, v_old
+  from folders where id = p_folder;
+
+  if v_restaurant is null then raise exception 'Kansiota ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  update folders set name = v_name where id = p_folder;
+
+  perform write_audit(
+    v_restaurant, 'renamed', 'folder', p_folder, v_name,
+    'Nimesi kansion ' || v_old || ' → ' || v_name
+  );
+end;
+$$;
+
+create or replace function move_folder(p_folder uuid, p_parent uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_target_restaurant uuid;
+  v_name text;
+  v_order integer;
+begin
+  select restaurant_id, name into v_restaurant, v_name
+  from folders where id = p_folder;
+
+  if v_restaurant is null then raise exception 'Kansiota ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  if p_parent is not null then
+    select restaurant_id into v_target_restaurant from folders where id = p_parent;
+
+    if v_target_restaurant is null then
+      raise exception 'Kohdekansiota ei löydy';
+    end if;
+
+    /*
+     * Molemmat päät samasta ravintolasta.
+     *
+     * Kutsuja voi olla usean ravintolan esihenkilö. Ilman tätä hän
+     * voisi siirtää kansion ravintolasta toiseen, ja rivin
+     * restaurant_id jäisi kertomaan eri tarinaa kuin sen paikka
+     * puussa.
+     */
+    if v_target_restaurant <> v_restaurant then
+      raise exception 'Kohdekansio on toisessa ravintolassa.' using errcode = 'insufficient_privilege';
+    end if;
+
+    if p_parent = p_folder then
+      raise exception 'Kansiota ei voi siirtää itseensä';
+    end if;
+
+    if folder_is_descendant(p_parent, p_folder) then
+      raise exception 'Kansiota ei voi siirtää oman alikansionsa sisään';
+    end if;
+
+    if folder_depth(p_parent) >= max_folder_depth() then
+      raise exception 'Kansiorakenne on liian syvä';
+    end if;
+  end if;
+
+  select coalesce(max(sort_order), -1) + 1 into v_order
+  from folders
+  where restaurant_id = v_restaurant
+    and parent_folder_id is not distinct from p_parent;
+
+  update folders
+  set parent_folder_id = p_parent, sort_order = v_order
+  where id = p_folder;
+
+  perform write_audit(
+    v_restaurant, 'moved', 'folder', p_folder, v_name,
+    'Siirsi kansion ' || v_name || ' → ' ||
+      coalesce(nullif(folder_path_text(p_parent), ''), 'Tiedostot')
+  );
+end;
+$$;
+
+/**
+ * Kansion poisto.
+ *
+ * p_mode = 'keep'     — tiedostot siirtyvät juureen, kansio katoaa
+ * p_mode = 'contents' — myös tiedostot poistetaan
+ *
+ * Palauttaa poistettujen tiedostojen storage-polut, jotta kutsuja voi
+ * poistaa myös itse objektit. Kanta ei ylety storageen, joten se on
+ * kutsujan tehtävä — ja siksi polut palautetaan tässä eikä jätetä
+ * kutsujan haettavaksi erikseen, jolloin ne olisivat jo poissa.
+ */
+create or replace function delete_folder(p_folder uuid, p_mode text default 'keep')
+returns setof text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_name text;
+  v_paths text[];
+  v_count integer;
+begin
+  select restaurant_id, name into v_restaurant, v_name
+  from folders where id = p_folder;
+
+  if v_restaurant is null then raise exception 'Kansiota ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  if p_mode not in ('keep', 'contents') then
+    raise exception 'Tuntematon poistotapa';
+  end if;
+
+  if p_mode = 'contents' then
+    /*
+     * Koko haara, ei vain tämä kansio.
+     *
+     * Käyttäjä näkee kansion sisältöineen yhtenä asiana. Jos poisto
+     * koskisi vain ylintä tasoa, alikansioiden tiedostot jäisivät
+     * juureen irrallisina — ja juuri niitä käyttäjä luuli poistavansa.
+     */
+    with recursive tree as (
+      select id from folders where id = p_folder
+      union all
+      select f.id from folders f join tree t on f.parent_folder_id = t.id
+    ),
+    poistetut as (
+      delete from files
+      where folder_id in (select id from tree)
+      returning storage_path
+    )
+    select array_agg(storage_path) into v_paths from poistetut;
+  end if;
+
+  v_count := coalesce(array_length(v_paths, 1), 0);
+
+  delete from folders where id = p_folder;
+
+  perform write_audit(
+    v_restaurant, 'deleted', 'folder', p_folder, v_name,
+    case
+      when p_mode = 'contents'
+        then 'Poisti kansion ' || v_name || ' sisältöineen (' || v_count || ' tiedostoa)'
+      else 'Poisti kansion ' || v_name
+    end,
+    null, null, true
+  );
+
+  /* Polut kutsujalle, joka poistaa objektit storagesta. */
+  return query select unnest(coalesce(v_paths, array[]::text[]));
+end;
+$$;
+
+create or replace function reorder_folders(p_parent uuid, p_restaurant uuid, p_ids uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid := p_restaurant;
+  v_wrong integer;
+begin
+  if p_parent is not null then
+    select restaurant_id into v_restaurant from folders where id = p_parent;
+    if v_restaurant is null then raise exception 'Kansiota ei löydy'; end if;
+  end if;
+
+  if v_restaurant is null or not is_manager(v_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  /*
+   * Jokaisen kansion on kuuluttava tähän paikkaan.
+   *
+   * Funktio on security definer, joten se ohittaa rivitason käytännöt.
+   * Ilman tätä tarkistusta annettu tunnistelista olisi tapa muuttaa
+   * minkä tahansa kansion järjestystä missä tahansa ravintolassa.
+   */
+  select count(*) into v_wrong
+  from unnest(p_ids) as wanted(id)
+  where not exists (
+    select 1 from folders f
+    where f.id = wanted.id
+      and f.restaurant_id = v_restaurant
+      and f.parent_folder_id is not distinct from p_parent
+  );
+
+  if v_wrong > 0 then
+    raise exception 'Kansio ei kuulu tähän paikkaan';
+  end if;
+
+  update folders f
+  set sort_order = pos.ord
+  from unnest(p_ids) with ordinality as pos(id, ord)
+  where f.id = pos.id;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Tiedostot
+-- ---------------------------------------------------------------------------
+
+/**
+ * Ladatun tiedoston kirjaus.
+ *
+ * Objekti on jo storagessa, kun tämä kutsutaan. Storage-käytäntö on
+ * tarkistanut ravintolan polusta; tämä tarkistaa saman uudelleen
+ * kannan puolelta, koska rivi on se jota käyttöliittymä näyttää.
+ */
+create or replace function register_file(
+  p_restaurant uuid,
+  p_folder uuid,
+  p_name text,
+  p_path text,
+  p_type text,
+  p_size bigint
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid := p_restaurant;
+  v_name text := btrim(coalesce(p_name, ''));
+  v_id uuid;
+begin
+  if v_name = '' then raise exception 'Tiedoston nimi puuttuu'; end if;
+  if coalesce(btrim(p_path), '') = '' then raise exception 'Polku puuttuu'; end if;
+  if coalesce(p_size, 0) <= 0 then raise exception 'Tiedosto on tyhjä'; end if;
+
+  if p_folder is not null then
+    select restaurant_id into v_restaurant from folders where id = p_folder;
+    if v_restaurant is null then raise exception 'Kansiota ei löydy'; end if;
+  end if;
+
+  if v_restaurant is null or not is_manager(v_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  /*
+   * Polun on alettava tämän ravintolan tunnisteella.
+   *
+   * Muuten rivi voisi osoittaa toisen ravintolan objektiin, ja
+   * allekirjoitettu osoite luotaisiin sille rivin perusteella.
+   */
+  if split_part(p_path, '/', 1) <> v_restaurant::text then
+    raise exception 'Polku ei kuulu tälle ravintolalle';
+  end if;
+
+  insert into files (
+    restaurant_id, folder_id, file_name, storage_path,
+    file_type, file_size, uploaded_by
+  )
+  values (
+    v_restaurant, p_folder, v_name, btrim(p_path),
+    coalesce(nullif(btrim(p_type), ''), 'application/octet-stream'),
+    p_size, auth.uid()
+  )
+  returning id into v_id;
+
+  perform write_audit(
+    v_restaurant, 'created', 'file', v_id, v_name,
+    'Lisäsi tiedoston ' || v_name || ' → ' ||
+      coalesce(nullif(folder_path_text(p_folder), ''), 'Tiedostot')
+  );
+
+  return v_id;
+end;
+$$;
+
+create or replace function rename_file(p_file uuid, p_name text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_old text;
+  v_name text := btrim(coalesce(p_name, ''));
+begin
+  if v_name = '' then raise exception 'Tiedoston nimi puuttuu'; end if;
+
+  select restaurant_id, file_name into v_restaurant, v_old
+  from files where id = p_file;
+
+  if v_restaurant is null then raise exception 'Tiedostoa ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  update files set file_name = v_name where id = p_file;
+
+  perform write_audit(
+    v_restaurant, 'renamed', 'file', p_file, v_name,
+    'Nimesi tiedoston ' || v_old || ' → ' || v_name
+  );
+end;
+$$;
+
+create or replace function move_file(p_file uuid, p_folder uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_current_folder uuid;
+  v_target_restaurant uuid;
+  v_name text;
+  v_from text;
+begin
+  select restaurant_id, file_name, folder_id
+  into v_restaurant, v_name, v_current_folder
+  from files where id = p_file;
+
+  if v_restaurant is null then raise exception 'Tiedostoa ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  v_from := coalesce(nullif(folder_path_text(v_current_folder), ''), 'Tiedostot');
+
+  if p_folder is not null then
+    select restaurant_id into v_target_restaurant from folders where id = p_folder;
+
+    if v_target_restaurant is null then
+      raise exception 'Kohdekansiota ei löydy';
+    end if;
+
+    /* Sama sääntö kuin kansion siirrossa: molemmat päät tarkistetaan. */
+    if v_target_restaurant <> v_restaurant then
+      raise exception 'Kohdekansio on toisessa ravintolassa.' using errcode = 'insufficient_privilege';
+    end if;
+  end if;
+
+  update files set folder_id = p_folder where id = p_file;
+
+  perform write_audit(
+    v_restaurant, 'moved', 'file', p_file, v_name,
+    'Siirsi tiedoston ' || v_name || ': ' || v_from || ' → ' ||
+      coalesce(nullif(folder_path_text(p_folder), ''), 'Tiedostot')
+  );
+end;
+$$;
+
+create or replace function set_file_favorite(p_file uuid, p_value boolean)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  select restaurant_id into v_restaurant from files where id = p_file;
+
+  if v_restaurant is null then raise exception 'Tiedostoa ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  /* Tähti ei ole lokitapahtuma: se on näkymäasetus, ei muutos asiaan. */
+  update files set is_favorite = coalesce(p_value, false) where id = p_file;
+end;
+$$;
+
+/**
+ * Tiedoston poisto.
+ *
+ * Palauttaa storage-polun, jotta kutsuja voi poistaa myös objektin.
+ * Rivi poistetaan ensin: se on se mitä käyttäjä näkee, ja jäljelle
+ * jäävä objekti on siivousasia — kun taas jäljelle jäävä rivi ilman
+ * objektia olisi rikkinäinen tiedosto näkymässä.
+ */
+create or replace function delete_file(p_file uuid)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_name text;
+  v_path text;
+begin
+  select restaurant_id, file_name, storage_path
+  into v_restaurant, v_name, v_path
+  from files where id = p_file;
+
+  if v_restaurant is null then raise exception 'Tiedostoa ei löydy'; end if;
+  if not is_manager(v_restaurant) then raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege'; end if;
+
+  delete from files where id = p_file;
+
+  perform write_audit(
+    v_restaurant, 'deleted', 'file', p_file, v_name,
+    'Poisti tiedoston ' || v_name,
+    null, null, true
+  );
+
+  return v_path;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Haku
+-- ---------------------------------------------------------------------------
+
+/**
+ * Haku koko ravintolan tiedostoista.
+ *
+ * Sijainti tulee mukaan, koska hakutulos ilman sijaintia ei kerro
+ * käyttäjälle mistä tiedosto löytyy ensi kerralla ilman hakua.
+ *
+ * security invoker: rivitason käytännöt rajaavat tuloksen kutsujan
+ * ravintoloihin, eikä tässä tarvita mitään sen yli.
+ */
+create or replace function search_files(
+  p_restaurant uuid,
+  p_term text,
+  p_limit integer default 50
+)
+returns table (
+  id uuid,
+  file_name text,
+  file_type text,
+  file_size bigint,
+  folder_id uuid,
+  folder_path text,
+  is_favorite boolean,
+  created_at timestamptz
+)
+language sql
+stable
+set search_path = public
+as $$
+  select
+    f.id,
+    f.file_name,
+    f.file_type,
+    f.file_size,
+    f.folder_id,
+    folder_path_text(f.folder_id),
+    f.is_favorite,
+    f.created_at
+  from files f
+  where f.restaurant_id = p_restaurant
+    and btrim(coalesce(p_term, '')) <> ''
+    and lower(f.file_name) like '%' || lower(btrim(p_term)) || '%'
+  order by f.created_at desc
+  limit least(greatest(coalesce(p_limit, 50), 1), 200);
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Oikeudet
+-- ---------------------------------------------------------------------------
+--
+-- Kirjautuneille, ei kaikille. Julkinen pinta ei kosketa tiedostoihin
+-- millään tavalla.
+
+/*
+ * revoke ... from public EI RIITÄ.
+ *
+ * Supabase myöntää anon- ja authenticated-rooleille suoran
+ * EXECUTE-oikeuden jokaiseen uuteen public-skeeman funktioon.
+ * PUBLIClta peruminen ei kosketa suoraa myöntöä, joten funktio jää
+ * kirjautumattoman kutsuttavaksi vaikka revoke näyttäisi tehdyltä.
+ *
+ * Sama ansa kuin taulujen kohdalla: oikeus on peruttava nimenomaan
+ * siltä roolilta jolla se on.
+ *
+ * Apufunktiot ja kylvöfunktio ovat sisäisiä. Ne kutsutaan vain
+ * security definer -funktioista, jotka ajavat omistajan oikeuksin,
+ * eikä niillä ole omaa oikeustarkistusta — seed_default_folders
+ * loisi kansiot mihin tahansa ravintolaan sille joka sen kutsuisi.
+ */
+revoke execute on function folder_depth(uuid) from public, anon, authenticated;
+revoke execute on function folder_is_descendant(uuid, uuid) from public, anon, authenticated;
+revoke execute on function max_folder_depth() from public, anon, authenticated;
+
+revoke execute on function folder_path_text(uuid) from public, anon;
+revoke execute on function folder_breadcrumb(uuid) from public, anon;
+revoke execute on function search_files(uuid, text, integer) from public, anon;
+revoke execute on function create_folder(uuid, uuid, text) from public, anon;
+revoke execute on function rename_folder(uuid, text) from public, anon;
+revoke execute on function move_folder(uuid, uuid) from public, anon;
+revoke execute on function delete_folder(uuid, text) from public, anon;
+revoke execute on function reorder_folders(uuid, uuid, uuid[]) from public, anon;
+revoke execute on function register_file(uuid, uuid, text, text, text, bigint) from public, anon;
+revoke execute on function rename_file(uuid, text) from public, anon;
+revoke execute on function move_file(uuid, uuid) from public, anon;
+revoke execute on function set_file_favorite(uuid, boolean) from public, anon;
+revoke execute on function delete_file(uuid) from public, anon;
+
+grant execute on function folder_path_text(uuid) to authenticated;
+grant execute on function folder_breadcrumb(uuid) to authenticated;
+grant execute on function search_files(uuid, text, integer) to authenticated;
+grant execute on function create_folder(uuid, uuid, text) to authenticated;
+grant execute on function rename_folder(uuid, text) to authenticated;
+grant execute on function move_folder(uuid, uuid) to authenticated;
+grant execute on function delete_folder(uuid, text) to authenticated;
+grant execute on function reorder_folders(uuid, uuid, uuid[]) to authenticated;
+grant execute on function register_file(uuid, uuid, text, text, text, bigint) to authenticated;
+grant execute on function rename_file(uuid, text) to authenticated;
+grant execute on function move_file(uuid, uuid) to authenticated;
+grant execute on function set_file_favorite(uuid, boolean) to authenticated;
+grant execute on function delete_file(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Tiedostomäärät kansioittain
+-- ---------------------------------------------------------------------------
+
+/**
+ * Montako tiedostoa kussakin kansiossa on suoraan.
+ *
+ * Ilman tätä kansiolistaus joutuisi lataamaan koko ravintolan
+ * tiedostorivit pelkkää lukumäärää varten. Rekursiivinen summa
+ * lasketaan selaimessa: kansiopuu on siellä jo valmiina, eikä sitä
+ * kannata hakea kahdesti.
+ *
+ * security invoker: rivitason käytännöt rajaavat tuloksen.
+ */
+create or replace function folder_counts(p_restaurant uuid)
+returns table (folder_id uuid, file_count bigint)
+language sql
+stable
+set search_path = public
+as $$
+  select f.folder_id, count(*)
+  from files f
+  where f.restaurant_id = p_restaurant
+    and f.folder_id is not null
+  group by f.folder_id;
+$$;
+
+revoke execute on function folder_counts(uuid) from public, anon;
+grant execute on function folder_counts(uuid) to authenticated;
+
+
+-- ===========================================================================
+-- 0073_default_folders.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0073 — Tiedostojen lähtökansiot
+-- ---------------------------------------------------------------------------
+--
+-- Tyhjä tiedostonäkymä on kysymys jota ravintoloitsija ei halua
+-- vastata: "mistä minun pitäisi aloittaa?" Yhdeksän kansiota vastaa
+-- siihen puolestaan.
+--
+-- ---------------------------------------------------------------------------
+-- KANSIOT OVAT EHDOTUS, EI RAKENNE
+-- ---------------------------------------------------------------------------
+--
+-- Nämä luodaan kerran ravintolan syntyessä ja unohdetaan. Mikään koodi
+-- ei etsi niitä nimellä, mikään ei oleta niiden olevan olemassa, eikä
+-- mikään luo niitä uudelleen jos ne poistetaan. Kansio on rivi jonka
+-- käyttäjä omistaa siitä hetkestä lähtien.
+--
+-- Jos tässä olisi vaikka "Kuitit"-kansio jota kuittien tallennus
+-- etsisi, kansion nimeäminen uudelleen rikkoisi kuitit. Siksi
+-- kansioilla ei ole tunnisteita eikä tyyppiä — vain nimi ja järjestys.
+
+create or replace function default_folder_names()
+returns table (name text, sort_order integer)
+language sql
+immutable
+set search_path = public
+as $
+  values
+    ('Sopimukset', 0),
+    ('Kuitit', 1),
+    ('Myyntiraportit', 2),
+    ('Laskut', 3),
+    ('Talous', 4),
+    ('Työntekijät', 5),
+    ('Viranomaiset', 6),
+    ('Tärkeät tiedostot', 7),
+    ('Muut', 8);
+$$;
+
+/**
+ * Lähtökansiot yhdelle ravintolalle.
+ *
+ * on conflict do nothing: ajo kahdesti ei kahdenna mitään, eikä
+ * käyttäjän poistama kansio palaa vaikka funktio ajettaisiin uudelleen
+ * — poistettua ei ole, ja uusi luonti on eri asia kuin paluu.
+ */
+create or replace function seed_default_folders(p_restaurant uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into folders (restaurant_id, parent_folder_id, name, sort_order)
+  select p_restaurant, null, d.name, d.sort_order
+  from default_folder_names() d
+  on conflict do nothing;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Uusi ravintola saa kansiot
+-- ---------------------------------------------------------------------------
+--
+-- create_restaurant kirjoitetaan kokonaan uudelleen, koska se on
+-- projektin tapa: 0038, 0039 ja 0044 tekivät saman. Sisältö on 0044:n
+-- versio, johon on lisätty yksi kutsu.
+
+create or replace function create_restaurant(
+  p_name text,
+  p_timezone text default 'Europe/Helsinki'
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id uuid;
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'Kirjautuminen vaaditaan';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    raise exception 'Ravintolan nimi puuttuu';
+  end if;
+
+  insert into profiles (id) values (v_user) on conflict (id) do nothing;
+
+  for v_attempt in 1..5 loop
+    begin
+      insert into restaurants (name, timezone, slug)
+      values (
+        trim(p_name),
+        coalesce(nullif(trim(p_timezone), ''), 'Europe/Helsinki'),
+        restaurant_slug(p_name)
+      )
+      returning id into v_id;
+
+      exit;
+    exception when unique_violation then
+      if v_attempt = 5 then
+        raise exception 'Ravintolan osoitetunnusta ei voitu muodostaa. Kokeile toista nimeä.';
+      end if;
+    end;
+  end loop;
+
+  insert into memberships (restaurant_id, user_id, role, position, hourly_rate_cents)
+  values (v_id, v_user, 'owner', 'manager', null);
+
+  insert into sales_groups (restaurant_id, name, vat_rate, is_default, sort_order)
+  values
+    (v_id, 'Ravintolamyynti', 0.13500, true, 0),
+    (v_id, 'Alkoholimyynti', 0.25500, false, 1),
+    (v_id, 'Muut myynnit', 0.25500, false, 2);
+
+  insert into pos_sales_groups (restaurant_id, pos_name, sales_group_id)
+  select v_id, d.pos_name, g.id
+  from default_pos_names() d
+  join sales_groups g
+    on g.restaurant_id = v_id
+   and g.name = d.group_name;
+
+  /* Tiedostojen lähtökansiot. Käyttäjä saa muuttaa niitä heti. */
+  perform seed_default_folders(v_id);
+
+  return v_id;
+end;
+$$;
+
+revoke all on function create_restaurant from public;
+grant execute on function create_restaurant to authenticated;
+
+/*
+ * Kylvöfunktiot ovat sisäisiä.
+ *
+ * seed_default_folders on security definer eikä tarkista oikeuksia:
+ * sen ainoa kutsuja on create_restaurant, joka on jo tarkistanut
+ * kirjautumisen. Ilman tätä peruutusta kuka tahansa — myös
+ * kirjautumaton — voisi luoda yhdeksän kansiota mihin tahansa
+ * ravintolaan pelkällä tunnisteella.
+ *
+ * from public ei riitä: Supabase myöntää anonille ja
+ * authenticatedille suoran oikeuden, jota PUBLIC-peruutus ei koske.
+ */
+revoke execute on function seed_default_folders(uuid) from public, anon, authenticated;
+revoke execute on function default_folder_names() from public, anon, authenticated;
+
+/*
+ * Sama vika projektin vanhoissa kylvöfunktioissa.
+ *
+ * seed_default_sales_groups ja seed_default_pos_mappings ovat olleet
+ * kirjautumattoman kutsuttavissa siitä asti kun ne luotiin. Ne ovat
+ * samaa luokkaa: security definer, ei oikeustarkistusta, ravintola
+ * parametrina. Korjataan samalla, koska vika on identtinen eikä sen
+ * jättäminen paikalleen olisi puolustettavissa.
+ */
+revoke execute on function seed_default_sales_groups(uuid) from public, anon, authenticated;
+revoke execute on function seed_default_pos_mappings(uuid) from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Olemassa olevat ravintolat
+-- ---------------------------------------------------------------------------
+--
+-- Ilman tätä ominaisuus avautuisi tyhjänä juuri niille ravintoloille
+-- jotka ovat jo käytössä — eli kaikille todellisille. Kansiot annetaan
+-- vain niille joilla ei ole yhtään: jos ravintola on jo rakentanut
+-- omansa jotenkin muuten, sitä ei täydennetä ehdotuksilla.
+
+do $$
+declare
+  r record;
+begin
+  for r in
+    select id from restaurants
+    where not exists (select 1 from folders f where f.restaurant_id = restaurants.id)
+  loop
+    perform seed_default_folders(r.id);
+  end loop;
+end;
+$$;
 

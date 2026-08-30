@@ -862,9 +862,13 @@ describe("oikeudet", () => {
    * Neljästoista on Pöytävaraukset. Se on illan aikana avoinna oleva
    * näkymä eikä asetus: seurue saapuu, pöytä vaihtuu, walk-in
    * istuutuu. Sitä ei voi hakea asetusten takaa kesken vuoron.
+   *
+   * Viidestoista on Tiedostot. Kaappi jota ei löydä valikosta ei ole
+   * kaappi vaan kansio jonka osoitteen joutuu muistamaan — ja juuri
+   * silloin dokumentit jäävät sähköpostiin niin kuin ennenkin.
    */
-  it("pitää päävalikon neljässätoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(14);
+  it("pitää päävalikon viidessätoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(15);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 
@@ -932,14 +936,23 @@ describe("oikeudet", () => {
     expect(accountant).not.toContain("staff");
 
     /*
-     * Kirjanpitäjä näkee Raportoinnin muttei Lounasta, ja molemmat
-     * ovat samassa "Muut"-ryhmässä. Ryhmä siis jää mutta kutistuu
-     * yhteen riviin — se on eri asia kuin tyhjä ryhmä.
+     * Kirjanpitäjä näkee Tiedostot ja Raportoinnin muttei Lounasta,
+     * ja kaikki kolme ovat samassa "Muut"-ryhmässä. Ryhmä siis jää
+     * mutta kutistuu — se on eri asia kuin tyhjä ryhmä.
+     *
+     * Tiedostot on hänelle nimenomaan kuuluva kohta: sopimukset,
+     * verodokumentit ja palkkatositteet ovat juuri sitä mitä hän
+     * työssään tarvitsee. Lukuoikeus riittää — kaapin järjestys on
+     * ravintolan oma asia, ja sen muuttaminen ulkopuolelta olisi
+     * sekaannus jota kukaan ei pyytänyt.
      */
     const muut = adminNavSectionsFor("accountant").find(
       (x) => x.id === "restaurant",
     );
-    expect(muut?.items.map((i) => i.href)).toEqual(["/admin/raportit"]);
+    expect(muut?.items.map((i) => i.href)).toEqual([
+      "/admin/tiedostot",
+      "/admin/raportit",
+    ]);
   });
 
   /*
