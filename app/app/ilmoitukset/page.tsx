@@ -25,6 +25,9 @@ export default async function EmployeeAlertsPage() {
   const { shifts, clockEvents, absences, today, now, restaurant } =
     await employeeContext("/app/ilmoitukset");
 
+  const locale = await resolveLocale();
+  const t = workerText(locale);
+
   const alerts = buildEmployeeAlerts({
     shifts,
     clockEvents,
@@ -32,9 +35,10 @@ export default async function EmployeeAlertsPage() {
     today,
     now,
     timezone: restaurant.timezone,
+    t,
+    locale,
   });
   const actionable = alerts.filter((alert) => alert.severity === "action");
-  const t = workerText(await resolveLocale());
 
   return (
     <div className="rf-enter space-y-4">

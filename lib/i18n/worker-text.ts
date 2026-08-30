@@ -38,6 +38,18 @@ const fi = {
     sending: "Lähetetään…",
     missingOut: "Uloskirjaus puuttuu",
   },
+  omatHalytykset: {
+    shiftChanged: "Työvuoro muuttui",
+    shiftWasNow: "oli {ennenAlku}–{ennenLoppu}, nyt {alku}–{loppu}",
+    clockLeftOpen: "Leimaus jäi auki",
+    clockLeftOpenDays: "{maara} päivää jäi leimaamatta ulos",
+    tellManager:
+      "Kerro esihenkilölle, jotta tunnit korjataan — auki jäänyt leimaus ei laske työaikaa oikein.",
+    absenceSent: "Poissaoloilmoitus lähetetty",
+    absencesSent: "{maara} poissaoloilmoitusta lähetetty",
+    absenceNoCancel:
+      "Ilmoitus ei peru vuoroa — esihenkilö etsii tilalle tekijän.",
+  },
 
   nav: {
     home: "Koti",
@@ -256,6 +268,18 @@ const en: WorkerText = {
     sending: "Sending…",
     missingOut: "Clock-out missing",
   },
+  omatHalytykset: {
+    shiftChanged: "The shift changed",
+    shiftWasNow: "was {ennenAlku}–{ennenLoppu}, now {alku}–{loppu}",
+    clockLeftOpen: "A clocking was left open",
+    clockLeftOpenDays: "{maara} days were left without a clock-out",
+    tellManager:
+      "Tell your manager so the hours get corrected — a clocking left open does not count the time right.",
+    absenceSent: "The absence report was sent",
+    absencesSent: "{maara} absence reports sent",
+    absenceNoCancel:
+      "The report does not cancel the shift — the manager finds a replacement.",
+  },
   nav: {
     home: "Home",
     shifts: "Shifts",
@@ -458,6 +482,18 @@ const sv: WorkerText = {
     sending: "Skickar…",
     missingOut: "Utstämpling saknas",
   },
+  omatHalytykset: {
+    shiftChanged: "Passet ändrades",
+    shiftWasNow: "var {ennenAlku}–{ennenLoppu}, nu {alku}–{loppu}",
+    clockLeftOpen: "En stämpling lämnades öppen",
+    clockLeftOpenDays: "{maara} dagar blev utan utstämpling",
+    tellManager:
+      "Berätta för chefen så att timmarna rättas — en öppen stämpling räknar inte tiden rätt.",
+    absenceSent: "Frånvaroanmälan skickad",
+    absencesSent: "{maara} frånvaroanmälningar skickade",
+    absenceNoCancel:
+      "Anmälan ställer inte in passet — chefen söker en ersättare.",
+  },
   nav: {
     home: "Hem",
     shifts: "Pass",
@@ -659,6 +695,18 @@ const da: WorkerText = {
     saving: "Gemmer…",
     sending: "Sender…",
     missingOut: "Udstempling mangler",
+  },
+  omatHalytykset: {
+    shiftChanged: "Vagten blev ændret",
+    shiftWasNow: "var {ennenAlku}–{ennenLoppu}, nu {alku}–{loppu}",
+    clockLeftOpen: "En stempling blev efterladt åben",
+    clockLeftOpenDays: "{maara} dage blev uden udstempling",
+    tellManager:
+      "Fortæl det til lederen, så timerne rettes — en åben stempling tæller ikke tiden rigtigt.",
+    absenceSent: "Fraværsmeldingen er sendt",
+    absencesSent: "{maara} fraværsmeldinger sendt",
+    absenceNoCancel:
+      "Meldingen aflyser ikke vagten — lederen finder en afløser.",
   },
   nav: {
     home: "Hjem",
@@ -864,6 +912,18 @@ const tr: WorkerText = {
     sending: "Gönderiliyor…",
     missingOut: "Çıkış kaydı eksik",
   },
+  omatHalytykset: {
+    shiftChanged: "Vardiya değişti",
+    shiftWasNow: "{ennenAlku}–{ennenLoppu} idi, şimdi {alku}–{loppu}",
+    clockLeftOpen: "Bir kayıt açık kaldı",
+    clockLeftOpenDays: "{maara} gün çıkış kaydı olmadan kaldı",
+    tellManager:
+      "Saatlerin düzeltilmesi için yöneticine söyle — açık kalan kayıt süreyi doğru saymaz.",
+    absenceSent: "Devamsızlık bildirimi gönderildi",
+    absencesSent: "{maara} devamsızlık bildirimi gönderildi",
+    absenceNoCancel:
+      "Bildirim vardiyayı iptal etmez — yönetici yerine birini bulur.",
+  },
   nav: {
     home: "Ana sayfa",
     shifts: "Vardiyalar",
@@ -1064,6 +1124,17 @@ const et: WorkerText = {
     saving: "Salvestame…",
     sending: "Saadame…",
     missingOut: "Väljaregistreerimine puudub",
+  },
+  omatHalytykset: {
+    shiftChanged: "Vahetus muutus",
+    shiftWasNow: "oli {ennenAlku}–{ennenLoppu}, nüüd {alku}–{loppu}",
+    clockLeftOpen: "Registreering jäi lahti",
+    clockLeftOpenDays: "{maara} päeva jäi väljaregistreerimata",
+    tellManager:
+      "Räägi juhatajale, et tunnid parandataks — lahtijäänud registreering ei arvesta aega õigesti.",
+    absenceSent: "Puudumisteade saadetud",
+    absencesSent: "{maara} puudumisteadet saadetud",
+    absenceNoCancel: "Teade ei tühista vahetust — juhataja otsib asendaja.",
   },
   nav: {
     home: "Avaleht",

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fill } from "@/lib/i18n/auth-text";
 import { adminText } from "@/lib/i18n/admin-text";
 import { formatMoney } from "@/lib/money";
 import {
@@ -236,7 +237,7 @@ const getAlerts = defineTool({
         })),
       },
       card: {
-        title: "Avoimet poikkeamat",
+        title: adminText(ctx.locale).kortti.openDeviations,
         value: String(result.alerts.length),
         meta: [
           `${result.counts.critical} kriittistä`,
@@ -391,7 +392,9 @@ const getLabourCost = defineTool({
         shareOfSales: share,
       },
       card: {
-        title: `Työvoima ${formatMonth(month, ctx.locale)}`,
+        title: fill(adminText(ctx.locale).kortti.labourTitle, {
+          kuukausi: formatMonth(month, ctx.locale),
+        }),
         value: formatMoney(totals.grossCents),
         meta: [
           formatHours(totals.workedMinutes),

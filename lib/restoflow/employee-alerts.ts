@@ -11,6 +11,9 @@
  */
 
 import { currentState, eventsOnDate } from "./timeclock";
+import { fill } from "@/lib/i18n/auth-text";
+import type { WorkerText } from "@/lib/i18n/worker-text";
+import { formatDayShortIn } from "@/lib/i18n/labels";
 import { dayIn } from "./clock-context";
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
@@ -38,6 +41,10 @@ export interface EmployeeAlertContext {
   now: string;
   /** Ravintolan aikavyöhyke: leimauksen päivä luetaan siinä ajassa. */
   timezone: string;
+  /** Työntekijänäkymän tekstit. */
+  t: WorkerText;
+  /** Käyttäjän kieli päivämäärien muotoiluun. */
+  locale: AppLocale;
 }
 
 /**
@@ -65,11 +72,16 @@ function changedShifts(ctx: EmployeeAlertContext): EmployeeAlert[] {
       id: `shift-changed-${shift.id}`,
       kind: "shift_changed" as const,
       severity: "action" as const,
-      title: "Työvuoro muuttui",
+      title: ctx.t.omatHalytykset.shiftChanged,
       detail:
-        `${formatDate(shift.date)} · ` +
+        `${formatDate(shift.date, ctx.locale)} · ` +
         (shift.previousStartTime
-          ? `oli ${shift.previousStartTime}–${shift.previousEndTime}, nyt ${shift.startTime}–${shift.endTime}`
+          ? fill(ctx.t.omatHalytykset.shiftWasNow, {
+              ennenAlku: shift.previousStartTime,
+              ennenLoppu: shift.previousEndTime ?? "",
+              alku: shift.startTime,
+              loppu: shift.endTime,
+            })
           : `${shift.startTime}–${shift.endTime}`) +
         ".",
       href: `/app/vuorot?paiva=${shift.date}`,
@@ -106,11 +118,13 @@ function openClock(ctx: EmployeeAlertContext): EmployeeAlert[] {
       severity: "action",
       title:
         stuck.length === 1
-          ? "Leimaus jäi auki"
-          : `${stuck.length} päivää jäi leimaamatta ulos`,
+          ? ctx.t.omatHalytykset.clockLeftOpen
+          : fill(ctx.t.omatHalytykset.clockLeftOpenDays, {
+              maara: String(stuck.length),
+            }),
       detail:
-        `${stuck.map(formatDate).join(", ")}. ` +
-        "Kerro esihenkilölle, jotta tunnit korjataan — auki jäänyt leimaus ei laske työaikaa oikein.",
+        `${stuck.map((d) => formatDate(d, ctx.locale)).join(", ")}. ` +
+        ctx.t.omatHalytykset.tellManager,
       href: "/app/tyoaika",
     },
   ];
@@ -130,11 +144,13 @@ function reportedAbsences(ctx: EmployeeAlertContext): EmployeeAlert[] {
       severity: "info",
       title:
         upcoming.length === 1
-          ? "Poissaoloilmoitus lähetetty"
-          : `${upcoming.length} poissaoloilmoitusta lähetetty`,
+          ? ctx.t.omatHalytykset.absenceSent
+          : fill(ctx.t.omatHalytykset.absencesSent, {
+              maara: String(upcoming.length),
+            }),
       detail:
-        `${upcoming.map((absence) => formatDate(absence.date)).join(", ")}. ` +
-        "Ilmoitus ei peru vuoroa — esihenkilö etsii tilalle tekijän.",
+        `${upcoming.map((absence) => formatDate(absence.date, ctx.locale)).join(", ")}. ` +
+        ctx.t.omatHalytykset.absenceNoCancel,
       href: "/app/vuorot",
     },
   ];
@@ -147,7 +163,6 @@ export function shiftStatusText(shift: Shift, locale: AppLocale): string {
   return labels(locale).shiftStatus[shift.status];
 }
 
-function formatDate(isoDate: string): string {
-  const [, m, d] = isoDate.split("-");
-  return `${Number(d)}.${Number(m)}.`;
+function formatDate(isoDate: string, locale: AppLocale): string {
+  return formatDayShortIn(isoDate, locale);
 }

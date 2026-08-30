@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { fill } from "@/lib/i18n/auth-text";
 import { adminText } from "@/lib/i18n/admin-text";
 import type { Role } from "@/lib/restoflow/types";
 import { can } from "@/lib/restoflow/permissions";
@@ -157,7 +158,9 @@ const getExpensesByCategory = defineTool({
         })),
       },
       card: {
-        title: `${formatMonth(month, ctx.locale)} kategorioittain`,
+        title: fill(adminText(ctx.locale).kortti.byCategoryTitle, {
+          kuukausi: formatMonth(month, ctx.locale),
+        }),
         value: formatMoney(totals.reduce((sum, t) => sum + t.totalCents, 0)),
         bars: totals.slice(0, 5).map((t) => ({
           label: labels(ctx.locale).categories[t.category],
@@ -211,7 +214,9 @@ const getSuppliers = defineTool({
         })),
       },
       card: {
-        title: `Suurimmat toimittajat · ${formatMonth(month, ctx.locale)}`,
+        title: fill(adminText(ctx.locale).kortti.topSuppliersTitle, {
+          kuukausi: formatMonth(month, ctx.locale),
+        }),
         value: formatMoney(suppliers.reduce((sum, x) => sum + x.totalCents, 0)),
         bars: suppliers.map((x) => ({
           label: x.name,
@@ -268,7 +273,7 @@ const searchReceipts = defineTool({
         found.length === 0
           ? undefined
           : {
-              title: "Hakutulos",
+              title: adminText(ctx.locale).kortti.searchResult,
               value: formatMoney(total),
               meta: [
                 `${found.length} kuittia`,
@@ -347,7 +352,9 @@ const getBudgets = defineTool({
         })),
       },
       card: {
-        title: `Budjetit · ${formatMonth(month, ctx.locale)}`,
+        title: fill(adminText(ctx.locale).kortti.budgetsTitle, {
+          kuukausi: formatMonth(month, ctx.locale),
+        }),
         value: formatMoney(lines.reduce((sum, l) => sum + l.spentCents, 0)),
         meta: [
           `${formatMoney(lines.reduce((sum, l) => sum + l.budgetCents, 0))} budjetoitu`,
@@ -397,7 +404,10 @@ const getLunchWeek = defineTool({
 
     return {
       card: {
-        title: `Viikko ${isoWeekNumber(week)} · ${formatWeekRange(week, ctx.locale)}`,
+        title: fill(adminText(ctx.locale).kortti.weekTitle, {
+          numero: String(isoWeekNumber(week)),
+          jakso: formatWeekRange(week, ctx.locale),
+        }),
         value: labels(ctx.locale).lunchStatus[menu.status],
         meta: [
           `${days.length} päivää`,
@@ -726,7 +736,7 @@ const proposeLunchPrice = defineTool({
     return {
       summary: `Valmis ehdotus: ${name} ${formatMoney(cents)} viikolle ${formatWeekRange(week, ctx.locale)}.`,
       preview: {
-        title: "Lounashinnan muutos",
+        title: adminText(ctx.locale).kortti.lunchPriceChange,
         changes: [
           {
             label: `${name} · ${formatWeekRange(week, ctx.locale)}`,
@@ -771,7 +781,7 @@ const proposeCopyLunchWeek = defineTool({
     return {
       summary: `Valmis ehdotus: kopioidaan ${formatWeekRange(from, ctx.locale)} → ${formatWeekRange(to, ctx.locale)}.`,
       preview: {
-        title: "Lounaslistan kopiointi",
+        title: adminText(ctx.locale).kortti.lunchCopy,
         changes: [
           {
             label: "Lähde",
@@ -818,7 +828,7 @@ const proposePublishLunch = defineTool({
     return {
       summary: `Valmis ehdotus: julkaistaan ${formatWeekRange(week, ctx.locale)}.`,
       preview: {
-        title: "Lounaslistan julkaisu",
+        title: adminText(ctx.locale).kortti.lunchPublish,
         changes: [
           {
             label: "Viikko",
