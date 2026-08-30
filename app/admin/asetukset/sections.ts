@@ -102,7 +102,7 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     summary: t.asetus.secReservationsHint,
     icon: "tables",
     ownerOnly: false,
-    href: "/admin/asetukset/varaukset",
+    href: "/admin/varaukset/asetukset",
   },
   /*
    * Toimintaloki on asetuksissa muttei asetus.

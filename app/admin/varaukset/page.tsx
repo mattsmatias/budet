@@ -27,6 +27,7 @@ import {
   type Tone,
 } from "@/components/restoflow/ui";
 import { ReservationDialog, StatusActions } from "./list";
+import { ReservationTabs } from "./tabs";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -109,6 +110,8 @@ export default async function ReservationsPage({
 
   return (
     <div className="rf-enter space-y-5">
+      <ReservationTabs t={t} current="sali" />
+
       {/* --- Otsikko ja päivän vaihto --- */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -164,7 +167,7 @@ export default async function ReservationsPage({
               </p>
             </div>
             <Link
-              href="/admin/asetukset/varaukset"
+              href="/admin/varaukset/asetukset"
               className="text-[13px] font-semibold"
               style={{ color: "var(--rf-accent)" }}
             >
@@ -226,7 +229,7 @@ export default async function ReservationsPage({
           description={t.varaus.noTablesBody}
           action={
             <Link
-              href="/admin/asetukset/varaukset"
+              href="/admin/varaukset/asetukset"
               className="text-[13px] font-semibold"
               style={{ color: "var(--rf-accent)" }}
             >

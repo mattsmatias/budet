@@ -292,7 +292,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    * ovat vuoropäällikön työtä — ja kanta on samaa mieltä: siellä raja
    * on is_manager.
    */
-  { href: "/admin/asetukset/varaukset", requires: "reservations.manage" },
+  { href: "/admin/varaukset/asetukset", requires: "reservations.manage" },
   /*
    * Sosiaalisen median tili on omistajan asia.
    *

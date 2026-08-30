@@ -28,7 +28,7 @@ export interface SetupState {
 }
 
 const KELLO = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const REITTI = "/admin/asetukset/varaukset";
+const REITTI = "/admin/varaukset/asetukset";
 
 function revalidate(): void {
   revalidatePath(REITTI);

@@ -265,6 +265,8 @@ const fi = {
     errTable: "Pöytä ei kuulu tähän ravintolaan.",
     errName: "Kirjoita nimi.",
     nextUp: "Seuraavaksi",
+    tabDay: "Sali",
+    tabSettings: "Asetukset",
   },
   varausJulkinen: {
     bookTitle: "Varaa pöytä",
@@ -2602,6 +2604,8 @@ const en: AdminText = {
     errTable: "That table does not belong to this restaurant.",
     errName: "Write a name.",
     nextUp: "Next up",
+    tabDay: "Floor",
+    tabSettings: "Settings",
   },
   varausJulkinen: {
     bookTitle: "Book a table",
@@ -4942,6 +4946,8 @@ const sv: AdminText = {
     errTable: "Bordet hör inte till den här restaurangen.",
     errName: "Skriv ett namn.",
     nextUp: "Näst på tur",
+    tabDay: "Salen",
+    tabSettings: "Inställningar",
   },
   varausJulkinen: {
     bookTitle: "Boka bord",
@@ -7278,6 +7284,8 @@ const da: AdminText = {
     errTable: "Bordet hører ikke til denne restaurant.",
     errName: "Skriv et navn.",
     nextUp: "Næste",
+    tabDay: "Salen",
+    tabSettings: "Indstillinger",
   },
   varausJulkinen: {
     bookTitle: "Book et bord",
@@ -9614,6 +9622,8 @@ const tr: AdminText = {
     errTable: "Bu masa bu restorana ait değil.",
     errName: "Bir ad yaz.",
     nextUp: "Sırada",
+    tabDay: "Salon",
+    tabSettings: "Ayarlar",
   },
   varausJulkinen: {
     bookTitle: "Masa ayırt",
@@ -11942,6 +11952,8 @@ const et: AdminText = {
     errTable: "See laud ei kuulu sellele restoranile.",
     errName: "Kirjuta nimi.",
     nextUp: "Järgmisena",
+    tabDay: "Saal",
+    tabSettings: "Seaded",
   },
   varausJulkinen: {
     bookTitle: "Broneeri laud",

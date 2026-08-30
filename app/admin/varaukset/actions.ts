@@ -55,7 +55,7 @@ function explain(code: string | undefined, t: AdminText): string {
 
 function revalidate(): void {
   revalidatePath("/admin/varaukset");
-  revalidatePath("/admin/asetukset/varaukset");
+  revalidatePath("/admin/varaukset/asetukset");
 }
 
 // ---------------------------------------------------------------------------

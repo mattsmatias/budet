@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { formatDayIn, weekdayByNumberIn } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { loadReservationSetup } from "@/lib/restoflow/reservation-queries";
 import { siteOrigin } from "@/lib/restoflow/site-origin";
-import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader } from "@/components/restoflow/ui";
 import {
   AreaList,
@@ -17,6 +15,7 @@ import {
   TableList,
 } from "./forms";
 import { EmbedPanel } from "./embed";
+import { ReservationTabs } from "../tabs";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -44,7 +43,7 @@ export async function generateMetadata() {
 export default async function ReservationSettingsPage() {
   const locale = await resolveLocale();
   const t = adminText(locale);
-  const { restaurant } = await adminContext("/admin/asetukset/varaukset");
+  const { restaurant } = await adminContext("/admin/varaukset/asetukset");
 
   const setup = await loadReservationSetup(restaurant.id);
   const origin = await siteOrigin();
@@ -55,29 +54,15 @@ export default async function ReservationSettingsPage() {
 
   return (
     <div className="rf-enter space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-[-0.01em]">
-            {t.nav.reservations}
-          </h1>
-          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {t.varausAsetus.intro}
-          </p>
-        </div>
+      <ReservationTabs t={t} current="asetukset" />
 
-        <Link
-          href="/admin/varaukset"
-          className="rf-press inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold"
-          style={{
-            background: "var(--rf-card)",
-            color: "var(--rf-text)",
-            border: "1px solid var(--rf-line)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          <RfIcon name="tables" size={16} />
-          {t.varausAsetus.openDay}
-        </Link>
+      <header>
+        <h1 className="text-[22px] font-bold tracking-[-0.01em]">
+          {t.nav.reservations}
+        </h1>
+        <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          {t.varausAsetus.intro}
+        </p>
       </header>
 
       {/* --- 1. Pöydät --- */}
