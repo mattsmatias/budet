@@ -13,6 +13,7 @@
  *
  * Käyttö:
  *   node scripts/posti-testi.mjs oma.osoite@example.fi
+ *   node scripts/posti-testi.mjs oma.osoite@example.fi "Ravintolan nimi"
  */
 
 import { readFileSync } from "node:fs";
@@ -58,8 +59,28 @@ if (!vastaanottaja) {
   process.exit(1);
 }
 
+/*
+ * Näkyvä nimi.
+ *
+ * Oikeassa vahvistuksessa tämä on sen ravintolan nimi, jonka pöydän
+ * asiakas varasi — se tulee kannasta eikä asetuksista. Koelähetyksen
+ * oletus kertoo mistä viesti tuli, ja toisella parametrilla voi
+ * kokeilla miltä oikea nimi näyttää postilaatikossa.
+ */
+const nimi = process.argv[3] || "Kate koelähetys";
+
 const avain = process.env.RESEND_API_KEY?.trim();
-const lahettaja = process.env.RESERVATION_EMAIL_FROM?.trim();
+const asetus = process.env.RESERVATION_EMAIL_FROM?.trim();
+
+/*
+ * Vain osoiteosa asetuksesta.
+ *
+ * Sama sääntö kuin palvelimella: näkyvä nimi tulee ravintolasta, ja
+ * asetukseen mahdollisesti jäänyt vanha nimi jätetään huomiotta.
+ */
+const osoite = asetus?.match(/<([^>]+)>/)?.[1]?.trim() ?? asetus;
+const puhdasNimi = nimi.replace(/["\\<>\r\n]/g, "").trim();
+const lahettaja = osoite ? `"${puhdasNimi}" <${osoite}>` : null;
 
 /*
  * Puuttuvat asetukset nimeltä.

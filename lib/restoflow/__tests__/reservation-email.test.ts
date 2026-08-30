@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksLikeEmail } from "../email";
+import { formatSender, looksLikeEmail } from "../email";
 import {
   confirmationEmail,
   EMAIL_LOCALES,
@@ -150,5 +150,59 @@ describe("osoitteen tarkistus", () => {
 
     /* Rivinvaihto osoitteessa on otsakkeiden injektointiyritys. */
     expect(looksLikeEmail("a@b.fi\nBcc: uhri@example.fi")).toBe(false);
+  });
+});
+
+describe("lähettäjän muoto", () => {
+  it("näyttää ravintolan nimen osoitteen edessä", () => {
+    expect(formatSender("varaukset@kate.fi", "Cafe Monami")).toBe(
+      '"Cafe Monami" <varaukset@kate.fi>',
+    );
+  });
+
+  it("jättää nimen pois kun sitä ei ole", () => {
+    /* Pelkkä osoite on kelvollinen lähettäjä. */
+    expect(formatSender("varaukset@kate.fi")).toBe("varaukset@kate.fi");
+    expect(formatSender("varaukset@kate.fi", "   ")).toBe("varaukset@kate.fi");
+  });
+
+  /*
+   * Rivinvaihto nimessä lopettaisi From-otsakkeen ja aloittaisi uuden.
+   *
+   * Se on tapa lisätä omia otsakkeita — esimerkiksi Bcc — viestiin,
+   * joka lähtee palvelun varmistetusta verkkotunnuksesta.
+   */
+  it("ei päästä rivinvaihtoa otsakkeeseen", () => {
+    const tulos = formatSender(
+      "varaukset@kate.fi",
+      "Paha\r\nBcc: uhri@example.fi",
+    );
+
+    expect(tulos).not.toContain("\n");
+    expect(tulos).not.toContain("\r");
+    expect(tulos).toBe('"Paha Bcc: uhri@example.fi" <varaukset@kate.fi>');
+  });
+
+  it("poistaa merkit jotka rikkoisivat lainaukset", () => {
+    const tulos = formatSender("varaukset@kate.fi", 'Ravintola "X" <hei>');
+
+    /* Nimen ympärillä on tasan yksi lainausmerkkipari. */
+    expect(tulos.match(/"/g)).toHaveLength(2);
+    expect(tulos).toBe('"Ravintola X hei" <varaukset@kate.fi>');
+  });
+
+  it("katkaisee kohtuuttoman pitkän nimen", () => {
+    const tulos = formatSender("varaukset@kate.fi", "A".repeat(200));
+
+    /* Otsakkeen rivi ei saa venyä loputtomiin. */
+    expect(tulos.length).toBeLessThan(120);
+  });
+
+  /* Pilkku ja piste ovat otsakkeessa erikoismerkkejä, mutta
+     lainausmerkkien sisällä vaarattomia — nimeä ei tarvitse typistää. */
+  it("säilyttää pilkun ja pisteen nimessä", () => {
+    expect(formatSender("a@b.fi", "Ravintola Oy, Helsinki")).toBe(
+      '"Ravintola Oy, Helsinki" <a@b.fi>',
+    );
   });
 });

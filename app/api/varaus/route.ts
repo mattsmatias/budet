@@ -282,6 +282,10 @@ async function lahetaVahvistus(
   after(async () => {
     const lahetys = await sendEmail({
       to: osoite,
+
+      /* Asiakas näkee postilaatikossaan ravintolan nimen, ei Katea. */
+      fromName: result.restaurantName ?? undefined,
+
       subject: viesti.subject,
       text: viesti.text,
       html: viesti.html,

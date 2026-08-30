@@ -41,6 +41,17 @@ const TIMEOUT_MS = 8000;
 
 export interface EmailMessage {
   to: string;
+
+  /**
+   * Näkyvä lähettäjän nimi.
+   *
+   * Asiakas näkee postilaatikossaan ravintolan nimen, ei ohjelmiston.
+   * Osoite on kaikilla ravintoloilla sama — se kuuluu palveluun ja
+   * sen verkkotunnus on varmistettu kerran — mutta nimen on oltava
+   * sen ravintolan, jonka pöydän asiakas varasi.
+   */
+  fromName?: string;
+
   subject: string;
   text: string;
   html: string;
@@ -79,10 +90,53 @@ export function looksLikeEmail(value: string): boolean {
   return domain.includes(".") && !domain.startsWith(".") && !domain.endsWith(".");
 }
 
-/** Lähettäjä muodossa jonka palvelu hyväksyy, tai null jos puuttuu. */
-function sender(): string | null {
-  const from = process.env.RESERVATION_EMAIL_FROM?.trim();
-  return from ? from : null;
+/**
+ * Lähettäjän osoite asetuksesta.
+ *
+ * Hyväksyy sekä pelkän osoitteen että vanhan "Nimi <osoite>" -muodon.
+ * Jälkimmäisen nimi jätetään huomiotta: nimi tulee nykyään
+ * ravintolasta, eikä asetukseen jäänyt vanha nimi saa näkyä toisen
+ * ravintolan viestissä.
+ */
+function senderAddress(): string | null {
+  const raw = process.env.RESERVATION_EMAIL_FROM?.trim();
+  if (!raw) return null;
+
+  const kulmissa = raw.match(/<([^>]+)>/);
+  const osoite = (kulmissa ? kulmissa[1] : raw).trim();
+
+  return looksLikeEmail(osoite) ? osoite : null;
+}
+
+/**
+ * Lähettäjä otsakkeeseen kelpaavassa muodossa.
+ *
+ * ---------------------------------------------------------------------
+ * MIKSI NIMI PUHDISTETAAN
+ * ---------------------------------------------------------------------
+ *
+ * Nimi päätyy sellaisenaan From-otsakkeeseen. Rivinvaihto nimessä
+ * lopettaisi otsakkeen ja aloittaisi uuden — se on tapa lisätä omia
+ * otsakkeita, esimerkiksi Bcc, viestiin joka lähtee palvelun
+ * varmistetusta verkkotunnuksesta.
+ *
+ * Nimen asettaa ravintolan omistaja eikä satunnainen vieras, joten
+ * tämä ei ole ensisijainen hyökkäyspinta. Se on silti käyttäjän
+ * kirjoittamaa tekstiä protokollan otsakkeessa, ja se riittää syyksi.
+ *
+ * Lainausmerkit ympärille aina: ne tekevät pilkusta ja pisteestä
+ * vaarattomia ilman että nimeä tarvitsee muuten rajoittaa.
+ */
+export function formatSender(address: string, name?: string): string {
+  const puhdas = (name ?? "")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/["\\<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    /* Otsakkeen rivi ei saa venyä kohtuuttomaksi. */
+    .slice(0, 78);
+
+  return puhdas ? `"${puhdas}" <${address}>` : address;
 }
 
 /**
@@ -93,14 +147,14 @@ function sender(): string | null {
  * kertoa rehellisesti ettei vahvistusta lähde.
  */
 export function emailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY?.trim() && sender());
+  return Boolean(process.env.RESEND_API_KEY?.trim() && senderAddress());
 }
 
 export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
   const key = process.env.RESEND_API_KEY?.trim();
-  const from = sender();
+  const address = senderAddress();
 
-  if (!key || !from) return { ok: false, reason: "not_configured" };
+  if (!key || !address) return { ok: false, reason: "not_configured" };
   if (!looksLikeEmail(message.to)) return { ok: false, reason: "bad_address" };
 
   const headers: Record<string, string> = {
@@ -119,7 +173,7 @@ export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
       method: "POST",
       headers,
       body: JSON.stringify({
-        from,
+        from: formatSender(address, message.fromName),
         to: message.to.trim(),
         subject: message.subject,
         text: message.text,
