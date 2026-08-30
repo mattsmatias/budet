@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels, type Labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -20,7 +23,10 @@ import {
   Pill,
 } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Toimintaloki" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.kirja.auditLog };
+}
 
 const PAGE_SIZE = 50;
 
@@ -45,6 +51,7 @@ const PAGE_SIZE = 50;
 export default async function AuditLogPage({
   searchParams,
 }: PageProps<"/admin/loki">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const { restaurant, role, users, today } = await adminContext("/admin/loki");
@@ -62,7 +69,7 @@ export default async function AuditLogPage({
   /*
    * Rajaus alkaa paikallisen päivän alusta.
    *
-   * "Tänään" tarkoittaa ravintolan päivää eikä viimeisiä 24 tuntia.
+   * t.kirja.today tarkoittaa ravintolan päivää eikä viimeisiä 24 tuntia.
    * Rullaava ikkuna jättäisi aamun tapahtumat pois iltapäivällä.
    */
   const since =
@@ -94,8 +101,7 @@ export default async function AuditLogPage({
   return (
     <div className="rf-enter space-y-5">
       <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-        Seuraa mitä ravintolan Kateessa on tapahtunut ja kuka muutokset on
-        tehnyt.
+        {t.kirja.logIntro}
       </p>
 
       {/*
@@ -106,19 +112,24 @@ export default async function AuditLogPage({
         kuin listaa tarvitsee selata.
       */}
       <section
-        aria-label="Yhteenveto"
+        aria-label={t.kirja.summary}
         className="grid auto-rows-fr grid-cols-2 gap-3.5 sm:grid-cols-4"
       >
-        <Luku label="Tapahtumia" value={summary.total} icon="report" />
-        <Luku label="Lisäyksiä" value={summary.created} tone="ok" icon="plus" />
+        <Luku label={t.kirja.events} value={summary.total} icon="report" />
         <Luku
-          label="Muutoksia"
+          label={t.kirja.additions}
+          value={summary.created}
+          tone="ok"
+          icon="plus"
+        />
+        <Luku
+          label={t.kirja.changes}
           value={summary.updated}
           tone="info"
           icon="settings"
         />
         <Luku
-          label="Poistoja"
+          label={t.kirja.deletions}
           value={summary.deleted}
           tone="risk"
           icon="trash"
@@ -128,8 +139,8 @@ export default async function AuditLogPage({
       {summary.latestCritical ? (
         <Card>
           <CardHeader
-            title="Viimeisin kriittinen muutos"
-            subtitle="Palkka, käyttöoikeus, työaikakorjaus tai verokanta"
+            title={t.kirja.lastCritical}
+            subtitle={t.kirja.criticalKinds}
           />
           <p className="text-[13.5px] font-semibold">
             {summary.latestCritical.summary}
@@ -156,8 +167,8 @@ export default async function AuditLogPage({
               type="search"
               name="haku"
               defaultValue={search}
-              placeholder="Hae käyttäjällä, toiminnolla tai kohteella…"
-              aria-label="Hae lokista"
+              placeholder={t.kirja.searchPlaceholder}
+              aria-label={t.kirja.searchLog}
               className="min-w-0 flex-1 px-3.5 py-2 text-[13px]"
               style={{
                 background: "var(--rf-card)",
@@ -176,20 +187,22 @@ export default async function AuditLogPage({
                 borderRadius: "var(--rf-r-control)",
               }}
             >
-              Hae
+              {t.kirja.search}
             </button>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-3">
             <Valitsin
+              t={t}
               name="moduuli"
-              label="Moduuli"
+              label={t.kirja.module}
               value={entityType}
               options={nimet.auditEntity}
             />
             <Valitsin
+              t={t}
               name="toiminto"
-              label="Toiminto"
+              label={t.kirja.action}
               value={action}
               options={nimet.auditAction}
             />
@@ -199,7 +212,7 @@ export default async function AuditLogPage({
                 className="block text-[12px] font-semibold"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                Käyttäjä
+                {t.kirja.user}
               </span>
               <select
                 name="kayttaja"
@@ -211,7 +224,7 @@ export default async function AuditLogPage({
                   borderRadius: "var(--rf-r-control)",
                 }}
               >
-                <option value="">Kaikki käyttäjät</option>
+                <option value="">{t.kirja.allUsers}</option>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.name}
@@ -222,12 +235,15 @@ export default async function AuditLogPage({
           </div>
         </form>
 
-        <nav aria-label="Ajanjakso" className="mt-3 flex flex-wrap gap-1.5">
+        <nav
+          aria-label={t.kirja.period}
+          className="mt-3 flex flex-wrap gap-1.5"
+        >
           {[
-            { days: 1, label: "Tänään" },
-            { days: 7, label: "7 päivää" },
-            { days: 30, label: "30 päivää" },
-            { days: 365, label: "Vuosi" },
+            { days: 1, label: t.kirja.today },
+            { days: 7, label: t.kirja.days7 },
+            { days: 30, label: t.kirja.days30 },
+            { days: 365, label: t.kirja.year },
           ].map((option) => (
             <Link
               key={option.days}
@@ -254,8 +270,8 @@ export default async function AuditLogPage({
 
       {events.length === 0 ? (
         <EmptyState
-          title="Ei tapahtumia"
-          description="Tällä rajauksella ei ole tapahtumia. Kokeile pidempää ajanjaksoa tai poista suodattimet."
+          title={t.kirja.noEvents}
+          description={t.kirja.noEventsHint}
         />
       ) : (
         <Card padded={false}>
@@ -263,6 +279,7 @@ export default async function AuditLogPage({
             {events.map((event) => (
               <li key={event.id} className="px-5 py-3.5">
                 <Tapahtuma
+                  t={t}
                   nimet={nimet}
                   event={event}
                   timezone={restaurant.timezone}
@@ -282,7 +299,7 @@ export default async function AuditLogPage({
               style={{ color: "var(--rf-text-2)" }}
             >
               <RfIcon name="back" size={14} />
-              Uudemmat
+              {t.kirja.newer}
             </Link>
           ) : (
             <span />
@@ -294,7 +311,7 @@ export default async function AuditLogPage({
               className="rf-press inline-flex items-center gap-1.5 text-[13px] font-semibold"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Vanhemmat
+              {t.kirja.older}
               <RfIcon name="chevron" size={14} />
             </Link>
           ) : (
@@ -309,10 +326,12 @@ export default async function AuditLogPage({
 // ---------------------------------------------------------------------------
 
 function Tapahtuma({
+  t,
   nimet,
   event,
   timezone,
 }: {
+  t: AdminText;
   nimet: Labels;
   event: AuditEvent;
   timezone: string;
@@ -349,7 +368,9 @@ function Tapahtuma({
           >
             {formatMoment(event.createdAt, timezone)}
             {event.entityType in nimet.auditEntity
-              ? ` · ${nimet.auditEntity[event.entityType]}`
+              ? fill(t.kirja.entitySuffix, {
+                  kohde: nimet.auditEntity[event.entityType],
+                })
               : ""}
           </span>
         </span>
@@ -364,12 +385,12 @@ function Tapahtuma({
       {changes.length > 0 ? (
         <div className="mt-3 pl-5">
           <table className="rf-table w-full" style={{ maxWidth: "34rem" }}>
-            <caption className="sr-only">Muuttuneet tiedot</caption>
+            <caption className="sr-only">{t.kirja.changedFields}</caption>
             <thead>
               <tr>
-                <th scope="col">Kenttä</th>
-                <th scope="col">Ennen</th>
-                <th scope="col">Jälkeen</th>
+                <th scope="col">{t.kirja.field}</th>
+                <th scope="col">{t.kirja.before}</th>
+                <th scope="col">{t.kirja.after}</th>
               </tr>
             </thead>
             <tbody>
@@ -393,7 +414,7 @@ function Tapahtuma({
           className="mt-2 pl-5 text-[12.5px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Tapahtumasta ei ole tallennettu kenttäkohtaisia arvoja.
+          {t.kirja.noFieldValues}
         </p>
       )}
     </details>
@@ -446,11 +467,13 @@ function Luku({
 }
 
 function Valitsin({
+  t,
   name,
   label,
   value,
   options,
 }: {
+  t: AdminText;
   name: string;
   label: string;
   value: string;
@@ -474,7 +497,7 @@ function Valitsin({
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        <option value="">Kaikki</option>
+        <option value="">{t.kirja.all}</option>
         {Object.entries(options).map(([key, text]) => (
           <option key={key} value={key}>
             {text}

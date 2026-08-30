@@ -104,8 +104,8 @@ export function Paivakirja({
 
               {saaKirjata && entry.status === "proposed" ? (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <PostEntryButton id={entry.id} />
-                  <RejectEntryButton id={entry.id} />
+                  <PostEntryButton t={t} id={entry.id} />
+                  <RejectEntryButton t={t} id={entry.id} />
                 </div>
               ) : null}
             </Card>
@@ -229,8 +229,8 @@ export function Paivakirja({
                     </span>
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <PostEntryButton id={entry.id} />
-                    <RejectEntryButton id={entry.id} />
+                    <PostEntryButton t={t} id={entry.id} />
+                    <RejectEntryButton t={t} id={entry.id} />
                   </div>
                 </div>
               </Card>
@@ -254,7 +254,7 @@ export function Paivakirja({
                       <span className="rf-tabular min-w-0 flex-1 truncate text-[13px]">
                         Tosite {entry.entryNumber} · {entry.description}
                       </span>
-                      <CorrectEntryForm id={entry.id} />
+                      <CorrectEntryForm t={t} id={entry.id} />
                     </div>
                   ))}
               </div>
@@ -838,7 +838,7 @@ export function Raportit({
             ))}
             <Rivi
               number=""
-              name="Tilikauden tulos"
+              name={t.kirja.periodResult}
               cents={balance.resultCents}
             />
             <Summa

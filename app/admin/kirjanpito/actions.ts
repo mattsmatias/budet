@@ -17,6 +17,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
@@ -35,9 +38,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * ehtisi ajautua muista erilleen.
  */
 async function vaadiOikeus() {
+  const t = adminText(await resolveLocale());
   const ctx = await requireContext(PATH);
   if (!can(ctx.role, "accounting.manage")) {
-    return { error: "Sinulla ei ole oikeutta kirjata kirjanpitoa." as const };
+    return { error: t.kirja.noRightPost };
   }
   return { ctx };
 }
@@ -57,11 +61,12 @@ export async function syncMonth(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const guard = await vaadiOikeus();
   if ("error" in guard) return guard;
 
   const month = kuukausiKentasta(formData);
-  if (!month) return { error: "Kuukausi puuttuu." };
+  if (!month) return { error: t.kirja.monthMissing };
 
   const supabase = await createClient();
 
@@ -84,7 +89,7 @@ export async function syncMonth(
     skipped?: unknown[];
   };
 
-  if (tulos.locked) return { error: tulos.message ?? "Kuukausi on suljettu." };
+  if (tulos.locked) return { error: tulos.message ?? t.kirja.monthClosed };
 
   revalidatePath(PATH, "layout");
 
@@ -92,13 +97,17 @@ export async function syncMonth(
   const ohi = tulos.skipped?.length ?? 0;
 
   if (luotu === 0 && ohi === 0) {
-    return { notice: "Kaikki kuukauden tapahtumat ovat jo kirjanpidossa." };
+    return { notice: t.kirja.alreadyAllPosted };
   }
 
   return {
     notice:
-      `${luotu} ${luotu === 1 ? "kirjausesitys" : "kirjausesitystä"} muodostettu` +
-      (ohi > 0 ? ` · ${ohi} ohitettu` : ""),
+      fill(
+        luotu === 1
+          ? t.kirja.proposalsCreatedOne
+          : t.kirja.proposalsCreatedMany,
+        { maara: String(luotu) },
+      ) + (ohi > 0 ? ` · ${ohi} ohitettu` : ""),
   };
 }
 
@@ -107,18 +116,19 @@ export async function postEntry(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const guard = await vaadiOikeus();
   if ("error" in guard) return guard;
 
   const id = String(formData.get("id") ?? "");
-  if (!UUID.test(id)) return { error: "Tositetta ei löydy." };
+  if (!UUID.test(id)) return { error: t.kirja.voucherNotFound };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("ledger_post", { p_entry: id });
   if (error) return { error: error.message };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Tosite kirjattu." };
+  return { notice: t.kirja.voucherPosted };
 }
 
 /**
@@ -132,11 +142,12 @@ export async function postAll(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const guard = await vaadiOikeus();
   if ("error" in guard) return guard;
 
   const month = kuukausiKentasta(formData);
-  if (!month) return { error: "Kuukausi puuttuu." };
+  if (!month) return { error: t.kirja.monthMissing };
 
   const supabase = await createClient();
 
@@ -150,7 +161,7 @@ export async function postAll(
 
   if (haku) return { error: haku.message };
   if (!rows || rows.length === 0) {
-    return { notice: "Ei hyväksyttäviä kirjausesityksiä." };
+    return { notice: t.kirja.nothingToApprove };
   }
 
   let kirjattu = 0;
@@ -172,11 +183,12 @@ export async function rejectEntry(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const guard = await vaadiOikeus();
   if ("error" in guard) return guard;
 
   const id = String(formData.get("id") ?? "");
-  if (!UUID.test(id)) return { error: "Tositetta ei löydy." };
+  if (!UUID.test(id)) return { error: t.kirja.voucherNotFound };
 
   const syy = String(formData.get("syy") ?? "").trim();
 
@@ -188,7 +200,7 @@ export async function rejectEntry(
   if (error) return { error: error.message };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Kirjausesitys hylätty." };
+  return { notice: t.kirja.proposalRejected };
 }
 
 /** Tee korjaustosite. Alkuperäinen säilyy. */
@@ -196,11 +208,12 @@ export async function correctEntry(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const guard = await vaadiOikeus();
   if ("error" in guard) return guard;
 
   const id = String(formData.get("id") ?? "");
-  if (!UUID.test(id)) return { error: "Tositetta ei löydy." };
+  if (!UUID.test(id)) return { error: t.kirja.voucherNotFound };
 
   const syy = String(formData.get("syy") ?? "").trim();
   if (syy === "") return { error: "Korjaukselle on annettava syy." };
@@ -213,7 +226,7 @@ export async function correctEntry(
   if (error) return { error: error.message };
 
   revalidatePath(PATH, "layout");
-  return { notice: "Korjaustosite muodostettu. Se odottaa hyväksyntää." };
+  return { notice: t.kirja.correctionCreated };
 }
 
 /**
@@ -227,15 +240,16 @@ export async function closeMonth(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const ctx = await requireContext(PATH);
 
   // Sulkeminen on omistajan oikeus, ei esihenkilön.
   if (ctx.role !== "owner") {
-    return { error: "Vain omistaja voi sulkea kirjanpidon kuukauden." };
+    return { error: t.kirja.ownerOnlyClose };
   }
 
   const month = kuukausiKentasta(formData);
-  if (!month) return { error: "Kuukausi puuttuu." };
+  if (!month) return { error: t.kirja.monthMissing };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("ledger_close_month", {
@@ -248,9 +262,9 @@ export async function closeMonth(
 
   const tulos = (data ?? {}) as { closed?: boolean; reason?: string };
   if (!tulos.closed) {
-    return { error: tulos.reason ?? "Kuukautta ei voitu sulkea." };
+    return { error: tulos.reason ?? t.kirja.closeFailed };
   }
 
   revalidatePath(PATH, "layout");
-  return { notice: "Kuukausi suljettu." };
+  return { notice: t.kirja.monthClosedNotice };
 }

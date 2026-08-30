@@ -11,6 +11,8 @@
  */
 
 import { useActionState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
 import type { AdminState } from "../actions";
@@ -89,15 +91,15 @@ function Viesti({ state }: { state: AdminState }) {
 }
 
 /** Muodosta kuukauden kirjausesitykset lähteistä. */
-export function SyncButton({ month }: { month: string }) {
+export function SyncButton({ t, month }: { t: AdminText; month: string }) {
   const [state, action] = useActionState(syncMonth, alku);
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
       <input type="hidden" name="kuukausi" value={month} />
       <Painike
-        label="Hae tapahtumat"
-        pending="Haetaan…"
+        label={t.kirja.fetchEvents}
+        pending={t.kirja.fetching}
         icon="download"
         tone="primary"
       />
@@ -108,9 +110,11 @@ export function SyncButton({ month }: { month: string }) {
 
 /** Hyväksy kaikki kuukauden esitykset. */
 export function PostAllButton({
+  t,
   month,
   count,
 }: {
+  t: AdminText;
   month: string;
   count: number;
 }) {
@@ -122,8 +126,8 @@ export function PostAllButton({
     <form action={action} className="flex flex-wrap items-center gap-3">
       <input type="hidden" name="kuukausi" value={month} />
       <Painike
-        label={`Kirjaa kaikki (${count})`}
-        pending="Kirjataan…"
+        label={fill(t.kirja.postAllCount, { maara: String(count) })}
+        pending={t.kirja.posting}
         icon="check"
       />
       <Viesti state={state} />
@@ -131,25 +135,25 @@ export function PostAllButton({
   );
 }
 
-export function PostEntryButton({ id }: { id: string }) {
+export function PostEntryButton({ t, id }: { t: AdminText; id: string }) {
   const [state, action] = useActionState(postEntry, alku);
 
   return (
     <form action={action} className="inline-flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
-      <Painike label="Kirjaa" pending="…" />
+      <Painike label={t.kirja.post} pending="…" />
       <Viesti state={state} />
     </form>
   );
 }
 
-export function RejectEntryButton({ id }: { id: string }) {
+export function RejectEntryButton({ t, id }: { t: AdminText; id: string }) {
   const [state, action] = useActionState(rejectEntry, alku);
 
   return (
     <form action={action} className="inline-flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
-      <Painike label="Hylkää" pending="…" tone="danger" />
+      <Painike label={t.kirja.reject} pending="…" tone="danger" />
       <Viesti state={state} />
     </form>
   );
@@ -162,7 +166,7 @@ export function RejectEntryButton({ id }: { id: string }) {
  * vahvistusikkuna kysyisi saman asian kahdesti, ja syy ilman
  * korjausta ei tarkoita mitään.
  */
-export function CorrectEntryForm({ id }: { id: string }) {
+export function CorrectEntryForm({ t, id }: { t: AdminText; id: string }) {
   const [state, action] = useActionState(correctEntry, alku);
 
   return (
@@ -172,7 +176,7 @@ export function CorrectEntryForm({ id }: { id: string }) {
         name="syy"
         required
         maxLength={200}
-        placeholder="Korjauksen syy"
+        placeholder={t.kirja.correctionReason}
         className="min-w-0 flex-1 px-3 py-2 text-[13px]"
         style={{
           background: "var(--rf-card)",
@@ -180,7 +184,7 @@ export function CorrectEntryForm({ id }: { id: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       />
-      <Painike label="Tee korjaus" pending="…" />
+      <Painike label={t.kirja.makeCorrection} pending="…" />
       <Viesti state={state} />
     </form>
   );
@@ -193,7 +197,7 @@ export function CorrectEntryForm({ id }: { id: string }) {
  * näkyvissä aina: sen painaminen kertoo tarkalleen mikä estää.
  * Piilotettu painike jättäisi arvailtavaksi miksi mitään ei tapahdu.
  */
-export function CloseMonthForm({ month }: { month: string }) {
+export function CloseMonthForm({ t, month }: { t: AdminText; month: string }) {
   const [state, action] = useActionState(closeMonth, alku);
 
   return (
@@ -202,7 +206,7 @@ export function CloseMonthForm({ month }: { month: string }) {
       <input
         name="merkinta"
         maxLength={200}
-        placeholder="Merkintä, esim. lähetetty tilitoimistoon"
+        placeholder={t.kirja.correctionPlaceholder}
         className="min-w-0 flex-1 px-3 py-2 text-[13px]"
         style={{
           background: "var(--rf-card)",
@@ -210,7 +214,7 @@ export function CloseMonthForm({ month }: { month: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       />
-      <Painike label="Sulje kuukausi" pending="Suljetaan…" />
+      <Painike label={t.kirja.closeMonth} pending={t.kirja.closing} />
       <Viesti state={state} />
     </form>
   );

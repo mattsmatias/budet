@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -39,19 +41,29 @@ import {
   Veroasiat,
 } from "./views";
 
-export const metadata = { title: "Kirjanpito" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.kirja.accounting };
+}
 
-const TABS = [
-  { key: "yhteenveto", label: "Yhteenveto" },
-  { key: "paivakirja", label: "Päiväkirja" },
-  { key: "paakirja", label: "Pääkirja" },
-  { key: "tilikartta", label: "Tilikartta" },
-  { key: "alv", label: "ALV" },
-  { key: "raportit", label: "Raportit" },
-  { key: "veroasiat", label: "Veroasiat" },
-] as const;
+/*
+ * Valilehdet tehtaana.
+ *
+ * Avaimet ovat osoitteessa eivatka saa muuttua kielen mukana; vain
+ * otsikko kaannetaan.
+ */
+const valilehdet = (t: AdminText) =>
+  [
+    { key: "yhteenveto", label: t.kirja.summary },
+    { key: "paivakirja", label: t.kirja.journal },
+    { key: "paakirja", label: t.kirja.generalLedger },
+    { key: "tilikartta", label: t.kirja.chartOfAccounts },
+    { key: "alv", label: "ALV" },
+    { key: "raportit", label: t.kirja.reports },
+    { key: "veroasiat", label: t.kirja.taxMatters },
+  ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type TabKey = ReturnType<typeof valilehdet>[number]["key"];
 
 /**
  * Kirjanpito.
@@ -89,7 +101,7 @@ export default async function AccountingPage({
     typeof params.kuukausi === "string" ? params.kuukausi : nykyinen;
   const month = ISO_MONTH.test(pyydetty) ? pyydetty : nykyinen;
 
-  const tab = (TABS.find((t) => t.key === params.nakyma)?.key ??
+  const tab = (valilehdet(t).find((t) => t.key === params.nakyma)?.key ??
     "yhteenveto") as TabKey;
 
   const state = await fetchMonthState(restaurant.id, month);
@@ -99,8 +111,8 @@ export default async function AccountingPage({
     return (
       <div className="rf-enter space-y-5">
         <EmptyState
-          title="Kirjanpitoa ei voitu lukea"
-          description="Tarkista että sinulla on oikeus talouden tietoihin. Jos ongelma toistuu, kyse on yhteydestä tietokantaan."
+          title={t.kirja.couldNotRead}
+          description={t.kirja.checkRights}
         />
       </div>
     );
@@ -122,7 +134,10 @@ export default async function AccountingPage({
       <div className="rf-z-page relative flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {state.posted} kirjattua · {state.proposed} odottaa
+            {fill(t.kirja.postedWaiting, {
+              kirjattu: String(state.posted),
+              odottaa: String(state.proposed),
+            })}
           </p>
         </div>
 
@@ -144,11 +159,11 @@ export default async function AccountingPage({
 
       {/* Välilehdet */}
       <nav
-        aria-label="Kirjanpidon näkymät"
+        aria-label={t.kirja.accountingViews}
         className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
       >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
-          {TABS.map((t) => {
+          {valilehdet(t).map((t) => {
             const active = t.key === tab;
             return (
               <li key={t.key}>
@@ -244,6 +259,7 @@ async function Yhteenveto({
   saaKirjata: boolean;
   onOmistaja: boolean;
 }) {
+  const t = adminText(await resolveLocale());
   /*
    * Yhteenvedon luvut näyttävät myös esitykset.
    *
@@ -261,33 +277,33 @@ async function Yhteenveto({
   return (
     <div className="space-y-5 md:space-y-6">
       <section
-        aria-label="Kuukauden yhteenveto"
+        aria-label={t.kirja.monthSummary}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <MetricCard
-          label="Myynti"
+          label={t.kirja.salesWord}
           icon={<RfIcon name="sales" size={17} />}
           tileTone="green"
           value={formatMoney(income?.revenueTotalCents ?? 0)}
-          hint="Kirjanpidon tuotot"
+          hint={t.kirja.ledgerRevenue}
         />
         <MetricCard
-          label="Kulut"
+          label={t.kirja.expensesWord}
           icon={<RfIcon name="expenses" size={17} />}
           tileTone="brand"
           value={formatMoney(income?.expenseTotalCents ?? 0)}
-          hint="Kirjanpidon kulut"
+          hint={t.kirja.ledgerExpenses}
         />
         <MetricCard
-          label="Tulos"
+          label={t.kirja.result}
           icon={<RfIcon name="trend" size={17} />}
           tileTone={(income?.resultCents ?? 0) >= 0 ? "green" : "bad"}
           tone={(income?.resultCents ?? 0) >= 0 ? "neutral" : "bad"}
           value={formatMoney(income?.resultCents ?? 0)}
-          hint="Tuotot miinus kulut"
+          hint={t.kirja.revenueMinusExpenses}
         />
         <MetricCard
-          label="Tositteet"
+          label={t.kirja.vouchers}
           icon={<RfIcon name="report" size={17} />}
           tileTone={state.proposed > 0 ? "warn" : "muted"}
           tone={state.proposed > 0 ? "warn" : "neutral"}
@@ -296,15 +312,17 @@ async function Yhteenveto({
            * Nolla ei ole "kaikki kirjattu".
            *
            * Tyhjä kuukausi näytti samalta kuin valmis kuukausi: molemmissa
-           * luki "Kaikki kirjattu". Ensimmäisessä ei ole kirjattu mitään,
+           * luki t.kirja.allPostedShort. Ensimmäisessä ei ole kirjattu mitään,
            * eikä sitä saa kehua valmiiksi.
            */
           hint={
             state.posted + state.proposed === 0
-              ? "Ei vielä kirjanpidossa"
+              ? t.kirja.notYetInLedger
               : state.proposed > 0
-                ? `${state.proposed} odottaa hyväksyntää`
-                : "Kaikki kirjattu"
+                ? fill(t.kirja.proposedWaiting, {
+                    maara: String(state.proposed),
+                  })
+                : t.kirja.allPostedShort
           }
         />
       </section>
@@ -313,11 +331,9 @@ async function Yhteenveto({
       <Card padded={false}>
         <div className="px-5 pt-4">
           <CardHeader
-            title="Mitä sinun pitää tehdä"
+            title={t.kirja.whatToDo}
             subtitle={
-              issues.length === 0
-                ? "Ei mitään — kuukausi on kunnossa"
-                : "Ylimpänä se joka estää kuukauden sulkemisen"
+              issues.length === 0 ? t.kirja.nothingToDo : t.kirja.topBlocker
             }
           />
         </div>
@@ -325,7 +341,7 @@ async function Yhteenveto({
         {issues.length === 0 ? (
           <div className="px-5 pb-5">
             <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              Kaikki kuukauden tapahtumat on kirjattu ja täsmäytys menee läpi.
+              {t.kirja.allPosted}
             </p>
           </div>
         ) : (
@@ -370,7 +386,10 @@ async function Yhteenveto({
                   >
                     {issue.detail}
                     {issue.differenceCents !== undefined
-                      ? ` Erotus ${formatMoney(Math.abs(issue.differenceCents))}.`
+                      ? " " +
+                        fill(t.kirja.differenceIs, {
+                          summa: formatMoney(Math.abs(issue.differenceCents)),
+                        })
                       : ""}
                   </span>
                 </span>
@@ -409,21 +428,24 @@ async function Yhteenveto({
             sinun pitää tehdä" kertoo sen tarkasti.
           */}
           <CardHeader
-            title="Osa tapahtumista ei ole vielä kirjanpidossa"
-            subtitle={`${jaljessa} ${jaljessa === 1 ? "tapahtuma odottaa" : "tapahtumaa odottaa"} · yritä hakea ne uudelleen`}
+            title={t.kirja.someNotPosted}
+            subtitle={fill(
+              jaljessa === 1 ? t.kirja.behindOne : t.kirja.behindMany,
+              {
+                maara: String(jaljessa),
+              },
+            )}
           />
 
           <div className="mt-4">
-            <SyncButton month={month} />
+            <SyncButton t={t} month={month} />
           </div>
 
           <p
             className="mt-4 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Tavallisesti tätä ei tarvita: kirjaus syntyy itsestään kun tallennat
-            kuitin tai päivän myynnin. Jos tapahtuma jää tähän haun jälkeenkin,
-            siltä puuttuu tietoja — yllä lukee mitä.
+            {t.kirja.manualRarely}
           </p>
         </Card>
       ) : null}
@@ -434,8 +456,7 @@ async function Yhteenveto({
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Näet kirjanpidon mutta et voi kirjata. Kirjaaminen on omistajan ja
-            vuoropäällikön oikeus.
+            {t.kirja.canSeeNotPost}
           </p>
         </Card>
       ) : null}
@@ -444,21 +465,26 @@ async function Yhteenveto({
       {onOmistaja && state.status !== "locked" ? (
         <Card>
           <CardHeader
-            title="Sulje kuukausi"
+            title={t.kirja.closeMonth}
             subtitle={
               state.proposed > 0
-                ? `Kirjaa ${state.proposed} ${state.proposed === 1 ? "tositteen" : "tositetta"} ja lukitsee kuukauden`
-                : "Suljettuun kuukauteen ei voi kirjata ilman korjaustositetta"
+                ? fill(
+                    state.proposed === 1
+                      ? t.kirja.postsAndLocksOne
+                      : t.kirja.postsAndLocksMany,
+                    { maara: String(state.proposed) },
+                  )
+                : t.kirja.closedNeedsCorrection
             }
           />
           <div className="mt-4">
-            <CloseMonthForm month={month} />
+            <CloseMonthForm t={t} month={month} />
           </div>
           {/*
             Sulku kirjaa itse.
 
             Aiemmin sulku kieltäytyi jos esityksiä oli hyväksymättä, joten
-            piti painaa ensin "Kirjaa kaikki" ja sitten "Sulje kuukausi".
+            piti painaa ensin "Kirjaa kaikki" ja sitten t.kirja.closeMonth.
             Ensimmäinen oli pelkkä esiehto toiselle, eikä esiehto ansaitse
             omaa painiketta. Täsmäytys estää yhä — se ei ole esiehto vaan
             syy olla sulkematta.
@@ -467,8 +493,7 @@ async function Yhteenveto({
             className="mt-3 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Sulkeminen kirjaa kuukauden tositteet ja lukitsee ne. Se ei onnistu
-            jos täsmäytys ei mene läpi — painike kertoo silloin mikä estää.
+            {t.kirja.closingLocks}
           </p>
         </Card>
       ) : null}
