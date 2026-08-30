@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { TaskForm } from "./task-form";
 import type { User } from "@/lib/restoflow/types";
@@ -14,10 +15,12 @@ import { RfIcon } from "@/components/restoflow/icons";
  * yksi painallus takaisin.
  */
 export function NewTask({
+  t,
   nimet,
   users,
   today,
 }: {
+  t: AdminText;
   nimet: Labels;
   users: User[];
   today: string;
@@ -27,6 +30,7 @@ export function NewTask({
   if (open) {
     return (
       <TaskForm
+        t={t}
         nimet={nimet}
         users={users}
         today={today}
@@ -48,7 +52,7 @@ export function NewTask({
       }}
     >
       <RfIcon name="plus" size={15} />
-      Uusi tehtävä
+      {t.tiimi.newTask}
     </button>
   );
 }

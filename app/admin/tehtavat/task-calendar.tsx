@@ -1,4 +1,5 @@
 import { monthCalendar } from "@/lib/restoflow/calendar";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { statusOf, type Task, type TaskStatus } from "@/lib/restoflow/tasks";
 import { Card } from "@/components/restoflow/ui";
 
@@ -14,9 +15,11 @@ import { Card } from "@/components/restoflow/ui";
  * maanantai ensin.
  */
 export function TaskCalendar({
+  t,
   tasks,
   today,
 }: {
+  t: AdminText;
   tasks: Task[];
   today: string;
 }) {
@@ -35,7 +38,7 @@ export function TaskCalendar({
           className="w-full"
           style={{ borderCollapse: "collapse", minWidth: "44rem" }}
         >
-          <caption className="sr-only">Tehtävät kuukauden päivillä</caption>
+          <caption className="sr-only">{t.tiimi.tasksOnMonthDays}</caption>
 
           <thead>
             <tr>

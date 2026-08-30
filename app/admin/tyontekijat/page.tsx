@@ -69,7 +69,7 @@ export default async function StaffPage() {
           tileTone="brand"
           tone="muted"
           value={<CountUp to={totalHours} format="hours" />}
-          conclusion="Kuluva kuukausi"
+          conclusion={t.tiimi.currentMonth}
         />
 
         {showsRates ? (
@@ -82,7 +82,7 @@ export default async function StaffPage() {
             conclusion={
               missingRates > 0
                 ? fill(t.lauseet.missingRates, { maara: String(missingRates) })
-                : "Tunnit × tuntipalkka"
+                : t.tiimi.hoursTimesRate
             }
           />
         ) : null}
@@ -103,7 +103,7 @@ export default async function StaffPage() {
         />
       </section>
 
-      {canManage ? <InviteForm nimet={nimet} /> : null}
+      {canManage ? <InviteForm t={t} nimet={nimet} /> : null}
 
       {invitations.length > 0 ? (
         <Card>
@@ -191,7 +191,7 @@ export default async function StaffPage() {
                   value={String(shiftCount)}
                 />
                 <Stat
-                  label={showsRates ? t.henkilosto2.cost : "Kuitit"}
+                  label={showsRates ? t.henkilosto2.cost : t.tiimi.receiptsWord}
                   value={
                     showsRates
                       ? formatMoney(cost)
@@ -202,7 +202,9 @@ export default async function StaffPage() {
                 />
               </dl>
 
-              {canManage ? <MemberForm nimet={nimet} user={user} /> : null}
+              {canManage ? (
+                <MemberForm t={t} nimet={nimet} user={user} />
+              ) : null}
             </Card>
           </li>
         ))}
@@ -253,7 +255,7 @@ export default async function StaffPage() {
                       </div>
                     </div>
                     {canManage ? (
-                      <MemberForm nimet={nimet} user={user} />
+                      <MemberForm t={t} nimet={nimet} user={user} />
                     ) : null}
                   </td>
                   <td>

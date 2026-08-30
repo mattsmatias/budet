@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import {
@@ -31,13 +33,13 @@ const POSITIONS: StaffPosition[] = ["waiter", "kitchen", "manager", "cleaning"];
  * Koodi näytetään kerran. Kannassa on vain tiiviste, joten sitä ei voi
  * hakea myöhemmin — kadonnut koodi mitätöidään ja luodaan uusi.
  */
-export function InviteForm({ nimet }: { nimet: Labels }) {
+export function InviteForm({ t, nimet }: { t: AdminText; nimet: Labels }) {
   const [state, action] = useActionState(createInvitation, initial);
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<Role>("employee");
 
   if (state.code) {
-    return <InviteCode nimet={nimet} code={state.code} role={role} />;
+    return <InviteCode t={t} nimet={nimet} code={state.code} role={role} />;
   }
 
   if (!open) {
@@ -61,7 +63,7 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
         }}
       >
         <RfIcon name="plus" size={18} />
-        Kutsu käyttäjä
+        {t.tiimi.inviteUser}
       </button>
     );
   }
@@ -69,10 +71,10 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
   return (
     <Card>
       <form action={action} className="space-y-4">
-        <p className="text-[15px] font-semibold">Kutsu käyttäjä</p>
+        <p className="text-[15px] font-semibold">{t.tiimi.inviteUser}</p>
 
         <Select
-          label="Rooli"
+          label={t.tiimi.role}
           name="role"
           value={role}
           onChange={(v) => setRole(v as Role)}
@@ -88,12 +90,16 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
           className="text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          {ROLE_HINTS[role]}
+          {roolienSelitteet(t)[role]}
         </p>
 
         {role !== "accountant" ? (
           <>
-            <Select label="Tehtävä" name="position" defaultValue="waiter">
+            <Select
+              label={t.tiimi.position}
+              name="position"
+              defaultValue="waiter"
+            >
               {POSITIONS.map((p) => (
                 <option key={p} value={p}>
                   {nimet.positions[p]}
@@ -102,12 +108,12 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
             </Select>
 
             <Input
-              label="Tuntipalkka"
+              label={t.tiimi.hourlyRate}
               name="hourlyRate"
               inputMode="decimal"
               placeholder="14,50"
               suffix="€/h"
-              hint="Käytetään henkilöstökulujen laskentaan. Voi jättää tyhjäksi."
+              hint={t.tiimi.rateHint}
             />
           </>
         ) : (
@@ -115,16 +121,16 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
         )}
 
         <Input
-          label="Nimilappu"
+          label={t.tiimi.nameTag}
           name="label"
-          placeholder="Uusi tarjoilija"
-          hint="Vain sinulle, jotta tunnistat kutsun listasta."
+          placeholder={t.tiimi.newWaiter}
+          hint={t.tiimi.nameTagHint}
         />
 
         {state.error ? <ErrorText>{state.error}</ErrorText> : null}
 
         <div className="grid grid-cols-2 gap-2.5">
-          <Submit label="Luo koodi" busy="Luodaan…" />
+          <Submit label={t.tiimi.createCode} busy={t.tiimi.creating} />
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -135,7 +141,7 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
               borderRadius: "var(--rf-r-control)",
             }}
           >
-            Peruuta
+            {t.tiimi.cancel}
           </button>
         </div>
       </form>
@@ -143,19 +149,29 @@ export function InviteForm({ nimet }: { nimet: Labels }) {
   );
 }
 
-const ROLE_HINTS: Record<Role, string> = {
-  owner: "Näkee ja muokkaa kaiken, mukaan lukien budjetit ja käyttäjät.",
-  manager: "Näkee kaiken ja hallitsee vuoroja ja kuitteja, muttei budjetteja.",
-  employee: "Näkee vain omat vuoronsa, oman työaikansa ja lisäämänsä kuitit.",
-  accountant:
-    "Näkee kulut, ALV:t ja raportit — ei tuntipalkkoja eikä työvuoroja.",
-};
+/*
+ * Roolien selitteet tehtaana, samasta syysta.
+ */
+const roolienSelitteet = (t: AdminText): Record<Role, string> => ({
+  owner: t.tiimi.roleOwner,
+  manager: t.tiimi.roleManager,
+  employee: t.tiimi.roleEmployee,
+  accountant: t.tiimi.roleAccountant,
+});
 
 // ---------------------------------------------------------------------------
 // Jäsenen muokkaus
 // ---------------------------------------------------------------------------
 
-export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
+export function MemberForm({
+  t,
+  nimet,
+  user,
+}: {
+  t: AdminText;
+  nimet: Labels;
+  user: User;
+}) {
   const [state, action] = useActionState(updateMembership, initial);
   const [open, setOpen] = useState(false);
 
@@ -171,7 +187,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Muokkaa
+        {t.tiimi.edit}
       </button>
     );
   }
@@ -184,7 +200,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
     >
       <input type="hidden" name="userId" value={user.id} />
 
-      <Select label="Rooli" name="role" defaultValue={user.role}>
+      <Select label={t.tiimi.role} name="role" defaultValue={user.role}>
         {ROLES.map((r) => (
           <option key={r} value={r}>
             {nimet.roles[r]}
@@ -193,7 +209,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
       </Select>
 
       <Select
-        label="Tehtävä"
+        label={t.tiimi.position}
         name="position"
         defaultValue={user.position ?? ""}
       >
@@ -206,7 +222,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
       </Select>
 
       <Input
-        label="Tuntipalkka"
+        label={t.tiimi.hourlyRate}
         name="hourlyRate"
         inputMode="decimal"
         suffix="€/h"
@@ -225,7 +241,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
       ) : null}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <Submit label="Tallenna" busy="Tallennetaan…" />
+        <Submit label={t.tiimi.save} busy={t.tiimi.savingEllipsis} />
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -236,7 +252,7 @@ export function MemberForm({ nimet, user }: { nimet: Labels; user: User }) {
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Sulje
+          {t.tiimi.close}
         </button>
       </div>
     </form>
@@ -413,10 +429,12 @@ export function StatusPill({ nimet, role }: { nimet: Labels; role: Role }) {
  * jossa omistaja oikeasti on, myös testiympäristössä.
  */
 function InviteCode({
+  t,
   nimet,
   code,
   role,
 }: {
+  t: AdminText;
   nimet: Labels;
   code: string;
   role: Role;
@@ -426,20 +444,23 @@ function InviteCode({
 
   const origin = typeof window === "undefined" ? "" : window.location.origin;
 
-  const message =
-    `Sinut on kutsuttu Kateen (${nimet.roles[role].toLowerCase()}).
-
-` +
-    `1. Mene osoitteeseen ${origin}/rekisteroidy?tila=liity
-` +
-    `2. Luo tunnus omalla sähköpostillasi
-` +
-    `3. Valitse "Liity koodilla"
-` +
-    `4. Syötä koodi: ${code}
-
-` +
-    `Koodi on voimassa 14 päivää ja toimii kerran.`;
+  /*
+   * Liitettava ohje kuudella kielella.
+   *
+   * Rivit ovat omia avaimiaan eivatka yhta pitkaa lausetta: numerot
+   * ja osoite pysyvat paikallaan, mutta sanajarjestys saa vaihtua
+   * kielen mukaan.
+   */
+  const message = [
+    fill(t.tiimi.inviteLine1, { rooli: nimet.roles[role].toLowerCase() }),
+    "",
+    fill(t.tiimi.inviteLine2, { osoite: origin }),
+    t.tiimi.inviteLine3,
+    t.tiimi.inviteLine4,
+    fill(t.tiimi.inviteLine5, { koodi: code }),
+    "",
+    t.tiimi.inviteLine6,
+  ].join("\n");
 
   async function copy(text: string, what: "code" | "message") {
     try {
@@ -457,13 +478,12 @@ function InviteCode({
 
   return (
     <Card>
-      <p className="text-[15px] font-semibold">Kutsukoodi luotu</p>
+      <p className="text-[15px] font-semibold">{t.tiimi.codeCreated}</p>
       <p
         className="mt-1.5 text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Koodi näytetään vain nyt. Kannassa on siitä vain tiiviste, joten sitä ei
-        voi hakea myöhemmin.
+        {t.tiimi.codeShownOnce}
       </p>
 
       <p
@@ -487,7 +507,7 @@ function InviteCode({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {copied === "code" ? "Kopioitu" : "Kopioi koodi"}
+          {copied === "code" ? t.tiimi.copied : t.tiimi.copyCode}
         </button>
 
         <button
@@ -500,7 +520,7 @@ function InviteCode({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {copied === "message" ? "Kopioitu" : "Kopioi ohje"}
+          {copied === "message" ? t.tiimi.copied : t.tiimi.copyInstructions}
         </button>
       </div>
 
@@ -509,8 +529,7 @@ function InviteCode({
           className="mt-2 text-[12px]"
           style={{ color: "var(--rf-amber-text)" }}
         >
-          Kopiointi ei onnistunut tässä selaimessa. Valitse teksti ja kopioi
-          käsin.
+          {t.tiimi.copyFailed}
         </p>
       ) : null}
 
@@ -518,7 +537,7 @@ function InviteCode({
         className="mt-4 border-t pt-4"
         style={{ borderColor: "var(--rf-line)" }}
       >
-        <p className="text-[13px] font-semibold">Näin kutsuttu pääsee sisään</p>
+        <p className="text-[13px] font-semibold">{t.tiimi.howToJoin}</p>
 
         <ol className="mt-2 space-y-2">
           {[
@@ -528,11 +547,12 @@ function InviteCode({
                 {origin}/rekisteroidy?tila=liity
               </span>
             </>,
-            <>Luo tunnuksen omalla sähköpostillaan</>,
+            <>{t.tiimi.createsAccount}</>,
             <>
-              Valitsee <strong>Liity koodilla</strong>
+              {t.tiimi.chooses}
+              <strong>{t.tiimi.joinWithCode}</strong>
             </>,
-            <>Syöttää koodin ja hyväksyy kutsun</>,
+            <>{t.tiimi.entersCode}</>,
           ].map((step, index) => (
             <li
               key={index}
@@ -558,8 +578,7 @@ function InviteCode({
           className="mt-3 text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Kate ei lähetä sähköpostia — anna koodi hänelle itse. Voimassa 14
-          päivää, yksi käyttökerta.
+          {t.tiimi.noEmailSent}
         </p>
       </div>
 
@@ -573,7 +592,7 @@ function InviteCode({
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Valmis
+        {t.tiimi.done}
       </button>
     </Card>
   );

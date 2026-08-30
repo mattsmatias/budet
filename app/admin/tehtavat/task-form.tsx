@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { saveTask } from "./actions";
@@ -23,12 +24,14 @@ const initial: AdminState = {};
  * tehtävä joka syntyy siinä hetkessä kun se muistetaan.
  */
 export function TaskForm({
+  t,
   nimet,
   users,
   task,
   onClose,
   today,
 }: {
+  t: AdminText;
   nimet: Labels;
   users: User[];
   task?: Task;
@@ -57,13 +60,13 @@ export function TaskForm({
 
         <div className="flex items-start justify-between gap-3">
           <p className="text-[15px] font-bold">
-            {task ? "Muokkaa tehtävää" : "Uusi tehtävä"}
+            {task ? t.tiimi.editTask : t.tiimi.newTask}
           </p>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="Sulje"
+            aria-label={t.tiimi.close}
             className="rf-press -mt-1 flex h-8 w-8 shrink-0 items-center justify-center"
             style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
           >
@@ -74,14 +77,16 @@ export function TaskForm({
         </div>
 
         <label className="block">
-          <span className="block text-[12.5px] font-semibold">Tehtävä</span>
+          <span className="block text-[12.5px] font-semibold">
+            {t.tiimi.position}
+          </span>
           <input
             name="title"
             required
             maxLength={200}
             autoFocus
             defaultValue={task?.title ?? ""}
-            placeholder="Maksa sähkölasku"
+            placeholder={t.tiimi.taskPlaceholder}
             className={`${CONTROL} mt-1.5`}
             style={CONTROL_STYLE}
           />
@@ -89,7 +94,9 @@ export function TaskForm({
 
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
           <label className="block">
-            <span className="block text-[12.5px] font-semibold">Eräpäivä</span>
+            <span className="block text-[12.5px] font-semibold">
+              {t.tiimi.dueDate}
+            </span>
             <input
               type="date"
               name="dueOn"
@@ -102,7 +109,7 @@ export function TaskForm({
 
           <label className="block">
             <span className="block text-[12.5px] font-semibold">
-              Kello
+              {t.tiimi.clock}
               <span
                 className="ml-1 font-normal"
                 style={{ color: "var(--rf-text-3)" }}
@@ -124,7 +131,7 @@ export function TaskForm({
           <>
             <label className="block">
               <span className="block text-[12.5px] font-semibold">
-                Kuvaus
+                {t.tiimi.description}
                 <span
                   className="ml-1 font-normal"
                   style={{ color: "var(--rf-text-3)" }}
@@ -145,7 +152,7 @@ export function TaskForm({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="block text-[12.5px] font-semibold">
-                  Vastuuhenkilö
+                  {t.tiimi.assignee}
                 </span>
                 <select
                   name="assignedTo"
@@ -153,7 +160,7 @@ export function TaskForm({
                   className={`${CONTROL} mt-1.5`}
                   style={CONTROL_STYLE}
                 >
-                  <option value="">Ei ketään erikseen</option>
+                  <option value="">{t.tiimi.nobodySpecific}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name}
@@ -164,7 +171,7 @@ export function TaskForm({
 
               <label className="block">
                 <span className="block text-[12.5px] font-semibold">
-                  Prioriteetti
+                  {t.tiimi.priority}
                 </span>
                 <select
                   name="priority"
@@ -182,7 +189,7 @@ export function TaskForm({
 
               <label className="block">
                 <span className="block text-[12.5px] font-semibold">
-                  Kuka näkee
+                  {t.tiimi.whoSees}
                 </span>
                 <select
                   name="visibility"
@@ -202,7 +209,7 @@ export function TaskForm({
 
               <label className="block">
                 <span className="block text-[12.5px] font-semibold">
-                  Toistuu
+                  {t.tiimi.repeats}
                 </span>
                 <select
                   name="recurrence"
@@ -229,7 +236,9 @@ export function TaskForm({
               ei tarvitse pitää kirjaa.
             */}
             <fieldset>
-              <legend className="text-[12.5px] font-semibold">Muistuta</legend>
+              <legend className="text-[12.5px] font-semibold">
+                {t.tiimi.remind}
+              </legend>
 
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
                 {[7, 3, 2, 1].map((day) => (
@@ -257,7 +266,7 @@ export function TaskForm({
                     defaultChecked={task?.remindOnDue ?? true}
                     className="h-4 w-4"
                   />
-                  Eräpäivänä
+                  {t.tiimi.onDueDate}
                 </label>
 
                 <label className="flex items-center gap-2 text-[13px]">
@@ -267,7 +276,7 @@ export function TaskForm({
                     defaultChecked={task?.remindWhenOverdue ?? true}
                     className="h-4 w-4"
                   />
-                  Kun myöhässä
+                  {t.tiimi.whenOverdue}
                 </label>
               </div>
             </fieldset>
@@ -279,7 +288,7 @@ export function TaskForm({
             className="rf-press text-[12.5px] font-semibold"
             style={{ color: "var(--rf-accent)" }}
           >
-            Lisää tiedot: vastuuhenkilö, prioriteetti, toistuvuus, muistutukset
+            {t.tiimi.addDetails}
           </button>
         )}
 
@@ -294,7 +303,7 @@ export function TaskForm({
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
-          <Submit label={task ? "Tallenna" : "Luo tehtävä"} />
+          <Submit t={t} label={task ? t.tiimi.save : t.tiimi.createTask} />
 
           <button
             type="button"
@@ -302,7 +311,7 @@ export function TaskForm({
             className="rf-press px-3.5 py-2 text-[13px] font-medium"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Peruuta
+            {t.tiimi.cancel}
           </button>
         </div>
       </form>
@@ -310,7 +319,7 @@ export function TaskForm({
   );
 }
 
-function Submit({ label }: { label: string }) {
+function Submit({ t, label }: { t: AdminText; label: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -325,7 +334,7 @@ function Submit({ label }: { label: string }) {
         opacity: pending ? 0.6 : 1,
       }}
     >
-      {pending ? "Tallennetaan…" : label}
+      {pending ? t.tiimi.savingEllipsis : label}
     </button>
   );
 }

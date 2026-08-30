@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -11,7 +14,10 @@ import { NewTask } from "./new-task";
 import { TaskList } from "./task-list";
 import { TaskCalendar } from "./task-calendar";
 
-export const metadata = { title: "Tehtävät" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.tiimi.tasksTitle };
+}
 
 /**
  * Tehtävät.
@@ -25,6 +31,7 @@ export const metadata = { title: "Tehtävät" };
 export default async function TasksPage({
   searchParams,
 }: PageProps<"/admin/tehtavat">) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const { restaurant, role, users, today } =
@@ -49,12 +56,14 @@ export default async function TasksPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           {counts.needsAttention === 0
-            ? "Ei mitään erääntymässä tänään"
-            : `${counts.needsAttention} vaatii huomiota`}
+            ? t.tiimi.nothingDueToday
+            : fill(t.tiimi.needsAttention, {
+                maara: String(counts.needsAttention),
+              })}
         </p>
 
         {canManage ? (
-          <NewTask nimet={nimet} users={users} today={today} />
+          <NewTask t={t} nimet={nimet} users={users} today={today} />
         ) : null}
       </div>
 
@@ -67,41 +76,39 @@ export default async function TasksPage({
         suodattimeensa.
       */}
       <section
-        aria-label="Tehtävien tilanne"
+        aria-label={t.tiimi.taskSituation}
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-3"
       >
         <Luku
-          label="Myöhässä"
+          label={t.tiimi.overdue}
           value={counts.overdue}
           tone="risk"
           href="/admin/tehtavat?suodatin=myohassa"
           hint={
-            counts.overdue === 0 ? "Ei myöhässä olevia" : "Eräpäivä on mennyt"
+            counts.overdue === 0 ? t.tiimi.noOverdue : t.tiimi.dueDatePassed
           }
         />
         <Luku
-          label="Erääntyy tänään"
+          label={t.tiimi.dueToday}
           value={counts.dueToday}
           tone="warn"
           href="/admin/tehtavat?suodatin=tanaan"
           hint={
-            counts.dueToday === 0
-              ? "Ei tämän päivän tehtäviä"
-              : "Hoidettava tänään"
+            counts.dueToday === 0 ? t.tiimi.noTasksToday : t.tiimi.handleToday
           }
         />
         <Luku
-          label="Tulevat"
+          label={t.tiimi.upcoming}
           value={counts.upcoming}
           tone="info"
           href="/admin/tehtavat?suodatin=tulevat"
-          hint="Eräpäivä edessä"
+          hint={t.tiimi.dueDateAhead}
         />
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Suodattimet" className="flex flex-wrap gap-1.5">
-          {FILTERS.map((item) => (
+        <nav aria-label={t.tiimi.filters} className="flex flex-wrap gap-1.5">
+          {suodattimet(t).map((item) => (
             <Suodatin
               key={item.key}
               label={item.label}
@@ -122,12 +129,12 @@ export default async function TasksPage({
         >
           <Valinta
             href={`/admin/tehtavat?suodatin=${filter}`}
-            label="Lista"
+            label={t.tiimi.listView}
             active={view === "lista"}
           />
           <Valinta
             href={`/admin/tehtavat?suodatin=${filter}&nakyma=kalenteri`}
-            label="Kalenteri"
+            label={t.tiimi.calendarView}
             active={view === "kalenteri"}
           />
         </div>
@@ -150,8 +157,8 @@ export default async function TasksPage({
           type="search"
           name="haku"
           defaultValue={search}
-          placeholder="Hae tehtävää…"
-          aria-label="Hae tehtävää"
+          placeholder={t.tiimi.searchPlaceholder}
+          aria-label={t.tiimi.searchLabel}
           className="min-w-0 flex-1 px-3.5 py-2 text-[13px]"
           style={{
             background: "var(--rf-card)",
@@ -170,7 +177,7 @@ export default async function TasksPage({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Hae
+          {t.tiimi.search}
         </button>
 
         {search !== "" ? (
@@ -179,15 +186,16 @@ export default async function TasksPage({
             className="rf-press px-2 py-2 text-[12.5px] font-semibold"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Tyhjennä
+            {t.tiimi.clear}
           </Link>
         ) : null}
       </form>
 
       {view === "kalenteri" ? (
-        <TaskCalendar tasks={filtered} today={today} />
+        <TaskCalendar t={t} tasks={filtered} today={today} />
       ) : (
         <TaskList
+          t={t}
           locale={locale}
           nimet={nimet}
           tasks={filtered}
@@ -202,13 +210,18 @@ export default async function TasksPage({
 
 // ---------------------------------------------------------------------------
 
-const FILTERS = [
-  { key: "avoimet", label: "Avoimet" },
-  { key: "tanaan", label: "Tänään" },
-  { key: "myohassa", label: "Myöhässä" },
-  { key: "tulevat", label: "Tulevat" },
-  { key: "tehdyt", label: "Tehdyt" },
-  { key: "kaikki", label: "Kaikki" },
+/*
+ * Suodattimet tehtaana.
+ *
+ * Moduulitason taulukko lukitsisi otsikot suomeksi jo latautuessa.
+ */
+const suodattimet = (t: AdminText) => [
+  { key: "avoimet", label: t.tiimi.openFilter },
+  { key: "tanaan", label: t.tiimi.todayFilter },
+  { key: "myohassa", label: t.tiimi.overdue },
+  { key: "tulevat", label: t.tiimi.upcoming },
+  { key: "tehdyt", label: t.tiimi.doneFilter },
+  { key: "kaikki", label: t.tiimi.allFilter },
 ];
 
 function matchesFilter(task: Task, filter: string, today: string): boolean {

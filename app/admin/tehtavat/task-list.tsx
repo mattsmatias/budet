@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
@@ -34,6 +36,7 @@ import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
  * takaisin auki samasta rivistä.
  */
 export function TaskList({
+  t,
   locale,
   nimet,
   tasks,
@@ -41,6 +44,7 @@ export function TaskList({
   today,
   canManage,
 }: {
+  t: AdminText;
   locale: AppLocale;
   nimet: Labels;
   tasks: Task[];
@@ -53,10 +57,7 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <EmptyState
-        title="Ei tehtäviä"
-        description="Lisää ensimmäinen tehtävä, niin Kate muistuttaa siitä ennen määräaikaa eikä anna sen unohtua."
-      />
+      <EmptyState title={t.tiimi.noTasks} description={t.tiimi.firstTaskHint} />
     );
   }
 
@@ -85,6 +86,7 @@ export function TaskList({
               editing === task.id ? (
                 <li key={task.id} className="py-3">
                   <TaskForm
+                    t={t}
                     nimet={nimet}
                     users={users}
                     task={task}
@@ -95,6 +97,7 @@ export function TaskList({
               ) : (
                 <li key={task.id} className="py-3 first:pt-1">
                   <Rivi
+                    t={t}
                     nimet={nimet}
                     task={task}
                     users={users}
@@ -113,6 +116,7 @@ export function TaskList({
 }
 
 function Rivi({
+  t,
   nimet,
   task,
   users,
@@ -120,6 +124,7 @@ function Rivi({
   canManage,
   onEdit,
 }: {
+  t: AdminText;
   nimet: Labels;
   task: Task;
   users: User[];
@@ -160,7 +165,7 @@ function Rivi({
         ) : (
           <form action={completeTask} className="mt-0.5 shrink-0">
             <input type="hidden" name="id" value={task.id} />
-            <Kuittaa title={task.title} />
+            <Kuittaa t={t} title={task.title} />
           </form>
         )}
 
@@ -186,13 +191,23 @@ function Rivi({
               style={{ color: "var(--rf-text-3)" }}
             >
               {formatDate(task.dueOn)}
-              {task.dueTime ? ` klo ${task.dueTime}` : ""}
+              {task.dueTime
+                ? " " + fill(t.tiimi.atTime, { aika: task.dueTime })
+                : ""}
               {late > 0
-                ? ` · myöhässä ${late} ${late === 1 ? "päivä" : "päivää"}`
+                ? fill(
+                    late === 1 ? t.tiimi.lateSuffixOne : t.tiimi.lateSuffixMany,
+                    {
+                      maara: String(late),
+                    },
+                  )
                 : ""}
               {owner ? ` · ${owner.name}` : ""}
               {task.recurrence !== "none"
-                ? ` · ${nimet.taskRecurrence[task.recurrence].toLowerCase()}`
+                ? fill(t.tiimi.recurrenceSuffix, {
+                    toistuvuus:
+                      nimet.taskRecurrence[task.recurrence].toLowerCase(),
+                  })
                 : ""}
             </span>
           </button>
@@ -223,7 +238,7 @@ function Rivi({
               {done ? (
                 <form action={reopenTask}>
                   <input type="hidden" name="id" value={task.id} />
-                  <Toiminto label="Avaa uudelleen" />
+                  <Toiminto label={t.tiimi.reopen} />
                 </form>
               ) : (
                 <>
@@ -233,7 +248,7 @@ function Rivi({
                     className="rf-press px-2.5 py-1 text-[12.5px] font-semibold"
                     style={{ color: "var(--rf-accent)" }}
                   >
-                    Muokkaa
+                    {t.tiimi.edit}
                   </button>
 
                   {/*
@@ -248,7 +263,7 @@ function Rivi({
                       name="dueOn"
                       value={addDays(task.dueOn, 1)}
                     />
-                    <Toiminto label="Siirrä päivällä" />
+                    <Toiminto label={t.tiimi.moveByDay} />
                   </form>
 
                   <form action={postponeTask}>
@@ -258,19 +273,19 @@ function Rivi({
                       name="dueOn"
                       value={addDays(task.dueOn, 7)}
                     />
-                    <Toiminto label="Siirrä viikolla" />
+                    <Toiminto label={t.tiimi.moveByWeek} />
                   </form>
 
                   <form action={cancelTask}>
                     <input type="hidden" name="id" value={task.id} />
-                    <Toiminto label="Peru" />
+                    <Toiminto label={t.tiimi.cancelTask} />
                   </form>
                 </>
               )}
 
               <form action={deleteTask}>
                 <input type="hidden" name="id" value={task.id} />
-                <Toiminto label="Poista" danger />
+                <Toiminto label={t.tiimi.remove} danger />
               </form>
             </div>
           ) : null}
@@ -280,15 +295,15 @@ function Rivi({
   );
 }
 
-function Kuittaa({ title }: { title: string }) {
+function Kuittaa({ t, title }: { t: AdminText; title: string }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
       disabled={pending}
-      aria-label={`Merkitse tehdyksi: ${title}`}
-      title="Merkitse tehdyksi"
+      aria-label={fill(t.tiimi.markDoneNamed, { nimi: title })}
+      title={t.tiimi.markDone}
       className="rf-press flex h-[22px] w-[22px] items-center justify-center"
       style={{
         border: "1.5px solid var(--rf-line-strong)",

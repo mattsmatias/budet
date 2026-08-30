@@ -16,6 +16,9 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -55,34 +58,35 @@ export async function saveTask(
   _prev: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role, user } = await requireContext(PATH);
-  if (!can(role, "tasks.manage"))
-    return { error: "Ei oikeutta hallita tehtäviä." };
+  if (!can(role, "tasks.manage")) return { error: t.tiimi.noRightTasks };
 
   const title = String(formData.get("title") ?? "").trim();
   if (title === "") return { error: "Anna tehtävälle nimi." };
-  if (title.length > 200) return { error: "Nimi on liian pitkä." };
+  if (title.length > 200) return { error: t.tiimi.nameTooLong };
 
   const dueOn = String(formData.get("dueOn") ?? "");
-  if (!ISO_DATE.test(dueOn)) return { error: "Tarkista eräpäivä." };
+  if (!ISO_DATE.test(dueOn)) return { error: t.tiimi.checkDueDate };
 
   const dueTimeRaw = String(formData.get("dueTime") ?? "").trim();
   if (dueTimeRaw !== "" && !TIME.test(dueTimeRaw)) {
-    return { error: "Tarkista kellonaika." };
+    return { error: t.tiimi.checkTime };
   }
 
   const priority = String(formData.get("priority") ?? "normal");
   const visibility = String(formData.get("visibility") ?? "managers");
   const recurrence = String(formData.get("recurrence") ?? "none");
 
-  if (!PRIORITIES.has(priority)) return { error: "Tuntematon prioriteetti." };
-  if (!VISIBILITIES.has(visibility)) return { error: "Tuntematon näkyvyys." };
-  if (!RECURRENCES.has(recurrence)) return { error: "Tuntematon toistuvuus." };
+  if (!PRIORITIES.has(priority)) return { error: t.tiimi.unknownPriority };
+  if (!VISIBILITIES.has(visibility))
+    return { error: t.tiimi.unknownVisibility };
+  if (!RECURRENCES.has(recurrence)) return { error: t.tiimi.unknownRecurrence };
 
   const assignedRaw = String(formData.get("assignedTo") ?? "").trim();
   const assignedTo = assignedRaw === "" ? null : assignedRaw;
   if (assignedTo !== null && !UUID.test(assignedTo)) {
-    return { error: "Tarkista vastuuhenkilö." };
+    return { error: t.tiimi.checkAssignee };
   }
 
   /*
@@ -102,8 +106,7 @@ export async function saveTask(
       .eq("user_id", assignedTo)
       .maybeSingle();
 
-    if (!member)
-      return { error: "Vastuuhenkilö ei ole tämän ravintolan jäsen." };
+    if (!member) return { error: t.tiimi.assigneeNotMember };
   }
 
   const payload = {
@@ -124,24 +127,30 @@ export async function saveTask(
   const id = String(formData.get("id") ?? "").trim();
 
   if (id !== "") {
-    if (!UUID.test(id)) return { error: "Tuntematon tehtävä." };
+    if (!UUID.test(id)) return { error: t.tiimi.unknownTask };
 
     const { error } = await supabase.from("tasks").update(payload).eq("id", id);
-    if (error) return { error: `Tallennus epäonnistui: ${error.message}` };
+    if (error)
+      return {
+        error: fill(t.tiimi.saveFailedWith, { viesti: error.message }),
+      };
 
     revalidatePath("/admin", "layout");
-    return { notice: "Tehtävä päivitetty." };
+    return { notice: t.tiimi.taskUpdated };
   }
 
   const { error } = await supabase
     .from("tasks")
     .insert({ ...payload, created_by: user.id });
 
-  if (error) return { error: `Tallennus epäonnistui: ${error.message}` };
+  if (error)
+    return {
+      error: fill(t.tiimi.saveFailedWith, { viesti: error.message }),
+    };
 
   revalidatePath("/admin", "layout");
   revalidatePath("/app", "layout");
-  return { notice: "Tehtävä luotu." };
+  return { notice: t.tiimi.taskCreated };
 }
 
 /**
