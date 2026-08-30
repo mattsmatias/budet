@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "bundle:sql": "node scripts/bundle-migrations.mjs",
     "icons": "node scripts/build-icons.mjs",
-    "test:live": "vitest run --config vitest.live.mts"
+    "test:live": "vitest run --config vitest.live.mts",
+    "posti:testi": "node scripts/posti-testi.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
