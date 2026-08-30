@@ -264,3 +264,76 @@ export async function setStatus(
   revalidate();
   return { notice: t.varaus.saved };
 }
+
+// ---------------------------------------------------------------------------
+// Lomakkeen haut
+// ---------------------------------------------------------------------------
+
+/**
+ * Vapaat ajat seurueen koolle.
+ *
+ * Aika riippuu seurueen koosta: kahdelle vapaa aika ei ole vapaa
+ * kuudelle, jos ainoa iso pöytä on varattu. Aiemmin lista laskettiin
+ * kerran kahdelle hengelle ja näytettiin kaikille koolle — lomake
+ * tarjosi aikoja jotka moottori hylkäsi vasta lähetyksen jälkeen.
+ *
+ * Palvelintoiminto eikä rajapintareitti: oikeustarkistus tulee
+ * requireContextista ilman omaa CORS- ja tunnistuskerrosta.
+ */
+export async function fetchSlots(
+  date: string,
+  partySize: number,
+  excludeId?: string,
+): Promise<string[]> {
+  if (!ISO_DATE.test(date)) return [];
+  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 200) return [];
+
+  const { restaurant } = await requireContext("/admin/varaukset");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reservation_admin_slots", {
+    p_restaurant: restaurant.id,
+    p_date: date,
+    p_party: partySize,
+    p_exclude: excludeId && z.string().uuid().safeParse(excludeId).success
+      ? excludeId
+      : null,
+  });
+
+  if (error || !data) return [];
+  return ((data as { slots?: string[] }).slots ?? []) as string[];
+}
+
+export interface TableOption {
+  id: string;
+  name: string;
+  seatsMin: number;
+  seatsMax: number;
+  /** Mahtuuko seurue tähän pöytään. Ei estä valintaa, vaan varoittaa. */
+  fits: boolean;
+}
+
+/**
+ * Pöydät jotka ovat vapaana juuri tämän varauksen aikana.
+ *
+ * Varaus ei estä itseään: sen oma pöytä on listalla, muuten pöydän
+ * vaihtaminen näyttäisi siltä ettei nykyinen pöytä kelpaa.
+ *
+ * Ilman tätä pöytävalinta listasi kaikki pöydät, ja varatun
+ * valitseminen päättyi virheeseen vasta tallennuksessa.
+ */
+export async function fetchFreeTables(
+  reservationId: string,
+): Promise<TableOption[]> {
+  if (!z.string().uuid().safeParse(reservationId).success) return [];
+
+  await requireContext("/admin/varaukset");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reservation_free_tables", {
+    p_reservation: reservationId,
+  });
+
+  if (error || !data) return [];
+  return data as unknown as TableOption[];
+}

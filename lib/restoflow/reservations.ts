@@ -23,6 +23,18 @@ export type ReservationStatus =
 export type ReservationSource = "widget" | "link" | "admin" | "walk_in";
 
 /** Tilat jotka varaavat pöydän. Sama joukko kuin kannan blocking-lipussa. */
+/**
+ * Seurueen oletuskoko.
+ *
+ * Sivu laskee vapaat ajat valmiiksi tälle koolle ja lomake avautuu
+ * samaan lukuun, joten dialogi näyttää oikeat ajat heti eikä hae
+ * uudelleen turhaan. Jos nämä eriävät, esilaskettu lista on väärä
+ * eikä mikään kerro siitä.
+ *
+ * Kaksi siksi että se on tavallisin varaus.
+ */
+export const OLETUS_SEURUE = 2;
+
 export const BLOCKING_STATUSES: ReservationStatus[] = [
   "pending",
   "confirmed",

@@ -10,6 +10,7 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { loadAdminSlots, loadReservationDay } from "@/lib/restoflow/reservation-queries";
 import {
+  OLETUS_SEURUE,
   sortForService,
   summarise,
   tableStates,
@@ -28,6 +29,7 @@ import {
 } from "@/components/restoflow/ui";
 import { ReservationDialog, StatusActions } from "./list";
 import { ReservationTabs } from "./tabs";
+import { DayPicker, LiveRefresh } from "./live";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -76,7 +78,9 @@ export default async function ReservationsPage({
    * pöytää. Se on halpa mutta ei ilmainen, eikä tarjoilijan
    * lukunäkymässä tarvita sitä lainkaan.
    */
-  const slots = canManage ? await loadAdminSlots(restaurant.id, date, 2) : [];
+  const slots = canManage
+    ? await loadAdminSlots(restaurant.id, date, OLETUS_SEURUE)
+    : [];
 
   const now = new Date();
   const ordered = sortForService(day.reservations);
@@ -110,6 +114,12 @@ export default async function ReservationsPage({
 
   return (
     <div className="rf-enter space-y-5">
+      {/*
+        Salinäkymä on auki koko vuoron. Ilman päivitystä pöytäkartan
+        "juuri nyt" tarkoittaa hetkeä jolloin sivu avattiin.
+      */}
+      {date === today ? <LiveRefresh seconds={60} /> : null}
+
       <ReservationTabs t={t} current="sali" />
 
       {/* --- Otsikko ja päivän vaihto --- */}
@@ -303,7 +313,26 @@ function ReservationRow({
           {fill(t.varaus.rowGuests, { maara: String(reservation.partySize) })}
           {" · "}
           {tables.length > 0 ? tables.join(", ") : t.varaus.unassigned}
-          {reservation.guestPhone ? ` · ${reservation.guestPhone}` : ""}
+
+          {/*
+            Numero on soitettava linkki.
+
+            Sitä tarvitaan silloin kun ilta muuttuu: pöytä myöhästyy
+            tai seurue ei saavu. Silloin numero kaivetaan ruudulta ja
+            näpytellään puhelimeen — yksi painallus riittää.
+          */}
+          {reservation.guestPhone ? (
+            <>
+              {" · "}
+              <a
+                href={`tel:${reservation.guestPhone.replace(/[^+\d]/g, "")}`}
+                className="underline decoration-dotted underline-offset-2"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {reservation.guestPhone}
+              </a>
+            </>
+          ) : null}
         </p>
 
         {reservation.note ? (
@@ -582,6 +611,15 @@ function DayNav({
           <RfIcon name="back" size={16} />
         </span>
       </Link>
+
+      {/*
+        Suora päivänvalinta nuolien viereen.
+
+        Nuolilla ensi lauantaihin on kuusi painallusta, ja se on
+        tavallisin syy vaihtaa päivää: puhelimessa kysytään ajasta
+        joka on viikon päässä.
+      */}
+      <DayPicker date={date} label={t.varaus.pickDay} />
     </div>
   );
 }

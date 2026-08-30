@@ -11,12 +11,15 @@ import type {
   ReservationStatus,
   RestaurantTable,
 } from "@/lib/restoflow/reservations";
-import { nextStatuses } from "@/lib/restoflow/reservations";
+import { nextStatuses, OLETUS_SEURUE } from "@/lib/restoflow/reservations";
 import {
   createReservation,
+  fetchFreeTables,
+  fetchSlots,
   setStatus,
   updateReservation,
   type ReservationState,
+  type TableOption,
 } from "./actions";
 
 const initial: ReservationState = {};
@@ -142,9 +145,81 @@ export function ReservationDialog({
   const [chosen, setChosen] = useState<string[]>(reservation?.tableIds ?? []);
   const [touched, setTouched] = useState(false);
 
+  /*
+   * Seurueen koko ohjaa vapaita aikoja.
+   *
+   * Kahdelle vapaa aika ei ole vapaa kuudelle, jos ainoa iso pöytä on
+   * varattu. Lista haetaan siis uudelleen kun koko muuttuu — muuten
+   * lomake tarjoaisi aikoja jotka moottori hylkää vasta lähetyksessä.
+   */
+  const [party, setParty] = useState(reservation?.partySize ?? OLETUS_SEURUE);
+  const [times, setTimes] = useState<string[]>(slots);
+
+  /*
+   * Lataustila johdetaan, ei aseteta.
+   *
+   * setState suoraan efektin alussa aiheuttaa ylimääräisen piirron ja
+   * on juuri se kuvio jonka React-lint kieltää. Sama tieto saadaan
+   * vertaamalla haettua avainta pyydettyyn: jos ne eroavat, haku on
+   * kesken.
+   *
+   * Alkuarvo vastaa palvelimen valmiiksi laskemaa listaa, joten
+   * dialogi ei välähdä latauksena auetessaan.
+   */
+  const avain = `${date}|${party}`;
+  const [ladattu, setLadattu] = useState(
+    `${date}|${reservation?.partySize ?? OLETUS_SEURUE}`,
+  );
+  const loadingTimes = trigger === "add" && ladattu !== avain;
+
+  /* Vapaat pöydät haetaan vasta kun dialogi avataan muokkaukseen. */
+  const [free, setFree] = useState<TableOption[] | null>(null);
+
   useEffect(() => {
     if (state.notice && open) dialog.current?.close();
   }, [state.notice, open]);
+
+  /*
+   * Aikojen haku.
+   *
+   * Vain uudelle varaukselle: walk-in ja muokkaus saavat vapaan
+   * kellonajan, koska salissa istutetaan myös aikaan jota lista ei
+   * tarjoa.
+   *
+   * Juokseva numero hylkää vanhentuneen vastauksen: käyttäjä ehtii
+   * vaihtaa kokoa nopeammin kuin haku vastaa.
+   */
+  useEffect(() => {
+    if (!open || trigger !== "add") return;
+
+    if (ladattu === avain) return;
+
+    let voimassa = true;
+
+    fetchSlots(date, party).then((tulos) => {
+      if (!voimassa) return;
+      setTimes(tulos);
+      setLadattu(avain);
+    });
+
+    return () => {
+      voimassa = false;
+    };
+  }, [open, trigger, date, party, avain, ladattu]);
+
+  /* Vapaat pöydät muokattaessa. */
+  useEffect(() => {
+    if (!open || !reservation) return;
+
+    let voimassa = true;
+    fetchFreeTables(reservation.id).then((tulos) => {
+      if (voimassa) setFree(tulos);
+    });
+
+    return () => {
+      voimassa = false;
+    };
+  }, [open, reservation]);
 
   function show() {
     setChosen(reservation?.tableIds ?? []);
@@ -224,19 +299,40 @@ export function ReservationDialog({
                     kiinni — kanta hylkäisi sen, mutta vasta lähetyksen
                     jälkeen.
                   */}
-                  {trigger === "add" && slots.length > 0 ? (
+                  {trigger === "add" && loadingTimes ? (
+                    <p
+                      className="py-2.5 text-[13px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {t.varaus.loadingTimes}
+                    </p>
+                  ) : trigger === "add" && times.length === 0 ? (
+                    /*
+                     * Ei aikoja tälle koolle.
+                     *
+                     * Tyhjä valikko näyttäisi rikkinäiseltä. Syy on
+                     * seurueen koko tai päivä, ja se sanotaan.
+                     */
+                    <p
+                      className="py-2.5 text-[13px]"
+                      style={{ color: "var(--rf-amber-text)" }}
+                    >
+                      {t.varaus.noTimesForParty}
+                    </p>
+                  ) : trigger === "add" ? (
                     <select
                       id="rv-time"
                       name="time"
                       required
-                      defaultValue={slots[0]}
+                      key={times.join(",")}
+                      defaultValue={times[0]}
                       className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                       style={{
                         background: "var(--rf-inset)",
                         borderRadius: "var(--rf-r-control)",
                       }}
                     >
-                      {slots.map((slot) => (
+                      {times.map((slot) => (
                         <option key={slot} value={slot}>
                           {slot}
                         </option>
@@ -266,7 +362,10 @@ export function ReservationDialog({
                     min={1}
                     max={200}
                     required
-                    defaultValue={reservation?.partySize ?? 2}
+                    value={party}
+                    onChange={(event) =>
+                      setParty(Math.max(1, Number(event.target.value) || 1))
+                    }
                     className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                     style={{
                       background: "var(--rf-inset)",
@@ -356,9 +455,28 @@ export function ReservationDialog({
                     .filter((table) => table.active)
                     .map((table) => {
                       const on = chosen.includes(table.id);
+
+                      /*
+                       * Vapaus tiedetään vain muokattaessa: uudella
+                       * varauksella ei ole vielä aikaa jota vasten
+                       * verrata. Ennen listan saapumista mikään ei ole
+                       * varattu — muuten lista välähtäisi punaisena.
+                       */
+                      const varattu =
+                        free !== null && !free.some((f) => f.id === table.id);
+                      const ahdas =
+                        free?.find((f) => f.id === table.id)?.fits === false;
+
                       return (
                         <label
                           key={table.id}
+                          title={
+                            varattu
+                              ? t.varaus.tableTaken
+                              : ahdas
+                                ? t.varaus.tableTight
+                                : undefined
+                          }
                           className="rf-press cursor-pointer px-3 py-1.5 text-[13px] font-medium"
                           style={{
                             background: on
@@ -366,8 +484,16 @@ export function ReservationDialog({
                               : "var(--rf-inset)",
                             color: on
                               ? "var(--rf-on-accent)"
-                              : "var(--rf-text)",
+                              : varattu
+                                ? "var(--rf-text-3)"
+                                : "var(--rf-text)",
+                            border: ahdas && !on
+                              ? "1px solid var(--rf-amber)"
+                              : "1px solid transparent",
                             borderRadius: "var(--rf-r-pill)",
+                            /* Varattu näkyy himmeänä muttei katoa: sen voi
+                               yhä valita, ja kanta kertoo jos se ei käy. */
+                            opacity: varattu && !on ? 0.45 : 1,
                           }}
                         >
                           <input
@@ -386,10 +512,20 @@ export function ReservationDialog({
                             className="sr-only"
                           />
                           {table.name}
+                          {varattu ? " ·" : ""}
                         </label>
                       );
                     })}
                 </div>
+
+                {free !== null ? (
+                  <p
+                    className="mt-1.5 text-[12px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    {t.varaus.tableLegend}
+                  </p>
+                ) : null}
               </fieldset>
             </div>
 
