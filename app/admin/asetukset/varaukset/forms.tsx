@@ -141,6 +141,45 @@ function DeleteButton({
 // Perusasetukset
 // ---------------------------------------------------------------------------
 
+/**
+ * Avattava osio harvoin tarvittaville.
+ *
+ * details eikä oma tilansa: selain hoitaa avaamisen, ja kentät ovat
+ * lomakkeen sisällä myös suljettuna — piilotettu kenttä lähtee
+ * tallennuksessa mukana eikä nollaudu. Oma tila olisi tähän kolme
+ * riviä koodia enemmän ja yksi tapa mennä rikki.
+ */
+function Advanced({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details className="mt-5">
+      <summary
+        className="cursor-pointer text-[13px] font-semibold"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        {label}
+      </summary>
+      <div className="mt-3.5">{children}</div>
+    </details>
+  );
+}
+
+/**
+ * Verkkovarauksen käyttöönotto.
+ *
+ * NÄKYVISSÄ VAIN SE MITÄ JOKU OIKEASTI VAIHTAA.
+ *
+ * Käyttöönotto ja korostusväri. Loput kahdeksan asetusta ovat
+ * Lisäasetusten takana, koska niiden oletukset ovat oikeat: puolen
+ * tunnin välein, puolitoista tuntia pöytä, tunti ennen viimeistään.
+ * Ravintola joka haluaa muuttaa niitä löytää ne; ravintola joka ei
+ * halua ei joudu ohittamaan niitä päästäkseen upotuskoodiin.
+ */
 export function SettingsForm({
   t,
   settings,
@@ -155,11 +194,6 @@ export function SettingsForm({
     <form action={action}>
       <input type="hidden" name="enabled" value={enabled ? "1" : "0"} />
 
-      {/*
-        Käyttöönotto on ensimmäisenä ja erillään muista.
-        Se on ainoa asetus jolla on seuraus ulospäin: sen jälkeen
-        asiakkaat voivat varata.
-      */}
       <label className="flex items-start gap-3">
         <input
           type="checkbox"
@@ -180,148 +214,158 @@ export function SettingsForm({
         </span>
       </label>
 
+      {/*
+        Korostusväri on näkyvissä, koska se on ainoa asetus jonka
+        asiakas näkee. Muut vaikuttavat siihen milloin varauksia
+        otetaan, ja niissä oletus on oikea.
+      */}
       <div className="mt-5 grid gap-3.5 sm:grid-cols-2">
-        <Field
-          label={t.varausAsetus.slotMinutes}
-          htmlFor="rs-slot"
-          hint={t.varausAsetus.slotHint}
-        >
+        <Field label={t.varausAsetus.themeColor} htmlFor="rs-color">
+          <input
+            id="rs-color"
+            name="themeColor"
+            type="color"
+            defaultValue={settings.themeColor}
+            className="h-11 w-full cursor-pointer"
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          />
+        </Field>
+
+        <Field label={t.varausAsetus.themeDark} htmlFor="rs-dark">
           <select
-            id="rs-slot"
-            name="slotMinutes"
-            defaultValue={String(settings.slotMinutes)}
+            id="rs-dark"
+            name="themeDark"
+            defaultValue={settings.themeDark ? "1" : "0"}
             className={INPUT}
             style={INPUT_STYLE}
           >
-            {[15, 20, 30, 60].map((n) => (
-              <option key={n} value={n}>
-                {fill(t.varausAsetus.minutes, { maara: String(n) })}
-              </option>
-            ))}
+            <option value="0">{t.varausAsetus.themeLightOption}</option>
+            <option value="1">{t.varausAsetus.themeDarkOption}</option>
           </select>
-        </Field>
-
-        <Field
-          label={t.varausAsetus.defaultDuration}
-          htmlFor="rs-duration"
-          hint={t.varausAsetus.defaultDurationHint}
-        >
-          <input
-            id="rs-duration"
-            name="defaultDurationMinutes"
-            type="number"
-            min={15}
-            max={600}
-            step={15}
-            defaultValue={settings.defaultDurationMinutes}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
-        </Field>
-
-        <Field
-          label={t.varausAsetus.turnaround}
-          htmlFor="rs-turn"
-          hint={t.varausAsetus.turnaroundHint}
-        >
-          <input
-            id="rs-turn"
-            name="turnaroundMinutes"
-            type="number"
-            min={0}
-            max={120}
-            step={5}
-            defaultValue={settings.turnaroundMinutes}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
-        </Field>
-
-        <Field
-          label={t.varausAsetus.leadMinutes}
-          htmlFor="rs-lead"
-          hint={t.varausAsetus.leadHint}
-        >
-          <input
-            id="rs-lead"
-            name="leadMinutes"
-            type="number"
-            min={0}
-            max={10080}
-            step={15}
-            defaultValue={settings.leadMinutes}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
-        </Field>
-
-        <Field label={t.varausAsetus.minParty} htmlFor="rs-min">
-          <input
-            id="rs-min"
-            name="minParty"
-            type="number"
-            min={1}
-            defaultValue={settings.minParty}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
-        </Field>
-
-        <Field
-          label={t.varausAsetus.maxParty}
-          htmlFor="rs-max"
-          hint={t.varausAsetus.maxPartyHint}
-        >
-          <input
-            id="rs-max"
-            name="maxParty"
-            type="number"
-            min={1}
-            defaultValue={settings.maxParty}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
-        </Field>
-
-        <Field
-          label={t.varausAsetus.maxDaysAhead}
-          htmlFor="rs-days"
-          hint={t.varausAsetus.maxDaysHint}
-        >
-          <input
-            id="rs-days"
-            name="maxDaysAhead"
-            type="number"
-            min={1}
-            max={365}
-            defaultValue={settings.maxDaysAhead}
-            className={INPUT}
-            style={INPUT_STYLE}
-          />
         </Field>
       </div>
 
-      {/* --- Ulkoasu --- */}
-      <fieldset className="mt-6">
-        <legend className="text-[13px] font-semibold">
-          {t.varausAsetus.themeTitle}
-        </legend>
-        <p className="mt-0.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {t.varausAsetus.themeHint}
-        </p>
+      <Advanced label={t.varausAsetus.advanced}>
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <Field
+            label={t.varausAsetus.slotMinutes}
+            htmlFor="rs-slot"
+            hint={t.varausAsetus.slotHint}
+          >
+            <select
+              id="rs-slot"
+              name="slotMinutes"
+              defaultValue={String(settings.slotMinutes)}
+              className={INPUT}
+              style={INPUT_STYLE}
+            >
+              {[15, 20, 30, 60].map((n) => (
+                <option key={n} value={n}>
+                  {fill(t.varausAsetus.minutes, { maara: String(n) })}
+                </option>
+              ))}
+            </select>
+          </Field>
 
-        <div className="mt-3 grid gap-3.5 sm:grid-cols-3">
-          <Field label={t.varausAsetus.themeColor} htmlFor="rs-color">
+          <Field
+            label={t.varausAsetus.defaultDuration}
+            htmlFor="rs-duration"
+            hint={t.varausAsetus.defaultDurationHint}
+          >
             <input
-              id="rs-color"
-              name="themeColor"
-              type="color"
-              defaultValue={settings.themeColor}
-              className="h-11 w-full cursor-pointer"
-              style={{
-                background: "var(--rf-inset)",
-                borderRadius: "var(--rf-r-control)",
-              }}
+              id="rs-duration"
+              name="defaultDurationMinutes"
+              type="number"
+              min={15}
+              max={600}
+              step={15}
+              defaultValue={settings.defaultDurationMinutes}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field
+            label={t.varausAsetus.turnaround}
+            htmlFor="rs-turn"
+            hint={t.varausAsetus.turnaroundHint}
+          >
+            <input
+              id="rs-turn"
+              name="turnaroundMinutes"
+              type="number"
+              min={0}
+              max={120}
+              step={5}
+              defaultValue={settings.turnaroundMinutes}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field
+            label={t.varausAsetus.leadMinutes}
+            htmlFor="rs-lead"
+            hint={t.varausAsetus.leadHint}
+          >
+            <input
+              id="rs-lead"
+              name="leadMinutes"
+              type="number"
+              min={0}
+              max={10080}
+              step={15}
+              defaultValue={settings.leadMinutes}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field label={t.varausAsetus.minParty} htmlFor="rs-min">
+            <input
+              id="rs-min"
+              name="minParty"
+              type="number"
+              min={1}
+              defaultValue={settings.minParty}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field
+            label={t.varausAsetus.maxParty}
+            htmlFor="rs-max"
+            hint={t.varausAsetus.maxPartyHint}
+          >
+            <input
+              id="rs-max"
+              name="maxParty"
+              type="number"
+              min={1}
+              defaultValue={settings.maxParty}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field
+            label={t.varausAsetus.maxDaysAhead}
+            htmlFor="rs-days"
+            hint={t.varausAsetus.maxDaysHint}
+          >
+            <input
+              id="rs-days"
+              name="maxDaysAhead"
+              type="number"
+              min={1}
+              max={365}
+              defaultValue={settings.maxDaysAhead}
+              className={INPUT}
+              style={INPUT_STYLE}
             />
           </Field>
 
@@ -337,21 +381,8 @@ export function SettingsForm({
               style={INPUT_STYLE}
             />
           </Field>
-
-          <Field label={t.varausAsetus.themeDark} htmlFor="rs-dark">
-            <select
-              id="rs-dark"
-              name="themeDark"
-              defaultValue={settings.themeDark ? "1" : "0"}
-              className={INPUT}
-              style={INPUT_STYLE}
-            >
-              <option value="0">{t.varausAsetus.themeLightOption}</option>
-              <option value="1">{t.varausAsetus.themeDarkOption}</option>
-            </select>
-          </Field>
         </div>
-      </fieldset>
+      </Advanced>
 
       <div className="mt-5">
         <SaveButton t={t} />

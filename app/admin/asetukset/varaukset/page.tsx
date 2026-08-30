@@ -26,15 +26,20 @@ export async function generateMetadata() {
 /**
  * Varausasetukset.
  *
- * Oma sivunsa eikä asetusten osasto, koska tässä on seitsemän eri
- * asiaa: käyttöönotto, aukiolo, kestot, poikkeukset, sali, yhdistelmät
- * ja upotuskoodi. Osastona se olisi asetussivun sisällä oleva toinen
- * asetussivu.
+ * JÄRJESTYS ON TYÖJÄRJESTYS.
  *
- * Järjestys on käyttöönoton järjestys eikä tärkeysjärjestys: pöydät
- * ennen aukioloja olisi loogisempi, mutta ravintoloitsija tulee tänne
- * kytkeäkseen varaukset päälle — ja se on ensimmäinen asia jonka hän
- * näkee.
+ * Pöydät, aukioloajat, käyttöönotto. Sivu alkoi aiemmin
+ * käyttöönotosta, mikä oli väärinpäin: varauksia ei voi ottaa ennen
+ * kuin on pöytiä joihin istuttaa ja aikoja jolloin ollaan auki.
+ * Ensimmäinen kortti on nyt se josta oikeasti aloitetaan.
+ *
+ * KOLME KORTTIA, EI KAHDEKSAA.
+ *
+ * Alueet, kestosäännöt, poikkeuspäivät ja pöytien yhdistelmät ovat
+ * avattavan osion takana. Ne eivät ole turhia — poikkeuspäivä
+ * tarvitaan juhannuksena ja yhdistelmä silloin kun kuuden hengen
+ * seurue soittaa — mutta ne eivät kuulu siihen mitä ravintola tekee
+ * ottaessaan varaukset käyttöön.
  */
 export default async function ReservationSettingsPage() {
   const locale = await resolveLocale();
@@ -75,14 +80,16 @@ export default async function ReservationSettingsPage() {
         </Link>
       </header>
 
+      {/* --- 1. Pöydät --- */}
       <Card>
         <CardHeader
-          title={t.varausAsetus.basicsTitle}
-          subtitle={t.varausAsetus.basicsHint}
+          title={t.varausAsetus.tableTitle}
+          subtitle={t.varausAsetus.tableSubtitle}
         />
-        <SettingsForm t={t} settings={setup.settings} />
+        <TableList t={t} tables={setup.tables} areas={setup.areas} />
       </Card>
 
+      {/* --- 2. Milloin otetaan varauksia --- */}
       <Card>
         <CardHeader
           title={t.varausAsetus.hoursTitle}
@@ -91,53 +98,82 @@ export default async function ReservationSettingsPage() {
         <HoursForm t={t} hours={setup.hours} weekdayNames={weekdayNames} />
       </Card>
 
-      <Card>
-        <CardHeader title={t.varausAsetus.durationTitle} />
-        <DurationList t={t} durations={setup.durations} />
-      </Card>
+      {/*
+        --- 3. Käyttöönotto ja verkkosivu ---
 
-      <Card>
-        <CardHeader title={t.varausAsetus.exceptionTitle} />
-        {/*
-          Päivämäärät muotoillaan tässä eikä komponentissa: funktiota
-          ei voi välittää palvelimelta clientille, ja selaimessa Intl
-          käyttäisi selaimen kieltä eikä käyttäjän valitsemaa.
-        */}
-        <ExceptionList
-          t={t}
-          exceptions={setup.exceptions.map((row) => ({
-            ...row,
-            label: formatDayIn(row.date, locale),
-          }))}
-        />
-      </Card>
-
-      <Card>
-        <CardHeader title={t.varausAsetus.areaTitle} />
-        <AreaList t={t} areas={setup.areas} />
-      </Card>
-
-      <Card>
-        <CardHeader title={t.varausAsetus.tableTitle} />
-        <TableList t={t} tables={setup.tables} areas={setup.areas} />
-      </Card>
-
-      <Card>
-        <CardHeader title={t.varausAsetus.combinationTitle} />
-        <CombinationList
-          t={t}
-          combinations={setup.combinations}
-          tables={setup.tables}
-        />
-      </Card>
-
+        Yksi kortti, ei kahta. Käyttöönotto ja upotuskoodi olivat
+        erillään, vaikka ne ovat sama työ: ravintola kytkee varaukset
+        päälle ja vie koodin sivulleen samalla istumalla. Kahtena
+        korttina toinen jää helposti huomaamatta.
+      */}
       <Card>
         <CardHeader
-          title={t.varausAsetus.embedTitle}
-          subtitle={t.varausAsetus.embedSubtitle}
+          title={t.varausAsetus.basicsTitle}
+          subtitle={t.varausAsetus.basicsHint}
         />
-        <EmbedPanel t={t} origin={origin} slug={restaurant.slug} />
+        <SettingsForm t={t} settings={setup.settings} />
+
+        <div
+          className="mt-6 pt-5"
+          style={{ borderTop: "1px solid var(--rf-line)" }}
+        >
+          <p className="text-[14px] font-bold">{t.varausAsetus.embedTitle}</p>
+          <p
+            className="mb-4 mt-0.5 text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {t.varausAsetus.embedSubtitle}
+          </p>
+          <EmbedPanel t={t} origin={origin} slug={restaurant.slug} />
+        </div>
       </Card>
+
+      {/* --- Harvoin tarvittavat --- */}
+      <details>
+        <summary
+          className="cursor-pointer px-1 py-2 text-[13px] font-semibold"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          {t.varausAsetus.rarely}
+        </summary>
+
+        <div className="mt-3 space-y-5">
+          <Card>
+            <CardHeader title={t.varausAsetus.exceptionTitle} />
+            {/*
+              Päivämäärät muotoillaan tässä eikä komponentissa: funktiota
+              ei voi välittää palvelimelta clientille, ja selaimessa Intl
+              käyttäisi selaimen kieltä eikä käyttäjän valitsemaa.
+            */}
+            <ExceptionList
+              t={t}
+              exceptions={setup.exceptions.map((row) => ({
+                ...row,
+                label: formatDayIn(row.date, locale),
+              }))}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader title={t.varausAsetus.combinationTitle} />
+            <CombinationList
+              t={t}
+              combinations={setup.combinations}
+              tables={setup.tables}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader title={t.varausAsetus.durationTitle} />
+            <DurationList t={t} durations={setup.durations} />
+          </Card>
+
+          <Card>
+            <CardHeader title={t.varausAsetus.areaTitle} />
+            <AreaList t={t} areas={setup.areas} />
+          </Card>
+        </div>
+      </details>
     </div>
   );
 }

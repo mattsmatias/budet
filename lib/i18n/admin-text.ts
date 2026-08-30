@@ -128,6 +128,9 @@ const fi = {
     errDuplicate: "Tämän niminen on jo olemassa.",
     errCombinationSize: "Yhdistelmässä on oltava vähintään kaksi pöytää.",
     copyLink: "Kopioi linkki",
+    advanced: "Lisäasetukset",
+    rarely: "Harvoin tarvittavat",
+    tableSubtitle: "Aloita tästä: ilman pöytiä varauksia ei voi ottaa.",
   },
   varaus: {
     todayHeading: "Tänään",
@@ -197,6 +200,7 @@ const fi = {
     errParty: "Seurueen koko ei käy.",
     errTable: "Pöytä ei kuulu tähän ravintolaan.",
     errName: "Kirjoita nimi.",
+    nextUp: "Seuraavaksi",
   },
   varausJulkinen: {
     bookTitle: "Varaa pöytä",
@@ -2389,6 +2393,9 @@ const en: AdminText = {
     errDuplicate: "One with that name already exists.",
     errCombinationSize: "A combination needs at least two tables.",
     copyLink: "Copy the link",
+    advanced: "Advanced settings",
+    rarely: "Rarely needed",
+    tableSubtitle: "Start here: without tables there is nothing to book.",
   },
   varaus: {
     todayHeading: "Today",
@@ -2458,6 +2465,7 @@ const en: AdminText = {
     errParty: "That party size does not work.",
     errTable: "That table does not belong to this restaurant.",
     errName: "Write a name.",
+    nextUp: "Next up",
   },
   varausJulkinen: {
     bookTitle: "Book a table",
@@ -4653,6 +4661,9 @@ const sv: AdminText = {
     errDuplicate: "Det finns redan ett med det namnet.",
     errCombinationSize: "En kombination behöver minst två bord.",
     copyLink: "Kopiera länken",
+    advanced: "Fler inställningar",
+    rarely: "Sällan använda",
+    tableSubtitle: "Börja här: utan bord går det inte att boka.",
   },
   varaus: {
     todayHeading: "I dag",
@@ -4722,6 +4733,7 @@ const sv: AdminText = {
     errParty: "Sällskapets storlek går inte.",
     errTable: "Bordet hör inte till den här restaurangen.",
     errName: "Skriv ett namn.",
+    nextUp: "Näst på tur",
   },
   varausJulkinen: {
     bookTitle: "Boka bord",
@@ -6913,6 +6925,9 @@ const da: AdminText = {
     errDuplicate: "Der findes allerede et med det navn.",
     errCombinationSize: "En kombination skal have mindst to borde.",
     copyLink: "Kopier linket",
+    advanced: "Flere indstillinger",
+    rarely: "Sjældent brugte",
+    tableSubtitle: "Start her: uden borde kan der ikke bestilles.",
   },
   varaus: {
     todayHeading: "I dag",
@@ -6982,6 +6997,7 @@ const da: AdminText = {
     errParty: "Selskabets størrelse går ikke.",
     errTable: "Bordet hører ikke til denne restaurant.",
     errName: "Skriv et navn.",
+    nextUp: "Næste",
   },
   varausJulkinen: {
     bookTitle: "Book et bord",
@@ -9173,6 +9189,9 @@ const tr: AdminText = {
     errDuplicate: "Bu adda bir tane zaten var.",
     errCombinationSize: "Bir birleşimde en az iki masa olmalı.",
     copyLink: "Bağlantıyı kopyala",
+    advanced: "Gelişmiş ayarlar",
+    rarely: "Nadiren gerekenler",
+    tableSubtitle: "Buradan başla: masa olmadan rezervasyon alınamaz.",
   },
   varaus: {
     todayHeading: "Bugün",
@@ -9242,6 +9261,7 @@ const tr: AdminText = {
     errParty: "Bu grup büyüklüğü uygun değil.",
     errTable: "Bu masa bu restorana ait değil.",
     errName: "Bir ad yaz.",
+    nextUp: "Sırada",
   },
   varausJulkinen: {
     bookTitle: "Masa ayırt",
@@ -11425,6 +11445,9 @@ const et: AdminText = {
     errDuplicate: "Selle nimega on juba olemas.",
     errCombinationSize: "Kombinatsioonis peab olema vähemalt kaks lauda.",
     copyLink: "Kopeeri link",
+    advanced: "Lisaseaded",
+    rarely: "Harva vajalikud",
+    tableSubtitle: "Alusta siit: ilma laudadeta ei saa broneerida.",
   },
   varaus: {
     todayHeading: "Täna",
@@ -11494,6 +11517,7 @@ const et: AdminText = {
     errParty: "See seltskonna suurus ei sobi.",
     errTable: "See laud ei kuulu sellele restoranile.",
     errName: "Kirjuta nimi.",
+    nextUp: "Järgmisena",
   },
   varausJulkinen: {
     bookTitle: "Broneeri laud",

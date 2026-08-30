@@ -77,9 +77,33 @@ export default async function ReservationsPage({
    */
   const slots = canManage ? await loadAdminSlots(restaurant.id, date, 2) : [];
 
+  const now = new Date();
   const ordered = sortForService(day.reservations);
   const summary = summarise(day.reservations);
-  const states = tableStates(day, new Date());
+  const states = tableStates(day, now);
+
+  /*
+   * Seuraavaksi vuorossa oleva seurue.
+   *
+   * Vuoron aikana tätä sivua katsotaan yhden kysymyksen takia: kuka
+   * tulee seuraavaksi. Vastaus on listassa, mutta se pitää etsiä
+   * riveistä — merkintä kertoo sen ilman lukemista.
+   *
+   * Saapunut seurue ei ole "seuraavaksi": se on jo täällä.
+   */
+  const nextUp = ordered.find(
+    (r) =>
+      (r.status === "confirmed" || r.status === "pending") &&
+      Date.parse(r.endsAt) > now.getTime(),
+  );
+
+  /* Vain ne luvut jotka eivät ole nollia. Nolla ei kerro mitään. */
+  const stats = [
+    { label: t.varaus.statArrived, value: summary.arrived },
+    { label: t.varaus.statWalkIns, value: summary.walkIns },
+    { label: t.varaus.statCancelled, value: summary.cancelled },
+    { label: t.varaus.statNoShow, value: summary.noShow },
+  ].filter((row) => row.value > 0);
 
   const enabled = day.settings?.enabled ?? false;
 
@@ -151,14 +175,41 @@ export default async function ReservationsPage({
       ) : null}
 
       {/* --- Yhteenveto --- */}
-      {summary.active > 0 || summary.cancelled > 0 || summary.noShow > 0 ? (
+      {stats.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          <Stat label={t.varaus.statArrived} value={summary.arrived} />
-          <Stat label={t.varaus.statWalkIns} value={summary.walkIns} />
-          <Stat label={t.varaus.statCancelled} value={summary.cancelled} />
-          <Stat label={t.varaus.statNoShow} value={summary.noShow} />
+          {stats.map((row) => (
+            <Stat key={row.label} label={row.label} value={row.value} />
+          ))}
         </div>
       ) : null}
+
+      {/* --- Varaukset --- */}
+      {ordered.length === 0 ? (
+        <EmptyState title={t.varaus.emptyTitle} description={t.varaus.emptyBody} />
+      ) : (
+        <Card padded={false}>
+          <ul>
+            {ordered.map((reservation, index) => (
+              <li
+                key={reservation.id}
+                style={{
+                  borderTop:
+                    index === 0 ? undefined : "1px solid var(--rf-line)",
+                }}
+              >
+                <ReservationRow
+                  t={t}
+                  day={day}
+                  date={date}
+                  reservation={reservation}
+                  canManage={canManage}
+                  next={reservation.id === nextUp?.id}
+                />
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {/* --- Pöytäkartta --- */}
       {day.tables.length > 0 ? (
@@ -184,33 +235,6 @@ export default async function ReservationsPage({
           }
         />
       ) : null}
-
-      {/* --- Varaukset --- */}
-      {ordered.length === 0 ? (
-        <EmptyState title={t.varaus.emptyTitle} description={t.varaus.emptyBody} />
-      ) : (
-        <Card padded={false}>
-          <ul>
-            {ordered.map((reservation, index) => (
-              <li
-                key={reservation.id}
-                style={{
-                  borderTop:
-                    index === 0 ? undefined : "1px solid var(--rf-line)",
-                }}
-              >
-                <ReservationRow
-                  t={t}
-                  day={day}
-                  date={date}
-                  reservation={reservation}
-                  canManage={canManage}
-                />
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
     </div>
   );
 }
@@ -225,12 +249,15 @@ function ReservationRow({
   date,
   reservation,
   canManage,
+  next,
 }: {
   t: AdminText;
   day: ReservationDay;
   date: string;
   reservation: Reservation;
   canManage: boolean;
+  /** Seuraavaksi vuorossa oleva seurue. Yksi rivi päivässä. */
+  next?: boolean;
 }) {
   const tables = reservation.tableIds
     .map((id) => day.tables.find((table) => table.id === id)?.name)
@@ -243,7 +270,10 @@ function ReservationRow({
   return (
     <div
       className="flex flex-wrap items-start gap-x-4 gap-y-2 px-[18px] py-3.5"
-      style={{ opacity: spent ? 0.55 : 1 }}
+      style={{
+        opacity: spent ? 0.55 : 1,
+        background: next ? "var(--rf-accent-bg)" : undefined,
+      }}
     >
       <div className="w-[52px] shrink-0">
         <p className="rf-num text-[15px] font-bold tabular-nums">
@@ -257,6 +287,7 @@ function ReservationRow({
       <div className="min-w-[10rem] flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[14px] font-semibold">{reservation.guestName}</p>
+          {next ? <Pill tone="info">{t.varaus.nextUp}</Pill> : null}
           <Pill tone={statusTone(reservation.status)} dot>
             {statusLabel(reservation.status, t)}
           </Pill>
@@ -383,10 +414,16 @@ function TableMap({
         </div>
       ))}
 
-      {/* Selite: väri ei kerro mitään ilman sitä, eikä väri yksin riitä. */}
+      {/*
+        Selite vain niistä tiloista jotka kartalla ovat.
+
+        Väri ei kerro mitään ilman selitettä, mutta selite tilasta jota
+        ei näy on yhtä lailla luettavaa jota ei tarvita. Kuuden rivin
+        selite yhden pöydän kartan alla oli enemmän kuin kartta.
+      */}
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 pt-1">
-        {(
-          ["free", "reserved", "late", "seated", "cleaning", "disabled"] as const
+        {LEGEND_ORDER.filter((state) =>
+          states.some((s) => s.state === state),
         ).map((state) => (
           <span
             key={state}
@@ -405,6 +442,16 @@ function TableMap({
     </div>
   );
 }
+
+/* Selitteen järjestys: vapaasta käytössä olevaan, lopuksi poissa. */
+const LEGEND_ORDER = [
+  "free",
+  "reserved",
+  "late",
+  "seated",
+  "cleaning",
+  "disabled",
+] as const;
 
 const STATE_COLORS: Record<
   TableState,
