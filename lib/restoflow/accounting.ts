@@ -12,6 +12,9 @@
  * osaisi kertoa kumpi on oikeassa.
  */
 
+import { formatMonthIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+
 // ---------------------------------------------------------------------------
 // Tyypit
 // ---------------------------------------------------------------------------
@@ -205,25 +208,10 @@ export function monthStart(month: string): string {
   return `${month}-01`;
 }
 
-/** "2026-08" → "Elokuu 2026". */
-const KUUKAUDET = [
-  "Tammikuu",
-  "Helmikuu",
-  "Maaliskuu",
-  "Huhtikuu",
-  "Toukokuu",
-  "Kesäkuu",
-  "Heinäkuu",
-  "Elokuu",
-  "Syyskuu",
-  "Lokakuu",
-  "Marraskuu",
-  "Joulukuu",
-];
-
-export function monthLabel(month: string): string {
-  const [year, m] = month.split("-");
+/** "2026-08" → "Elokuu 2026" käyttäjän kielellä. */
+export function monthLabel(month: string, locale: AppLocale): string {
+  const [, m] = month.split("-");
   const index = Number(m) - 1;
   if (Number.isNaN(index) || index < 0 || index > 11) return month;
-  return `${KUUKAUDET[index]} ${year}`;
+  return formatMonthIn(month, locale);
 }

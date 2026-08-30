@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { labels } from "@/lib/i18n/labels";
@@ -188,6 +189,7 @@ export default async function AccountingPage({
 
       {tab === "yhteenveto" ? (
         <Yhteenveto
+          locale={locale}
           restaurantId={restaurant.id}
           month={month}
           state={state}
@@ -221,10 +223,11 @@ export default async function AccountingPage({
         />
       ) : null}
 
-      {tab === "alv" ? <Alv t={t} vat={state.vat} /> : null}
+      {tab === "alv" ? <Alv locale={locale} t={t} vat={state.vat} /> : null}
 
       {tab === "veroasiat" ? (
         <Veroasiat
+          locale={locale}
           t={t}
           guides={await fetchTaxGuides()}
           vat={state.vat}
@@ -234,6 +237,7 @@ export default async function AccountingPage({
 
       {tab === "raportit" ? (
         <Raportit
+          locale={locale}
           t={t}
           income={await fetchIncomeStatement(restaurant.id, month, true)}
           balance={await fetchBalanceSheet(restaurant.id, month, true)}
@@ -247,12 +251,14 @@ export default async function AccountingPage({
 // ---------------------------------------------------------------------------
 
 async function Yhteenveto({
+  locale,
   restaurantId,
   month,
   state,
   saaKirjata,
   onOmistaja,
 }: {
+  locale: AppLocale;
   restaurantId: string;
   month: string;
   state: MonthState;
@@ -511,8 +517,9 @@ async function Yhteenveto({
               className="text-[13px] leading-relaxed"
               style={{ color: "var(--rf-text-2)" }}
             >
-              {monthLabel(month)} on suljettu. Tapahtumat säilyvät sellaisinaan;
-              korjaus tehdään uudella tositteella joka viittaa alkuperäiseen.
+              {monthLabel(month, locale)} on suljettu. Tapahtumat säilyvät
+              sellaisinaan; korjaus tehdään uudella tositteella joka viittaa
+              alkuperäiseen.
             </p>
           </div>
         </Card>

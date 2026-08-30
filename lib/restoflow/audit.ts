@@ -1,3 +1,4 @@
+import type { AdminText } from "@/lib/i18n/admin-text";
 /**
  * Toimintaloki.
  *
@@ -122,40 +123,27 @@ export interface FieldChange {
   after: string;
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  hourly_rate_cents: "Tuntipalkka",
-  monthly_salary_cents: "Kuukausipalkka",
-  role: "Rooli",
-  position: "Tehtävä",
-  active: "Käytössä",
-  vat_rate: "ALV-kanta",
-  name: "Nimi",
-  amount_cents: "Summa",
-  total_cents: "Summa",
-  vat_cents: "ALV",
-  category: "Kategoria",
-  date: "Päivä",
-  start: "Alkaa",
-  end: "Päättyy",
-  break_minutes: "Tauko",
-  due_on: "Eräpäivä",
-  priority: "Prioriteetti",
-  assigned_to: "Vastuuhenkilö",
-  user_id: "Tekijä",
-  in: "Sisään",
-  out: "Ulos",
-  reason: "Syy",
-};
+/*
+ * Lokin kenttien nakyvat nimet.
+ *
+ * Avain on kannan sarakkeen nimi eika kaanny; vain nakyva nimi
+ * kaannetaan. Tuntematon kentta naytetaan avaimena, jolloin uusi
+ * sarake nakyy lokissa heti eika vasta kun se on kaannetty.
+ */
+function kentanNimi(key: string, t: AdminText): string {
+  const nimet = t.lokiKentta as unknown as Record<string, string>;
+  return nimet[key] ?? key;
+}
 
-export function fieldChanges(event: AuditEvent): FieldChange[] {
+export function fieldChanges(event: AuditEvent, t: AdminText): FieldChange[] {
   const before = event.beforeData ?? {};
   const after = event.afterData ?? {};
   const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
 
   return keys.map((key) => ({
-    field: FIELD_LABELS[key] ?? key,
-    before: renderValue(key, before[key]),
-    after: renderValue(key, after[key]),
+    field: kentanNimi(key, t),
+    before: renderValue(key, before[key], t),
+    after: renderValue(key, after[key], t),
   }));
 }
 
@@ -166,7 +154,7 @@ export function fieldChanges(event: AuditEvent): FieldChange[] {
  * yksiköillä kuin näkymät, muuten lukija joutuu muuntamaan päässään
  * juuri siinä kohtaa jossa hän tarkistaa onko luku oikein.
  */
-function renderValue(key: string, value: unknown): string {
+function renderValue(key: string, value: unknown, t: AdminText): string {
   if (value === null || value === undefined) return "—";
 
   if (typeof value === "number" && key.endsWith("_cents")) {
@@ -180,7 +168,8 @@ function renderValue(key: string, value: unknown): string {
       : String(value);
   }
 
-  if (typeof value === "boolean") return value ? "kyllä" : "ei";
+  if (typeof value === "boolean")
+    return value ? t.lokiKentta.yes : t.lokiKentta.no;
 
   return String(value);
 }

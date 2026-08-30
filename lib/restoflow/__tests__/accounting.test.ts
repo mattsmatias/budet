@@ -226,14 +226,14 @@ describe("kuukauden esitys", () => {
   });
 
   it("nimeää kuukauden suomeksi", () => {
-    expect(monthLabel("2026-08")).toBe("Elokuu 2026");
-    expect(monthLabel("2026-01")).toBe("Tammikuu 2026");
-    expect(monthLabel("2026-12")).toBe("Joulukuu 2026");
+    expect(monthLabel("2026-08", "fi")).toBe("Elokuu 2026");
+    expect(monthLabel("2026-01", "fi")).toBe("Tammikuu 2026");
+    expect(monthLabel("2026-12", "fi")).toBe("Joulukuu 2026");
   });
 
   it("palauttaa syötteen sellaisenaan jos se ei ole kuukausi", () => {
-    expect(monthLabel("roska")).toBe("roska");
-    expect(monthLabel("2026-13")).toBe("2026-13");
+    expect(monthLabel("roska", "fi")).toBe("roska");
+    expect(monthLabel("2026-13", "fi")).toBe("2026-13");
   });
 
   it("avoin kuukausi on neutraali eikä huomautus", () => {

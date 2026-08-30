@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { Labels } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -484,7 +485,15 @@ export function Tilikartta({
  * täsmäävät, sen näkee yhdellä silmäyksellä; jos eivät, erotus on
  * luettavissa eikä piilotettu.
  */
-export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
+export function Alv({
+  locale,
+  vat,
+  t,
+}: {
+  locale: AppLocale;
+  vat: VatSummary;
+  t: AdminText;
+}) {
   const myyntiEro = vat.salesVatSource - vat.salesVatLedger;
   const ostoEro = vat.purchaseVatSource - vat.purchaseVatLedger;
 
@@ -493,7 +502,7 @@ export function Alv({ vat, t }: { vat: VatSummary; t: AdminText }) {
       <Card>
         <CardHeader
           title={t.kirjanpito.periodSummary}
-          subtitle={monthLabel(vat.month)}
+          subtitle={monthLabel(vat.month, locale)}
         />
 
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -702,11 +711,13 @@ function Luku({
 // ---------------------------------------------------------------------------
 
 export function Raportit({
+  locale,
   t,
   income,
   balance,
   month,
 }: {
+  locale: AppLocale;
   t: AdminText;
   income: IncomeStatement | null;
   balance: BalanceSheet | null;
@@ -760,7 +771,7 @@ export function Raportit({
           <div className="px-5 pt-4">
             <CardHeader
               title={t.kirjanpito.incomeStatement}
-              subtitle={`${monthLabel(month)}${
+              subtitle={`${monthLabel(month, locale)}${
                 income.includesProposed
                   ? t.kirjanpito.withProposed
                   : t.kirjanpito.onlyBooked
@@ -966,11 +977,13 @@ function Lataus({ href, label }: { href: string; label: string }) {
  * muuttuu, eikä sen muuttaminen saa vaatia julkaisua.
  */
 export function Veroasiat({
+  locale,
   t,
   guides,
   vat,
   month,
 }: {
+  locale: AppLocale;
   t: AdminText;
   guides: TaxGuide[];
   vat: VatSummary;
@@ -996,7 +1009,7 @@ export function Veroasiat({
         <CardHeader
           title={t.kirjanpito.whatComputed}
           subtitle={fill(t.kirjanpito.figuresFromBooks, {
-            kuukausi: monthLabel(month),
+            kuukausi: monthLabel(month, locale),
           })}
         />
 

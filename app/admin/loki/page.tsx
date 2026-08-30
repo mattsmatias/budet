@@ -337,7 +337,7 @@ function Tapahtuma({
   timezone: string;
 }) {
   const tone = actionTone(event.action);
-  const changes = fieldChanges(event);
+  const changes = fieldChanges(event, t);
 
   return (
     <details className="group">
