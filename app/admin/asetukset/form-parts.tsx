@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
 import type { AdminState } from "../actions";
 
@@ -115,21 +116,23 @@ export function Toggle({
  * osumassa uudestaan.
  */
 export function SaveRow({
+  t,
   state,
-  label = "Tallenna",
+  label = t.asetus.save,
 }: {
+  t: AdminText;
   state: AdminState;
   label?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 pt-1">
-      <Submit label={label} />
+      <Submit t={t} label={label} />
       <Feedback state={state} />
     </div>
   );
 }
 
-export function Submit({ label }: { label: string }) {
+export function Submit({ t, label }: { t: AdminText; label: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -144,7 +147,7 @@ export function Submit({ label }: { label: string }) {
         minHeight: 36,
       }}
     >
-      {pending ? "Tallennetaan…" : label}
+      {pending ? t.asetus.savingEllipsis : label}
     </button>
   );
 }

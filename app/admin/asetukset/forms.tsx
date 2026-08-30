@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import {
   updateRestaurant,
   updateShiftRules,
@@ -30,9 +31,11 @@ const TIMEZONES = [
 ] as const;
 
 export function RestaurantForm({
+  t,
   name,
   timezone,
 }: {
+  t: AdminText;
   name: string;
   timezone: string;
 }) {
@@ -40,7 +43,7 @@ export function RestaurantForm({
 
   return (
     <form action={action} className="space-y-4">
-      <Field label="Ravintolan nimi" htmlFor="rf-name">
+      <Field label={t.asetus.restaurantName} htmlFor="rf-name">
         <input
           id="rf-name"
           name="name"
@@ -53,9 +56,9 @@ export function RestaurantForm({
       </Field>
 
       <Field
-        label="Aikavyöhyke"
+        label={t.asetus.timezone}
         htmlFor="rf-tz"
-        hint="Työaika, vuorojen päivät ja kuukausirajat lasketaan tässä ajassa. Palvelin käy UTC:ssä, joten väärä vyöhyke siirtäisi yövuorot väärälle päivälle."
+        hint={t.asetus.timezoneHint}
       >
         <select
           id="rf-tz"
@@ -75,7 +78,7 @@ export function RestaurantForm({
         </select>
       </Field>
 
-      <SaveRow state={state} />
+      <SaveRow t={t} state={state} />
     </form>
   );
 }
@@ -90,9 +93,11 @@ export function RestaurantForm({
  * lomakkeessa, toista ei voinut muuttaa lainkaan.
  */
 export function ShiftRulesForm({
+  t,
   clockInEarlyMinutes,
   openShiftClaiming,
 }: {
+  t: AdminText;
   clockInEarlyMinutes: number;
   openShiftClaiming: boolean;
 }) {
@@ -101,9 +106,9 @@ export function ShiftRulesForm({
   return (
     <form action={action} className="space-y-4">
       <Field
-        label="Leimausikkuna ennen vuoroa"
+        label={t.asetus.clockWindow}
         htmlFor="rf-early"
-        hint="Kuinka monta minuuttia ennen vuoron alkua sisään saa leimata. Täsmälleen alkuhetkellä painaminen olisi kohtuuton vaatimus — töihin tullaan hetkeä ennen. Nolla tarkoittaa ettei etukäteen voi leimata lainkaan."
+        hint={t.asetus.clockWindowHint}
       >
         <div className="flex items-center gap-3">
           <input
@@ -127,11 +132,11 @@ export function ShiftRulesForm({
       <Toggle
         name="openShiftClaiming"
         defaultChecked={openShiftClaiming}
-        label="Työntekijä voi ottaa avoimen vuoron"
-        hint="Työntekijä näkee oman asemansa avoimet vuorot ja voi ottaa niistä yhden itselleen. Päällekkäiset vuorot estyvät. Ilman tätä avoimet vuorot näkyvät vain sinulle."
+        label={t.asetus.openShiftPickup}
+        hint={t.asetus.openShiftPickupHint}
       />
 
-      <SaveRow state={state} />
+      <SaveRow t={t} state={state} />
     </form>
   );
 }

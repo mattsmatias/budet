@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteCategory, saveCategory, type AdminState } from "../actions";
@@ -22,9 +23,11 @@ const initial: AdminState = {};
  * budjetoivansa "Viinit"-riviä erikseen.
  */
 export function CategoryManager({
+  t,
   categories,
   nimet,
 }: {
+  t: AdminText;
   categories: CustomCategory[];
   nimet: Labels;
 }) {
@@ -37,14 +40,13 @@ export function CategoryManager({
           className="text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Omia kategorioita ei ole. Ilman niitä kuitit näkyvät yhdeksällä
-          perusluokalla.
+          {t.asetus.noOwnCategories}
         </p>
       ) : (
         <ul className="space-y-2">
           {categories.map((category) => (
             <li key={category.id}>
-              <CategoryRow nimet={nimet} category={category} />
+              <CategoryRow t={t} nimet={nimet} category={category} />
             </li>
           ))}
         </ul>
@@ -58,8 +60,10 @@ export function CategoryManager({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          <p className="mb-2 text-[13px] font-semibold">Uusi kategoria</p>
-          <CategoryForm nimet={nimet} onDone={() => setAdding(false)} />
+          <p className="mb-2 text-[13px] font-semibold">
+            {t.asetus.newCategory}
+          </p>
+          <CategoryForm t={t} nimet={nimet} onDone={() => setAdding(false)} />
         </div>
       ) : (
         <button
@@ -73,7 +77,7 @@ export function CategoryManager({
           }}
         >
           <RfIcon name="plus" size={16} />
-          Lisää kategoria
+          {t.asetus.addCategory}
         </button>
       )}
 
@@ -81,10 +85,7 @@ export function CategoryManager({
         className="text-[12px] leading-relaxed"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Oma kategoria on tarkennus perusluokkaan, ei sen korvaaja. ALV-tarkistus
-        ja budjetit toimivat perusluokalla, koska keksitylle luokalle ei ole
-        odotettua ALV-kantaa. Kategorian poisto ei poista kuitteja — ne palaavat
-        perusluokkaan.
+        {t.asetus.ownCategoryHint}
       </p>
     </div>
   );
@@ -93,9 +94,11 @@ export function CategoryManager({
 // ---------------------------------------------------------------------------
 
 function CategoryRow({
+  t,
   nimet,
   category,
 }: {
+  t: AdminText;
   nimet: Labels;
   category: CustomCategory;
 }) {
@@ -112,6 +115,7 @@ function CategoryRow({
         }}
       >
         <CategoryForm
+          t={t}
           nimet={nimet}
           category={category}
           onDone={() => setEditing(false)}
@@ -133,7 +137,7 @@ function CategoryRow({
                   borderRadius: "var(--rf-r-control)",
                 }}
               >
-                Poista kategoria
+                {t.asetus.removeCategory}
               </button>
               <button
                 type="button"
@@ -141,7 +145,7 @@ function CategoryRow({
                 className="text-[13px]"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                Peruuta
+                {t.asetus.cancel}
               </button>
             </form>
           ) : (
@@ -151,7 +155,7 @@ function CategoryRow({
               className="text-[13px] underline underline-offset-4"
               style={{ color: "var(--rf-red-text)" }}
             >
-              Poista kategoria
+              {t.asetus.removeCategory}
             </button>
           )}
         </div>
@@ -185,7 +189,7 @@ function CategoryRow({
       </span>
 
       <span className="flex shrink-0 items-center gap-2">
-        {category.active ? null : <Pill>pois käytöstä</Pill>}
+        {category.active ? null : <Pill>{t.asetus.disabled}</Pill>}
         <button
           type="button"
           onClick={() => setEditing(true)}
@@ -196,7 +200,7 @@ function CategoryRow({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Muokkaa
+          {t.asetus.edit}
         </button>
       </span>
     </div>
@@ -204,10 +208,12 @@ function CategoryRow({
 }
 
 function CategoryForm({
+  t,
   nimet,
   category,
   onDone,
 }: {
+  t: AdminText;
   nimet: Labels;
   category?: CustomCategory;
   onDone: () => void;
@@ -241,7 +247,7 @@ function CategoryForm({
           htmlFor={`c-name-${category?.id ?? "new"}`}
           className="block text-[13px] font-medium"
         >
-          Nimi
+          {t.asetus.nameLabel}
         </label>
         <input
           id={`c-name-${category?.id ?? "new"}`}
@@ -263,7 +269,7 @@ function CategoryForm({
           htmlFor={`c-base-${category?.id ?? "new"}`}
           className="block text-[13px] font-medium"
         >
-          Kuuluu perusluokkaan
+          {t.asetus.belongsToBase}
         </label>
         <select
           id={`c-base-${category?.id ?? "new"}`}
@@ -287,7 +293,7 @@ function CategoryForm({
           className="mt-1 text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Perusluokka ratkaisee ALV-odotuksen ja budjetin.
+          {t.asetus.baseDecides}
         </p>
       </div>
 
@@ -298,7 +304,7 @@ function CategoryForm({
           defaultChecked={category?.active ?? true}
           className="h-4 w-4"
         />
-        Käytössä uusissa kuiteissa
+        {t.asetus.inUseNewReceipts}
       </label>
 
       {state.error ? (
@@ -316,7 +322,7 @@ function CategoryForm({
       ) : null}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <Save />
+        <Save t={t} />
         <button
           type="button"
           onClick={onDone}
@@ -327,14 +333,14 @@ function CategoryForm({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Peruuta
+          {t.asetus.cancel}
         </button>
       </div>
     </form>
   );
 }
 
-function Save() {
+function Save({ t }: { t: AdminText }) {
   const { pending } = useFormStatus();
 
   return (
@@ -348,7 +354,7 @@ function Save() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : "Tallenna"}
+      {pending ? t.asetus.savingEllipsis : t.asetus.save}
     </button>
   );
 }

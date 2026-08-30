@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -15,7 +16,10 @@ import { fetchPosMappings, fetchSalesGroups } from "@/lib/restoflow/queries";
 import { SectionNav } from "./section-nav";
 import { sectionFor } from "./sections";
 
-export const metadata = { title: "Asetukset" };
+export async function generateMetadata() {
+  const t = adminText(await resolveLocale());
+  return { title: t.asetus.settingsTitle };
+}
 
 /**
  * Asetukset osastoittain.
@@ -31,6 +35,7 @@ export default async function SettingsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
   const params = await searchParams;
@@ -38,7 +43,7 @@ export default async function SettingsPage({
     await adminContext("/admin/asetukset");
 
   const canEdit = can(role, "settings.edit");
-  const section = sectionFor(params.osio);
+  const section = sectionFor(params.osio, t);
 
   /*
    * Verotuksen aineisto haetaan vain kun sitä katsotaan.
@@ -62,25 +67,21 @@ export default async function SettingsPage({
    * näkyy jotain mitä oikeasti saa muuttaa.
    */
   const shown =
-    section.ownerOnly && !canEdit ? sectionFor("profiili") : section;
+    section.ownerOnly && !canEdit ? sectionFor("profiili", t) : section;
 
   return (
     <div className="rf-enter space-y-4">
-      {canEdit ? null : (
-        <ScopeNotice>
-          Näet asetukset mutta et voi muuttaa ravintolan asetuksia — ne ovat
-          omistajan oikeus. Oman tunnuksesi asetukset voit muuttaa.
-        </ScopeNotice>
-      )}
+      {canEdit ? null : <ScopeNotice>{t.asetus.readOnlyNotice}</ScopeNotice>}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,244px)_minmax(0,1fr)] lg:gap-6">
-        <SectionNav current={shown.id} canEdit={canEdit} />
+        <SectionNav t={t} current={shown.id} canEdit={canEdit} />
 
         <div className="min-w-0">
           <Panel title={shown.label} summary={shown.summary}>
             {shown.id === "ravintola" ? (
               <>
                 <RestaurantForm
+                  t={t}
                   name={restaurant.name}
                   timezone={restaurant.timezone}
                 />
@@ -95,44 +96,45 @@ export default async function SettingsPage({
                 */}
                 <Facts
                   rows={[
-                    { label: "Valuutta", value: restaurant.currency },
+                    { label: t.asetus.currency, value: restaurant.currency },
                     {
-                      label: "Lounaslistan osoite",
+                      label: t.asetus.lunchPageAddress,
                       value: `/lounas/${restaurant.slug}`,
                       href: `/lounas/${restaurant.slug}`,
                     },
-                    { label: "Käyttäjiä", value: String(users.length) },
+                    { label: t.asetus.usersWord, value: String(users.length) },
                   ]}
-                  note="Valuutta on kiinteä ja lounaslistan osoite muodostuu ravintolan nimestä. Käyttäjät lisätään Työntekijät-sivulta."
+                  note={t.asetus.fixedSettingsHint}
                 />
               </>
             ) : null}
 
             {shown.id === "profiili" ? (
               <>
-                <NameForm fullName={user.fullName ?? ""} />
+                <NameForm t={t} fullName={user.fullName ?? ""} />
 
                 <Divider />
 
-                <h3 className="text-[13.5px] font-bold">Salasana</h3>
+                <h3 className="text-[13.5px] font-bold">{t.asetus.password}</h3>
                 <div className="mt-3">
-                  <PasswordForm />
+                  <PasswordForm t={t} />
                 </div>
 
                 <Divider />
 
                 <Facts
                   rows={[
-                    { label: "Sähköposti", value: user.email ?? "—" },
-                    { label: "Rooli", value: nimet.roles[role] },
+                    { label: t.asetus.email, value: user.email ?? "—" },
+                    { label: t.asetus.role, value: nimet.roles[role] },
                   ]}
-                  note="Sähköposti on kirjautumistunnuksesi eikä sitä voi vaihtaa täältä. Roolin asettaa ravintolan omistaja."
+                  note={t.asetus.emailFixed}
                 />
               </>
             ) : null}
 
             {shown.id === "vuorot" ? (
               <ShiftRulesForm
+                t={t}
                 clockInEarlyMinutes={restaurant.clockInEarlyMinutes}
                 openShiftClaiming={restaurant.openShiftClaiming}
               />
@@ -144,32 +146,35 @@ export default async function SettingsPage({
                   className="text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}
                 >
-                  Myyntiryhmät ovat samat kuin kassajärjestelmäsi
-                  päiväraportissa. Kun ne täsmäävät, päivän myynti voidaan
-                  verrata raporttiin ryhmä ja verokanta kerrallaan — eikä vain
-                  loppusummana.
+                  {t.asetus.groupsMatchRegister}
                 </p>
 
                 <div className="mt-4">
-                  <SalesGroups groups={vat.groups} mappings={vat.mappings} />
+                  <SalesGroups
+                    t={t}
+                    groups={vat.groups}
+                    mappings={vat.mappings}
+                  />
                 </div>
 
                 <Divider />
 
                 <h3 className="text-[13.5px] font-bold">
-                  Kassajärjestelmän ryhmät
+                  {t.asetus.registerGroups}
                 </h3>
                 <p
                   className="mt-1 text-[12.5px] leading-relaxed"
                   style={{ color: "var(--rf-text-3)" }}
                 >
-                  Kassa tuntee omat nimensä. Kerro mihin myyntiryhmään kukin
-                  niistä kuuluu, niin poiminta osaa kohdistaa raportin rivit
-                  oikeille verokannoille.
+                  {t.asetus.registerGroupsHint}
                 </p>
 
                 <div className="mt-3">
-                  <PosMappings mappings={vat.mappings} groups={vat.groups} />
+                  <PosMappings
+                    t={t}
+                    mappings={vat.mappings}
+                    groups={vat.groups}
+                  />
                 </div>
               </>
             ) : null}
@@ -180,13 +185,11 @@ export default async function SettingsPage({
                   className="text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}
                 >
-                  Suljettu kuukausi on kirjanpitoon lähetetty kuukausi. Sen
-                  jälkeen tehty muutos ei enää täsmää siihen mitä
-                  kirjanpitäjälle on annettu, joten suljetun kuukauden kuitteja
-                  ei voi lisätä, muuttaa eikä poistaa.
+                  {t.asetus.closedMonthHint}
                 </p>
 
                 <MonthClosing
+                  t={t}
                   locale={locale}
                   closedMonths={closedMonths}
                   selectableMonths={closableMonths(month)}
@@ -196,12 +199,14 @@ export default async function SettingsPage({
 
             {shown.id === "kategoriat" ? (
               <>
-                <h3 className="text-[13.5px] font-bold">Vakiokategoriat</h3>
+                <h3 className="text-[13.5px] font-bold">
+                  {t.asetus.standardCategories}
+                </h3>
                 <p
                   className="mt-1 text-[12.5px]"
                   style={{ color: "var(--rf-text-3)" }}
                 >
-                  Aina käytettävissä eikä poistettavissa.
+                  {t.asetus.alwaysAvailable}
                 </p>
                 <ul className="mt-2.5 flex flex-wrap gap-2">
                   {Object.values(nimet.categories).map((label) => (
@@ -213,14 +218,16 @@ export default async function SettingsPage({
 
                 <Divider />
 
-                <h3 className="text-[13.5px] font-bold">Omat kategoriat</h3>
+                <h3 className="text-[13.5px] font-bold">
+                  {t.asetus.ownCategories}
+                </h3>
                 <p
                   className="mt-1 text-[12.5px]"
                   style={{ color: "var(--rf-text-3)" }}
                 >
-                  Lisää oma kategoria jos vakiot eivät riitä.
+                  {t.asetus.addOwnCategory}
                 </p>
-                <CategoryManager categories={categories} nimet={nimet} />
+                <CategoryManager t={t} categories={categories} nimet={nimet} />
               </>
             ) : null}
 
@@ -230,9 +237,7 @@ export default async function SettingsPage({
                   className="text-[13px] leading-relaxed"
                   style={{ color: "var(--rf-text-2)" }}
                 >
-                  Toimintaloki kertoo kuka teki muutoksen, mihin se kohdistui ja
-                  mikä arvo oli ennen. Palkkamuutokset, työaikakorjaukset,
-                  verokannat ja käyttöoikeudet kirjataan aina.
+                  {t.asetus.logHint}
                 </p>
 
                 <Link
@@ -246,16 +251,14 @@ export default async function SettingsPage({
                   }}
                 >
                   <RfIcon name="clock" size={15} />
-                  Avaa toimintaloki
+                  {t.asetus.openLog}
                 </Link>
 
                 <p
                   className="text-[12px] leading-relaxed"
                   style={{ color: "var(--rf-text-3)" }}
                 >
-                  Lokia ei voi muokata eikä poistaa. Merkinnät syntyvät
-                  tietokannassa, joten ne kirjautuvat myös silloin kun muutos
-                  tehdään käyttöliittymän ohi.
+                  {t.asetus.logImmutable}
                 </p>
               </div>
             ) : null}

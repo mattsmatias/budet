@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { fill } from "@/lib/i18n/auth-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { formatRate } from "@/lib/money";
 import type { PosMapping, SalesGroup } from "@/lib/restoflow/sales-vat";
@@ -32,9 +34,11 @@ const initial: VatState = {};
  * myös muissa maissa.
  */
 export function SalesGroups({
+  t,
   groups,
   mappings,
 }: {
+  t: AdminText;
   groups: SalesGroup[];
   /* Kohdistukset tarvitaan poiston varoitukseen, ei näyttämiseen. */
   mappings: PosMapping[];
@@ -61,9 +65,7 @@ export function SalesGroups({
             className="text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Yhtään myyntiryhmää ei ole vielä määritetty. Suomessa ravintolan
-            kannat ovat samat joka ravintolalle, joten voit aloittaa
-            vakiopohjasta ja muokata sitä.
+            {t.asetus.noGroupsYet}
           </p>
 
           <form action={seedDefaultSalesGroups} className="mt-3">
@@ -77,7 +79,7 @@ export function SalesGroups({
               }}
             >
               <RfIcon name="plus" size={15} />
-              Lisää Suomen vakioryhmät
+              {t.asetus.addFinnishDefaults}
             </button>
           </form>
 
@@ -85,9 +87,7 @@ export function SalesGroups({
             className="mt-2.5 text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Ravintolamyynti 13,5 %, Alkoholimyynti 25,5 %, Muut myynnit 25,5 %.
-            Tarkista että kannat vastaavat nykyistä lainsäädäntöä — Kate ei
-            seuraa verokantojen muutoksia puolestasi.
+            {t.asetus.finnishDefaultsHint}
           </p>
         </div>
       ) : (
@@ -96,6 +96,7 @@ export function SalesGroups({
             editing === group.id ? (
               <li key={group.id}>
                 <GroupForm
+                  t={t}
                   group={group}
                   mappedNames={mappings
                     .filter((m) => m.salesGroupId === group.id)
@@ -107,7 +108,11 @@ export function SalesGroups({
               </li>
             ) : (
               <li key={group.id}>
-                <GroupRow group={group} onEdit={() => setEditing(group.id)} />
+                <GroupRow
+                  t={t}
+                  group={group}
+                  onEdit={() => setEditing(group.id)}
+                />
               </li>
             ),
           )}
@@ -117,6 +122,7 @@ export function SalesGroups({
       <div className="mt-4">
         {editing === "new" ? (
           <GroupForm
+            t={t}
             action={action}
             state={state}
             onClose={() => setEditing(null)}
@@ -134,7 +140,7 @@ export function SalesGroups({
             }}
           >
             <RfIcon name="plus" size={15} />
-            Lisää myyntiryhmä
+            {t.asetus.addSalesGroup}
           </button>
         )}
       </div>
@@ -143,9 +149,11 @@ export function SalesGroups({
 }
 
 function GroupRow({
+  t,
   group,
   onEdit,
 }: {
+  t: AdminText;
   group: SalesGroup;
   onEdit: () => void;
 }) {
@@ -173,7 +181,7 @@ function GroupRow({
                 borderRadius: 999,
               }}
             >
-              Oletus
+              {t.asetus.defaultWord}
             </span>
           ) : null}
 
@@ -182,7 +190,7 @@ function GroupRow({
               className="shrink-0 text-[11.5px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              Ei käytössä
+              {t.asetus.notInUse}
             </span>
           )}
         </span>
@@ -201,7 +209,7 @@ function GroupRow({
               className="rf-press px-2.5 py-1 text-[12px] font-semibold"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Aseta oletukseksi
+              {t.asetus.setAsDefault}
             </button>
           </form>
         )}
@@ -212,7 +220,7 @@ function GroupRow({
           className="rf-press px-2.5 py-1 text-[12px] font-semibold"
           style={{ color: "var(--rf-accent)" }}
         >
-          Muokkaa
+          {t.asetus.edit}
         </button>
       </span>
     </div>
@@ -228,12 +236,14 @@ function GroupRow({
  * ryhmä veisi mukanaan päivän myynnin.
  */
 function GroupForm({
+  t,
   group,
   mappedNames = [],
   action,
   state,
   onClose,
 }: {
+  t: AdminText;
   group?: SalesGroup;
   mappedNames?: string[];
   action: (formData: FormData) => void;
@@ -255,14 +265,14 @@ function GroupForm({
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
           <label className="block">
             <span className="block text-[12.5px] font-semibold">
-              Myyntiryhmä
+              {t.asetus.salesGroup}
             </span>
             <input
               name="name"
               defaultValue={group?.name ?? ""}
               required
               maxLength={60}
-              placeholder="Ravintolamyynti"
+              placeholder={t.asetus.restaurantSales}
               className={`${CONTROL} mt-1.5`}
               style={CONTROL_STYLE}
             />
@@ -298,15 +308,15 @@ function GroupForm({
             style={{ accentColor: "var(--rf-accent)" }}
           />
           <span className="text-[12.5px]">
-            Käytössä
+            {t.asetus.inUse}
             <span className="ml-1.5" style={{ color: "var(--rf-text-3)" }}>
-              — pois käytöstä otettu ryhmä säilyy vanhoilla riveillä
+              {t.asetus.disabledKeepsRows}
             </span>
           </span>
         </label>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Submit label="Tallenna" />
+          <Submit t={t} label={t.asetus.save} />
 
           <button
             type="button"
@@ -314,7 +324,7 @@ function GroupForm({
             className="rf-press px-2.5 py-2 text-[12.5px] font-semibold"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Peruuta
+            {t.asetus.cancel}
           </button>
 
           <Feedback state={state} />
@@ -327,6 +337,7 @@ function GroupForm({
           style={{ borderColor: "var(--rf-line)" }}
         >
           <DeleteGroup
+            t={t}
             id={group.id}
             name={group.name}
             mappedNames={mappedNames}
@@ -349,10 +360,12 @@ function GroupForm({
  * seuraava päiväraportti kohdistuu väärin.
  */
 function DeleteGroup({
+  t,
   id,
   name,
   mappedNames,
 }: {
+  t: AdminText;
   id: string;
   name: string;
   mappedNames: string[];
@@ -368,7 +381,7 @@ function DeleteGroup({
         className="rf-press text-[12px] font-semibold"
         style={{ color: "var(--rf-text-3)" }}
       >
-        Poista ryhmä
+        {t.asetus.removeGroup}
       </button>
     );
   }
@@ -407,7 +420,7 @@ function DeleteGroup({
             borderRadius: 8,
           }}
         >
-          Poista
+          {t.asetus.remove}
         </button>
       </form>
 
@@ -417,7 +430,7 @@ function DeleteGroup({
         className="rf-press text-[12px]"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Peruuta
+        {t.asetus.cancel}
       </button>
 
       <Feedback state={state} />
@@ -430,7 +443,7 @@ function DeleteGroup({
 /**
  * Kassajärjestelmän ryhmien kohdistus.
  *
- * Kassa tuntee omat nimensä — "Ruoka", "Viini", "Olut", "Take away" —
+ * Kassa tuntee omat nimensä — t.asetus.foodExample, "Viini", "Olut", "Take away" —
  * ja Kate tuntee myyntiryhmät. Kohdistus on ravintolakohtainen, koska
  * kaksi ravintolaa nimeää samat asiat eri tavoin.
  *
@@ -439,9 +452,11 @@ function DeleteGroup({
  * juuri sen täsmäytys näyttää.
  */
 export function PosMappings({
+  t,
   mappings,
   groups,
 }: {
+  t: AdminText;
   mappings: PosMapping[];
   groups: SalesGroup[];
 }) {
@@ -455,8 +470,7 @@ export function PosMappings({
         className="text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Lisää ensin myyntiryhmät. Kohdistus kertoo mihin niistä kassan oma
-        ryhmänimi kuuluu.
+        {t.asetus.addGroupsFirst}
       </p>
     );
   }
@@ -489,7 +503,7 @@ export function PosMappings({
                 </span>
 
                 <span className="min-w-0 flex-1 truncate text-[13px]">
-                  {group?.name ?? "Poistettu ryhmä"}
+                  {group?.name ?? t.asetus.deletedGroup}
                 </span>
 
                 <span className="rf-tabular shrink-0 text-[13px] font-bold">
@@ -500,7 +514,9 @@ export function PosMappings({
                   <input type="hidden" name="id" value={mapping.id} />
                   <button
                     type="submit"
-                    aria-label={`Poista kohdistus ${mapping.posName}`}
+                    aria-label={fill(t.asetus.removeMappingNamed, {
+                      nimi: mapping.posName,
+                    })}
                     className="rf-press flex h-7 w-7 items-center justify-center"
                     style={{ color: "var(--rf-text-3)", borderRadius: 8 }}
                   >
@@ -516,8 +532,7 @@ export function PosMappings({
           className="text-[13px] leading-relaxed"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Kohdistuksia ei ole. Kohdistamaton ryhmä päätyy oletusryhmään, joten
-          myynti ei katoa — mutta verokanta voi olla väärä.
+          {t.asetus.noMappings}
         </p>
       )}
 
@@ -525,13 +540,13 @@ export function PosMappings({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="block text-[12.5px] font-semibold">
-              Nimi kassan raportissa
+              {t.asetus.nameInReport}
             </span>
             <input
               name="posName"
               required
               maxLength={80}
-              placeholder="Ruoka"
+              placeholder={t.asetus.foodExample}
               className={`${CONTROL} mt-1.5`}
               style={CONTROL_STYLE}
             />
@@ -539,7 +554,7 @@ export function PosMappings({
 
           <label className="block">
             <span className="block text-[12.5px] font-semibold">
-              Katen myyntiryhmä
+              {t.asetus.kateSalesGroup}
             </span>
             <select
               name="salesGroupId"
@@ -558,7 +573,7 @@ export function PosMappings({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Submit label="Lisää kohdistus" />
+          <Submit t={t} label={t.asetus.addMapping} />
           <Feedback state={state} />
         </div>
       </form>
@@ -585,17 +600,14 @@ export function PosMappings({
           }}
         >
           <RfIcon name="plus" size={15} />
-          Lisää yleiset kassaryhmänimet
+          {t.asetus.addCommonNames}
         </button>
 
         <p
           className="mt-2 text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          RUOKA, LOUNAS, VEDET ja muut tavalliset nimet ravintolamyyntiin; OLUT,
-          VIINI, ALKO ja vastaavat alkoholimyyntiin. Omat kohdistuksesi säilyvät
-          ennallaan. Monitulkintaisia nimiä kuten JUOMAT tai TAKE AWAY ei
-          kohdisteta puolestasi — niistä Kate varoittaa raporttia luettaessa.
+          {t.asetus.commonNamesHint}
         </p>
       </form>
     </div>

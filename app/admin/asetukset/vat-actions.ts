@@ -18,6 +18,10 @@
  */
 
 import { revalidatePath } from "next/cache";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { resolveLocale } from "@/lib/i18n/resolve";
+import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
@@ -31,24 +35,25 @@ export interface VatState {
 
 const PATH = "/admin/asetukset";
 
-const groupSchema = z.object({
-  name: z.string().trim().min(1, "Anna myyntiryhmälle nimi.").max(60),
-});
+const groupSchema = (t: AdminText) =>
+  z.object({
+    name: z.string().trim().min(1, t.asetus.giveGroupName).max(60),
+  });
 
 export async function saveSalesGroup(
   _prev: VatState,
   formData: FormData,
 ): Promise<VatState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "settings.edit"))
-    return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit")) return { error: t.asetus.noRightSettings };
 
-  const parsed = groupSchema.safeParse({ name: formData.get("name") });
+  const parsed = groupSchema(t).safeParse({ name: formData.get("name") });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const rate = parseRate(formData.get("rate"));
   if (rate === null) {
-    return { error: "Anna verokanta prosentteina, esimerkiksi 13,5 tai 25,5." };
+    return { error: t.asetus.givePercentRate };
   }
 
   const id = String(formData.get("id") ?? "").trim();
@@ -71,13 +76,13 @@ export async function saveSalesGroup(
     return {
       error:
         error.code === "23505"
-          ? "Samanniminen myyntiryhmä on jo olemassa."
-          : `Tallennus epäonnistui: ${error.message}`,
+          ? t.asetus.groupExists
+          : fill(t.asetus.saveFailedWith, { viesti: error.message }),
     };
   }
 
   revalidatePath("/admin", "layout");
-  return { notice: id ? "Myyntiryhmä tallennettu." : "Myyntiryhmä lisätty." };
+  return { notice: id ? t.asetus.groupSaved : t.asetus.groupAdded };
 }
 
 /**
@@ -120,9 +125,9 @@ export async function deleteSalesGroup(
   _prev: VatState,
   formData: FormData,
 ): Promise<VatState> {
+  const t = adminText(await resolveLocale());
   const { role } = await requireContext(PATH);
-  if (!can(role, "settings.edit"))
-    return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit")) return { error: t.asetus.noRightSettings };
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return {};
@@ -148,10 +153,7 @@ export async function deleteSalesGroup(
 
   if (count && count > 0) {
     return {
-      error:
-        `Ryhmää ei voi poistaa: sitä on käytetty ${count} ` +
-        `${count === 1 ? "myyntirivillä" : "myyntirivillä"}. Ota se pois ` +
-        `käytöstä sen sijaan — vanhat rivit säilyttävät nimen ja kannan.`,
+      error: fill(t.asetus.groupUsedOnRows, { maara: String(count) }),
     };
   }
 
@@ -172,33 +174,34 @@ export async function deleteSalesGroup(
     return {
       error:
         error.code === "23503"
-          ? "Ryhmää ei voi poistaa, koska sitä on käytetty myyntipäivillä. Ota se pois käytöstä sen sijaan — vanhat rivit säilyttävät nimen."
-          : `Poisto epäonnistui: ${error.message}`,
+          ? t.asetus.groupInUseBody
+          : fill(t.asetus.deleteFailedWith, { viesti: error.message }),
     };
   }
 
   revalidatePath("/admin", "layout");
-  return { notice: "Myyntiryhmä poistettu." };
+  return { notice: t.asetus.groupDeleted };
 }
 
 // ---------------------------------------------------------------------------
 // Kassaryhmien kohdistus
 // ---------------------------------------------------------------------------
 
-const mappingSchema = z.object({
-  posName: z.string().trim().min(1, "Anna kassan ryhmänimi.").max(80),
-  salesGroupId: z.string().uuid("Valitse myyntiryhmä."),
-});
+const mappingSchema = (t: AdminText) =>
+  z.object({
+    posName: z.string().trim().min(1, t.asetus.giveRegisterName).max(80),
+    salesGroupId: z.string().uuid(t.asetus.chooseSalesGroup),
+  });
 
 export async function savePosMapping(
   _prev: VatState,
   formData: FormData,
 ): Promise<VatState> {
+  const t = adminText(await resolveLocale());
   const { restaurant, role } = await requireContext(PATH);
-  if (!can(role, "settings.edit"))
-    return { error: "Ei oikeutta muuttaa asetuksia." };
+  if (!can(role, "settings.edit")) return { error: t.asetus.noRightSettings };
 
-  const parsed = mappingSchema.safeParse({
+  const parsed = mappingSchema(t).safeParse({
     posName: formData.get("posName"),
     salesGroupId: formData.get("salesGroupId"),
   });
@@ -225,10 +228,12 @@ export async function savePosMapping(
   );
 
   if (error)
-    return { error: `Kohdistuksen tallennus epäonnistui: ${error.message}` };
+    return {
+      error: fill(t.asetus.mappingSaveFailed, { viesti: error.message }),
+    };
 
   revalidatePath("/admin", "layout");
-  return { notice: "Kohdistus tallennettu." };
+  return { notice: t.asetus.mappingSaved };
 }
 
 export async function deletePosMapping(formData: FormData): Promise<void> {

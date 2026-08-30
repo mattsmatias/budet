@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { changePassword, updateProfile } from "@/app/app/actions";
 import type { AdminState } from "../actions";
 import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
@@ -15,15 +16,15 @@ import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
  */
 const initial: AdminState = {};
 
-export function NameForm({ fullName }: { fullName: string }) {
+export function NameForm({ t, fullName }: { t: AdminText; fullName: string }) {
   const [state, action] = useActionState(updateProfile, initial);
 
   return (
     <form action={action} className="space-y-4">
       <Field
-        label="Nimesi"
+        label={t.asetus.yourName}
         htmlFor="rf-fullname"
-        hint="Näkyy vuorolistassa, kuittien kirjaajana ja työyhteisössä. Sama nimi kaikkialla — ei erillistä näyttönimeä."
+        hint={t.asetus.yourNameHint}
       >
         <input
           id="rf-fullname"
@@ -37,20 +38,20 @@ export function NameForm({ fullName }: { fullName: string }) {
         />
       </Field>
 
-      <SaveRow state={state} />
+      <SaveRow t={t} state={state} />
     </form>
   );
 }
 
-export function PasswordForm() {
+export function PasswordForm({ t }: { t: AdminText }) {
   const [state, action] = useActionState(changePassword, initial);
 
   return (
     <form action={action} className="space-y-4">
       <Field
-        label="Uusi salasana"
+        label={t.asetus.newPassword}
         htmlFor="rf-pw"
-        hint="Vähintään kahdeksan merkkiä. Vanhaa salasanaa ei kysytä, koska olet jo kirjautuneena — jos istunto on vanhentunut, vaihto ei onnistu."
+        hint={t.asetus.newPasswordHint}
       >
         <input
           id="rf-pw"
@@ -64,7 +65,7 @@ export function PasswordForm() {
         />
       </Field>
 
-      <Field label="Uusi salasana uudelleen" htmlFor="rf-pw2">
+      <Field label={t.asetus.newPasswordAgain} htmlFor="rf-pw2">
         <input
           id="rf-pw2"
           name="confirm"
@@ -77,7 +78,7 @@ export function PasswordForm() {
         />
       </Field>
 
-      <SaveRow state={state} label="Vaihda salasana" />
+      <SaveRow t={t} state={state} label={t.asetus.changePassword} />
     </form>
   );
 }

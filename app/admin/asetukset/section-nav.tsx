@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
-import { SETTINGS_SECTIONS } from "./sections";
+import { settingsSections } from "./sections";
 
 /**
  * Osastovalikko.
@@ -13,13 +14,15 @@ import { SETTINGS_SECTIONS } from "./sections";
  * Linkkejä eikä painikkeita, koska valinta on osoitteessa.
  */
 export function SectionNav({
+  t,
   current,
   canEdit,
 }: {
+  t: AdminText;
   current: string;
   canEdit: boolean;
 }) {
-  const sections = SETTINGS_SECTIONS.filter((s) => canEdit || !s.ownerOnly);
+  const sections = settingsSections(t).filter((s) => canEdit || !s.ownerOnly);
 
   return (
     /*
@@ -30,7 +33,7 @@ export function SectionNav({
      * puhelimessa. Vieritys kuuluu listaan, ei sivuun.
      */
     <nav
-      aria-label="Asetusten osastot"
+      aria-label={t.asetus.settingsSections}
       className="min-w-0 lg:sticky lg:top-[76px]"
     >
       {/* Puhelin: vaakarivi joka vierii. */}

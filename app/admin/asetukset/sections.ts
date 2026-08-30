@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/restoflow/icons";
+import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
  * Asetusten osastot.
@@ -28,46 +29,52 @@ export interface SettingsSection {
   ownerOnly: boolean;
 }
 
-export const SETTINGS_SECTIONS: SettingsSection[] = [
+/*
+ * Osastot tehtaana.
+ *
+ * Tunniste on osoitteessa eika saa muuttua kielen mukana; otsikko ja
+ * kuvaus kaannetaan.
+ */
+export const settingsSections = (t: AdminText): SettingsSection[] => [
   {
     id: "ravintola",
-    label: "Ravintola",
-    summary: "Nimi, aikavyöhyke ja julkinen osoite",
+    label: t.asetus.secRestaurant,
+    summary: t.asetus.secRestaurantHint,
     icon: "settings",
     ownerOnly: true,
   },
   {
     id: "profiili",
-    label: "Oma tunnus",
-    summary: "Nimesi ja salasanasi",
+    label: t.asetus.secAccount,
+    summary: t.asetus.secAccountHint,
     icon: "staff",
     ownerOnly: false,
   },
   {
     id: "vuorot",
-    label: "Työaika ja vuorot",
-    summary: "Leimausikkuna ja avoimet vuorot",
+    label: t.asetus.secTime,
+    summary: t.asetus.secTimeHint,
     icon: "clock",
     ownerOnly: true,
   },
   {
     id: "verotus",
-    label: "Verotus",
-    summary: "Myyntiryhmät, ALV-kannat ja kassan ryhmät",
+    label: t.asetus.secTax,
+    summary: t.asetus.secTaxHint,
     icon: "report",
     ownerOnly: true,
   },
   {
     id: "kirjanpito",
-    label: "Kirjanpito",
-    summary: "Kuukausien sulkeminen",
+    label: t.asetus.secAccounting,
+    summary: t.asetus.secAccountingHint,
     icon: "report",
     ownerOnly: true,
   },
   {
     id: "kategoriat",
-    label: "Kulukategoriat",
-    summary: "Vakiokategoriat ja omat lisäykset",
+    label: t.asetus.secCategories,
+    summary: t.asetus.secCategoriesHint,
     icon: "expenses",
     ownerOnly: true,
   },
@@ -80,14 +87,15 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
    */
   {
     id: "loki",
-    label: "Toimintaloki",
-    summary: "Kuka teki mitä ja milloin",
+    label: t.asetus.secLog,
+    summary: t.asetus.secLogHint,
     icon: "clock",
     ownerOnly: true,
   },
 ];
 
 /** Tuntematon osio putoaa ensimmäiseen: osoiterivin voi kirjoittaa itse. */
-export function sectionFor(id: unknown): SettingsSection {
-  return SETTINGS_SECTIONS.find((s) => s.id === id) ?? SETTINGS_SECTIONS[0];
+export function sectionFor(id: unknown, t: AdminText): SettingsSection {
+  const osastot = settingsSections(t);
+  return osastot.find((s) => s.id === id) ?? osastot[0];
 }

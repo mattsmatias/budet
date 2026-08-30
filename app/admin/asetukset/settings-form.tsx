@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { formatMonth } from "@/lib/restoflow/expenses";
 import { useFormStatus } from "react-dom";
@@ -17,10 +18,12 @@ const initial: AdminState = {};
  * kalenterin mukaan.
  */
 export function MonthClosing({
+  t,
   closedMonths,
   selectableMonths,
   locale,
 }: {
+  t: AdminText;
   closedMonths: string[];
   selectableMonths: string[];
   /** Kayttoliittyman kieli: kuukauden nimi tulee siita. */
@@ -48,13 +51,13 @@ export function MonthClosing({
                 </span>
                 {formatMonth(month, locale)}
               </span>
-              <ReopenButton month={month} />
+              <ReopenButton t={t} month={month} />
             </li>
           ))}
         </ul>
       ) : (
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Yhtään kuukautta ei ole suljettu.
+          {t.asetus.noClosedMonths}
         </p>
       )}
 
@@ -62,7 +65,7 @@ export function MonthClosing({
         <form action={action} className="space-y-3">
           <div>
             <label htmlFor="rf-month" className="block text-[13px] font-medium">
-              Sulje kuukausi
+              {t.asetus.closeMonth}
             </label>
             <select
               id="rf-month"
@@ -84,7 +87,7 @@ export function MonthClosing({
 
           <input
             name="note"
-            placeholder="Merkintä, esim. lähetetty tilitoimistoon"
+            placeholder={t.asetus.notePlaceholder}
             maxLength={200}
             className="w-full px-3.5 py-2.5 text-[16px] outline-none"
             style={{
@@ -95,20 +98,18 @@ export function MonthClosing({
 
           <Feedback state={state} />
 
-          <Submit label="Sulje kuukausi" />
+          <Submit t={t} label={t.asetus.closeMonth} />
 
           <p
             className="text-[12px] leading-relaxed"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Suljetun kuukauden kuitteja ei voi lisätä, muuttaa eikä poistaa.
-            Kuluvaa kuukautta ei voi sulkea. Avaaminen onnistuu tästä samasta
-            näkymästä.
+            {t.asetus.closedMonthRules}
           </p>
         </form>
       ) : (
         <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Ei suljettavia kuukausia — kuluvaa kuukautta ei voi sulkea.
+          {t.asetus.nothingToClose}
         </p>
       )}
     </div>
@@ -117,7 +118,7 @@ export function MonthClosing({
 
 // ---------------------------------------------------------------------------
 
-function ReopenButton({ month }: { month: string }) {
+function ReopenButton({ t, month }: { t: AdminText; month: string }) {
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -132,7 +133,7 @@ function ReopenButton({ month }: { month: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Avaa
+        {t.asetus.open}
       </button>
     );
   }
@@ -149,7 +150,7 @@ function ReopenButton({ month }: { month: string }) {
           borderRadius: "var(--rf-r-control)",
         }}
       >
-        Avaa uudelleen
+        {t.asetus.reopen}
       </button>
       <button
         type="button"
@@ -157,7 +158,7 @@ function ReopenButton({ month }: { month: string }) {
         className="text-[13px]"
         style={{ color: "var(--rf-text-2)" }}
       >
-        Peruuta
+        {t.asetus.cancel}
       </button>
     </form>
   );
@@ -199,7 +200,7 @@ function Feedback({ state }: { state: AdminState }) {
   return null;
 }
 
-function Submit({ label }: { label: string }) {
+function Submit({ t, label }: { t: AdminText; label: string }) {
   const { pending } = useFormStatus();
 
   return (
@@ -213,7 +214,7 @@ function Submit({ label }: { label: string }) {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Tallennetaan…" : label}
+      {pending ? t.asetus.savingEllipsis : label}
     </button>
   );
 }
