@@ -2,10 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import type { AppLocale } from "@/lib/i18n/app-locales";
-import {
-  formatDayShortIn,
-  weekdayShortIn,
-} from "@/lib/i18n/labels";
+import { formatDayShortIn, weekdayShortIn } from "@/lib/i18n/labels";
 import { fill } from "@/lib/i18n/auth-text";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";

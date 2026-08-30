@@ -22,12 +22,6 @@ import type { Shift, User } from "./types";
 
 export type Publication = "draft" | "published" | "cancelled";
 
-export const PUBLICATION_LABELS: Record<Publication, string> = {
-  draft: "Luonnos",
-  published: "Julkaistu",
-  cancelled: "Peruttu",
-};
-
 /**
  * Vuoron julkaisutila.
  *

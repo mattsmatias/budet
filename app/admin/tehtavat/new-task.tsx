@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { Labels } from "@/lib/i18n/labels";
 import { TaskForm } from "./task-form";
 import type { User } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -12,12 +13,25 @@ import { RfIcon } from "@/components/restoflow/icons";
  * kirjoitetaan siihen näkymään jossa muutkin ovat, ja peruminen on
  * yksi painallus takaisin.
  */
-export function NewTask({ users, today }: { users: User[]; today: string }) {
+export function NewTask({
+  nimet,
+  users,
+  today,
+}: {
+  nimet: Labels;
+  users: User[];
+  today: string;
+}) {
   const [open, setOpen] = useState(false);
 
   if (open) {
     return (
-      <TaskForm users={users} today={today} onClose={() => setOpen(false)} />
+      <TaskForm
+        nimet={nimet}
+        users={users}
+        today={today}
+        onClose={() => setOpen(false)}
+      />
     );
   }
 

@@ -40,25 +40,6 @@ export interface AuditEvent {
   createdAt: string;
 }
 
-export const ACTION_LABELS: Record<string, string> = {
-  created: "Lisäsi",
-  updated: "Muutti",
-  deleted: "Poisti",
-  published: "Julkaisi",
-  cancelled: "Perui",
-  completed: "Merkitsi tehdyksi",
-};
-
-export const ENTITY_LABELS: Record<string, string> = {
-  member: "Työntekijät",
-  shift: "Työvuorot",
-  receipt: "Kuitit",
-  task: "Tehtävät",
-  budget: "Budjetit",
-  sales_group: "Verotus",
-  time_correction: "Työajanseuranta",
-};
-
 /**
  * Toiminnon sävy.
  *

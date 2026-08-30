@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import {
   cancelTask,
@@ -11,8 +13,6 @@ import {
 } from "./actions";
 import { TaskForm } from "./task-form";
 import {
-  PRIORITY_LABELS,
-  RECURRENCE_LABELS,
   daysLate,
   groupTasks,
   statusOf,
@@ -34,18 +34,22 @@ import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
  * takaisin auki samasta rivistä.
  */
 export function TaskList({
+  locale,
+  nimet,
   tasks,
   users,
   today,
   canManage,
 }: {
+  locale: AppLocale;
+  nimet: Labels;
   tasks: Task[];
   users: User[];
   today: string;
   canManage: boolean;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
-  const groups = groupTasks(tasks, today);
+  const groups = groupTasks(tasks, today, locale);
 
   if (tasks.length === 0) {
     return (
@@ -81,6 +85,7 @@ export function TaskList({
               editing === task.id ? (
                 <li key={task.id} className="py-3">
                   <TaskForm
+                    nimet={nimet}
                     users={users}
                     task={task}
                     today={today}
@@ -90,6 +95,7 @@ export function TaskList({
               ) : (
                 <li key={task.id} className="py-3 first:pt-1">
                   <Rivi
+                    nimet={nimet}
                     task={task}
                     users={users}
                     today={today}
@@ -107,12 +113,14 @@ export function TaskList({
 }
 
 function Rivi({
+  nimet,
   task,
   users,
   today,
   canManage,
   onEdit,
 }: {
+  nimet: Labels;
   task: Task;
   users: User[];
   today: string;
@@ -184,7 +192,7 @@ function Rivi({
                 : ""}
               {owner ? ` · ${owner.name}` : ""}
               {task.recurrence !== "none"
-                ? ` · ${RECURRENCE_LABELS[task.recurrence].toLowerCase()}`
+                ? ` · ${nimet.taskRecurrence[task.recurrence].toLowerCase()}`
                 : ""}
             </span>
           </button>
@@ -193,7 +201,7 @@ function Rivi({
         <div className="flex shrink-0 items-center gap-2">
           {task.priority !== "normal" ? (
             <Pill tone={task.priority === "critical" ? "risk" : "warn"} dot>
-              {PRIORITY_LABELS[task.priority].toLowerCase()}
+              {nimet.taskPriority[task.priority].toLowerCase()}
             </Pill>
           ) : null}
         </div>

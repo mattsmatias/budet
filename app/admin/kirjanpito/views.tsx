@@ -1,12 +1,10 @@
 import Link from "next/link";
+import type { Labels } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { formatMoney } from "@/lib/money";
 import { formatRate } from "@/lib/restoflow/vat";
 import {
-  ACCOUNT_TYPE_LABELS,
-  SOURCE_LABELS,
-  STATUS_LABELS,
   isBalanced,
   monthLabel,
   type LedgerEntry,
@@ -41,10 +39,12 @@ import {
  * kortti jossa viennit ovat allekkain — samat luvut, eri muoto.
  */
 export function Paivakirja({
+  nimet,
   t,
   entries,
   saaKirjata,
 }: {
+  nimet: Labels;
   t: AdminText;
   entries: LedgerEntry[];
   saaKirjata: boolean;
@@ -75,10 +75,10 @@ export function Paivakirja({
                     style={{ color: "var(--rf-text-3)" }}
                   >
                     Tosite {entry.entryNumber} · {suomiPvm(entry.entryDate)} ·{" "}
-                    {SOURCE_LABELS[entry.sourceType]}
+                    {nimet.ledgerSource[entry.sourceType]}
                   </p>
                 </div>
-                <TilaMerkki entry={entry} />
+                <TilaMerkki nimet={nimet} entry={entry} />
               </div>
 
               <ul className="mt-3 space-y-1.5">
@@ -195,9 +195,13 @@ export function Paivakirja({
                       {line.vatRate !== null ? formatRate(line.vatRate) : ""}
                     </td>
                     <td style={{ color: "var(--rf-text-3)" }}>
-                      {i === 0 ? SOURCE_LABELS[entry.sourceType] : ""}
+                      {i === 0 ? nimet.ledgerSource[entry.sourceType] : ""}
                     </td>
-                    <td>{i === 0 ? <TilaMerkki entry={entry} /> : null}</td>
+                    <td>
+                      {i === 0 ? (
+                        <TilaMerkki nimet={nimet} entry={entry} />
+                      ) : null}
+                    </td>
                   </tr>
                 )),
               )}
@@ -262,7 +266,7 @@ export function Paivakirja({
   );
 }
 
-function TilaMerkki({ entry }: { entry: LedgerEntry }) {
+function TilaMerkki({ nimet, entry }: { nimet: Labels; entry: LedgerEntry }) {
   return (
     <Pill
       tone={
@@ -274,7 +278,7 @@ function TilaMerkki({ entry }: { entry: LedgerEntry }) {
       }
       dot
     >
-      {STATUS_LABELS[entry.status]}
+      {nimet.ledgerStatus[entry.status]}
     </Pill>
   );
 }
@@ -291,9 +295,11 @@ function TilaMerkki({ entry }: { entry: LedgerEntry }) {
  * kysymykseen "mistä tämä tulee" voi vastata.
  */
 export function Paakirja({
+  nimet,
   accounts,
   t,
 }: {
+  nimet: Labels;
   accounts: GeneralLedgerAccount[];
   t: AdminText;
 }) {
@@ -319,7 +325,7 @@ export function Paakirja({
                 {account.name}
               </p>
               <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-                {ACCOUNT_TYPE_LABELS[account.type]} · {account.lineCount}{" "}
+                {nimet.accountType[account.type]} · {account.lineCount}{" "}
                 {account.lineCount === 1 ? "vienti" : t.kirjanpito2.entry}
               </p>
             </div>
@@ -392,9 +398,11 @@ function LahdeLinkki({
 // ---------------------------------------------------------------------------
 
 export function Tilikartta({
+  nimet,
   accounts,
   t,
 }: {
+  nimet: Labels;
   accounts: LedgerAccount[];
   t: AdminText;
 }) {
@@ -419,7 +427,7 @@ export function Tilikartta({
         <Card key={ryhma.type} padded={false}>
           <div className="px-5 pt-4">
             <CardHeader
-              title={ACCOUNT_TYPE_LABELS[ryhma.type]}
+              title={nimet.accountType[ryhma.type]}
               subtitle={fill(t.kirjanpito.accountCount, {
                 maara: String(ryhma.rows.length),
               })}

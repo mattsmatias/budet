@@ -15,11 +15,7 @@ import {
 } from "@/lib/restoflow/shifts";
 import { formatDuration } from "@/lib/restoflow/timeclock";
 import { dayIn } from "@/lib/restoflow/clock-context";
-import {
-  DEVIATION_LABELS,
-  findDeviations,
-  isRetroactive,
-} from "@/lib/restoflow/deviations";
+import { findDeviations, isRetroactive } from "@/lib/restoflow/deviations";
 import { can, seesPayRates } from "@/lib/restoflow/permissions";
 import { type Shift, type User } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
@@ -471,7 +467,7 @@ export default async function AdminShiftsPage() {
                   tone={poikkeama.severity === "critical" ? "risk" : "warn"}
                   dot
                 >
-                  {DEVIATION_LABELS[poikkeama.kind].toLowerCase()}
+                  {nimet.deviation[poikkeama.kind].toLowerCase()}
                 </Pill>
               </li>
             ))}

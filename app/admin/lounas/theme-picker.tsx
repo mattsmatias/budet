@@ -1,14 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { setLunchTheme, type LunchState } from "./actions";
-import {
-  LUNCH_THEMES,
-  LUNCH_THEME_HINTS,
-  LUNCH_THEME_LABELS,
-  type LunchTheme,
-} from "@/lib/restoflow/lunch-themes";
+import { LUNCH_THEMES, type LunchTheme } from "@/lib/restoflow/lunch-themes";
 
 const initial: LunchState = {};
 const ORDER: LunchTheme[] = ["light", "dark", "classic"];
@@ -24,7 +20,13 @@ const ORDER: LunchTheme[] = ["light", "dark", "classic"];
  * Pienoiskuva piirretään samoista arvoista kuin oikea sivu. Erillinen
  * kuva ajautuisi erilleen heti kun jokin sävy muuttuu.
  */
-export function LunchThemePicker({ current }: { current: LunchTheme }) {
+export function LunchThemePicker({
+  nimet,
+  current,
+}: {
+  nimet: Labels;
+  current: LunchTheme;
+}) {
   const [state, action] = useActionState(setLunchTheme, initial);
 
   return (
@@ -39,6 +41,7 @@ export function LunchThemePicker({ current }: { current: LunchTheme }) {
       <div className="mt-2 grid gap-2 sm:grid-cols-3">
         {ORDER.map((theme) => (
           <ThemeOption
+            nimet={nimet}
             key={theme}
             theme={theme}
             selected={theme === current}
@@ -61,10 +64,12 @@ export function LunchThemePicker({ current }: { current: LunchTheme }) {
 }
 
 function ThemeOption({
+  nimet,
   theme,
   selected,
   action,
 }: {
+  nimet: Labels;
   theme: LunchTheme;
   selected: boolean;
   action: (formData: FormData) => void;
@@ -112,13 +117,13 @@ function ThemeOption({
         </span>
 
         <span className="mt-2 block text-[13px] font-semibold">
-          {LUNCH_THEME_LABELS[theme]}
+          {nimet.lunchTheme[theme]}
         </span>
         <span
           className="mt-0.5 block text-[11px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          {LUNCH_THEME_HINTS[theme]}
+          {nimet.lunchThemeHint[theme]}
         </span>
       </Choice>
     </form>

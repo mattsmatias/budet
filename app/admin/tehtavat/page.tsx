@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchTasks } from "@/lib/restoflow/queries";
@@ -23,6 +25,8 @@ export const metadata = { title: "Tehtävät" };
 export default async function TasksPage({
   searchParams,
 }: PageProps<"/admin/tehtavat">) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const { restaurant, role, users, today } =
     await adminContext("/admin/tehtavat");
 
@@ -49,7 +53,9 @@ export default async function TasksPage({
             : `${counts.needsAttention} vaatii huomiota`}
         </p>
 
-        {canManage ? <NewTask users={users} today={today} /> : null}
+        {canManage ? (
+          <NewTask nimet={nimet} users={users} today={today} />
+        ) : null}
       </div>
 
       {/*
@@ -182,6 +188,8 @@ export default async function TasksPage({
         <TaskCalendar tasks={filtered} today={today} />
       ) : (
         <TaskList
+          locale={locale}
+          nimet={nimet}
           tasks={filtered}
           users={users}
           today={today}

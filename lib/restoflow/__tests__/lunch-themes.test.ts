@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { labels } from "@/lib/i18n/labels";
 import {
   LUNCH_THEMES,
-  LUNCH_THEME_HINTS,
-  LUNCH_THEME_LABELS,
   isLunchTheme,
   lunchTheme,
   type LunchTheme,
@@ -123,8 +122,8 @@ describe("teeman valinta", () => {
 
   it("nimeää ja kuvaa jokaisen teeman", () => {
     for (const theme of THEMES) {
-      expect(LUNCH_THEME_LABELS[theme].length).toBeGreaterThan(2);
-      expect(LUNCH_THEME_HINTS[theme].length).toBeGreaterThan(15);
+      expect(labels("fi").lunchTheme[theme].length).toBeGreaterThan(2);
+      expect(labels("fi").lunchThemeHint[theme].length).toBeGreaterThan(15);
     }
   });
 });

@@ -95,18 +95,6 @@ export const LUNCH_THEMES: Record<LunchTheme, LunchThemeTokens> = {
   },
 };
 
-export const LUNCH_THEME_LABELS: Record<LunchTheme, string> = {
-  light: "Vaalea",
-  dark: "Tumma",
-  classic: "Klassinen",
-};
-
-export const LUNCH_THEME_HINTS: Record<LunchTheme, string> = {
-  light: "Selkeä ja kevyt. Sopii puhelimeen ja QR-koodiin.",
-  dark: "Ruudulle saliin tai tiskille. Ei hohda hämärässä.",
-  classic: "Painetun ruokalistan tuntu. Lämmin sävy ja antiikva otsikko.",
-};
-
 export function isLunchTheme(value: unknown): value is LunchTheme {
   return value === "light" || value === "dark" || value === "classic";
 }

@@ -212,14 +212,6 @@ export function plannedLabel(shift: Shift): string {
   return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
 }
 
-export const DEVIATION_LABELS: Record<DeviationKind, string> = {
-  no_clock_in: "Ei leimausta",
-  late: "Myöhästyminen",
-  overrun: "Ylitys",
-  shift_missing: "Työvuoro puuttuu",
-  overlap: "Päällekkäinen vuoro",
-};
-
 /**
  * Kirjattiinko vuoro vasta sen päivän jälkeen?
  *

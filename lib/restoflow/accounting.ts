@@ -95,34 +95,6 @@ export interface MonthState {
 // Nimet
 // ---------------------------------------------------------------------------
 
-export const ACCOUNT_TYPE_LABELS: Record<LedgerAccountType, string> = {
-  revenue: "Tuotot",
-  expense: "Kulut",
-  asset: "Vastaavaa",
-  liability: "Vastattavaa",
-  equity: "Oma pääoma",
-};
-
-export const SOURCE_LABELS: Record<LedgerSource, string> = {
-  receipt: "Kuitti",
-  daily_sales: "Kassaraportti",
-  manual: "Käsin",
-  correction: "Korjaus",
-};
-
-export const STATUS_LABELS: Record<LedgerStatus, string> = {
-  proposed: "Kirjausesitys",
-  posted: "Kirjattu",
-  rejected: "Hylätty",
-};
-
-export const MONTH_STATUS_LABELS: Record<MonthStatus, string> = {
-  open: "Avoin",
-  review: "Vaatii tarkistusta",
-  ready: "Valmis",
-  locked: "Lukittu",
-};
-
 /**
  * Kuukauden tilan sävy.
  *
@@ -222,13 +194,6 @@ export function sourceState(
   if (!hit) return "unprocessed";
   return hit.status;
 }
-
-export const SOURCE_STATE_LABELS: Record<SourceState, string> = {
-  unprocessed: "Ei kirjanpidossa",
-  proposed: "Odottaa tarkistusta",
-  posted: "Kirjattu kirjanpitoon",
-  rejected: "Ei kirjata",
-};
 
 /**
  * Kuukauden ensimmäinen päivä ISO-muodossa.

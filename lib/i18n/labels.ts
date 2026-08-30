@@ -4,6 +4,23 @@ import type {
   PaymentMethod,
   ReviewReason,
 } from "@/lib/restoflow/types";
+import type {
+  LedgerAccountType,
+  LedgerSource,
+  LedgerStatus,
+  MonthStatus,
+  SourceState,
+} from "@/lib/restoflow/accounting";
+import type { DeviationKind } from "@/lib/restoflow/deviations";
+import type { LunchTheme } from "@/lib/restoflow/lunch-themes";
+import type { LunchStatus } from "@/lib/restoflow/lunch";
+import type { Publication } from "@/lib/restoflow/shift-planning";
+import type {
+  TaskPriority,
+  TaskRecurrence,
+  TaskStatus,
+  TaskVisibility,
+} from "@/lib/restoflow/tasks";
 
 /**
  * Jaetut nimikkeet ja kuukaudet.
@@ -46,6 +63,23 @@ export interface Labels {
   categories: Record<ExpenseCategory, string>;
   payments: Record<PaymentMethod, string>;
   reviewReasons: Record<ReviewReason, string>;
+  accountType: Record<LedgerAccountType, string>;
+  ledgerSource: Record<LedgerSource, string>;
+  ledgerStatus: Record<LedgerStatus, string>;
+  monthStatus: Record<MonthStatus, string>;
+  sourceState: Record<SourceState, string>;
+  auditAction: Record<string, string>;
+  auditEntity: Record<string, string>;
+  deviation: Record<DeviationKind, string>;
+  lunchTheme: Record<LunchTheme, string>;
+  lunchThemeHint: Record<LunchTheme, string>;
+  lunchStatus: Record<LunchStatus, string>;
+  publication: Record<Publication, string>;
+  taskPriority: Record<TaskPriority, string>;
+  taskVisibility: Record<TaskVisibility, string>;
+  taskRecurrence: Record<TaskRecurrence, string>;
+  taskStatus: Record<TaskStatus, string>;
+  budgetStatus: Record<string, string>;
 }
 
 const fi: Labels = {
@@ -104,6 +138,111 @@ const fi: Labels = {
     poor_image: "Kuittikuva epäselvä",
     items_dont_sum: "Rivien summa ei täsmää loppusummaan",
   },
+  accountType: {
+    revenue: "Tuotot",
+    expense: "Kulut",
+    asset: "Vastaavaa",
+    liability: "Vastattavaa",
+    equity: "Oma pääoma",
+  },
+  ledgerSource: {
+    receipt: "Kuitti",
+    daily_sales: "Kassaraportti",
+    manual: "Käsin",
+    correction: "Korjaus",
+  },
+  ledgerStatus: {
+    proposed: "Kirjausesitys",
+    posted: "Kirjattu",
+    rejected: "Hylätty",
+  },
+  monthStatus: {
+    open: "Avoin",
+    review: "Vaatii tarkistusta",
+    ready: "Valmis",
+    locked: "Lukittu",
+  },
+  sourceState: {
+    unprocessed: "Ei kirjanpidossa",
+    proposed: "Odottaa tarkistusta",
+    posted: "Kirjattu kirjanpitoon",
+    rejected: "Ei kirjata",
+  },
+  auditAction: {
+    created: "Lisäsi",
+    updated: "Muutti",
+    deleted: "Poisti",
+    published: "Julkaisi",
+    cancelled: "Perui",
+    completed: "Merkitsi tehdyksi",
+  },
+  auditEntity: {
+    member: "Työntekijät",
+    shift: "Työvuorot",
+    receipt: "Kuitit",
+    task: "Tehtävät",
+    budget: "Budjetit",
+    sales_group: "Verotus",
+    time_correction: "Työajanseuranta",
+  },
+  deviation: {
+    no_clock_in: "Ei leimausta",
+    late: "Myöhästyminen",
+    overrun: "Ylitys",
+    shift_missing: "Työvuoro puuttuu",
+    overlap: "Päällekkäinen vuoro",
+  },
+  lunchTheme: {
+    light: "Vaalea",
+    dark: "Tumma",
+    classic: "Klassinen",
+  },
+  lunchThemeHint: {
+    light: "Selkeä ja kevyt. Sopii puhelimeen ja QR-koodiin.",
+    dark: "Ruudulle saliin tai tiskille. Ei hohda hämärässä.",
+    classic: "Painetun ruokalistan tuntu. Lämmin sävy ja antiikva otsikko.",
+  },
+  lunchStatus: {
+    draft: "Luonnos",
+    published: "Julkaistu",
+    archived: "Arkistoitu",
+  },
+  publication: {
+    draft: "Luonnos",
+    published: "Julkaistu",
+    cancelled: "Peruttu",
+  },
+  taskPriority: {
+    normal: "Normaali",
+    important: "Tärkeä",
+    critical: "Kriittinen",
+  },
+  taskVisibility: {
+    owner_only: "Vain omistaja",
+    managers: "Esihenkilöt",
+    assigned_user: "Vain vastuuhenkilö",
+    all_staff: "Koko henkilöstö",
+  },
+  taskRecurrence: {
+    none: "Ei toistu",
+    daily: "Päivittäin",
+    weekly: "Viikoittain",
+    monthly: "Kuukausittain",
+    yearly: "Vuosittain",
+  },
+  taskStatus: {
+    upcoming: "Tulossa",
+    due_today: "Erääntyy tänään",
+    overdue: "Myöhässä",
+    completed: "Tehty",
+    cancelled: "Peruttu",
+  },
+  budgetStatus: {
+    ok: "OK",
+    warning: "Lähestyy rajaa",
+    exceeded: "Ylitetty",
+    none: "Ei budjettia",
+  },
 };
 const en: Labels = {
   roles: {
@@ -160,6 +299,111 @@ const en: Labels = {
     duplicate_suspected: "Possible duplicate",
     poor_image: "The receipt image is unclear",
     items_dont_sum: "The line items do not add up to the total",
+  },
+  accountType: {
+    revenue: "Revenue",
+    expense: "Expenses",
+    asset: "Assets",
+    liability: "Liabilities",
+    equity: "Equity",
+  },
+  ledgerSource: {
+    receipt: "Receipt",
+    daily_sales: "Register report",
+    manual: "By hand",
+    correction: "Correction",
+  },
+  ledgerStatus: {
+    proposed: "Proposed entry",
+    posted: "Posted",
+    rejected: "Rejected",
+  },
+  monthStatus: {
+    open: "Open",
+    review: "Needs checking",
+    ready: "Ready",
+    locked: "Locked",
+  },
+  sourceState: {
+    unprocessed: "Not in the ledger",
+    proposed: "Awaiting checking",
+    posted: "Posted to the ledger",
+    rejected: "Not posted",
+  },
+  auditAction: {
+    created: "Added",
+    updated: "Changed",
+    deleted: "Deleted",
+    published: "Published",
+    cancelled: "Cancelled",
+    completed: "Marked as done",
+  },
+  auditEntity: {
+    member: "Employees",
+    shift: "Shifts",
+    receipt: "Receipts",
+    task: "Tasks",
+    budget: "Budgets",
+    sales_group: "Taxation",
+    time_correction: "Time tracking",
+  },
+  deviation: {
+    no_clock_in: "No clocking",
+    late: "Lateness",
+    overrun: "Overrun",
+    shift_missing: "The shift is missing",
+    overlap: "Overlapping shift",
+  },
+  lunchTheme: {
+    light: "Light",
+    dark: "Dark",
+    classic: "Classic",
+  },
+  lunchThemeHint: {
+    light: "Clear and light. Suits a phone and a QR code.",
+    dark: "For a screen in the dining room or at the counter. It does not glare in dim light.",
+    classic: "The feel of a printed menu. A warm tone and a serif heading.",
+  },
+  lunchStatus: {
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived",
+  },
+  publication: {
+    draft: "Draft",
+    published: "Published",
+    cancelled: "Cancelled",
+  },
+  taskPriority: {
+    normal: "Normal",
+    important: "Important",
+    critical: "Critical",
+  },
+  taskVisibility: {
+    owner_only: "The owner only",
+    managers: "Managers",
+    assigned_user: "The assignee only",
+    all_staff: "All staff",
+  },
+  taskRecurrence: {
+    none: "Does not repeat",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    yearly: "Yearly",
+  },
+  taskStatus: {
+    upcoming: "Upcoming",
+    due_today: "Due today",
+    overdue: "Overdue",
+    completed: "Done",
+    cancelled: "Cancelled",
+  },
+  budgetStatus: {
+    ok: "OK",
+    warning: "Approaching the limit",
+    exceeded: "Exceeded",
+    none: "No budget",
   },
 };
 const sv: Labels = {
@@ -218,6 +462,111 @@ const sv: Labels = {
     poor_image: "Kvittobilden är otydlig",
     items_dont_sum: "Radernas summa stämmer inte med slutsumman",
   },
+  accountType: {
+    revenue: "Intäkter",
+    expense: "Kostnader",
+    asset: "Tillgångar",
+    liability: "Skulder",
+    equity: "Eget kapital",
+  },
+  ledgerSource: {
+    receipt: "Kvitto",
+    daily_sales: "Kassarapport",
+    manual: "För hand",
+    correction: "Korrigering",
+  },
+  ledgerStatus: {
+    proposed: "Bokföringsförslag",
+    posted: "Bokförd",
+    rejected: "Avvisad",
+  },
+  monthStatus: {
+    open: "Öppen",
+    review: "Kräver kontroll",
+    ready: "Klar",
+    locked: "Låst",
+  },
+  sourceState: {
+    unprocessed: "Inte i bokföringen",
+    proposed: "Väntar på kontroll",
+    posted: "Bokförd",
+    rejected: "Bokförs inte",
+  },
+  auditAction: {
+    created: "Lade till",
+    updated: "Ändrade",
+    deleted: "Tog bort",
+    published: "Publicerade",
+    cancelled: "Ställde in",
+    completed: "Markerade som klar",
+  },
+  auditEntity: {
+    member: "Anställda",
+    shift: "Arbetspass",
+    receipt: "Kvitton",
+    task: "Uppgifter",
+    budget: "Budgetar",
+    sales_group: "Beskattning",
+    time_correction: "Tidsuppföljning",
+  },
+  deviation: {
+    no_clock_in: "Ingen stämpling",
+    late: "Försening",
+    overrun: "Överskridning",
+    shift_missing: "Passet saknas",
+    overlap: "Överlappande pass",
+  },
+  lunchTheme: {
+    light: "Ljust",
+    dark: "Mörkt",
+    classic: "Klassiskt",
+  },
+  lunchThemeHint: {
+    light: "Tydligt och lätt. Passar telefon och QR-kod.",
+    dark: "För en skärm i matsalen eller vid disken. Bländar inte i dunkel.",
+    classic: "Känslan av en tryckt meny. Varm ton och antikva rubrik.",
+  },
+  lunchStatus: {
+    draft: "Utkast",
+    published: "Publicerad",
+    archived: "Arkiverad",
+  },
+  publication: {
+    draft: "Utkast",
+    published: "Publicerad",
+    cancelled: "Inställt",
+  },
+  taskPriority: {
+    normal: "Normal",
+    important: "Viktig",
+    critical: "Kritisk",
+  },
+  taskVisibility: {
+    owner_only: "Endast ägaren",
+    managers: "Chefer",
+    assigned_user: "Endast ansvarig",
+    all_staff: "Hela personalen",
+  },
+  taskRecurrence: {
+    none: "Upprepas inte",
+    daily: "Dagligen",
+    weekly: "Veckovis",
+    monthly: "Månadsvis",
+    yearly: "Årsvis",
+  },
+  taskStatus: {
+    upcoming: "Kommande",
+    due_today: "Förfaller i dag",
+    overdue: "Försenad",
+    completed: "Klar",
+    cancelled: "Inställd",
+  },
+  budgetStatus: {
+    ok: "OK",
+    warning: "Närmar sig gränsen",
+    exceeded: "Överskriden",
+    none: "Ingen budget",
+  },
 };
 const da: Labels = {
   roles: {
@@ -274,6 +623,111 @@ const da: Labels = {
     duplicate_suspected: "Mulig dublet",
     poor_image: "Kvitteringsbilledet er utydeligt",
     items_dont_sum: "Linjernes sum passer ikke med slutsummen",
+  },
+  accountType: {
+    revenue: "Indtægter",
+    expense: "Udgifter",
+    asset: "Aktiver",
+    liability: "Passiver",
+    equity: "Egenkapital",
+  },
+  ledgerSource: {
+    receipt: "Kvittering",
+    daily_sales: "Kasserapport",
+    manual: "Manuelt",
+    correction: "Rettelse",
+  },
+  ledgerStatus: {
+    proposed: "Bogføringsforslag",
+    posted: "Bogført",
+    rejected: "Afvist",
+  },
+  monthStatus: {
+    open: "Åben",
+    review: "Kræver kontrol",
+    ready: "Klar",
+    locked: "Låst",
+  },
+  sourceState: {
+    unprocessed: "Ikke i bogføringen",
+    proposed: "Afventer kontrol",
+    posted: "Bogført",
+    rejected: "Bogføres ikke",
+  },
+  auditAction: {
+    created: "Tilføjede",
+    updated: "Ændrede",
+    deleted: "Slettede",
+    published: "Udgav",
+    cancelled: "Aflyste",
+    completed: "Markerede som færdig",
+  },
+  auditEntity: {
+    member: "Medarbejdere",
+    shift: "Vagter",
+    receipt: "Kvitteringer",
+    task: "Opgaver",
+    budget: "Budgetter",
+    sales_group: "Beskatning",
+    time_correction: "Tidsregistrering",
+  },
+  deviation: {
+    no_clock_in: "Ingen stempling",
+    late: "Forsinkelse",
+    overrun: "Overskridelse",
+    shift_missing: "Vagten mangler",
+    overlap: "Overlappende vagt",
+  },
+  lunchTheme: {
+    light: "Lyst",
+    dark: "Mørkt",
+    classic: "Klassisk",
+  },
+  lunchThemeHint: {
+    light: "Klart og let. Passer til telefon og QR-kode.",
+    dark: "Til en skærm i restauranten eller ved disken. Blænder ikke i halvmørke.",
+    classic: "Følelsen af en trykt menu. Varm tone og antikva-overskrift.",
+  },
+  lunchStatus: {
+    draft: "Kladde",
+    published: "Udgivet",
+    archived: "Arkiveret",
+  },
+  publication: {
+    draft: "Kladde",
+    published: "Udgivet",
+    cancelled: "Aflyst",
+  },
+  taskPriority: {
+    normal: "Normal",
+    important: "Vigtig",
+    critical: "Kritisk",
+  },
+  taskVisibility: {
+    owner_only: "Kun ejeren",
+    managers: "Ledere",
+    assigned_user: "Kun den ansvarlige",
+    all_staff: "Hele personalet",
+  },
+  taskRecurrence: {
+    none: "Gentages ikke",
+    daily: "Dagligt",
+    weekly: "Ugentligt",
+    monthly: "Månedligt",
+    yearly: "Årligt",
+  },
+  taskStatus: {
+    upcoming: "Kommende",
+    due_today: "Forfalder i dag",
+    overdue: "Forsinket",
+    completed: "Færdig",
+    cancelled: "Aflyst",
+  },
+  budgetStatus: {
+    ok: "OK",
+    warning: "Nærmer sig grænsen",
+    exceeded: "Overskredet",
+    none: "Intet budget",
   },
 };
 const tr: Labels = {
@@ -332,6 +786,111 @@ const tr: Labels = {
     poor_image: "Fiş görseli belirsiz",
     items_dont_sum: "Satırların toplamı genel toplamla uyuşmuyor",
   },
+  accountType: {
+    revenue: "Gelirler",
+    expense: "Giderler",
+    asset: "Varlıklar",
+    liability: "Yükümlülükler",
+    equity: "Özkaynak",
+  },
+  ledgerSource: {
+    receipt: "Fiş",
+    daily_sales: "Kasa raporu",
+    manual: "Elle",
+    correction: "Düzeltme",
+  },
+  ledgerStatus: {
+    proposed: "Kayıt önerisi",
+    posted: "Kaydedildi",
+    rejected: "Reddedildi",
+  },
+  monthStatus: {
+    open: "Açık",
+    review: "Kontrol gerekiyor",
+    ready: "Hazır",
+    locked: "Kilitli",
+  },
+  sourceState: {
+    unprocessed: "Muhasebede değil",
+    proposed: "Kontrol bekliyor",
+    posted: "Muhasebeye kaydedildi",
+    rejected: "Kaydedilmiyor",
+  },
+  auditAction: {
+    created: "Ekledi",
+    updated: "Değiştirdi",
+    deleted: "Sildi",
+    published: "Yayınladı",
+    cancelled: "İptal etti",
+    completed: "Tamamlandı olarak işaretledi",
+  },
+  auditEntity: {
+    member: "Çalışanlar",
+    shift: "Vardiyalar",
+    receipt: "Fişler",
+    task: "Görevler",
+    budget: "Bütçeler",
+    sales_group: "Vergilendirme",
+    time_correction: "Zaman takibi",
+  },
+  deviation: {
+    no_clock_in: "Kayıt yok",
+    late: "Gecikme",
+    overrun: "Aşım",
+    shift_missing: "Vardiya eksik",
+    overlap: "Çakışan vardiya",
+  },
+  lunchTheme: {
+    light: "Açık",
+    dark: "Koyu",
+    classic: "Klasik",
+  },
+  lunchThemeHint: {
+    light: "Net ve hafif. Telefona ve QR koda uygun.",
+    dark: "Salondaki ya da tezgâhtaki ekran için. Loş ışıkta göz almaz.",
+    classic: "Basılı menü hissi. Sıcak bir ton ve serif başlık.",
+  },
+  lunchStatus: {
+    draft: "Taslak",
+    published: "Yayınlandı",
+    archived: "Arşivlendi",
+  },
+  publication: {
+    draft: "Taslak",
+    published: "Yayınlandı",
+    cancelled: "İptal edildi",
+  },
+  taskPriority: {
+    normal: "Normal",
+    important: "Önemli",
+    critical: "Kritik",
+  },
+  taskVisibility: {
+    owner_only: "Yalnızca sahip",
+    managers: "Yöneticiler",
+    assigned_user: "Yalnızca sorumlu",
+    all_staff: "Tüm personel",
+  },
+  taskRecurrence: {
+    none: "Tekrarlanmaz",
+    daily: "Günlük",
+    weekly: "Haftalık",
+    monthly: "Aylık",
+    yearly: "Yıllık",
+  },
+  taskStatus: {
+    upcoming: "Yaklaşan",
+    due_today: "Bugün bitiyor",
+    overdue: "Gecikmiş",
+    completed: "Tamamlandı",
+    cancelled: "İptal edildi",
+  },
+  budgetStatus: {
+    ok: "Tamam",
+    warning: "Sınıra yaklaşıyor",
+    exceeded: "Aşıldı",
+    none: "Bütçe yok",
+  },
 };
 const et: Labels = {
   roles: {
@@ -388,6 +947,111 @@ const et: Labels = {
     duplicate_suspected: "Võimalik duplikaat",
     poor_image: "Tšeki pilt on ebaselge",
     items_dont_sum: "Ridade summa ei klapi lõppsummaga",
+  },
+  accountType: {
+    revenue: "Tulud",
+    expense: "Kulud",
+    asset: "Aktiva",
+    liability: "Passiva",
+    equity: "Omakapital",
+  },
+  ledgerSource: {
+    receipt: "Tšekk",
+    daily_sales: "Kassaaruanne",
+    manual: "Käsitsi",
+    correction: "Parandus",
+  },
+  ledgerStatus: {
+    proposed: "Kandeettepanek",
+    posted: "Kantud",
+    rejected: "Tagasi lükatud",
+  },
+  monthStatus: {
+    open: "Avatud",
+    review: "Vajab kontrollimist",
+    ready: "Valmis",
+    locked: "Lukustatud",
+  },
+  sourceState: {
+    unprocessed: "Raamatupidamises ei ole",
+    proposed: "Ootab kontrollimist",
+    posted: "Kantud raamatupidamisse",
+    rejected: "Ei kanta",
+  },
+  auditAction: {
+    created: "Lisas",
+    updated: "Muutis",
+    deleted: "Kustutas",
+    published: "Avaldas",
+    cancelled: "Tühistas",
+    completed: "Märkis tehtuks",
+  },
+  auditEntity: {
+    member: "Töötajad",
+    shift: "Töövahetused",
+    receipt: "Tšekid",
+    task: "Ülesanded",
+    budget: "Eelarved",
+    sales_group: "Maksustamine",
+    time_correction: "Tööaja jälgimine",
+  },
+  deviation: {
+    no_clock_in: "Registreeringut ei ole",
+    late: "Hilinemine",
+    overrun: "Ületamine",
+    shift_missing: "Vahetus puudub",
+    overlap: "Kattuv vahetus",
+  },
+  lunchTheme: {
+    light: "Hele",
+    dark: "Tume",
+    classic: "Klassikaline",
+  },
+  lunchThemeHint: {
+    light: "Selge ja kerge. Sobib telefoni ja QR-koodi jaoks.",
+    dark: "Ekraanile saali või leti juurde. Ei helenda hämaras.",
+    classic: "Trükitud menüü tunne. Soe toon ja seriifidega pealkiri.",
+  },
+  lunchStatus: {
+    draft: "Mustand",
+    published: "Avaldatud",
+    archived: "Arhiveeritud",
+  },
+  publication: {
+    draft: "Mustand",
+    published: "Avaldatud",
+    cancelled: "Tühistatud",
+  },
+  taskPriority: {
+    normal: "Tavaline",
+    important: "Tähtis",
+    critical: "Kriitiline",
+  },
+  taskVisibility: {
+    owner_only: "Ainult omanik",
+    managers: "Juhatajad",
+    assigned_user: "Ainult vastutaja",
+    all_staff: "Kogu personal",
+  },
+  taskRecurrence: {
+    none: "Ei kordu",
+    daily: "Iga päev",
+    weekly: "Iga nädal",
+    monthly: "Iga kuu",
+    yearly: "Iga aasta",
+  },
+  taskStatus: {
+    upcoming: "Tulemas",
+    due_today: "Tähtaeg täna",
+    overdue: "Hilinenud",
+    completed: "Tehtud",
+    cancelled: "Tühistatud",
+  },
+  budgetStatus: {
+    ok: "OK",
+    warning: "Läheneb piirile",
+    exceeded: "Ületatud",
+    none: "Eelarvet ei ole",
   },
 };
 const KAIKKI: Record<AppLocale, Labels> = { fi, en, sv, da, tr, et };

@@ -20,6 +20,8 @@
  */
 
 import { addDays, daysBetween } from "./dates";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { labels } from "@/lib/i18n/labels";
 
 export type TaskPriority = "normal" | "important" | "critical";
 
@@ -55,35 +57,6 @@ export interface Task {
   createdBy: string;
   createdAt: string;
 }
-
-export const PRIORITY_LABELS: Record<TaskPriority, string> = {
-  normal: "Normaali",
-  important: "Tärkeä",
-  critical: "Kriittinen",
-};
-
-export const VISIBILITY_LABELS: Record<TaskVisibility, string> = {
-  owner_only: "Vain omistaja",
-  managers: "Esihenkilöt",
-  assigned_user: "Vain vastuuhenkilö",
-  all_staff: "Koko henkilöstö",
-};
-
-export const RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
-  none: "Ei toistu",
-  daily: "Päivittäin",
-  weekly: "Viikoittain",
-  monthly: "Kuukausittain",
-  yearly: "Vuosittain",
-};
-
-export const STATUS_LABELS: Record<TaskStatus, string> = {
-  upcoming: "Tulossa",
-  due_today: "Erääntyy tänään",
-  overdue: "Myöhässä",
-  completed: "Tehty",
-  cancelled: "Peruttu",
-};
 
 /**
  * Tehtävän tila juuri nyt.
@@ -245,8 +218,10 @@ export interface TaskGroup {
 export function groupTasks(
   tasks: Task[],
   today: string,
+  locale: AppLocale,
   nowTime?: string,
 ): TaskGroup[] {
+  const nimet = labels(locale);
   const order: TaskStatus[] = [
     "overdue",
     "due_today",
@@ -260,7 +235,7 @@ export function groupTasks(
   return order
     .map((status) => ({
       status,
-      label: STATUS_LABELS[status],
+      label: nimet.taskStatus[status],
       tasks: sorted.filter((task) => statusOf(task, today, nowTime) === status),
     }))
     .filter((group) => group.tasks.length > 0);

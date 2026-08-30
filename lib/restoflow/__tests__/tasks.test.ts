@@ -177,7 +177,7 @@ describe("sortTasks", () => {
 
 describe("groupTasks", () => {
   it("jättää tyhjät ryhmät pois", () => {
-    const groups = groupTasks([task({ dueOn: TODAY })], TODAY);
+    const groups = groupTasks([task({ dueOn: TODAY })], TODAY, "fi");
 
     expect(groups).toHaveLength(1);
     expect(groups[0].status).toBe("due_today");
@@ -191,6 +191,7 @@ describe("groupTasks", () => {
         task({ id: "c", dueOn: TODAY }),
       ],
       TODAY,
+      "fi",
     );
 
     expect(groups.map((g) => g.status)).toEqual([

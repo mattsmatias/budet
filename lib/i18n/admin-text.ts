@@ -65,9 +65,11 @@ const fi = {
     groupPerson: "Henkilö",
   },
   myynti: {
-    blurryImage: "Kuva on epäselvä. Tarkista jokainen luku raportista ennen tallennusta.",
+    blurryImage:
+      "Kuva on epäselvä. Tarkista jokainen luku raportista ennen tallennusta.",
     salesByGroup: "Myynti ryhmittäin",
-    rateFromGroup: "Verokanta tulee myyntiryhmän asetuksesta. Rivi tallentaa käytetyn kannan, joten myöhempi asetusmuutos ei muuta tätä päivää.",
+    rateFromGroup:
+      "Verokanta tulee myyntiryhmän asetuksesta. Rivi tallentaa käytetyn kannan, joten myöhempi asetusmuutos ei muuta tätä päivää.",
     group: "Ryhmä",
     registerName: "Kassan nimi",
     withTax: "Verollinen",
@@ -87,7 +89,8 @@ const fi = {
     calcGrossMinusVat: "Laskettu: verollinen − ALV",
     labourShareBase: "Tästä lasketaan työvoiman osuus",
     target: "Tavoite",
-    targetHint: "Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan.",
+    targetHint:
+      "Vapaaehtoinen. Tyhjänä verrataan saman viikonpäivän historiaan.",
     unknownGroup: "Tuntematon ryhmä",
     savingEllipsis: "Tallennetaan…",
     saveDaySales: "Tallenna päivän myynti",
@@ -96,13 +99,15 @@ const fi = {
     averagePurchase: "Keskiostos {summa}",
     netFromReport: "Päivän veroton myynti kassan päiväraportista",
     shootDailyReport: "Kuvaa kassan päiväraportti",
-    extractionHint: "Poiminta lukee päivän, myynnin, ALV:n ja kuittien määrän. Tarkistat luvut ennen tallennusta.",
+    extractionHint:
+      "Poiminta lukee päivän, myynnin, ALV:n ja kuittien määrän. Tarkistat luvut ennen tallennusta.",
     reconciliation: "Täsmäytys kassaan",
     yesterdayMissing: "Eiliseltä puuttuu myynti",
     dayWord: "Päivä",
     averageWord: "Keskiostos",
     comparison: "Vertailu",
-    netReason: "Veroton summa, koska työvoiman osuus myynnistä lasketaan siitä. Verollisella luvulla suhde olisi järjestelmällisesti liian pieni.",
+    netReason:
+      "Veroton summa, koska työvoiman osuus myynnistä lasketaan siitä. Verollisella luvulla suhde olisi järjestelmällisesti liian pieni.",
     todayWord: "tänään",
     noComparison: "Ei vertailukohtaa",
     salesWord: "Myynti",
@@ -111,22 +116,27 @@ const fi = {
     recordedDays: "Kirjatut päivät",
     dayOne: "päivä",
     dayMany: "päivää",
-    noSalesYet: "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Kate alkaa verrata päiviä toisiinsa.",
+    noSalesYet:
+      "Ei vielä kirjattua myyntiä. Ensimmäisen päivän jälkeen Kate alkaa verrata päiviä toisiinsa.",
     readFromReport: "Luettu päiväraportista",
     vsSameWeekday: "vs. sama viikonpäivä",
     monthDaysOne: "{kuukausi} · {maara} päivä",
     monthDaysMany: "{kuukausi} · {maara} päivää",
-    noSalesThisMonth: "Tältä kuukaudelta ei ole kirjattua myyntiä. Muilta kuukausilta löytyy {maara} päivää.",
+    noSalesThisMonth:
+      "Tältä kuukaudelta ei ole kirjattua myyntiä. Muilta kuukausilta löytyy {maara} päivää.",
     openDay: "Avaa {paiva}",
-    rateWhenRecorded: "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta tätä riviä.",
-    registerLeftKateRight: "Kassan päiväraportti vasemmalla, Katen laskelma oikealla.",
+    rateWhenRecorded:
+      "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta tätä riviä.",
+    registerLeftKateRight:
+      "Kassan päiväraportti vasemmalla, Katen laskelma oikealla.",
     daySales: "Päivän myynti",
     readFromRegister: "Luettu kassan päiväraportista",
     enteredByHand: "Kirjattu käsin",
     whatCustomerPaid: "Mitä asiakas maksoi",
     goesToTax: "Osuus joka menee verottajalle",
     averageSuffix: " · keskiostos {summa}",
-    noRegisterFigures: "Kassan lukuja ei ole, joten päivää ei ole täsmäytetty. Kuvaa päiväraportti, niin Kate vertaa oman laskelmansa siihen.",
+    noRegisterFigures:
+      "Kassan lukuja ei ole, joten päivää ei ole täsmäytetty. Kuvaa päiväraportti, niin Kate vertaa oman laskelmansa siihen.",
     registerVsKate: "Kassan ja Katen vertailu",
     subject: "Kohde",
     register: "Kassa",
@@ -139,9 +149,11 @@ const fi = {
     noRightRecord: "Ei oikeutta kirjata myyntiä.",
     checkDate: "Tarkista päivämäärä.",
     enterNetSales: "Syötä päivän veroton myynti.",
-    grossBelowNet: "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut.",
+    grossBelowNet:
+      "Verollinen myynti ei voi olla verotonta pienempi. Tarkista luvut.",
     badRows: "Myyntirivit olivat virheellisiä.",
-    unknownSalesGroup: "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen.",
+    unknownSalesGroup:
+      "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen.",
     salesSaved: "Myynti tallennettu.",
     salesSaveFailed: "Myynnin tallennus epäonnistui: {viesti}",
     rowsSaveFailed: "Myyntirivien tallennus epäonnistui: {viesti}",
@@ -1188,9 +1200,11 @@ const en: AdminText = {
     groupPerson: "Person",
   },
   myynti: {
-    blurryImage: "The image is unclear. Check every figure against the report before saving.",
+    blurryImage:
+      "The image is unclear. Check every figure against the report before saving.",
     salesByGroup: "Sales by group",
-    rateFromGroup: "The tax rate comes from the sales group's setting. The row stores the rate used, so a later settings change does not alter this day.",
+    rateFromGroup:
+      "The tax rate comes from the sales group's setting. The row stores the rate used, so a later settings change does not alter this day.",
     group: "Group",
     registerName: "Register name",
     withTax: "With tax",
@@ -1210,7 +1224,8 @@ const en: AdminText = {
     calcGrossMinusVat: "Calculated: with tax − VAT",
     labourShareBase: "The labour share is calculated from this",
     target: "Target",
-    targetHint: "Optional. Left empty, the comparison uses the history of the same weekday.",
+    targetHint:
+      "Optional. Left empty, the comparison uses the history of the same weekday.",
     unknownGroup: "Unknown group",
     savingEllipsis: "Saving…",
     saveDaySales: "Save the day's sales",
@@ -1219,13 +1234,15 @@ const en: AdminText = {
     averagePurchase: "Average purchase {summa}",
     netFromReport: "The day's net sales from the register's daily report",
     shootDailyReport: "Photograph the register's daily report",
-    extractionHint: "The extraction reads the day, the sales, the VAT and the receipt count. You check the figures before saving.",
+    extractionHint:
+      "The extraction reads the day, the sales, the VAT and the receipt count. You check the figures before saving.",
     reconciliation: "Reconciliation with the register",
     yesterdayMissing: "Yesterday's sales are missing",
     dayWord: "Day",
     averageWord: "Average purchase",
     comparison: "Comparison",
-    netReason: "The net figure, because the labour share of sales is calculated from it. With the gross figure the ratio would be systematically too small.",
+    netReason:
+      "The net figure, because the labour share of sales is calculated from it. With the gross figure the ratio would be systematically too small.",
     todayWord: "today",
     noComparison: "No point of comparison",
     salesWord: "Sales",
@@ -1234,22 +1251,27 @@ const en: AdminText = {
     recordedDays: "Recorded days",
     dayOne: "day",
     dayMany: "days",
-    noSalesYet: "No sales recorded yet. After the first day Kate starts comparing days with each other.",
+    noSalesYet:
+      "No sales recorded yet. After the first day Kate starts comparing days with each other.",
     readFromReport: "Read from the daily report",
     vsSameWeekday: "vs. the same weekday",
     monthDaysOne: "{kuukausi} · {maara} day",
     monthDaysMany: "{kuukausi} · {maara} days",
-    noSalesThisMonth: "No sales recorded for this month. Other months have {maara} days.",
+    noSalesThisMonth:
+      "No sales recorded for this month. Other months have {maara} days.",
     openDay: "Open {paiva}",
-    rateWhenRecorded: "The tax rate is the one in force when the day was recorded. A later settings change does not alter this row.",
-    registerLeftKateRight: "The register's daily report on the left, Kate's calculation on the right.",
+    rateWhenRecorded:
+      "The tax rate is the one in force when the day was recorded. A later settings change does not alter this row.",
+    registerLeftKateRight:
+      "The register's daily report on the left, Kate's calculation on the right.",
     daySales: "The day's sales",
     readFromRegister: "Read from the register's daily report",
     enteredByHand: "Entered by hand",
     whatCustomerPaid: "What the customer paid",
     goesToTax: "The share that goes to the tax office",
     averageSuffix: " · average purchase {summa}",
-    noRegisterFigures: "There are no register figures, so the day has not been reconciled. Photograph the daily report and Kate compares its own calculation with it.",
+    noRegisterFigures:
+      "There are no register figures, so the day has not been reconciled. Photograph the daily report and Kate compares its own calculation with it.",
     registerVsKate: "The register compared with Kate",
     subject: "Item",
     register: "Register",
@@ -1262,7 +1284,8 @@ const en: AdminText = {
     noRightRecord: "No right to record sales.",
     checkDate: "Check the date.",
     enterNetSales: "Enter the day's net sales.",
-    grossBelowNet: "Sales with tax cannot be lower than sales without tax. Check the figures.",
+    grossBelowNet:
+      "Sales with tax cannot be lower than sales without tax. Check the figures.",
     badRows: "The sales rows were invalid.",
     unknownSalesGroup: "Unknown sales group. Reload the page and try again.",
     salesSaved: "The sales are saved.",
@@ -2314,9 +2337,11 @@ const sv: AdminText = {
     groupPerson: "Person",
   },
   myynti: {
-    blurryImage: "Bilden är otydlig. Kontrollera varje siffra mot rapporten innan du sparar.",
+    blurryImage:
+      "Bilden är otydlig. Kontrollera varje siffra mot rapporten innan du sparar.",
     salesByGroup: "Försäljning per grupp",
-    rateFromGroup: "Skattesatsen kommer från försäljningsgruppens inställning. Raden sparar satsen som användes, så en senare ändring påverkar inte den här dagen.",
+    rateFromGroup:
+      "Skattesatsen kommer från försäljningsgruppens inställning. Raden sparar satsen som användes, så en senare ändring påverkar inte den här dagen.",
     group: "Grupp",
     registerName: "Kassans namn",
     withTax: "Med moms",
@@ -2336,7 +2361,8 @@ const sv: AdminText = {
     calcGrossMinusVat: "Beräknat: med moms − moms",
     labourShareBase: "Personalandelen räknas från detta",
     target: "Mål",
-    targetHint: "Frivilligt. Lämnas det tomt jämförs samma veckodag historiskt.",
+    targetHint:
+      "Frivilligt. Lämnas det tomt jämförs samma veckodag historiskt.",
     unknownGroup: "Okänd grupp",
     savingEllipsis: "Sparar…",
     saveDaySales: "Spara dagens försäljning",
@@ -2345,13 +2371,15 @@ const sv: AdminText = {
     averagePurchase: "Snittköp {summa}",
     netFromReport: "Dagens nettoförsäljning från kassans dagrapport",
     shootDailyReport: "Fotografera kassans dagrapport",
-    extractionHint: "Avläsningen läser dagen, försäljningen, momsen och antalet kvitton. Du kontrollerar siffrorna innan du sparar.",
+    extractionHint:
+      "Avläsningen läser dagen, försäljningen, momsen och antalet kvitton. Du kontrollerar siffrorna innan du sparar.",
     reconciliation: "Avstämning mot kassan",
     yesterdayMissing: "Gårdagens försäljning saknas",
     dayWord: "Dag",
     averageWord: "Snittköp",
     comparison: "Jämförelse",
-    netReason: "Nettosumman, eftersom personalandelen av försäljningen räknas från den. Med bruttosiffran skulle kvoten bli systematiskt för liten.",
+    netReason:
+      "Nettosumman, eftersom personalandelen av försäljningen räknas från den. Med bruttosiffran skulle kvoten bli systematiskt för liten.",
     todayWord: "i dag",
     noComparison: "Ingen jämförelsepunkt",
     salesWord: "Försäljning",
@@ -2360,22 +2388,27 @@ const sv: AdminText = {
     recordedDays: "Registrerade dagar",
     dayOne: "dag",
     dayMany: "dagar",
-    noSalesYet: "Ingen försäljning registrerad än. Efter den första dagen börjar Kate jämföra dagarna med varandra.",
+    noSalesYet:
+      "Ingen försäljning registrerad än. Efter den första dagen börjar Kate jämföra dagarna med varandra.",
     readFromReport: "Läst från dagrapporten",
     vsSameWeekday: "jfr. samma veckodag",
     monthDaysOne: "{kuukausi} · {maara} dag",
     monthDaysMany: "{kuukausi} · {maara} dagar",
-    noSalesThisMonth: "Ingen försäljning registrerad för den här månaden. Andra månader har {maara} dagar.",
+    noSalesThisMonth:
+      "Ingen försäljning registrerad för den här månaden. Andra månader har {maara} dagar.",
     openDay: "Öppna {paiva}",
-    rateWhenRecorded: "Skattesatsen är den som gällde när dagen registrerades. En senare ändring påverkar inte raden.",
-    registerLeftKateRight: "Kassans dagrapport till vänster, Kates beräkning till höger.",
+    rateWhenRecorded:
+      "Skattesatsen är den som gällde när dagen registrerades. En senare ändring påverkar inte raden.",
+    registerLeftKateRight:
+      "Kassans dagrapport till vänster, Kates beräkning till höger.",
     daySales: "Dagens försäljning",
     readFromRegister: "Läst från kassans dagrapport",
     enteredByHand: "Inskrivet för hand",
     whatCustomerPaid: "Vad kunden betalade",
     goesToTax: "Den del som går till skatteverket",
     averageSuffix: " · snittköp {summa}",
-    noRegisterFigures: "Det finns inga kassasiffror, så dagen är inte avstämd. Fotografera dagrapporten, så jämför Kate sin egen beräkning med den.",
+    noRegisterFigures:
+      "Det finns inga kassasiffror, så dagen är inte avstämd. Fotografera dagrapporten, så jämför Kate sin egen beräkning med den.",
     registerVsKate: "Jämförelse mellan kassan och Kate",
     subject: "Post",
     register: "Kassa",
@@ -2388,9 +2421,11 @@ const sv: AdminText = {
     noRightRecord: "Ingen behörighet att registrera försäljning.",
     checkDate: "Kontrollera datumet.",
     enterNetSales: "Ange dagens nettoförsäljning.",
-    grossBelowNet: "Försäljning med moms kan inte vara lägre än utan moms. Kontrollera siffrorna.",
+    grossBelowNet:
+      "Försäljning med moms kan inte vara lägre än utan moms. Kontrollera siffrorna.",
     badRows: "Försäljningsraderna var felaktiga.",
-    unknownSalesGroup: "Okänd försäljningsgrupp. Ladda om sidan och försök igen.",
+    unknownSalesGroup:
+      "Okänd försäljningsgrupp. Ladda om sidan och försök igen.",
     salesSaved: "Försäljningen är sparad.",
     salesSaveFailed: "Försäljningen kunde inte sparas: {viesti}",
     rowsSaveFailed: "Försäljningsraderna kunde inte sparas: {viesti}",
@@ -3438,9 +3473,11 @@ const da: AdminText = {
     groupPerson: "Person",
   },
   myynti: {
-    blurryImage: "Billedet er utydeligt. Tjek hvert tal mod rapporten, før du gemmer.",
+    blurryImage:
+      "Billedet er utydeligt. Tjek hvert tal mod rapporten, før du gemmer.",
     salesByGroup: "Salg pr. gruppe",
-    rateFromGroup: "Skattesatsen kommer fra salgsgruppens indstilling. Rækken gemmer den anvendte sats, så en senere ændring påvirker ikke denne dag.",
+    rateFromGroup:
+      "Skattesatsen kommer fra salgsgruppens indstilling. Rækken gemmer den anvendte sats, så en senere ændring påvirker ikke denne dag.",
     group: "Gruppe",
     registerName: "Kassens navn",
     withTax: "Med moms",
@@ -3460,7 +3497,8 @@ const da: AdminText = {
     calcGrossMinusVat: "Beregnet: med moms − moms",
     labourShareBase: "Personaleandelen beregnes ud fra dette",
     target: "Mål",
-    targetHint: "Valgfrit. Efterlades det tomt, sammenlignes med samme ugedag historisk.",
+    targetHint:
+      "Valgfrit. Efterlades det tomt, sammenlignes med samme ugedag historisk.",
     unknownGroup: "Ukendt gruppe",
     savingEllipsis: "Gemmer…",
     saveDaySales: "Gem dagens salg",
@@ -3469,13 +3507,15 @@ const da: AdminText = {
     averagePurchase: "Gennemsnitskøb {summa}",
     netFromReport: "Dagens nettosalg fra kassens dagsrapport",
     shootDailyReport: "Fotografér kassens dagsrapport",
-    extractionHint: "Aflæsningen læser dagen, salget, momsen og antallet af kvitteringer. Du tjekker tallene, før du gemmer.",
+    extractionHint:
+      "Aflæsningen læser dagen, salget, momsen og antallet af kvitteringer. Du tjekker tallene, før du gemmer.",
     reconciliation: "Afstemning med kassen",
     yesterdayMissing: "Gårsdagens salg mangler",
     dayWord: "Dag",
     averageWord: "Gennemsnitskøb",
     comparison: "Sammenligning",
-    netReason: "Nettobeløbet, fordi personaleandelen af salget beregnes ud fra det. Med bruttotallet ville forholdet blive systematisk for lille.",
+    netReason:
+      "Nettobeløbet, fordi personaleandelen af salget beregnes ud fra det. Med bruttotallet ville forholdet blive systematisk for lille.",
     todayWord: "i dag",
     noComparison: "Intet sammenligningsgrundlag",
     salesWord: "Salg",
@@ -3484,22 +3524,27 @@ const da: AdminText = {
     recordedDays: "Registrerede dage",
     dayOne: "dag",
     dayMany: "dage",
-    noSalesYet: "Der er endnu ikke registreret salg. Efter den første dag begynder Kate at sammenligne dagene.",
+    noSalesYet:
+      "Der er endnu ikke registreret salg. Efter den første dag begynder Kate at sammenligne dagene.",
     readFromReport: "Læst fra dagsrapporten",
     vsSameWeekday: "ift. samme ugedag",
     monthDaysOne: "{kuukausi} · {maara} dag",
     monthDaysMany: "{kuukausi} · {maara} dage",
-    noSalesThisMonth: "Der er ikke registreret salg for denne måned. Andre måneder har {maara} dage.",
+    noSalesThisMonth:
+      "Der er ikke registreret salg for denne måned. Andre måneder har {maara} dage.",
     openDay: "Åbn {paiva}",
-    rateWhenRecorded: "Skattesatsen er den, der gjaldt, da dagen blev registreret. En senere ændring påvirker ikke rækken.",
-    registerLeftKateRight: "Kassens dagsrapport til venstre, Kates beregning til højre.",
+    rateWhenRecorded:
+      "Skattesatsen er den, der gjaldt, da dagen blev registreret. En senere ændring påvirker ikke rækken.",
+    registerLeftKateRight:
+      "Kassens dagsrapport til venstre, Kates beregning til højre.",
     daySales: "Dagens salg",
     readFromRegister: "Læst fra kassens dagsrapport",
     enteredByHand: "Indtastet manuelt",
     whatCustomerPaid: "Hvad kunden betalte",
     goesToTax: "Den del, der går til skattevæsenet",
     averageSuffix: " · gennemsnitskøb {summa}",
-    noRegisterFigures: "Der er ingen kassetal, så dagen er ikke afstemt. Fotografér dagsrapporten, så sammenligner Kate sin egen beregning med den.",
+    noRegisterFigures:
+      "Der er ingen kassetal, så dagen er ikke afstemt. Fotografér dagsrapporten, så sammenligner Kate sin egen beregning med den.",
     registerVsKate: "Sammenligning af kassen og Kate",
     subject: "Post",
     register: "Kasse",
@@ -3512,7 +3557,8 @@ const da: AdminText = {
     noRightRecord: "Ingen ret til at registrere salg.",
     checkDate: "Tjek datoen.",
     enterNetSales: "Indtast dagens nettosalg.",
-    grossBelowNet: "Salg med moms kan ikke være lavere end uden moms. Tjek tallene.",
+    grossBelowNet:
+      "Salg med moms kan ikke være lavere end uden moms. Tjek tallene.",
     badRows: "Salgsrækkerne var ugyldige.",
     unknownSalesGroup: "Ukendt salgsgruppe. Genindlæs siden, og prøv igen.",
     salesSaved: "Salget er gemt.",
@@ -4561,9 +4607,11 @@ const tr: AdminText = {
     groupPerson: "Kişi",
   },
   myynti: {
-    blurryImage: "Görsel belirsiz. Kaydetmeden önce her rakamı rapordan kontrol et.",
+    blurryImage:
+      "Görsel belirsiz. Kaydetmeden önce her rakamı rapordan kontrol et.",
     salesByGroup: "Gruba göre satış",
-    rateFromGroup: "Vergi oranı satış grubunun ayarından gelir. Satır kullanılan oranı saklar, bu yüzden sonraki ayar değişikliği bu günü değiştirmez.",
+    rateFromGroup:
+      "Vergi oranı satış grubunun ayarından gelir. Satır kullanılan oranı saklar, bu yüzden sonraki ayar değişikliği bu günü değiştirmez.",
     group: "Grup",
     registerName: "Kasa adı",
     withTax: "Vergili",
@@ -4583,7 +4631,8 @@ const tr: AdminText = {
     calcGrossMinusVat: "Hesaplandı: vergili − KDV",
     labourShareBase: "İşgücü payı bundan hesaplanır",
     target: "Hedef",
-    targetHint: "İsteğe bağlı. Boş bırakılırsa aynı günün geçmişiyle karşılaştırılır.",
+    targetHint:
+      "İsteğe bağlı. Boş bırakılırsa aynı günün geçmişiyle karşılaştırılır.",
     unknownGroup: "Bilinmeyen grup",
     savingEllipsis: "Kaydediliyor…",
     saveDaySales: "Günün satışını kaydet",
@@ -4592,13 +4641,15 @@ const tr: AdminText = {
     averagePurchase: "Ortalama satın alma {summa}",
     netFromReport: "Kasanın gün raporundan günün net satışı",
     shootDailyReport: "Kasanın gün raporunu çek",
-    extractionHint: "Okuma; günü, satışı, KDV'yi ve fiş sayısını alır. Kaydetmeden önce rakamları sen kontrol edersin.",
+    extractionHint:
+      "Okuma; günü, satışı, KDV'yi ve fiş sayısını alır. Kaydetmeden önce rakamları sen kontrol edersin.",
     reconciliation: "Kasayla mutabakat",
     yesterdayMissing: "Dünün satışı eksik",
     dayWord: "Gün",
     averageWord: "Ortalama satın alma",
     comparison: "Karşılaştırma",
-    netReason: "Net tutar, çünkü satışın işgücü payı bundan hesaplanır. Brüt rakamla oran sistematik olarak çok küçük olurdu.",
+    netReason:
+      "Net tutar, çünkü satışın işgücü payı bundan hesaplanır. Brüt rakamla oran sistematik olarak çok küçük olurdu.",
     todayWord: "bugün",
     noComparison: "Karşılaştırma noktası yok",
     salesWord: "Satış",
@@ -4607,14 +4658,17 @@ const tr: AdminText = {
     recordedDays: "Kaydedilen günler",
     dayOne: "gün",
     dayMany: "gün",
-    noSalesYet: "Henüz kayıtlı satış yok. İlk günden sonra Kate günleri birbiriyle karşılaştırmaya başlar.",
+    noSalesYet:
+      "Henüz kayıtlı satış yok. İlk günden sonra Kate günleri birbiriyle karşılaştırmaya başlar.",
     readFromReport: "Gün raporundan okundu",
     vsSameWeekday: "aynı gün ile karşılaştırma",
     monthDaysOne: "{kuukausi} · {maara} gün",
     monthDaysMany: "{kuukausi} · {maara} gün",
-    noSalesThisMonth: "Bu ay için kayıtlı satış yok. Diğer aylarda {maara} gün var.",
+    noSalesThisMonth:
+      "Bu ay için kayıtlı satış yok. Diğer aylarda {maara} gün var.",
     openDay: "{paiva} aç",
-    rateWhenRecorded: "Vergi oranı, gün kaydedildiğinde geçerli olandır. Sonraki ayar değişikliği bu satırı değiştirmez.",
+    rateWhenRecorded:
+      "Vergi oranı, gün kaydedildiğinde geçerli olandır. Sonraki ayar değişikliği bu satırı değiştirmez.",
     registerLeftKateRight: "Solda kasanın gün raporu, sağda Kate'in hesabı.",
     daySales: "Günün satışı",
     readFromRegister: "Kasanın gün raporundan okundu",
@@ -4622,7 +4676,8 @@ const tr: AdminText = {
     whatCustomerPaid: "Müşterinin ödediği",
     goesToTax: "Vergi dairesine giden pay",
     averageSuffix: " · ortalama satın alma {summa}",
-    noRegisterFigures: "Kasa rakamları yok, bu yüzden gün mutabık değil. Gün raporunu çek, Kate kendi hesabını onunla karşılaştırsın.",
+    noRegisterFigures:
+      "Kasa rakamları yok, bu yüzden gün mutabık değil. Gün raporunu çek, Kate kendi hesabını onunla karşılaştırsın.",
     registerVsKate: "Kasa ile Kate karşılaştırması",
     subject: "Kalem",
     register: "Kasa",
@@ -4635,7 +4690,8 @@ const tr: AdminText = {
     noRightRecord: "Satış kaydetme yetkisi yok.",
     checkDate: "Tarihi kontrol et.",
     enterNetSales: "Günün net satışını gir.",
-    grossBelowNet: "Vergili satış, vergisizden düşük olamaz. Rakamları kontrol et.",
+    grossBelowNet:
+      "Vergili satış, vergisizden düşük olamaz. Rakamları kontrol et.",
     badRows: "Satış satırları geçersizdi.",
     unknownSalesGroup: "Bilinmeyen satış grubu. Sayfayı yenile ve tekrar dene.",
     salesSaved: "Satış kaydedildi.",
@@ -5680,9 +5736,11 @@ const et: AdminText = {
     groupPerson: "Isik",
   },
   myynti: {
-    blurryImage: "Pilt on ebaselge. Kontrolli enne salvestamist iga numbrit aruandest.",
+    blurryImage:
+      "Pilt on ebaselge. Kontrolli enne salvestamist iga numbrit aruandest.",
     salesByGroup: "Müük gruppide kaupa",
-    rateFromGroup: "Maksumäär tuleb müügigrupi seadest. Rida salvestab kasutatud määra, seega hilisem seademuudatus seda päeva ei muuda.",
+    rateFromGroup:
+      "Maksumäär tuleb müügigrupi seadest. Rida salvestab kasutatud määra, seega hilisem seademuudatus seda päeva ei muuda.",
     group: "Grupp",
     registerName: "Kassa nimi",
     withTax: "Käibemaksuga",
@@ -5702,7 +5760,8 @@ const et: AdminText = {
     calcGrossMinusVat: "Arvutatud: käibemaksuga − KM",
     labourShareBase: "Sellest arvutatakse tööjõu osa",
     target: "Eesmärk",
-    targetHint: "Valikuline. Tühjaks jättes võrreldakse sama nädalapäeva ajalooga.",
+    targetHint:
+      "Valikuline. Tühjaks jättes võrreldakse sama nädalapäeva ajalooga.",
     unknownGroup: "Tundmatu grupp",
     savingEllipsis: "Salvestan…",
     saveDaySales: "Salvesta päeva müük",
@@ -5711,13 +5770,15 @@ const et: AdminText = {
     averagePurchase: "Keskmine ost {summa}",
     netFromReport: "Päeva netomüük kassa päevaaruandest",
     shootDailyReport: "Pildista kassa päevaaruanne",
-    extractionHint: "Lugemine loeb päeva, müügi, käibemaksu ja tšekkide arvu. Sina kontrollid numbreid enne salvestamist.",
+    extractionHint:
+      "Lugemine loeb päeva, müügi, käibemaksu ja tšekkide arvu. Sina kontrollid numbreid enne salvestamist.",
     reconciliation: "Kassaga vastavusse viimine",
     yesterdayMissing: "Eilne müük puudub",
     dayWord: "Päev",
     averageWord: "Keskmine ost",
     comparison: "Võrdlus",
-    netReason: "Netosumma, sest tööjõu osa müügist arvutatakse sellest. Brutonumbriga oleks suhe süstemaatiliselt liiga väike.",
+    netReason:
+      "Netosumma, sest tööjõu osa müügist arvutatakse sellest. Brutonumbriga oleks suhe süstemaatiliselt liiga väike.",
     todayWord: "täna",
     noComparison: "Võrdlusalust ei ole",
     salesWord: "Müük",
@@ -5726,14 +5787,17 @@ const et: AdminText = {
     recordedDays: "Salvestatud päevad",
     dayOne: "päev",
     dayMany: "päeva",
-    noSalesYet: "Salvestatud müüki veel ei ole. Pärast esimest päeva hakkab Kate päevi omavahel võrdlema.",
+    noSalesYet:
+      "Salvestatud müüki veel ei ole. Pärast esimest päeva hakkab Kate päevi omavahel võrdlema.",
     readFromReport: "Loetud päevaaruandest",
     vsSameWeekday: "vs sama nädalapäev",
     monthDaysOne: "{kuukausi} · {maara} päev",
     monthDaysMany: "{kuukausi} · {maara} päeva",
-    noSalesThisMonth: "Selle kuu kohta müüki salvestatud ei ole. Teistes kuudes on {maara} päeva.",
+    noSalesThisMonth:
+      "Selle kuu kohta müüki salvestatud ei ole. Teistes kuudes on {maara} päeva.",
     openDay: "Ava {paiva}",
-    rateWhenRecorded: "Maksumäär on see, mis kehtis päeva salvestamisel. Hilisem seademuudatus seda rida ei muuda.",
+    rateWhenRecorded:
+      "Maksumäär on see, mis kehtis päeva salvestamisel. Hilisem seademuudatus seda rida ei muuda.",
     registerLeftKateRight: "Vasakul kassa päevaaruanne, paremal Kate arvutus.",
     daySales: "Päeva müük",
     readFromRegister: "Loetud kassa päevaaruandest",
@@ -5741,7 +5805,8 @@ const et: AdminText = {
     whatCustomerPaid: "Mida klient maksis",
     goesToTax: "Osa, mis läheb maksuametile",
     averageSuffix: " · keskmine ost {summa}",
-    noRegisterFigures: "Kassa numbreid ei ole, seega päev ei ole vastavusse viidud. Pildista päevaaruanne ja Kate võrdleb oma arvutust sellega.",
+    noRegisterFigures:
+      "Kassa numbreid ei ole, seega päev ei ole vastavusse viidud. Pildista päevaaruanne ja Kate võrdleb oma arvutust sellega.",
     registerVsKate: "Kassa ja Kate võrdlus",
     subject: "Kirje",
     register: "Kassa",
@@ -5754,9 +5819,11 @@ const et: AdminText = {
     noRightRecord: "Müügi salvestamise õigust ei ole.",
     checkDate: "Kontrolli kuupäeva.",
     enterNetSales: "Sisesta päeva netomüük.",
-    grossBelowNet: "Käibemaksuga müük ei saa olla väiksem kui käibemaksuta. Kontrolli numbreid.",
+    grossBelowNet:
+      "Käibemaksuga müük ei saa olla väiksem kui käibemaksuta. Kontrolli numbreid.",
     badRows: "Müügiread olid vigased.",
-    unknownSalesGroup: "Tundmatu müügigrupp. Laadi leht uuesti ja proovi uuesti.",
+    unknownSalesGroup:
+      "Tundmatu müügigrupp. Laadi leht uuesti ja proovi uuesti.",
     salesSaved: "Müük on salvestatud.",
     salesSaveFailed: "Müügi salvestamine ebaõnnestus: {viesti}",
     rowsSaveFailed: "Müügiridade salvestamine ebaõnnestus: {viesti}",

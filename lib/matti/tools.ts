@@ -15,7 +15,6 @@ import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
 import { budgetLines } from "@/lib/restoflow/dashboard";
 import { labels } from "@/lib/i18n/labels";
 import {
-  LUNCH_STATUS_LABELS,
   formatWeekRange,
   includedExtras,
   inheritedIncludes,
@@ -393,7 +392,7 @@ const getLunchWeek = defineTool({
     return {
       card: {
         title: `Viikko ${isoWeekNumber(week)} · ${formatWeekRange(week, ctx.locale)}`,
-        value: LUNCH_STATUS_LABELS[menu.status],
+        value: labels(ctx.locale).lunchStatus[menu.status],
         meta: [
           `${days.length} päivää`,
           `${menu.days.reduce((n, d) => n + d.items.length, 0)} ruokaa`,

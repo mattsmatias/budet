@@ -205,12 +205,6 @@ export function daysWithContent(week: LunchWeek): LunchDay[] {
   return week.days.filter((day) => day.items.length > 0);
 }
 
-export const LUNCH_STATUS_LABELS: Record<LunchStatus, string> = {
-  draft: "Luonnos",
-  published: "Julkaistu",
-  archived: "Arkistoitu",
-};
-
 /** Oletushinnan nimi. Yhden hinnan tapauksessa tätä ei näytetä erikseen. */
 export const DEFAULT_PRICE_NAME = "Lounas";
 

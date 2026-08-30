@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { labels } from "@/lib/i18n/labels";
 import {
-  PRIORITY_LABELS,
   activeReminders,
   countTasks,
   daysLate,
@@ -59,7 +59,7 @@ const getTasks = defineTool({
       dueTime: task.dueTime,
       status: statusOf(task, ctx.today),
       daysLate: daysLate(task, ctx.today),
-      priority: PRIORITY_LABELS[task.priority],
+      priority: labels(ctx.locale).taskPriority[task.priority],
       assignedTo:
         ctx.data.users.find((user) => user.id === task.assignedTo)?.name ??
         null,

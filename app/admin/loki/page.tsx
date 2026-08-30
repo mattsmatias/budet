@@ -1,11 +1,11 @@
 import Link from "next/link";
+import { labels, type Labels } from "@/lib/i18n/labels";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { addDays, startOfDayIso } from "@/lib/restoflow/dates";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchAuditLog } from "@/lib/restoflow/queries";
 import {
-  ACTION_LABELS,
-  ENTITY_LABELS,
   actionTone,
   fieldChanges,
   summarise,
@@ -45,6 +45,8 @@ const PAGE_SIZE = 50;
 export default async function AuditLogPage({
   searchParams,
 }: PageProps<"/admin/loki">) {
+  const locale = await resolveLocale();
+  const nimet = labels(locale);
   const { restaurant, role, users, today } = await adminContext("/admin/loki");
   if (!can(role, "audit.view")) return null;
 
@@ -183,13 +185,13 @@ export default async function AuditLogPage({
               name="moduuli"
               label="Moduuli"
               value={entityType}
-              options={ENTITY_LABELS}
+              options={nimet.auditEntity}
             />
             <Valitsin
               name="toiminto"
               label="Toiminto"
               value={action}
-              options={ACTION_LABELS}
+              options={nimet.auditAction}
             />
 
             <label className="block">
@@ -260,7 +262,11 @@ export default async function AuditLogPage({
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
             {events.map((event) => (
               <li key={event.id} className="px-5 py-3.5">
-                <Tapahtuma event={event} timezone={restaurant.timezone} />
+                <Tapahtuma
+                  nimet={nimet}
+                  event={event}
+                  timezone={restaurant.timezone}
+                />
               </li>
             ))}
           </ul>
@@ -303,9 +309,11 @@ export default async function AuditLogPage({
 // ---------------------------------------------------------------------------
 
 function Tapahtuma({
+  nimet,
   event,
   timezone,
 }: {
+  nimet: Labels;
   event: AuditEvent;
   timezone: string;
 }) {
@@ -340,8 +348,8 @@ function Tapahtuma({
             style={{ color: "var(--rf-text-3)" }}
           >
             {formatMoment(event.createdAt, timezone)}
-            {event.entityType in ENTITY_LABELS
-              ? ` · ${ENTITY_LABELS[event.entityType]}`
+            {event.entityType in nimet.auditEntity
+              ? ` · ${nimet.auditEntity[event.entityType]}`
               : ""}
           </span>
         </span>

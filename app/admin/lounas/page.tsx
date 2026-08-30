@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -16,7 +17,6 @@ import {
 import {
   DEFAULT_PRICE_NAME,
   EXTRA_PRICE_NAMES,
-  LUNCH_STATUS_LABELS,
   formatDayShort,
   formatWeekRange,
   hasContent,
@@ -79,6 +79,7 @@ export default async function LunchPage({
 }: PageProps<"/admin/lounas">) {
   const locale = await resolveLocale();
   const t = adminText(locale);
+  const nimet = labels(locale);
   const params = await searchParams;
   const { restaurant, role, today } = await adminContext("/admin/lounas");
 
@@ -274,7 +275,7 @@ export default async function LunchPage({
       {week ? (
         <div className="flex flex-wrap items-center gap-2">
           <Pill tone={week.status === "published" ? "ok" : "neutral"} dot>
-            {LUNCH_STATUS_LABELS[week.status]}
+            {nimet.lunchStatus[week.status]}
           </Pill>
 
           {week.publishedAt ? (
@@ -383,7 +384,10 @@ export default async function LunchPage({
                 seassa. */}
             {canManage ? (
               <div className="pt-2">
-                <LunchThemePicker current={restaurant.lunchTheme} />
+                <LunchThemePicker
+                  nimet={nimet}
+                  current={restaurant.lunchTheme}
+                />
               </div>
             ) : null}
 
@@ -465,7 +469,7 @@ export default async function LunchPage({
                     <Pill
                       tone={entry.status === "published" ? "ok" : "neutral"}
                     >
-                      {LUNCH_STATUS_LABELS[entry.status]}
+                      {nimet.lunchStatus[entry.status]}
                     </Pill>
                     <span style={{ color: "var(--rf-text-3)" }}>
                       <RfIcon name="chevron" size={15} />

@@ -1,15 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { saveTask } from "./actions";
 import type { AdminState } from "../actions";
-import {
-  PRIORITY_LABELS,
-  RECURRENCE_LABELS,
-  VISIBILITY_LABELS,
-  type Task,
-} from "@/lib/restoflow/tasks";
+import { type Task } from "@/lib/restoflow/tasks";
 import type { User } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card } from "@/components/restoflow/ui";
@@ -27,11 +23,13 @@ const initial: AdminState = {};
  * tehtävä joka syntyy siinä hetkessä kun se muistetaan.
  */
 export function TaskForm({
+  nimet,
   users,
   task,
   onClose,
   today,
 }: {
+  nimet: Labels;
   users: User[];
   task?: Task;
   onClose: () => void;
@@ -174,7 +172,7 @@ export function TaskForm({
                   className={`${CONTROL} mt-1.5`}
                   style={CONTROL_STYLE}
                 >
-                  {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                  {Object.entries(nimet.taskPriority).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
@@ -192,11 +190,13 @@ export function TaskForm({
                   className={`${CONTROL} mt-1.5`}
                   style={CONTROL_STYLE}
                 >
-                  {Object.entries(VISIBILITY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(nimet.taskVisibility).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
 
@@ -210,11 +210,13 @@ export function TaskForm({
                   className={`${CONTROL} mt-1.5`}
                   style={CONTROL_STYLE}
                 >
-                  {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(nimet.taskRecurrence).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </label>
             </div>

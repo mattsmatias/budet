@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -6,7 +7,6 @@ import { can } from "@/lib/restoflow/permissions";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { formatMoney } from "@/lib/money";
 import {
-  MONTH_STATUS_LABELS,
   monthLabel,
   monthTone,
   sortIssues,
@@ -81,7 +81,9 @@ export default async function AccountingPage({
     role,
     month: nykyinen,
   } = await adminContext("/admin/kirjanpito");
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const nimet = labels(locale);
 
   const pyydetty =
     typeof params.kuukausi === "string" ? params.kuukausi : nykyinen;
@@ -135,7 +137,7 @@ export default async function AccountingPage({
             }
             dot
           >
-            {MONTH_STATUS_LABELS[state.status]}
+            {nimet.monthStatus[state.status]}
           </Pill>
         </div>
       </div>
@@ -181,6 +183,7 @@ export default async function AccountingPage({
 
       {tab === "paivakirja" ? (
         <Paivakirja
+          nimet={nimet}
           t={t}
           entries={await fetchJournal(restaurant.id, month)}
           saaKirjata={saaKirjata}
@@ -189,13 +192,18 @@ export default async function AccountingPage({
 
       {tab === "paakirja" ? (
         <Paakirja
+          nimet={nimet}
           t={t}
           accounts={await fetchGeneralLedger(restaurant.id, month)}
         />
       ) : null}
 
       {tab === "tilikartta" ? (
-        <Tilikartta t={t} accounts={await fetchAccounts(restaurant.id)} />
+        <Tilikartta
+          nimet={nimet}
+          t={t}
+          accounts={await fetchAccounts(restaurant.id)}
+        />
       ) : null}
 
       {tab === "alv" ? <Alv t={t} vat={state.vat} /> : null}

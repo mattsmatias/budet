@@ -257,7 +257,7 @@ export async function buildReportRows(
           money(p.spentCents),
           p.remainingCents === null ? "" : money(p.remainingCents),
           p.ratio === null ? "" : `${Math.round(p.ratio * 100)} %`,
-          STATUS_LABELS[p.status],
+          nimet.budgetStatus[p.status],
         ]),
       ];
     }
@@ -296,13 +296,6 @@ export async function buildReportRows(
 
   return [];
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  ok: "OK",
-  warning: "Lähestyy rajaa",
-  exceeded: "Ylitetty",
-  none: "Ei budjettia",
-};
 
 /** Sentit euroiksi desimaalipilkulla, ilman valuuttamerkkiä. */
 function money(cents: number): string {
