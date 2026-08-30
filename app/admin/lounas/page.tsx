@@ -8,6 +8,7 @@ import { fill } from "@/lib/i18n/auth-text";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import QRCode from "qrcode";
 import { adminContext } from "@/lib/restoflow/page-context";
+import { siteOrigin } from "@/lib/restoflow/site-origin";
 import {
   fetchAllergenTypes,
   fetchDietTypes,
@@ -842,29 +843,6 @@ function DayCard({
 }
 
 // ---------------------------------------------------------------------------
-
-/**
- * Sovelluksen julkinen osoite.
- *
- * Ympäristömuuttuja jos se on asetettu; muuten pyynnön otsikoista.
- * Kovakoodattu osoite olisi väärä heti kun sovellus siirtyy omalle
- * verkkotunnukselle, ja juuri tämä osoite päätyy QR-koodiin oveen.
- */
-async function siteOrigin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured.replace(/\/+$/, "");
-
-  const { headers } = await import("next/headers");
-  const list = await headers();
-
-  const host =
-    list.get("x-forwarded-host") ?? list.get("host") ?? "localhost:3000";
-  const protocol =
-    list.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") ? "http" : "https");
-
-  return `${protocol}://${host}`;
-}
 
 function formatTimestamp(iso: string, t: AdminText): string {
   const date = new Date(iso);

@@ -49,7 +49,8 @@ export type IconName =
   | "more"
   | "logout"
   | "sales"
-  | "trend";
+  | "trend"
+  | "tables";
 
 /**
  * Ikonipolut.
@@ -92,6 +93,11 @@ const PATHS: Record<IconName, string> = {
     "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 16.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z",
 
   calendar: "M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4",
+
+  // Pyöreä pöytä ylhäältä, neljä tuolia ympärillä. Varaus koskee
+  // pöytää, ei kalenteria — kalenteri on jo työvuorojen merkki.
+  tables:
+    "M12 17.6a5.6 5.6 0 1 0 0-11.2 5.6 5.6 0 0 0 0 11.2ZM12 3.4v2.2M12 18.4v2.2M3.4 12h2.2M18.4 12h2.2",
 
   staff:
     "M14.5 20.5v-1.6a3.9 3.9 0 0 0-3.9-3.9H7.4a3.9 3.9 0 0 0-3.9 3.9v1.6M9 12.4a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM20.5 20.5v-1.6a3.9 3.9 0 0 0-2.9-3.8M15.6 4.8a3.9 3.9 0 0 1 0 7.6",

@@ -858,9 +858,13 @@ describe("oikeudet", () => {
    * Kolmastoista on Kirjanpito. Se on oma työtilansa eikä analyysiä
    * muusta, joten sitä ei voi tavoittaa toisen sivun osiosta niin
    * kuin Toimittajia tai Havaintoja.
+   *
+   * Neljästoista on Pöytävaraukset. Se on illan aikana avoinna oleva
+   * näkymä eikä asetus: seurue saapuu, pöytä vaihtuu, walk-in
+   * istuutuu. Sitä ei voi hakea asetusten takaa kesken vuoron.
    */
-  it("pitää päävalikon kolmessatoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(13);
+  it("pitää päävalikon neljässätoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(14);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 

@@ -40,6 +40,16 @@ export type Capability =
   | "alerts.view"
   | "lunch.view"
   | "lunch.manage"
+  /*
+   * Pöytävaraukset kahtena oikeutena.
+   *
+   * Tarjoilija tarvitsee illan varauslistan tehdäkseen työnsä, muttei
+   * saa siirtää eikä perua varauksia. Sama raja on kannassa:
+   * reservation_day palvelee kaikkia jäseniä ja jättää yhteystiedot
+   * pois, kun taas muokkausfunktiot vaativat is_manager.
+   */
+  | "reservations.view"
+  | "reservations.manage"
   | "matti.use"
   /*
    * Tehtävät kahtena oikeutena.
@@ -90,6 +100,8 @@ const OWNER: Capability[] = [
   "reports.export",
   "lunch.view",
   "lunch.manage",
+  "reservations.view",
+  "reservations.manage",
   "matti.use",
   "tasks.view",
   "tasks.manage",
@@ -131,6 +143,8 @@ const MANAGER: Capability[] = [
   "reports.export",
   "lunch.view",
   "lunch.manage",
+  "reservations.view",
+  "reservations.manage",
   "matti.use",
   "tasks.view",
   "tasks.manage",
@@ -157,6 +171,14 @@ const EMPLOYEE: Capability[] = [
   // Oma palkkakertymä, ei muiden. Työntekijän on nähtävä mitä hänelle
   // kertyy; muiden palkka ei kuulu hänelle.
   "payroll.view.own",
+  /*
+   * Illan varauslista, ilman asiakkaiden yhteystietoja.
+   *
+   * Salivuorossa on tiedettävä montako seuruetta on tulossa ja mihin
+   * pöytiin. Puhelinnumero ei kuulu siihen: sillä soittaa esihenkilö
+   * jos ilta muuttuu. Kanta karsii kentät, ei käyttöliittymä.
+   */
+  "reservations.view",
 ];
 
 /**
@@ -259,9 +281,18 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/lounas", requires: "lunch.view" },
+  { href: "/admin/varaukset", requires: "reservations.view" },
   { href: "/admin/raportit", requires: "reports.view" },
   { href: "/admin/ilmoitukset", requires: "alerts.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
+  /*
+   * Varausasetukset ovat asetusten alla mutta oma vaatimuksensa.
+   *
+   * settings.edit on vain omistajalla, mutta pöytäkartta ja aukioloajat
+   * ovat vuoropäällikön työtä — ja kanta on samaa mieltä: siellä raja
+   * on is_manager.
+   */
+  { href: "/admin/asetukset/varaukset", requires: "reservations.manage" },
 ];
 
 /**
@@ -443,6 +474,22 @@ export const ADMIN_NAV: NavEntry[] = [
     icon: "payroll",
     requires: "payroll.view",
     section: "staff",
+  },
+
+  /*
+   * Pöytävaraukset vaatii reservations.manage eikä .view.
+   *
+   * Sama syy kuin Tehtävissä: työntekijällä on reservations.view
+   * salivuoroa varten, mutta hänen näkymänsä on /app. Jos valikkokohta
+   * vaatisi vain lukuoikeutta, landingFor ohjaisi hänet kirjautuessaan
+   * hallinnan varaussivulle.
+   */
+  {
+    href: "/admin/varaukset",
+    key: "reservations",
+    icon: "tables",
+    requires: "reservations.manage",
+    section: "restaurant",
   },
 
   {

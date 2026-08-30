@@ -24,6 +24,10 @@ export function SectionNav({
 }) {
   const sections = settingsSections(t).filter((s) => canEdit || !s.ownerOnly);
 
+  /* Osaston osoite: oma sivu jos sellainen on, muuten tämän sivun osio. */
+  const href = (section: (typeof sections)[number]) =>
+    section.href ?? `/admin/asetukset?osio=${section.id}`;
+
   return (
     /*
      * min-w-0 ei ole koriste.
@@ -41,8 +45,10 @@ export function SectionNav({
         {sections.map((section) => (
           <li key={section.id} className="shrink-0">
             <Link
-              href={`/admin/asetukset?osio=${section.id}`}
-              aria-current={section.id === current ? "page" : undefined}
+              href={href(section)}
+              aria-current={
+                !section.href && section.id === current ? "page" : undefined
+              }
               className="rf-press flex items-center gap-2 whitespace-nowrap px-3.5 py-2 text-[13px] font-bold"
               style={{
                 background:
@@ -67,12 +73,12 @@ export function SectionNav({
       {/* Työpöytä: pystylista, jossa jokaisella rivillä myös kuvaus. */}
       <ul className="hidden lg:block">
         {sections.map((section) => {
-          const active = section.id === current;
+          const active = !section.href && section.id === current;
 
           return (
             <li key={section.id} className="mb-1 last:mb-0">
               <Link
-                href={`/admin/asetukset?osio=${section.id}`}
+                href={href(section)}
                 aria-current={active ? "page" : undefined}
                 className="rf-press flex items-start gap-[11px] px-3 py-2.5"
                 style={{

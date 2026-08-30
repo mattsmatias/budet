@@ -27,6 +27,16 @@ export interface SettingsSection {
   icon: IconName;
   /** Vaatiiko osio omistajan oikeudet. */
   ownerOnly: boolean;
+  /*
+   * Oma sivunsa asetusten sisällä.
+   *
+   * Useimmat osastot ovat saman sivun näkymiä ja valinta on
+   * ?osio-parametrissa. Pöytävaraukset on niin laaja — sali,
+   * aukiolot, kestot, yhdistelmät ja upotuskoodi — että osastona se
+   * olisi asetussivun sisällä oleva toinen asetussivu. Se on siis
+   * oma reittinsä, mutta löytyy samasta valikosta kuin muutkin.
+   */
+  href?: string;
 }
 
 /*
@@ -78,6 +88,14 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     icon: "expenses",
     ownerOnly: true,
   },
+  {
+    id: "varaukset",
+    label: t.nav.reservations,
+    summary: t.asetus.secReservationsHint,
+    icon: "tables",
+    ownerOnly: false,
+    href: "/admin/asetukset/varaukset",
+  },
   /*
    * Toimintaloki on asetuksissa muttei asetus.
    *
@@ -96,6 +114,12 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
 
 /** Tuntematon osio putoaa ensimmäiseen: osoiterivin voi kirjoittaa itse. */
 export function sectionFor(id: unknown, t: AdminText): SettingsSection {
-  const osastot = settingsSections(t);
+  /*
+   * Omalle sivulleen vievät kohdat eivät kelpaa osioksi.
+   *
+   * ?osio=varaukset osuisi muuten kohtaan jolla ei ole sisältöä tällä
+   * sivulla, ja käyttäjä näkisi tyhjän osaston.
+   */
+  const osastot = settingsSections(t).filter((s) => !s.href);
   return osastot.find((s) => s.id === id) ?? osastot[0];
 }
