@@ -181,7 +181,7 @@ const getBriefing = defineTool({
             : "Kuukauden karkea tulos",
         ],
         href: "/admin",
-        linkLabel: "Avaa yleiskuva",
+        linkLabel: adminText(ctx.locale).korttiLinkki.openOverview,
       },
     };
   },
@@ -244,7 +244,7 @@ const getAlerts = defineTool({
           `${result.counts.warning} huomautusta`,
         ],
         href: "/admin/havainnot",
-        linkLabel: "Näytä kaikki",
+        linkLabel: adminText(ctx.locale).korttiLinkki.showAll,
       },
     };
   },
@@ -327,7 +327,7 @@ const getSales = defineTool({
           ...(from === to ? [] : [`${days.length} päivää`]),
         ],
         href: "/admin/myynti",
-        linkLabel: "Avaa myynti",
+        linkLabel: adminText(ctx.locale).korttiLinkki.openSales,
       },
     };
   },
@@ -404,7 +404,7 @@ const getLabourCost = defineTool({
             : `${Math.round(share * 100)} % myynnistä`,
         ],
         href: `/admin/palkat?kuukausi=${month}`,
-        linkLabel: "Avaa palkat",
+        linkLabel: adminText(ctx.locale).korttiLinkki.openPayroll,
       },
     };
   },

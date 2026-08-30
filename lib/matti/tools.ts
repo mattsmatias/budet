@@ -115,7 +115,7 @@ const getDashboard = defineTool({
             : []),
         ],
         href: `/admin/kulut?kuukausi=${month}`,
-        linkLabel: "Näytä kulut",
+        linkLabel: adminText(ctx.locale).korttiLinkki.showExpenses,
       },
     };
   },
@@ -168,7 +168,7 @@ const getExpensesByCategory = defineTool({
           percent: Math.round(t.share * 100),
         })),
         href: `/admin/kulut?kuukausi=${month}`,
-        linkLabel: "Näytä kulut",
+        linkLabel: adminText(ctx.locale).korttiLinkki.showExpenses,
       },
     };
   },
@@ -224,7 +224,7 @@ const getSuppliers = defineTool({
           percent: Math.round(x.share * 100),
         })),
         href: "/admin/toimittajat",
-        linkLabel: "Kaikki toimittajat",
+        linkLabel: adminText(ctx.locale).korttiLinkki.allSuppliers,
       },
     };
   },
@@ -281,7 +281,7 @@ const searchReceipts = defineTool({
                 ...(input.month ? [input.month] : []),
               ],
               href: "/admin/kuitit",
-              linkLabel: "Avaa kuitit",
+              linkLabel: adminText(ctx.locale).korttiLinkki.openReceipts,
             },
       summary:
         found.length === 0
@@ -365,7 +365,7 @@ const getBudgets = defineTool({
           percent: Math.min(100, l.percent),
         })),
         href: `/admin/budjetit?kuukausi=${month}`,
-        linkLabel: "Näytä budjetit",
+        linkLabel: adminText(ctx.locale).korttiLinkki.showBudgets,
       },
     };
   },
@@ -420,7 +420,7 @@ const getLunchWeek = defineTool({
             : []),
         ],
         href: `/admin/lounas?viikko=${week}`,
-        linkLabel: "Avaa lounaslista",
+        linkLabel: adminText(ctx.locale).korttiLinkki.openLunchList,
       },
       summary:
         `Viikko ${isoWeekNumber(week)} (${formatWeekRange(week, ctx.locale)}): tila ${menu.status}` +
