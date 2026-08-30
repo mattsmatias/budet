@@ -12,6 +12,8 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { adminText } from "@/lib/i18n/admin-text";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -280,7 +282,7 @@ export async function POST(request: Request) {
      * näyttäisi siltä ettei raportissa ollut mitään luettavaa, ja
      * käyttäjä kuvaisi sen turhaan uudelleen.
      */
-    const failure = explainAiError(error);
+    const failure = explainAiError(error, adminText(await resolveLocale()));
 
     console.error("myynnin poiminta: mallikutsu epäonnistui", {
       reason: failure.reason,

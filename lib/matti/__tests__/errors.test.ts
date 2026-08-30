@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import { explainAiError } from "../errors";
 
 /**
@@ -37,6 +38,7 @@ describe("saldo loppu", () => {
         "Your credit balance is too low to access the Anthropic API. " +
           "Please go to Plans & Billing to upgrade or purchase credits.",
       ),
+      adminText("fi"),
     );
 
     expect(failure.reason).toBe("out_of_credit");
@@ -45,7 +47,10 @@ describe("saldo loppu", () => {
   });
 
   it("ei kehota yrittämään uudelleen", () => {
-    const failure = explainAiError(apiError(400, "credit balance is too low"));
+    const failure = explainAiError(
+      apiError(400, "credit balance is too low"),
+      adminText("fi"),
+    );
 
     expect(failure.retryable).toBe(false);
     expect(failure.message).not.toMatch(/uudelleen/i);
@@ -54,7 +59,10 @@ describe("saldo loppu", () => {
 
 describe("muut virheet", () => {
   it("tunnistaa kelvottoman avaimen", () => {
-    const failure = explainAiError(apiError(401, "invalid x-api-key"));
+    const failure = explainAiError(
+      apiError(401, "invalid x-api-key"),
+      adminText("fi"),
+    );
 
     expect(failure.reason).toBe("invalid_key");
     expect(failure.retryable).toBe(false);
@@ -62,19 +70,29 @@ describe("muut virheet", () => {
   });
 
   it("pitää ruuhkan ohimenevänä", () => {
-    const failure = explainAiError(apiError(429, "rate limit exceeded"));
+    const failure = explainAiError(
+      apiError(429, "rate limit exceeded"),
+      adminText("fi"),
+    );
 
     expect(failure.reason).toBe("rate_limited");
     expect(failure.retryable).toBe(true);
   });
 
   it("pitää palvelinvirheen ohimenevänä", () => {
-    expect(explainAiError(apiError(529, "overloaded")).retryable).toBe(true);
-    expect(explainAiError(apiError(500, "internal")).retryable).toBe(true);
+    expect(
+      explainAiError(apiError(529, "overloaded"), adminText("fi")).retryable,
+    ).toBe(true);
+    expect(
+      explainAiError(apiError(500, "internal"), adminText("fi")).retryable,
+    ).toBe(true);
   });
 
   it("kestää tuntemattoman virheen", () => {
-    const failure = explainAiError(new Error("socket hang up"));
+    const failure = explainAiError(
+      new Error("socket hang up"),
+      adminText("fi"),
+    );
 
     expect(failure.retryable).toBe(true);
     expect(failure.status).toBe(502);
@@ -82,7 +100,7 @@ describe("muut virheet", () => {
   });
 
   it("kestää sen ettei virhe ole Error", () => {
-    const failure = explainAiError("jotain meni pieleen");
+    const failure = explainAiError("jotain meni pieleen", adminText("fi"));
 
     expect(failure.retryable).toBe(true);
     expect(failure.reason).toBe("unknown");
@@ -98,6 +116,7 @@ describe("viestin sisältö", () => {
         400,
         "Your credit balance is too low to access the Anthropic API.",
       ),
+      adminText("fi"),
     );
 
     expect(failure.message).not.toMatch(/credit balance/i);

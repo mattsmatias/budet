@@ -15,6 +15,8 @@
  */
 
 import type { Alert, Receipt, Shift } from "@/lib/restoflow/types";
+import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import type { DailySales } from "@/lib/restoflow/sales";
 import { addDays } from "@/lib/restoflow/dates";
 
@@ -77,6 +79,7 @@ function prosentti(n: number): string {
 export function expenseObservation(
   receipts: Receipt[],
   today: string,
+  t: AdminText,
 ): Observation | null {
   const viikko = addDays(today, -7);
 
@@ -111,10 +114,10 @@ export function expenseObservation(
     id: "kulut-viikko",
     text:
       ero > 0
-        ? `Kulut ovat tällä viikolla ${prosentti(ero)} korkeammat kuin neljän edellisen viikon keskiarvo.`
-        : `Kulut ovat tällä viikolla ${prosentti(ero)} matalammat kuin neljän edellisen viikon keskiarvo.`,
+        ? fill(t.brief.expensesUp, { osuus: prosentti(ero) })
+        : fill(t.brief.expensesDown, { osuus: prosentti(ero) }),
     href: "/admin/kulut",
-    linkLabel: "Analysoi kulut",
+    linkLabel: t.brief.analyseExpenses,
     tone: ero > 0 ? "warn" : "neutral",
   };
 }
@@ -123,6 +126,7 @@ export function expenseObservation(
 export function salesObservation(
   sales: DailySales[],
   today: string,
+  t: AdminText,
 ): Observation | null {
   const viikko = addDays(today, -7);
   const edellinen = addDays(today, -14);
@@ -152,10 +156,10 @@ export function salesObservation(
     id: "myynti-viikko",
     text:
       ero > 0
-        ? `Myynti on viime viikolla ${prosentti(ero)} korkeampi kuin sitä edeltävällä viikolla.`
-        : `Myynti on viime viikolla ${prosentti(ero)} matalampi kuin sitä edeltävällä viikolla.`,
+        ? fill(t.brief.salesUp, { osuus: prosentti(ero) })
+        : fill(t.brief.salesDown, { osuus: prosentti(ero) }),
     href: "/admin/myynti",
-    linkLabel: "Katso myynti",
+    linkLabel: t.brief.seeSales,
     tone: ero > 0 ? "neutral" : "warn",
   };
 }
@@ -164,6 +168,7 @@ export function salesObservation(
 export function shiftObservation(
   shifts: Shift[],
   today: string,
+  t: AdminText,
 ): Observation | null {
   const alku = addDays(today, 7);
   const loppu = addDays(today, 14);
@@ -195,10 +200,10 @@ export function shiftObservation(
     id: "vuorot-ensi-viikko",
     text:
       erotus > 0
-        ? `Ensi viikolle on suunniteltu ${maara} vuoroa enemmän kuin neljän edellisen viikon keskiarvo.`
-        : `Ensi viikolle on suunniteltu ${maara} vuoroa vähemmän kuin neljän edellisen viikon keskiarvo.`,
+        ? fill(t.brief.shiftsMore, { maara: String(maara) })
+        : fill(t.brief.shiftsFewer, { maara: String(maara) }),
     href: "/admin/tyovuorot",
-    linkLabel: "Tarkista vuorot",
+    linkLabel: t.brief.checkShifts,
     tone: "warn",
   };
 }
@@ -218,17 +223,20 @@ export function buildBriefing({
   sales,
   shifts,
   today,
+  t,
 }: {
   alerts: Alert[];
   receipts: Receipt[];
   sales: DailySales[];
   shifts: Shift[];
   today: string;
+  /** Hallinnan tekstit: havainnot kirjoitetaan niillä. */
+  t: AdminText;
 }): Briefing {
   const observations = [
-    expenseObservation(receipts, today),
-    salesObservation(sales, today),
-    shiftObservation(shifts, today),
+    expenseObservation(receipts, today, t),
+    salesObservation(sales, today, t),
+    shiftObservation(shifts, today, t),
   ].filter((o): o is Observation => o !== null);
 
   return {
@@ -245,17 +253,17 @@ export function buildBriefing({
  * Katea lomalla toisessa maassa, eikä "hyvää yötä" ole silloin
  * totta ravintolassa.
  */
-export function greeting(now: Date, timezone: string): string {
+export function greeting(now: Date, timezone: string, t: AdminText): string {
   const tunti = Number(
-    new Intl.DateTimeFormat("fi-FI", {
+    new Intl.DateTimeFormat("en-GB", {
       hour: "numeric",
       hour12: false,
       timeZone: timezone,
     }).format(now),
   );
 
-  if (tunti < 5) return "Hyvää yötä";
-  if (tunti < 10) return "Hyvää huomenta";
-  if (tunti < 17) return "Hyvää päivää";
-  return "Hyvää iltaa";
+  if (tunti < 5) return t.brief.goodNight;
+  if (tunti < 10) return t.brief.goodMorning;
+  if (tunti < 17) return t.brief.goodDay;
+  return t.brief.goodEvening;
 }

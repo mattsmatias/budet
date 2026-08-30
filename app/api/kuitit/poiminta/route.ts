@@ -12,6 +12,8 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { adminText } from "@/lib/i18n/admin-text";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { NextResponse } from "next/server";
@@ -263,7 +265,7 @@ export async function POST(request: Request) {
      * Sama selitys kuin Matilla: saldon loppuminen ja ruuhka vaativat
      * eri toimenpiteet, ja "yritä uudelleen" on toisessa väärä neuvo.
      */
-    const failure = explainAiError(error);
+    const failure = explainAiError(error, adminText(await resolveLocale()));
 
     console.error("poiminta: mallikutsu epäonnistui", {
       reason: failure.reason,

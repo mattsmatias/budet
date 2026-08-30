@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { adminText } from "@/lib/i18n/admin-text";
 import {
   expenseObservation,
   greeting,
@@ -8,6 +9,9 @@ import {
 import { addDays } from "@/lib/restoflow/dates";
 import type { Receipt, Shift } from "@/lib/restoflow/types";
 import type { DailySales } from "@/lib/restoflow/sales";
+
+/** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
+const suomi = adminText("fi");
 
 const TANAAN = "2026-08-26";
 
@@ -70,7 +74,7 @@ describe("expenseObservation", () => {
    */
   it("ei sano mitään ilman neljää vertailuviikkoa", () => {
     const receipts = viikonKuitit(addDays(TANAAN, -7), 10_000);
-    expect(expenseObservation(receipts, TANAAN)).toBeNull();
+    expect(expenseObservation(receipts, TANAAN, suomi)).toBeNull();
   });
 
   it("ei sano mitään jos yksikin vertailuviikko on tyhjä", () => {
@@ -81,7 +85,7 @@ describe("expenseObservation", () => {
       ...viikonKuitit(addDays(TANAAN, -28), 10_000),
       ...viikonKuitit(addDays(TANAAN, -35), 10_000),
     ];
-    expect(expenseObservation(receipts, TANAAN)).toBeNull();
+    expect(expenseObservation(receipts, TANAAN, suomi)).toBeNull();
   });
 
   it("vaikenee pienestä heilahduksesta", () => {
@@ -92,7 +96,7 @@ describe("expenseObservation", () => {
       ...viikonKuitit(addDays(TANAAN, -28), 10_000),
       ...viikonKuitit(addDays(TANAAN, -35), 10_000),
     ];
-    expect(expenseObservation(receipts, TANAAN)).toBeNull();
+    expect(expenseObservation(receipts, TANAAN, suomi)).toBeNull();
   });
 
   it("huomaa selvän nousun ja kertoo suunnan", () => {
@@ -104,7 +108,7 @@ describe("expenseObservation", () => {
       ...viikonKuitit(addDays(TANAAN, -35), 10_000),
     ];
 
-    const havainto = expenseObservation(receipts, TANAAN);
+    const havainto = expenseObservation(receipts, TANAAN, suomi);
     expect(havainto).not.toBeNull();
     expect(havainto?.text).toContain("korkeammat");
     expect(havainto?.text).toContain("50 %");
@@ -120,7 +124,7 @@ describe("expenseObservation", () => {
       ...viikonKuitit(addDays(TANAAN, -35), 10_000),
     ];
 
-    const havainto = expenseObservation(receipts, TANAAN);
+    const havainto = expenseObservation(receipts, TANAAN, suomi);
     expect(havainto?.text).toContain("matalammat");
     expect(havainto?.tone).toBe("neutral");
   });
@@ -135,7 +139,7 @@ describe("salesObservation", () => {
       myynti(addDays(TANAAN, -9), 50_000),
       myynti(addDays(TANAAN, -10), 50_000),
     ];
-    expect(salesObservation(sales, TANAAN)).toBeNull();
+    expect(salesObservation(sales, TANAAN, suomi)).toBeNull();
   });
 
   it("huomaa myynnin laskun ja pitää sitä huomionarvoisena", () => {
@@ -144,7 +148,7 @@ describe("salesObservation", () => {
       ...[8, 9, 10, 11].map((i) => myynti(addDays(TANAAN, -i), 100_000)),
     ];
 
-    const havainto = salesObservation(sales, TANAAN);
+    const havainto = salesObservation(sales, TANAAN, suomi);
     expect(havainto?.text).toContain("matalampi");
     expect(havainto?.tone).toBe("warn");
   });
@@ -155,14 +159,14 @@ describe("salesObservation", () => {
       ...[8, 9, 10, 11].map((i) => myynti(addDays(TANAAN, -i), 50_000)),
     ];
 
-    expect(salesObservation(sales, TANAAN)?.tone).toBe("neutral");
+    expect(salesObservation(sales, TANAAN, suomi)?.tone).toBe("neutral");
   });
 });
 
 describe("shiftObservation", () => {
   it("ei sano mitään ilman neljän viikon historiaa", () => {
     const shifts = [vuoro(addDays(TANAAN, 8), 1), vuoro(addDays(TANAAN, 9), 2)];
-    expect(shiftObservation(shifts, TANAAN)).toBeNull();
+    expect(shiftObservation(shifts, TANAAN, suomi)).toBeNull();
   });
 
   /*
@@ -178,7 +182,7 @@ describe("shiftObservation", () => {
         [1, 2].map((i) => vuoro(addDays(TANAAN, -7 * viikko + i), i)),
       ),
     ];
-    expect(shiftObservation(shifts, TANAAN)).toBeNull();
+    expect(shiftObservation(shifts, TANAAN, suomi)).toBeNull();
   });
 
   it("huomaa kun ensi viikolle on suunniteltu selvästi enemmän", () => {
@@ -189,7 +193,7 @@ describe("shiftObservation", () => {
       ),
     ];
 
-    const havainto = shiftObservation(shifts, TANAAN);
+    const havainto = shiftObservation(shifts, TANAAN, suomi);
     expect(havainto?.text).toContain("enemmän");
     expect(havainto?.text).toContain("4 vuoroa");
   });
@@ -205,15 +209,17 @@ describe("greeting", () => {
   it("kertoo ravintolan ajan eikä katsojan", () => {
     // 22:00 UTC = Helsingissä 01:00 seuraavaa vuorokautta, New Yorkissa 18:00.
     const klo = new Date("2026-08-26T22:00:00Z");
-    expect(greeting(klo, "Europe/Helsinki")).toBe("Hyvää yötä");
-    expect(greeting(klo, "America/New_York")).toBe("Hyvää iltaa");
+    expect(greeting(klo, "Europe/Helsinki", suomi)).toBe("Hyvää yötä");
+    expect(greeting(klo, "America/New_York", suomi)).toBe("Hyvää iltaa");
   });
 
   it("vaihtaa tervehdyksen vuorokauden mukaan", () => {
     const hki = "Europe/Helsinki";
-    expect(greeting(new Date("2026-08-26T04:00:00Z"), hki)).toBe(
+    expect(greeting(new Date("2026-08-26T04:00:00Z"), hki, suomi)).toBe(
       "Hyvää huomenta",
     );
-    expect(greeting(new Date("2026-08-26T18:00:00Z"), hki)).toBe("Hyvää iltaa");
+    expect(greeting(new Date("2026-08-26T18:00:00Z"), hki, suomi)).toBe(
+      "Hyvää iltaa",
+    );
   });
 });

@@ -64,6 +64,32 @@ const fi = {
     groupSupplier: "Toimittaja",
     groupPerson: "Henkilö",
   },
+  brief: {
+    analyseExpenses: "Analysoi kulut",
+    seeSales: "Katso myynti",
+    checkShifts: "Tarkista vuorot",
+    goodNight: "Hyvää yötä",
+    goodMorning: "Hyvää huomenta",
+    goodDay: "Hyvää päivää",
+    goodEvening: "Hyvää iltaa",
+    expensesUp:
+      "Kulut ovat tällä viikolla {osuus} korkeammat kuin neljän edellisen viikon keskiarvo.",
+    expensesDown:
+      "Kulut ovat tällä viikolla {osuus} matalammat kuin neljän edellisen viikon keskiarvo.",
+    salesUp:
+      "Myynti on viime viikolla {osuus} korkeampi kuin sitä edeltävällä viikolla.",
+    salesDown:
+      "Myynti on viime viikolla {osuus} matalampi kuin sitä edeltävällä viikolla.",
+    shiftsMore:
+      "Ensi viikolle on suunniteltu {maara} vuoroa enemmän kuin neljän edellisen viikon keskiarvo.",
+    shiftsFewer:
+      "Ensi viikolle on suunniteltu {maara} vuoroa vähemmän kuin neljän edellisen viikon keskiarvo.",
+    aiNoCredit:
+      "Matti on tauolla: AI-palvelun saldo on loppu. Lisää krediittejä Anthropic-tililtä, niin Matti herää heti.",
+    aiBadKey: "Mattia ei ole kytketty oikein: API-avain ei kelpaa. Tarkista",
+    aiBusy: "Matti on juuri nyt ruuhkautunut. Yritä hetken päästä uudelleen.",
+    aiNoAnswer: "En saanut tällä kertaa vastausta. Yritä uudelleen.",
+  },
   vienti: {
     employee: "Työntekijä",
     position: "Tehtävä",
@@ -73,7 +99,8 @@ const fi = {
     note: "Huom",
     noRateAccess: "Roolisi ei salli tuntipalkkojen tarkastelua",
     month: "Kuukausi",
-    calculatedNote: "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja",
+    calculatedNote:
+      "Laskennallinen. Ei sisällä lisiä, lomakorvauksia eikä sivukuluja",
     hourlyRate: "Tuntipalkka",
     cost: "Kulu",
     day: "Päivä",
@@ -94,19 +121,22 @@ const fi = {
     used: "Käytetty",
     remaining: "Jäljellä",
     expenseReport: "Kate — kuluraportti",
-    scopeNote: "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia",
+    scopeNote:
+      "Luvut ovat järjestelmään kirjattuja kuluja, eivät pankkitilin tapahtumia",
     recordedTotal: "Kirjatut kulut yhteensä",
     ofWhichVat: "Josta ALV",
     toCheckCount: "Tarkistettavia",
     unknownGroup: "Tuntematon ryhmä",
     vatReport: "Kate — ALV-raportti myynnistä",
-    vatRateNote: "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta menneitä rivejä.",
+    vatRateNote:
+      "Verokanta on se joka oli voimassa kun päivä kirjattiin. Myöhempi asetusmuutos ei muuta menneitä rivejä.",
     vatRate: "Verokanta",
     withTax: "Verollinen",
     withoutTax: "Veroton",
     salesGroup: "Myyntiryhmä",
     unbrokenDays: "Erittelemättömät päivät",
-    unbrokenNote: "Käsin kirjattu päivä on yksi luku eikä sitä voi eritellä kannoittain. Nämä eivät ole mukana yllä olevissa summissa.",
+    unbrokenNote:
+      "Käsin kirjattu päivä on yksi luku eikä sitä voi eritellä kannoittain. Nämä eivät ole mukana yllä olevissa summissa.",
     netSales: "Veroton myynti",
     voucher: "Tosite",
     explanation: "Selite",
@@ -2073,6 +2103,31 @@ const en: AdminText = {
     groupSupplier: "Supplier",
     groupPerson: "Person",
   },
+  brief: {
+    analyseExpenses: "Analyse the expenses",
+    seeSales: "See the sales",
+    checkShifts: "Check the shifts",
+    goodNight: "Good night",
+    goodMorning: "Good morning",
+    goodDay: "Good day",
+    goodEvening: "Good evening",
+    expensesUp:
+      "Expenses this week are {osuus} higher than the average of the previous four weeks.",
+    expensesDown:
+      "Expenses this week are {osuus} lower than the average of the previous four weeks.",
+    salesUp: "Sales last week were {osuus} higher than the week before.",
+    salesDown: "Sales last week were {osuus} lower than the week before.",
+    shiftsMore:
+      "Next week has {maara} more shifts planned than the average of the previous four weeks.",
+    shiftsFewer:
+      "Next week has {maara} fewer shifts planned than the average of the previous four weeks.",
+    aiNoCredit:
+      "Matti is on a break: the AI service is out of credit. Add credits on the Anthropic account and Matti wakes up right away.",
+    aiBadKey:
+      "Matti is not wired up correctly: the API key is not valid. Check",
+    aiBusy: "Matti is congested right now. Try again in a moment.",
+    aiNoAnswer: "I did not get an answer this time. Try again.",
+  },
   vienti: {
     employee: "Employee",
     position: "Position",
@@ -2082,7 +2137,8 @@ const en: AdminText = {
     note: "Note",
     noRateAccess: "Your role does not allow viewing hourly rates",
     month: "Month",
-    calculatedNote: "Calculated. Excludes supplements, holiday pay and side costs",
+    calculatedNote:
+      "Calculated. Excludes supplements, holiday pay and side costs",
     hourlyRate: "Hourly rate",
     cost: "Cost",
     day: "Date",
@@ -2103,19 +2159,22 @@ const en: AdminText = {
     used: "Used",
     remaining: "Remaining",
     expenseReport: "Kate — expense report",
-    scopeNote: "The figures are expenses recorded in the system, not bank account transactions",
+    scopeNote:
+      "The figures are expenses recorded in the system, not bank account transactions",
     recordedTotal: "Recorded expenses in total",
     ofWhichVat: "Of which VAT",
     toCheckCount: "To check",
     unknownGroup: "Unknown group",
     vatReport: "Kate — VAT report on sales",
-    vatRateNote: "The tax rate is the one in force when the day was recorded. A later settings change does not alter past rows.",
+    vatRateNote:
+      "The tax rate is the one in force when the day was recorded. A later settings change does not alter past rows.",
     vatRate: "Tax rate",
     withTax: "With tax",
     withoutTax: "Without tax",
     salesGroup: "Sales group",
     unbrokenDays: "Days without a breakdown",
-    unbrokenNote: "A manually recorded day is a single figure and cannot be split by rate. These are not included in the sums above.",
+    unbrokenNote:
+      "A manually recorded day is a single figure and cannot be split by rate. These are not included in the sums above.",
     netSales: "Sales without tax",
     voucher: "Voucher",
     explanation: "Description",
@@ -4087,6 +4146,30 @@ const sv: AdminText = {
     groupSupplier: "Leverantör",
     groupPerson: "Person",
   },
+  brief: {
+    analyseExpenses: "Analysera kostnaderna",
+    seeSales: "Se försäljningen",
+    checkShifts: "Kontrollera passen",
+    goodNight: "God natt",
+    goodMorning: "God morgon",
+    goodDay: "God dag",
+    goodEvening: "God kväll",
+    expensesUp:
+      "Kostnaderna denna vecka är {osuus} högre än snittet för de fyra föregående veckorna.",
+    expensesDown:
+      "Kostnaderna denna vecka är {osuus} lägre än snittet för de fyra föregående veckorna.",
+    salesUp: "Försäljningen förra veckan var {osuus} högre än veckan innan.",
+    salesDown: "Försäljningen förra veckan var {osuus} lägre än veckan innan.",
+    shiftsMore:
+      "Nästa vecka har {maara} fler pass planerade än snittet för de fyra föregående veckorna.",
+    shiftsFewer:
+      "Nästa vecka har {maara} färre pass planerade än snittet för de fyra föregående veckorna.",
+    aiNoCredit:
+      "Matti har paus: AI-tjänstens saldo är slut. Lägg till krediter på Anthropic-kontot, så vaknar Matti direkt.",
+    aiBadKey: "Matti är inte rätt kopplad: API-nyckeln duger inte. Kontrollera",
+    aiBusy: "Matti är överbelastad just nu. Försök igen om en stund.",
+    aiNoAnswer: "Jag fick inget svar den här gången. Försök igen.",
+  },
   vienti: {
     employee: "Anställd",
     position: "Uppgift",
@@ -4096,7 +4179,8 @@ const sv: AdminText = {
     note: "Obs",
     noRateAccess: "Din roll tillåter inte att se timlöner",
     month: "Månad",
-    calculatedNote: "Beräknad. Omfattar inte tillägg, semesterersättning eller bikostnader",
+    calculatedNote:
+      "Beräknad. Omfattar inte tillägg, semesterersättning eller bikostnader",
     hourlyRate: "Timlön",
     cost: "Kostnad",
     day: "Datum",
@@ -4117,19 +4201,22 @@ const sv: AdminText = {
     used: "Använt",
     remaining: "Kvar",
     expenseReport: "Kate — kostnadsrapport",
-    scopeNote: "Siffrorna är kostnader registrerade i systemet, inte banktransaktioner",
+    scopeNote:
+      "Siffrorna är kostnader registrerade i systemet, inte banktransaktioner",
     recordedTotal: "Registrerade kostnader totalt",
     ofWhichVat: "Varav moms",
     toCheckCount: "Att kontrollera",
     unknownGroup: "Okänd grupp",
     vatReport: "Kate — momsrapport för försäljning",
-    vatRateNote: "Skattesatsen är den som gällde när dagen registrerades. En senare ändring påverkar inte tidigare rader.",
+    vatRateNote:
+      "Skattesatsen är den som gällde när dagen registrerades. En senare ändring påverkar inte tidigare rader.",
     vatRate: "Skattesats",
     withTax: "Med moms",
     withoutTax: "Utan moms",
     salesGroup: "Försäljningsgrupp",
     unbrokenDays: "Dagar utan specifikation",
-    unbrokenNote: "En manuellt registrerad dag är en enda siffra och kan inte delas per sats. Dessa ingår inte i summorna ovan.",
+    unbrokenNote:
+      "En manuellt registrerad dag är en enda siffra och kan inte delas per sats. Dessa ingår inte i summorna ovan.",
     netSales: "Försäljning utan moms",
     voucher: "Verifikat",
     explanation: "Beskrivning",
@@ -6098,6 +6185,30 @@ const da: AdminText = {
     groupSupplier: "Leverandør",
     groupPerson: "Person",
   },
+  brief: {
+    analyseExpenses: "Analysér udgifterne",
+    seeSales: "Se salget",
+    checkShifts: "Tjek vagterne",
+    goodNight: "Godnat",
+    goodMorning: "Godmorgen",
+    goodDay: "Goddag",
+    goodEvening: "Godaften",
+    expensesUp:
+      "Udgifterne denne uge er {osuus} højere end gennemsnittet for de fire foregående uger.",
+    expensesDown:
+      "Udgifterne denne uge er {osuus} lavere end gennemsnittet for de fire foregående uger.",
+    salesUp: "Salget i sidste uge var {osuus} højere end ugen før.",
+    salesDown: "Salget i sidste uge var {osuus} lavere end ugen før.",
+    shiftsMore:
+      "Næste uge har {maara} flere vagter planlagt end gennemsnittet for de fire foregående uger.",
+    shiftsFewer:
+      "Næste uge har {maara} færre vagter planlagt end gennemsnittet for de fire foregående uger.",
+    aiNoCredit:
+      "Matti holder pause: AI-tjenestens saldo er brugt op. Tilføj kreditter på Anthropic-kontoen, så vågner Matti med det samme.",
+    aiBadKey: "Matti er ikke koblet rigtigt til: API-nøglen er ugyldig. Tjek",
+    aiBusy: "Matti er overbelastet lige nu. Prøv igen om lidt.",
+    aiNoAnswer: "Jeg fik ikke et svar denne gang. Prøv igen.",
+  },
   vienti: {
     employee: "Medarbejder",
     position: "Stilling",
@@ -6107,7 +6218,8 @@ const da: AdminText = {
     note: "Bemærk",
     noRateAccess: "Din rolle tillader ikke at se timelønninger",
     month: "Måned",
-    calculatedNote: "Beregnet. Omfatter ikke tillæg, feriepenge eller omkostninger",
+    calculatedNote:
+      "Beregnet. Omfatter ikke tillæg, feriepenge eller omkostninger",
     hourlyRate: "Timeløn",
     cost: "Omkostning",
     day: "Dato",
@@ -6128,19 +6240,22 @@ const da: AdminText = {
     used: "Brugt",
     remaining: "Tilbage",
     expenseReport: "Kate — udgiftsrapport",
-    scopeNote: "Tallene er udgifter registreret i systemet, ikke banktransaktioner",
+    scopeNote:
+      "Tallene er udgifter registreret i systemet, ikke banktransaktioner",
     recordedTotal: "Registrerede udgifter i alt",
     ofWhichVat: "Heraf moms",
     toCheckCount: "At tjekke",
     unknownGroup: "Ukendt gruppe",
     vatReport: "Kate — momsrapport for salg",
-    vatRateNote: "Skattesatsen er den, der gjaldt, da dagen blev registreret. En senere ændring påvirker ikke tidligere rækker.",
+    vatRateNote:
+      "Skattesatsen er den, der gjaldt, da dagen blev registreret. En senere ændring påvirker ikke tidligere rækker.",
     vatRate: "Skattesats",
     withTax: "Med moms",
     withoutTax: "Uden moms",
     salesGroup: "Salgsgruppe",
     unbrokenDays: "Dage uden specifikation",
-    unbrokenNote: "En manuelt registreret dag er ét tal og kan ikke opdeles pr. sats. Disse indgår ikke i summerne ovenfor.",
+    unbrokenNote:
+      "En manuelt registreret dag er ét tal og kan ikke opdeles pr. sats. Disse indgår ikke i summerne ovenfor.",
     netSales: "Salg uden moms",
     voucher: "Bilag",
     explanation: "Beskrivelse",
@@ -8109,6 +8224,32 @@ const tr: AdminText = {
     groupSupplier: "Tedarikçi",
     groupPerson: "Kişi",
   },
+  brief: {
+    analyseExpenses: "Giderleri incele",
+    seeSales: "Satışa bak",
+    checkShifts: "Vardiyaları kontrol et",
+    goodNight: "İyi geceler",
+    goodMorning: "Günaydın",
+    goodDay: "İyi günler",
+    goodEvening: "İyi akşamlar",
+    expensesUp:
+      "Bu haftaki giderler, önceki dört haftanın ortalamasından %{osuus} daha yüksek.",
+    expensesDown:
+      "Bu haftaki giderler, önceki dört haftanın ortalamasından %{osuus} daha düşük.",
+    salesUp:
+      "Geçen haftaki satış, ondan önceki haftaya göre %{osuus} daha yüksek.",
+    salesDown:
+      "Geçen haftaki satış, ondan önceki haftaya göre %{osuus} daha düşük.",
+    shiftsMore:
+      "Gelecek haftaya, önceki dört haftanın ortalamasından {maara} vardiya fazla planlandı.",
+    shiftsFewer:
+      "Gelecek haftaya, önceki dört haftanın ortalamasından {maara} vardiya az planlandı.",
+    aiNoCredit:
+      "Matti molada: AI servisinin bakiyesi bitti. Anthropic hesabına kredi ekle, Matti hemen uyansın.",
+    aiBadKey: "Matti doğru bağlanmamış: API anahtarı geçersiz. Kontrol et",
+    aiBusy: "Matti şu anda yoğun. Birazdan tekrar dene.",
+    aiNoAnswer: "Bu sefer yanıt alamadım. Tekrar dene.",
+  },
   vienti: {
     employee: "Çalışan",
     position: "Görev",
@@ -8118,7 +8259,8 @@ const tr: AdminText = {
     note: "Not",
     noRateAccess: "Rolün saat ücretlerini görmene izin vermiyor",
     month: "Ay",
-    calculatedNote: "Hesaplanmış. Ek ödemeleri, izin ücretlerini ve yan maliyetleri içermez",
+    calculatedNote:
+      "Hesaplanmış. Ek ödemeleri, izin ücretlerini ve yan maliyetleri içermez",
     hourlyRate: "Saat ücreti",
     cost: "Maliyet",
     day: "Tarih",
@@ -8139,19 +8281,22 @@ const tr: AdminText = {
     used: "Kullanılan",
     remaining: "Kalan",
     expenseReport: "Kate — gider raporu",
-    scopeNote: "Rakamlar sisteme kaydedilen giderlerdir, banka hareketleri değildir",
+    scopeNote:
+      "Rakamlar sisteme kaydedilen giderlerdir, banka hareketleri değildir",
     recordedTotal: "Kaydedilen giderler toplamı",
     ofWhichVat: "Bunun KDV'si",
     toCheckCount: "Kontrol edilecek",
     unknownGroup: "Bilinmeyen grup",
     vatReport: "Kate — satış KDV raporu",
-    vatRateNote: "Vergi oranı, gün kaydedildiğinde geçerli olandır. Sonraki ayar değişikliği geçmiş satırları değiştirmez.",
+    vatRateNote:
+      "Vergi oranı, gün kaydedildiğinde geçerli olandır. Sonraki ayar değişikliği geçmiş satırları değiştirmez.",
     vatRate: "Vergi oranı",
     withTax: "Vergili",
     withoutTax: "Vergisiz",
     salesGroup: "Satış grubu",
     unbrokenDays: "Dökümü olmayan günler",
-    unbrokenNote: "Elle kaydedilen gün tek bir rakamdır ve orana göre ayrıştırılamaz. Bunlar yukarıdaki toplamlara dahil değildir.",
+    unbrokenNote:
+      "Elle kaydedilen gün tek bir rakamdır ve orana göre ayrıştırılamaz. Bunlar yukarıdaki toplamlara dahil değildir.",
     netSales: "Vergisiz satış",
     voucher: "Belge",
     explanation: "Açıklama",
@@ -10110,6 +10255,32 @@ const et: AdminText = {
     groupSupplier: "Tarnija",
     groupPerson: "Isik",
   },
+  brief: {
+    analyseExpenses: "Analüüsi kulusid",
+    seeSales: "Vaata müüki",
+    checkShifts: "Kontrolli vahetusi",
+    goodNight: "Head ööd",
+    goodMorning: "Tere hommikust",
+    goodDay: "Tere päevast",
+    goodEvening: "Tere õhtust",
+    expensesUp:
+      "Selle nädala kulud on {osuus} kõrgemad kui nelja eelmise nädala keskmine.",
+    expensesDown:
+      "Selle nädala kulud on {osuus} madalamad kui nelja eelmise nädala keskmine.",
+    salesUp:
+      "Eelmise nädala müük oli {osuus} kõrgem kui sellele eelnenud nädalal.",
+    salesDown:
+      "Eelmise nädala müük oli {osuus} madalam kui sellele eelnenud nädalal.",
+    shiftsMore:
+      "Järgmisele nädalale on plaanitud {maara} vahetust rohkem kui nelja eelmise nädala keskmine.",
+    shiftsFewer:
+      "Järgmisele nädalale on plaanitud {maara} vahetust vähem kui nelja eelmise nädala keskmine.",
+    aiNoCredit:
+      "Matti on pausil: AI-teenuse saldo on otsas. Lisa Anthropicu kontole krediiti, siis Matti ärkab kohe.",
+    aiBadKey: "Matti ei ole õigesti ühendatud: API-võti ei kõlba. Kontrolli",
+    aiBusy: "Matti on praegu ülekoormatud. Proovi hetke pärast uuesti.",
+    aiNoAnswer: "Ma ei saanud seekord vastust. Proovi uuesti.",
+  },
   vienti: {
     employee: "Töötaja",
     position: "Ametikoht",
@@ -10119,7 +10290,8 @@ const et: AdminText = {
     note: "Märkus",
     noRateAccess: "Sinu roll ei luba tunnitasusid vaadata",
     month: "Kuu",
-    calculatedNote: "Arvutuslik. Ei sisalda lisasid, puhkusetasusid ega kõrvalkulusid",
+    calculatedNote:
+      "Arvutuslik. Ei sisalda lisasid, puhkusetasusid ega kõrvalkulusid",
     hourlyRate: "Tunnitasu",
     cost: "Kulu",
     day: "Kuupäev",
@@ -10140,19 +10312,22 @@ const et: AdminText = {
     used: "Kasutatud",
     remaining: "Jääk",
     expenseReport: "Kate — kuluaruanne",
-    scopeNote: "Numbrid on süsteemi salvestatud kulud, mitte pangakonto tehingud",
+    scopeNote:
+      "Numbrid on süsteemi salvestatud kulud, mitte pangakonto tehingud",
     recordedTotal: "Salvestatud kulud kokku",
     ofWhichVat: "Millest käibemaks",
     toCheckCount: "Kontrollida",
     unknownGroup: "Tundmatu grupp",
     vatReport: "Kate — müügi käibemaksuaruanne",
-    vatRateNote: "Maksumäär on see, mis kehtis päeva salvestamisel. Hilisem seademuudatus varasemaid ridu ei muuda.",
+    vatRateNote:
+      "Maksumäär on see, mis kehtis päeva salvestamisel. Hilisem seademuudatus varasemaid ridu ei muuda.",
     vatRate: "Maksumäär",
     withTax: "Käibemaksuga",
     withoutTax: "Käibemaksuta",
     salesGroup: "Müügigrupp",
     unbrokenDays: "Jaotuseta päevad",
-    unbrokenNote: "Käsitsi salvestatud päev on üks arv ja seda ei saa määrade kaupa jaotada. Need ei ole ülaltoodud summades.",
+    unbrokenNote:
+      "Käsitsi salvestatud päev on üks arv ja seda ei saa määrade kaupa jaotada. Need ei ole ülaltoodud summades.",
     netSales: "Käibemaksuta müük",
     voucher: "Tosite",
     explanation: "Selgitus",

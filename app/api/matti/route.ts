@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { adminText } from "@/lib/i18n/admin-text";
+import { resolveLocale } from "@/lib/i18n/resolve";
 import { z } from "zod";
 import { toJSONSchema } from "zod";
 import { createClient } from "@/utils/supabase/server";
@@ -184,7 +186,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
-    const failure = explainAiError(error);
+    const failure = explainAiError(error, adminText(await resolveLocale()));
 
     console.error("matti: mallikutsu epäonnistui", {
       restaurantId: ctx.restaurantId,

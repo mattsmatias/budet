@@ -1,3 +1,4 @@
+import type { AdminText } from "@/lib/i18n/admin-text";
 /**
  * AI-palvelun virheiden kääntäminen.
  *
@@ -33,15 +34,13 @@ function isOutOfCredit(text: string): boolean {
   return /credit balance is too low|insufficient.*credit/i.test(text);
 }
 
-export function explainAiError(error: unknown): AiFailure {
+export function explainAiError(error: unknown, t: AdminText): AiFailure {
   const status = readStatus(error);
   const text = readMessage(error);
 
   if (isOutOfCredit(text)) {
     return {
-      message:
-        "Matti on tauolla: AI-palvelun saldo on loppu. Lisää krediittejä " +
-        "Anthropic-tililtä, niin Matti herää heti.",
+      message: t.brief.aiNoCredit,
       retryable: false,
       status: 402,
       reason: "out_of_credit",
@@ -61,8 +60,7 @@ export function explainAiError(error: unknown): AiFailure {
 
   if (status === 429) {
     return {
-      message:
-        "Matti on juuri nyt ruuhkautunut. Yritä hetken päästä uudelleen.",
+      message: t.brief.aiBusy,
       retryable: true,
       status: 429,
       reason: "rate_limited",
@@ -71,7 +69,7 @@ export function explainAiError(error: unknown): AiFailure {
 
   // Loput ovat ohimeneviä: katkos, aikakatkaisu, palvelun ylikuormitus.
   return {
-    message: "En saanut tällä kertaa vastausta. Yritä uudelleen.",
+    message: t.brief.aiNoAnswer,
     retryable: true,
     status: 502,
     reason: status ? `http_${status}` : "unknown",

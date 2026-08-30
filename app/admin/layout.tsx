@@ -68,6 +68,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     sales: data.sales,
     shifts: data.shifts,
     today,
+    t,
   });
 
   const userName = user.fullName ?? user.email ?? t.kuori.user;
@@ -127,7 +128,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           restaurantName={restaurant.name}
           t={t}
           briefing={briefing}
-          greeting={greeting(new Date(now), restaurant.timezone)}
+          greeting={greeting(new Date(now), restaurant.timezone, t)}
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
