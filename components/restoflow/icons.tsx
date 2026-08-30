@@ -51,7 +51,8 @@ export type IconName =
   | "sales"
   | "trend"
   | "tables"
-  | "drag";
+  | "drag"
+  | "share";
 
 /**
  * Ikonipolut.
@@ -94,6 +95,11 @@ const PATHS: Record<IconName, string> = {
     "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 16.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z",
 
   calendar: "M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4",
+
+  // Kolme solmua ja niiden valiset viivat: jakaminen. Sama merkki
+  // kuin jarjestelmissa yleisesti, joten se tunnistetaan ilman selitetta.
+  share:
+    "M17.5 7.8a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM6.5 14.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM17.5 20.8a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM8.5 11.1l7-3.2M8.5 12.9l7 3.2",
 
   // Kaksi viivaa: raahauskahva. Kolme olisi hampurilaisvalikko, ja
   // sama merkki kahdelle eri asialle opettaa ohittamaan molemmat.

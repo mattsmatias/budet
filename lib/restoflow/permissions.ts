@@ -293,6 +293,14 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    * on is_manager.
    */
   { href: "/admin/asetukset/varaukset", requires: "reservations.manage" },
+  /*
+   * Sosiaalisen median tili on omistajan asia.
+   *
+   * Yhdistäminen antaa Katelle oikeuden julkaista ravintolan nimissä,
+   * ja se on eri päätös kuin lounaslistan kirjoittaminen. Julkaisu
+   * itse vaatii lunch.manage, joka on myös vuoropäälliköllä.
+   */
+  { href: "/admin/asetukset/some", requires: "settings.edit" },
 ];
 
 /**

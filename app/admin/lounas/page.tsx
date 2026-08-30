@@ -53,6 +53,14 @@ import {
   LunchPriceField,
 } from "./editor";
 import { SortableItems } from "./sortable";
+import { PublishPanel } from "./publish";
+import { buildLunchPost, alreadyPublished } from "@/lib/restoflow/meta-post";
+import {
+  canPublish,
+  instagramReady,
+  loadMetaConnection,
+  loadPublications,
+} from "@/lib/restoflow/meta-queries";
 import { LunchThemePicker } from "./theme-picker";
 import { LunchChannels } from "./channels";
 import { loadPublicWeek, weekAsText } from "@/lib/restoflow/public-lunch";
@@ -88,12 +96,15 @@ export default async function LunchPage({
   const requested = typeof params.viikko === "string" ? params.viikko : today;
   const weekStart = weekStartOf(ISO_DATE.test(requested) ? requested : today);
 
-  const [week, previous, diets, allergens, history] = await Promise.all([
+  const [week, previous, diets, allergens, history, metaConnection, julkaisut] =
+    await Promise.all([
     fetchLunchWeek(restaurant.id, weekStart),
     fetchLunchWeek(restaurant.id, previousWeek(weekStart)),
     fetchDietTypes(),
     fetchAllergenTypes(),
     fetchLunchHistory(restaurant.id),
+    loadMetaConnection(restaurant.id),
+    loadPublications(restaurant.id, 30),
   ]);
 
   const canManage = can(role, "lunch.manage");
@@ -363,6 +374,35 @@ export default async function LunchPage({
               </dl>
             ) : null}
           </div>
+        </Card>
+      ) : null}
+
+      {/*
+        --- Julkaise someen ---
+
+        Vain kun viikossa on sisältöä ja Facebook on yhdistetty.
+        Tyhjän listan julkaisu olisi julkaisu joka kertoo asiakkaalle
+        tyhjää, ja yhdistämätön tili olisi painike joka vie
+        virheilmoitukseen.
+      */}
+      {canManage && week !== null && hasContent(week) && canPublish(metaConnection) ? (
+        <Card>
+          <CardHeader title={t.some.publishTitle} />
+          <PublishPanel
+            t={t}
+            menuId={week.id}
+            weekStart={week.weekStart}
+            defaultMessage={buildLunchPost({
+              week,
+              restaurantName: restaurant.name,
+              diets,
+              locale,
+            })}
+            facebookReady={canPublish(metaConnection)}
+            instagramReady={instagramReady(metaConnection)}
+            connectionName={metaConnection?.pageName ?? null}
+            already={alreadyPublished(julkaisut, week.id)}
+          />
         </Card>
       ) : null}
 

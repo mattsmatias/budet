@@ -89,6 +89,14 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     ownerOnly: true,
   },
   {
+    id: "some",
+    label: t.some.title,
+    summary: t.some.secSomeHint,
+    icon: "share",
+    ownerOnly: true,
+    href: "/admin/asetukset/some",
+  },
+  {
     id: "varaukset",
     label: t.nav.reservations,
     summary: t.asetus.secReservationsHint,
