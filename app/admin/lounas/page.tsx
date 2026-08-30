@@ -126,8 +126,10 @@ export default async function LunchPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            Viikko {isoWeekNumber(weekStart)} ·{" "}
-            {formatWeekRange(weekStart, locale)}
+            {fill(t.lounas.weekLabel, {
+              numero: String(isoWeekNumber(weekStart)),
+              jakso: formatWeekRange(weekStart, locale),
+            })}
           </p>
         </div>
 
@@ -172,110 +174,6 @@ export default async function LunchPage({
         </div>
       </header>
 
-      {/* --- Hinta ja tila --- */}
-      {week ? (
-        <Card>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p
-                className="text-[11px] font-medium uppercase"
-                style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
-              >
-                {fill(t.hinta.wholeWeekSuffix, {
-                  nimi: priceLabel(DEFAULT_PRICE_NAME, t),
-                })}
-              </p>
-
-              {canManage ? (
-                <LunchPriceField
-                  menuId={week.id}
-                  name={DEFAULT_PRICE_NAME}
-                  cents={
-                    week.prices.find((p) => p.name === DEFAULT_PRICE_NAME)
-                      ?.cents ?? null
-                  }
-                />
-              ) : (
-                <p className="rf-tabular text-[24px] font-semibold">
-                  {week.prices.length > 0
-                    ? formatMoney(week.prices[0].cents)
-                    : "—"}
-                </p>
-              )}
-            </div>
-
-            {canManage ? (
-              <LunchIncludes
-                t={t}
-                menuId={week.id}
-                dessert={week.includesDessert}
-                coffee={week.includesCoffee}
-              />
-            ) : includedSentence(week, t) ? (
-              <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-                {includedSentence(week, t)}
-              </p>
-            ) : null}
-
-            {/*
-              Alennushinnat olivat vain luettavissa.
-
-              Kanta on tukenut useaa nimettyä hintaa alusta asti ja
-              julkinen sivu on osannut listata ne, mutta niitä ei
-              päässyt syöttämään mistään — kenttä puuttui kokonaan.
-              Näkymä siis lupasi tiedon jota ei voinut antaa.
-
-              Tyhjä kenttä ei julkaise mitään: hinta ilman lukua ei
-              päädy asiakkaan sivulle.
-            */}
-            {canManage ? (
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-                {EXTRA_PRICE_NAMES.map((name) => (
-                  <div key={name}>
-                    <p
-                      className="text-[11px] font-medium uppercase"
-                      style={{
-                        color: "var(--rf-text-3)",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {name}
-                    </p>
-                    <LunchPriceField
-                      menuId={week.id}
-                      name={name}
-                      compact
-                      cents={
-                        week.prices.find((p) => p.name === name)?.cents ?? null
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME)
-                .length > 0 ? (
-              <dl className="flex flex-wrap gap-x-5 gap-y-1">
-                {week.prices
-                  .filter((p) => p.name !== DEFAULT_PRICE_NAME)
-                  .map((price) => (
-                    <div key={price.id}>
-                      <dt
-                        className="text-[11px]"
-                        style={{ color: "var(--rf-text-3)" }}
-                      >
-                        {price.name}
-                      </dt>
-                      <dd className="rf-tabular text-[15px] font-medium">
-                        {formatMoney(price.cents)}
-                      </dd>
-                    </div>
-                  ))}
-              </dl>
-            ) : null}
-          </div>
-        </Card>
-      ) : null}
-
       {week ? (
         <div className="flex flex-wrap items-center gap-2">
           <Pill tone={week.status === "published" ? "ok" : "neutral"} dot>
@@ -284,7 +182,9 @@ export default async function LunchPage({
 
           {week.publishedAt ? (
             <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-              Viimeksi julkaistu {formatTimestamp(week.publishedAt, t)}
+              {fill(t.lounas.lastPublished, {
+                aika: formatTimestamp(week.publishedAt, t),
+              })}
             </span>
           ) : null}
         </div>
@@ -353,6 +253,119 @@ export default async function LunchPage({
         </>
       )}
 
+      {/* --- Hinta ja tila --- */}
+      {week ? (
+        <Card>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p
+                className="text-[11px] font-medium uppercase"
+                style={{ color: "var(--rf-text-3)", letterSpacing: "0.05em" }}
+              >
+                {fill(t.hinta.wholeWeekSuffix, {
+                  nimi: priceLabel(DEFAULT_PRICE_NAME, t),
+                })}
+              </p>
+
+              {canManage ? (
+                <LunchPriceField
+                  menuId={week.id}
+                  name={DEFAULT_PRICE_NAME}
+                  cents={
+                    week.prices.find((p) => p.name === DEFAULT_PRICE_NAME)
+                      ?.cents ?? null
+                  }
+                />
+              ) : (
+                <p className="rf-tabular text-[24px] font-semibold">
+                  {week.prices.length > 0
+                    ? formatMoney(week.prices[0].cents)
+                    : "—"}
+                </p>
+              )}
+            </div>
+
+            {canManage ? (
+              <LunchIncludes
+                t={t}
+                menuId={week.id}
+                dessert={week.includesDessert}
+                coffee={week.includesCoffee}
+              />
+            ) : includedSentence(week, t) ? (
+              <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+                {includedSentence(week, t)}
+              </p>
+            ) : null}
+
+            {/*
+              Alennushinnat olivat vain luettavissa.
+
+              Kanta on tukenut useaa nimettyä hintaa alusta asti ja
+              julkinen sivu on osannut listata ne, mutta niitä ei
+              päässyt syöttämään mistään — kenttä puuttui kokonaan.
+              Näkymä siis lupasi tiedon jota ei voinut antaa.
+
+              Tyhjä kenttä ei julkaise mitään: hinta ilman lukua ei
+              päädy asiakkaan sivulle.
+            */}
+            {canManage ? (
+              <details className="w-full">
+                <summary
+                  className="cursor-pointer text-[12px] font-semibold"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {t.lounas.morePrices}
+                </summary>
+                <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3">
+                  {EXTRA_PRICE_NAMES.map((name) => (
+                    <div key={name}>
+                      <p
+                        className="text-[11px] font-medium uppercase"
+                        style={{
+                          color: "var(--rf-text-3)",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        {name}
+                      </p>
+                      <LunchPriceField
+                        menuId={week.id}
+                        name={name}
+                        compact
+                        cents={
+                          week.prices.find((p) => p.name === name)?.cents ??
+                          null
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : week.prices.filter((p) => p.name !== DEFAULT_PRICE_NAME)
+                .length > 0 ? (
+              <dl className="flex flex-wrap gap-x-5 gap-y-1">
+                {week.prices
+                  .filter((p) => p.name !== DEFAULT_PRICE_NAME)
+                  .map((price) => (
+                    <div key={price.id}>
+                      <dt
+                        className="text-[11px]"
+                        style={{ color: "var(--rf-text-3)" }}
+                      >
+                        {price.name}
+                      </dt>
+                      <dd className="rf-tabular text-[15px] font-medium">
+                        {formatMoney(price.cents)}
+                      </dd>
+                    </div>
+                  ))}
+              </dl>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
+
       {/* --- Jakaminen --- */}
       <Card>
         <CardHeader
@@ -383,34 +396,45 @@ export default async function LunchPage({
               <RfIcon name="chevron" size={13} />
             </Link>
 
-            {/* Teema on ravintolan valinta, ei viikon — siksi se on
-                jakamisen yhteydessä eikä viikkokohtaisten asetusten
-                seassa. */}
-            {canManage ? (
-              <div className="pt-2">
-                <LunchThemePicker
-                  t={t}
-                  nimet={nimet}
-                  current={restaurant.lunchTheme}
-                />
-              </div>
-            ) : null}
-
             {/*
-              Lista ei ole valmis kun se on tallennettu. Se on valmis kun
-              se on siellä missä asiakas sen näkee.
+              Teema ja jakokanavat valitaan kerran, linkki jaetaan joka
+              viikko. Avattava osio pitää viikoittaisen näkyvissä ja
+              kerran tehtävän ulottuvilla.
+
+              Teema on ravintolan valinta, ei viikon — siksi se on
+              jakamisen yhteydessä eikä viikkokohtaisten asetusten
+              seassa.
             */}
             {canManage ? (
-              <div className="pt-2">
-                <LunchChannels
-                  t={t}
-                  publicUrl={publicUrl}
-                  previewUrl={`${publicUrl}?viikko=${weekStart}&esikatselu=1`}
-                  embedUrl={`${publicUrl}/upota`}
-                  displayUrl={`${publicUrl}/naytto`}
-                  shareText={shareText}
-                />
-              </div>
+              <details className="pt-2">
+                <summary
+                  className="cursor-pointer py-1 text-[13px] font-semibold"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {t.lounas.shareMore}
+                </summary>
+
+                <div className="mt-3 space-y-3">
+                  <LunchThemePicker
+                    t={t}
+                    nimet={nimet}
+                    current={restaurant.lunchTheme}
+                  />
+
+                  {/*
+                    Lista ei ole valmis kun se on tallennettu. Se on
+                    valmis kun se on siellä missä asiakas sen näkee.
+                  */}
+                  <LunchChannels
+                    t={t}
+                    publicUrl={publicUrl}
+                    previewUrl={`${publicUrl}?viikko=${weekStart}&esikatselu=1`}
+                    embedUrl={`${publicUrl}/upota`}
+                    displayUrl={`${publicUrl}/naytto`}
+                    shareText={shareText}
+                  />
+                </div>
+              </details>
             ) : null}
           </div>
 
@@ -442,49 +466,67 @@ export default async function LunchPage({
 
       {/* --- Historia --- */}
       {history.length > 0 ? (
-        <Card padded={false}>
-          <div className="px-5 pt-5">
-            <CardHeader
-              title={t.lounas.lunchHistory}
-              subtitle={t.lounas.earlierWeeks}
-            />
+        <details>
+          <summary
+            className="cursor-pointer px-1 py-2 text-[13px] font-semibold"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {t.lounas.earlierWeeksToggle}
+          </summary>
+
+          <div className="mt-3">
+            <Card padded={false}>
+              <div className="px-5 pt-5">
+                <CardHeader
+                  title={t.lounas.lunchHistory}
+                  subtitle={t.lounas.earlierWeeks}
+                />
+              </div>
+
+              <ul
+                className="divide-y"
+                style={{ borderColor: "var(--rf-line)" }}
+              >
+                {history.map((entry) => (
+                  <li key={entry.id}>
+                    <Link
+                      href={`/admin/lounas?viikko=${entry.weekStart}`}
+                      className="flex items-center justify-between gap-3 px-5 py-3.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-medium">
+                          {fill(t.lounas.weekNumber, {
+                            numero: String(isoWeekNumber(entry.weekStart)),
+                          })}
+                        </p>
+                        <p
+                          className="rf-tabular text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {formatWeekRange(entry.weekStart, locale)} ·{" "}
+                          {fill(t.lounas.dishCount, {
+                            maara: String(entry.itemCount),
+                          })}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Pill
+                          tone={entry.status === "published" ? "ok" : "neutral"}
+                        >
+                          {nimet.lunchStatus[entry.status]}
+                        </Pill>
+                        <span style={{ color: "var(--rf-text-3)" }}>
+                          <RfIcon name="chevron" size={15} />
+                        </span>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </div>
-
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            {history.map((entry) => (
-              <li key={entry.id}>
-                <Link
-                  href={`/admin/lounas?viikko=${entry.weekStart}`}
-                  className="flex items-center justify-between gap-3 px-5 py-3.5"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-medium">
-                      Viikko {isoWeekNumber(entry.weekStart)}
-                    </p>
-                    <p
-                      className="rf-tabular text-[12px]"
-                      style={{ color: "var(--rf-text-3)" }}
-                    >
-                      {formatWeekRange(entry.weekStart, locale)} ·{" "}
-                      {entry.itemCount} ruokaa
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Pill
-                      tone={entry.status === "published" ? "ok" : "neutral"}
-                    >
-                      {nimet.lunchStatus[entry.status]}
-                    </Pill>
-                    <span style={{ color: "var(--rf-text-3)" }}>
-                      <RfIcon name="chevron" size={15} />
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        </details>
       ) : null}
     </div>
   );

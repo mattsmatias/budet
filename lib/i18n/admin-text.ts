@@ -1703,6 +1703,13 @@ const fi = {
     copying: "Kopioidaan…",
     copyLink: "Kopioi linkki",
     copyToDayNamed: "Kopioi {paiva} päivään",
+    weekLabel: "Viikko {numero} · {jakso}",
+    weekNumber: "Viikko {numero}",
+    dishCount: "{maara} ruokaa",
+    lastPublished: "Viimeksi julkaistu {aika}",
+    morePrices: "Muut hinnat",
+    shareMore: "Lisää jakotapoja ja ulkoasu",
+    earlierWeeksToggle: "Aiemmat viikot",
   },
   kuva: {
     multiPage:
@@ -3972,6 +3979,13 @@ const en: AdminText = {
     copying: "Copying…",
     copyLink: "Copy the link",
     copyToDayNamed: "Copy into {paiva}",
+    weekLabel: "Week {numero} · {jakso}",
+    weekNumber: "Week {numero}",
+    dishCount: "{maara} dishes",
+    lastPublished: "Last published {aika}",
+    morePrices: "Other prices",
+    shareMore: "More ways to share, and the look",
+    earlierWeeksToggle: "Earlier weeks",
   },
   kuva: {
     multiPage:
@@ -6238,6 +6252,13 @@ const sv: AdminText = {
     copying: "Kopierar…",
     copyLink: "Kopiera länken",
     copyToDayNamed: "Kopiera till {paiva}",
+    weekLabel: "Vecka {numero} · {jakso}",
+    weekNumber: "Vecka {numero}",
+    dishCount: "{maara} rätter",
+    lastPublished: "Senast publicerad {aika}",
+    morePrices: "Andra priser",
+    shareMore: "Fler sätt att dela, och utseendet",
+    earlierWeeksToggle: "Tidigare veckor",
   },
   kuva: {
     multiPage:
@@ -8502,6 +8523,13 @@ const da: AdminText = {
     copying: "Kopierer…",
     copyLink: "Kopiér linket",
     copyToDayNamed: "Kopiér til {paiva}",
+    weekLabel: "Uge {numero} · {jakso}",
+    weekNumber: "Uge {numero}",
+    dishCount: "{maara} retter",
+    lastPublished: "Senest udgivet {aika}",
+    morePrices: "Andre priser",
+    shareMore: "Flere måder at dele på, og udseendet",
+    earlierWeeksToggle: "Tidligere uger",
   },
   kuva: {
     multiPage:
@@ -10761,6 +10789,13 @@ const tr: AdminText = {
     copying: "Kopyalanıyor…",
     copyLink: "Bağlantıyı kopyala",
     copyToDayNamed: "{paiva} gününe kopyala",
+    weekLabel: "Hafta {numero} · {jakso}",
+    weekNumber: "Hafta {numero}",
+    dishCount: "{maara} yemek",
+    lastPublished: "Son yayın {aika}",
+    morePrices: "Diğer fiyatlar",
+    shareMore: "Daha fazla paylaşım yolu ve görünüm",
+    earlierWeeksToggle: "Önceki haftalar",
   },
   kuva: {
     multiPage:
@@ -13012,6 +13047,13 @@ const et: AdminText = {
     copying: "Kopeerin…",
     copyLink: "Kopeeri link",
     copyToDayNamed: "Kopeeri päeva {paiva}",
+    weekLabel: "Nädal {numero} · {jakso}",
+    weekNumber: "Nädal {numero}",
+    dishCount: "{maara} rooga",
+    lastPublished: "Viimati avaldatud {aika}",
+    morePrices: "Muud hinnad",
+    shareMore: "Rohkem jagamisviise ja välimus",
+    earlierWeeksToggle: "Varasemad nädalad",
   },
   kuva: {
     multiPage:
