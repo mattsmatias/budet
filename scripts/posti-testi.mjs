@@ -101,37 +101,46 @@ const vastaus = await fetch("https://api.resend.com/emails", {
 
 const teksti = await vastaus.text();
 
+/*
+ * Paluuarvo asetetaan, prosessia ei katkaista.
+ *
+ * process.exit() lopettaa kesken avoimen HTTP-yhteyden, ja Windowsin
+ * Node valittaa siitä "Assertion failed" -rivillä onnistuneenkin
+ * lähetyksen perään. Se ei ole vika mutta näyttää sellaiselta juuri
+ * silloin kun tällä skriptillä etsitään vikaa.
+ *
+ * exitCode antaa saman paluuarvon ja antaa yhteyden sulkeutua itse.
+ */
 if (vastaus.ok) {
   console.log("✓ Lähetetty. Tarkista postilaatikko (myös roskaposti).");
   console.log("  " + teksti);
-  process.exit(0);
-}
-
-console.error(`✗ Lähetys epäonnistui — HTTP ${vastaus.status}`);
-console.error("  " + teksti);
-console.error("");
-
-/*
- * Yleisimmät virheet selitettynä.
- *
- * Resendin oma viesti on tarkka mutta olettaa lukijan tuntevan
- * palvelun. Nämä kolme ovat ne joihin käyttöönotto kaatuu.
- */
-if (vastaus.status === 403) {
-  console.error("403 tarkoittaa lähes aina jompaakumpaa:");
+} else {
+  console.error(`✗ Lähetys epäonnistui — HTTP ${vastaus.status}`);
+  console.error("  " + teksti);
   console.error("");
-  console.error("  a) Verkkotunnusta ei ole varmistettu.");
-  console.error("     Käy resend.com/domains ja lisää DNS-tietueet.");
-  console.error("");
-  console.error("  b) Lähettäjä on onboarding@resend.dev, joka lähettää");
-  console.error("     vain Resend-tilisi omaan sähköpostiin. Anna se");
-  console.error("     osoite vastaanottajaksi, tai varmista verkkotunnus.");
-} else if (vastaus.status === 401) {
-  console.error("401 tarkoittaa että avain ei kelpaa.");
-  console.error("Luo uusi resend.com/api-keys ja korvaa RESEND_API_KEY.");
-} else if (vastaus.status === 422 || vastaus.status === 400) {
-  console.error("Muoto ei kelpaa. Tarkista RESERVATION_EMAIL_FROM:");
-  console.error("  Cafe Monami <varaukset@verkkotunnus.fi>");
-}
 
-process.exit(1);
+  /*
+   * Yleisimmät virheet selitettynä.
+   *
+   * Resendin oma viesti on tarkka mutta olettaa lukijan tuntevan
+   * palvelun. Nämä kolme ovat ne joihin käyttöönotto kaatuu.
+   */
+  if (vastaus.status === 403) {
+    console.error("403 tarkoittaa lähes aina jompaakumpaa:");
+    console.error("");
+    console.error("  a) Verkkotunnusta ei ole varmistettu.");
+    console.error("     Käy resend.com/domains ja lisää DNS-tietueet.");
+    console.error("");
+    console.error("  b) Lähettäjä on onboarding@resend.dev, joka lähettää");
+    console.error("     vain Resend-tilisi omaan sähköpostiin. Anna se");
+    console.error("     osoite vastaanottajaksi, tai varmista verkkotunnus.");
+  } else if (vastaus.status === 401) {
+    console.error("401 tarkoittaa että avain ei kelpaa.");
+    console.error("Luo uusi resend.com/api-keys ja korvaa RESEND_API_KEY.");
+  } else if (vastaus.status === 422 || vastaus.status === 400) {
+    console.error("Muoto ei kelpaa. Tarkista RESERVATION_EMAIL_FROM:");
+    console.error("  Cafe Monami <varaukset@verkkotunnus.fi>");
+  }
+
+  process.exitCode = 1;
+}
