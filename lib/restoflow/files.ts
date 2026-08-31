@@ -68,9 +68,6 @@ export interface FileRow {
 
   /** Roskakorissa olevalla on aika, muilla null. */
   deletedAt: string | null;
-
-  /** Vain hakutuloksissa ja koontinäkymissä. */
-  folderPath?: string;
 }
 
 // ---------------------------------------------------------------------------

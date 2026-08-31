@@ -56,7 +56,7 @@ const FILE_COLUMNS =
   "id, folder_id, file_name, storage_path, file_type, file_size, is_favorite, " +
   "created_at, updated_at, expires_on, supplier_id, receipt_id, deleted_at";
 
-function toFile(row: FileRecord, folderPath?: string): FileRow {
+function toFile(row: FileRecord): FileRow {
   return {
     id: row.id,
     folderId: row.folder_id,
@@ -71,7 +71,6 @@ function toFile(row: FileRecord, folderPath?: string): FileRow {
     supplierId: row.supplier_id,
     receiptId: row.receipt_id,
     deletedAt: row.deleted_at,
-    ...(folderPath === undefined ? {} : { folderPath }),
   };
 }
 
@@ -235,7 +234,6 @@ export async function searchFiles(
           file_type: string;
           file_size: number;
           folder_id: string | null;
-          folder_path: string;
           is_favorite: boolean;
           created_at: string;
           expires_on: string | null;
@@ -255,7 +253,6 @@ export async function searchFiles(
     supplierId: null,
     receiptId: null,
     deletedAt: null,
-    folderPath: row.folder_path,
   }));
 }
 

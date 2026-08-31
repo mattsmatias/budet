@@ -2,7 +2,7 @@
 -- Tiedostokaapin eristys ja toiminnot
 -- ---------------------------------------------------------------------------
 --
--- Kaksi lohkoa, kumpikin päättyy tarkoitukselliseen poikkeukseen jonka
+-- Kolme lohkoa, kukin päättyy tarkoitukselliseen poikkeukseen jonka
 -- viesti on tulosrivi:
 --
 --   ERROR: TULOKSET: OK1 OK2 OK3 …
@@ -11,7 +11,7 @@
 -- lohkot erikseen — ensimmäisen poikkeus lopettaa ajon.
 --
 -- ---------------------------------------------------------------------------
--- OLENNAISTA: MOLEMMAT VAIHTAVAT ROOLIN
+-- OLENNAISTA: KAIKKI VAIHTAVAT ROOLIN
 -- ---------------------------------------------------------------------------
 --
 -- Pääkäyttäjänä ajettuna rivitason käytännöt ohitetaan kokonaan, ja
@@ -316,6 +316,89 @@ begin
 
   begin perform delete_file(v_root_file); r := r || 'FAIL19 ';
   exception when insufficient_privilege then r := r || 'OK19 '; end;
+
+  reset role;
+  raise exception 'TULOKSET: %', r;
+end;
+$t$;
+
+-- ===========================================================================
+-- 3. Haun järjestys
+-- ===========================================================================
+--
+-- Yhden kirjaimen haku on se hetki jolloin järjestys ratkaisee: "a"
+-- osuu lähes jokaiseen nimeen, ja ilman järjestystä tulos näyttää
+-- satunnaiselta. Tiedostot lisätään käänteisessä järjestyksessä, jotta
+-- lisäysaika ei vahingossa tuota oikeaa tulosta.
+
+do $t$
+declare
+  r text := '';
+  v_a uuid;
+  v_ua uuid := gen_random_uuid();
+  v_nimet text[];
+  v_n int;
+begin
+  insert into restaurants (name, slug, timezone)
+  values ('ZZ Haku', 'zz-haku', 'Europe/Helsinki') returning id into v_a;
+
+  insert into auth.users (id, instance_id, aud, role, email, created_at, updated_at)
+  values (v_ua, '00000000-0000-0000-0000-000000000000', 'authenticated',
+          'authenticated', 'zzh@x.test', now(), now());
+
+  insert into profiles (id, full_name) values (v_ua, 'A')
+  on conflict (id) do update set full_name = excluded.full_name;
+
+  insert into memberships (restaurant_id, user_id, role) values (v_a, v_ua, 'owner');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_ua)::text, true);
+
+  perform register_file(v_a, null, 'Zzz alv-raportti.pdf',
+    v_a::text || '/' || gen_random_uuid()::text, 'application/pdf', 100);
+  perform register_file(v_a, null, 'Vuokra anniskelu.pdf',
+    v_a::text || '/' || gen_random_uuid()::text, 'application/pdf', 100);
+  perform register_file(v_a, null, 'Anniskelulupa.pdf',
+    v_a::text || '/' || gen_random_uuid()::text, 'application/pdf', 100);
+
+  /* Alkukirjaimella alkava ylimmäksi. */
+  select array_agg(file_name order by ord) into v_nimet
+  from (select file_name, row_number() over () as ord
+        from search_files(v_a, 'a', 50)) x;
+
+  if v_nimet[1] = 'Anniskelulupa.pdf' then r := r || 'OK1 ';
+  else r := r || 'FAIL1(' || coalesce(v_nimet[1], 'null') || ') '; end if;
+
+  /* Kaikki kolme sisältävät a-kirjaimen. */
+  if array_length(v_nimet, 1) = 3 then r := r || 'OK2 ';
+  else r := r || 'FAIL2(' || coalesce(array_length(v_nimet, 1), 0) || ') '; end if;
+
+  select array_agg(file_name order by ord) into v_nimet
+  from (select file_name, row_number() over () as ord
+        from search_files(v_a, 'anniskelu', 50)) x;
+
+  if array_length(v_nimet, 1) = 2 then r := r || 'OK3 ';
+  else r := r || 'FAIL3(' || coalesce(array_length(v_nimet, 1), 0) || ') '; end if;
+
+  if v_nimet[1] = 'Anniskelulupa.pdf' then r := r || 'OK4 ';
+  else r := r || 'FAIL4(' || coalesce(v_nimet[1], 'null') || ') '; end if;
+
+  /* Kirjainkoko ei vaikuta. */
+  select count(*) into v_n from search_files(v_a, 'ANNISKELU', 50);
+  if v_n = 2 then r := r || 'OK5 '; else r := r || 'FAIL5(' || v_n || ') '; end if;
+
+  /* Tyhjä hakusana ei palauta mitään. */
+  select count(*) into v_n from search_files(v_a, '   ', 50);
+  if v_n = 0 then r := r || 'OK6 '; else r := r || 'FAIL6(' || v_n || ') '; end if;
+
+  /*
+   * Rajaus ottaa parhaat eikä satunnaiset.
+   *
+   * Järjestys on kannassa juuri tämän takia: jos se olisi selaimessa,
+   * raja katkaisisi listan ennen kuin parhaat osumat olisi valittu.
+   */
+  select count(*) into v_n from search_files(v_a, 'anniskelu', 1);
+  if v_n = 1 then r := r || 'OK7 '; else r := r || 'FAIL7(' || v_n || ') '; end if;
 
   reset role;
   raise exception 'TULOKSET: %', r;

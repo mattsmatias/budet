@@ -146,3 +146,75 @@ from default_folder_names() d
 where f.parent_folder_id is null
   and f.default_key is null
   and lower(btrim(f.name)) = lower(d.name);
+
+-- ---------------------------------------------------------------------------
+-- Haku: osumat järjestykseen
+-- ---------------------------------------------------------------------------
+
+/**
+ * Haku nimen osalla, parhaat ensin.
+ *
+ * Aiemmin järjestys oli pelkkä lisäysaika. Yhden kirjaimen haku "a"
+ * palautti siis kaiken minkä nimessä sattuu olemaan a-kirjain,
+ * satunnaisen näköisessä järjestyksessä — ja se on juuri se hetki
+ * jolloin käyttäjä on kirjoittanut vasta yhden kirjaimen.
+ *
+ * Järjestys on kolmiportainen:
+ *
+ *   1. Nimi alkaa hakusanalla. Sitä käyttäjä useimmiten etsii.
+ *   2. Osuman kohta nimessä. Aiempi osuma on parempi kuin myöhempi.
+ *   3. Uusin ensin. Tasapelit eivät saa heilua latauksesta toiseen.
+ *
+ * Järjestys on kannassa eikä selaimessa, koska rajaus katkaisee listan
+ * ennen kuin selain näkee sen: sadan tuloksen raja veisi parhaat
+ * osumat mennessään jos ne olisivat lopussa.
+ *
+ * folder_path palautetaan tyhjänä. Sijainti lasketaan selaimessa,
+ * jossa lähtökansioiden käännökset ovat käytettävissä — kanta ei tiedä
+ * käyttäjän kieltä.
+ */
+create or replace function search_files(
+  p_restaurant uuid,
+  p_term text,
+  p_limit integer default 50
+)
+returns table (
+  id uuid,
+  file_name text,
+  file_type text,
+  file_size bigint,
+  folder_id uuid,
+  folder_path text,
+  is_favorite boolean,
+  created_at timestamptz,
+  expires_on date
+)
+language sql
+stable
+set search_path = public
+as $$
+  with haku as (select lower(btrim(coalesce(p_term, ''))) as term)
+  select
+    f.id,
+    f.file_name,
+    f.file_type,
+    f.file_size,
+    f.folder_id,
+    ''::text,
+    f.is_favorite,
+    f.created_at,
+    f.expires_on
+  from files f, haku h
+  where f.restaurant_id = p_restaurant
+    and f.deleted_at is null
+    and h.term <> ''
+    and lower(f.file_name) like '%' || h.term || '%'
+  order by
+    case when lower(f.file_name) like h.term || '%' then 0 else 1 end,
+    position(h.term in lower(f.file_name)),
+    f.created_at desc
+  limit least(greatest(coalesce(p_limit, 50), 1), 200);
+$$;
+
+revoke execute on function search_files(uuid, text, integer) from public, anon;
+grant execute on function search_files(uuid, text, integer) to authenticated;

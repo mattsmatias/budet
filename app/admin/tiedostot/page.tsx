@@ -28,6 +28,7 @@ import {
 import { RfIcon } from "@/components/restoflow/icons";
 import { EmptyState } from "@/components/restoflow/ui";
 import { FileBrowser } from "./browser";
+import { SearchBox } from "./search";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -153,7 +154,12 @@ export default async function FilesPage({
   if (folderId && !current && !searching && view === "all") {
     return (
       <div className="rf-enter space-y-5">
-        <Header t={t} term={term} canManage={canManage} />
+        <Header
+          t={t}
+          term={term}
+          canManage={canManage}
+          folderId={folderId}
+        />
         <EmptyState
           title={t.tiedosto.errorGeneric}
           description={t.tiedosto.emptyFolder}
@@ -164,7 +170,7 @@ export default async function FilesPage({
 
   return (
     <div className="rf-enter space-y-5">
-      <Header t={t} term={term} canManage={canManage} />
+      <Header t={t} term={term} canManage={canManage} folderId={folderId} />
 
       {/* Välilehdet piiloon haun ajaksi: haku kattaa jo koko kaapin. */}
       {searching ? null : <Tabs t={t} view={view} folderId={folderId} />}
@@ -226,10 +232,12 @@ function Header({
   t,
   term,
   canManage,
+  folderId,
 }: {
   t: ReturnType<typeof adminText>;
   term: string;
   canManage: boolean;
+  folderId: string | null;
 }) {
   return (
     <div className="space-y-3">
@@ -245,28 +253,7 @@ function Header({
         </p>
       )}
 
-      <form
-        method="get"
-        action="/admin/tiedostot"
-        className="flex items-center gap-2"
-        style={{
-          background: "var(--rf-inset)",
-          borderRadius: "var(--rf-r-pill)",
-          padding: "0 12px",
-        }}
-      >
-        <span style={{ color: "var(--rf-text-3)" }}>
-          <RfIcon name="search" size={16} />
-        </span>
-        <input
-          type="search"
-          name="haku"
-          defaultValue={term}
-          placeholder={t.tiedosto.search}
-          aria-label={t.tiedosto.search}
-          className="h-[42px] w-full bg-transparent text-[14px] outline-none"
-        />
-      </form>
+      <SearchBox t={t} term={term} folderId={folderId} />
     </div>
   );
 }
