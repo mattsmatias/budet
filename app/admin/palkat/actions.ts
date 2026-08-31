@@ -27,6 +27,16 @@ import { loadPayroll } from "@/lib/restoflow/payroll-data";
 import { eventsOnDate } from "@/lib/restoflow/timeclock";
 import { windowStartIso } from "@/lib/restoflow/clock-context";
 import { fingerprint, type PeriodBounds } from "@/lib/restoflow/payroll";
+import { calculatePayslipTax } from "@/lib/restoflow/payroll-tax";
+import {
+  loadBenefits,
+  loadEmployerSettings,
+  loadIncomeLimit,
+  loadPayrollBefore,
+  loadPayrollProfiles,
+  loadTaxCards,
+  loadTaxRules,
+} from "@/lib/restoflow/payroll-tax-queries";
 
 export interface PayrollState {
   error?: string;
@@ -212,13 +222,13 @@ async function periodRow(restaurantId: string, period: PeriodBounds) {
 
   const { data } = await supabase
     .from("pay_periods")
-    .select("id, status")
+    .select("id, status, pay_date")
     .eq("restaurant_id", restaurantId)
     .eq("starts_on", period.startsOn)
     .eq("ends_on", period.endsOn)
     .maybeSingle();
 
-  if (data) return data as { id: string; status: string };
+  if (data) return data as PeriodRow;
 
   const { data: created } = await supabase
     .from("pay_periods")
@@ -227,10 +237,62 @@ async function periodRow(restaurantId: string, period: PeriodBounds) {
       starts_on: period.startsOn,
       ends_on: period.endsOn,
     })
-    .select("id, status")
+    .select("id, status, pay_date")
     .single();
 
-  return (created as { id: string; status: string } | null) ?? null;
+  return (created as PeriodRow | null) ?? null;
+}
+
+interface PeriodRow {
+  id: string;
+  status: string;
+  pay_date: string | null;
+}
+
+/**
+ * Palkkakauden maksupäivä.
+ *
+ * Oma toimintonsa eikä osa hyväksyntää: maksupäivä päätetään kerran
+ * kaudelle, ei jokaiselle työntekijälle erikseen. Se ratkaisee minkä
+ * verokortin mukaan ennakonpidätys lasketaan ja mille verovuodelle
+ * palkka kuuluu, joten sen muuttaminen jälkikäteen muuttaisi jo
+ * hyväksyttyjä laskelmia — siksi hyväksytty kausi ei ota sitä vastaan.
+ */
+export async function setPayDate(
+  _prev: PayrollState,
+  formData: FormData,
+): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant, role } = await requireContext(PATH);
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightApprovePay };
+
+  const startsOn = String(formData.get("startsOn") ?? "");
+  const endsOn = String(formData.get("endsOn") ?? "");
+  const payDate = String(formData.get("payDate") ?? "");
+
+  if (!ISO_DATE.test(startsOn) || !ISO_DATE.test(endsOn)) {
+    return { error: t.palkka.periodMissing };
+  }
+  if (!ISO_DATE.test(payDate)) return { error: t.palkka.payDateMissing };
+
+  const row = await periodRow(restaurant.id, { startsOn, endsOn });
+  if (!row) return { error: t.palkka.periodCreateFailed };
+
+  if (row.status === "approved" || row.status === "paid") {
+    return { error: t.palkka.periodApprovedBody };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pay_periods")
+    .update({ pay_date: payDate })
+    .eq("id", row.id);
+
+  if (error) return { error: explain(error, t.palkka.approveFailed, t) };
+
+  revalidatePath(PATH, "layout");
+  return { notice: t.palkka.payDateSaved };
 }
 
 /**
@@ -285,7 +347,81 @@ export async function approvePayslip(
   const row = await periodRow(restaurant.id, period);
   if (!row) return { error: t.palkka.periodCreateFailed };
 
+  /*
+   * Maksupäivä ennen hyväksyntää.
+   *
+   * Ilman sitä ei voi valita verokorttia eikä verovuotta, ja
+   * hyväksyntä tuottaisi laskelman jonka ennakonpidätyksellä ei ole
+   * perustetta. Parempi kieltäytyä kuin laskea jollakin.
+   */
+  const payDate = row.pay_date;
+  if (!payDate) return { error: t.palkka.payDateMissing };
+
   const supabase = await createClient();
+
+  /*
+   * Verotus lasketaan palvelimella samasta syystä kuin bruttopalkka.
+   *
+   * Vuosisäännöt luetaan maksupäivän vuodelta. Puuttuva vuosi ei ole
+   * tilanne jossa arvataan: ilman vahvistettuja prosentteja palkkaa ei
+   * lasketa lainkaan.
+   */
+  const vuosi = Number(payDate.slice(0, 4));
+  const rules = await loadTaxRules(vuosi);
+
+  if (!rules) {
+    return { error: fill(t.palkka.rulesMissing, { vuosi: String(vuosi) }) };
+  }
+
+  const [cards, benefits, employer, profiles, limit, payrollBefore, existing] =
+    await Promise.all([
+      loadTaxCards(restaurant.id, userId),
+      loadBenefits(restaurant.id, userId),
+      loadEmployerSettings(restaurant.id),
+      loadPayrollProfiles(restaurant.id),
+      loadIncomeLimit(restaurant.id, userId, payDate),
+      loadPayrollBefore(restaurant.id, payDate),
+      supabase
+        .from("payslips")
+        .select("taxable_cents, status")
+        .eq("pay_period_id", row.id)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+
+  /*
+   * Uudelleenhyväksyntä ei saa kuluttaa tulorajaa kahdesti.
+   *
+   * Kannan laskema käyttö sisältää tämän saman laskelman aiemman
+   * version, jos se on jo hyväksytty. Ilman vähennystä toinen
+   * hyväksyntä siirtäisi palkan lisäprosentin puolelle ilman että
+   * mikään on muuttunut.
+   */
+  const aiempi = existing.data as
+    | { taxable_cents: number; status: string }
+    | null;
+
+  const omaOsuus =
+    aiempi && (aiempi.status === "approved" || aiempi.status === "paid")
+      ? Number(aiempi.taxable_cents)
+      : 0;
+
+  const usedLimitCents = Math.max(0, (limit?.usedCents ?? 0) - omaOsuus);
+
+  const tax = calculatePayslipTax({
+    grossCents: slip.grossCents,
+    periodFrom: period.startsOn,
+    periodTo: period.endsOn,
+    payDate,
+    cards,
+    benefits,
+    usedLimitCents,
+    payrollBeforeCents: Math.max(0, payrollBefore - omaOsuus),
+    rules,
+    employer,
+    birthDate:
+      profiles.find((profile) => profile.userId === userId)?.birthDate ?? null,
+  });
 
   const { data: saved, error } = await supabase
     .from("payslips")
@@ -295,11 +431,55 @@ export async function approvePayslip(
         pay_period_id: row.id,
         user_id: userId,
         status: "approved",
+        pay_date: payDate,
         hourly_rate_cents: slip.hourlyRateCents,
         worked_minutes: slip.workedMinutes,
         base_cents: slip.baseCents,
         supplements_cents: slip.supplementsCents,
         gross_cents: slip.grossCents,
+
+        benefits_cents: tax.benefitsCents,
+        taxable_cents: tax.taxableCents,
+        withholding_cents: tax.withholding.cents,
+        employee_pension_cents: tax.employeePensionCents,
+        employee_unemployment_cents: tax.employeeUnemploymentCents,
+        net_cents: tax.netCents,
+
+        employer_pension_cents: tax.employerPensionCents,
+        employer_health_cents: tax.employerHealthCents,
+        employer_unemployment_cents: tax.employerUnemploymentCents,
+        employer_accident_cents: tax.employerAccidentCents,
+        employer_group_life_cents: tax.employerGroupLifeCents,
+
+        /*
+         * Vanhat yhteissarakkeet pysyvät ajan tasalla.
+         *
+         * Ne olivat 0027:ssa paikanvaraus, ja kirjanpidon puoli lukee
+         * niitä. Kaksi totuutta samasta summasta ajautuisi erilleen,
+         * joten ne lasketaan samoista osista.
+         */
+        deductions_cents:
+          tax.withholding.cents +
+          tax.employeePensionCents +
+          tax.employeeUnemploymentCents,
+        employer_cost_cents: tax.employerTotalCents,
+
+        tax_rules_year_used: tax.used.taxYear,
+        tax_card_id: tax.used.taxCardId,
+        tax_base_percent_used: tax.used.basePercent,
+        tax_additional_percent_used: tax.used.additionalPercent,
+        employee_pension_rate_used: tax.used.employeePensionRate,
+        employee_unemployment_rate_used: tax.used.employeeUnemploymentRate,
+        employer_pension_rate_used: tax.used.employerPensionRate,
+        employer_health_rate_used: tax.used.employerHealthRate,
+        employer_unemployment_rate_used: tax.used.employerUnemploymentRate,
+        employer_accident_rate_used: tax.used.employerAccidentRate,
+        employer_group_life_rate_used: tax.used.employerGroupLifeRate,
+        no_tax_card: tax.withholding.noTaxCard,
+
+        income_limit_before_cents: tax.withholding.limitBeforeCents,
+        income_limit_used_cents: tax.withholding.limitUsedCents,
+
         source_fingerprint: fingerprint(slip),
         computed_at: nowIso,
         approved_at: nowIso,
@@ -319,20 +499,46 @@ export async function approvePayslip(
   // vanhoja rivejä jos laskelma on lyhentynyt.
   await supabase.from("payslip_lines").delete().eq("payslip_id", payslipId);
 
-  if (slip.lines.length > 0) {
-    const { error: lineError } = await supabase.from("payslip_lines").insert(
-      slip.lines.map((line) => ({
-        payslip_id: payslipId,
-        work_date: line.date,
-        shift_id: line.shiftId,
-        pay_component_id: line.componentId,
-        correction_id: line.correctionId,
-        description: line.description,
-        minutes: line.minutes,
-        rate_cents: line.rateCents,
-        amount_cents: line.amountCents,
-      })),
-    );
+  const rivit = slip.lines.map((line) => ({
+    payslip_id: payslipId,
+    work_date: line.date,
+    shift_id: line.shiftId,
+    pay_component_id: line.componentId,
+    correction_id: line.correctionId,
+    description: line.description,
+    minutes: line.minutes,
+    rate_cents: line.rateCents,
+    amount_cents: line.amountCents,
+    line_kind: line.componentId === null ? "base" : "supplement",
+  }));
+
+  /*
+   * Luontoisetu omana rivinään.
+   *
+   * Ilman riviä laskelman summat eivät täsmäisi: veronalainen palkka
+   * olisi suurempi kuin rivien summa, eikä lukija näkisi mistä ero
+   * tulee. Rivi kertoo myös sen mitä etu tarkoittaa palkassa —
+   * veronalaista tuloa jota ei makseta rahana.
+   */
+  if (tax.benefitsCents > 0) {
+    rivit.push({
+      payslip_id: payslipId,
+      work_date: period.endsOn,
+      shift_id: null,
+      pay_component_id: null,
+      correction_id: null,
+      description: t.verotus.benefits,
+      minutes: 0,
+      rate_cents: 0,
+      amount_cents: tax.benefitsCents,
+      line_kind: "benefit",
+    });
+  }
+
+  if (rivit.length > 0) {
+    const { error: lineError } = await supabase
+      .from("payslip_lines")
+      .insert(rivit);
 
     if (lineError)
       return { error: explain(lineError, t.palkka.rowsSaveFailed, t) };
