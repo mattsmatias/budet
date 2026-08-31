@@ -10,7 +10,6 @@ import {
   folderLabel,
   folderPath,
   formatFileSize,
-  isPreviewable,
   MAX_FILE_BYTES,
   mimeFor,
   movableTargets,
@@ -121,17 +120,6 @@ describe("tiedostotyypit", () => {
     expect(fileKind("text/plain", "muistio.txt")).toBe("text");
   });
 
-  /*
-   * HEIC on kuva muttei selaimen näytettävissä.
-   *
-   * iPhone tuottaa niitä. Esikatselu näyttäisi rikkinäiseltä
-   * kuvakkeelta, ja latauslinkki on rehellisempi.
-   */
-  it("ei lupaa esikatselua HEIC-kuvalle", () => {
-    expect(isPreviewable("image/jpeg", "kuva.jpg")).toBe(true);
-    expect(isPreviewable("image/heic", "kuva.heic")).toBe(false);
-    expect(isPreviewable("application/vnd.ms-excel", "a.xlsx")).toBe(false);
-  });
 });
 
 describe("koko", () => {

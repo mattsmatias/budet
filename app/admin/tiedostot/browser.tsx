@@ -42,7 +42,6 @@ import {
   folderLabel,
   folderPath,
   formatFileSize,
-  isPreviewable,
   mimeFor,
   movableTargets,
   type ExpiryState,
@@ -680,6 +679,18 @@ export function FileBrowser(props: Props) {
               inTrash={view === "trash"}
               selected={valitut.includes(file.id)}
               onSelect={() => vaihdaValinta(file.id)}
+              onShowLocation={
+                file.folderId
+                  ? () =>
+                      router.push(
+                        filesHref({
+                          folderId: file.folderId,
+                          fileSort: props.fileSort,
+                          folderSort: props.folderSort,
+                        }),
+                      )
+                  : () => router.push(filesHref({}))
+              }
               onRestore={() => run(() => restoreFile(file.id))}
               onExpiry={() => setDialog({ type: "expiry", file })}
               onLink={() => setDialog({ type: "link", file })}
@@ -1235,6 +1246,7 @@ function FileRowItem({
   inTrash,
   selected,
   onSelect,
+  onShowLocation,
   onRestore,
   onExpiry,
   onLink,
@@ -1256,6 +1268,8 @@ function FileRowItem({
   inTrash: boolean;
   selected: boolean;
   onSelect: () => void;
+  /** null kun tiedosto on jo juuressa: sinne ei ole mihin siirtyä. */
+  onShowLocation: (() => void) | null;
   onRestore: () => void;
   onExpiry: () => void;
   onLink: () => void;
@@ -1378,11 +1392,32 @@ function FileRowItem({
         <RowMenu
           label={file.name}
           items={[
+            /*
+             * Avaa ja Esikatsele olivat sama kutsu.
+             *
+             * Molemmat avasivat tiedoston uuteen välilehteen, eli
+             * valikossa oli kaksi eri nimeä yhdelle teolle. Se opettaa
+             * epäilemään koko valikkoa: jos nämä kaksi ovat sama, mitkä
+             * muut ovat?
+             *
+             * Jäljelle jäi Avaa. Esikatselu olisi oma tekonsa vasta jos
+             * se näyttäisi tiedoston sivulla poistumatta listasta —
+             * kaksi nimeä samalle asialle ei ole esikatselu.
+             */
             { label: t.tiedosto.open, onClick: () => void open(false) },
-            ...(isPreviewable(file.type, file.name)
-              ? [{ label: t.tiedosto.preview, onClick: () => void open(false) }]
-              : []),
             { label: t.tiedosto.download, onClick: () => void open(true) },
+
+            /*
+             * Sijainti vain silloin kun tiedosto näkyy kansionsa
+             * ulkopuolella.
+             *
+             * Hakutuloksessa ja koontinäkymissä käyttäjä on löytänyt
+             * tiedoston muttei tiedä missä se asuu. Kansiolistassa
+             * kohta olisi tarjous siirtyä sinne missä ollaan jo.
+             */
+            ...(showPath && onShowLocation
+              ? [{ label: t.tiedosto.showLocation, onClick: onShowLocation }]
+              : []),
             ...(canManage
               ? [
                   { label: t.tiedosto.rename, onClick: onRename },

@@ -163,21 +163,6 @@ export function fileKind(type: string, name = ""): FileKind {
   return "other";
 }
 
-/** Voiko selain näyttää tiedoston sellaisenaan. */
-export function isPreviewable(type: string, name = ""): boolean {
-  const kind = fileKind(type, name);
-
-  /*
-   * HEIC on kuva muttei selaimen näytettävissä.
-   *
-   * iPhone tuottaa niitä, ja esikatselu näyttäisi rikkinäiseltä
-   * kuvakkeelta. Latauslinkki toimii, ja se on rehellisempi.
-   */
-  if (extensionOf(name) === "heic" || extensionOf(name) === "heif") return false;
-
-  return kind === "pdf" || kind === "image" || kind === "text";
-}
-
 // ---------------------------------------------------------------------------
 // Koko
 // ---------------------------------------------------------------------------
