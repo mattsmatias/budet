@@ -354,7 +354,17 @@ export function FileBrowser(props: Props) {
     });
   }
 
-  const empty = visibleFolders.length === 0 && files.length === 0;
+  /*
+   * Roskakorissa voi olla pelkkiä kansioita.
+   *
+   * Tyhjän kansion poisto ei tuo mukanaan yhtään tiedostoa. Ilman
+   * tätä ehtoa näkymä sanoisi roskakoria tyhjäksi, ja kansio jäisi
+   * sinne ilman tapaa palauttaa se.
+   */
+  const empty =
+    visibleFolders.length === 0 &&
+    files.length === 0 &&
+    props.trashFolders.length === 0;
 
   return (
     <div className="space-y-3">

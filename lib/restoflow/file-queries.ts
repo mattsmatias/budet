@@ -424,3 +424,42 @@ export async function loadLinkedFiles(
   const { data } = await query;
   return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
 }
+
+/**
+ * Vanhentuneiden lopullinen siivous.
+ *
+ * Tämä on kysely eikä toiminto, vaikka se poistaa rivejä. Ero on
+ * ratkaiseva: toiminnot kutsuvat revalidatePathia, ja sen kutsuminen
+ * kesken sen sivun renderöinnin jota se mitätöi kaataa pyynnön.
+ * Sivunlataus ei tarvitse mitätöintiä — se on jo lataamassa tuoretta
+ * tietoa.
+ *
+ * Ajetaan roskakoria avattaessa. Ajastettua tehtävää ei ole, eikä
+ * sellaista kannata lisätä yhden siivouksen takia: jos kukaan ei
+ * katso roskakoria, rivit odottavat eivätkä haittaa ketään.
+ */
+export async function purgeExpiredTrash(
+  restaurantId: string,
+  days = 30,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("purge_trash", {
+    p_restaurant: restaurantId,
+    p_days: days,
+  });
+
+  /*
+   * Epäonnistuminen on hiljainen.
+   *
+   * Siivous on ylläpitoa, ei sitä mitä käyttäjä pyysi. Jos se ei
+   * onnistu, roskakori näkyy silti — ja se on parempi kuin virhesivu
+   * sen tilalla.
+   */
+  if (error) return;
+
+  const paths = (data as string[] | null) ?? [];
+  if (paths.length > 0) {
+    await supabase.storage.from("files").remove(paths);
+  }
+}

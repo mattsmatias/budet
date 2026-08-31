@@ -12,6 +12,7 @@ import {
   loadFolders,
   loadRecent,
   loadTrash,
+  purgeExpiredTrash,
   searchFiles,
 } from "@/lib/restoflow/file-queries";
 import {
@@ -21,7 +22,6 @@ import {
   type FileSort,
   type FolderSort,
 } from "@/lib/restoflow/files";
-import { purgeTrash } from "./actions";
 import { RfIcon } from "@/components/restoflow/icons";
 import { EmptyState } from "@/components/restoflow/ui";
 import { FileBrowser } from "./browser";
@@ -89,12 +89,12 @@ export default async function FilesPage({
   /*
    * Roskakori siivoaa itsensä avattaessa.
    *
-   * Ajastettua tehtävää ei ole, eikä sellaista kannata lisätä yhden
-   * siivouksen takia. Kolmeakymmentä päivää vanhemmat häviävät silloin
-   * kun joku katsoo roskakoria — ja jos kukaan ei katso, ne odottavat
-   * eivätkä haittaa ketään.
+   * Kysely eikä toiminto: toiminnot kutsuvat revalidatePathia, ja sen
+   * kutsuminen kesken tämän sivun renderöinnin kaataa koko pyynnön.
+   * Sivunlataus ei tarvitse mitätöintiä — se on jo lataamassa tuoretta
+   * tietoa.
    */
-  if (view === "trash" && canManage) await purgeTrash(30);
+  if (view === "trash" && canManage) await purgeExpiredTrash(restaurant.id, 30);
 
   const trash = view === "trash" ? await loadTrash(restaurant.id) : null;
 
