@@ -80,6 +80,7 @@ async function store(
   fileName: string,
   mime: string,
   bytes: Uint8Array | Blob,
+  link: { receiptId?: string } = {},
 ): Promise<string | null> {
   const supabase = await createClient();
 
@@ -99,6 +100,7 @@ async function store(
     p_path: path,
     p_type: mime,
     p_size: bytes instanceof Blob ? bytes.size : bytes.length,
+    p_receipt: link.receiptId ?? null,
   });
 
   if (error) {
@@ -279,12 +281,20 @@ export async function saveReceiptToFiles(input: {
       .replace(/[\\/:*?"<>|]/g, "-")
       .slice(0, 200);
 
+    /*
+     * Liitos kuittiin syntyy itsestaan.
+     *
+     * Tiedosto ON se kuitti. Erikseen liitettava tieto jaisi
+     * liittamatta, ja kuittisivu nayttaisi tyhjaa vaikka tosite on
+     * kaapissa.
+     */
     const problem = await store(
       restaurant.id,
       input.folderId,
       safeName,
       blob.type || "image/jpeg",
       blob,
+      { receiptId: input.receiptId },
     );
 
     if (!problem) saved += 1;
@@ -294,4 +304,38 @@ export async function saveReceiptToFiles(input: {
 
   revalidatePath("/admin/tiedostot");
   return { notice: `${merchant} ${date}` };
+}
+
+// ---------------------------------------------------------------------------
+// Toimittajat liitosvalintaan
+// ---------------------------------------------------------------------------
+
+export interface SupplierChoice {
+  id: string;
+  name: string;
+}
+
+/**
+ * Ravintolan toimittajat nimeltä.
+ *
+ * Haetaan vasta kun liitosdialogi avataan. Toimittajia voi olla
+ * satoja, eikä niitä kannata kuljettaa jokaisen tiedostorivin mukana
+ * listaan jossa käyttäjä avaa yhden valikon tai ei yhtään.
+ */
+export async function supplierChoices(): Promise<SupplierChoice[]> {
+  const { restaurant, role } = await requireContext("/admin/tiedostot");
+  if (!can(role, "files.manage")) return [];
+
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("suppliers")
+    .select("id, name")
+    .eq("restaurant_id", restaurant.id)
+    .order("name");
+
+  return ((data as SupplierChoice[] | null) ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+  }));
 }

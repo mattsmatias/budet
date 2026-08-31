@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ALLOWED_TYPES,
   checkFile,
+  EXPIRY_WARNING_DAYS,
+  expiryState,
   extensionOf,
   fileKind,
   folderPath,
@@ -10,8 +12,10 @@ import {
   MAX_FILE_BYTES,
   mimeFor,
   movableTargets,
+  sortByExpiry,
   sortFiles,
   sortFolders,
+  suggestName,
   type FileRow,
   type FolderRow,
 } from "../files";
@@ -38,6 +42,10 @@ function tiedosto(muutos: Partial<FileRow> & { id: string }): FileRow {
     isFavorite: false,
     createdAt: "2026-01-01T00:00:00Z",
     updatedAt: "2026-01-01T00:00:00Z",
+    expiresOn: null,
+    supplierId: null,
+    receiptId: null,
+    deletedAt: null,
     ...muutos,
   };
 }
@@ -226,5 +234,95 @@ describe("siirron kohteet", () => {
 
     expect(() => folderPath(rikki, "a")).not.toThrow();
     expect(() => movableTargets(rikki, "a")).not.toThrow();
+  });
+});
+
+describe("voimassaolo", () => {
+  /*
+   * Kalenteripäivä, ei tunnit.
+   *
+   * "Vanhenee huomenna" ei saa muuttua sanomaan "tänään" vain siksi
+   * että kello on paljon — ravintoloitsija katsoo tätä illalla.
+   */
+  it("laskee päivät kalenteripäivinä", () => {
+    expect(expiryState("2026-09-30", "2026-08-31")).toEqual({
+      state: "soon",
+      days: 30,
+    });
+    expect(expiryState("2026-08-31", "2026-08-31")).toEqual({
+      state: "soon",
+      days: 0,
+    });
+  });
+
+  it("erottaa vanhentuneen, pian vanhenevan ja voimassa olevan", () => {
+    expect(expiryState("2026-08-01", "2026-08-31").state).toBe("expired");
+    expect(expiryState("2026-10-15", "2026-08-31").state).toBe("soon");
+    expect(expiryState("2027-08-31", "2026-08-31").state).toBe("ok");
+  });
+
+  /* Raja on 60 päivää: lupien uusiminen vie viikkoja. */
+  it("varoittaa täsmälleen rajalla muttei sen yli", () => {
+    const raja = new Date(Date.UTC(2026, 7, 31));
+    raja.setUTCDate(raja.getUTCDate() + EXPIRY_WARNING_DAYS);
+    const yli = new Date(raja);
+    yli.setUTCDate(yli.getUTCDate() + 1);
+
+    expect(expiryState(raja.toISOString().slice(0, 10), "2026-08-31").state).toBe(
+      "soon",
+    );
+    expect(expiryState(yli.toISOString().slice(0, 10), "2026-08-31").state).toBe(
+      "ok",
+    );
+  });
+
+  it("kestää puuttuvan ja kelvottoman päivän", () => {
+    expect(expiryState(null, "2026-08-31").state).toBe("none");
+    expect(expiryState("ei-paiva", "2026-08-31").state).toBe("none");
+  });
+
+  it("järjestää kiireellisimmän ensin ja jättää merkitsemättömät pois", () => {
+    const lista = [
+      tiedosto({ id: "a", expiresOn: "2026-12-01" }),
+      tiedosto({ id: "b", expiresOn: null }),
+      tiedosto({ id: "c", expiresOn: "2026-01-01" }),
+    ];
+
+    expect(sortByExpiry(lista).map((f) => f.id)).toEqual(["c", "a"]);
+  });
+});
+
+describe("nimiehdotus", () => {
+  /*
+   * ISO-päivä nimessä.
+   *
+   * Tiedostot järjestyvät nimen mukaan oikeaan aikajärjestykseen, ja
+   * sama nimi tarkoittaa samaa kaikilla kuudella kielellä.
+   */
+  it("kokoaa nimen toimittajasta ja päivästä", () => {
+    expect(suggestName("scan_0042.pdf", "Metro", "2026-01-12")).toBe(
+      "Metro 2026-01-12.pdf",
+    );
+  });
+
+  /* Pääte kertoo mikä tiedosto on. Sen vaihtaminen rikkoisi avaamisen. */
+  it("säilyttää alkuperäisen päätteen", () => {
+    expect(suggestName("IMG_4821.JPG", "Wihuri", null)).toBe("Wihuri.JPG");
+  });
+
+  it("poistaa merkit jotka rikkovat tiedostonimen", () => {
+    expect(suggestName("a.pdf", 'Metro/Oy: "iso"', null)).toBe(
+      "Metro-Oy- -iso-.pdf",
+    );
+  });
+
+  /* Ilman toimittajaa ei ole mitään ehdotettavaa. */
+  it("palauttaa null kun toimittajaa ei tunnistettu", () => {
+    expect(suggestName("scan.pdf", null, "2026-01-12")).toBeNull();
+    expect(suggestName("scan.pdf", "   ", "2026-01-12")).toBeNull();
+  });
+
+  it("jättää kelvottoman päivän pois nimestä", () => {
+    expect(suggestName("a.pdf", "Metro", "eilen")).toBe("Metro.pdf");
   });
 });

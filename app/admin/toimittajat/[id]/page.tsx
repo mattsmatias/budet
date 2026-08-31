@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
+import { can } from "@/lib/restoflow/permissions";
+import { loadLinkedFiles } from "@/lib/restoflow/file-queries";
+import { LinkedFiles } from "@/components/restoflow/linked-files";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -43,6 +47,8 @@ export default async function SupplierDetailPage({
   const nimet = labels(locale);
   const { id } = await params;
   const {
+    restaurant,
+    role,
     receipts,
     suppliers,
     month: nykyinen,
@@ -67,6 +73,17 @@ export default async function SupplierDetailPage({
   const monthTotal = inMonth.reduce((s, r) => s + r.totalCents, 0);
   const average =
     inMonth.length === 0 ? 0 : Math.round(monthTotal / inMonth.length);
+
+  /*
+   * Toimittajaan liitetyt tiedostot.
+   *
+   * Sopimus, hinnasto tai reklamaatio kuuluu tähän eikä pelkästään
+   * kaappiin: kaapista etsiminen edellyttää muistamista, ja juuri
+   * siitä kaapin oli tarkoitus päästää eroon.
+   */
+  const linked = can(role, "files.view")
+    ? await loadLinkedFiles(restaurant.id, { supplierId: id })
+    : [];
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
@@ -318,6 +335,8 @@ export default async function SupplierDetailPage({
           </p>
         ) : null}
       </Card>
+
+      <LinkedFiles t={t} tag={LOCALE_INFO[locale].tag} files={linked} />
     </div>
   );
 }

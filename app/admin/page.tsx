@@ -38,6 +38,9 @@ import {
 import { RfIcon } from "@/components/restoflow/icons";
 import { Rhythm } from "./home/rhythm";
 import { StatusHeader } from "./home/status-header";
+import { loadExpiring } from "@/lib/restoflow/file-queries";
+import { expirySummary } from "@/lib/restoflow/files";
+import { fill as taytaTeksti } from "@/lib/i18n/auth-text";
 import {
   COST_COLOR,
   Donut,
@@ -234,6 +237,38 @@ export default async function AdminDashboard({
     locale,
   });
   const items = focusItems(dashboardInput, insights);
+
+  /*
+   * Vanhenevat asiakirjat samaan huomiolistaan.
+   *
+   * Oma lohkonsa olisi toinen vastaus kysymykseen "onko kaikki
+   * kunnossa" — juuri se virhe jonka tämä sivu on kerran jo tehnyt ja
+   * korjannut. Yksi rivi listassa, ei kaksikymmentä: jokainen
+   * vanheneva paperi omana rivinään hukuttaisi kaiken muun.
+   *
+   * Anniskeluluvan umpeutuminen sulkee anniskelun, joten vanhentunut
+   * on kriittinen eikä varoitus.
+   */
+  if (can(role, "files.view")) {
+    const { expired, soon } = expirySummary(
+      await loadExpiring(restaurant.id),
+      today,
+    );
+
+    if (expired > 0 || soon > 0) {
+      items.unshift({
+        id: "files-expiry",
+        severity: expired > 0 ? "critical" : "warning",
+        title:
+          expired > 0
+            ? taytaTeksti(t.tiedosto.focusExpired, { maara: String(expired) })
+            : taytaTeksti(t.tiedosto.focusExpiring, { maara: String(soon) }),
+        detail: t.tiedosto.focusExpiryDetail,
+        href: "/admin/tiedostot?nakyma=expiring",
+        icon: "folder",
+      });
+    }
+  }
 
   const budgets_ = budgetLines(t, receipts, budgets, viewMonth);
 

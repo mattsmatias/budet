@@ -36,6 +36,22 @@ export interface FileRow {
   isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
+
+  /**
+   * Voimassaolo, jos tiedostolla sellainen on.
+   *
+   * Useimmilla ei ole. Anniskeluluvalla, vakuutuksella ja
+   * vuokrasopimuksella on, ja juuri niiden unohtuminen maksaa.
+   */
+  expiresOn: string | null;
+
+  /** Liitos toimittajaan tai kuittiin, jos tiedosto koskee sellaista. */
+  supplierId: string | null;
+  receiptId: string | null;
+
+  /** Roskakorissa olevalla on aika, muilla null. */
+  deletedAt: string | null;
+
   /** Vain hakutuloksissa ja koontinäkymissä. */
   folderPath?: string;
 }
@@ -308,4 +324,115 @@ export function folderPath(all: FolderRow[], id: string | null): string {
   }
 
   return parts.join(" / ");
+}
+
+// ---------------------------------------------------------------------------
+// Voimassaolo
+// ---------------------------------------------------------------------------
+
+/**
+ * Kuinka monta päivää varoitetaan etukäteen.
+ *
+ * Kaksi kuukautta. Anniskeluluvan uusiminen, vakuutuskilpailutus ja
+ * vuokrasopimuksen neuvottelu vievät viikkoja — viikon varoitus tulisi
+ * liian myöhään ollakseen muuta kuin ahdistava.
+ */
+export const EXPIRY_WARNING_DAYS = 60;
+
+export type ExpiryState = "expired" | "soon" | "ok" | "none";
+
+/**
+ * Tiedoston voimassaolon tila.
+ *
+ * Päivät lasketaan kalenteripäivinä eikä tunteina: "vanhenee
+ * huomenna" ei saa muuttua sanomaan "tänään" vain siksi että kello on
+ * paljon.
+ */
+export function expiryState(
+  expiresOn: string | null,
+  today: string,
+): { state: ExpiryState; days: number } {
+  if (!expiresOn) return { state: "none", days: 0 };
+
+  const end = Date.parse(`${expiresOn}T00:00:00Z`);
+  const now = Date.parse(`${today}T00:00:00Z`);
+
+  if (Number.isNaN(end) || Number.isNaN(now)) return { state: "none", days: 0 };
+
+  const days = Math.round((end - now) / 86_400_000);
+
+  if (days < 0) return { state: "expired", days };
+  if (days <= EXPIRY_WARNING_DAYS) return { state: "soon", days };
+  return { state: "ok", days };
+}
+
+/**
+ * Vanhenevat ensin, ja niiden sisällä kiireellisin ylimmäksi.
+ *
+ * Jo vanhentunut on kiireellisempi kuin huomenna vanheneva, joten
+ * järjestys on yksinkertaisesti päivämäärä nousevasti.
+ */
+export function sortByExpiry(files: FileRow[]): FileRow[] {
+  return [...files]
+    .filter((file) => file.expiresOn !== null)
+    .sort((a, b) => (a.expiresOn ?? "").localeCompare(b.expiresOn ?? ""));
+}
+
+/**
+ * Ehdotus tiedoston nimeksi.
+ *
+ * Skannerista tulee "scan_0042.pdf", eikä haku löydä sitä ikinä.
+ * Toimittaja ja päivä tekevät siitä nimen jonka voi arvata puoli
+ * vuotta myöhemmin.
+ *
+ * Pääte säilyy alkuperäisestä kirjainkokoa myöten: se kertoo mikä
+ * tiedosto on, ja sen vaihtaminen rikkoisi avaamisen.
+ *
+ * Päivä ISO-muodossa eikä paikallisessa. Kaksi syytä: tiedostot
+ * järjestyvät nimen mukaan oikeaan aikajärjestykseen, ja sama nimi
+ * tarkoittaa samaa asiaa kaikilla kuudella kielellä. Kuitista
+ * tallennettu tiedosto nimetään jo samalla tavalla.
+ */
+export function suggestName(
+  original: string,
+  supplier: string | null,
+  date: string | null,
+): string | null {
+  const cleanSupplier = (supplier ?? "").trim();
+  if (cleanSupplier === "") return null;
+
+  /* extensionOf pienentää kirjaimet, joten pääte otetaan raakana. */
+  const dot = original.lastIndexOf(".");
+  const suffix = extensionOf(original) ? original.slice(dot) : "";
+
+  /* Merkit jotka rikkovat tiedostonimen tai polun. */
+  const safe = cleanSupplier.replace(/[\/:*?"<>|]/g, "-").slice(0, 80);
+
+  const day = (date ?? "").trim();
+  const stamp = /^\d{4}-\d{2}-\d{2}$/.test(day) ? ` ${day}` : "";
+
+  return `${safe}${stamp}${suffix}`;
+}
+
+/**
+ * Voimassaolon tilanne lukuina.
+ *
+ * Yleiskatsaus tarvitsee yhden rivin eikä listaa: kaksikymmentä
+ * vanhenevaa asiakirjaa olisi kaksikymmentä riviä listassa jonka
+ * otsikko on "vaatii huomiota", ja ne hukuttaisivat kaiken muun.
+ */
+export function expirySummary(
+  files: FileRow[],
+  today: string,
+): { expired: number; soon: number } {
+  let expired = 0;
+  let soon = 0;
+
+  for (const file of files) {
+    const { state } = expiryState(file.expiresOn, today);
+    if (state === "expired") expired += 1;
+    else if (state === "soon") soon += 1;
+  }
+
+  return { expired, soon };
 }

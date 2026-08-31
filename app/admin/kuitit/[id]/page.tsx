@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { SaveToFiles } from "@/components/restoflow/save-to-files";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
+import { loadLinkedFiles } from "@/lib/restoflow/file-queries";
+import { LinkedFiles } from "@/components/restoflow/linked-files";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -146,6 +149,11 @@ export default async function AdminReceiptDetailPage({
   /* Kannoittainen erittely riveiltä. Sekakuitti ei pakotu yhteen kantaan. */
   const rateBreakdown = vatByRate(receipt.items);
 
+  /* Kaappiin tallennetut tositteet tästä kuitista. */
+  const linked = can(role, "files.view")
+    ? await loadLinkedFiles(restaurant.id, { receiptId: id })
+    : [];
+
   return (
     <div className="rf-enter mx-auto max-w-4xl space-y-4">
       <header className="flex items-center gap-2">
@@ -179,6 +187,8 @@ export default async function AdminReceiptDetailPage({
           </div>
         ) : null}
       </header>
+
+      <LinkedFiles t={t} tag={LOCALE_INFO[locale].tag} files={linked} />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-4">

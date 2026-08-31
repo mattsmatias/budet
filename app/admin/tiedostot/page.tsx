@@ -6,18 +6,22 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import {
   loadCrumbs,
+  loadExpiring,
   loadFavorites,
   loadFiles,
   loadFolders,
   loadRecent,
+  loadTrash,
   searchFiles,
 } from "@/lib/restoflow/file-queries";
 import {
   sortFiles,
   sortFolders,
+  type FileRow,
   type FileSort,
   type FolderSort,
 } from "@/lib/restoflow/files";
+import { purgeTrash } from "./actions";
 import { RfIcon } from "@/components/restoflow/icons";
 import { EmptyState } from "@/components/restoflow/ui";
 import { FileBrowser } from "./browser";
@@ -27,7 +31,9 @@ export async function generateMetadata() {
   return { title: t.nav.files };
 }
 
-type View = "all" | "favorites" | "recent";
+type View = "all" | "favorites" | "recent" | "expiring" | "trash";
+
+const VIEWS: View[] = ["all", "favorites", "recent", "expiring", "trash"];
 
 function str(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -58,16 +64,14 @@ export default async function FilesPage({
   const t = adminText(locale);
   const tag = LOCALE_INFO[locale].tag;
   const params = await searchParams;
-  const { restaurant, role } = await adminContext("/admin/tiedostot");
+  const { restaurant, role, today } = await adminContext("/admin/tiedostot");
 
   const canManage = can(role, "files.manage");
 
   const folderId = str(params.kansio) || null;
   const term = str(params.haku).trim();
-  const view: View =
-    params.nakyma === "favorites" || params.nakyma === "recent"
-      ? params.nakyma
-      : "all";
+  const requested = str(params.nakyma) as View;
+  const view: View = VIEWS.includes(requested) ? requested : "all";
 
   const fileSort = (str(params.jarjesta) || "added") as FileSort;
   const folderSort = (str(params.kansiot) || "custom") as FolderSort;
@@ -82,6 +86,18 @@ export default async function FilesPage({
    */
   const searching = term !== "";
 
+  /*
+   * Roskakori siivoaa itsensä avattaessa.
+   *
+   * Ajastettua tehtävää ei ole, eikä sellaista kannata lisätä yhden
+   * siivouksen takia. Kolmeakymmentä päivää vanhemmat häviävät silloin
+   * kun joku katsoo roskakoria — ja jos kukaan ei katso, ne odottavat
+   * eivätkä haittaa ketään.
+   */
+  if (view === "trash" && canManage) await purgeTrash(30);
+
+  const trash = view === "trash" ? await loadTrash(restaurant.id) : null;
+
   const [folders, files, crumbs] = await Promise.all([
     loadFolders(restaurant.id),
     searching
@@ -90,7 +106,11 @@ export default async function FilesPage({
         ? loadFavorites(restaurant.id)
         : view === "recent"
           ? loadRecent(restaurant.id, 30)
-          : loadFiles(restaurant.id, folderId),
+          : view === "expiring"
+            ? loadExpiring(restaurant.id)
+            : view === "trash"
+              ? Promise.resolve((trash?.files ?? []) as FileRow[])
+              : loadFiles(restaurant.id, folderId),
     searching || view !== "all" ? Promise.resolve([]) : loadCrumbs(folderId),
   ]);
 
@@ -110,9 +130,10 @@ export default async function FilesPage({
           tag,
         );
 
-  const visibleFiles = searching
-    ? files
-    : sortFiles(files, view === "all" ? fileSort : "added", tag);
+  const visibleFiles =
+    searching || view === "expiring" || view === "trash"
+      ? files
+      : sortFiles(files, view === "all" ? fileSort : "added", tag);
 
   const current = folderId ? folders.find((f) => f.id === folderId) : undefined;
 
@@ -163,6 +184,8 @@ export default async function FilesPage({
         term={term}
         fileSort={fileSort}
         folderSort={folderSort}
+        today={today}
+        trashFolders={trash?.folders ?? []}
       />
     </div>
   );
@@ -269,10 +292,20 @@ function Tabs({
       label: t.tiedosto.tabRecent,
       href: "/admin/tiedostot?nakyma=recent",
     },
+    {
+      id: "expiring",
+      label: t.tiedosto.tabExpiring,
+      href: "/admin/tiedostot?nakyma=expiring",
+    },
+    {
+      id: "trash",
+      label: t.tiedosto.tabTrash,
+      href: "/admin/tiedostot?nakyma=trash",
+    },
   ];
 
   return (
-    <nav className="flex gap-1.5">
+    <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
       {items.map((item) => {
         const on = item.id === view;
         return (

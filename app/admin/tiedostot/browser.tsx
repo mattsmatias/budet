@@ -36,12 +36,14 @@ import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import {
   checkFile,
+  expiryState,
   fileKind,
   folderPath,
   formatFileSize,
   isPreviewable,
   mimeFor,
   movableTargets,
+  type ExpiryState,
   type FileRow,
   type FileSort,
   type FolderRow,
@@ -54,18 +56,36 @@ import { createClient } from "@/utils/supabase/client";
 import {
   createFolder,
   deleteFile,
+  deleteFiles,
   deleteFolder,
+  favoriteFiles,
   fileUrl,
   moveFile,
+  moveFiles,
   moveFolder,
+  purgeTrash,
   registerFile,
   renameFile,
   renameFolder,
   reorderFolders,
+  restoreFile,
+  restoreFolder,
+  setExpiry,
   toggleFavorite,
 } from "./actions";
+import {
+  supplierChoices,
+  type SupplierChoice,
+} from "./save-actions";
+import { linkFile } from "./actions";
 
-type View = "all" | "favorites" | "recent" | "search";
+type View =
+  | "all"
+  | "favorites"
+  | "recent"
+  | "search"
+  | "expiring"
+  | "trash";
 
 interface Props {
   t: AdminText;
@@ -81,6 +101,12 @@ interface Props {
   term: string;
   fileSort: FileSort;
   folderSort: FolderSort;
+
+  /** Tänään ravintolan aikavyöhykkeellä, ei selaimen. */
+  today: string;
+
+  /** Roskakorissa olevat kansiot. Tyhjä muissa näkymissä. */
+  trashFolders: { id: string; name: string; deletedAt: string }[];
 }
 
 /*
@@ -116,7 +142,9 @@ export function FileBrowser(props: Props) {
     | { type: "upload"; folderId: string | null; initial: File[] }
     | { type: "renameFolder"; folder: FolderRow }
     | { type: "renameFile"; file: FileRow }
-    | { type: "move"; kind: "folder" | "file"; id: string; name: string }
+    | { type: "move"; kind: "folder" | "file" | "files"; id: string; name: string }
+    | { type: "expiry"; file: FileRow }
+    | { type: "link"; file: FileRow }
     | { type: "deleteFolder"; folder: FolderRow }
     | null
   >(null);
@@ -212,6 +240,39 @@ export function FileBrowser(props: Props) {
   }
 
   const [kahvassa, setKahvassa] = useState<string | null>(null);
+
+  // -------------------------------------------------------------------------
+  // Monivalinta
+  // -------------------------------------------------------------------------
+  //
+  // Kaksisataa kuittia väärässä kansiossa on ero käyttökelpoisen ja
+  // käyttökelvottoman välillä. Valinta on tiedostoille eikä kansioille:
+  // kansioita on kymmeniä ja niitä käsitellään yksitellen, tiedostoja
+  // satoja ja niitä käsitellään joukkona.
+
+  const [valitut, setValitut] = useState<string[]>([]);
+  const nakyvat = files.map((file) => file.id);
+
+  /*
+   * Valinta nollautuu kun lista vaihtuu.
+   *
+   * Muuten toisessa kansiossa valittu tiedosto seuraisi mukana
+   * näkymättömänä, ja "poista valitut" poistaisi jotain mitä käyttäjä
+   * ei näe.
+   */
+  const listaTunnus = nakyvat.join(",");
+  const [listaEdellinen, setListaEdellinen] = useState(listaTunnus);
+
+  if (listaTunnus !== listaEdellinen) {
+    setListaEdellinen(listaTunnus);
+    if (valitut.length > 0) setValitut([]);
+  }
+
+  function vaihdaValinta(id: string): void {
+    setValitut((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
 
   /*
    * Järjestäminen vain omassa järjestyksessä.
@@ -326,6 +387,117 @@ export function FileBrowser(props: Props) {
         </p>
       ) : null}
 
+      {/*
+        Roskakorin ohje ja tyhjennys.
+
+        Kolmenkymmenen päivän sääntö sanotaan ääneen: ilman sitä
+        käyttäjä ei tiedä onko poistettu tallessa vai menossa pois, ja
+        arvaa väärin kumpaan suuntaan tahansa.
+      */}
+      {view === "trash" && canManage ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+            {t.tiedosto.trashNote}
+          </p>
+
+          {files.length > 0 || props.trashFolders.length > 0 ? (
+            <div className="ml-auto">
+              <Button
+                tone="danger"
+                size="sm"
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  if (confirm(t.tiedosto.emptyTrashConfirm)) {
+                    run(() => purgeTrash(0));
+                  }
+                }}
+              >
+                {t.tiedosto.emptyTrash}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/*
+        Joukkotoiminnot ilmestyvät vasta kun jotain on valittu.
+
+        Aina näkyvä palkki veisi tilaa listalta joka kerta, myös
+        silloin kun käyttäjä vain selaa.
+      */}
+      {valitut.length > 0 && canManage ? (
+        <div
+          className="flex flex-wrap items-center gap-2 px-3 py-2"
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-card)",
+          }}
+        >
+          <span className="text-[13px] font-semibold">
+            {fill(t.tiedosto.selected, { maara: String(valitut.length) })}
+          </span>
+
+          <div className="ml-auto flex flex-wrap gap-1.5">
+            <Button
+              tone="ghost"
+              size="sm"
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                setDialog({
+                  type: "move",
+                  kind: "files",
+                  id: "",
+                  name: fill(t.tiedosto.selected, {
+                    maara: String(valitut.length),
+                  }),
+                })
+              }
+            >
+              {t.tiedosto.move}
+            </Button>
+
+            <Button
+              tone="ghost"
+              size="sm"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                const ids = valitut;
+                setValitut([]);
+                run(() => favoriteFiles(ids, true));
+              }}
+            >
+              {t.tiedosto.addFavorite}
+            </Button>
+
+            <Button
+              tone="ghost"
+              size="sm"
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                const ids = valitut;
+                setValitut([]);
+                run(() => deleteFiles(ids));
+              }}
+            >
+              {t.tiedosto.remove}
+            </Button>
+
+            <Button
+              tone="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setValitut([])}
+            >
+              {t.tiedosto.clearSelection}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       {empty ? (
         <EmptyState
           title={
@@ -335,16 +507,24 @@ export function FileBrowser(props: Props) {
                 ? t.tiedosto.tabFavorites
                 : view === "recent"
                   ? t.tiedosto.tabRecent
-                  : t.tiedosto.emptyFolder
+                  : view === "expiring"
+                    ? t.tiedosto.tabExpiring
+                    : view === "trash"
+                      ? t.tiedosto.tabTrash
+                      : t.tiedosto.emptyFolder
           }
           description={
             view === "favorites"
               ? t.tiedosto.emptyFavorites
               : view === "recent"
                 ? t.tiedosto.emptyRecent
-                : view === "search"
-                  ? ""
-                  : t.tiedosto.emptyFolder
+                : view === "expiring"
+                  ? t.tiedosto.emptyExpiring
+                  : view === "trash"
+                    ? t.tiedosto.trashEmpty
+                    : view === "search"
+                      ? ""
+                      : t.tiedosto.emptyFolder
           }
         />
       ) : (
@@ -362,6 +542,48 @@ export function FileBrowser(props: Props) {
             if (canManage) dropOn(props.folderId, event);
           }}
         >
+          {/*
+            Roskakorissa olevat kansiot.
+
+            Palautus on eri toiminto kuin tiedoston palautus, ja se tuo
+            takaisin kansion eikä sen sisältöä — sisältö palautetaan
+            erikseen, koska käyttäjä ei aina halua molempia.
+          */}
+          {props.trashFolders.map((folder) => (
+            <li
+              key={folder.id}
+              className="flex items-center gap-3 px-3 py-3"
+              style={{ borderBottom: "1px solid var(--rf-line)" }}
+            >
+              <span style={{ color: "var(--rf-text-3)" }}>
+                <RfIcon name="folder" size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14.5px] font-semibold">
+                  {folder.name}
+                </span>
+                <span
+                  className="text-[12.5px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {`${t.tiedosto.deletedOn} ${folder.deletedAt.slice(0, 10)}`}
+                </span>
+              </span>
+
+              {canManage ? (
+                <Button
+                  tone="ghost"
+                  size="sm"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => run(() => restoreFolder(folder.id))}
+                >
+                  {t.tiedosto.restore}
+                </Button>
+              ) : null}
+            </li>
+          ))}
+
           {orderedFolders.map((folder) => (
             <FolderRowItem
               key={folder.id}
@@ -422,6 +644,13 @@ export function FileBrowser(props: Props) {
               file={file}
               canManage={canManage}
               showPath={view !== "all"}
+              today={props.today}
+              inTrash={view === "trash"}
+              selected={valitut.includes(file.id)}
+              onSelect={() => vaihdaValinta(file.id)}
+              onRestore={() => run(() => restoreFile(file.id))}
+              onExpiry={() => setDialog({ type: "expiry", file })}
+              onLink={() => setDialog({ type: "link", file })}
               onDragStart={() => setDragged(file.id)}
               onDragEnd={() => setDragged(null)}
               onRename={() => setDialog({ type: "renameFile", file })}
@@ -518,8 +747,47 @@ export function FileBrowser(props: Props) {
           onClose={() => setDialog(null)}
           onPick={(targetId) => {
             const { kind, id } = dialog;
+            const ids = valitut;
+
             run(() =>
-              kind === "folder" ? moveFolder(id, targetId) : moveFile(id, targetId),
+              kind === "folder"
+                ? moveFolder(id, targetId)
+                : kind === "files"
+                  ? moveFiles(ids, targetId)
+                  : moveFile(id, targetId),
+            );
+
+            if (kind === "files") setValitut([]);
+            setDialog(null);
+          }}
+        />
+      ) : null}
+
+      {dialog?.type === "expiry" ? (
+        <ExpiryDialog
+          t={t}
+          file={dialog.file}
+          onClose={() => setDialog(null)}
+          onSave={(date) => {
+            run(() => setExpiry(dialog.file.id, date));
+            setDialog(null);
+          }}
+        />
+      ) : null}
+
+      {dialog?.type === "link" ? (
+        <LinkDialog
+          t={t}
+          file={dialog.file}
+          onClose={() => setDialog(null)}
+          onPick={(supplierId) => {
+            run(() =>
+              linkFile(dialog.file.id, {
+                supplierId,
+                /* Kuittiliitos säilyy: se kertoo mistä tiedosto tuli,
+                   eikä toimittajan valinta ole päätös siitä. */
+                receiptId: dialog.file.receiptId,
+              }),
             );
             setDialog(null);
           }}
@@ -906,6 +1174,13 @@ function FileRowItem({
   file,
   canManage,
   showPath,
+  today,
+  inTrash,
+  selected,
+  onSelect,
+  onRestore,
+  onExpiry,
+  onLink,
   onDragStart,
   onDragEnd,
   onRename,
@@ -918,6 +1193,13 @@ function FileRowItem({
   file: FileRow;
   canManage: boolean;
   showPath: boolean;
+  today: string;
+  inTrash: boolean;
+  selected: boolean;
+  onSelect: () => void;
+  onRestore: () => void;
+  onExpiry: () => void;
+  onLink: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onRename: () => void;
@@ -952,15 +1234,38 @@ function FileRowItem({
   }
 
   const kind = fileKind(file.type, file.name);
+  const expiry = expiryState(file.expiresOn, today);
 
   return (
     <li
-      draggable={canManage}
+      /* Roskakorissa oleva ei ole siirrettävissä: se ei ole missään. */
+      draggable={canManage && !inTrash}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="flex items-center gap-3 px-3"
-      style={{ borderBottom: "1px solid var(--rf-line)" }}
+      className="flex items-center gap-2 px-3"
+      style={{
+        borderBottom: "1px solid var(--rf-line)",
+        background: selected ? "var(--rf-inset)" : "transparent",
+      }}
     >
+      {/*
+        Valintaruutu on aina näkyvissä.
+
+        Erillinen valintatila olisi yksi painallus lisää ennen kuin
+        mitään voi valita, ja ruudun näkyminen vasta osoittimen alla ei
+        toimi kosketuksella lainkaan.
+      */}
+      {canManage && !inTrash ? (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onSelect}
+          aria-label={`${t.tiedosto.select}: ${file.name}`}
+          className="h-4 w-4 shrink-0 cursor-pointer"
+          style={{ accentColor: "var(--rf-accent)" }}
+        />
+      ) : null}
+
       <button
         type="button"
         onClick={() => void open(false)}
@@ -976,12 +1281,24 @@ function FileRowItem({
             {file.name}
           </span>
           <span className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-            {showPath && file.folderPath !== undefined
-              ? `${t.tiedosto.location}: ${file.folderPath || t.tiedosto.root} · ${formatFileSize(file.size, tag)}`
-              : formatFileSize(file.size, tag)}
+            {inTrash
+              ? `${t.tiedosto.deletedOn} ${(file.deletedAt ?? "").slice(0, 10)}`
+              : showPath && file.folderPath !== undefined
+                ? `${t.tiedosto.location}: ${file.folderPath || t.tiedosto.root} · ${formatFileSize(file.size, tag)}`
+                : formatFileSize(file.size, tag)}
           </span>
         </span>
       </button>
+
+      {/*
+        Voimassaolo merkintänä eikä sarakkeena.
+
+        Useimmilla tiedostoilla sitä ei ole, ja tyhjä sarake joka
+        rivillä olisi tilaa jota mikään ei täytä.
+      */}
+      {expiry.state !== "none" && !inTrash ? (
+        <ExpiryPill t={t} state={expiry.state} days={expiry.days} />
+      ) : null}
 
       {file.isFavorite ? (
         <span
@@ -992,30 +1309,87 @@ function FileRowItem({
         </span>
       ) : null}
 
-      <RowMenu
-        label={file.name}
-        items={[
-          { label: t.tiedosto.open, onClick: () => void open(false) },
-          ...(isPreviewable(file.type, file.name)
-            ? [{ label: t.tiedosto.preview, onClick: () => void open(false) }]
-            : []),
-          { label: t.tiedosto.download, onClick: () => void open(true) },
-          ...(canManage
-            ? [
-                { label: t.tiedosto.rename, onClick: onRename },
-                { label: t.tiedosto.move, onClick: onMove },
-                {
-                  label: file.isFavorite
-                    ? t.tiedosto.removeFavorite
-                    : t.tiedosto.addFavorite,
-                  onClick: onFavorite,
-                },
-                { label: t.tiedosto.remove, onClick: onDelete, danger: true },
-              ]
-            : []),
-        ]}
-      />
+      {inTrash ? (
+        canManage ? (
+          <Button tone="ghost" size="sm" type="button" onClick={onRestore}>
+            {t.tiedosto.restore}
+          </Button>
+        ) : null
+      ) : (
+        <RowMenu
+          label={file.name}
+          items={[
+            { label: t.tiedosto.open, onClick: () => void open(false) },
+            ...(isPreviewable(file.type, file.name)
+              ? [{ label: t.tiedosto.preview, onClick: () => void open(false) }]
+              : []),
+            { label: t.tiedosto.download, onClick: () => void open(true) },
+            ...(canManage
+              ? [
+                  { label: t.tiedosto.rename, onClick: onRename },
+                  { label: t.tiedosto.move, onClick: onMove },
+                  { label: t.tiedosto.expiry, onClick: onExpiry },
+                  { label: t.tiedosto.linkSupplier, onClick: onLink },
+                  {
+                    label: file.isFavorite
+                      ? t.tiedosto.removeFavorite
+                      : t.tiedosto.addFavorite,
+                    onClick: onFavorite,
+                  },
+                  { label: t.tiedosto.remove, onClick: onDelete, danger: true },
+                ]
+              : []),
+          ]}
+        />
+      )}
     </li>
+  );
+}
+
+/**
+ * Voimassaolon merkintä.
+ *
+ * Kolme väriä kolmelle tilalle. Vanhentunut on punainen koska se on
+ * ongelma nyt; pian vanheneva keltainen koska se on ongelma pian;
+ * voimassa oleva harmaa koska se ei ole ongelma — mutta se näkyy silti,
+ * jotta käyttäjä tietää merkinnän olevan tehty.
+ */
+function ExpiryPill({
+  t,
+  state,
+  days,
+}: {
+  t: AdminText;
+  state: ExpiryState;
+  days: number;
+}) {
+  const label =
+    state === "expired"
+      ? t.tiedosto.expired
+      : days === 0
+        ? t.tiedosto.expiresToday
+        : state === "soon"
+          ? fill(t.tiedosto.expiresInDays, { maara: String(days) })
+          : t.tiedosto.expiryValid;
+
+  const palette =
+    state === "expired"
+      ? { bg: "var(--rf-red-bg)", fg: "var(--rf-red-text)" }
+      : state === "soon"
+        ? { bg: "var(--rf-amber-bg)", fg: "var(--rf-amber-text)" }
+        : { bg: "var(--rf-inset)", fg: "var(--rf-text-3)" };
+
+  return (
+    <span
+      className="shrink-0 whitespace-nowrap px-2 py-0.5 text-[11.5px] font-semibold"
+      style={{
+        background: palette.bg,
+        color: palette.fg,
+        borderRadius: "var(--rf-r-pill)",
+      }}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -1378,6 +1752,172 @@ function DeleteFolderDialog({
   );
 }
 
+/**
+ * Voimassaolon asetus.
+ *
+ * Natiivi päivämääräkenttä: selain osaa sen omalla kielellään, ja
+ * puhelimessa se avaa järjestelmän oman valitsimen.
+ *
+ * Tyhjentäminen on yhtä helppoa kuin asettaminen. Väärin merkitty
+ * voimassaolo on huonompi kuin merkitsemätön: se varoittaa väärästä
+ * asiasta ja opettaa ohittamaan varoitukset.
+ */
+function ExpiryDialog({
+  t,
+  file,
+  onClose,
+  onSave,
+}: {
+  t: AdminText;
+  file: FileRow;
+  onClose: () => void;
+  onSave: (date: string | null) => void;
+}) {
+  const [date, setDate] = useState(file.expiresOn ?? "");
+
+  return (
+    <Modal title={t.tiedosto.expiry} onClose={onClose}>
+      <p className="mb-2 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        {file.name}
+      </p>
+
+      <label className="block">
+        <span className="text-[13px] font-semibold">{t.tiedosto.expiry}</span>
+        <input
+          type="date"
+          value={date}
+          onChange={(event) => setDate(event.target.value)}
+          className="mt-1 h-[42px] w-full px-3 text-[14px] outline-none"
+          style={{
+            background: "var(--rf-inset)",
+            border: "1px solid var(--rf-line)",
+            borderRadius: "var(--rf-r-field)",
+            color: "var(--rf-text)",
+          }}
+        />
+        <span
+          className="mt-1 block text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.tiedosto.expiryHint}
+        </span>
+      </label>
+
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <Button tone="ghost" type="button" onClick={onClose}>
+          {t.tiedosto.cancel}
+        </Button>
+
+        {file.expiresOn ? (
+          <Button tone="ghost" type="button" onClick={() => onSave(null)}>
+            {t.tiedosto.expiryNone}
+          </Button>
+        ) : null}
+
+        <Button
+          tone="primary"
+          type="button"
+          disabled={date === ""}
+          onClick={() => onSave(date || null)}
+        >
+          {t.tiedosto.save}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Tiedoston liittäminen toimittajaan.
+ *
+ * Sopimus, hinnasto tai reklamaatio löytyy sen jälkeen toimittajan
+ * omalta sivulta. Kaappi ei katoa mihinkään — tiedosto on yhä siellä
+ * missä käyttäjä sen pani.
+ *
+ * Toimittajat haetaan vasta avattaessa: niitä voi olla satoja, eikä
+ * niitä kannata kuljettaa jokaisen rivin mukana.
+ */
+function LinkDialog({
+  t,
+  file,
+  onClose,
+  onPick,
+}: {
+  t: AdminText;
+  file: FileRow;
+  onClose: () => void;
+  onPick: (supplierId: string | null) => void;
+}) {
+  const [choices, setChoices] = useState<SupplierChoice[] | null>(null);
+
+  useEffect(() => {
+    let voimassa = true;
+    void supplierChoices().then((list) => {
+      if (voimassa) setChoices(list);
+    });
+
+    return () => {
+      voimassa = false;
+    };
+  }, []);
+
+  return (
+    <Modal title={t.tiedosto.linkSupplier} onClose={onClose}>
+      <p className="mb-2 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        {file.name}
+      </p>
+
+      <ul
+        className="max-h-72 overflow-y-auto"
+        style={{
+          border: "1px solid var(--rf-line)",
+          borderRadius: "var(--rf-r-field)",
+        }}
+      >
+        <li>
+          <button
+            type="button"
+            onClick={() => onPick(null)}
+            className="w-full px-3 py-2.5 text-left text-[13.5px] font-semibold"
+            style={{
+              color: file.supplierId ? "var(--rf-text)" : "var(--rf-accent)",
+            }}
+          >
+            {t.tiedosto.noSupplier}
+          </button>
+        </li>
+
+        {(choices ?? []).map((choice) => (
+          <li key={choice.id} style={{ borderTop: "1px solid var(--rf-line)" }}>
+            <button
+              type="button"
+              onClick={() => onPick(choice.id)}
+              className="flex w-full items-center justify-between px-3 py-2.5 text-left text-[13.5px]"
+              style={{
+                color:
+                  choice.id === file.supplierId
+                    ? "var(--rf-accent)"
+                    : "var(--rf-text)",
+              }}
+            >
+              <span className="truncate">{choice.name}</span>
+              {choice.id === file.supplierId ? (
+                <RfIcon name="check" size={14} />
+              ) : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-3 flex justify-end">
+        <Button tone="ghost" type="button" onClick={onClose}>
+          {t.tiedosto.cancel}
+        </Button>
+      </div>
+    </Modal>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Lataus
 // ---------------------------------------------------------------------------
@@ -1416,6 +1956,64 @@ function UploadDialog({
   const [chosen, setChosen] = useState<File[]>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /*
+   * Nimi ja voimassaolo vain yhdelle tiedostolle.
+   *
+   * Monta kerralla on joukkolataus: sata kuittia ei nimetä yksitellen
+   * dialogissa, eikä niillä ole yhteistä voimassaoloa. Yksi tiedosto
+   * kerrallaan on se tapa jolla tärkeät asiakirjat tulevat sisään, ja
+   * juuri niille nimi ja voimassaolo ovat tarpeen.
+   */
+  const single = chosen.length === 1 ? chosen[0] : null;
+
+  const [name, setName] = useState("");
+  const [expires, setExpires] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestFailed, setSuggestFailed] = useState(false);
+
+  /* Nimi seuraa valittua tiedostoa kunnes käyttäjä koskee siihen. */
+  const chosenKey = chosen.map((file) => file.name).join("|");
+  const [chosenBefore, setChosenBefore] = useState(chosenKey);
+
+  if (chosenKey !== chosenBefore) {
+    setChosenBefore(chosenKey);
+    setName(chosen.length === 1 ? chosen[0].name : "");
+    setSuggestFailed(false);
+  }
+
+  /**
+   * Nimiehdotus mallilta.
+   *
+   * Epäonnistuminen on hiljainen: ehdotus on mukavuus, ja
+   * virheilmoitus olisi este asialle joka onnistuu ilman sitä.
+   */
+  async function suggest(): Promise<void> {
+    if (!single) return;
+
+    setSuggesting(true);
+    setSuggestFailed(false);
+
+    try {
+      const body = new FormData();
+      body.set("file", single);
+      body.set("nimi", single.name);
+
+      const response = await fetch("/api/tiedostot/nimiehdotus", {
+        method: "POST",
+        body,
+      });
+
+      const data = (await response.json()) as { suggestion?: string | null };
+
+      if (data.suggestion) setName(data.suggestion);
+      else setSuggestFailed(true);
+    } catch {
+      setSuggestFailed(true);
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   async function send(): Promise<void> {
     if (chosen.length === 0) return;
@@ -1461,10 +2059,13 @@ function UploadDialog({
 
       const result = await registerFile({
         folderId: target,
-        name: file.name,
+        /* Käyttäjän antama nimi voittaa, mutta vain yhden tiedoston
+           latauksessa — joukossa jokainen pitää omansa. */
+        name: single && name.trim() !== "" ? name.trim() : file.name,
         path,
         type,
         size: file.size,
+        expiresOn: single && expires !== "" ? expires : null,
       });
 
       if (result.error) {
@@ -1529,7 +2130,31 @@ function UploadDialog({
           </span>
         </label>
 
-        {chosen.length > 0 ? (
+        {/*
+          Kamera omana kenttänään.
+
+          capture="environment" avaa puhelimessa takakameran suoraan.
+          Paperi joka tulee keittiöön — rahtikirja, takuukortti,
+          tarkastuspöytäkirja — menee kaappiin siinä paikassa eikä
+          "kunhan ehdin skannata".
+
+          Tietokoneella kenttä on tavallinen tiedostonvalinta, joten se
+          ei ole rikki siellä missä kameraa ei ole.
+        */}
+        <label className="block">
+          <span className="text-[13px] font-semibold">{t.tiedosto.takePhoto}</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(event) =>
+              setChosen(Array.from(event.target.files ?? []))
+            }
+            className="mt-1 block w-full text-[13px]"
+          />
+        </label>
+
+        {chosen.length > 1 ? (
           <ul className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {chosen.map((file) => (
               <li key={file.name}>
@@ -1537,6 +2162,76 @@ function UploadDialog({
               </li>
             ))}
           </ul>
+        ) : null}
+
+        {single ? (
+          <>
+            <label className="block">
+              <span className="text-[13px] font-semibold">
+                {t.tiedosto.nameLabel}
+              </span>
+              <div className="mt-1 flex gap-2">
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  maxLength={200}
+                  className="h-[42px] min-w-0 flex-1 px-3 text-[14px] outline-none"
+                  style={{
+                    background: "var(--rf-inset)",
+                    border: "1px solid var(--rf-line)",
+                    borderRadius: "var(--rf-r-field)",
+                    color: "var(--rf-text)",
+                  }}
+                />
+                <Button
+                  tone="ghost"
+                  size="sm"
+                  type="button"
+                  disabled={suggesting || busy}
+                  onClick={() => void suggest()}
+                >
+                  {suggesting ? t.tiedosto.suggesting : t.tiedosto.suggestName}
+                </Button>
+              </div>
+
+              <span
+                className="mt-1 block text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {`${formatFileSize(single.size, tag)}`}
+              </span>
+            </label>
+
+            {suggestFailed ? (
+              <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+                {t.tiedosto.noSuggestion}
+              </p>
+            ) : null}
+
+            <label className="block">
+              <span className="text-[13px] font-semibold">
+                {t.tiedosto.expiry}
+              </span>
+              <input
+                type="date"
+                value={expires}
+                onChange={(event) => setExpires(event.target.value)}
+                className="mt-1 h-[42px] w-full px-3 text-[14px] outline-none"
+                style={{
+                  background: "var(--rf-inset)",
+                  border: "1px solid var(--rf-line)",
+                  borderRadius: "var(--rf-r-field)",
+                  color: "var(--rf-text)",
+                }}
+              />
+              <span
+                className="mt-1 block text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {t.tiedosto.expiryHint}
+              </span>
+            </label>
+          </>
         ) : null}
 
         {error ? (

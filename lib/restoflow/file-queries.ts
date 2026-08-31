@@ -45,10 +45,15 @@ interface FileRecord {
   is_favorite: boolean;
   created_at: string;
   updated_at: string;
+  expires_on: string | null;
+  supplier_id: string | null;
+  receipt_id: string | null;
+  deleted_at: string | null;
 }
 
 const FILE_COLUMNS =
-  "id, folder_id, file_name, storage_path, file_type, file_size, is_favorite, created_at, updated_at";
+  "id, folder_id, file_name, storage_path, file_type, file_size, is_favorite, " +
+  "created_at, updated_at, expires_on, supplier_id, receipt_id, deleted_at";
 
 function toFile(row: FileRecord, folderPath?: string): FileRow {
   return {
@@ -61,6 +66,10 @@ function toFile(row: FileRecord, folderPath?: string): FileRow {
     isFavorite: row.is_favorite,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    expiresOn: row.expires_on,
+    supplierId: row.supplier_id,
+    receiptId: row.receipt_id,
+    deletedAt: row.deleted_at,
     ...(folderPath === undefined ? {} : { folderPath }),
   };
 }
@@ -81,6 +90,7 @@ export async function loadFolders(restaurantId: string): Promise<FolderRow[]> {
       .from("folders")
       .select("id, parent_folder_id, name, sort_order, created_at")
       .eq("restaurant_id", restaurantId)
+      .is("deleted_at", null)
       .order("sort_order")
       .order("name"),
     supabase.rpc("folder_counts", { p_restaurant: restaurantId }),
@@ -121,6 +131,8 @@ export async function loadFiles(
     .from("files")
     .select(FILE_COLUMNS)
     .eq("restaurant_id", restaurantId)
+    /* Roskakorissa oleva ei ole kansiossa vaikka folder_id niin sanoo. */
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   query = folderId === null ? query.is("folder_id", null) : query.eq("folder_id", folderId);
@@ -157,6 +169,7 @@ export async function loadFavorites(restaurantId: string): Promise<FileRow[]> {
     .select(FILE_COLUMNS)
     .eq("restaurant_id", restaurantId)
     .eq("is_favorite", true)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   return attachPaths(restaurantId, (data as FileRecord[] | null) ?? []);
@@ -173,6 +186,7 @@ export async function loadRecent(
     .from("files")
     .select(FILE_COLUMNS)
     .eq("restaurant_id", restaurantId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -247,6 +261,7 @@ export async function searchFiles(
           folder_path: string;
           is_favorite: boolean;
           created_at: string;
+          expires_on: string | null;
         }[]
       | null) ?? []
   ).map((row) => ({
@@ -259,6 +274,10 @@ export async function searchFiles(
     isFavorite: row.is_favorite,
     createdAt: row.created_at,
     updatedAt: row.created_at,
+    expiresOn: row.expires_on,
+    supplierId: null,
+    receiptId: null,
+    deletedAt: null,
     folderPath: row.folder_path,
   }));
 }
@@ -279,4 +298,129 @@ export async function signedUrl(path: string): Promise<string | null> {
     .createSignedUrl(path, URL_SECONDS);
 
   return error || !data ? null : data.signedUrl;
+}
+
+// ---------------------------------------------------------------------------
+// Vanhenevat
+// ---------------------------------------------------------------------------
+
+/**
+ * Tiedostot joilla on voimassaolo.
+ *
+ * Kaikki, ei vain vanhentuvat: näkymä on lista siitä mikä on
+ * voimassa ja mikä ei. Pelkkä varoituslista näyttäisi tyhjältä juuri
+ * silloin kun kaikki on kunnossa, eikä käyttäjä tietäisi onko se hyvä
+ * merkki vai unohtiko hän merkitä mitään.
+ */
+export async function loadExpiring(restaurantId: string): Promise<FileRow[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("files")
+    .select(FILE_COLUMNS)
+    .eq("restaurant_id", restaurantId)
+    .is("deleted_at", null)
+    .not("expires_on", "is", null)
+    .order("expires_on", { ascending: true });
+
+  return attachPaths(restaurantId, (data as FileRecord[] | null) ?? []);
+}
+
+/**
+ * Montako vaatii huomiota.
+ *
+ * Yleiskatsaus tarvitsee luvun eikä listaa, ja väli lasketaan
+ * kannassa: selaimen kello voi olla väärässä, ja ravintolan
+ * aikavyöhyke on se joka ratkaisee.
+ */
+export async function countExpiringSoon(
+  restaurantId: string,
+  withinDays: number,
+): Promise<number> {
+  const supabase = await createClient();
+
+  const limit = new Date();
+  limit.setUTCDate(limit.getUTCDate() + withinDays);
+
+  const { count } = await supabase
+    .from("files")
+    .select("id", { count: "exact", head: true })
+    .eq("restaurant_id", restaurantId)
+    .is("deleted_at", null)
+    .not("expires_on", "is", null)
+    .lte("expires_on", limit.toISOString().slice(0, 10));
+
+  return count ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Roskakori
+// ---------------------------------------------------------------------------
+
+export interface TrashContents {
+  files: FileRow[];
+  folders: { id: string; name: string; deletedAt: string }[];
+}
+
+/**
+ * Roskakorin sisältö.
+ *
+ * Kansiot ja tiedostot erikseen, koska palautus on eri toiminto
+ * kummallekin: kansion palautus tuo takaisin kansion, ei sen sisältöä.
+ */
+export async function loadTrash(restaurantId: string): Promise<TrashContents> {
+  const supabase = await createClient();
+
+  const [{ data: files }, { data: folders }] = await Promise.all([
+    supabase
+      .from("files")
+      .select(FILE_COLUMNS)
+      .eq("restaurant_id", restaurantId)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("folders")
+      .select("id, name, deleted_at")
+      .eq("restaurant_id", restaurantId)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+  ]);
+
+  return {
+    files: ((files as FileRecord[] | null) ?? []).map((row) => toFile(row)),
+    folders: (
+      (folders as { id: string; name: string; deleted_at: string }[] | null) ?? []
+    ).map((row) => ({ id: row.id, name: row.name, deletedAt: row.deleted_at })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Liitokset
+// ---------------------------------------------------------------------------
+
+/**
+ * Toimittajaan tai kuittiin liitetyt tiedostot.
+ *
+ * Näytetään toimittajan ja kuitin omilla sivuilla, jotta sopimus
+ * löytyy sieltä missä sitä tarvitaan eikä vain kaapista.
+ */
+export async function loadLinkedFiles(
+  restaurantId: string,
+  link: { supplierId?: string; receiptId?: string },
+): Promise<FileRow[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("files")
+    .select(FILE_COLUMNS)
+    .eq("restaurant_id", restaurantId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (link.supplierId) query = query.eq("supplier_id", link.supplierId);
+  else if (link.receiptId) query = query.eq("receipt_id", link.receiptId);
+  else return [];
+
+  const { data } = await query;
+  return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
 }

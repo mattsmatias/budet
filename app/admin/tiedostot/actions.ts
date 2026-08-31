@@ -190,18 +190,19 @@ export async function deleteFolder(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("delete_folder", {
+  const { error } = await supabase.rpc("delete_folder", {
     p_folder: folderId,
     p_mode: mode,
   });
 
   if (error) return { error: explain(error.message, alku.t) };
 
-  const paths = (data as string[] | null) ?? [];
-  if (paths.length > 0) {
-    await supabase.storage.from("files").remove(paths);
-  }
-
+  /*
+   * Storagea ei kosketa.
+   *
+   * Poisto vie roskakoriin, ja objekti tarvitaan yhä jos käyttäjä
+   * palauttaa. Objektit häviävät vasta lopullisessa siivouksessa.
+   */
   revalidate();
   return {};
 }
@@ -252,6 +253,10 @@ export async function registerFile(input: {
   path: string;
   type: string;
   size: number;
+  /* Voimassaolo latauksen yhteydessa: erillinen kutsu olisi toinen
+     verkkokierros, jonka epaonnistuminen jattaisi tiedoston
+     puolitiehen. */
+  expiresOn?: string | null;
 }): Promise<FileState> {
   const alku = await alusta();
   if (!alku.ok) return alku.state;
@@ -263,8 +268,13 @@ export async function registerFile(input: {
       path: z.string().trim().min(1).max(400),
       type: z.string().trim().max(160),
       size: z.number().int().positive().max(25 * 1024 * 1024),
+      expiresOn: z
+        .string()
+        .regex(/^d{4}-d{2}-d{2}$/)
+        .nullable()
+        .default(null),
     })
-    .safeParse(input);
+    .safeParse({ ...input, expiresOn: input.expiresOn ?? null });
 
   if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
 
@@ -276,6 +286,7 @@ export async function registerFile(input: {
     p_path: parsed.data.path,
     p_type: parsed.data.type,
     p_size: parsed.data.size,
+    p_expires: parsed.data.expiresOn,
   });
 
   if (error) {
@@ -376,12 +387,9 @@ export async function deleteFile(fileId: string): Promise<FileState> {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("delete_file", { p_file: fileId });
+  const { error } = await supabase.rpc("delete_file", { p_file: fileId });
 
   if (error) return { error: explain(error.message, alku.t) };
-
-  const path = data as string | null;
-  if (path) await supabase.storage.from("files").remove([path]);
 
   revalidate();
   return {};
@@ -424,4 +432,225 @@ export async function fileUrl(fileId: string): Promise<string | null> {
     .createSignedUrl(path, 3600);
 
   return error || !data ? null : data.signedUrl;
+}
+
+// ---------------------------------------------------------------------------
+// Voimassaolo
+// ---------------------------------------------------------------------------
+
+/**
+ * Voimassaolon asetus tai poisto.
+ *
+ * Tyhjä päivä poistaa voimassaolon. Useimmilla tiedostoilla sitä ei
+ * ole, ja väärin merkityn poistamisen on oltava yhtä helppoa kuin sen
+ * asettamisen.
+ */
+export async function setExpiry(
+  fileId: string,
+  date: string | null,
+): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const parsed = z
+    .object({
+      id: UUID,
+      date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .nullable(),
+    })
+    .safeParse({ id: fileId, date: date || null });
+
+  if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_file_expiry", {
+    p_file: parsed.data.id,
+    p_date: parsed.data.date,
+  });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Liitokset
+// ---------------------------------------------------------------------------
+
+export async function linkFile(
+  fileId: string,
+  link: { supplierId?: string | null; receiptId?: string | null },
+): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const parsed = z
+    .object({
+      id: UUID,
+      supplierId: UUID.nullable(),
+      receiptId: UUID.nullable(),
+    })
+    .safeParse({
+      id: fileId,
+      supplierId: link.supplierId ?? null,
+      receiptId: link.receiptId ?? null,
+    });
+
+  if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("link_file", {
+    p_file: parsed.data.id,
+    p_supplier: parsed.data.supplierId,
+    p_receipt: parsed.data.receiptId,
+  });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Joukkotoiminnot
+// ---------------------------------------------------------------------------
+//
+// Kanta tekee koko joukon yhtenä lauseena. Silmukka täältä olisi sata
+// kutsua, joista osa voisi onnistua ja osa ei — ja käyttäjä näkisi
+// puolikkaan siirron jota hän ei osaisi perua.
+
+const IDS = z.array(UUID).min(1).max(500);
+
+export async function moveFiles(
+  ids: string[],
+  targetId: string | null,
+): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const parsed = IDS.safeParse(ids);
+  if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
+  if (targetId !== null && !UUID.safeParse(targetId).success) {
+    return { error: alku.t.tiedosto.errorGeneric };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("move_files", {
+    p_ids: parsed.data,
+    p_folder: targetId,
+  });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+export async function favoriteFiles(
+  ids: string[],
+  value: boolean,
+): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const parsed = IDS.safeParse(ids);
+  if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_files_favorite", {
+    p_ids: parsed.data,
+    p_value: value,
+  });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+export async function deleteFiles(ids: string[]): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const parsed = IDS.safeParse(ids);
+  if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("delete_files", { p_ids: parsed.data });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Roskakori
+// ---------------------------------------------------------------------------
+
+export async function restoreFile(fileId: string): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+  if (!UUID.safeParse(fileId).success) {
+    return { error: alku.t.tiedosto.errorGeneric };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_file", { p_file: fileId });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+export async function restoreFolder(folderId: string): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+  if (!UUID.safeParse(folderId).success) {
+    return { error: alku.t.tiedosto.errorGeneric };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("restore_folder", { p_folder: folderId });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  revalidate();
+  return {};
+}
+
+/**
+ * Lopullinen siivous.
+ *
+ * days = 30 — vanhentuneet, ajetaan roskakoria avattaessa
+ * days = 0  — kaikki, käyttäjän pyynnöstä
+ *
+ * Vasta tässä objektit häviävät storagesta. Rivit menevät ensin, koska
+ * ne ovat se mitä käyttöliittymä näyttää: jäljelle jäävä objekti on
+ * siivousasia, jäljelle jäävä rivi ilman objektia olisi rikkinäinen
+ * tiedosto.
+ */
+export async function purgeTrash(days: 0 | 30): Promise<FileState> {
+  const alku = await alusta();
+  if (!alku.ok) return alku.state;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("purge_trash", {
+    p_restaurant: alku.restaurantId,
+    p_days: days,
+  });
+
+  if (error) return { error: explain(error.message, alku.t) };
+
+  const paths = (data as string[] | null) ?? [];
+  if (paths.length > 0) {
+    await supabase.storage.from("files").remove(paths);
+  }
+
+  revalidate();
+  return {};
 }
