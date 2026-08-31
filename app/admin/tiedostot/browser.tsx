@@ -369,7 +369,21 @@ export function FileBrowser(props: Props) {
 
   return (
     <div className="space-y-3">
-      {canManage && view !== "trash" ? (
+      {/*
+        Painike nakyy siella missa sen tulos nakyy.
+        ------------------------------------------------------------------
+
+        Kaikki       — tiedosto ilmestyy avoinna olevaan kansioon.
+        Viimeksi     — ladattu tiedosto ON uusin, joten se ilmestyy heti.
+        Tarkeat      — lataus ei merkitse tahtea; tiedosto ei nay.
+        Voimassaolo  — ilman voimassaolopaivaa tiedosto ei nay.
+        Roskakori    — ei paikkaa johon mitaan menisi.
+        Haku         — ladattu tiedosto ei valttamatta osu hakuun.
+
+        Painike joka tekee jotain nakymatonta opettaa etta se on
+        rikki. Kolmessa viimeisessa se on siis piilossa kokonaan.
+      */}
+      {canManage && (view === "all" || view === "recent") ? (
         <Toolbar
           t={t}
           busy={busy}
