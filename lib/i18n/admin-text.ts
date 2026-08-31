@@ -181,6 +181,7 @@ const fi = {
     focusExpiredOne: "Yksi asiakirja on vanhentunut",
     focusExpiringOne: "Yksi asiakirja vanhenee pian",
     searchHitOne: "1 osuma",
+    readingCount: "Luetaan {luettu}/{kaikki}…",
   },
   some: {
     title: "Sosiaalinen media",
@@ -2661,6 +2662,7 @@ const en: AdminText = {
     focusExpiredOne: "One document has expired",
     focusExpiringOne: "One document expires soon",
     searchHitOne: "1 match",
+    readingCount: "Reading {luettu}/{kaikki}…",
   },
   some: {
     title: "Social media",
@@ -5144,6 +5146,7 @@ const sv: AdminText = {
     focusExpiredOne: "Ett dokument har gått ut",
     focusExpiringOne: "Ett dokument går ut snart",
     searchHitOne: "1 träff",
+    readingCount: "Läser {luettu}/{kaikki}…",
   },
   some: {
     title: "Sociala medier",
@@ -7623,6 +7626,7 @@ const da: AdminText = {
     focusExpiredOne: "Ét dokument er udløbet",
     focusExpiringOne: "Ét dokument udløber snart",
     searchHitOne: "1 resultat",
+    readingCount: "Læser {luettu}/{kaikki}…",
   },
   some: {
     title: "Sociale medier",
@@ -10102,6 +10106,7 @@ const tr: AdminText = {
     focusExpiredOne: "Bir belgenin süresi doldu",
     focusExpiringOne: "Bir belgenin süresi yakında doluyor",
     searchHitOne: "1 sonuç",
+    readingCount: "Okunuyor {luettu}/{kaikki}…",
   },
   some: {
     title: "Sosyal medya",
@@ -12573,6 +12578,7 @@ const et: AdminText = {
     focusExpiredOne: "Üks dokument on aegunud",
     focusExpiringOne: "Üks dokument aegub varsti",
     searchHitOne: "1 vaste",
+    readingCount: "Loen {luettu}/{kaikki}…",
   },
   some: {
     title: "Sotsiaalmeedia",

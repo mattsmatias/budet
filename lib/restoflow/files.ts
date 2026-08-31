@@ -440,6 +440,33 @@ export function sortByExpiry(files: FileRow[]): FileRow[] {
 }
 
 /**
+ * Vapaa nimi kun ehdotus osuu jo varattuun.
+ *
+ * Laatikollisessa papereita on usein kaksi laskua samalta
+ * toimittajalta samana päivänä, ja malli lukee niistä saman nimen.
+ * Kaksi identtisesti nimettyä tiedostoa samassa kaapissa on kaksi
+ * tiedostoa joita ei voi erottaa toisistaan.
+ *
+ * Numero menee ennen päätettä, ei perään: "Metro 2026-01-12 (2).pdf"
+ * aukeaa, "Metro 2026-01-12.pdf (2)" ei.
+ */
+export function uniqueName(wanted: string, taken: string[]): string {
+  const varatut = new Set(taken.map((nimi) => nimi.toLowerCase()));
+  if (!varatut.has(wanted.toLowerCase())) return wanted;
+
+  const dot = wanted.lastIndexOf(".");
+  const runko = extensionOf(wanted) && dot > 0 ? wanted.slice(0, dot) : wanted;
+  const paate = extensionOf(wanted) && dot > 0 ? wanted.slice(dot) : "";
+
+  for (let n = 2; n < 1000; n++) {
+    const ehdokas = `${runko} (${n})${paate}`;
+    if (!varatut.has(ehdokas.toLowerCase())) return ehdokas;
+  }
+
+  return wanted;
+}
+
+/**
  * Ehdotus tiedoston nimeksi.
  *
  * Skannerista tulee "scan_0042.pdf", eikä haku löydä sitä ikinä.

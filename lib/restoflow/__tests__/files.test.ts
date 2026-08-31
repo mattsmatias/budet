@@ -19,6 +19,7 @@ import {
   sortFiles,
   sortFolders,
   suggestName,
+  uniqueName,
   type FileRow,
   type FolderRow,
 } from "../files";
@@ -507,5 +508,37 @@ describe("asiakirjan laji kansioksi", () => {
   /* "other" on rehellinen vastaus: sijoittamaton on parempi kuin väärä. */
   it("ei sijoita tunnistamatonta", () => {
     expect(folderKeyFor("other")).toBeNull();
+  });
+});
+
+describe("nimien numerointi", () => {
+  /*
+   * Laatikollisessa papereita on usein kaksi laskua samalta
+   * toimittajalta samana päivänä, ja malli lukee niistä saman nimen.
+   */
+  it("jättää vapaan nimen rauhaan", () => {
+    expect(uniqueName("Metro 2026-01-12.pdf", [])).toBe("Metro 2026-01-12.pdf");
+    expect(uniqueName("Metro.pdf", ["Wihuri.pdf"])).toBe("Metro.pdf");
+  });
+
+  /* Numero ennen päätettä: "nimi.pdf (2)" ei aukea missään. */
+  it("numeroi varatun nimen päätteen edestä", () => {
+    expect(uniqueName("Metro 2026-01-12.pdf", ["Metro 2026-01-12.pdf"])).toBe(
+      "Metro 2026-01-12 (2).pdf",
+    );
+  });
+
+  it("jatkaa numerointia kunnes nimi on vapaa", () => {
+    const varatut = ["Lasku.pdf", "Lasku (2).pdf", "Lasku (3).pdf"];
+    expect(uniqueName("Lasku.pdf", varatut)).toBe("Lasku (4).pdf");
+  });
+
+  /* Tiedostonimet eivät eroa kirjainkoolla useimmissa järjestelmissä. */
+  it("ei erota isoja ja pieniä kirjaimia", () => {
+    expect(uniqueName("Lasku.pdf", ["lasku.PDF"])).toBe("Lasku (2).pdf");
+  });
+
+  it("kestää nimen ilman päätettä", () => {
+    expect(uniqueName("Sopimus", ["Sopimus"])).toBe("Sopimus (2)");
   });
 });

@@ -45,6 +45,7 @@ import {
   folderPath,
   formatFileSize,
   mimeFor,
+  uniqueName,
   movableTargets,
   type ExpiryState,
   type FileRow,
@@ -2072,6 +2073,23 @@ function LinkDialog({
 // Lataus
 // ---------------------------------------------------------------------------
 
+
+/**
+ * Yksi rivi valittua tiedostoa kohden.
+ *
+ * folderId null tarkoittaa "sama kuin ylhaalla valittu": kayttaja voi
+ * vaihtaa kohteen kaikille kerralla, eika tunnistamattomien rivien
+ * tarvitse toistaa sita erikseen.
+ */
+interface UploadRow {
+  name: string;
+  folderId: string | null;
+  /** Mita Kate arveli asiakirjan olevan. */
+  title: string | null;
+  supplierId: string | null;
+  expiresOn: string | null;
+  tila: "kesken" | "valmis" | "eiTunnistettu";
+}
 /**
  * Tiedoston lataus.
  *
@@ -2080,8 +2098,18 @@ function LinkDialog({
  * tiedoston kierrättäminen palvelinfunktion muistin kautta olisi
  * hitaampaa ja kaatuisi suurimpiin.
  *
- * Kohdekansio on valittavissa ennen latausta: oletus on se kansio jossa
- * käyttäjä on, mutta hän on voinut avata dialogin väärässä paikassa.
+ * ---------------------------------------------------------------------
+ * YKSI JA MONTA OVAT SAMA POLKU
+ * ---------------------------------------------------------------------
+ *
+ * Jokainen valittu tiedosto saa oman rivinsä: nimen, kansion ja tiedon
+ * siitä mitä Kate arveli sen olevan. Yhden tiedoston lataus on lista
+ * jossa on yksi rivi.
+ *
+ * Aiemmin tunnistus koski vain yhtä tiedostoa kerrallaan. Se oli
+ * väärinpäin: yksi paperi on jo nyt helppo arkistoida, mutta
+ * laatikollinen ei ole — ja juuri laatikollinen on se syy miksi paperit
+ * jäävät laatikkoon.
  */
 function UploadDialog({
   t,
@@ -2107,167 +2135,169 @@ function UploadDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /*
-   * Nimi ja voimassaolo vain yhdelle tiedostolle.
-   *
-   * Monta kerralla on joukkolataus: sata kuittia ei nimetä yksitellen
-   * dialogissa, eikä niillä ole yhteistä voimassaoloa. Yksi tiedosto
-   * kerrallaan on se tapa jolla tärkeät asiakirjat tulevat sisään, ja
-   * juuri niille nimi ja voimassaolo ovat tarpeen.
-   */
-  const single = chosen.length === 1 ? chosen[0] : null;
+  const [rows, setRows] = useState<UploadRow[]>([]);
 
-  const [name, setName] = useState("");
+  /* Yhdelle tiedostolle voimassaolo on oma kenttänsä. */
   const [expires, setExpires] = useState("");
 
-  /*
-   * Lukeminen alkaa itsestään, ei painikkeesta.
-   *
-   * Lasku on kädessä ja se halutaan talteen. Ylimääräinen painallus
-   * ennen sitä on este asialle jonka kone osaa tehdä ilman pyytämistä
-   * — ja painike jota ei paineta tarkoittaa ettei tunnistusta ole.
-   *
-   * Kaksi avainta eikä yhtä lippua: valmis ja epäonnistunut kertovat
-   * kumpikin oman tiedostonsa, ja "lukee" on se väli jossa kumpaakaan
-   * ei vielä ole. Tila siis johdetaan — setState efektin alussa on
-   * kuvio jonka React-lint kieltää, ja syystä.
-   */
-  const [readFor, setReadFor] = useState<string | null>(null);
-  const [failedFor, setFailedFor] = useState<string | null>(null);
+  const single = chosen.length === 1;
 
   /*
-   * Katen ehdotus kokonaisuutena.
+   * Automaattinen luku alkaa valinnasta.
    *
-   * Kansio ja toimittaja ovat osa samaa lukua kuin nimi ja
-   * voimassaolo: yksi katsaus asiakirjaan vastaa kaikkiin neljään.
-   * Erilliset kutsut olisivat neljä kertaa sama työ ja neljä kertaa
-   * hinta.
+   * Tila johdetaan riveistä eikä aseteta efektissä: rivi on joko
+   * luettu, epäonnistunut tai vielä kesken.
    */
-  const [proposal, setProposal] = useState<{
-    title: string | null;
-    supplierId: string | null;
-    supplierName: string | null;
-    sure: boolean;
-  } | null>(null);
-
-  /* Nimi seuraa valittua tiedostoa kunnes käyttäjä koskee siihen. */
-  const chosenKey = chosen.map((file) => file.name).join("|");
-  const [chosenBefore, setChosenBefore] = useState(chosenKey);
+  const chosenKey = chosen.map((file) => `${file.name}:${file.size}`).join("|");
+  const [chosenBefore, setChosenBefore] = useState<string | null>(null);
 
   if (chosenKey !== chosenBefore) {
     setChosenBefore(chosenKey);
-    setName(chosen.length === 1 ? chosen[0].name : "");
     setExpires("");
-    setProposal(null);
-    setReadFor(null);
-    setFailedFor(null);
+    setRows(
+      chosen.map((file) => ({
+        name: file.name,
+        folderId: null,
+        title: null,
+        supplierId: null,
+        expiresOn: null,
+        tila: "kesken" as const,
+      })),
+    );
   }
 
-  /*
-   * Luku on kesken kun kumpikaan avain ei vastaa valittua tiedostoa.
-   *
-   * Vain yhdelle kerrallaan: monta tiedostoa on joukkolataus, jossa
-   * jokainen luku olisi oma hintansa eikä yhteistä nimeä tai
-   * voimassaoloa ole.
-   */
-  const reading =
-    single !== null && readFor !== chosenKey && failedFor !== chosenKey;
+  const reading = rows.some((rivi) => rivi.tila === "kesken");
+  const readCount = rows.filter((rivi) => rivi.tila !== "kesken").length;
 
-  const suggestFailed = failedFor === chosenKey;
-
-  /**
-   * Arkistointiehdotus mallilta.
-   *
-   * Yksi katsaus asiakirjaan täyttää nimen, kansion, voimassaolon ja
-   * toimittajan. Kentät ovat näkyvissä ja muutettavissa: Kate ehdottaa,
-   * käyttäjä päättää.
-   *
-   * Käynnistyy heti kun tiedosto on valittu. Jos tunnistus ei onnistu,
-   * kentät jäävät käyttäjän täytettäviksi ja hän saa siitä tiedon —
-   * hiljainen epäonnistuminen näyttäisi siltä ettei Kate edes
-   * yrittänyt.
-   */
   useEffect(() => {
-    if (!reading || !single) return;
+    if (!reading || chosen.length === 0) return;
 
     let voimassa = true;
 
     void (async () => {
-      try {
-        const body = new FormData();
-        body.set("file", single);
-        body.set("nimi", single.name);
+      /* Jono: vain ne rivit joita ei ole vielä luettu. */
+      const jono: number[] = [];
+      for (let i = 0; i < chosen.length; i++) jono.push(i);
 
-        const response = await fetch("/api/tiedostot/ehdotus", {
-          method: "POST",
-          body,
-        });
+      let seuraava = 0;
 
-        const data = (await response.json()) as {
-          proposal?: {
-            title: string | null;
-            name: string | null;
-            folderId: string | null;
-            expiresOn: string | null;
-            supplierId: string | null;
-            supplierName: string | null;
-            sure: boolean;
-          } | null;
-        };
+      async function lue(index: number): Promise<void> {
+        const file = chosen[index];
+        if (!file) return;
 
-        if (!voimassa) return;
+        try {
+          const body = new FormData();
+          body.set("file", file);
+          body.set("nimi", file.name);
 
-        const ehdotus = data.proposal;
+          const response = await fetch("/api/tiedostot/ehdotus", {
+            method: "POST",
+            body,
+          });
 
-        if (!ehdotus) {
-          setFailedFor(chosenKey);
-          return;
-        }
+          const data = (await response.json()) as {
+            proposal?: {
+              title: string | null;
+              name: string | null;
+              folderId: string | null;
+              expiresOn: string | null;
+              supplierId: string | null;
+              supplierName: string | null;
+              sure: boolean;
+            } | null;
+          };
 
-        /*
-         * Käyttäjän oma kirjoitus voittaa.
-         *
-         * Luku kestää sekunteja, ja sinä aikana ehtii kirjoittaa nimen
-         * itse. Vastauksen ei pidä pyyhkiä sitä yli.
-         */
-        const ehdotettuNimi = ehdotus.name;
-        if (ehdotettuNimi) {
-          setName((edellinen) =>
-            edellinen === single.name ? ehdotettuNimi : edellinen,
+          if (!voimassa) return;
+
+          const ehdotus = data.proposal;
+
+          setRows((edelliset) => {
+            /*
+             * Nimi joka ei osu toisen rivin nimeen.
+             *
+             * Kaksi laskua samalta toimittajalta samana päivänä saa
+             * mallilta saman nimen, ja ilman numerointia kaappiin
+             * päätyisi kaksi tiedostoa joita ei voi erottaa.
+             */
+            const varatut = edelliset
+              .filter((_, i) => i !== index)
+              .map((rivi) => rivi.name);
+
+            return edelliset.map((rivi, i) => {
+              if (i !== index || rivi.tila !== "kesken") return rivi;
+              if (!ehdotus) return { ...rivi, tila: "eiTunnistettu" as const };
+
+              return {
+                ...rivi,
+                /*
+                 * Käyttäjän oma kirjoitus voittaa.
+                 *
+                 * Luku kestää sekunteja, ja sinä aikana ehtii nimetä
+                 * itse. Vastauksen ei pidä pyyhkiä sitä yli.
+                 */
+                name:
+                  rivi.name === file.name
+                    ? uniqueName(ehdotus.name ?? rivi.name, varatut)
+                    : rivi.name,
+                folderId: ehdotus.folderId ?? rivi.folderId,
+                title: ehdotus.title,
+                supplierId: ehdotus.supplierId,
+                expiresOn: ehdotus.expiresOn,
+                tila: "valmis" as const,
+              };
+            });
+          });
+        } catch {
+          if (!voimassa) return;
+          setRows((edelliset) =>
+            edelliset.map((rivi, i) =>
+              i === index && rivi.tila === "kesken"
+                ? { ...rivi, tila: "eiTunnistettu" as const }
+                : rivi,
+            ),
           );
         }
-
-        const ehdotettuPaiva = ehdotus.expiresOn;
-        if (ehdotettuPaiva) {
-          setExpires((edellinen) => edellinen || ehdotettuPaiva);
-        }
-
-        /*
-         * Kansio vain jos Kate osasi ehdottaa sellaista.
-         *
-         * Tyhjä ehdotus ei saa siirtää käyttäjää juureen: hän avasi
-         * latauksen jostakin kansiosta, ja se valinta on parempi kuin
-         * ei mitään.
-         */
-        if (ehdotus.folderId) setTarget(ehdotus.folderId);
-
-        setProposal({
-          title: ehdotus.title,
-          supplierId: ehdotus.supplierId,
-          supplierName: ehdotus.supplierName,
-          sure: ehdotus.sure,
-        });
-
-        setReadFor(chosenKey);
-      } catch {
-        if (voimassa) setFailedFor(chosenKey);
       }
+
+      /*
+       * Enintään kolme lukua rinnakkain.
+       *
+       * Yksitellen kolmenkymmenen paperin lukeminen kestäisi
+       * minuutteja. Kaikki kerralla kuormittaisi mallia ja verkkoa
+       * turhaan, ja epäonnistuisi juuri silloin kun kuvia on eniten.
+       */
+      async function tyontekija(): Promise<void> {
+        while (voimassa && seuraava < jono.length) {
+          const index = jono[seuraava];
+          seuraava += 1;
+          await lue(index);
+        }
+      }
+
+      await Promise.all(
+        Array.from({ length: Math.min(3, jono.length) }, () => tyontekija()),
+      );
     })();
 
     return () => {
       voimassa = false;
     };
-  }, [reading, single, chosenKey]);
+  }, [chosenKey, reading, chosen]);
+
+  /*
+   * Yhden tiedoston voimassaolo tulee luvusta.
+   *
+   * Monelle sitä ei kysytä: laatikollisella kuitteja ei ole yhteistä
+   * voimassaoloa, ja jokaisen kysyminen erikseen tekisi
+   * tarkistuslistasta lomakkeen.
+   */
+  const ehdotettuPaiva = single ? (rows[0]?.expiresOn ?? null) : null;
+  const [expiryFrom, setExpiryFrom] = useState<string | null>(null);
+
+  if (ehdotettuPaiva && expiryFrom !== chosenKey) {
+    setExpiryFrom(chosenKey);
+    if (expires === "") setExpires(ehdotettuPaiva);
+  }
 
   async function send(): Promise<void> {
     if (chosen.length === 0) return;
@@ -2277,7 +2307,7 @@ function UploadDialog({
 
     const supabase = createClient();
 
-    for (const file of chosen) {
+    for (const [index, file] of chosen.entries()) {
       const problem = checkFile(file);
       if (problem) {
         setError(
@@ -2293,9 +2323,9 @@ function UploadDialog({
 
       /*
        * Polku alkaa ravintolan tunnisteella, koska storage-käytäntö
-       * lukee pääsyn juuri siitä. Nimenä tunniste eikä käyttäjän
-       * antama nimi: kaksi samannimistä tiedostoa eivät korvaa
-       * toisiaan, eikä polusta voi päätellä sisältöä.
+       * lukee pääsyn juuri siitä. Nimenä tunniste eikä käyttäjän antama
+       * nimi: kaksi samannimistä tiedostoa eivät korvaa toisiaan, eikä
+       * polusta voi päätellä sisältöä.
        */
       const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
       const path = `${restaurantId}/${crypto.randomUUID()}.${extension}`;
@@ -2311,16 +2341,16 @@ function UploadDialog({
         return;
       }
 
+      const rivi = rows[index];
+
       const result = await registerFile({
-        folderId: target,
-        /* Käyttäjän antama nimi voittaa, mutta vain yhden tiedoston
-           latauksessa — joukossa jokainen pitää omansa. */
-        name: single && name.trim() !== "" ? name.trim() : file.name,
+        folderId: rivi?.folderId ?? target,
+        name: rivi?.name.trim() || file.name,
         path,
         type,
         size: file.size,
         expiresOn: single && expires !== "" ? expires : null,
-        supplierId: single ? (proposal?.supplierId ?? null) : null,
+        supplierId: rivi?.supplierId ?? null,
       });
 
       if (result.error) {
@@ -2335,6 +2365,12 @@ function UploadDialog({
   }
 
   const here = folderPath(folders, target, t.tiedosto) || t.tiedosto.root;
+
+  function paivitaRivi(index: number, muutos: Partial<UploadRow>): void {
+    setRows((edelliset) =>
+      edelliset.map((rivi, i) => (i === index ? { ...rivi, ...muutos } : rivi)),
+    );
+  }
 
   return (
     <Modal title={t.tiedosto.uploadTitle} onClose={onClose}>
@@ -2368,13 +2404,13 @@ function UploadDialog({
         </label>
 
         <label className="block">
-          <span className="text-[13px] font-semibold">{t.tiedosto.chooseFile}</span>
+          <span className="text-[13px] font-semibold">
+            {t.tiedosto.chooseFile}
+          </span>
           <input
             type="file"
             multiple
-            onChange={(event) =>
-              setChosen(Array.from(event.target.files ?? []))
-            }
+            onChange={(event) => setChosen(Array.from(event.target.files ?? []))}
             className="mt-1 block w-full text-[13px]"
           />
           <span
@@ -2389,48 +2425,74 @@ function UploadDialog({
           Kamera omana kenttänään.
 
           capture="environment" avaa puhelimessa takakameran suoraan.
-          Paperi joka tulee keittiöön — rahtikirja, takuukortti,
-          tarkastuspöytäkirja — menee kaappiin siinä paikassa eikä
+          Paperi joka tulee keittiöön menee kaappiin siinä paikassa eikä
           "kunhan ehdin skannata".
-
-          Tietokoneella kenttä on tavallinen tiedostonvalinta, joten se
-          ei ole rikki siellä missä kameraa ei ole.
         */}
         <label className="block">
-          <span className="text-[13px] font-semibold">{t.tiedosto.takePhoto}</span>
+          <span className="text-[13px] font-semibold">
+            {t.tiedosto.takePhoto}
+          </span>
           <input
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={(event) =>
-              setChosen(Array.from(event.target.files ?? []))
-            }
+            onChange={(event) => setChosen(Array.from(event.target.files ?? []))}
             className="mt-1 block w-full text-[13px]"
           />
         </label>
 
-        {chosen.length > 1 ? (
-          <ul className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {chosen.map((file) => (
-              <li key={file.name}>
-                {`${file.name} · ${formatFileSize(file.size, tag)}`}
-              </li>
-            ))}
-          </ul>
+        {/*
+          Lukemisen edistyminen.
+
+          Kolmenkymmenen paperin luku kestää, ja hiljaisuus näyttäisi
+          siltä ettei mitään tapahdu. Luku kertoo missä mennään.
+        */}
+        {reading ? (
+          <p
+            className="px-3 py-2 text-[12.5px]"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text-2)",
+              borderRadius: "var(--rf-r-card)",
+            }}
+          >
+            {single
+              ? t.tiedosto.proposing
+              : fill(t.tiedosto.readingCount, {
+                  luettu: String(readCount),
+                  kaikki: String(rows.length),
+                })}
+          </p>
         ) : null}
 
-        {single ? (
-          <>
-            <label className="block">
-              <span className="text-[13px] font-semibold">
-                {t.tiedosto.nameLabel}
-              </span>
-              <div className="mt-1 flex gap-2">
+        {rows.map((rivi, index) => {
+          const file = chosen[index];
+          if (!file) return null;
+
+          return (
+            <div
+              key={`${file.name}-${index}`}
+              className="space-y-1.5"
+              style={
+                single || index === 0
+                  ? undefined
+                  : {
+                      borderTop: "1px solid var(--rf-line)",
+                      paddingTop: "0.75rem",
+                    }
+              }
+            >
+              <label className="block">
+                <span className="text-[13px] font-semibold">
+                  {t.tiedosto.nameLabel}
+                </span>
                 <input
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  value={rivi.name}
+                  onChange={(event) =>
+                    paivitaRivi(index, { name: event.target.value })
+                  }
                   maxLength={200}
-                  className="h-[42px] min-w-0 flex-1 px-3 text-[14px] outline-none"
+                  className="mt-1 h-[42px] w-full px-3 text-[14px] outline-none"
                   style={{
                     background: "var(--rf-inset)",
                     border: "1px solid var(--rf-line)",
@@ -2438,127 +2500,88 @@ function UploadDialog({
                     color: "var(--rf-text)",
                   }}
                 />
+              </label>
 
-                {/*
-                  Uusi yritys vain epäonnistumisen jälkeen.
+              {/*
+                Kansio riveittäin vasta kun tiedostoja on monta.
 
-                  Onnistuneen luvun jälkeen painike olisi tarjous tehdä
-                  uudelleen se mikä on jo tehty. Verkko voi kuitenkin
-                  katketa, eikä ainoa keino saa olla tiedoston
-                  valitseminen uudestaan.
-                */}
-                {suggestFailed ? (
-                  <Button
-                    tone="ghost"
-                    size="sm"
-                    type="button"
-                    disabled={busy}
-                    onClick={() => setFailedFor(null)}
-                    icon={<RfIcon name="sparkle" size={15} />}
-                  >
-                    {t.tiedosto.proposeFiling}
-                  </Button>
-                ) : null}
-              </div>
+                Yhdelle ylhäällä oleva valinta on jo kansio, eikä samaa
+                asiaa kysytä kahdesti.
+              */}
+              {single ? null : (
+                <select
+                  value={rivi.folderId ?? ""}
+                  aria-label={t.tiedosto.savedTo}
+                  onChange={(event) =>
+                    paivitaRivi(index, { folderId: event.target.value || null })
+                  }
+                  className="h-[38px] w-full px-2 text-[13px] outline-none"
+                  style={{
+                    background: "var(--rf-inset)",
+                    border: "1px solid var(--rf-line)",
+                    borderRadius: "var(--rf-r-field)",
+                    color: "var(--rf-text)",
+                  }}
+                >
+                  <option value="">{here}</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folderPath(folders, folder.id, t.tiedosto)}
+                    </option>
+                  ))}
+                </select>
+              )}
 
-              <span
-                className="mt-1 block text-[12px]"
-                style={{ color: "var(--rf-text-3)" }}
-              >
-                {`${formatFileSize(single.size, tag)}`}
-              </span>
-            </label>
-
-            {/*
-              Lukeminen näkyy siinä missä tuloskin.
-
-              Sekunnin tai kahden hiljaisuus näyttäisi siltä ettei
-              mitään tapahdu, ja käyttäjä alkaisi täyttää kenttiä
-              käsin juuri ennen kuin ne täyttyvät itsestään.
-            */}
-            {reading ? (
-              <p
-                className="px-3 py-2 text-[12.5px]"
-                style={{
-                  background: "var(--rf-inset)",
-                  color: "var(--rf-text-2)",
-                  borderRadius: "var(--rf-r-card)",
-                }}
-              >
-                {t.tiedosto.proposing}
+              <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                {[
+                  formatFileSize(file.size, tag),
+                  rivi.tila === "kesken"
+                    ? t.tiedosto.proposing
+                    : rivi.tila === "eiTunnistettu"
+                      ? t.tiedosto.noProposal
+                      : rivi.title
+                        ? fill(t.tiedosto.looksLike, { mika: rivi.title })
+                        : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
-            ) : null}
+            </div>
+          );
+        })}
 
-            {suggestFailed ? (
-              <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-                {t.tiedosto.noProposal}
-              </p>
-            ) : null}
+        {/*
+          Voimassaolo vain yhdelle tiedostolle.
 
-            {/*
-              Mitä Kate luuli lukevansa.
-
-              Ilman tätä täytetyt kentät ilmestyisivät selittämättä, ja
-              käyttäjä joutuisi arvaamaan mihin ne perustuvat. Matala
-              varmuus sanotaan ääneen eikä piiloteta: silloin kentät on
-              syytä tarkistaa.
-            */}
-            {proposal?.title ? (
-              <div
-                className="px-3 py-2 text-[12.5px]"
-                style={{
-                  background: proposal.sure
-                    ? "var(--rf-inset)"
-                    : "var(--rf-amber-bg)",
-                  color: proposal.sure
-                    ? "var(--rf-text-2)"
-                    : "var(--rf-amber-text)",
-                  borderRadius: "var(--rf-r-card)",
-                }}
-              >
-                <p>
-                  {fill(
-                    proposal.sure
-                      ? t.tiedosto.looksLike
-                      : t.tiedosto.looksLikeUnsure,
-                    { mika: proposal.title },
-                  )}
-                </p>
-
-                {proposal.supplierName ? (
-                  <p className="mt-0.5">
-                    {fill(t.tiedosto.proposedSupplier, {
-                      nimi: proposal.supplierName,
-                    })}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-
-            <label className="block">
-              <span className="text-[13px] font-semibold">
-                {t.tiedosto.expiry}
-              </span>
-              <input
-                type="date"
-                value={expires}
-                onChange={(event) => setExpires(event.target.value)}
-                className="mt-1 h-[42px] w-full px-3 text-[14px] outline-none"
-                style={{
-                  background: "var(--rf-inset)",
-                  border: "1px solid var(--rf-line)",
-                  borderRadius: "var(--rf-r-field)",
-                  color: "var(--rf-text)",
-                }}
-              />
-              <span
-                className="mt-1 block text-[12px]"
-                style={{ color: "var(--rf-text-3)" }}
-              >
-                {t.tiedosto.expiryHint}
-              </span>
-            </label>
-          </>
+          Laatikollisella kuitteja ei ole yhteistä voimassaoloa, ja
+          jokaisen kysyminen erikseen tekisi tarkistuslistasta lomakkeen.
+          Yksittäiselle luvalle se on juuri se kenttä jonka takia
+          tiedosto tallennetaan.
+        */}
+        {single ? (
+          <label className="block">
+            <span className="text-[13px] font-semibold">
+              {t.tiedosto.expiry}
+            </span>
+            <input
+              type="date"
+              value={expires}
+              onChange={(event) => setExpires(event.target.value)}
+              className="mt-1 h-[42px] w-full px-3 text-[14px] outline-none"
+              style={{
+                background: "var(--rf-inset)",
+                border: "1px solid var(--rf-line)",
+                borderRadius: "var(--rf-r-field)",
+                color: "var(--rf-text)",
+              }}
+            />
+            <span
+              className="mt-1 block text-[12px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              {t.tiedosto.expiryHint}
+            </span>
+          </label>
         ) : null}
 
         {error ? (
@@ -2571,12 +2594,12 @@ function UploadDialog({
           <Button tone="ghost" type="button" onClick={onClose} disabled={busy}>
             {t.tiedosto.cancel}
           </Button>
+
           {/*
             Lataus odottaa lukemisen loppuun.
 
-            Muuten tiedosto tallentuisi alkuperäisellä nimellään juuri
-            ennen kuin ehdotus ehtii kenttään, ja käyttäjä näkisi
-            "scan_0042.pdf" listassa ihmetellen mihin tunnistus katosi.
+            Muuten tiedostot tallentuisivat alkuperäisillä nimillään
+            juuri ennen kuin ehdotukset ehtivät kenttiin.
           */}
           <Button
             tone="primary"
