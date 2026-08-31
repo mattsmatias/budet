@@ -25,6 +25,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { fill } from "@/lib/i18n/auth-text";
+import { reminderDay } from "@/lib/restoflow/files";
 import { can } from "@/lib/restoflow/permissions";
 import { requireContext } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
@@ -253,10 +255,11 @@ export async function registerFile(input: {
   path: string;
   type: string;
   size: number;
-  /* Voimassaolo latauksen yhteydessa: erillinen kutsu olisi toinen
-     verkkokierros, jonka epaonnistuminen jattaisi tiedoston
+  /* Voimassaolo ja liitos latauksen yhteydessa: erillinen kutsu olisi
+     toinen verkkokierros, jonka epaonnistuminen jattaisi tiedoston
      puolitiehen. */
   expiresOn?: string | null;
+  supplierId?: string | null;
 }): Promise<FileState> {
   const alku = await alusta();
   if (!alku.ok) return alku.state;
@@ -273,13 +276,18 @@ export async function registerFile(input: {
         .regex(/^d{4}-d{2}-d{2}$/)
         .nullable()
         .default(null),
+      supplierId: UUID.nullable().default(null),
     })
-    .safeParse({ ...input, expiresOn: input.expiresOn ?? null });
+    .safeParse({
+      ...input,
+      expiresOn: input.expiresOn ?? null,
+      supplierId: input.supplierId ?? null,
+    });
 
   if (!parsed.success) return { error: alku.t.tiedosto.errorGeneric };
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("register_file", {
+  const { data: created, error } = await supabase.rpc("register_file", {
     p_restaurant: alku.restaurantId,
     p_folder: parsed.data.folderId,
     p_name: parsed.data.name,
@@ -287,6 +295,7 @@ export async function registerFile(input: {
     p_type: parsed.data.type,
     p_size: parsed.data.size,
     p_expires: parsed.data.expiresOn,
+    p_supplier: parsed.data.supplierId,
   });
 
   if (error) {
@@ -298,6 +307,18 @@ export async function registerFile(input: {
      */
     await supabase.storage.from("files").remove([parsed.data.path]);
     return { error: explain(error.message, alku.t) };
+  }
+
+  /*
+   * Voimassaolo latauksessa tekee muistutuksen heti.
+   *
+   * Muuten se syntyisi vasta jos käyttäjä avaisi voimassaolodialogin
+   * uudelleen — eli tekisi saman työn kahdesti.
+   */
+  const newId = typeof created === "string" ? created : null;
+
+  if (parsed.data.expiresOn && newId) {
+    await syncReminder(newId, parsed.data.expiresOn, alku.t);
   }
 
   revalidate();
@@ -443,8 +464,132 @@ export async function setExpiry(
 
   if (error) return { error: explain(error.message, alku.t) };
 
+  const made = await syncReminder(parsed.data.id, parsed.data.date, alku.t);
+
   revalidate();
-  return {};
+  return made ? { notice: alku.t.tiedosto.reminderMade } : {};
+}
+
+// ---------------------------------------------------------------------------
+// Muistutus tehtäviin
+// ---------------------------------------------------------------------------
+
+/**
+ * Voimassaolo tehtäväksi.
+ *
+ * Merkintä rivillä on huomio; tehtävä on teko. Vanheneva anniskelulupa
+ * ei korjaa itseään sillä että joku näki keltaisen merkinnän
+ * ohimennen.
+ *
+ * Palauttaa true jos uusi tehtävä syntyi, jotta käyttäjälle voidaan
+ * kertoa siitä. Hiljaa tehty tehtävä toisessa osiossa on yllätys.
+ */
+async function syncReminder(
+  fileId: string,
+  expires: string | null,
+  t: AdminText,
+): Promise<boolean> {
+  const { restaurant, user } = await requireContext("/admin/tiedostot");
+  const supabase = await createClient();
+
+  const { data: row } = await supabase
+    .from("files")
+    .select("file_name, reminder_task_id")
+    .eq("id", fileId)
+    .maybeSingle();
+
+  const file = row as
+    | { file_name: string; reminder_task_id: string | null }
+    | null;
+
+  if (!file) return false;
+
+  /*
+   * Vanha tehtävä: päivitetään vain jos se on yhä auki.
+   *
+   * Tehty tai peruttu tehtävä on merkintä siitä mitä ihminen teki,
+   * eikä sitä kirjoiteta uusiksi. Uusi voimassaolo saa oman
+   * tehtävänsä.
+   */
+  const existing = file.reminder_task_id
+    ? await openTask(file.reminder_task_id)
+    : null;
+
+  if (!expires) {
+    /* Voimassaolo poistettiin: avoin muistutus ei koske enää mitään. */
+    if (existing) {
+      await supabase.from("tasks").delete().eq("id", existing);
+      await supabase
+        .from("files")
+        .update({ reminder_task_id: null })
+        .eq("id", fileId);
+    }
+    return false;
+  }
+
+  const due = reminderDay(expires, todayFor(restaurant.timezone));
+
+  const payload = {
+    restaurant_id: restaurant.id,
+    title: fill(t.tiedosto.reminderTitle, { nimi: file.file_name }).slice(0, 200),
+    description: fill(t.tiedosto.reminderNote, { pvm: expires }),
+    due_on: due,
+    priority: "important" as const,
+    visibility: "managers" as const,
+  };
+
+  if (existing) {
+    await supabase.from("tasks").update(payload).eq("id", existing);
+    return false;
+  }
+
+  const { data: created } = await supabase
+    .from("tasks")
+    .insert({ ...payload, created_by: user.id })
+    .select("id")
+    .maybeSingle();
+
+  const taskId = (created as { id: string } | null)?.id;
+  if (!taskId) return false;
+
+  await supabase
+    .from("files")
+    .update({ reminder_task_id: taskId })
+    .eq("id", fileId);
+
+  /* Tehtävälista muuttui toisessa osiossa. */
+  revalidatePath("/admin/tehtavat");
+  revalidatePath("/admin", "layout");
+
+  return true;
+}
+
+/** Tehtävän tunnus jos se on yhä auki, muuten null. */
+async function openTask(taskId: string): Promise<string | null> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("tasks")
+    .select("id, completed_at, cancelled_at")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  const task = data as
+    | { id: string; completed_at: string | null; cancelled_at: string | null }
+    | null;
+
+  if (!task || task.completed_at || task.cancelled_at) return null;
+  return task.id;
+}
+
+/** Tänään ravintolan vyöhykkeellä, ei palvelimen. */
+function todayFor(timezone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 // ---------------------------------------------------------------------------

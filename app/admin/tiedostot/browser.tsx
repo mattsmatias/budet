@@ -2066,6 +2066,21 @@ function UploadDialog({
   const [suggesting, setSuggesting] = useState(false);
   const [suggestFailed, setSuggestFailed] = useState(false);
 
+  /*
+   * Katen ehdotus kokonaisuutena.
+   *
+   * Kansio ja toimittaja ovat osa samaa lukua kuin nimi ja
+   * voimassaolo: yksi katsaus asiakirjaan vastaa kaikkiin neljään.
+   * Erilliset kutsut olisivat neljä kertaa sama työ ja neljä kertaa
+   * hinta.
+   */
+  const [proposal, setProposal] = useState<{
+    title: string | null;
+    supplierId: string | null;
+    supplierName: string | null;
+    sure: boolean;
+  } | null>(null);
+
   /* Nimi seuraa valittua tiedostoa kunnes käyttäjä koskee siihen. */
   const chosenKey = chosen.map((file) => file.name).join("|");
   const [chosenBefore, setChosenBefore] = useState(chosenKey);
@@ -2073,13 +2088,19 @@ function UploadDialog({
   if (chosenKey !== chosenBefore) {
     setChosenBefore(chosenKey);
     setName(chosen.length === 1 ? chosen[0].name : "");
+    setExpires("");
+    setProposal(null);
     setSuggestFailed(false);
   }
 
   /**
-   * Nimiehdotus mallilta.
+   * Arkistointiehdotus mallilta.
    *
-   * Epäonnistuminen on hiljainen: ehdotus on mukavuus, ja
+   * Yksi katsaus asiakirjaan täyttää nimen, kansion, voimassaolon ja
+   * toimittajan. Kentät ovat näkyvissä ja muutettavissa: Kate ehdottaa,
+   * käyttäjä päättää.
+   *
+   * Epäonnistuminen on hiljainen. Ehdotus on mukavuus, ja
    * virheilmoitus olisi este asialle joka onnistuu ilman sitä.
    */
   async function suggest(): Promise<void> {
@@ -2093,15 +2114,48 @@ function UploadDialog({
       body.set("file", single);
       body.set("nimi", single.name);
 
-      const response = await fetch("/api/tiedostot/nimiehdotus", {
+      const response = await fetch("/api/tiedostot/ehdotus", {
         method: "POST",
         body,
       });
 
-      const data = (await response.json()) as { suggestion?: string | null };
+      const data = (await response.json()) as {
+        proposal?: {
+          title: string | null;
+          name: string | null;
+          folderId: string | null;
+          expiresOn: string | null;
+          supplierId: string | null;
+          supplierName: string | null;
+          sure: boolean;
+        } | null;
+      };
 
-      if (data.suggestion) setName(data.suggestion);
-      else setSuggestFailed(true);
+      const ehdotus = data.proposal;
+
+      if (!ehdotus) {
+        setSuggestFailed(true);
+        return;
+      }
+
+      if (ehdotus.name) setName(ehdotus.name);
+      if (ehdotus.expiresOn) setExpires(ehdotus.expiresOn);
+
+      /*
+       * Kansio vain jos Kate osasi ehdottaa sellaista.
+       *
+       * Tyhjä ehdotus ei saa siirtää käyttäjää juureen: hän avasi
+       * latauksen jostakin kansiosta, ja se valinta on parempi kuin
+       * ei mitään.
+       */
+      if (ehdotus.folderId) setTarget(ehdotus.folderId);
+
+      setProposal({
+        title: ehdotus.title,
+        supplierId: ehdotus.supplierId,
+        supplierName: ehdotus.supplierName,
+        sure: ehdotus.sure,
+      });
     } catch {
       setSuggestFailed(true);
     } finally {
@@ -2160,6 +2214,7 @@ function UploadDialog({
         type,
         size: file.size,
         expiresOn: single && expires !== "" ? expires : null,
+        supplierId: single ? (proposal?.supplierId ?? null) : null,
       });
 
       if (result.error) {
@@ -2283,8 +2338,9 @@ function UploadDialog({
                   type="button"
                   disabled={suggesting || busy}
                   onClick={() => void suggest()}
+                  icon={<RfIcon name="sparkle" size={15} />}
                 >
-                  {suggesting ? t.tiedosto.suggesting : t.tiedosto.suggestName}
+                  {suggesting ? t.tiedosto.proposing : t.tiedosto.proposeFiling}
                 </Button>
               </div>
 
@@ -2298,8 +2354,48 @@ function UploadDialog({
 
             {suggestFailed ? (
               <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
-                {t.tiedosto.noSuggestion}
+                {t.tiedosto.noProposal}
               </p>
+            ) : null}
+
+            {/*
+              Mitä Kate luuli lukevansa.
+
+              Ilman tätä täytetyt kentät ilmestyisivät selittämättä, ja
+              käyttäjä joutuisi arvaamaan mihin ne perustuvat. Matala
+              varmuus sanotaan ääneen eikä piiloteta: silloin kentät on
+              syytä tarkistaa.
+            */}
+            {proposal?.title ? (
+              <div
+                className="px-3 py-2 text-[12.5px]"
+                style={{
+                  background: proposal.sure
+                    ? "var(--rf-inset)"
+                    : "var(--rf-amber-bg)",
+                  color: proposal.sure
+                    ? "var(--rf-text-2)"
+                    : "var(--rf-amber-text)",
+                  borderRadius: "var(--rf-r-card)",
+                }}
+              >
+                <p>
+                  {fill(
+                    proposal.sure
+                      ? t.tiedosto.looksLike
+                      : t.tiedosto.looksLikeUnsure,
+                    { mika: proposal.title },
+                  )}
+                </p>
+
+                {proposal.supplierName ? (
+                  <p className="mt-0.5">
+                    {fill(t.tiedosto.proposedSupplier, {
+                      nimi: proposal.supplierName,
+                    })}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
 
             <label className="block">

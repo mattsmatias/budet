@@ -13,6 +13,8 @@ import {
   MAX_FILE_BYTES,
   mimeFor,
   movableTargets,
+  REMINDER_DAYS_BEFORE,
+  reminderDay,
   sortByExpiry,
   sortFiles,
   sortFolders,
@@ -20,6 +22,7 @@ import {
   type FileRow,
   type FolderRow,
 } from "../files";
+import { DOCUMENT_KINDS, folderKeyFor } from "../document-ai";
 
 /**
  * Sanakirjan osa jota nimeäminen tarvitsee.
@@ -436,5 +439,73 @@ describe("lähtökansioiden nimet", () => {
       "g",
       "k",
     ]);
+  });
+});
+
+describe("muistutuksen ajankohta", () => {
+  /*
+   * Kuukausi ennen vanhenemista.
+   *
+   * Merkintä varoittaa 60 päivää ennen, tehtävä 30. Ne ovat eri asia:
+   * toinen kertoo, toinen käskee.
+   */
+  it("erääntyy kuukautta ennen voimassaolon päättymistä", () => {
+    expect(reminderDay("2026-12-31", "2026-08-31")).toBe("2026-12-01");
+    expect(REMINDER_DAYS_BEFORE).toBe(30);
+  });
+
+  /*
+   * Menneisyyteen ei voi asettaa eräpäivää.
+   *
+   * Jos lupa vanhenee kahden viikon päästä, muistutuksen "oikea"
+   * ajankohta olisi jo mennyt. Silloin asia on tänään — eräpäivä
+   * menneisyydessä syntyisi valmiiksi myöhässä olevana.
+   */
+  it("siirtää tähän päivään kun aika on jo kulunut", () => {
+    expect(reminderDay("2026-09-10", "2026-08-31")).toBe("2026-08-31");
+    expect(reminderDay("2026-01-01", "2026-08-31")).toBe("2026-08-31");
+  });
+
+  /* Kuukauden ja vuoden yli: laskenta ei saa pysähtyä rajalle. */
+  it("laskee oikein kuukauden ja vuoden vaihteen yli", () => {
+    expect(reminderDay("2027-01-15", "2026-08-31")).toBe("2026-12-16");
+    expect(reminderDay("2026-03-01", "2026-01-01")).toBe("2026-01-30");
+  });
+
+  it("kestää kelvottoman päivän", () => {
+    expect(reminderDay("ei-paiva", "2026-08-31")).toBe("2026-08-31");
+  });
+});
+
+describe("asiakirjan laji kansioksi", () => {
+  /*
+   * Jokainen laji osuu Katen omaan lähtökansioon.
+   *
+   * Puuttuva kartoitus on hiljainen vika: ehdotus jää tyhjäksi eikä
+   * kukaan huomaa, koska tyhjä ehdotus näyttää samalta kuin
+   * tunnistamaton asiakirja.
+   */
+  it("sijoittaa jokaisen tunnetun lajin", () => {
+    const odotetut: Record<string, string | null> = {
+      invoice: "invoices",
+      receipt: "receipts",
+      licence: "authorities",
+      tax: "authorities",
+      lease: "contracts",
+      contract: "contracts",
+      insurance: "contracts",
+      report: "sales_reports",
+      payroll: "staff",
+      other: null,
+    };
+
+    for (const kind of DOCUMENT_KINDS) {
+      expect(folderKeyFor(kind), kind).toBe(odotetut[kind]);
+    }
+  });
+
+  /* "other" on rehellinen vastaus: sijoittamaton on parempi kuin väärä. */
+  it("ei sijoita tunnistamatonta", () => {
+    expect(folderKeyFor("other")).toBeNull();
   });
 });

@@ -536,3 +536,38 @@ export function filesHref(options: {
   const query = params.toString();
   return query === "" ? "/admin/tiedostot" : `/admin/tiedostot?${query}`;
 }
+
+// ---------------------------------------------------------------------------
+// Muistutuksen ajankohta
+// ---------------------------------------------------------------------------
+
+/**
+ * Kuukausi etuajassa.
+ *
+ * Merkintä rivillä varoittaa 60 päivää ennen, koska silloin asia on
+ * hyvä tietää. Tehtävä on eri asia: se on hetki jolloin pitää ryhtyä
+ * toimeen, ja luvan uusimiseen riittää kuukausi.
+ *
+ * Kaksi kuukautta etuajassa oleva tehtävä siirrettäisiin eteenpäin, ja
+ * siirretty tehtävä opettaa siirtämään.
+ */
+export const REMINDER_DAYS_BEFORE = 30;
+
+/**
+ * Milloin muistutus erääntyy.
+ *
+ * Jo mennyt hetki ei ole eräpäivä: jos voimassaolo päättyy alle
+ * kuukauden päästä — tai on jo päättynyt — asia on tänään.
+ *
+ * Laskenta on UTC:ssä ja päivinä, ei tunteina. Kesäaika siirtäisi
+ * tunneissa lasketun rajan väärälle päivälle kahdesti vuodessa.
+ */
+export function reminderDay(expires: string, today: string): string {
+  const date = new Date(`${expires}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return today;
+
+  date.setUTCDate(date.getUTCDate() - REMINDER_DAYS_BEFORE);
+  const wanted = date.toISOString().slice(0, 10);
+
+  return wanted < today ? today : wanted;
+}
