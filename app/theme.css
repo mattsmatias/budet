@@ -1160,3 +1160,16 @@ details[open] .rf-summary-chevron {
     padding-top: 7px;
   }
 }
+
+/*
+ * Hakukentän oma tyhjennysrasti pois.
+ *
+ * type="search" antaa Chromessa oman rastinsa. Kate piirtää omansa,
+ * jonka nappiin mahtuu sormi ja joka näyttää samalta joka selaimessa —
+ * kaksi rastia vierekkäin ei kerro kumpi tekee mitä.
+ */
+.rf-no-clear::-webkit-search-cancel-button,
+.rf-no-clear::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}

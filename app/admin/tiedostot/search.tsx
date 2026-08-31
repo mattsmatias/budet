@@ -129,7 +129,14 @@ export function SearchBox({
         placeholder={t.tiedosto.search}
         aria-label={t.tiedosto.search}
         autoComplete="off"
-        className="h-[42px] w-full bg-transparent text-[14px] outline-none"
+        /*
+         * Selaimen oma tyhjennysrasti pois.
+         *
+         * type="search" antaa Chromessa oman rastinsa, ja oman
+         * painikkeen vieressa niita oli kaksi. Tyyppi sailyy, koska
+         * puhelimen nappaimisto antaa silla "hae"-nappaimen.
+         */
+        className="rf-no-clear h-[42px] w-full bg-transparent text-[14px] outline-none"
       />
 
       {/*
@@ -142,7 +149,7 @@ export function SearchBox({
       {value !== "" ? (
         <button
           type="button"
-          aria-label={t.tiedosto.clearSelection}
+          aria-label={t.tiedosto.clearSearch}
           onClick={() => {
             kirjoitettu.current = true;
             setValue("");
@@ -150,7 +157,7 @@ export function SearchBox({
           className="rf-press shrink-0 p-1"
           style={{ color: "var(--rf-text-3)" }}
         >
-          <RfIcon name="back" size={14} />
+          <RfIcon name="close" size={14} />
         </button>
       ) : null}
     </form>

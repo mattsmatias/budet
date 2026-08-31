@@ -26,6 +26,7 @@ import { z } from "zod";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { fill } from "@/lib/i18n/auth-text";
+import { formatDayIn } from "@/lib/i18n/labels";
 import { reminderDay } from "@/lib/restoflow/files";
 import { can } from "@/lib/restoflow/permissions";
 import { requireContext } from "@/lib/restoflow/session";
@@ -118,7 +119,7 @@ export async function createFolder(
   if (error) return { error: explain(error.message, alku.t) };
 
   revalidate();
-  return { notice: parsed.data.name };
+  return {};
 }
 
 export async function renameFolder(
@@ -143,7 +144,7 @@ export async function renameFolder(
   if (error) return { error: explain(error.message, alku.t) };
 
   revalidate();
-  return { notice: parsed.data.name };
+  return {};
 }
 
 export async function moveFolder(
@@ -347,7 +348,7 @@ export async function renameFile(
   if (error) return { error: explain(error.message, alku.t) };
 
   revalidate();
-  return { notice: parsed.data.name };
+  return {};
 }
 
 export async function moveFile(
@@ -489,6 +490,7 @@ async function syncReminder(
   expires: string | null,
   t: AdminText,
 ): Promise<boolean> {
+  const locale = await resolveLocale();
   const { restaurant, user } = await requireContext("/admin/tiedostot");
   const supabase = await createClient();
 
@@ -531,8 +533,12 @@ async function syncReminder(
 
   const payload = {
     restaurant_id: restaurant.id,
-    title: fill(t.tiedosto.reminderTitle, { nimi: file.file_name }).slice(0, 200),
-    description: fill(t.tiedosto.reminderNote, { pvm: expires }),
+    title: fill(t.tiedosto.reminderTitleFixed, {
+      nimi: file.file_name,
+    }).slice(0, 200),
+    description: fill(t.tiedosto.reminderNote, {
+      pvm: formatDayIn(expires, locale),
+    }),
     due_on: due,
     priority: "important" as const,
     visibility: "managers" as const,

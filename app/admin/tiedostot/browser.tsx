@@ -33,7 +33,9 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import type { AppLocale } from "@/lib/i18n/app-locales";
 import { fill } from "@/lib/i18n/auth-text";
+import { formatDayIn } from "@/lib/i18n/labels";
 import {
   checkFile,
   expiryState,
@@ -105,6 +107,9 @@ interface Props {
   /** Tänään ravintolan aikavyöhykkeellä, ei selaimen. */
   today: string;
 
+  /** Päivämäärien muotoiluun käyttäjän kielellä. */
+  locale: AppLocale;
+
   /** Roskakorissa olevat kansiot. Tyhjä muissa näkymissä. */
   trashFolders: { id: string; name: string; deletedAt: string }[];
 }
@@ -134,6 +139,16 @@ export function FileBrowser(props: Props) {
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [dragged, setDragged] = useState<Dragged>(null);
+
+  /*
+   * Vahvistus vain siitä mikä tapahtui muualla.
+   *
+   * Kansion luonti ja nimeäminen näkyvät listassa heti, eivätkä ne
+   * tarvitse ilmoitusta. Tehtävän syntyminen Tehtävät-osioon ei näy
+   * täältä mitenkään — ja hiljaa tehty tehtävä toisessa osiossa on
+   * yllätys, ei palvelus.
+   */
+  const [notice, setNotice] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
 
   /* Dialogit. Yksi kerrallaan, joten yksi tila riittää. */
@@ -149,12 +164,22 @@ export function FileBrowser(props: Props) {
     | null
   >(null);
 
-  function run(action: () => Promise<{ error?: string }>): void {
+  function run(
+    action: () => Promise<{ error?: string; notice?: string }>,
+  ): void {
     setError(null);
+    setNotice(null);
+
     start(async () => {
       const result = await action();
-      if (result.error) setError(result.error);
-      else router.refresh();
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.notice) setNotice(result.notice);
+      router.refresh();
     });
   }
 
@@ -411,6 +436,20 @@ export function FileBrowser(props: Props) {
         </p>
       ) : null}
 
+      {notice ? (
+        <p
+          className="px-3 py-2 text-[13px] font-medium"
+          style={{
+            background: "var(--rf-green-bg)",
+            color: "var(--rf-green-text)",
+            borderRadius: "var(--rf-r-card)",
+          }}
+          role="status"
+        >
+          {notice}
+        </p>
+      ) : null}
+
       {/*
         Roskakorin ohje ja tyhjennys.
 
@@ -524,17 +563,24 @@ export function FileBrowser(props: Props) {
 
       {empty ? (
         <EmptyState
+          /*
+            Otsikko ei toista välilehden nimeä.
+
+            Välilehti on korostettuna ruudulla, joten "Roskakori" sen
+            alla oli sama sana kolmesti: välilehdessä, otsikossa ja
+            selityksessä.
+          */
           title={
             view === "search"
               ? `${t.tiedosto.noResults} "${props.term}"`
               : view === "favorites"
-                ? t.tiedosto.tabFavorites
+                ? t.tiedosto.emptyFavoritesTitle
                 : view === "recent"
-                  ? t.tiedosto.tabRecent
+                  ? t.tiedosto.emptyRecentTitle
                   : view === "expiring"
-                    ? t.tiedosto.tabExpiring
+                    ? t.tiedosto.emptyExpiringTitle
                     : view === "trash"
-                      ? t.tiedosto.tabTrash
+                      ? t.tiedosto.trashEmpty
                       : t.tiedosto.emptyFolder
           }
           description={
@@ -544,11 +590,7 @@ export function FileBrowser(props: Props) {
                 ? t.tiedosto.emptyRecent
                 : view === "expiring"
                   ? t.tiedosto.emptyExpiring
-                  : view === "trash"
-                    ? t.tiedosto.trashEmpty
-                    : view === "search"
-                      ? ""
-                      : t.tiedosto.emptyFolder
+                  : ""
           }
         />
       ) : (
@@ -674,6 +716,7 @@ export function FileBrowser(props: Props) {
               canManage={canManage}
               showPath={view !== "all"}
               path={folderPath(props.folders, file.folderId, t.tiedosto)}
+              locale={props.locale}
               today={props.today}
               inTrash={view === "trash"}
               selected={valitut.includes(file.id)}
@@ -1241,6 +1284,7 @@ function FileRowItem({
   canManage,
   showPath,
   path,
+  locale,
   today,
   inTrash,
   selected,
@@ -1263,6 +1307,8 @@ function FileRowItem({
   showPath: boolean;
   /** Sijainti käyttäjän kielellä. Tyhjä = juuri. */
   path: string;
+  /** Päivämäärien muotoiluun. */
+  locale: AppLocale;
   today: string;
   inTrash: boolean;
   selected: boolean;
@@ -1354,9 +1400,19 @@ function FileRowItem({
           <span className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
             {inTrash
               ? `${t.tiedosto.deletedOn} ${(file.deletedAt ?? "").slice(0, 10)}`
-              : showPath
-                ? `${t.tiedosto.location}: ${path || t.tiedosto.root} · ${formatFileSize(file.size, tag)}`
-                : formatFileSize(file.size, tag)}
+              : [
+                  showPath
+                    ? `${t.tiedosto.location}: ${path || t.tiedosto.root}`
+                    : null,
+                  formatFileSize(file.size, tag),
+                  file.expiresOn
+                    ? fill(t.tiedosto.validUntilShort, {
+                        pvm: formatDayIn(file.expiresOn, locale),
+                      })
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
           </span>
         </span>
       </button>

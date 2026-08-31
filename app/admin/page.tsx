@@ -259,10 +259,21 @@ export default async function AdminDashboard({
       items.unshift({
         id: "files-expiry",
         severity: expired > 0 ? "critical" : "warning",
+        /*
+         * Yksikko ja monikko erikseen.
+         *
+         * "1 asiakirjaa vanhenee pian" on vaaraa suomea, ja sama
+         * ongelma on jokaisella kuudella kielella. Luku yksi on
+         * tavallisin tapaus: yleensa vanhenee yksi lupa kerrallaan.
+         */
         title:
           expired > 0
-            ? taytaTeksti(t.tiedosto.focusExpired, { maara: String(expired) })
-            : taytaTeksti(t.tiedosto.focusExpiring, { maara: String(soon) }),
+            ? expired === 1
+              ? t.tiedosto.focusExpiredOne
+              : taytaTeksti(t.tiedosto.focusExpired, { maara: String(expired) })
+            : soon === 1
+              ? t.tiedosto.focusExpiringOne
+              : taytaTeksti(t.tiedosto.focusExpiring, { maara: String(soon) }),
         detail: t.tiedosto.focusExpiryDetail,
         href: "/admin/tiedostot?nakyma=expiring",
         icon: "folder",

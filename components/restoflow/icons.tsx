@@ -40,6 +40,7 @@ export type IconName =
   | "file"
   | "folder"
   | "star"
+  | "close"
   | "plus"
   | "search"
   | "chevron"
@@ -148,6 +149,9 @@ const PATHS: Record<IconName, string> = {
   folder: "M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2.5h9A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
 
   star: "M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z",
+
+  /* Risti sulkemiselle. Kentan tyhjennys ei ole paluu edelliseen. */
+  close: "M6 6l12 12M18 6L6 18",
 
   plus: "M12 5.5v13M5.5 12h13",
 

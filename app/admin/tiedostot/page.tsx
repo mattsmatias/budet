@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -177,7 +178,11 @@ export default async function FilesPage({
 
       {searching ? (
         <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          {`${visibleFiles.length} · ${term}`}
+          {visibleFiles.length === 1
+            ? t.tiedosto.searchHitOne
+            : fill(t.tiedosto.searchHits, {
+                maara: String(visibleFiles.length),
+              })}
         </p>
       ) : view === "all" ? (
         <Breadcrumb
@@ -202,6 +207,7 @@ export default async function FilesPage({
         fileSort={fileSort}
         folderSort={folderSort}
         today={today}
+        locale={locale}
         trashFolders={trash?.folders ?? []}
       />
     </div>
