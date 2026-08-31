@@ -301,6 +301,17 @@ grant execute on function payroll_accrual(uuid, uuid, integer) to authenticated;
 -- prior_income_cents kattaa sen mitä ennen Katea maksettiin. Ilman
 -- sitä kesken vuotta käyttöönotettu Kate luulisi rajaa koskemattomaksi
 -- ja jättäisi lisäprosentin perimättä.
+--
+-- ---------------------------------------------------------------------------
+-- PUUTTUVA KORTTI PALAUTTAA TYHJÄN, EI NOLLIA
+-- ---------------------------------------------------------------------------
+--
+-- Komposiittityyppiä palauttava funktio antaa osumatta jäädessään
+-- yhden rivin jossa kaikki kentät ovat null — ei nollaa riviä. Ilman
+-- `c.id is not null` tämä palautti verokortittomalle työntekijälle
+-- rivin jossa raja on 0 ja jäljellä 0, ja käyttöliittymä kertoi
+-- tulorajan olevan täynnä. Se on eri väite kuin "korttia ei ole", ja
+-- väärä.
 
 create or replace function income_limit_status(
   p_restaurant uuid,
@@ -324,7 +335,8 @@ as $$
   used as (
     select coalesce(sum(p.taxable_cents), 0)::bigint as total
     from payslips p, card c
-    where p.restaurant_id = p_restaurant
+    where c.id is not null
+      and p.restaurant_id = p_restaurant
       and p.user_id = p_user
       and p.status in ('approved', 'paid')
       and p.pay_date is not null
@@ -337,7 +349,8 @@ as $$
     c.prior_income_cents + u.total,
     greatest(0, c.income_limit_cents - (c.prior_income_cents + u.total))
   from card c, used u
-  where (p_user = auth.uid() or is_manager(p_restaurant));
+  where c.id is not null
+    and (p_user = auth.uid() or is_manager(p_restaurant));
 $$;
 
 revoke all on function income_limit_status(uuid, uuid, date) from public, anon;

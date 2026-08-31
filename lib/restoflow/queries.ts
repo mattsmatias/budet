@@ -1014,6 +1014,16 @@ export interface PayPeriod {
   status: "open" | "review" | "approved" | "paid";
   approvedAt: string | null;
   paidAt: string | null;
+
+  /**
+   * Palkan maksupäivä.
+   *
+   * Eri asia kuin kauden alku ja loppu: kausi kertoo miltä ajalta
+   * palkka on, maksupäivä milloin raha liikkuu. Maksupäivä ratkaisee
+   * verokortin ja verovuoden, eikä se ole pääteltävissä kauden
+   * lopusta — palkka maksetaan usein vasta seuraavassa kuussa.
+   */
+  payDate: string | null;
 }
 
 export async function fetchPayPeriods(
@@ -1022,7 +1032,7 @@ export async function fetchPayPeriods(
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("pay_periods")
-    .select("id, starts_on, ends_on, status, approved_at, paid_at")
+    .select("id, starts_on, ends_on, status, approved_at, paid_at, pay_date")
     .eq("restaurant_id", restaurantId)
     .order("starts_on", { ascending: false })
     .limit(24);
@@ -1034,6 +1044,7 @@ export async function fetchPayPeriods(
     startsOn: row.starts_on as string,
     endsOn: row.ends_on as string,
     status: row.status as PayPeriod["status"],
+    payDate: row.pay_date,
     approvedAt: (row.approved_at as string | null) ?? null,
     paidAt: (row.paid_at as string | null) ?? null,
   }));

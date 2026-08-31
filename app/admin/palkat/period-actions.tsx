@@ -4,9 +4,40 @@ import { useActionState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
-import { approvePeriod, reopenPeriod, type PayrollState } from "./actions";
+import {
+  approvePeriod,
+  reopenPeriod,
+  setPayDate,
+  type PayrollState,
+} from "./actions";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
+
+/**
+ * Tallennuspainike omana komponenttinaan.
+ *
+ * useFormStatus lukee sen lomakkeen tilan jonka sisällä komponentti on,
+ * eikä se toimi samassa komponentissa jossa lomake määritellään.
+ */
+function SaveDateButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="rf-press h-[38px] px-3.5 text-[13px] font-semibold"
+      style={{
+        background: "var(--rf-inset)",
+        color: "var(--rf-text)",
+        borderRadius: "var(--rf-r-control)",
+        opacity: pending ? 0.6 : 1,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
 
 const initial: PayrollState = {};
 
@@ -25,6 +56,7 @@ export function PeriodActions({
   totalCount,
   issueCount,
   locked,
+  payDate,
 }: {
   t: AdminText;
   startsOn: string;
@@ -33,9 +65,12 @@ export function PeriodActions({
   totalCount: number;
   issueCount: number;
   locked: boolean;
+  /** Kauden maksupäivä, tai null jos sitä ei ole vielä asetettu. */
+  payDate: string | null;
 }) {
   const [approveState, approve] = useActionState(approvePeriod, initial);
   const [reopenState, reopen] = useActionState(reopenPeriod, initial);
+  const [dateState, saveDate] = useActionState(setPayDate, initial);
 
   const state =
     approveState.error || approveState.notice ? approveState : reopenState;
@@ -74,6 +109,83 @@ export function PeriodActions({
               : t.palkka.inProgress}
         </Pill>
       </div>
+
+      {/*
+        Maksupäivä ennen hyväksyntää.
+        ------------------------------------------------------------------
+
+        Verohallinnon ohje on yksiselitteinen: sovellettava verokortti
+        määräytyy suorituksen maksupäivästä. Kesäkuussa tehty työ joka
+        maksetaan heinäkuussa kuuluu heinäkuun kortille, ja joulukuun
+        työ joka maksetaan tammikuussa kuuluu uuteen verovuoteen.
+
+        Siksi tämä on oma kenttänsä eikä pääteltävissä kauden lopusta.
+        Ilman sitä hyväksyntä ei etene: laskettu ennakonpidätys ilman
+        perustetta on huonompi kuin laskematon.
+
+        Kentän tila kertoo miksi hyväksyntä on kiinni. Pelkkä harmaa
+        nappi olisi arvoitus.
+      */}
+      {locked ? null : (
+        <form
+          action={saveDate}
+          className="mt-4 flex flex-wrap items-end gap-2 pt-3"
+          style={{ borderTop: "1px solid var(--rf-line)" }}
+        >
+          <input type="hidden" name="startsOn" value={startsOn} />
+          <input type="hidden" name="endsOn" value={endsOn} />
+
+          <label className="block">
+            <span className="text-[13px] font-semibold">
+              {t.palkka.payDate}
+            </span>
+            <input
+              type="date"
+              name="payDate"
+              required
+              defaultValue={payDate ?? ""}
+              className="mt-1 h-[38px] px-2.5 text-[14px] outline-none"
+              style={{
+                background: "var(--rf-inset)",
+                border: "1px solid var(--rf-line)",
+                borderRadius: "var(--rf-r-field)",
+                color: "var(--rf-text)",
+              }}
+            />
+          </label>
+
+          <SaveDateButton label={t.palkka.periodSaveDate} />
+
+          {dateState.error ? (
+            <p
+              className="w-full text-[13px]"
+              style={{ color: "var(--rf-red-text)" }}
+              role="alert"
+            >
+              {dateState.error}
+            </p>
+          ) : null}
+
+          {dateState.notice ? (
+            <p
+              className="w-full text-[13px]"
+              style={{ color: "var(--rf-green-text)" }}
+              role="status"
+            >
+              {dateState.notice}
+            </p>
+          ) : null}
+
+          {payDate === null ? (
+            <p
+              className="w-full text-[12.5px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              {t.palkka.payDateMissing}
+            </p>
+          ) : null}
+        </form>
+      )}
 
       {state.error ? (
         <p className="mt-3 text-[13px]" style={{ color: "var(--rf-red-text)" }}>

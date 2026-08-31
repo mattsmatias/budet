@@ -272,7 +272,9 @@ export async function loadBenefits(
 
   let query = supabase
     .from("employee_benefits")
-    .select("id, user_id, kind, label, monthly_value_cents, valid_from, valid_to")
+    .select(
+      "id, user_id, kind, label, monthly_value_cents, valid_from, valid_to",
+    )
     .eq("restaurant_id", restaurantId)
     .order("valid_from", { ascending: false });
 
@@ -309,7 +311,9 @@ export async function loadEmployerSettings(
 
   const { data } = await supabase
     .from("payroll_settings")
-    .select("employer_pension_rate, employer_accident_rate, employer_group_life_rate")
+    .select(
+      "employer_pension_rate, employer_accident_rate, employer_group_life_rate",
+    )
     .eq("restaurant_id", restaurantId)
     .maybeSingle();
 
@@ -501,7 +505,14 @@ export async function loadIncomeLimit(
       | null
   )?.[0];
 
-  if (!row) return null;
+  /*
+   * Tyhjä rivi tarkoittaa samaa kuin puuttuva rivi.
+   *
+   * Kanta suodattaa korttittomat pois, mutta tarkistus on tässäkin:
+   * "raja 0 ja jäljellä 0" näyttäisi käyttöliittymässä täydeltä
+   * tulorajalta, ja se on eri väite kuin "korttia ei ole".
+   */
+  if (!row || !row.tax_card_id) return null;
 
   return {
     taxCardId: row.tax_card_id,

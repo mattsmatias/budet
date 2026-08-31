@@ -381,6 +381,7 @@ export default async function PayrollPage({
           totalCount={paid.length}
           issueCount={data.issues.length}
           locked={locked}
+          payDate={stored?.payDate ?? null}
         />
       ) : null}
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -170,7 +171,16 @@ export default async function StaffPage() {
                 <Avatar initials={user.initials} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-semibold">
-                    {user.name}
+                    {showsRates ? (
+                      <Link
+                        href={`/admin/tyontekijat/${user.id}`}
+                        className="rf-press"
+                      >
+                        {user.name}
+                      </Link>
+                    ) : (
+                      user.name
+                    )}
                   </p>
                   <p
                     className="text-[13px]"
@@ -243,7 +253,27 @@ export default async function StaffPage() {
                     <div className="flex items-center gap-3">
                       <Avatar initials={user.initials} size={34} />
                       <div>
-                        <span className="font-medium">{user.name}</span>
+                        {/*
+                          Nimi vie palkka- ja verotusprofiiliin.
+
+                          Verokortti, luontoisedut ja palkkakertymä ovat
+                          yhden ihmisen tietoja, eivätkä ne mahdu
+                          listariville. Linkki on nimessä, koska sitä
+                          klikataan muutenkin.
+
+                          Vain palkat näkevälle: työntekijä ei saa
+                          avata työkaverinsa verotietoja.
+                        */}
+                        {showsRates ? (
+                          <Link
+                            href={`/admin/tyontekijat/${user.id}`}
+                            className="rf-press font-medium"
+                          >
+                            {user.name}
+                          </Link>
+                        ) : (
+                          <span className="font-medium">{user.name}</span>
+                        )}
                         {user.position ? (
                           <p
                             className="text-[12px]"

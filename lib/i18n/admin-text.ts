@@ -111,6 +111,8 @@ const fi = {
     negative: "Arvo ei voi olla negatiivinen.",
     sourceNote: "Perusteet",
     estimated: "Työnantajan eläkemaksuna on kansallinen keskiarvo. Syötä oma prosenttisi, jotta kustannus on tarkka.",
+    inUse: "Käytössä",
+    fromSlips: "Hyväksytyistä ja maksetuista laskelmista: {maara} kpl. Luonnos ei kerrytä.",
   },
   tiedosto: {
     title: "Tiedostot",
@@ -1868,6 +1870,7 @@ const fi = {
     payDateSaved: "Maksupäivä tallennettiin.",
     rulesMissing: "Vuoden {vuosi} verosääntöjä ei ole tallennettu. Palkkaa ei voitu laskea.",
     calcFailed: "Palkkaa ei voitu laskea. Tarkista työntekijän verokortti- ja palkkatiedot.",
+    periodSaveDate: "Tallenna maksupäivä",
   },
   lounas: {
     weekNotCreated: "Viikkoa ei ole vielä luotu.",
@@ -2677,6 +2680,8 @@ const en: AdminText = {
     negative: "The value cannot be negative.",
     sourceNote: "Sources",
     estimated: "The employer pension contribution uses the national average. Enter your own rate for an exact cost.",
+    inUse: "In use",
+    fromSlips: "From approved and paid payslips: {maara}. Drafts do not count.",
   },
   tiedosto: {
     title: "Files",
@@ -4437,6 +4442,7 @@ const en: AdminText = {
     payDateSaved: "Payment date saved.",
     rulesMissing: "The tax rules for {vuosi} are not on record. The pay could not be calculated.",
     calcFailed: "The pay could not be calculated. Check the employee's tax card and pay details.",
+    periodSaveDate: "Save payment date",
   },
   lounas: {
     weekNotCreated: "The week has not been created yet.",
@@ -5246,6 +5252,8 @@ const sv: AdminText = {
     negative: "Värdet kan inte vara negativt.",
     sourceNote: "Källor",
     estimated: "Arbetsgivarens pensionsavgift använder det nationella medeltalet. Ange din egen procent för exakt kostnad.",
+    inUse: "I bruk",
+    fromSlips: "Från godkända och betalda lönespecifikationer: {maara}. Utkast räknas inte.",
   },
   tiedosto: {
     title: "Filer",
@@ -7004,6 +7012,7 @@ const sv: AdminText = {
     payDateSaved: "Betalningsdagen sparades.",
     rulesMissing: "Skattereglerna för {vuosi} saknas. Lönen kunde inte beräknas.",
     calcFailed: "Lönen kunde inte beräknas. Kontrollera den anställdas skattekort och löneuppgifter.",
+    periodSaveDate: "Spara betalningsdag",
   },
   lounas: {
     weekNotCreated: "Veckan har inte skapats än.",
@@ -7811,6 +7820,8 @@ const da: AdminText = {
     negative: "Værdien kan ikke være negativ.",
     sourceNote: "Kilder",
     estimated: "Arbejdsgiverens pensionsbidrag bruger landsgennemsnittet. Indtast din egen procent for en præcis omkostning.",
+    inUse: "I brug",
+    fromSlips: "Fra godkendte og betalte lønsedler: {maara}. Kladder tæller ikke.",
   },
   tiedosto: {
     title: "Filer",
@@ -9569,6 +9580,7 @@ const da: AdminText = {
     payDateSaved: "Betalingsdagen blev gemt.",
     rulesMissing: "Skattereglerne for {vuosi} mangler. Lønnen kunne ikke beregnes.",
     calcFailed: "Lønnen kunne ikke beregnes. Kontrollér medarbejderens skattekort og lønoplysninger.",
+    periodSaveDate: "Gem betalingsdag",
   },
   lounas: {
     weekNotCreated: "Ugen er ikke oprettet endnu.",
@@ -10376,6 +10388,8 @@ const tr: AdminText = {
     negative: "Değer negatif olamaz.",
     sourceNote: "Kaynaklar",
     estimated: "İşveren emeklilik primi ulusal ortalamayı kullanıyor. Kesin maliyet için kendi oranınızı girin.",
+    inUse: "Kullanımda",
+    fromSlips: "Onaylanan ve ödenen bordrolardan: {maara}. Taslaklar sayılmaz.",
   },
   tiedosto: {
     title: "Dosyalar",
@@ -12130,6 +12144,7 @@ const tr: AdminText = {
     payDateSaved: "Ödeme tarihi kaydedildi.",
     rulesMissing: "{vuosi} yılı vergi kuralları kayıtlı değil. Ücret hesaplanamadı.",
     calcFailed: "Ücret hesaplanamadı. Çalışanın vergi kartı ve ücret bilgilerini kontrol edin.",
+    periodSaveDate: "Ödeme tarihini kaydet",
   },
   lounas: {
     weekNotCreated: "Hafta henüz oluşturulmadı.",
@@ -12933,6 +12948,8 @@ const et: AdminText = {
     negative: "Väärtus ei saa olla negatiivne.",
     sourceNote: "Allikad",
     estimated: "Tööandja pensionimakse kasutab riiklikku keskmist. Sisesta oma protsent täpse kulu saamiseks.",
+    inUse: "Kasutusel",
+    fromSlips: "Kinnitatud ja makstud palgalehtedelt: {maara}. Mustandid ei arvestu.",
   },
   tiedosto: {
     title: "Failid",
@@ -14682,6 +14699,7 @@ const et: AdminText = {
     payDateSaved: "Maksepäev salvestati.",
     rulesMissing: "Aasta {vuosi} maksureegleid pole salvestatud. Palka ei saanud arvutada.",
     calcFailed: "Palka ei saanud arvutada. Kontrolli töötaja maksukaarti ja palgaandmeid.",
+    periodSaveDate: "Salvesta maksepäev",
   },
   lounas: {
     weekNotCreated: "Nädalat pole veel loodud.",

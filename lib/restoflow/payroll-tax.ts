@@ -91,12 +91,7 @@ export interface TaxCard {
 }
 
 export type BenefitKind =
-  | "meal"
-  | "phone"
-  | "car"
-  | "housing"
-  | "bicycle"
-  | "other";
+  "meal" | "phone" | "car" | "housing" | "bicycle" | "other";
 
 export interface EmployeeBenefit {
   id: string;
@@ -280,10 +275,7 @@ export function ageOn(birthDate: string, onDate: string): number | null {
  * Useasta osuvasta valitaan myöhäisin alkupäivä: muutosverokortti
  * kumoaa aiemman samalta ajalta.
  */
-export function pickTaxCard(
-  cards: TaxCard[],
-  payDate: string,
-): TaxCard | null {
+export function pickTaxCard(cards: TaxCard[], payDate: string): TaxCard | null {
   const day = toDay(payDate);
 
   const osuvat = cards
