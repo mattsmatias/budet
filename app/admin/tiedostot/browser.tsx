@@ -1049,7 +1049,7 @@ function Modal({
       ref={ref}
       onClose={onClose}
       onCancel={onClose}
-      className="rf-enter w-[min(30rem,calc(100vw-2rem))] p-0 backdrop:bg-black/40"
+      className="rf-enter m-auto max-h-[85dvh] w-[min(30rem,calc(100vw-2rem))] overflow-y-auto p-0 backdrop:bg-black/40"
       style={{
         background: "var(--rf-card)",
         color: "var(--rf-text)",
