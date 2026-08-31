@@ -169,11 +169,20 @@ export default async function FilesPage({
 }
 
 // ---------------------------------------------------------------------------
-// Otsikko ja haku
+// Haku
 // ---------------------------------------------------------------------------
 
 /**
- * Haku on tavallinen GET-lomake.
+ * Sivu ei kirjoita omaa otsikkoaan.
+ *
+ * Yläpalkki lukee nimen reitistä (page-title.tsx), joten sivun oma
+ * otsikko oli sama sana kahdesti allekkain. Kaksi totuutta samasta
+ * nimestä ajautuu myös erilleen: valikossa lukisi yhtä ja otsikossa
+ * toista, eikä kumpikaan olisi väärin omalla tavallaan.
+ *
+ * ---------------------------------------------------------------------
+ * HAKU ON TAVALLINEN GET-LOMAKE
+ * ---------------------------------------------------------------------
  *
  * Se toimii ilman JavaScriptiä, tulos on linkitettävissä ja selaimen
  * paluunappi vie takaisin listaan. Näppäilyn mukana hakeva kenttä
@@ -190,14 +199,17 @@ function Header({
 }) {
   return (
     <div className="space-y-3">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight">
-          {t.tiedosto.title}
-        </h1>
-        <p className="mt-0.5 text-[13.5px]" style={{ color: "var(--rf-text-2)" }}>
-          {canManage ? t.tiedosto.intro : t.tiedosto.readOnly}
+      {/*
+        Lukuoikeuden huomautus jää.
+
+        Se ei ole sivun kuvaus vaan vastaus kysymykseen miksi
+        painikkeita ei näy. Kirjanpitäjä on ainoa joka näkee tämän.
+      */}
+      {canManage ? null : (
+        <p className="text-[13.5px]" style={{ color: "var(--rf-text-2)" }}>
+          {t.tiedosto.readOnly}
         </p>
-      </div>
+      )}
 
       <form
         method="get"

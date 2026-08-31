@@ -50,7 +50,6 @@ const fi = {
   },
   tiedosto: {
     title: "Tiedostot",
-    intro: "Ravintolan omat asiakirjat yhdessä paikassa.",
     root: "Tiedostot",
     tabAll: "Kaikki",
     tabFavorites: "Tärkeät",
@@ -2467,7 +2466,6 @@ const en: AdminText = {
   },
   tiedosto: {
     title: "Files",
-    intro: "Your restaurant's documents in one place.",
     root: "Files",
     tabAll: "All",
     tabFavorites: "Starred",
@@ -4887,7 +4885,6 @@ const sv: AdminText = {
   },
   tiedosto: {
     title: "Filer",
-    intro: "Restaurangens dokument på ett ställe.",
     root: "Filer",
     tabAll: "Alla",
     tabFavorites: "Viktiga",
@@ -7303,7 +7300,6 @@ const da: AdminText = {
   },
   tiedosto: {
     title: "Filer",
-    intro: "Restaurantens dokumenter ét sted.",
     root: "Filer",
     tabAll: "Alle",
     tabFavorites: "Vigtige",
@@ -9719,7 +9715,6 @@ const tr: AdminText = {
   },
   tiedosto: {
     title: "Dosyalar",
-    intro: "Restoranınızın belgeleri tek bir yerde.",
     root: "Dosyalar",
     tabAll: "Tümü",
     tabFavorites: "Önemli",
@@ -12127,7 +12122,6 @@ const et: AdminText = {
   },
   tiedosto: {
     title: "Failid",
-    intro: "Restorani dokumendid ühes kohas.",
     root: "Failid",
     tabAll: "Kõik",
     tabFavorites: "Olulised",
