@@ -6,6 +6,7 @@ import {
   expiryState,
   extensionOf,
   fileKind,
+  filesHref,
   folderPath,
   formatFileSize,
   isPreviewable,
@@ -324,5 +325,39 @@ describe("nimiehdotus", () => {
 
   it("jättää kelvottoman päivän pois nimestä", () => {
     expect(suggestName("a.pdf", "Metro", "eilen")).toBe("Metro.pdf");
+  });
+});
+
+describe("osoitteet", () => {
+  /*
+   * Lajittelu katosi kansioon siirryttäessä, koska kansiolinkki
+   * rakennettiin eri paikassa eri säännöillä kuin lajitteluvalikko.
+   * Yksi rakentaja on koko korjaus.
+   */
+  it("kantaa lajittelun kansiosta toiseen", () => {
+    expect(
+      filesHref({ folderId: "abc", fileSort: "name", folderSort: "newest" }),
+    ).toBe("/admin/tiedostot?kansio=abc&jarjesta=name&kansiot=newest");
+  });
+
+  /* Oletukset eivät kuulu osoitteeseen: lyhyt osoite on jaettava. */
+  it("jättää oletusarvot pois", () => {
+    expect(filesHref({})).toBe("/admin/tiedostot");
+    expect(filesHref({ fileSort: "added", folderSort: "custom" })).toBe(
+      "/admin/tiedostot",
+    );
+    expect(filesHref({ view: "all" })).toBe("/admin/tiedostot");
+  });
+
+  it("kirjoittaa näkymän ja haun", () => {
+    expect(filesHref({ view: "trash" })).toBe("/admin/tiedostot?nakyma=trash");
+    expect(filesHref({ term: "vuokra" })).toBe("/admin/tiedostot?haku=vuokra");
+  });
+
+  /* Hakusanassa voi olla mitä tahansa, myös &-merkki. */
+  it("koodaa hakusanan turvallisesti", () => {
+    expect(filesHref({ term: "a&b=c" })).toBe(
+      "/admin/tiedostot?haku=a%26b%3Dc",
+    );
   });
 });

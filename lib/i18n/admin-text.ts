@@ -151,6 +151,8 @@ const fi = {
     focusExpired: "{maara} asiakirjaa on vanhentunut",
     focusExpiring: "{maara} asiakirjaa vanhenee pian",
     focusExpiryDetail: "Tarkista luvat, vakuutukset ja sopimukset.",
+    foldersWord: "Kansiot",
+    filesWord: "Tiedostot",
   },
   some: {
     title: "Sosiaalinen media",
@@ -2601,6 +2603,8 @@ const en: AdminText = {
     focusExpired: "{maara} documents have expired",
     focusExpiring: "{maara} documents expire soon",
     focusExpiryDetail: "Check licences, insurance and contracts.",
+    foldersWord: "Folders",
+    filesWord: "Files",
   },
   some: {
     title: "Social media",
@@ -5054,6 +5058,8 @@ const sv: AdminText = {
     focusExpired: "{maara} dokument har gått ut",
     focusExpiring: "{maara} dokument går ut snart",
     focusExpiryDetail: "Kontrollera tillstånd, försäkringar och avtal.",
+    foldersWord: "Mappar",
+    filesWord: "Filer",
   },
   some: {
     title: "Sociala medier",
@@ -7503,6 +7509,8 @@ const da: AdminText = {
     focusExpired: "{maara} dokumenter er udløbet",
     focusExpiring: "{maara} dokumenter udløber snart",
     focusExpiryDetail: "Tjek tilladelser, forsikringer og aftaler.",
+    foldersWord: "Mapper",
+    filesWord: "Filer",
   },
   some: {
     title: "Sociale medier",
@@ -9952,6 +9960,8 @@ const tr: AdminText = {
     focusExpired: "{maara} belgenin süresi doldu",
     focusExpiring: "{maara} belgenin süresi yakında doluyor",
     focusExpiryDetail: "Ruhsatları, sigortaları ve sözleşmeleri kontrol edin.",
+    foldersWord: "Klasörler",
+    filesWord: "Dosyalar",
   },
   some: {
     title: "Sosyal medya",
@@ -12393,6 +12403,8 @@ const et: AdminText = {
     focusExpired: "{maara} dokumenti on aegunud",
     focusExpiring: "{maara} dokumenti aegub varsti",
     focusExpiryDetail: "Kontrolli lubasid, kindlustusi ja lepinguid.",
+    foldersWord: "Kaustad",
+    filesWord: "Failid",
   },
   some: {
     title: "Sotsiaalmeedia",

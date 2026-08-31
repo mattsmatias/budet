@@ -16,6 +16,7 @@ import {
   searchFiles,
 } from "@/lib/restoflow/file-queries";
 import {
+  filesHref,
   sortFiles,
   sortFolders,
   type FileRow,
@@ -168,7 +169,12 @@ export default async function FilesPage({
           {`${visibleFiles.length} · ${term}`}
         </p>
       ) : view === "all" ? (
-        <Breadcrumb t={t} crumbs={crumbs} />
+        <Breadcrumb
+          t={t}
+          crumbs={crumbs}
+          fileSort={fileSort}
+          folderSort={folderSort}
+        />
       ) : null}
 
       <FileBrowser
@@ -278,29 +284,27 @@ function Tabs({
       id: "all",
       label: t.tiedosto.tabAll,
       /* Kaikki-välilehti palaa siihen kansioon jossa oltiin. */
-      href: folderId
-        ? `/admin/tiedostot?kansio=${folderId}`
-        : "/admin/tiedostot",
+      href: filesHref({ folderId }),
     },
     {
       id: "favorites",
       label: t.tiedosto.tabFavorites,
-      href: "/admin/tiedostot?nakyma=favorites",
+      href: filesHref({ view: "favorites" }),
     },
     {
       id: "recent",
       label: t.tiedosto.tabRecent,
-      href: "/admin/tiedostot?nakyma=recent",
+      href: filesHref({ view: "recent" }),
     },
     {
       id: "expiring",
       label: t.tiedosto.tabExpiring,
-      href: "/admin/tiedostot?nakyma=expiring",
+      href: filesHref({ view: "expiring" }),
     },
     {
       id: "trash",
       label: t.tiedosto.tabTrash,
-      href: "/admin/tiedostot?nakyma=trash",
+      href: filesHref({ view: "trash" }),
     },
   ];
 
@@ -342,9 +346,13 @@ function Tabs({
 function Breadcrumb({
   t,
   crumbs,
+  fileSort,
+  folderSort,
 }: {
   t: ReturnType<typeof adminText>;
   crumbs: { id: string; name: string }[];
+  fileSort: FileSort;
+  folderSort: FolderSort;
 }) {
   return (
     <nav
@@ -352,7 +360,10 @@ function Breadcrumb({
       style={{ color: "var(--rf-text-2)" }}
       aria-label={t.tiedosto.title}
     >
-      <Link href="/admin/tiedostot" className="rf-press font-semibold">
+      <Link
+        href={filesHref({ fileSort, folderSort })}
+        className="rf-press font-semibold"
+      >
         {t.tiedosto.root}
       </Link>
 
@@ -373,7 +384,11 @@ function Breadcrumb({
               </span>
             ) : (
               <Link
-                href={`/admin/tiedostot?kansio=${crumb.id}`}
+                href={filesHref({
+                  folderId: crumb.id,
+                  fileSort,
+                  folderSort,
+                })}
                 className="rf-press font-semibold"
               >
                 {crumb.name}

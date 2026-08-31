@@ -38,6 +38,7 @@ import {
   checkFile,
   expiryState,
   fileKind,
+  filesHref,
   folderPath,
   formatFileSize,
   isPreviewable,
@@ -368,7 +369,7 @@ export function FileBrowser(props: Props) {
 
   return (
     <div className="space-y-3">
-      {canManage ? (
+      {canManage && view !== "trash" ? (
         <Toolbar
           t={t}
           busy={busy}
@@ -376,7 +377,16 @@ export function FileBrowser(props: Props) {
           folderSort={props.folderSort}
           folderId={props.folderId}
           showSort={view === "all"}
-          onNewFolder={() => setDialog({ type: "newFolder" })}
+          /*
+           * Uusi kansio vain siellä missä sen näkee syntyvän.
+           *
+           * Tähdissä ja viimeksi lisätyissä ei ole nykyistä kansiota,
+           * joten kansio ilmestyisi juureen näkymättömiin. Lataus käy
+           * silti: sen dialogi kysyy kohdekansion erikseen.
+           */
+          onNewFolder={
+            view === "all" ? () => setDialog({ type: "newFolder" }) : null
+          }
           onUpload={() =>
             setDialog({ type: "upload", folderId: props.folderId, initial: [] })
           }
@@ -599,6 +609,11 @@ export function FileBrowser(props: Props) {
               key={folder.id}
               t={t}
               folder={folder}
+              href={filesHref({
+                folderId: folder.id,
+                fileSort: props.fileSort,
+                folderSort: props.folderSort,
+              })}
               canManage={canManage}
               sortable={sortable}
               dragging={kahvassa === folder.id}
@@ -840,20 +855,23 @@ function Toolbar({
   folderSort: FolderSort;
   folderId: string | null;
   showSort: boolean;
-  onNewFolder: () => void;
+  /** null piilottaa painikkeen kokonaan. */
+  onNewFolder: (() => void) | null;
   onUpload: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button
-        tone="secondary"
-        size="sm"
-        onClick={onNewFolder}
-        disabled={busy}
-        icon={<RfIcon name="plus" size={15} />}
-      >
-        {t.tiedosto.newFolder}
-      </Button>
+      {onNewFolder ? (
+        <Button
+          tone="secondary"
+          size="sm"
+          onClick={onNewFolder}
+          disabled={busy}
+          icon={<RfIcon name="plus" size={15} />}
+        >
+          {t.tiedosto.newFolder}
+        </Button>
+      ) : null}
 
       <Button
         tone="primary"
@@ -898,11 +916,11 @@ function SortMenu({
   const box = useDismiss<HTMLDivElement>(open, () => setOpen(false));
 
   function href(next: { jarjesta?: FileSort; kansiot?: FolderSort }): string {
-    const params = new URLSearchParams();
-    if (folderId) params.set("kansio", folderId);
-    params.set("jarjesta", next.jarjesta ?? fileSort);
-    params.set("kansiot", next.kansiot ?? folderSort);
-    return `/admin/tiedostot?${params.toString()}`;
+    return filesHref({
+      folderId,
+      fileSort: next.jarjesta ?? fileSort,
+      folderSort: next.kansiot ?? folderSort,
+    });
   }
 
   const files: [FileSort, string][] = [
@@ -943,16 +961,26 @@ function SortMenu({
             boxShadow: "var(--rf-shadow-lg)",
           }}
         >
-          <MenuLabel>{t.tiedosto.title}</MenuLabel>
+          <MenuLabel>{t.tiedosto.filesWord}</MenuLabel>
           {files.map(([key, label]) => (
-            <MenuLink key={key} href={href({ jarjesta: key })} on={key === fileSort}>
+            <MenuLink
+              key={key}
+              href={href({ jarjesta: key })}
+              on={key === fileSort}
+              onPick={() => setOpen(false)}
+            >
               {label}
             </MenuLink>
           ))}
 
-          <MenuLabel>{t.tiedosto.newFolder}</MenuLabel>
+          <MenuLabel>{t.tiedosto.foldersWord}</MenuLabel>
           {folders.map(([key, label]) => (
-            <MenuLink key={key} href={href({ kansiot: key })} on={key === folderSort}>
+            <MenuLink
+              key={key}
+              href={href({ kansiot: key })}
+              on={key === folderSort}
+              onPick={() => setOpen(false)}
+            >
               {label}
             </MenuLink>
           ))}
@@ -973,18 +1001,29 @@ function MenuLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Valikkorivi joka sulkee valikon.
+ *
+ * useDismiss reagoi vain valikon ulkopuoliseen painallukseen, ja
+ * pehmeä siirtymä ei irrota komponenttia. Ilman tätä valikko jäi auki
+ * valinnan jälkeen ja peitti juuri sen listan jonka järjestystä
+ * käyttäjä oli muuttamassa.
+ */
 function MenuLink({
   href,
   on,
+  onPick,
   children,
 }: {
   href: string;
   on: boolean;
+  onPick: () => void;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
+      onClick={onPick}
       role="menuitem"
       className="flex items-center justify-between px-3 py-2 text-[13.5px]"
       style={{ color: on ? "var(--rf-accent)" : "var(--rf-text)" }}
@@ -1060,6 +1099,7 @@ function RowMenu({
 function FolderRowItem({
   t,
   folder,
+  href,
   canManage,
   sortable,
   dragging,
@@ -1077,6 +1117,8 @@ function FolderRowItem({
 }: {
   t: AdminText;
   folder: FolderRow;
+  /** Valmis osoite: kantaa mukanaan valitun lajittelun. */
+  href: string;
   canManage: boolean;
   sortable: boolean;
   dragging: boolean;
@@ -1148,7 +1190,7 @@ function FolderRowItem({
       ) : null}
 
       <Link
-        href={`/admin/tiedostot?kansio=${folder.id}`}
+        href={href}
         className="flex min-w-0 flex-1 items-center gap-3 py-3"
       >
         <span style={{ color: "var(--rf-accent)" }}>

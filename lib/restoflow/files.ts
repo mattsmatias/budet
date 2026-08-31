@@ -436,3 +436,42 @@ export function expirySummary(
 
   return { expired, soon };
 }
+
+// ---------------------------------------------------------------------------
+// Osoitteet
+// ---------------------------------------------------------------------------
+
+/**
+ * Tiedostosivun osoite yhdestä paikasta.
+ *
+ * Osoitetta rakennettiin kolmessa paikassa eri säännöillä: välilehdet,
+ * murupolku ja lajitteluvalikko. Seuraus oli että lajittelu katosi
+ * kansioon siirryttäessä — valittu järjestys näytti siltä ettei se
+ * tehnyt mitään, vaikka se teki, kunnes seuraava klikkaus pyyhki sen.
+ *
+ * Oletusarvoja ei kirjoiteta osoitteeseen. Lyhyt osoite on jaettava ja
+ * luettava, ja "?jarjesta=added&kansiot=custom" on molemmat vain
+ * huonommin.
+ */
+export function filesHref(options: {
+  folderId?: string | null;
+  view?: string;
+  term?: string;
+  fileSort?: FileSort;
+  folderSort?: FolderSort;
+}): string {
+  const params = new URLSearchParams();
+
+  if (options.folderId) params.set("kansio", options.folderId);
+  if (options.view && options.view !== "all") params.set("nakyma", options.view);
+  if (options.term) params.set("haku", options.term);
+  if (options.fileSort && options.fileSort !== "added") {
+    params.set("jarjesta", options.fileSort);
+  }
+  if (options.folderSort && options.folderSort !== "custom") {
+    params.set("kansiot", options.folderSort);
+  }
+
+  const query = params.toString();
+  return query === "" ? "/admin/tiedostot" : `/admin/tiedostot?${query}`;
+}
