@@ -1199,11 +1199,43 @@ function RowMenu({
   const [open, setOpen] = useState(false);
   const box = useDismiss<HTMLDivElement>(open, () => setOpen(false));
 
+  /*
+   * Valikko aukeaa siihen suuntaan johon se mahtuu.
+   *
+   * Alaspäin aukeava valikko jäi listan viimeisillä riveillä ruudun
+   * alareunan alle, eikä sivulla ollut enää mitään mihin vierittää:
+   * puolet kohdista oli näkymättömissä eikä niihin päässyt käsiksi
+   * mitenkään. Juuri viimeinen rivi on se jolla valikkoa tarvitaan
+   * yhtä usein kuin ensimmäisellä.
+   *
+   * Suunta päätetään avaushetkellä mittaamalla, ei arvaamalla rivin
+   * järjestysnumerosta: sivu on eri korkuinen jokaisella koneella.
+   */
+  const [upward, setUpward] = useState(false);
+
+  /* Karkea korkeus: rivi ~34 px, reunukset ~10 px. */
+  const menuHeight = items.length * 34 + 10;
+
   return (
     <div ref={box} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={(event) => {
+          if (!open) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const alla = window.innerHeight - rect.bottom;
+            const ylla = rect.top;
+
+            /*
+             * Ylös vain jos sinne oikeasti mahtuu paremmin. Muuten
+             * lyhyt valikko kääntyisi ylös turhaan aivan sivun
+             * yläreunassa.
+             */
+            setUpward(alla < menuHeight && ylla > alla);
+          }
+
+          setOpen((value) => !value);
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
@@ -1216,7 +1248,9 @@ function RowMenu({
       {open ? (
         <div
           role="menu"
-          className="rf-enter absolute right-0 z-40 mt-1 w-52 overflow-hidden py-1"
+          className={`rf-enter absolute right-0 z-40 w-52 overflow-hidden py-1 ${
+            upward ? "bottom-full mb-1" : "mt-1"
+          }`}
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
