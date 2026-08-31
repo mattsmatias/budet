@@ -370,37 +370,28 @@ export function FileBrowser(props: Props) {
   return (
     <div className="space-y-3">
       {/*
-        Painike nakyy siella missa sen tulos nakyy.
+        Työkalurivi vain Kaikki-näkymässä.
         ------------------------------------------------------------------
 
-        Kaikki       — tiedosto ilmestyy avoinna olevaan kansioon.
-        Viimeksi     — ladattu tiedosto ON uusin, joten se ilmestyy heti.
-        Tarkeat      — lataus ei merkitse tahtea; tiedosto ei nay.
-        Voimassaolo  — ilman voimassaolopaivaa tiedosto ei nay.
-        Roskakori    — ei paikkaa johon mitaan menisi.
-        Haku         — ladattu tiedosto ei valttamatta osu hakuun.
+        Kaikki on ainoa näkymä jossa ollaan jossakin: siinä on avoinna
+        oleva kansio, ja uusi kansio tai ladattu tiedosto ilmestyy
+        siihen näkyviin.
 
-        Painike joka tekee jotain nakymatonta opettaa etta se on
-        rikki. Kolmessa viimeisessa se on siis piilossa kokonaan.
+        Muut neljä ovat koontinäkymiä. Tärkeät, Voimassaolo, Roskakori
+        ja haku kertovat tiedostoista eri puolilta puuta, eikä
+        yhdessäkään ole paikkaa johon uusi tiedosto kuuluisi.
+        Viimeksi lisätyt näyttäisi ladatun tiedoston, mutta se on
+        katsausnäkymä eikä työtila — lataaminen kuuluu sinne minne
+        tiedosto menee, ei sinne mistä sen näkee menneen.
       */}
-      {canManage && (view === "all" || view === "recent") ? (
+      {canManage && view === "all" ? (
         <Toolbar
           t={t}
           busy={busy}
           fileSort={props.fileSort}
           folderSort={props.folderSort}
           folderId={props.folderId}
-          showSort={view === "all"}
-          /*
-           * Uusi kansio vain siellä missä sen näkee syntyvän.
-           *
-           * Tähdissä ja viimeksi lisätyissä ei ole nykyistä kansiota,
-           * joten kansio ilmestyisi juureen näkymättömiin. Lataus käy
-           * silti: sen dialogi kysyy kohdekansion erikseen.
-           */
-          onNewFolder={
-            view === "all" ? () => setDialog({ type: "newFolder" }) : null
-          }
+          onNewFolder={() => setDialog({ type: "newFolder" })}
           onUpload={() =>
             setDialog({ type: "upload", folderId: props.folderId, initial: [] })
           }
@@ -859,7 +850,6 @@ function Toolbar({
   fileSort,
   folderSort,
   folderId,
-  showSort,
   onNewFolder,
   onUpload,
 }: {
@@ -868,24 +858,20 @@ function Toolbar({
   fileSort: FileSort;
   folderSort: FolderSort;
   folderId: string | null;
-  showSort: boolean;
-  /** null piilottaa painikkeen kokonaan. */
-  onNewFolder: (() => void) | null;
+  onNewFolder: () => void;
   onUpload: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {onNewFolder ? (
-        <Button
-          tone="secondary"
-          size="sm"
-          onClick={onNewFolder}
-          disabled={busy}
-          icon={<RfIcon name="plus" size={15} />}
-        >
-          {t.tiedosto.newFolder}
-        </Button>
-      ) : null}
+      <Button
+        tone="secondary"
+        size="sm"
+        onClick={onNewFolder}
+        disabled={busy}
+        icon={<RfIcon name="plus" size={15} />}
+      >
+        {t.tiedosto.newFolder}
+      </Button>
 
       <Button
         tone="primary"
@@ -897,14 +883,12 @@ function Toolbar({
         {t.tiedosto.upload}
       </Button>
 
-      {showSort ? (
-        <SortMenu
-          t={t}
-          fileSort={fileSort}
-          folderSort={folderSort}
-          folderId={folderId}
-        />
-      ) : null}
+      <SortMenu
+        t={t}
+        fileSort={fileSort}
+        folderSort={folderSort}
+        folderId={folderId}
+      />
     </div>
   );
 }
