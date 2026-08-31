@@ -2119,8 +2119,21 @@ function UploadDialog({
 
   const [name, setName] = useState("");
   const [expires, setExpires] = useState("");
-  const [suggesting, setSuggesting] = useState(false);
-  const [suggestFailed, setSuggestFailed] = useState(false);
+
+  /*
+   * Lukeminen alkaa itsestään, ei painikkeesta.
+   *
+   * Lasku on kädessä ja se halutaan talteen. Ylimääräinen painallus
+   * ennen sitä on este asialle jonka kone osaa tehdä ilman pyytämistä
+   * — ja painike jota ei paineta tarkoittaa ettei tunnistusta ole.
+   *
+   * Kaksi avainta eikä yhtä lippua: valmis ja epäonnistunut kertovat
+   * kumpikin oman tiedostonsa, ja "lukee" on se väli jossa kumpaakaan
+   * ei vielä ole. Tila siis johdetaan — setState efektin alussa on
+   * kuvio jonka React-lint kieltää, ja syystä.
+   */
+  const [readFor, setReadFor] = useState<string | null>(null);
+  const [failedFor, setFailedFor] = useState<string | null>(null);
 
   /*
    * Katen ehdotus kokonaisuutena.
@@ -2146,8 +2159,21 @@ function UploadDialog({
     setName(chosen.length === 1 ? chosen[0].name : "");
     setExpires("");
     setProposal(null);
-    setSuggestFailed(false);
+    setReadFor(null);
+    setFailedFor(null);
   }
+
+  /*
+   * Luku on kesken kun kumpikaan avain ei vastaa valittua tiedostoa.
+   *
+   * Vain yhdelle kerrallaan: monta tiedostoa on joukkolataus, jossa
+   * jokainen luku olisi oma hintansa eikä yhteistä nimeä tai
+   * voimassaoloa ole.
+   */
+  const reading =
+    single !== null && readFor !== chosenKey && failedFor !== chosenKey;
+
+  const suggestFailed = failedFor === chosenKey;
 
   /**
    * Arkistointiehdotus mallilta.
@@ -2156,68 +2182,92 @@ function UploadDialog({
    * toimittajan. Kentät ovat näkyvissä ja muutettavissa: Kate ehdottaa,
    * käyttäjä päättää.
    *
-   * Epäonnistuminen on hiljainen. Ehdotus on mukavuus, ja
-   * virheilmoitus olisi este asialle joka onnistuu ilman sitä.
+   * Käynnistyy heti kun tiedosto on valittu. Jos tunnistus ei onnistu,
+   * kentät jäävät käyttäjän täytettäviksi ja hän saa siitä tiedon —
+   * hiljainen epäonnistuminen näyttäisi siltä ettei Kate edes
+   * yrittänyt.
    */
-  async function suggest(): Promise<void> {
-    if (!single) return;
+  useEffect(() => {
+    if (!reading || !single) return;
 
-    setSuggesting(true);
-    setSuggestFailed(false);
+    let voimassa = true;
 
-    try {
-      const body = new FormData();
-      body.set("file", single);
-      body.set("nimi", single.name);
+    void (async () => {
+      try {
+        const body = new FormData();
+        body.set("file", single);
+        body.set("nimi", single.name);
 
-      const response = await fetch("/api/tiedostot/ehdotus", {
-        method: "POST",
-        body,
-      });
+        const response = await fetch("/api/tiedostot/ehdotus", {
+          method: "POST",
+          body,
+        });
 
-      const data = (await response.json()) as {
-        proposal?: {
-          title: string | null;
-          name: string | null;
-          folderId: string | null;
-          expiresOn: string | null;
-          supplierId: string | null;
-          supplierName: string | null;
-          sure: boolean;
-        } | null;
-      };
+        const data = (await response.json()) as {
+          proposal?: {
+            title: string | null;
+            name: string | null;
+            folderId: string | null;
+            expiresOn: string | null;
+            supplierId: string | null;
+            supplierName: string | null;
+            sure: boolean;
+          } | null;
+        };
 
-      const ehdotus = data.proposal;
+        if (!voimassa) return;
 
-      if (!ehdotus) {
-        setSuggestFailed(true);
-        return;
+        const ehdotus = data.proposal;
+
+        if (!ehdotus) {
+          setFailedFor(chosenKey);
+          return;
+        }
+
+        /*
+         * Käyttäjän oma kirjoitus voittaa.
+         *
+         * Luku kestää sekunteja, ja sinä aikana ehtii kirjoittaa nimen
+         * itse. Vastauksen ei pidä pyyhkiä sitä yli.
+         */
+        const ehdotettuNimi = ehdotus.name;
+        if (ehdotettuNimi) {
+          setName((edellinen) =>
+            edellinen === single.name ? ehdotettuNimi : edellinen,
+          );
+        }
+
+        const ehdotettuPaiva = ehdotus.expiresOn;
+        if (ehdotettuPaiva) {
+          setExpires((edellinen) => edellinen || ehdotettuPaiva);
+        }
+
+        /*
+         * Kansio vain jos Kate osasi ehdottaa sellaista.
+         *
+         * Tyhjä ehdotus ei saa siirtää käyttäjää juureen: hän avasi
+         * latauksen jostakin kansiosta, ja se valinta on parempi kuin
+         * ei mitään.
+         */
+        if (ehdotus.folderId) setTarget(ehdotus.folderId);
+
+        setProposal({
+          title: ehdotus.title,
+          supplierId: ehdotus.supplierId,
+          supplierName: ehdotus.supplierName,
+          sure: ehdotus.sure,
+        });
+
+        setReadFor(chosenKey);
+      } catch {
+        if (voimassa) setFailedFor(chosenKey);
       }
+    })();
 
-      if (ehdotus.name) setName(ehdotus.name);
-      if (ehdotus.expiresOn) setExpires(ehdotus.expiresOn);
-
-      /*
-       * Kansio vain jos Kate osasi ehdottaa sellaista.
-       *
-       * Tyhjä ehdotus ei saa siirtää käyttäjää juureen: hän avasi
-       * latauksen jostakin kansiosta, ja se valinta on parempi kuin
-       * ei mitään.
-       */
-      if (ehdotus.folderId) setTarget(ehdotus.folderId);
-
-      setProposal({
-        title: ehdotus.title,
-        supplierId: ehdotus.supplierId,
-        supplierName: ehdotus.supplierName,
-        sure: ehdotus.sure,
-      });
-    } catch {
-      setSuggestFailed(true);
-    } finally {
-      setSuggesting(false);
-    }
-  }
+    return () => {
+      voimassa = false;
+    };
+  }, [reading, single, chosenKey]);
 
   async function send(): Promise<void> {
     if (chosen.length === 0) return;
@@ -2388,16 +2438,27 @@ function UploadDialog({
                     color: "var(--rf-text)",
                   }}
                 />
-                <Button
-                  tone="ghost"
-                  size="sm"
-                  type="button"
-                  disabled={suggesting || busy}
-                  onClick={() => void suggest()}
-                  icon={<RfIcon name="sparkle" size={15} />}
-                >
-                  {suggesting ? t.tiedosto.proposing : t.tiedosto.proposeFiling}
-                </Button>
+
+                {/*
+                  Uusi yritys vain epäonnistumisen jälkeen.
+
+                  Onnistuneen luvun jälkeen painike olisi tarjous tehdä
+                  uudelleen se mikä on jo tehty. Verkko voi kuitenkin
+                  katketa, eikä ainoa keino saa olla tiedoston
+                  valitseminen uudestaan.
+                */}
+                {suggestFailed ? (
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setFailedFor(null)}
+                    icon={<RfIcon name="sparkle" size={15} />}
+                  >
+                    {t.tiedosto.proposeFiling}
+                  </Button>
+                ) : null}
               </div>
 
               <span
@@ -2407,6 +2468,26 @@ function UploadDialog({
                 {`${formatFileSize(single.size, tag)}`}
               </span>
             </label>
+
+            {/*
+              Lukeminen näkyy siinä missä tuloskin.
+
+              Sekunnin tai kahden hiljaisuus näyttäisi siltä ettei
+              mitään tapahdu, ja käyttäjä alkaisi täyttää kenttiä
+              käsin juuri ennen kuin ne täyttyvät itsestään.
+            */}
+            {reading ? (
+              <p
+                className="px-3 py-2 text-[12.5px]"
+                style={{
+                  background: "var(--rf-inset)",
+                  color: "var(--rf-text-2)",
+                  borderRadius: "var(--rf-r-card)",
+                }}
+              >
+                {t.tiedosto.proposing}
+              </p>
+            ) : null}
 
             {suggestFailed ? (
               <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
@@ -2490,11 +2571,18 @@ function UploadDialog({
           <Button tone="ghost" type="button" onClick={onClose} disabled={busy}>
             {t.tiedosto.cancel}
           </Button>
+          {/*
+            Lataus odottaa lukemisen loppuun.
+
+            Muuten tiedosto tallentuisi alkuperäisellä nimellään juuri
+            ennen kuin ehdotus ehtii kenttään, ja käyttäjä näkisi
+            "scan_0042.pdf" listassa ihmetellen mihin tunnistus katosi.
+          */}
           <Button
             tone="primary"
             type="button"
             onClick={() => void send()}
-            disabled={busy || chosen.length === 0}
+            disabled={busy || reading || chosen.length === 0}
           >
             {busy ? t.tiedosto.uploading : t.tiedosto.upload}
           </Button>
