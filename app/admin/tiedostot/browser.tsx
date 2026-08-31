@@ -60,7 +60,6 @@ import {
   deleteFiles,
   deleteFolder,
   favoriteFiles,
-  fileUrl,
   moveFile,
   moveFiles,
   moveFolder,
@@ -1280,25 +1279,25 @@ function FileRowItem({
   onFavorite: () => void;
   onDelete: () => void;
 }) {
-  const [opening, setOpening] = useState(false);
-
   /**
-   * Avaus hakee osoitteen vasta klikattaessa.
+   * Avaus Katen omasta osoitteesta.
    *
-   * Bucket on yksityinen, joten jokainen avaus tarvitsee oman
-   * allekirjoitetun osoitteen. Sadan rivin listalle niitä ei luoda
-   * valmiiksi — käyttäjä avaa yhden.
+   * Ei allekirjoitettua storage-osoitetta: se paljastaisi
+   * osoiterivillä Supabase-projektin, bucketin ja ravintolan
+   * tunnisteen, ja olisi tunnin ajan toimiva linkki yksityiseen
+   * asiakirjaan kenelle tahansa jolle osoite päätyy.
+   *
+   * /api/tiedostot/<tunnus> tarkistaa kirjautumisen ja jäsenyyden joka
+   * kerta, joten sen jakaminen ei anna kenellekään mitään.
    */
-  async function open(download: boolean): Promise<void> {
-    setOpening(true);
-    const url = await fileUrl(file.id);
-    setOpening(false);
-    if (!url) return;
+  function open(download: boolean): void {
+    const url = `/api/tiedostot/${file.id}${download ? "?lataa=1" : ""}`;
 
     if (download) {
+      /* Lataus ei avaa välilehteä: otsake kertoo selaimelle mitä tehdä. */
       const link = document.createElement("a");
       link.href = url;
-      link.download = file.name;
+      link.rel = "noopener";
       link.click();
       return;
     }
@@ -1341,8 +1340,7 @@ function FileRowItem({
 
       <button
         type="button"
-        onClick={() => void open(false)}
-        disabled={opening}
+        onClick={() => open(false)}
         className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left"
       >
         <span style={{ color: "var(--rf-text-3)" }}>
@@ -1404,8 +1402,8 @@ function FileRowItem({
              * se näyttäisi tiedoston sivulla poistumatta listasta —
              * kaksi nimeä samalle asialle ei ole esikatselu.
              */
-            { label: t.tiedosto.open, onClick: () => void open(false) },
-            { label: t.tiedosto.download, onClick: () => void open(true) },
+            { label: t.tiedosto.open, onClick: () => open(false) },
+            { label: t.tiedosto.download, onClick: () => open(true) },
 
             /*
              * Sijainti vain silloin kun tiedosto näkyy kansionsa

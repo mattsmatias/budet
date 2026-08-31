@@ -47,7 +47,6 @@ export interface FileRow {
   id: string;
   folderId: string | null;
   name: string;
-  storagePath: string;
   type: string;
   size: number;
   isFavorite: boolean;

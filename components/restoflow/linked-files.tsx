@@ -6,18 +6,22 @@
  * — juuri sitä mitä kaapin oli tarkoitus poistaa.
  *
  * ---------------------------------------------------------------------
- * OSOITTEET LUODAAN TÄSSÄ
+ * OSOITE ON KATEN OMA
  * ---------------------------------------------------------------------
  *
- * Palvelinkomponentti, joten allekirjoitetut osoitteet syntyvät
- * piirron yhteydessä. Se on kannattavaa vain koska liitettyjä
- * tiedostoja on muutama: kaapin oma lista tekee saman vasta
- * klikattaessa, koska siellä niitä on satoja.
+ * Linkki osoittaa /api/tiedostot/<tunnus>-reittiin, joka tarkistaa
+ * kirjautumisen ja jäsenyyden ja välittää tavut. Allekirjoitettu
+ * storage-osoite ei päädy selaimeen missään vaiheessa: se paljastaisi
+ * projektin ja bucketin, ja olisi tunnin ajan toimiva linkki
+ * yksityiseen asiakirjaan.
+ *
+ * Sivutuotteena tämä ei enää luo allekirjoituksia piirron aikana —
+ * linkit ovat pelkkiä osoitteita, ja ne maksavat vasta kun niitä
+ * painetaan.
  */
 
 import Link from "next/link";
 import type { AdminText } from "@/lib/i18n/admin-text";
-import { signedUrl } from "@/lib/restoflow/file-queries";
 import { fileKind, formatFileSize, type FileRow } from "@/lib/restoflow/files";
 import { RfIcon, type IconName } from "./icons";
 
@@ -30,7 +34,7 @@ const KIND_ICONS: Record<string, IconName> = {
   other: "file",
 };
 
-export async function LinkedFiles({
+export function LinkedFiles({
   t,
   tag,
   files,
@@ -49,8 +53,6 @@ export async function LinkedFiles({
    */
   if (files.length === 0) return null;
 
-  const urls = await Promise.all(files.map((file) => signedUrl(file.storagePath)));
-
   return (
     <section>
       <h3 className="mb-2 text-[13px] font-bold uppercase tracking-wide"
@@ -66,8 +68,6 @@ export async function LinkedFiles({
         }}
       >
         {files.map((file, index) => {
-          const url = urls[index];
-
           return (
             <li
               key={file.id}
@@ -87,20 +87,14 @@ export async function LinkedFiles({
               </span>
 
               <span className="min-w-0 flex-1">
-                {url ? (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block truncate text-[14px] font-medium"
-                  >
-                    {file.name}
-                  </a>
-                ) : (
-                  <span className="block truncate text-[14px] font-medium">
-                    {file.name}
-                  </span>
-                )}
+                <a
+                  href={`/api/tiedostot/${file.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block truncate text-[14px] font-medium"
+                >
+                  {file.name}
+                </a>
 
                 <span
                   className="text-[12px]"

@@ -398,41 +398,12 @@ export async function deleteFile(fileId: string): Promise<FileState> {
 // ---------------------------------------------------------------------------
 // Avaaminen
 // ---------------------------------------------------------------------------
-
-/**
- * Allekirjoitettu osoite yhteen tiedostoon.
- *
- * Osoite luodaan vasta kun käyttäjä pyytää tiedostoa. Sadan osoitteen
- * luonti listan piirtoa varten olisi sata pyyntöä joista käyttäjä avaa
- * yhden.
- *
- * Lukuoikeus riittää: kirjanpitäjä saa avata tiedoston vaikkei saa
- * järjestää kaappia. Polku haetaan kannasta tunnisteella eikä oteta
- * vastaan selaimelta — muuten tämä olisi tapa allekirjoittaa mikä
- * tahansa polku.
- */
-export async function fileUrl(fileId: string): Promise<string | null> {
-  const { role } = await requireContext("/admin/tiedostot");
-  if (!can(role, "files.view")) return null;
-  if (!UUID.safeParse(fileId).success) return null;
-
-  const supabase = await createClient();
-
-  const { data: row } = await supabase
-    .from("files")
-    .select("storage_path")
-    .eq("id", fileId)
-    .maybeSingle();
-
-  const path = (row as { storage_path: string } | null)?.storage_path;
-  if (!path) return null;
-
-  const { data, error } = await supabase.storage
-    .from("files")
-    .createSignedUrl(path, 3600);
-
-  return error || !data ? null : data.signedUrl;
-}
+//
+// Tiedosto avataan reitistä /api/tiedostot/<tunnus>, joka tarkistaa
+// oikeuden ja välittää tavut. Aiemmin tässä oli toiminto joka palautti
+// allekirjoitetun storage-osoitteen selaimelle — se päätyi
+// osoiteriville ja paljasti projektin, bucketin ja ravintolan
+// tunnisteen.
 
 // ---------------------------------------------------------------------------
 // Voimassaolo

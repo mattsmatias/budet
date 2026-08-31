@@ -19,14 +19,6 @@
 import { createClient } from "@/utils/supabase/server";
 import type { FileRow, FolderRow } from "./files";
 
-/*
- * Allekirjoitetun osoitteen voimassaolo.
- *
- * Tunti, kuten kuiteilla. Osoite riittää yhden istunnon ajaksi eikä jää
- * elämään sähköpostiin liitettynä.
- */
-const URL_SECONDS = 3600;
-
 interface FolderRecord {
   id: string;
   parent_folder_id: string | null;
@@ -40,7 +32,6 @@ interface FileRecord {
   id: string;
   folder_id: string | null;
   file_name: string;
-  storage_path: string;
   file_type: string;
   file_size: number;
   is_favorite: boolean;
@@ -53,7 +44,7 @@ interface FileRecord {
 }
 
 const FILE_COLUMNS =
-  "id, folder_id, file_name, storage_path, file_type, file_size, is_favorite, " +
+  "id, folder_id, file_name, file_type, file_size, is_favorite, " +
   "created_at, updated_at, expires_on, supplier_id, receipt_id, deleted_at";
 
 function toFile(row: FileRecord): FileRow {
@@ -61,7 +52,6 @@ function toFile(row: FileRecord): FileRow {
     id: row.id,
     folderId: row.folder_id,
     name: row.file_name,
-    storagePath: row.storage_path,
     type: row.file_type,
     size: Number(row.file_size),
     isFavorite: row.is_favorite,
@@ -243,7 +233,6 @@ export async function searchFiles(
     id: row.id,
     folderId: row.folder_id,
     name: row.file_name,
-    storagePath: "",
     type: row.file_type,
     size: Number(row.file_size),
     isFavorite: row.is_favorite,
@@ -256,23 +245,6 @@ export async function searchFiles(
   }));
 }
 
-/**
- * Allekirjoitettu osoite tiedostoon.
- *
- * Bucket on yksityinen. Osoite luodaan vasta kun käyttäjä pyytää
- * tiedostoa, eikä sitä kirjoiteta listaan valmiiksi: sata osoitetta
- * listan piirtoa varten olisi sata pyyntöä joista käyttäjä avaa yhden.
- */
-export async function signedUrl(path: string): Promise<string | null> {
-  if (!path) return null;
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from("files")
-    .createSignedUrl(path, URL_SECONDS);
-
-  return error || !data ? null : data.signedUrl;
-}
 
 // ---------------------------------------------------------------------------
 // Vanhenevat

@@ -55,7 +55,6 @@ function tiedosto(muutos: Partial<FileRow> & { id: string }): FileRow {
   return {
     folderId: null,
     name: muutos.id,
-    storagePath: "r/1",
     type: "application/pdf",
     size: 1000,
     isFavorite: false,
