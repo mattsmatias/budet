@@ -41,6 +41,14 @@ export interface FolderRow {
   fileCount: number;
   /** Onko alikansioita. Kertoo tarvitseeko kansio avata. */
   hasChildren: boolean;
+
+  /**
+   * Kansion tuorein tapahtuma.
+   *
+   * "86 tiedostoa · päivitetty tänään" kertoo yhdellä silmäyksellä
+   * missä eletään ja mikä on hiljaista.
+   */
+  lastActivity: string | null;
 }
 
 export interface FileRow {
@@ -67,6 +75,18 @@ export interface FileRow {
 
   /** Roskakorissa olevalla on aika, muilla null. */
   deletedAt: string | null;
+
+  /**
+   * Milloin tiedosto viimeksi avattiin.
+   *
+   * Eri asia kuin createdAt: sopimus on voitu tallentaa vuosi sitten ja
+   * avata eilen, ja juuri se eilinen avaus on se mistä se löytyy
+   * uudelleen.
+   */
+  lastOpenedAt: string | null;
+
+  /** Kuka toi tiedoston kaappiin. Näkyy tietopaneelissa. */
+  uploadedBy: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,8 +173,13 @@ export function fileKind(type: string, name = ""): FileKind {
   const extension = extensionOf(name);
 
   if (extension === "pdf" || type === "application/pdf") return "pdf";
-  if (["doc", "docx"].includes(extension) || type.includes("word")) return "doc";
-  if (["xls", "xlsx", "csv"].includes(extension) || type.includes("sheet") || type.includes("excel")) {
+  if (["doc", "docx"].includes(extension) || type.includes("word"))
+    return "doc";
+  if (
+    ["xls", "xlsx", "csv"].includes(extension) ||
+    type.includes("sheet") ||
+    type.includes("excel")
+  ) {
     return "sheet";
   }
   if (extension === "txt" || type === "text/plain") return "text";
@@ -200,7 +225,10 @@ export type FolderSort = "name" | "newest" | "oldest" | "custom";
  * kun sille kerrotaan kieli.
  */
 function byName(locale: string): (a: string, b: string) => number {
-  const collator = new Intl.Collator(locale, { numeric: true, sensitivity: "base" });
+  const collator = new Intl.Collator(locale, {
+    numeric: true,
+    sensitivity: "base",
+  });
   return (a, b) => collator.compare(a, b);
 }
 
@@ -230,7 +258,9 @@ export function sortFiles(
        * joka latauksella.
        */
       return copy.sort((a, b) => {
-        const kinds = fileKind(a.type, a.name).localeCompare(fileKind(b.type, b.name));
+        const kinds = fileKind(a.type, a.name).localeCompare(
+          fileKind(b.type, b.name),
+        );
         return kinds !== 0 ? kinds : compare(a.name, b.name);
       });
   }
@@ -347,7 +377,11 @@ export function movableTargets(
   while (grew) {
     grew = false;
     for (const folder of all) {
-      if (folder.parentId && forbidden.has(folder.parentId) && !forbidden.has(folder.id)) {
+      if (
+        folder.parentId &&
+        forbidden.has(folder.parentId) &&
+        !forbidden.has(folder.id)
+      ) {
         forbidden.add(folder.id);
         grew = true;
       }
@@ -551,7 +585,8 @@ export function filesHref(options: {
   const params = new URLSearchParams();
 
   if (options.folderId) params.set("kansio", options.folderId);
-  if (options.view && options.view !== "all") params.set("nakyma", options.view);
+  if (options.view && options.view !== "all")
+    params.set("nakyma", options.view);
   if (options.term) params.set("haku", options.term);
   if (options.fileSort && options.fileSort !== "added") {
     params.set("jarjesta", options.fileSort);
@@ -597,4 +632,71 @@ export function reminderDay(expires: string, today: string): string {
   const wanted = date.toISOString().slice(0, 10);
 
   return wanted < today ? today : wanted;
+}
+
+/**
+ * Tapahtuman ikä sanoina, ei päivämääränä.
+ *
+ * "Päivitetty tänään" kertoo enemmän kuin "12.1.2026", koska kysymys
+ * on eläkö kansio vai onko se kuollut. Kolmenkymmenen päivän jälkeen
+ * tarkka päivä on taas parempi: "47 pv sitten" vaatii laskutoimituksen
+ * jonka lukija joutuu tekemään päässään.
+ *
+ * Vertailu tehdään päivinä eikä tunteina. Eilen klo 23 ja tänään klo 1
+ * ovat kahden tunnin päässä toisistaan mutta eri päiviä, ja käyttäjä
+ * ajattelee päivissä.
+ *
+ * Tulevaisuus palautuu tämänpäiväisenä: kellot heittävät, eikä
+ * "-1 pv sitten" ole mitään.
+ */
+export type FileAge =
+  | { kind: "today" }
+  | { kind: "yesterday" }
+  | { kind: "days"; days: number }
+  | { kind: "date"; day: string };
+
+export function fileAge(iso: string | null, today: string): FileAge | null {
+  if (!iso) return null;
+
+  const day = iso.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+
+  const ero =
+    (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${day}T00:00:00Z`)) /
+    86_400_000;
+
+  if (Number.isNaN(ero)) return null;
+
+  const days = Math.round(ero);
+
+  if (days <= 0) return { kind: "today" };
+  if (days === 1) return { kind: "yesterday" };
+  if (days <= 30) return { kind: "days", days };
+
+  return { kind: "date", day };
+}
+
+/**
+ * Ikä valmiina tekstinä.
+ *
+ * Päivämäärän muotoilu tulee kutsujalta funktiona, koska se tarvitsee
+ * käyttäjän kielen — ja tämä tiedosto on tarkoituksella sellainen ettei
+ * se tuo mitään. Puhdas moduuli kääntyy sekä palvelimella että
+ * selaimessa, ja juuri siksi molemmat voivat käyttää samaa sanontaa.
+ */
+export function ageText(
+  iso: string | null,
+  today: string,
+  t: { today: string; yesterday: string; daysAgo: string },
+  formatDay: (day: string) => string,
+): string | null {
+  const age = fileAge(iso, today);
+  if (!age) return null;
+
+  if (age.kind === "today") return t.today;
+  if (age.kind === "yesterday") return t.yesterday;
+  if (age.kind === "days")
+    return t.daysAgo.replace("{maara}", String(age.days));
+
+  return formatDay(age.day);
 }

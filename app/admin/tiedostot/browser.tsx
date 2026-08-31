@@ -30,6 +30,7 @@
  */
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AdminText } from "@/lib/i18n/admin-text";
@@ -43,6 +44,8 @@ import {
   filesHref,
   folderLabel,
   folderPath,
+  ageText,
+  extensionOf,
   formatFileSize,
   mimeFor,
   uniqueName,
@@ -76,19 +79,10 @@ import {
   setExpiry,
   toggleFavorite,
 } from "./actions";
-import {
-  supplierChoices,
-  type SupplierChoice,
-} from "./save-actions";
+import { supplierChoices, type SupplierChoice } from "./save-actions";
 import { linkFile } from "./actions";
 
-type View =
-  | "all"
-  | "favorites"
-  | "recent"
-  | "search"
-  | "expiring"
-  | "trash";
+type View = "all" | "favorites" | "recent" | "search" | "expiring" | "trash";
 
 interface Props {
   t: AdminText;
@@ -113,6 +107,14 @@ interface Props {
 
   /** Roskakorissa olevat kansiot. Tyhjä muissa näkymissä. */
   trashFolders: { id: string; name: string; deletedAt: string }[];
+
+  /**
+   * Viimeksi avatut. Vain kaapin juuressa, muualla tyhjä.
+   *
+   * Eri asia kuin viimeksi lisätyt: ravintoloitsija ei muista missä
+   * kansiossa vuokrasopimus on, mutta muistaa katsoneensa sitä.
+   */
+  recentlyOpened: FileRow[];
 }
 
 /*
@@ -152,13 +154,27 @@ export function FileBrowser(props: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
 
+  /*
+   * Tietopaneeli, sama kuin Matin paneeli.
+   *
+   * Sivun reuna eikä keskellä oleva ikkuna: lista jää näkyviin
+   * taustalle, ja seuraavan tiedoston voi avata heti perään ilman
+   * että näkymä katoaa välillä.
+   */
+  const [details, setDetails] = useState<FileRow | null>(null);
+
   /* Dialogit. Yksi kerrallaan, joten yksi tila riittää. */
   const [dialog, setDialog] = useState<
     | { type: "newFolder" }
     | { type: "upload"; folderId: string | null; initial: File[] }
     | { type: "renameFolder"; folder: FolderRow }
     | { type: "renameFile"; file: FileRow }
-    | { type: "move"; kind: "folder" | "file" | "files"; id: string; name: string }
+    | {
+        type: "move";
+        kind: "folder" | "file" | "files";
+        id: string;
+        name: string;
+      }
     | { type: "expiry"; file: FileRow }
     | { type: "link"; file: FileRow }
     | { type: "deleteFolder"; folder: FolderRow }
@@ -562,6 +578,63 @@ export function FileBrowser(props: Props) {
         </div>
       ) : null}
 
+      {/*
+        Viimeksi käytetyt vain juuressa ja vain jos niitä on.
+
+        Tyhjä osio otsikoineen olisi lupaus jota mikään ei lunasta, ja
+        uudessa kaapissa se olisi ensimmäinen asia jonka käyttäjä
+        näkee.
+      */}
+      {props.recentlyOpened.length > 0 ? (
+        <div className="space-y-1.5">
+          <p
+            className="text-[12px] font-semibold uppercase"
+            style={{ color: "var(--rf-text-3)", letterSpacing: "0.04em" }}
+          >
+            {t.tiedosto.recentlyUsed}
+          </p>
+
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {props.recentlyOpened.map((file) => (
+              <button
+                key={file.id}
+                type="button"
+                onClick={() => setDetails(file)}
+                className="rf-press flex w-44 shrink-0 items-center gap-2 px-3 py-2 text-left"
+                style={{
+                  background: "var(--rf-inset)",
+                  borderRadius: "var(--rf-r-card)",
+                }}
+              >
+                <span style={{ color: "var(--rf-text-3)" }}>
+                  <RfIcon
+                    name={KIND_ICONS[fileKind(file.type, file.name)] ?? "file"}
+                    size={18}
+                  />
+                </span>
+
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-medium">
+                    {file.name}
+                  </span>
+                  <span
+                    className="block truncate text-[11.5px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    {ageText(
+                      file.lastOpenedAt,
+                      props.today,
+                      t.tiedosto,
+                      (day) => formatDayIn(day, props.locale),
+                    ) ?? ""}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {empty ? (
         <EmptyState
           /*
@@ -656,6 +729,12 @@ export function FileBrowser(props: Props) {
               key={folder.id}
               t={t}
               folder={folder}
+              activity={ageText(
+                folder.lastActivity,
+                props.today,
+                t.tiedosto,
+                (day) => formatDayIn(day, props.locale),
+              )}
               href={filesHref({
                 folderId: folder.id,
                 fileSort: props.fileSort,
@@ -690,7 +769,9 @@ export function FileBrowser(props: Props) {
                 event.stopPropagation();
                 setOver(folder.id);
               }}
-              onDragLeave={() => setOver((id) => (id === folder.id ? null : id))}
+              onDragLeave={() =>
+                setOver((id) => (id === folder.id ? null : id))
+              }
               onDrop={(event) => {
                 event.stopPropagation();
                 dropOn(folder.id, event);
@@ -722,6 +803,7 @@ export function FileBrowser(props: Props) {
               inTrash={view === "trash"}
               selected={valitut.includes(file.id)}
               onSelect={() => vaihdaValinta(file.id)}
+              onDetails={() => setDetails(file)}
               onShowLocation={
                 file.folderId
                   ? () =>
@@ -748,7 +830,9 @@ export function FileBrowser(props: Props) {
                   name: file.name,
                 })
               }
-              onFavorite={() => run(() => toggleFavorite(file.id, !file.isFavorite))}
+              onFavorite={() =>
+                run(() => toggleFavorite(file.id, !file.isFavorite))
+              }
               onDelete={() => {
                 if (confirm(t.tiedosto.deleteFileConfirm)) {
                   run(() => deleteFile(file.id));
@@ -758,6 +842,18 @@ export function FileBrowser(props: Props) {
           ))}
         </ul>
       )}
+
+      {details ? (
+        <DetailsPanel
+          t={t}
+          tag={tag}
+          locale={props.locale}
+          today={props.today}
+          file={details}
+          path={folderPath(props.folders, details.folderId, t.tiedosto)}
+          onClose={() => setDetails(null)}
+        />
+      ) : null}
 
       {/* --- Dialogit ------------------------------------------------------ */}
 
@@ -1154,6 +1250,7 @@ function RowMenu({
 function FolderRowItem({
   t,
   folder,
+  activity,
   href,
   canManage,
   sortable,
@@ -1172,6 +1269,8 @@ function FolderRowItem({
 }: {
   t: AdminText;
   folder: FolderRow;
+  /** "tänään", "3 pv sitten" tai null jos kansio on tyhjä. */
+  activity: string | null;
   /** Valmis osoite: kantaa mukanaan valitun lajittelun. */
   href: string;
   canManage: boolean;
@@ -1189,12 +1288,23 @@ function FolderRowItem({
   onMove: () => void;
   onDelete: () => void;
 }) {
-  const count =
+  /*
+   * Määrä ja tuoreus samalla rivillä.
+   *
+   * "86 tiedostoa" kertoo että kansio on käytössä, "päivitetty tänään"
+   * kertoo että se on käytössä nyt. Kumpikaan yksin ei erota elävää
+   * kansiota arkistosta.
+   */
+  const count = [
     folder.fileCount === 0
       ? t.tiedosto.emptyLabel
       : folder.fileCount === 1
         ? t.tiedosto.oneFile
-        : fill(t.tiedosto.fileCount, { maara: String(folder.fileCount) });
+        : fill(t.tiedosto.fileCount, { maara: String(folder.fileCount) }),
+    activity ? fill(t.tiedosto.updatedAgo, { aika: activity }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   /* Katen luoma lähtökansio näytetään käyttäjän kielellä. */
   const nimi = folderLabel(folder, t.tiedosto);
@@ -1216,8 +1326,7 @@ function FolderRowItem({
          * kiinni. Sama korostus molemmille tarkoittaisi kahta eri
          * asiaa samalla merkillä.
          */
-        background:
-          highlighted || dragging ? "var(--rf-inset)" : "transparent",
+        background: highlighted || dragging ? "var(--rf-inset)" : "transparent",
         outline: highlighted ? "2px solid var(--rf-accent)" : "none",
         outlineOffset: "-2px",
       }}
@@ -1247,10 +1356,7 @@ function FolderRowItem({
         </button>
       ) : null}
 
-      <Link
-        href={href}
-        className="flex min-w-0 flex-1 items-center gap-3 py-3"
-      >
+      <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 py-3">
         <span style={{ color: "var(--rf-accent)" }}>
           <RfIcon name="folder" size={20} />
         </span>
@@ -1290,6 +1396,7 @@ function FileRowItem({
   inTrash,
   selected,
   onSelect,
+  onDetails,
   onShowLocation,
   onRestore,
   onExpiry,
@@ -1314,6 +1421,7 @@ function FileRowItem({
   inTrash: boolean;
   selected: boolean;
   onSelect: () => void;
+  onDetails: () => void;
   /** null kun tiedosto on jo juuressa: sinne ei ole mihin siirtyä. */
   onShowLocation: (() => void) | null;
   onRestore: () => void;
@@ -1460,6 +1568,17 @@ function FileRowItem({
              * kaksi nimeä samalle asialle ei ole esikatselu.
              */
             { label: t.tiedosto.open, onClick: () => open(false) },
+
+            /*
+             * Tiedot on nyt oikeasti eri teko kuin Avaa.
+             *
+             * Avaa vie tiedoston omaan välilehteensä ja pois listasta.
+             * Tiedot näyttää sen sivun reunassa: kuka toi, kuinka iso,
+             * milloin viimeksi katsottu, ja itse sisältö niin että
+             * listaan jää sormi väliin.
+             */
+            { label: t.tiedosto.details, onClick: onDetails },
+
             { label: t.tiedosto.download, onClick: () => open(true) },
 
             /*
@@ -1854,7 +1973,12 @@ function DeleteFolderDialog({
 
       <div className="mt-4 space-y-3">
         <div>
-          <Button tone="secondary" full type="button" onClick={() => onConfirm("keep")}>
+          <Button
+            tone="secondary"
+            full
+            type="button"
+            onClick={() => onConfirm("keep")}
+          >
             {t.tiedosto.keepFiles}
           </Button>
           <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
@@ -1864,7 +1988,10 @@ function DeleteFolderDialog({
 
         <div>
           <label className="block">
-            <span className="text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+            <span
+              className="text-[12.5px]"
+              style={{ color: "var(--rf-text-2)" }}
+            >
               {t.tiedosto.deleteAllConfirm}
             </span>
             <input
@@ -2073,7 +2200,6 @@ function LinkDialog({
 // Lataus
 // ---------------------------------------------------------------------------
 
-
 /**
  * Yksi rivi valittua tiedostoa kohden.
  *
@@ -2088,7 +2214,7 @@ interface UploadRow {
   title: string | null;
   supplierId: string | null;
   expiresOn: string | null;
-  tila: "kesken" | "valmis" | "eiTunnistettu";
+  tila: "kesken" | "valmis" | "eiTunnistettu" | "ohitettu";
 }
 /**
  * Tiedoston lataus.
@@ -2111,6 +2237,23 @@ interface UploadRow {
  * laatikollinen ei ole — ja juuri laatikollinen on se syy miksi paperit
  * jäävät laatikkoon.
  */
+/*
+ * Kuinka monta luetaan kerralla.
+ *
+ * Kolmekymmentä on kuukauden kuitit tai kansiollinen sopimuksia -- se
+ * mita ravintoloitsija oikeasti kantaa kerralla koneelle. Rinnakkaisia
+ * lukuja on kolme, joten se on noin minuutti odotusta.
+ *
+ * Sadan lukeminen kestaisi neljä minuuttia. Se ei ole odottamista vaan
+ * poistumista koneelta, ja palatessa puolet olisi ehtinyt epaonnistua
+ * ilman etta kukaan naki miksi.
+ *
+ * Raja ei estä lataamista. Loput menevat kaappiin omilla nimillaan,
+ * kuten ennen tunnistusta kaikki menivat -- ja ne voi nimeta myohemmin
+ * yksi kerrallaan.
+ */
+const READ_LIMIT = 30;
+
 function UploadDialog({
   t,
   tag,
@@ -2155,19 +2298,27 @@ function UploadDialog({
     setChosenBefore(chosenKey);
     setExpires("");
     setRows(
-      chosen.map((file) => ({
+      chosen.map((file, index) => ({
         name: file.name,
         folderId: null,
         title: null,
         supplierId: null,
         expiresOn: null,
-        tila: "kesken" as const,
+        tila: index < READ_LIMIT ? ("kesken" as const) : ("ohitettu" as const),
       })),
     );
   }
 
   const reading = rows.some((rivi) => rivi.tila === "kesken");
-  const readCount = rows.filter((rivi) => rivi.tila !== "kesken").length;
+
+  /*
+   * Edistyminen lasketaan vain luettavista.
+   *
+   * Rajan yli menevät rivit ovat valmiita heti, eikä "30 / 60 luettu"
+   * heti alussa kerro edistymisestä vaan hämmennyksestä.
+   */
+  const luettavat = rows.filter((rivi) => rivi.tila !== "ohitettu");
+  const readCount = luettavat.filter((rivi) => rivi.tila !== "kesken").length;
 
   useEffect(() => {
     if (!reading || chosen.length === 0) return;
@@ -2177,7 +2328,8 @@ function UploadDialog({
     void (async () => {
       /* Jono: vain ne rivit joita ei ole vielä luettu. */
       const jono: number[] = [];
-      for (let i = 0; i < chosen.length; i++) jono.push(i);
+      for (let i = 0; i < Math.min(chosen.length, READ_LIMIT); i++)
+        jono.push(i);
 
       let seuraava = 0;
 
@@ -2376,7 +2528,9 @@ function UploadDialog({
     <Modal title={t.tiedosto.uploadTitle} onClose={onClose}>
       <div className="space-y-3">
         <label className="block">
-          <span className="text-[13px] font-semibold">{t.tiedosto.savedTo}</span>
+          <span className="text-[13px] font-semibold">
+            {t.tiedosto.savedTo}
+          </span>
           <select
             value={target ?? ""}
             onChange={(event) => setTarget(event.target.value || null)}
@@ -2410,7 +2564,9 @@ function UploadDialog({
           <input
             type="file"
             multiple
-            onChange={(event) => setChosen(Array.from(event.target.files ?? []))}
+            onChange={(event) =>
+              setChosen(Array.from(event.target.files ?? []))
+            }
             className="mt-1 block w-full text-[13px]"
           />
           <span
@@ -2436,7 +2592,9 @@ function UploadDialog({
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={(event) => setChosen(Array.from(event.target.files ?? []))}
+            onChange={(event) =>
+              setChosen(Array.from(event.target.files ?? []))
+            }
             className="mt-1 block w-full text-[13px]"
           />
         </label>
@@ -2460,8 +2618,28 @@ function UploadDialog({
               ? t.tiedosto.proposing
               : fill(t.tiedosto.readingCount, {
                   luettu: String(readCount),
-                  kaikki: String(rows.length),
+                  kaikki: String(luettavat.length),
                 })}
+          </p>
+        ) : null}
+
+        {/*
+          Raja sanotaan ääneen ennen kuin siihen törmää.
+
+          Ilman tätä käyttäjä selaisi listaa ja ihmettelisi miksi
+          loppupää on nimetty toisin kuin alkupää. Lause kertoo myös
+          sen mikä ei mene pieleen: kaikki tallentuvat silti.
+        */}
+        {chosen.length > READ_LIMIT ? (
+          <p
+            className="px-3 py-2 text-[12.5px]"
+            style={{
+              background: "var(--rf-inset)",
+              color: "var(--rf-text-2)",
+              borderRadius: "var(--rf-r-card)",
+            }}
+          >
+            {fill(t.tiedosto.readLimit, { maara: String(READ_LIMIT) })}
           </p>
         ) : null}
 
@@ -2537,11 +2715,13 @@ function UploadDialog({
                   formatFileSize(file.size, tag),
                   rivi.tila === "kesken"
                     ? t.tiedosto.proposing
-                    : rivi.tila === "eiTunnistettu"
-                      ? t.tiedosto.noProposal
-                      : rivi.title
-                        ? fill(t.tiedosto.looksLike, { mika: rivi.title })
-                        : null,
+                    : rivi.tila === "ohitettu"
+                      ? t.tiedosto.notRead
+                      : rivi.tila === "eiTunnistettu"
+                        ? t.tiedosto.noProposal
+                        : rivi.title
+                          ? fill(t.tiedosto.looksLike, { mika: rivi.title })
+                          : null,
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -2612,5 +2792,240 @@ function UploadDialog({
         </div>
       </div>
     </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tietopaneeli
+// ---------------------------------------------------------------------------
+
+/**
+ * Tiedosto sivun reunassa.
+ *
+ * Ennen tätä ainoa tapa katsoa tiedostoa oli avata se uuteen
+ * välilehteen. Kymmenen kuitin läpikäynti oli kymmenen välilehteä,
+ * kymmenen paluuta ja kymmenen kertaa saman listan etsimistä
+ * uudelleen. Nyt lista pysyy paikallaan ja sisältö vaihtuu viereen.
+ *
+ * ---------------------------------------------------------------------
+ * ESIKATSELU KULKEE SAMASTA REITISTÄ KUIN AVAUS
+ * ---------------------------------------------------------------------
+ *
+ * /api/tiedostot/<tunnus> tarkistaa kirjautumisen ja jäsenyyden joka
+ * kerta. Erillinen esikatselureitti olisi toinen paikka jossa sama
+ * tarkistus pitäisi muistaa tehdä — ja se on juuri se paikka josta se
+ * jonain päivänä unohtuisi.
+ *
+ * Kuva ja PDF näytetään, muut eivät. Word-tiedostosta selain ei osaa
+ * piirtää mitään, ja tyhjä harmaa laatikko on huonompi kuin rehellinen
+ * lause siitä ettei esikatselua ole.
+ */
+function DetailsPanel({
+  t,
+  tag,
+  locale,
+  today,
+  file,
+  path,
+  onClose,
+}: {
+  t: AdminText;
+  tag: string;
+  locale: AppLocale;
+  today: string;
+  file: FileRow;
+  path: string;
+  onClose: () => void;
+}) {
+  const kind = fileKind(file.type, file.name);
+  const url = `/api/tiedostot/${file.id}`;
+
+  /*
+   * Escape sulkee.
+   *
+   * Paneeli ei ole dialogi, joten selain ei tee tätä puolesta. Ilman
+   * sitä ainoa tapa sulkea olisi osua pieneen ruksiin.
+   */
+  useEffect(() => {
+    function nappain(event: KeyboardEvent): void {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", nappain);
+    return () => window.removeEventListener("keydown", nappain);
+  }, [onClose]);
+
+  const rivit: { label: string; value: string }[] = [
+    { label: t.tiedosto.location, value: path || t.tiedosto.root },
+    { label: t.tiedosto.fileType, value: extensionOf(file.name) || file.type },
+    { label: t.tiedosto.fileSize, value: formatFileSize(file.size, tag) },
+    {
+      label: t.tiedosto.addedOn,
+      value: formatDayIn(file.createdAt.slice(0, 10), locale),
+    },
+    ...(file.uploadedBy
+      ? [{ label: t.tiedosto.addedBy, value: file.uploadedBy }]
+      : []),
+    ...(file.expiresOn
+      ? [
+          {
+            label: t.tiedosto.expiry,
+            value: formatDayIn(file.expiresOn, locale),
+          },
+        ]
+      : []),
+  ];
+
+  const avattu = ageText(file.lastOpenedAt, today, t.tiedosto, (day) =>
+    formatDayIn(day, locale),
+  );
+
+  if (typeof document === "undefined") return null;
+
+  /*
+   * Portaali dokumentin juureen.
+   *
+   * Ilman sitä paneeli jäi sivun sisältölaatikon sisään: fixed
+   * asemoituu lähimpään muunnettuun esivanhempaan, ja sivun
+   * sisääntuloanimaatio on juuri sellainen. Paneeli näkyi keskellä
+   * ruutua puolikkaana laatikkona.
+   */
+  return createPortal(
+    <>
+      <button
+        type="button"
+        aria-label={t.tiedosto.close}
+        onClick={onClose}
+        className="rf-z-panel-backdrop fixed inset-0"
+        style={{ background: "rgba(17, 19, 24, 0.35)" }}
+      />
+
+      <aside
+        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
+        style={{
+          background: "var(--rf-card)",
+          borderColor: "var(--rf-line)",
+          boxShadow: "var(--rf-shadow-lg)",
+        }}
+        aria-label={t.tiedosto.details}
+      >
+        <div
+          className="flex items-start gap-2 px-4 py-3"
+          style={{ borderBottom: "1px solid var(--rf-line)" }}
+        >
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-semibold">{file.name}</p>
+            {avattu ? (
+              <p
+                className="text-[12.5px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {`${t.tiedosto.recentlyUsed}: ${avattu}`}
+              </p>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.tiedosto.close}
+            className="rf-press flex h-9 w-9 shrink-0 items-center justify-center"
+            style={{ borderRadius: "50%", color: "var(--rf-text-2)" }}
+          >
+            <RfIcon name="close" size={18} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {/*
+          Esikatselu ensin.
+
+          Käyttäjä avasi paneelin nähdäkseen tiedoston, ei lukeakseen
+          sen kokoa tavuina.
+        */}
+          <div
+            className="flex items-center justify-center p-4"
+            style={{ background: "var(--rf-inset)", minHeight: "220px" }}
+          >
+            {kind === "image" ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={url}
+                alt={file.name}
+                className="max-h-[52vh] w-auto max-w-full"
+                style={{ borderRadius: "var(--rf-r-card)" }}
+              />
+            ) : kind === "pdf" ? (
+              <iframe
+                src={url}
+                title={file.name}
+                className="h-[52vh] w-full"
+                style={{
+                  border: "1px solid var(--rf-line)",
+                  borderRadius: "var(--rf-r-card)",
+                  background: "var(--rf-card)",
+                }}
+              />
+            ) : (
+              <p
+                className="max-w-xs text-center text-[13px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {t.tiedosto.noPreview}
+              </p>
+            )}
+          </div>
+
+          <dl className="px-4 py-3">
+            {rivit.map((rivi) => (
+              <div
+                key={rivi.label}
+                className="flex gap-3 py-1.5 text-[13.5px]"
+                style={{ borderBottom: "1px solid var(--rf-line)" }}
+              >
+                <dt
+                  className="w-32 shrink-0"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {rivi.label}
+                </dt>
+                <dd className="min-w-0 flex-1 break-words font-medium">
+                  {rivi.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div
+          className="flex gap-2 px-4 py-3"
+          style={{ borderTop: "1px solid var(--rf-line)" }}
+        >
+          <Button
+            tone="ghost"
+            size="sm"
+            type="button"
+            onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+          >
+            {t.tiedosto.openInTab}
+          </Button>
+
+          <Button
+            tone="ghost"
+            size="sm"
+            type="button"
+            onClick={() => {
+              const link = document.createElement("a");
+              link.href = `${url}?lataa=1`;
+              link.rel = "noopener";
+              link.click();
+            }}
+          >
+            {t.tiedosto.download}
+          </Button>
+        </div>
+      </aside>
+    </>,
+    document.body,
   );
 }

@@ -12,11 +12,14 @@ import {
   loadFiles,
   loadFolders,
   loadRecent,
+  loadRecentlyOpened,
+  loadSummary,
   loadTrash,
   purgeExpiredTrash,
   searchFiles,
 } from "@/lib/restoflow/file-queries";
 import {
+  ageText,
   filesHref,
   folderLabel,
   sortFiles,
@@ -26,6 +29,7 @@ import {
   type FolderRow,
   type FolderSort,
 } from "@/lib/restoflow/files";
+import { formatDayIn } from "@/lib/i18n/labels";
 import { RfIcon } from "@/components/restoflow/icons";
 import { EmptyState } from "@/components/restoflow/ui";
 import { FileBrowser } from "./browser";
@@ -103,6 +107,21 @@ export default async function FilesPage({
 
   const trash = view === "trash" ? await loadTrash(restaurant.id) : null;
 
+  /*
+   * Kaapin etusivu.
+   *
+   * Yhteenveto ja viimeksi käytetyt kuuluvat sinne mistä kaappiin
+   * tullaan sisään — juureen. Kansion sisällä ne vastaisivat eri
+   * kysymykseen kuin mitä käyttäjä siinä kohtaa kysyy, ja kahdeksan
+   * kansion syvyydessä ne olisivat pelkkää toistoa.
+   */
+  const atRoot = view === "all" && !searching && folderId === null;
+
+  const [summary, recentlyOpened] = await Promise.all([
+    atRoot ? loadSummary(restaurant.id) : null,
+    atRoot ? loadRecentlyOpened(restaurant.id, 5) : [],
+  ]);
+
   const [folders, files] = await Promise.all([
     loadFolders(restaurant.id),
     searching
@@ -119,7 +138,8 @@ export default async function FilesPage({
   ]);
 
   /* Murupolku puusta: kannan nimi ei tiedä käyttäjän kieltä. */
-  const crumbs = searching || view !== "all" ? [] : crumbsFor(folders, folderId);
+  const crumbs =
+    searching || view !== "all" ? [] : crumbsFor(folders, folderId);
 
   /*
    * Kansiot vain omassa näkymässään.
@@ -155,12 +175,7 @@ export default async function FilesPage({
   if (folderId && !current && !searching && view === "all") {
     return (
       <div className="rf-enter space-y-5">
-        <Header
-          t={t}
-          term={term}
-          canManage={canManage}
-          folderId={folderId}
-        />
+        <Header t={t} term={term} canManage={canManage} folderId={folderId} />
         <EmptyState
           title={t.tiedosto.errorGeneric}
           description={t.tiedosto.emptyFolder}
@@ -185,12 +200,42 @@ export default async function FilesPage({
               })}
         </p>
       ) : view === "all" ? (
-        <Breadcrumb
-          t={t}
-          crumbs={crumbs}
-          fileSort={fileSort}
-          folderSort={folderSort}
-        />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Breadcrumb
+            t={t}
+            crumbs={crumbs}
+            fileSort={fileSort}
+            folderSort={folderSort}
+          />
+
+          {/*
+            Kaapin koko yhtenä rivinä.
+
+            Ilman tätä etusivu on kansiolista jonka kokoa ei näe ennen
+            kuin avaa kansiot yksitellen. Luvut kertovat myös sen mitä
+            tyhjä lista ei kerro: onko kaappi tyhjä vai onko kaikki
+            vain jossain muualla.
+          */}
+          {summary ? (
+            <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+              {fill(t.tiedosto.summary, {
+                tiedostot: String(summary.files),
+                kansiot: String(summary.folders),
+              })}
+              {(() => {
+                const ika = ageText(
+                  summary.lastActivity,
+                  today,
+                  t.tiedosto,
+                  (day) => formatDayIn(day, locale),
+                );
+                return ika
+                  ? ` · ${fill(t.tiedosto.updatedAgo, { aika: ika })}`
+                  : "";
+              })()}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       <FileBrowser
@@ -209,6 +254,7 @@ export default async function FilesPage({
         today={today}
         locale={locale}
         trashFolders={trash?.folders ?? []}
+        recentlyOpened={recentlyOpened}
       />
     </div>
   );

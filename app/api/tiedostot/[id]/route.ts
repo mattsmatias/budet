@@ -93,6 +93,18 @@ export async function GET(
     return new NextResponse(null, { status: 502 });
   }
 
+  /*
+   * Merkinta avauksesta.
+   *
+   * "Viimeksi kaytetyt" vastaa siihen mita ravintoloitsija oikeasti
+   * muistaa: han ei muista missa kansiossa vuokrasopimus on, mutta
+   * muistaa katsoneensa sita.
+   *
+   * Merkinnan epaonnistuminen ei saa estaa tiedoston avaamista --
+   * kayttaja pyysi tiedostoa, ei merkintaa.
+   */
+  await supabase.rpc("mark_file_opened", { p_file: id });
+
   const download = request.nextUrl.searchParams.get("lataa") === "1";
 
   const headers = new Headers({

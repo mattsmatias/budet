@@ -41,11 +41,14 @@ interface FileRecord {
   supplier_id: string | null;
   receipt_id: string | null;
   deleted_at: string | null;
+  last_opened_at: string | null;
+  uploader?: { full_name: string | null } | null;
 }
 
 const FILE_COLUMNS =
   "id, folder_id, file_name, file_type, file_size, is_favorite, " +
-  "created_at, updated_at, expires_on, supplier_id, receipt_id, deleted_at";
+  "created_at, updated_at, expires_on, supplier_id, receipt_id, deleted_at, " +
+  "last_opened_at, uploader:profiles!files_uploaded_by_fkey(full_name)";
 
 function toFile(row: FileRecord): FileRow {
   return {
@@ -61,6 +64,8 @@ function toFile(row: FileRecord): FileRow {
     supplierId: row.supplier_id,
     receiptId: row.receipt_id,
     deletedAt: row.deleted_at,
+    lastOpenedAt: row.last_opened_at,
+    uploadedBy: row.uploader?.full_name ?? null,
   };
 }
 
@@ -88,15 +93,26 @@ export async function loadFolders(restaurantId: string): Promise<FolderRow[]> {
 
   if (!folders) return [];
 
-  const byFolder = new Map<string, number>(
-    ((counts as { folder_id: string; file_count: number }[] | null) ?? []).map(
-      (row) => [row.folder_id, Number(row.file_count)],
-    ),
+  const byFolder = new Map(
+    (
+      (counts as
+        | {
+            folder_id: string;
+            file_count: number;
+            last_activity: string | null;
+          }[]
+        | null) ?? []
+    ).map((row) => [
+      row.folder_id,
+      { count: Number(row.file_count), activity: row.last_activity },
+    ]),
   );
 
   const rows = folders as FolderRecord[];
   const parents = new Set(
-    rows.map((row) => row.parent_folder_id).filter((id): id is string => Boolean(id)),
+    rows
+      .map((row) => row.parent_folder_id)
+      .filter((id): id is string => Boolean(id)),
   );
 
   return rows.map((row) => ({
@@ -106,7 +122,8 @@ export async function loadFolders(restaurantId: string): Promise<FolderRow[]> {
     defaultKey: row.default_key,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
-    fileCount: byFolder.get(row.id) ?? 0,
+    fileCount: byFolder.get(row.id)?.count ?? 0,
+    lastActivity: byFolder.get(row.id)?.activity ?? null,
     hasChildren: parents.has(row.id),
   }));
 }
@@ -126,7 +143,10 @@ export async function loadFiles(
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  query = folderId === null ? query.is("folder_id", null) : query.eq("folder_id", folderId);
+  query =
+    folderId === null
+      ? query.is("folder_id", null)
+      : query.eq("folder_id", folderId);
 
   const { data } = await query;
   return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
@@ -242,9 +262,10 @@ export async function searchFiles(
     supplierId: null,
     receiptId: null,
     deletedAt: null,
+    lastOpenedAt: null,
+    uploadedBy: null,
   }));
 }
-
 
 // ---------------------------------------------------------------------------
 // Vanhenevat
@@ -335,7 +356,8 @@ export async function loadTrash(restaurantId: string): Promise<TrashContents> {
   return {
     files: ((files as FileRecord[] | null) ?? []).map((row) => toFile(row)),
     folders: (
-      (folders as { id: string; name: string; deleted_at: string }[] | null) ?? []
+      (folders as { id: string; name: string; deleted_at: string }[] | null) ??
+      []
     ).map((row) => ({ id: row.id, name: row.name, deletedAt: row.deleted_at })),
   };
 }
@@ -408,4 +430,87 @@ export async function purgeExpiredTrash(
   if (paths.length > 0) {
     await supabase.storage.from("files").remove(paths);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Tiedostokeskus
+// ---------------------------------------------------------------------------
+
+/**
+ * Viimeksi avatut tiedostot.
+ *
+ * Eri kysymys kuin "viimeksi lisätyt": ravintoloitsija ei muista missä
+ * kansiossa vuokrasopimus on, mutta muistaa katsoneensa sitä. Sopimus
+ * on voitu tallentaa vuosi sitten ja avata eilen.
+ *
+ * Vain avatut: tiedosto jota kukaan ei ole koskaan avannut ei kuulu
+ * listaan jonka otsikko on "viimeksi käytetyt".
+ */
+export async function loadRecentlyOpened(
+  restaurantId: string,
+  limit = 5,
+): Promise<FileRow[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("files")
+    .select(FILE_COLUMNS)
+    .eq("restaurant_id", restaurantId)
+    .is("deleted_at", null)
+    .not("last_opened_at", "is", null)
+    .order("last_opened_at", { ascending: false })
+    .limit(limit);
+
+  return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
+}
+
+export interface CabinetSummary {
+  files: number;
+  folders: number;
+  /** Tuorein muutos koko kaapissa. */
+  lastActivity: string | null;
+}
+
+/**
+ * Kaapin koko yhtenä rivinä.
+ *
+ * Kolme lukua kertoo onko kaappi tyhjä, käytössä vai täynnä — ja
+ * milloin siellä viimeksi tapahtui jotain. Ilman tätä etusivu on
+ * kansiolista jonka kokoa ei näe ennen kuin avaa kansiot yksitellen.
+ *
+ * count-kysely head-tilassa ei tuo yhtään riviä: pelkkä luku riittää,
+ * eikä tuhannen tiedoston nimiä kannata siirtää sen takia.
+ */
+export async function loadSummary(
+  restaurantId: string,
+): Promise<CabinetSummary> {
+  const supabase = await createClient();
+
+  const [files, folders, viimeisin] = await Promise.all([
+    supabase
+      .from("files")
+      .select("id", { count: "exact", head: true })
+      .eq("restaurant_id", restaurantId)
+      .is("deleted_at", null),
+    supabase
+      .from("folders")
+      .select("id", { count: "exact", head: true })
+      .eq("restaurant_id", restaurantId)
+      .is("deleted_at", null),
+    supabase
+      .from("files")
+      .select("updated_at")
+      .eq("restaurant_id", restaurantId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    files: files.count ?? 0,
+    folders: folders.count ?? 0,
+    lastActivity:
+      (viimeisin.data as { updated_at: string } | null)?.updated_at ?? null,
+  };
 }

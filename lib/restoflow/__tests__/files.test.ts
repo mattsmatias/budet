@@ -5,6 +5,7 @@ import {
   EXPIRY_WARNING_DAYS,
   expiryState,
   extensionOf,
+  fileAge,
   fileKind,
   filesHref,
   folderLabel,
@@ -50,6 +51,7 @@ function kansio(muutos: Partial<FolderRow> & { id: string }): FolderRow {
     sortOrder: 0,
     createdAt: "2026-01-01T00:00:00Z",
     fileCount: 0,
+    lastActivity: null,
     hasChildren: false,
     ...muutos,
   };
@@ -68,6 +70,8 @@ function tiedosto(muutos: Partial<FileRow> & { id: string }): FileRow {
     supplierId: null,
     receiptId: null,
     deletedAt: null,
+    lastOpenedAt: null,
+    uploadedBy: null,
     ...muutos,
   };
 }
@@ -540,5 +544,44 @@ describe("nimien numerointi", () => {
 
   it("kestää nimen ilman päätettä", () => {
     expect(uniqueName("Sopimus", ["Sopimus"])).toBe("Sopimus (2)");
+  });
+});
+
+describe("fileAge", () => {
+  it("palauttaa null ilman aikaa", () => {
+    expect(fileAge(null, "2026-03-10")).toBeNull();
+  });
+
+  it("tunnistaa tämän päivän ja eilisen", () => {
+    expect(fileAge("2026-03-10T08:00:00Z", "2026-03-10")).toEqual({
+      kind: "today",
+    });
+    expect(fileAge("2026-03-09T23:00:00Z", "2026-03-10")).toEqual({
+      kind: "yesterday",
+    });
+  });
+
+  it("laskee päivät kuukauden ajan", () => {
+    expect(fileAge("2026-03-08T12:00:00Z", "2026-03-10")).toEqual({
+      kind: "days",
+      days: 2,
+    });
+    expect(fileAge("2026-02-08T12:00:00Z", "2026-03-10")).toEqual({
+      kind: "days",
+      days: 30,
+    });
+  });
+
+  it("vaihtaa päivämäärään kun aikaa on kulunut liikaa", () => {
+    expect(fileAge("2026-02-07T12:00:00Z", "2026-03-10")).toEqual({
+      kind: "date",
+      day: "2026-02-07",
+    });
+  });
+
+  it("ei näytä tulevaisuutta negatiivisena", () => {
+    expect(fileAge("2026-03-12T12:00:00Z", "2026-03-10")).toEqual({
+      kind: "today",
+    });
   });
 });
