@@ -17,7 +17,24 @@
 export interface FolderRow {
   id: string;
   parentId: string | null;
+
+  /**
+   * Kannassa oleva nimi.
+   *
+   * Näytettävä nimi on eri asia: Katen luoma lähtökansio käännetään
+   * käyttäjän kielelle. Käytä folderLabel-funktiota kaikkialla missä
+   * nimi näkyy ihmiselle.
+   */
   name: string;
+
+  /**
+   * Katen luoma lähtökansio jota kukaan ei ole nimennyt.
+   *
+   * null tarkoittaa että nimi on käyttäjän oma eikä sitä käännetä.
+   * Uudelleennimeäminen tyhjentää tämän kannassa.
+   */
+  defaultKey: string | null;
+
   sortOrder: number;
   createdAt: string;
   /** Suoraan tässä kansiossa olevien tiedostojen määrä. */
@@ -54,11 +71,6 @@ export interface FileRow {
 
   /** Vain hakutuloksissa ja koontinäkymissä. */
   folderPath?: string;
-}
-
-export interface Crumb {
-  id: string;
-  name: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -247,13 +259,18 @@ export function sortFolders(
   folders: FolderRow[],
   key: FolderSort,
   locale = "fi-FI",
+  /* Aakkosjärjestys näytettävän nimen mukaan: turkinkielinen käyttäjä
+     odottaa "Fişler" olevan F:n kohdalla eikä K:n. */
+  t?: FolderText,
 ): FolderRow[] {
   const compare = byName(locale);
   const copy = [...folders];
+  const label = (folder: FolderRow) =>
+    t ? folderLabel(folder, t) : folder.name;
 
   switch (key) {
     case "name":
-      return copy.sort((a, b) => compare(a.name, b.name));
+      return copy.sort((a, b) => compare(label(a), label(b)));
     case "newest":
       return copy.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     case "oldest":
@@ -263,9 +280,66 @@ export function sortFolders(
       return copy.sort((a, b) =>
         a.sortOrder !== b.sortOrder
           ? a.sortOrder - b.sortOrder
-          : compare(a.name, b.name),
+          : compare(label(a), label(b)),
       );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Näytettävä nimi
+// ---------------------------------------------------------------------------
+
+/**
+ * Lähtökansioiden käännökset avaimittain.
+ *
+ * Kanta tallentaa nimen suomeksi, koska sen on oltava jotain. Näytetty
+ * nimi seuraa käyttäjän kieltä siihen asti kunnes hän nimeää kansion
+ * itse — silloin avain katoaa ja nimi on hänen.
+ */
+function defaultFolderNames(t: FolderText): Record<string, string> {
+  return {
+    contracts: t.dfContracts,
+    receipts: t.dfReceipts,
+    sales_reports: t.dfSalesReports,
+    invoices: t.dfInvoices,
+    finance: t.dfFinance,
+    staff: t.dfStaff,
+    authorities: t.dfAuthorities,
+    important: t.dfImportant,
+    other: t.dfOther,
+  };
+}
+
+/**
+ * Ne sanakirjan kentät joita nimeäminen tarvitsee.
+ *
+ * Koko AdminText olisi tarpeettoman iso riippuvuus puhtaalle
+ * moduulille, ja se sitoisi tämän tiedoston sanakirjan rakenteeseen.
+ */
+export interface FolderText {
+  dfContracts: string;
+  dfReceipts: string;
+  dfSalesReports: string;
+  dfInvoices: string;
+  dfFinance: string;
+  dfStaff: string;
+  dfAuthorities: string;
+  dfImportant: string;
+  dfOther: string;
+}
+
+/**
+ * Kansion nimi käyttäjän kielellä.
+ *
+ * Tuntematon avain palauttaa kannassa olevan nimen: uusi lähtökansio
+ * jonka käännös puuttuu on parempi näyttää suomeksi kuin tyhjänä.
+ */
+export function folderLabel(
+  folder: { name: string; defaultKey: string | null },
+  t: FolderText,
+): string {
+  if (!folder.defaultKey) return folder.name;
+  return defaultFolderNames(t)[folder.defaultKey] ?? folder.name;
 }
 
 // ---------------------------------------------------------------------------
@@ -308,7 +382,11 @@ export function movableTargets(
  * Siirtovalikko näyttää litteän listan, jossa "2026" yksinään ei kerro
  * kummasta vuodesta on kyse jos niitä on kaksi eri haarassa.
  */
-export function folderPath(all: FolderRow[], id: string | null): string {
+export function folderPath(
+  all: FolderRow[],
+  id: string | null,
+  t: FolderText,
+): string {
   if (!id) return "";
 
   const byId = new Map(all.map((folder) => [folder.id, folder]));
@@ -318,7 +396,9 @@ export function folderPath(all: FolderRow[], id: string | null): string {
   let guard = 0;
 
   while (current && guard < 50) {
-    parts.unshift(current.name);
+    /* Jokainen taso käännetään: "Talous / 2026" on puoliksi Katen
+       ehdotus ja puoliksi käyttäjän oma nimi. */
+    parts.unshift(folderLabel(current, t));
     current = current.parentId ? byId.get(current.parentId) : undefined;
     guard += 1;
   }

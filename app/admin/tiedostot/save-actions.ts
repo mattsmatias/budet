@@ -59,10 +59,15 @@ export async function folderChoices(): Promise<FolderChoice[]> {
   const { restaurant, role } = await requireContext("/admin/tiedostot");
   if (!can(role, "files.manage")) return [];
 
+  const t = adminText(await resolveLocale());
   const folders = await loadFolders(restaurant.id);
 
   return folders
-    .map((folder) => ({ id: folder.id, path: folderPath(folders, folder.id) }))
+    .map((folder) => ({
+      id: folder.id,
+      /* Käyttäjän kielellä: lähtökansio "Kuitit" on turkiksi "Fişler". */
+      path: folderPath(folders, folder.id, t.tiedosto),
+    }))
     .sort((a, b) => a.path.localeCompare(b.path));
 }
 

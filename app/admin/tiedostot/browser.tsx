@@ -39,6 +39,7 @@ import {
   expiryState,
   fileKind,
   filesHref,
+  folderLabel,
   folderPath,
   formatFileSize,
   isPreviewable,
@@ -674,6 +675,7 @@ export function FileBrowser(props: Props) {
               file={file}
               canManage={canManage}
               showPath={view !== "all"}
+              path={folderPath(props.folders, file.folderId, t.tiedosto)}
               today={props.today}
               inTrash={view === "trash"}
               selected={valitut.includes(file.id)}
@@ -739,7 +741,8 @@ export function FileBrowser(props: Props) {
           t={t}
           title={t.tiedosto.rename}
           label={t.tiedosto.folderName}
-          value={dialog.folder.name}
+          /* Kentässä se nimi jonka käyttäjä näkee, ei kannan suomi. */
+          value={folderLabel(dialog.folder, t.tiedosto)}
           onClose={() => setDialog(null)}
           onSubmit={(name) => {
             const form = new FormData();
@@ -1139,6 +1142,9 @@ function FolderRowItem({
         ? t.tiedosto.oneFile
         : fill(t.tiedosto.fileCount, { maara: String(folder.fileCount) });
 
+  /* Katen luoma lähtökansio näytetään käyttäjän kielellä. */
+  const nimi = folderLabel(folder, t.tiedosto);
+
   return (
     <li
       data-kansio=""
@@ -1170,7 +1176,7 @@ function FolderRowItem({
            * ja nuolinäppäimet siirtävät kansiota askeleen. Pelkkä
            * raahaus sulkisi ulos jokaisen joka ei käytä hiirtä.
            */
-          aria-label={`${t.tiedosto.move}: ${folder.name}`}
+          aria-label={`${t.tiedosto.move}: ${nimi}`}
           className="rf-press flex h-8 w-6 shrink-0 cursor-grab items-center justify-center"
           style={{
             color: "var(--rf-text-3)",
@@ -1196,7 +1202,7 @@ function FolderRowItem({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14.5px] font-semibold">
-            {folder.name}
+            {nimi}
           </span>
           <span className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
             {count}
@@ -1206,7 +1212,7 @@ function FolderRowItem({
 
       {canManage ? (
         <RowMenu
-          label={folder.name}
+          label={nimi}
           items={[
             { label: t.tiedosto.rename, onClick: onRename },
             { label: t.tiedosto.move, onClick: onMove },
@@ -1224,6 +1230,7 @@ function FileRowItem({
   file,
   canManage,
   showPath,
+  path,
   today,
   inTrash,
   selected,
@@ -1243,6 +1250,8 @@ function FileRowItem({
   file: FileRow;
   canManage: boolean;
   showPath: boolean;
+  /** Sijainti käyttäjän kielellä. Tyhjä = juuri. */
+  path: string;
   today: string;
   inTrash: boolean;
   selected: boolean;
@@ -1333,8 +1342,8 @@ function FileRowItem({
           <span className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
             {inTrash
               ? `${t.tiedosto.deletedOn} ${(file.deletedAt ?? "").slice(0, 10)}`
-              : showPath && file.folderPath !== undefined
-                ? `${t.tiedosto.location}: ${file.folderPath || t.tiedosto.root} · ${formatFileSize(file.size, tag)}`
+              : showPath
+                ? `${t.tiedosto.location}: ${path || t.tiedosto.root} · ${formatFileSize(file.size, tag)}`
                 : formatFileSize(file.size, tag)}
           </span>
         </span>
@@ -1547,7 +1556,7 @@ function NewFolderDialog({
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const here = folderPath(folders, folderId) || t.tiedosto.root;
+  const here = folderPath(folders, folderId, t.tiedosto) || t.tiedosto.root;
 
   return (
     <Modal title={t.tiedosto.newFolderTitle} onClose={onClose}>
@@ -1686,7 +1695,9 @@ function MoveDialog({
               className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13.5px]"
             >
               <RfIcon name="folder" size={16} />
-              <span className="truncate">{folderPath(folders, folder.id)}</span>
+              <span className="truncate">
+                {folderPath(folders, folder.id, t.tiedosto)}
+              </span>
             </button>
           </li>
         ))}
@@ -1728,7 +1739,7 @@ function DeleteFolderDialog({
   if (contents === 0) {
     return (
       <Modal title={t.tiedosto.deleteFolderTitle} onClose={onClose}>
-        <p className="text-[13.5px]">{folder.name}</p>
+        <p className="text-[13.5px]">{folderLabel(folder, t.tiedosto)}</p>
 
         <div className="mt-4 flex justify-end gap-2">
           <Button tone="ghost" type="button" onClick={onClose}>
@@ -1748,7 +1759,7 @@ function DeleteFolderDialog({
         {t.tiedosto.folderNotEmptyHelp}
       </p>
       <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-3)" }}>
-        {`${folder.name} · ${fill(t.tiedosto.fileCount, { maara: String(contents) })}`}
+        {`${folderLabel(folder, t.tiedosto)} · ${fill(t.tiedosto.fileCount, { maara: String(contents) })}`}
       </p>
 
       <div className="mt-4 space-y-3">
@@ -2129,7 +2140,7 @@ function UploadDialog({
     onDone();
   }
 
-  const here = folderPath(folders, target) || t.tiedosto.root;
+  const here = folderPath(folders, target, t.tiedosto) || t.tiedosto.root;
 
   return (
     <Modal title={t.tiedosto.uploadTitle} onClose={onClose}>
@@ -2150,7 +2161,7 @@ function UploadDialog({
             <option value="">{t.tiedosto.root}</option>
             {folders.map((folder) => (
               <option key={folder.id} value={folder.id}>
-                {folderPath(folders, folder.id)}
+                {folderPath(folders, folder.id, t.tiedosto)}
               </option>
             ))}
           </select>

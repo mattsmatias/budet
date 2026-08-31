@@ -5,7 +5,7 @@ import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import {
-  loadCrumbs,
+  crumbsFor,
   loadExpiring,
   loadFavorites,
   loadFiles,
@@ -17,10 +17,12 @@ import {
 } from "@/lib/restoflow/file-queries";
 import {
   filesHref,
+  folderLabel,
   sortFiles,
   sortFolders,
   type FileRow,
   type FileSort,
+  type FolderRow,
   type FolderSort,
 } from "@/lib/restoflow/files";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -99,7 +101,7 @@ export default async function FilesPage({
 
   const trash = view === "trash" ? await loadTrash(restaurant.id) : null;
 
-  const [folders, files, crumbs] = await Promise.all([
+  const [folders, files] = await Promise.all([
     loadFolders(restaurant.id),
     searching
       ? searchFiles(restaurant.id, term)
@@ -112,8 +114,10 @@ export default async function FilesPage({
             : view === "trash"
               ? Promise.resolve((trash?.files ?? []) as FileRow[])
               : loadFiles(restaurant.id, folderId),
-    searching || view !== "all" ? Promise.resolve([]) : loadCrumbs(folderId),
   ]);
+
+  /* Murupolku puusta: kannan nimi ei tiedä käyttäjän kieltä. */
+  const crumbs = searching || view !== "all" ? [] : crumbsFor(folders, folderId);
 
   /*
    * Kansiot vain omassa näkymässään.
@@ -129,6 +133,7 @@ export default async function FilesPage({
           folders.filter((folder) => folder.parentId === folderId),
           folderSort,
           tag,
+          t.tiedosto,
         );
 
   const visibleFiles =
@@ -350,7 +355,7 @@ function Breadcrumb({
   folderSort,
 }: {
   t: ReturnType<typeof adminText>;
-  crumbs: { id: string; name: string }[];
+  crumbs: FolderRow[];
   fileSort: FileSort;
   folderSort: FolderSort;
 }) {
@@ -380,7 +385,7 @@ function Breadcrumb({
                 style={{ color: "var(--rf-text)" }}
                 aria-current="page"
               >
-                {crumb.name}
+                {folderLabel(crumb, t.tiedosto)}
               </span>
             ) : (
               <Link
@@ -391,7 +396,7 @@ function Breadcrumb({
                 })}
                 className="rf-press font-semibold"
               >
-                {crumb.name}
+                {folderLabel(crumb, t.tiedosto)}
               </Link>
             )}
           </span>

@@ -7,6 +7,7 @@ import {
   extensionOf,
   fileKind,
   filesHref,
+  folderLabel,
   folderPath,
   formatFileSize,
   isPreviewable,
@@ -21,10 +22,28 @@ import {
   type FolderRow,
 } from "../files";
 
+/**
+ * Sanakirjan osa jota nimeäminen tarvitsee.
+ *
+ * Tunnistettavat arvot: testi näkee heti kumpi nimi tuli mistäkin.
+ */
+const sanat = {
+  dfContracts: "TR-sopimukset",
+  dfReceipts: "Fişler",
+  dfSalesReports: "TR-myynti",
+  dfInvoices: "TR-laskut",
+  dfFinance: "TR-talous",
+  dfStaff: "TR-henkilosto",
+  dfAuthorities: "TR-viranomaiset",
+  dfImportant: "TR-tarkeat",
+  dfOther: "TR-muut",
+};
+
 function kansio(muutos: Partial<FolderRow> & { id: string }): FolderRow {
   return {
     parentId: null,
     name: muutos.id,
+    defaultKey: null,
     sortOrder: 0,
     createdAt: "2026-01-01T00:00:00Z",
     fileCount: 0,
@@ -222,8 +241,8 @@ describe("siirron kohteet", () => {
       kansio({ id: "elo", name: "Elokuu", parentId: "2026" }),
     ];
 
-    expect(folderPath(puu, "elo")).toBe("Talous / 2026 / Elokuu");
-    expect(folderPath(puu, null)).toBe("");
+    expect(folderPath(puu, "elo", sanat)).toBe("Talous / 2026 / Elokuu");
+    expect(folderPath(puu, null, sanat)).toBe("");
   });
 
   /* Rikkinäinen puu ei saa jumittaa selainta. */
@@ -233,7 +252,7 @@ describe("siirron kohteet", () => {
       kansio({ id: "b", parentId: "a" }),
     ];
 
-    expect(() => folderPath(rikki, "a")).not.toThrow();
+    expect(() => folderPath(rikki, "a", sanat)).not.toThrow();
     expect(() => movableTargets(rikki, "a")).not.toThrow();
   });
 });
@@ -359,5 +378,76 @@ describe("osoitteet", () => {
     expect(filesHref({ term: "a&b=c" })).toBe(
       "/admin/tiedostot?haku=a%26b%3Dc",
     );
+  });
+});
+
+describe("lähtökansioiden nimet", () => {
+  /*
+   * Kanta tallentaa nimen suomeksi, koska sen on oltava jotain.
+   * Turkinkielinen käyttäjä ei kuitenkaan voi tietää onko "Kuitit"
+   * käännösvirhe vai jonkun aiemmin kirjoittama nimi.
+   */
+  it("kääntää Katen luoman lähtökansion", () => {
+    expect(
+      folderLabel({ name: "Kuitit", defaultKey: "receipts" }, sanat),
+    ).toBe("Fişler");
+  });
+
+  /*
+   * Nimeäminen katkaisee sidoksen lopullisesti.
+   *
+   * Kannassa avain on tyhjennetty, joten nimi on käyttäjän oma eikä
+   * käänny millään kielellä.
+   */
+  it("jättää käyttäjän oman nimen rauhaan", () => {
+    expect(folderLabel({ name: "Kuitit", defaultKey: null }, sanat)).toBe(
+      "Kuitit",
+    );
+    expect(folderLabel({ name: "Oma kansio", defaultKey: null }, sanat)).toBe(
+      "Oma kansio",
+    );
+  });
+
+  /* Tuntematon avain: kannan nimi on parempi kuin tyhjä. */
+  it("palauttaa kannan nimen tuntemattomalle avaimelle", () => {
+    expect(folderLabel({ name: "Uusi", defaultKey: "tuntematon" }, sanat)).toBe(
+      "Uusi",
+    );
+  });
+
+  it("kääntää jokaisen tason polussa", () => {
+    const puu = [
+      kansio({ id: "k", name: "Kuitit", defaultKey: "receipts" }),
+      kansio({ id: "v", name: "2026", parentId: "k" }),
+    ];
+
+    expect(folderPath(puu, "v", sanat)).toBe("Fişler / 2026");
+  });
+
+  /*
+   * Aakkosjärjestys näytettävän nimen mukaan.
+   *
+   * Turkinkielinen käyttäjä odottaa "Fişler" olevan F:n kohdalla eikä
+   * K:n, jossa se olisi kannan nimen "Kuitit" mukaan.
+   */
+  it("lajittelee näytettävän nimen mukaan", () => {
+    const puu = [
+      kansio({ id: "k", name: "Kuitit", defaultKey: "receipts" }),
+      kansio({ id: "g", name: "Gastro" }),
+    ];
+
+    /* Nayttonimella: "Fisler" alkaa F:lla, siis ennen "Gastroa". */
+    expect(sortFolders(puu, "name", "tr-TR", sanat).map((f) => f.id)).toEqual([
+      "k",
+      "g",
+    ]);
+
+    /* Ilman sanakirjaa lajittelu putoaa kannan nimeen "Kuitit", jolloin
+       jarjestys kaantyy. Juuri tama oli vika: lista nayttaa F-nimen
+       K-kirjaimen kohdalla. */
+    expect(sortFolders(puu, "name", "tr-TR").map((f) => f.id)).toEqual([
+      "g",
+      "k",
+    ]);
   });
 });

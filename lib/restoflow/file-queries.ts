@@ -17,7 +17,7 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
-import type { Crumb, FileRow, FolderRow } from "./files";
+import type { FileRow, FolderRow } from "./files";
 
 /*
  * Allekirjoitetun osoitteen voimassaolo.
@@ -31,6 +31,7 @@ interface FolderRecord {
   id: string;
   parent_folder_id: string | null;
   name: string;
+  default_key: string | null;
   sort_order: number;
   created_at: string;
 }
@@ -88,7 +89,7 @@ export async function loadFolders(restaurantId: string): Promise<FolderRow[]> {
   const [{ data: folders }, { data: counts }] = await Promise.all([
     supabase
       .from("folders")
-      .select("id, parent_folder_id, name, sort_order, created_at")
+      .select("id, parent_folder_id, name, default_key, sort_order, created_at")
       .eq("restaurant_id", restaurantId)
       .is("deleted_at", null)
       .order("sort_order")
@@ -113,6 +114,7 @@ export async function loadFolders(restaurantId: string): Promise<FolderRow[]> {
     id: row.id,
     parentId: row.parent_folder_id,
     name: row.name,
+    defaultKey: row.default_key,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     fileCount: byFolder.get(row.id) ?? 0,
@@ -142,22 +144,34 @@ export async function loadFiles(
 }
 
 /**
- * Murupolku kannasta, ei selaimen muistista.
+ * Murupolku valmiiksi haetusta puusta.
  *
- * Käyttäjä voi tulla kansioon suoralla osoitteella, jolloin selain ei
- * tiedä yläpuolisia kansioita. Polku on kannassa yhtä kaukana kuin
- * kansio itse.
+ * Aiemmin tämä kysyi kannalta rekursiivisesti. Puu on kuitenkin jo
+ * ladattu samalla sivulla, ja kannan palauttama nimi on aina se mikä
+ * rivillä lukee — lähtökansion käännös jäisi tekemättä, koska kanta ei
+ * tiedä käyttäjän kieltä.
+ *
+ * Yksi kysely vähemmän on sivutuote, ei syy.
  */
-export async function loadCrumbs(folderId: string | null): Promise<Crumb[]> {
+export function crumbsFor(
+  folders: FolderRow[],
+  folderId: string | null,
+): FolderRow[] {
   if (!folderId) return [];
 
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("folder_breadcrumb", { p_folder: folderId });
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  const path: FolderRow[] = [];
 
-  return ((data as { id: string; name: string }[] | null) ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-  }));
+  let current = byId.get(folderId);
+  let guard = 0;
+
+  while (current && guard < 50) {
+    path.unshift(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+    guard += 1;
+  }
+
+  return path;
 }
 
 /** Tähdellä merkityt, kansiosta riippumatta. */
@@ -172,7 +186,7 @@ export async function loadFavorites(restaurantId: string): Promise<FileRow[]> {
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
-  return attachPaths(restaurantId, (data as FileRecord[] | null) ?? []);
+  return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
 }
 
 /** Viimeksi lisätyt, kansiosta riippumatta. */
@@ -190,44 +204,7 @@ export async function loadRecent(
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  return attachPaths(restaurantId, (data as FileRecord[] | null) ?? []);
-}
-
-/**
- * Sijainti mukaan koontinäkymiin.
- *
- * Tähdet ja viimeksi lisätyt näyttävät tiedostoja eri kansioista, joten
- * kummassakin on kerrottava mistä tiedosto löytyy — muuten käyttäjä
- * näkee nimen jonka sijaintia hän ei tiedä.
- *
- * Polku lasketaan valmiiksi haetusta kansiopuusta eikä kysytä kannalta
- * riviä kohden: kolmenkymmenen tiedoston lista olisi kolmekymmentä
- * rekursiivista kyselyä.
- */
-async function attachPaths(
-  restaurantId: string,
-  rows: FileRecord[],
-): Promise<FileRow[]> {
-  if (rows.length === 0) return [];
-
-  const folders = await loadFolders(restaurantId);
-  const byId = new Map(folders.map((folder) => [folder.id, folder]));
-
-  function path(id: string | null): string {
-    const parts: string[] = [];
-    let current = id ? byId.get(id) : undefined;
-    let guard = 0;
-
-    while (current && guard < 50) {
-      parts.unshift(current.name);
-      current = current.parentId ? byId.get(current.parentId) : undefined;
-      guard += 1;
-    }
-
-    return parts.join(" / ");
-  }
-
-  return rows.map((row) => toFile(row, path(row.folder_id)));
+  return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
 }
 
 /**
@@ -323,7 +300,7 @@ export async function loadExpiring(restaurantId: string): Promise<FileRow[]> {
     .not("expires_on", "is", null)
     .order("expires_on", { ascending: true });
 
-  return attachPaths(restaurantId, (data as FileRecord[] | null) ?? []);
+  return ((data as FileRecord[] | null) ?? []).map((row) => toFile(row));
 }
 
 /**
