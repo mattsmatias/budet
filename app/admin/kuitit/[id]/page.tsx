@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SaveToFiles } from "@/components/restoflow/save-to-files";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -159,6 +160,24 @@ export default async function AdminReceiptDetailPage({
         <h2 className="truncate text-[20px] font-bold tracking-[-0.02em]">
           {receipt.supplierName}
         </h2>
+
+        {/*
+          Kuitti tositteeksi kaappiin.
+
+          Kuva kopioidaan eikä siihen viitata: kuitin poisto ei saa
+          tyhjentää kaappiin tallennettua tositetta. Näkyy vain jos
+          kuvaa on, ja vain sille joka saa kaappiin kirjoittaa.
+        */}
+        {pagePaths.length > 0 && can(role, "files.manage") ? (
+          <div className="ml-auto shrink-0">
+            <SaveToFiles
+              t={t}
+              label={t.tiedosto.saveToFiles}
+              title={`${receipt.supplierName} ${receipt.date}`}
+              source={{ kind: "receipt", receiptId: id }}
+            />
+          </div>
+        ) : null}
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">

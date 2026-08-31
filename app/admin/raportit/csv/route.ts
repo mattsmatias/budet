@@ -1,9 +1,10 @@
 /**
  * Raporttien CSV-vienti.
  *
- * Puolipiste erottimena ja UTF-8 BOM alkuun: suomalainen Excel avaa
- * tiedoston silloin suoraan oikein. Pilkku erottimena rikkoisi
- * desimaalipilkulliset summat.
+ * Tiedoston rakentaminen on lib/restoflow/report-file.ts:ssä, jotta
+ * lataus ja Tiedostoihin tallennus tuottavat varmasti saman tiedoston.
+ * Tämä reitti on HTTP-kerros sen ympärillä: tunnistus, parametrit ja
+ * otsakkeet.
  *
  * Vienti vaatii kirjautumisen ja reports.export-oikeuden. Ilman
  * tarkistusta osoitteen arvaaminen antaisi koko kuukauden aineiston.
@@ -16,12 +17,8 @@ import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import { monthIn } from "@/lib/restoflow/clock-context";
-import {
-  buildReportRows,
-  ACCOUNTING_KINDS,
-  REPORT_KINDS,
-  type ReportKind,
-} from "@/lib/restoflow/report-rows";
+import { REPORT_KINDS, type ReportKind } from "@/lib/restoflow/report-rows";
+import { buildReportFile, isReportProblem } from "@/lib/restoflow/report-file";
 
 export async function GET(request: NextRequest) {
   const locale = await resolveLocale();
@@ -57,53 +54,31 @@ export async function GET(request: NextRequest) {
       ? requested
       : monthIn(restaurant.timezone);
 
-  if (!kind || !REPORT_KINDS.includes(kind)) {
-    return NextResponse.json(
-      { error: t.raportti.unknownReportKind, allowed: REPORT_KINDS },
-      { status: 400 },
-    );
-  }
-
-  /*
-   * Kirjanpito vaatii oman oikeutensa.
-   *
-   * reports.export riittää kuluraporttiin, mutta kirjanpito on eri
-   * asia: se sisältää tilikartan ja tositteet. Ilman tätä
-   * osoitteen arvaaminen antaisi ne kenelle tahansa jolla on
-   * raporttien vienti-oikeus.
-   */
-  if (
-    ACCOUNTING_KINDS.includes(kind) &&
-    !can(restaurant.role, "accounting.view")
-  ) {
-    return NextResponse.json(
-      { error: t.raportti.noRightAccounting },
-      { status: 403 },
-    );
-  }
-
-  const rows = await buildReportRows(
-    kind,
-    restaurant.id,
-    month,
-    restaurant.role,
-    restaurant.timezone,
+  const result = await buildReportFile({
+    restaurantId: restaurant.id,
+    role: restaurant.role,
+    timezone: restaurant.timezone,
     locale,
-  );
-  const csv = "﻿" + rows.map((r) => r.map(escapeCell).join(";")).join("\r\n");
+    t,
+    kind,
+    month,
+    format: "csv",
+  });
 
-  return new NextResponse(csv, {
+  if (isReportProblem(result)) {
+    return result === "accounting"
+      ? NextResponse.json({ error: t.raportti.noRightAccounting }, { status: 403 })
+      : NextResponse.json(
+          { error: t.raportti.unknownReportKind, allowed: REPORT_KINDS },
+          { status: 400 },
+        );
+  }
+
+  return new NextResponse(result.text ?? "", {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="restoflow-${kind}-${month}.csv"`,
+      "Content-Disposition": `attachment; filename="${result.fileName}"`,
       "Cache-Control": "no-store",
     },
   });
-}
-
-/** Lainausmerkit kahdennetaan ja kenttä lainataan jos siinä on erottimia. */
-function escapeCell(value: string): string {
-  const text = String(value ?? "");
-  if (/[";\r\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
-  return text;
 }

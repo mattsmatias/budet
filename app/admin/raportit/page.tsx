@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SaveToFiles } from "@/components/restoflow/save-to-files";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -158,6 +159,25 @@ export default async function ReportsPage({
                 href={`/admin/raportit/xlsx?tyyppi=${report.kind}&kuukausi=${viewMonth}`}
                 label="Excel"
               />
+
+              {/*
+                Sama raportti suoraan kaappiin.
+
+                Ilman tata raportti pitaisi ladata koneelle ja ladata
+                takaisin Kateen — kahden askeleen kierros, jonka paassa
+                tiedosto on samassa jarjestelmassa josta se lahti.
+              */}
+              <SaveToFiles
+                t={t}
+                label={t.tiedosto.saveToFiles}
+                title={report.title}
+                source={{
+                  kind: "report",
+                  reportKind: report.kind,
+                  month: viewMonth,
+                  format: "xlsx",
+                }}
+              />
             </div>
           </Card>
         ))}
@@ -229,6 +249,18 @@ export default async function ReportsPage({
             <RfIcon name="download" size={15} />
             {t.raportti.downloadWholeMonth}
           </a>
+
+          <SaveToFiles
+            t={t}
+            label={t.tiedosto.saveToFiles}
+            title={t.raportti.downloadWholeMonth}
+            source={{
+              kind: "report",
+              reportKind: null,
+              month: viewMonth,
+              format: "xlsx",
+            }}
+          />
 
           {accountants.length === 0 ? (
             <Link

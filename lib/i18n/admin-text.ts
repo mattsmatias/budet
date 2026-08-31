@@ -116,6 +116,8 @@ const fi = {
     errorDepth: "Kansiorakenne on liian syvä.",
     errorDuplicate: "Samanniminen kansio on jo tässä.",
     readOnly: "Sinulla on lukuoikeus tiedostoihin.",
+    saveToFiles: "Tallenna Tiedostoihin",
+    savedNotice: "Tallennettu Tiedostoihin.",
   },
   some: {
     title: "Sosiaalinen media",
@@ -2531,6 +2533,8 @@ const en: AdminText = {
     errorDepth: "The folder structure is too deep.",
     errorDuplicate: "A folder with that name is already here.",
     readOnly: "You have read-only access to files.",
+    saveToFiles: "Save to Files",
+    savedNotice: "Saved to Files.",
   },
   some: {
     title: "Social media",
@@ -4949,6 +4953,8 @@ const sv: AdminText = {
     errorDepth: "Mappstrukturen är för djup.",
     errorDuplicate: "En mapp med det namnet finns redan här.",
     readOnly: "Du har läsbehörighet till filerna.",
+    saveToFiles: "Spara i Filer",
+    savedNotice: "Sparad i Filer.",
   },
   some: {
     title: "Sociala medier",
@@ -7363,6 +7369,8 @@ const da: AdminText = {
     errorDepth: "Mappestrukturen er for dyb.",
     errorDuplicate: "En mappe med det navn findes allerede her.",
     readOnly: "Du har læseadgang til filerne.",
+    saveToFiles: "Gem i Filer",
+    savedNotice: "Gemt i Filer.",
   },
   some: {
     title: "Sociale medier",
@@ -9777,6 +9785,8 @@ const tr: AdminText = {
     errorDepth: "Klasör yapısı çok derin.",
     errorDuplicate: "Bu adda bir klasör zaten burada var.",
     readOnly: "Dosyalara salt okunur erişiminiz var.",
+    saveToFiles: "Dosyalara kaydet",
+    savedNotice: "Dosyalara kaydedildi.",
   },
   some: {
     title: "Sosyal medya",
@@ -12183,6 +12193,8 @@ const et: AdminText = {
     errorDepth: "Kaustastruktuur on liiga sügav.",
     errorDuplicate: "Sellise nimega kaust on siin juba olemas.",
     readOnly: "Sul on failidele lugemisõigus.",
+    saveToFiles: "Salvesta failidesse",
+    savedNotice: "Salvestatud failidesse.",
   },
   some: {
     title: "Sotsiaalmeedia",

@@ -9,17 +9,24 @@
  * mikä listassa näkyisi kerralla.
  *
  * ---------------------------------------------------------------------
- * RAAHAUS ON TYÖPÖYDÄN TAPA, VALIKKO PUHELIMEN
+ * KAKSI ERI RAAHAUSTA, KAKSI ERI TARKOITUSTA
  * ---------------------------------------------------------------------
  *
- * Raahaus käyttää selaimen omaa vetotapahtumaa. Se ei toimi
- * kosketuksella — mikä on tässä oikein, koska pitkä painallus ja veto
- * pienellä ruudulla osuisi väärään riviin useammin kuin oikeaan.
- * Puhelimessa sama asia tehdään rivin valikon Siirrä-kohdasta, ja se
- * on molemmilla laitteilla saatavilla.
+ * Kansion KAHVA järjestää: pointer-tapahtumilla, kuten lounaslistalla,
+ * joten se toimii myös kosketuksella ja näppäimistön nuolilla.
  *
- * Sama vetotapahtuma ottaa vastaan myös käyttöjärjestelmästä pudotetut
- * tiedostot: niiden pudottaminen kansioon lataa ne sinne.
+ * Tiedoston VETO siirtää kansioon: selaimen oma vetotapahtuma, joka ei
+ * toimi kosketuksella. Puhelimessa sama tehdään rivin valikon
+ * Siirrä-kohdasta.
+ *
+ * Aiemmin kansiorivi oli myös selaimen vedettävä, jolloin sama ele
+ * tarkoitti kahta eri asiaa — paikan vaihtoa ja kansioon siirtoa — ja
+ * lopputulos riippui siitä minkä rivin päälle sormi sattui osumaan.
+ * Nyt järjestäminen on kahvassa ja siirto valikossa, jossa kohde
+ * valitaan nimeltä.
+ *
+ * Tiedostojen vetotapahtuma ottaa vastaan myös käyttöjärjestelmästä
+ * pudotetut tiedostot: niiden pudottaminen kansioon lataa ne sinne.
  */
 
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -54,6 +61,7 @@ import {
   registerFile,
   renameFile,
   renameFolder,
+  reorderFolders,
   toggleFavorite,
 } from "./actions";
 
@@ -75,11 +83,14 @@ interface Props {
   folderSort: FolderSort;
 }
 
-/** Raahattavana oleva kohde. */
-type Dragged =
-  | { kind: "folder"; id: string }
-  | { kind: "file"; id: string }
-  | null;
+/*
+ * Raahattavana oleva tiedosto.
+ *
+ * Vain tiedosto: kansion paikkaa vaihdetaan kahvasta ja sen siirto
+ * toiseen kansioon tehdään rivin valikosta. Sama ele ei saa tarkoittaa
+ * kahta eri asiaa.
+ */
+type Dragged = string | null;
 
 const KIND_ICONS: Record<string, IconName> = {
   pdf: "file",
@@ -160,18 +171,126 @@ export function FileBrowser(props: Props) {
       return;
     }
 
-    const item = dragged;
+    const fileId = dragged;
     setDragged(null);
-    if (!item) return;
+    if (fileId) run(() => moveFile(fileId, targetFolderId));
+  }
 
-    if (item.kind === "file") {
-      run(() => moveFile(item.id, targetFolderId));
-      return;
+  // -------------------------------------------------------------------------
+  // Kansioiden järjestäminen kahvasta
+  // -------------------------------------------------------------------------
+  //
+  // Sama kuvio kuin lounaslistalla: pointer-tapahtumat kattavat hiiren,
+  // kosketuksen ja kynän samalla koodilla, ja järjestys tallennetaan
+  // vasta irrotettaessa. Jokainen ohitettu rivi ei ole oma
+  // tallennuksensa — se olisi kymmenen kutsua yhdestä siirrosta, ja
+  // niistä viimeinen voisi saapua ensimmäisenä.
+  //
+  // Kahva on erillään rivistä tarkoituksella. Aiemmin koko kansiorivi
+  // oli vedettävä, jolloin sama ele tarkoitti kahta eri asiaa:
+  // järjestyksen vaihtoa ja siirtoa toisen kansion sisään. Kansion
+  // siirtäminen toiseen kansioon on nyt rivin valikossa, jossa kohde
+  // valitaan nimeltä eikä osumatarkkuudella.
+
+  const lista = useRef<HTMLUListElement>(null);
+
+  /*
+   * Palvelimen järjestys on totuus, paikallinen on sen kopio.
+   *
+   * Kun palvelin palauttaa uuden järjestyksen, tunnisteiden jono
+   * muuttuu ja paikallinen tila nollataan sen mukaan.
+   */
+  const kansioTunnus = visibleFolders.map((f) => f.id).join(",");
+  const [edellinen, setEdellinen] = useState(kansioTunnus);
+  const [jarjestys, setJarjestys] = useState<string[]>(() =>
+    visibleFolders.map((f) => f.id),
+  );
+
+  if (kansioTunnus !== edellinen) {
+    setEdellinen(kansioTunnus);
+    setJarjestys(visibleFolders.map((f) => f.id));
+  }
+
+  const [kahvassa, setKahvassa] = useState<string | null>(null);
+
+  /*
+   * Järjestäminen vain omassa järjestyksessä.
+   *
+   * Nimen mukaan lajitellussa listassa rivin siirtäminen ei tarkoita
+   * mitään: seuraava lataus palauttaisi sen takaisin aakkosiin.
+   */
+  const sortable =
+    canManage && props.folderSort === "custom" && visibleFolders.length > 1;
+
+  const byId = new Map(visibleFolders.map((folder) => [folder.id, folder]));
+  const orderedFolders = sortable
+    ? jarjestys
+        .map((id) => byId.get(id))
+        .filter((folder): folder is FolderRow => folder !== undefined)
+    : visibleFolders;
+
+  function siirraKohtaan(from: number, to: number): string[] {
+    const kopio = [...jarjestys];
+    const [poimittu] = kopio.splice(from, 1);
+    kopio.splice(to, 0, poimittu);
+    return kopio;
+  }
+
+  function kahvaLiikkuu(event: React.PointerEvent): void {
+    if (!kahvassa || !lista.current) return;
+
+    const rows = Array.from(
+      lista.current.querySelectorAll<HTMLElement>("[data-kansio]"),
+    );
+
+    const from = jarjestys.indexOf(kahvassa);
+
+    /*
+     * Kohta luetaan riviltä jonka päällä sormi on, ei pikselisiirtymästä:
+     * rivit ovat eri korkuisia nimen pituuden mukaan.
+     */
+    let to = from;
+    rows.forEach((row, index) => {
+      const box = row.getBoundingClientRect();
+      if (event.clientY >= box.top && event.clientY <= box.bottom) to = index;
+    });
+
+    if (to !== from) setJarjestys(siirraKohtaan(from, to));
+  }
+
+  function kahvaIrtosi(): void {
+    if (!kahvassa) return;
+    setKahvassa(null);
+
+    /* Tallennus vain jos järjestys oikeasti muuttui. */
+    if (jarjestys.join(",") !== kansioTunnus) {
+      const uusi = jarjestys;
+      start(async () => {
+        const result = await reorderFolders(props.folderId, uusi);
+        if (result.error) setError(result.error);
+        else router.refresh();
+      });
     }
+  }
 
-    /* Kansiota ei raahata itseensä — kanta estäisi tämän joka tapauksessa. */
-    if (item.id === targetFolderId) return;
-    run(() => moveFolder(item.id, targetFolderId));
+  function kahvaNappaimisto(event: React.KeyboardEvent, id: string): void {
+    const suunta =
+      event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+    if (suunta === 0) return;
+
+    const from = jarjestys.indexOf(id);
+    const to = from + suunta;
+    if (to < 0 || to >= jarjestys.length) return;
+
+    event.preventDefault();
+    const uusi = siirraKohtaan(from, to);
+    setJarjestys(uusi);
+
+    start(async () => {
+      const result = await reorderFolders(props.folderId, uusi);
+      if (result.error) setError(result.error);
+      else router.refresh();
+    });
   }
 
   const empty = visibleFolders.length === 0 && files.length === 0;
@@ -197,7 +316,7 @@ export function FileBrowser(props: Props) {
         <p
           className="px-3 py-2 text-[13px] font-medium"
           style={{
-            background: "var(--rf-red-soft)",
+            background: "var(--rf-red-bg)",
             color: "var(--rf-red-text)",
             borderRadius: "var(--rf-r-card)",
           }}
@@ -230,7 +349,7 @@ export function FileBrowser(props: Props) {
         />
       ) : (
         <ul
-          className="overflow-hidden"
+          ref={lista}
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
@@ -243,18 +362,34 @@ export function FileBrowser(props: Props) {
             if (canManage) dropOn(props.folderId, event);
           }}
         >
-          {visibleFolders.map((folder) => (
+          {orderedFolders.map((folder) => (
             <FolderRowItem
               key={folder.id}
               t={t}
               folder={folder}
               canManage={canManage}
+              sortable={sortable}
+              dragging={kahvassa === folder.id}
               highlighted={over === folder.id}
-              onDragStart={() => setDragged({ kind: "folder", id: folder.id })}
-              onDragEnd={() => {
-                setDragged(null);
-                setOver(null);
+              onHandleDown={(event) => {
+                event.preventDefault();
+
+                /*
+                 * Kaappaus try-lohkossa: setPointerCapture heittää jos
+                 * osoitin ehtii irrota tapahtuman ja käsittelijän
+                 * välissä. Ilman suojaa raahaus ei alkaisi lainkaan.
+                 */
+                try {
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                } catch {
+                  /* Ei kaappausta; liike toimii silti listan päällä. */
+                }
+
+                setKahvassa(folder.id);
               }}
+              onHandleMove={kahvaLiikkuu}
+              onHandleUp={kahvaIrtosi}
+              onHandleKey={(event) => kahvaNappaimisto(event, folder.id)}
               onDragOver={(event) => {
                 if (!canManage) return;
                 event.preventDefault();
@@ -287,7 +422,7 @@ export function FileBrowser(props: Props) {
               file={file}
               canManage={canManage}
               showPath={view !== "all"}
-              onDragStart={() => setDragged({ kind: "file", id: file.id })}
+              onDragStart={() => setDragged(file.id)}
               onDragEnd={() => setDragged(null)}
               onRename={() => setDialog({ type: "renameFile", file })}
               onMove={() =>
@@ -648,9 +783,13 @@ function FolderRowItem({
   t,
   folder,
   canManage,
+  sortable,
+  dragging,
   highlighted,
-  onDragStart,
-  onDragEnd,
+  onHandleDown,
+  onHandleMove,
+  onHandleUp,
+  onHandleKey,
   onDragOver,
   onDragLeave,
   onDrop,
@@ -661,9 +800,13 @@ function FolderRowItem({
   t: AdminText;
   folder: FolderRow;
   canManage: boolean;
+  sortable: boolean;
+  dragging: boolean;
   highlighted: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
+  onHandleDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
+  onHandleMove: (event: React.PointerEvent) => void;
+  onHandleUp: () => void;
+  onHandleKey: (event: React.KeyboardEvent) => void;
   onDragOver: (event: React.DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (event: React.DragEvent) => void;
@@ -680,21 +823,52 @@ function FolderRowItem({
 
   return (
     <li
-      draggable={canManage}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
+      data-kansio=""
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      className="flex items-center gap-3 px-3"
+      className="flex items-center gap-2 px-3"
       style={{
         borderBottom: "1px solid var(--rf-line)",
-        /* Korostus kertoo mihin pudotus osuu — ilman sitä veto on arvailua. */
-        background: highlighted ? "var(--rf-inset)" : "transparent",
+        /*
+         * Kaksi eri korostusta kahdelle eri asialle.
+         *
+         * Reunus kertoo mihin pudotus osuu, kun tiedostoa raahataan
+         * kansion päälle. Taustaväri kertoo mikä rivi on kahvassa
+         * kiinni. Sama korostus molemmille tarkoittaisi kahta eri
+         * asiaa samalla merkillä.
+         */
+        background:
+          highlighted || dragging ? "var(--rf-inset)" : "transparent",
         outline: highlighted ? "2px solid var(--rf-accent)" : "none",
         outlineOffset: "-2px",
       }}
     >
+      {sortable ? (
+        <button
+          type="button"
+          /*
+           * Kahva on painike eikä div: se saa kohdistuksen sarkaimella,
+           * ja nuolinäppäimet siirtävät kansiota askeleen. Pelkkä
+           * raahaus sulkisi ulos jokaisen joka ei käytä hiirtä.
+           */
+          aria-label={`${t.tiedosto.move}: ${folder.name}`}
+          className="rf-press flex h-8 w-6 shrink-0 cursor-grab items-center justify-center"
+          style={{
+            color: "var(--rf-text-3)",
+            /* Ilman tätä selain vierittää sivua sormen mukana. */
+            touchAction: "none",
+          }}
+          onPointerDown={onHandleDown}
+          onPointerMove={onHandleMove}
+          onPointerUp={onHandleUp}
+          onPointerCancel={onHandleUp}
+          onKeyDown={onHandleKey}
+        >
+          <RfIcon name="drag" size={16} />
+        </button>
+      ) : null}
+
       <Link
         href={`/admin/tiedostot?kansio=${folder.id}`}
         className="flex min-w-0 flex-1 items-center gap-3 py-3"
