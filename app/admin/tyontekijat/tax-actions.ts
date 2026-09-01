@@ -401,3 +401,128 @@ export async function savePayrollSettings(
   revalidatePath(PATH, "layout");
   return { notice: t.verotus.saved };
 }
+
+// ---------------------------------------------------------------------------
+// Verokortin dokumentti
+// ---------------------------------------------------------------------------
+
+/**
+ * Verokortti tiedostokaappiin, ei omaan säilöönsä.
+ *
+ * Katessa on jo yksityinen tiedostokaappi käytäntöineen,
+ * käyttöoikeuksineen ja välityspalvelimineen. Toinen säilö
+ * verokorteille olisi toinen paikka jossa yksityisyys pitäisi muistaa
+ * toteuttaa oikein — ja se on juuri se paikka josta se jonain päivänä
+ * unohtuisi.
+ *
+ * Polku on Työntekijät → [nimi] → Verokortit. Kansiot luodaan
+ * tarvittaessa, mutta niitä ei nimetä uudelleen jos ne ovat olemassa:
+ * rakenne on ravintolan oma, ja käyttäjän tekemä järjestys voittaa.
+ *
+ * Pelkkä PDF kansiossa ei silti riitä palkanlaskentaan. Prosentit
+ * luetaan aina tax_cards-riviltä, ja dokumentti on todiste sen
+ * takana.
+ */
+export async function attachTaxCardDocument(input: {
+  employeeName: string;
+  name: string;
+  path: string;
+  type: string;
+  size: number;
+}): Promise<{ fileId?: string; error?: string }> {
+  const t = adminText(await resolveLocale());
+  const { restaurant, role } = await requireContext(PATH);
+
+  if (!can(role, "payroll.manage")) return { error: t.verotus.noRight };
+
+  const supabase = await createClient();
+
+  const staffFolder = await folderByKey(restaurant.id, "staff");
+  const person = await childFolder(
+    restaurant.id,
+    staffFolder,
+    input.employeeName.trim() || t.verotus.section,
+  );
+  const cards = await childFolder(restaurant.id, person, t.verotus.taxCards);
+
+  const { data, error } = await supabase.rpc("register_file", {
+    p_restaurant: restaurant.id,
+    p_folder: cards,
+    p_name: input.name.slice(0, 200),
+    p_path: input.path,
+    p_type: input.type,
+    p_size: input.size,
+    p_expires: null,
+    p_supplier: null,
+  });
+
+  if (error) {
+    /*
+     * Kirjaus epäonnistui mutta objekti on jo storagessa.
+     *
+     * Ilman siivousta jäisi tiedosto jota kukaan ei näe eikä voi
+     * poistaa: sillä ei ole riviä, joten se ei ole missään näkymässä.
+     */
+    await supabase.storage.from("files").remove([input.path]);
+    return { error: explain(error.message ?? "", t) };
+  }
+
+  revalidatePath(PATH, "layout");
+  return { fileId: typeof data === "string" ? data : undefined };
+}
+
+/** Katen lähtökansio tunnisteella. Null jos se on poistettu. */
+async function folderByKey(
+  restaurantId: string,
+  key: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("folders")
+    .select("id")
+    .eq("restaurant_id", restaurantId)
+    .eq("default_key", key)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  return (data as { id: string } | null)?.id ?? null;
+}
+
+/**
+ * Alikansio nimellä, luodaan jos puuttuu.
+ *
+ * Nimivertailu on tarkka eikä sumea. Sumea vertailu osuisi jonain
+ * päivänä väärään kansioon, ja verokortti päätyisi toisen työntekijän
+ * kansioon — juuri se virhe jota tässä ei saa tehdä.
+ */
+async function childFolder(
+  restaurantId: string,
+  parentId: string | null,
+  name: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("folders")
+    .select("id")
+    .eq("restaurant_id", restaurantId)
+    .eq("name", name)
+    .is("deleted_at", null);
+
+  query =
+    parentId === null
+      ? query.is("parent_folder_id", null)
+      : query.eq("parent_folder_id", parentId);
+
+  const { data: found } = await query.maybeSingle();
+  if (found) return (found as { id: string }).id;
+
+  const { data: created } = await supabase.rpc("create_folder", {
+    p_restaurant: restaurantId,
+    p_parent: parentId,
+    p_name: name,
+  });
+
+  return typeof created === "string" ? created : null;
+}

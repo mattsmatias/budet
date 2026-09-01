@@ -397,9 +397,10 @@ export async function approvePayslip(
    * hyväksyntä siirtäisi palkan lisäprosentin puolelle ilman että
    * mikään on muuttunut.
    */
-  const aiempi = existing.data as
-    | { taxable_cents: number; status: string }
-    | null;
+  const aiempi = existing.data as {
+    taxable_cents: number;
+    status: string;
+  } | null;
 
   const omaOsuus =
     aiempi && (aiempi.status === "approved" || aiempi.status === "paid")
@@ -748,4 +749,58 @@ export async function deactivatePayComponent(
     .eq("restaurant_id", restaurant.id);
 
   revalidatePath(PATH, "layout");
+}
+
+/**
+ * Palkkalaskelman peruminen.
+ *
+ * Peruttu laskelma ei kerrytä palkkakertymää eikä tulorajaa, mutta se
+ * ei katoa. Poistettu laskelma jättäisi aukon johon kukaan ei osaisi
+ * vastata; peruttu kertoo että jotain tapahtui ja miksi.
+ *
+ * Syy on pakollinen samasta syystä kuin työaikakorjauksessa: peruttu
+ * palkka ilman perustelua on luku jota kukaan ei osaa selittää.
+ *
+ * Tämä ei ole palkanmaksun peruminen. Kate ei maksa palkkoja, ja
+ * pankille lähtenyttä maksua ei peruta täältä.
+ */
+export async function cancelPayslip(
+  _prev: PayrollState,
+  formData: FormData,
+): Promise<PayrollState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant, role } = await requireContext(PATH);
+  if (!can(role, "payroll.manage"))
+    return { error: t.palkka.noRightApprovePay };
+
+  const userId = String(formData.get("userId") ?? "");
+  const startsOn = String(formData.get("startsOn") ?? "");
+  const endsOn = String(formData.get("endsOn") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+
+  if (!userId || !ISO_DATE.test(startsOn) || !ISO_DATE.test(endsOn)) {
+    return { error: t.palkka.periodMissing };
+  }
+
+  if (reason.length === 0) return { error: t.palkka.cancelReasonNeeded };
+
+  const row = await periodRow(restaurant.id, { startsOn, endsOn });
+  if (!row) return { error: t.palkka.periodCreateFailed };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("payslips")
+    .update({
+      status: "cancelled",
+      cancelled_at: new Date().toISOString(),
+      cancelled_reason: reason.slice(0, 500),
+    })
+    .eq("pay_period_id", row.id)
+    .eq("user_id", userId);
+
+  if (error) return { error: explain(error, t.palkka.approveFailed, t) };
+
+  revalidatePath(PATH, "layout");
+  return { notice: t.palkka.slipCancelled };
 }

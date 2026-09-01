@@ -18,6 +18,7 @@ import {
   loadTaxRules,
 } from "@/lib/restoflow/payroll-tax-queries";
 import { pickTaxCard } from "@/lib/restoflow/payroll-tax";
+import { isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { Avatar, Card, CardHeader, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import {
@@ -287,8 +288,16 @@ export default async function EmployeePayrollPage({
             <TaxCardForm
               t={t}
               userId={userId}
+              employeeName={user.name}
               card={null}
               hasCards={cards.length > 0}
+              /*
+               * Kuvantunnistus näkyy vain jos se on käytössä.
+               *
+               * Ilman avainta painike lupaisi jotain mitä ei tapahdu,
+               * ja verokortin voi aina syöttää käsin.
+               */
+              canRead={isRealExtractor()}
             />
           </div>
         ) : null}
