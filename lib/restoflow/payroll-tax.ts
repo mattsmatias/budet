@@ -310,48 +310,83 @@ export function benefitsForPeriod(
   from: string,
   to: string,
 ): number {
-  let yhteensa = 0;
+  return benefits.reduce(
+    (sum, benefit) =>
+      sum +
+      prorateMonthly(
+        benefit.monthlyValueCents,
+        from,
+        to,
+        benefit.validFrom,
+        benefit.validTo,
+      ),
+    0,
+  );
+}
 
-  for (const benefit of benefits) {
-    let arvo = 0;
+/**
+ * Kuukausiarvo jaksolle päivien suhteessa.
+ *
+ * Sama laskutoimitus tarvitaan kahteen asiaan: luontoisedun
+ * verotusarvoon ja kuukausipalkkaan. Molemmissa kysymys on sama —
+ * kuinka suuri osa kuukaudesta tämä jakso on — ja kaksi toteutusta
+ * ajautuisi erilleen juuri karkausvuoden helmikuussa.
+ *
+ * Kuukausi kerrallaan, koska kuukausien pituus vaihtelee. Maaliskuun
+ * puolikas on 15/31 ja helmikuun 14/28, eikä kumpikaan ole "puoli".
+ * Näin kaksi puolikasta summautuu takaisin kokonaiseksi kuukaudeksi.
+ *
+ * Rajaus voimassaoloon on valinnainen: kuukausipalkalla sitä ei ole,
+ * luontoisedulla on.
+ */
+export function prorateMonthly(
+  monthlyCents: number,
+  from: string,
+  to: string,
+  validFrom?: string | null,
+  validTo?: string | null,
+): number {
+  let arvo = 0;
 
-    /* Kuukausi kerrallaan: kuukausien pituus vaihtelee. */
-    let vuosi = yearOf(from);
-    let kuukausi = Number(from.slice(5, 7));
+  let vuosi = yearOf(from);
+  let kuukausi = Number(from.slice(5, 7));
 
-    const loppuVuosi = yearOf(to);
-    const loppuKuukausi = Number(to.slice(5, 7));
+  const loppuVuosi = yearOf(to);
+  const loppuKuukausi = Number(to.slice(5, 7));
 
-    while (
-      vuosi < loppuVuosi ||
-      (vuosi === loppuVuosi && kuukausi <= loppuKuukausi)
-    ) {
-      const pituus = daysInMonth(vuosi, kuukausi);
-      const kuukaudenAlku = `${vuosi}-${pad(kuukausi)}-01`;
-      const kuukaudenLoppu = `${vuosi}-${pad(kuukausi)}-${pad(pituus)}`;
+  /* Suojaus kelvottomalta jaksolta: silmukka ei saa jäädä pyörimään. */
+  let kierroksia = 0;
 
-      const alku = maxDay(maxDay(from, kuukaudenAlku), benefit.validFrom);
-      const loppu = minDay(
-        minDay(to, kuukaudenLoppu),
-        benefit.validTo ?? kuukaudenLoppu,
-      );
+  while (
+    (vuosi < loppuVuosi ||
+      (vuosi === loppuVuosi && kuukausi <= loppuKuukausi)) &&
+    kierroksia < 240
+  ) {
+    kierroksia += 1;
 
-      if (toDay(alku) <= toDay(loppu)) {
-        const paivia = (toDay(loppu) - toDay(alku)) / 86_400_000 + 1;
-        arvo += (benefit.monthlyValueCents * paivia) / pituus;
-      }
+    const pituus = daysInMonth(vuosi, kuukausi);
+    const kuukaudenAlku = `${vuosi}-${pad(kuukausi)}-01`;
+    const kuukaudenLoppu = `${vuosi}-${pad(kuukausi)}-${pad(pituus)}`;
 
-      kuukausi += 1;
-      if (kuukausi > 12) {
-        kuukausi = 1;
-        vuosi += 1;
-      }
+    const alku = maxDay(
+      maxDay(from, kuukaudenAlku),
+      validFrom ?? kuukaudenAlku,
+    );
+    const loppu = minDay(minDay(to, kuukaudenLoppu), validTo ?? kuukaudenLoppu);
+
+    if (toDay(alku) <= toDay(loppu)) {
+      const paivia = (toDay(loppu) - toDay(alku)) / 86_400_000 + 1;
+      arvo += (monthlyCents * paivia) / pituus;
     }
 
-    yhteensa += roundCents(arvo);
+    kuukausi += 1;
+    if (kuukausi > 12) {
+      kuukausi = 1;
+      vuosi += 1;
+    }
   }
 
-  return yhteensa;
+  return roundCents(arvo);
 }
 
 function pad(value: number): string {

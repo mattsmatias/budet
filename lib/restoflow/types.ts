@@ -49,6 +49,19 @@ export interface User {
   position: StaffPosition | null;
   /** Tuntipalkka sentteinä. Null kirjanpitäjälle. */
   hourlyRateCents: number | null;
+
+  /**
+   * Tunti- vai kuukausipalkka.
+   *
+   * Ravintolassa on molempia: keittiöpäällikkö kuukausipalkalla ja
+   * tarjoilijat tunneittain. Palkkatyypin puuttuminen tarkoitti että
+   * kuukausipalkkaisen palkka laskettiin tunneista — eli useimmiten
+   * nollaksi.
+   */
+  payType: "hourly" | "monthly";
+
+  /** Kuukausipalkka sentteinä. Null tuntipalkkaisella. */
+  monthlySalaryCents: number | null;
   initials: string;
   active: boolean;
 }

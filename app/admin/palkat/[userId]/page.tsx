@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { notFound } from "next/navigation";
@@ -17,6 +18,12 @@ import { formatDuration } from "@/lib/restoflow/timeclock";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
+import {
+  CostBreakdown,
+  rowsFromStored,
+  rowsFromTax,
+} from "@/components/restoflow/cost-breakdown";
+import { costsForPeriod } from "@/lib/restoflow/payroll-cost";
 import { ApprovePayslip } from "./approve";
 import { CorrectionRow } from "./correction";
 
@@ -37,7 +44,12 @@ export default async function PayslipPage({
   params,
   searchParams,
 }: PageProps<"/admin/palkat/[userId]">) {
-  const t = adminText(await resolveLocale());
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+
+  /* Intl-tunniste: prosentit käyttäjän kielellä. */
+  const tag = LOCALE_INFO[locale].tag;
+
   const { userId } = await params;
   const query = await searchParams;
   const { restaurant, role, month, now, users } =
@@ -94,6 +106,34 @@ export default async function PayslipPage({
 
   const canManage = can(role, "payroll.manage");
   const locked = stored?.status === "approved" || stored?.status === "paid";
+
+  /*
+   * Verotus ja työnantajan kustannus.
+   *
+   * Hyväksytyltä laskelmalta luetaan jäädytetyt luvut. Luonnokselle
+   * lasketaan ennuste, koska juuri sitä varten sivu avataan: mitä
+   * tämä palkka tulee maksamaan ennen kuin se hyväksytään.
+   */
+  const hyvaksytty = saved !== undefined && saved.status !== "draft";
+
+  const costs = hyvaksytty
+    ? null
+    : await costsForPeriod({
+        restaurantId: restaurant.id,
+        periodFrom: period.startsOn,
+        periodTo: period.endsOn,
+        payDate: stored?.payDate ?? null,
+        slips: [slip],
+        noPayDateMessage: t.palkka.payDateMissing,
+        noRulesMessage: t.palkka.rulesMissing,
+      });
+
+  const costRows = hyvaksytty
+    ? rowsFromStored(saved)
+    : (() => {
+        const tax = costs?.byUser.get(userId);
+        return tax ? rowsFromTax(tax) : null;
+      })();
 
   /*
    * Lisät ryhmitellään lajeittain.
@@ -258,13 +298,40 @@ export default async function PayslipPage({
             {formatMoney(slip.grossCents)}
           </span>
         </div>
+      </Card>
 
-        <p
-          className="mt-3 text-[12px] leading-relaxed"
-          style={{ color: "var(--rf-text-3)" }}
-        >
-          {t.palkka.grossExcludes}
-        </p>
+      {/* --- Vähennykset ja työnantajan kustannus ------------------------- */}
+
+      {/*
+        Tämä on se osa jonka takia palkkamoduuli on olemassa.
+
+        Bruttopalkka kertoo mitä työntekijän kanssa on sovittu.
+        Työnantajan kokonaiskustannus kertoo mitä se maksaa — ja ero on
+        noin viidennes. Ilman tätä korttia hinnoittelu perustuisi
+        väärään lukuun.
+      */}
+      <Card>
+        <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+          {t.verotus.employerCost}
+        </h2>
+
+        <div className="mt-3">
+          {costRows ? (
+            <CostBreakdown
+              t={t}
+              tag={tag}
+              rows={costRows}
+              frozen={hyvaksytty}
+            />
+          ) : (
+            <p
+              className="text-[13px]"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
+              {costs?.blocked ?? t.palkka.calcFailed}
+            </p>
+          )}
+        </div>
       </Card>
 
       {/* --- Mistä summa muodostui --------------------------------------- */}

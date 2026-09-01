@@ -68,6 +68,8 @@ export default async function MyPayPage() {
     role: restaurant.role,
     position: restaurant.position,
     hourlyRateCents: restaurant.hourlyRateCents,
+    payType: "hourly" as const,
+    monthlySalaryCents: null,
     initials: "",
     active: true,
   };

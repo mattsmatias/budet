@@ -24,6 +24,8 @@ const users: User[] = [
     role: "employee",
     position: "waiter",
     hourlyRateCents: 1500,
+    payType: "hourly" as const,
+    monthlySalaryCents: null,
     initials: "A",
     active: true,
   },

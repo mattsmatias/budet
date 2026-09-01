@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
@@ -28,6 +29,9 @@ import {
 } from "@/components/restoflow/dashboard-ui";
 import { PeriodPicker } from "./period-picker";
 import { PeriodActions } from "./period-actions";
+import { costsForPeriod, summariseCosts } from "@/lib/restoflow/payroll-cost";
+import { loadEmployerSettings } from "@/lib/restoflow/payroll-tax-queries";
+import { EmployerRates } from "./employer-rates";
 import { PayComponents } from "./components-editor";
 
 export async function generateMetadata() {
@@ -53,6 +57,9 @@ export default async function PayrollPage({
     await adminContext("/admin/palkat");
   const locale = await resolveLocale();
   const t = adminText(locale);
+
+  /* Intl-tunniste: prosentit ja summat käyttäjän kielellä. */
+  const tag = LOCALE_INFO[locale].tag;
 
   const requested =
     typeof params.kuukausi === "string" ? params.kuukausi : month;
@@ -102,6 +109,36 @@ export default async function PayrollPage({
 
   const canManage = can(role, "payroll.manage");
   const locked = stored?.status === "approved" || stored?.status === "paid";
+
+  /*
+   * Kauden kustannus työnantajalle.
+   *
+   * Lasketaan vain esihenkilölle: kustannus sisältää jokaisen
+   * työntekijän palkan, eikä se kuulu työntekijälle itselleen.
+   */
+  const costs = can(role, "payroll.manage")
+    ? await costsForPeriod({
+        restaurantId: restaurant.id,
+        periodFrom: period.startsOn,
+        periodTo: period.endsOn,
+        payDate: stored?.payDate ?? null,
+        slips: data.slips,
+        noPayDateMessage: t.palkka.payDateMissing,
+        noRulesMessage: t.palkka.rulesMissing,
+      })
+    : { byUser: new Map(), taxYear: 0, blocked: null };
+
+  const costSummary = summariseCosts(costs);
+
+  /*
+   * Ravintolan omat prosentit lomaketta varten.
+   *
+   * Erikseen kustannuslaskennasta, koska lomake tarvitsee ne myös
+   * silloin kun laskenta on kiinni puuttuvan maksupäivän takia.
+   */
+  const employerRates = canManage
+    ? await loadEmployerSettings(restaurant.id)
+    : null;
 
   const paid = data.slips
     .filter((s) => s.workedMinutes > 0)
@@ -244,6 +281,102 @@ export default async function PayrollPage({
             >
               ja {data.issues.length - 8} muuta.
             </p>
+          ) : null}
+        </Card>
+      ) : null}
+
+      {/* --- Palkkakustannus ---------------------------------------------- */}
+
+      {/*
+        Bruttopalkka ei ole palkkakustannus.
+        ------------------------------------------------------------------
+
+        Avainluvuissa on bruttopalkka, ja se on se luku jota
+        ravintoloitsija on tottunut käyttämään. Sen päälle tulee
+        eläkemaksu, sairausvakuutusmaksu ja työttömyysvakuutusmaksu —
+        noin viidennes lisää.
+
+        Tämä kortti kertoo kokonaiskustannuksen ja sen mistä se
+        muodostuu. Se on ennuste: hyväksytyillä laskelmilla luvut
+        luetaan laskelmilta, mutta kausi on harvoin kokonaan
+        hyväksytty silloin kun kustannusta kysytään.
+      */}
+      {canManage ? (
+        <Card>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
+              {t.verotus.periodCost}
+            </h2>
+            {costs.taxYear > 0 ? (
+              <span
+                className="text-[12.5px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {costs.taxYear}
+              </span>
+            ) : null}
+          </div>
+
+          {costs.blocked ? (
+            <p
+              className="mt-2 text-[13px]"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
+              {costs.blocked}
+            </p>
+          ) : (
+            <>
+              <div className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <span className="rf-tabular text-[28px] font-semibold">
+                  {formatMoney(costSummary.employerTotalCents)}
+                </span>
+                <span
+                  className="text-[13px]"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {fill(t.verotus.overhead, {
+                    prosentti: costSummary.overheadPercent.toLocaleString(tag, {
+                      maximumFractionDigits: 1,
+                    }),
+                  })}
+                </span>
+              </div>
+
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <CostFigure
+                  label={t.verotus.taxablePay}
+                  value={formatMoney(costSummary.taxableCents)}
+                />
+                <CostFigure
+                  label={t.verotus.employerContributions}
+                  value={formatMoney(costSummary.employerContributionsCents)}
+                />
+                <CostFigure
+                  label={t.verotus.withholding}
+                  value={formatMoney(costSummary.withholdingCents)}
+                />
+                <CostFigure
+                  label={t.verotus.netPay}
+                  value={formatMoney(costSummary.netCents)}
+                />
+              </dl>
+
+              <p
+                className="mt-3 text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {t.verotus.estimate}
+              </p>
+            </>
+          )}
+
+          {employerRates ? (
+            <EmployerRates
+              t={t}
+              pensionRate={employerRates.pensionRate}
+              accidentRate={employerRates.accidentRate}
+              groupLifeRate={employerRates.groupLifeRate}
+            />
           ) : null}
         </Card>
       ) : null}
@@ -412,4 +545,27 @@ function StatusPill({
   if (issues > 0) return <Pill tone="warn">{t.sanat.check}</Pill>;
   if (approved) return <Pill tone="ok">{t.palkat.approved}</Pill>;
   return <Pill tone="neutral">{t.sanat.waiting}</Pill>;
+}
+
+/**
+ * Yksi luku kustannuskortissa.
+ *
+ * Sama muoto kuin työntekijän profiilissa: pieni harmaa nimi,
+ * tasalevyinen luku. Palkkasummat luetaan allekkain, ja vaihteleva
+ * numeronleveys tekee siitä työlästä.
+ */
+function CostFigure({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+        {label}
+      </dt>
+      <dd
+        className="text-[15px] font-semibold"
+        style={{ fontVariantNumeric: "tabular-nums" }}
+      >
+        {value}
+      </dd>
+    </div>
+  );
 }

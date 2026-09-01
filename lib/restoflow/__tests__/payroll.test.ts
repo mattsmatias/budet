@@ -49,6 +49,8 @@ const user: User = {
   role: "employee",
   position: "waiter",
   hourlyRateCents: 1550,
+  payType: "hourly" as const,
+  monthlySalaryCents: null,
   initials: "MM",
   active: true,
 };
@@ -553,5 +555,97 @@ describe("yhden päivän ratkaisu", () => {
     expect(workday.source).toBe("clock");
     expect(workday.correctionId).toBeNull();
     expect(workday.workedMinutes).toBe(480);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Kuukausipalkka
+// ---------------------------------------------------------------------------
+
+describe("kuukausipalkka juoksee kalenterista, ei tunneista", () => {
+  const kk: User = {
+    ...user,
+    payType: "monthly",
+    hourlyRateCents: null,
+    monthlySalaryCents: 300_000,
+  };
+
+  it("maksaa koko kuukausipalkan koko kuukaudelta", () => {
+    const laskelma = slip({ user: kk, from: "2026-08-01", to: "2026-08-31" });
+
+    expect(laskelma.grossCents).toBe(300_000);
+    expect(laskelma.baseCents).toBe(300_000);
+  });
+
+  it("maksaa myös silloin kun tunteja ei ole yhtään", () => {
+    /*
+     * Loma tai sairaus. Tuntipohjainen laskenta antaisi nollan, ja
+     * kuukausipalkkainen jäisi ilman palkkaa juuri silloin kun sitä
+     * eniten tarvitaan.
+     */
+    const laskelma = slip({ user: kk, from: "2026-08-01", to: "2026-08-31" });
+
+    expect(laskelma.workedMinutes).toBe(0);
+    expect(laskelma.grossCents).toBe(300_000);
+  });
+
+  it("jaksottaa puolikkaalle kaudelle", () => {
+    /* 3 000,00 € × 15/31 = 1 451,61 € */
+    const laskelma = slip({ user: kk, from: "2026-08-01", to: "2026-08-15" });
+
+    expect(laskelma.grossCents).toBe(145_161);
+  });
+
+  it("ei valita puuttuvasta tuntipalkasta", () => {
+    const laskelma = slip({ user: kk, from: "2026-08-01", to: "2026-08-31" });
+
+    expect(laskelma.issues.some((i) => i.kind === "missing_rate")).toBe(false);
+  });
+
+  it("valittaa puuttuvasta kuukausipalkasta", () => {
+    const laskelma = slip({
+      user: { ...kk, monthlySalaryCents: null },
+      from: "2026-08-01",
+      to: "2026-08-31",
+    });
+
+    expect(laskelma.issues.some((i) => i.kind === "missing_rate")).toBe(true);
+    expect(laskelma.grossCents).toBe(0);
+  });
+
+  it("ei laske prosenttilisää kuukausipalkasta vaan kertoo siitä", () => {
+    /*
+     * Prosenttilisä tarkoittaa prosenttia tuntipalkasta. Jakaja
+     * (158 h, 160 h, TES:n oma) riippuu alasta, eikä Kate saa valita
+     * sitä puolesta. Hiljaa ohitettu lisä olisi puuttuvaa palkkaa jota
+     * kukaan ei huomaa.
+     */
+    const sunnuntai: PayComponent = {
+      id: "c1",
+      name: "Sunnuntailisä",
+      code: "sunday",
+      unit: "percent",
+      value: 100,
+      weekdays: [],
+      fromMinute: null,
+      toMinute: null,
+      stackable: true,
+      validFrom: "2026-01-01",
+      validTo: null,
+      active: true,
+    };
+
+    const laskelma = slip({
+      user: kk,
+      from: "2026-08-24",
+      to: "2026-08-24",
+      events: [ev("in", local("2026-08-24", "10:00")), ev("out", local("2026-08-24", "18:00"))],
+      components: [sunnuntai],
+    });
+
+    expect(laskelma.supplementsCents).toBe(0);
+    expect(laskelma.issues.some((i) => i.kind === "percent_needs_hourly")).toBe(
+      true,
+    );
   });
 });

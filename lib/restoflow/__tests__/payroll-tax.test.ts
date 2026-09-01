@@ -17,6 +17,7 @@ import {
   calculatePayslipTax,
   employerUnemploymentFor,
   pickTaxCard,
+  prorateMonthly,
   roundCents,
   withholdingFor,
   type EmployeeBenefit,
@@ -526,5 +527,37 @@ describe("ageOn", () => {
   it("palauttaa null kelvottomasta päivästä", () => {
     expect(ageOn("", "2026-05-20")).toBeNull();
     expect(ageOn("1990-05-20", "eilen")).toBeNull();
+  });
+});
+
+// ===========================================================================
+// Kuukausiarvon jaksotus
+// ===========================================================================
+
+describe("prorateMonthly", () => {
+  it("antaa koko kuukauden täydeltä kuukaudelta", () => {
+    expect(prorateMonthly(250_000, "2026-03-01", "2026-03-31")).toBe(250_000);
+  });
+
+  it("jakaa päivien suhteessa, ei puolina", () => {
+    /* 2 500,00 € × 15/31 = 1 209,68 € */
+    expect(prorateMonthly(250_000, "2026-03-01", "2026-03-15")).toBe(120_968);
+  });
+
+  it("summaa kaksi puolikasta takaisin kokonaiseksi", () => {
+    const alku = prorateMonthly(250_000, "2026-02-01", "2026-02-14");
+    const loppu = prorateMonthly(250_000, "2026-02-15", "2026-02-28");
+    expect(alku + loppu).toBe(250_000);
+  });
+
+  it("laskee kahden kuukauden yli", () => {
+    expect(prorateMonthly(250_000, "2026-03-01", "2026-04-30")).toBe(500_000);
+  });
+
+  it("rajaa voimassaoloon", () => {
+    /* Etu alkaa 16.3.: 16/31 kuukaudesta. */
+    expect(
+      prorateMonthly(3100, "2026-03-01", "2026-03-31", "2026-03-16", null),
+    ).toBe(1600);
   });
 });

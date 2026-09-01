@@ -264,11 +264,39 @@ export async function fetchUsers(restaurantId: string): Promise<User[]> {
 
   if (members.error || !members.data) return [];
 
-  const rateByUser = new Map<string, number | null>(
+  /*
+   * Palkkatiedot kokonaisina, ei pelkkänä tuntipalkkana.
+   *
+   * staff_pay_rates on palauttanut palkkatyypin ja kuukausipalkan
+   * alusta asti, mutta ne jätettiin lukematta. Kuukausipalkkaisen
+   * palkka laskettiin siksi tunneista — eli nollaksi, koska
+   * tuntipalkkaa ei ole.
+   */
+  const payByUser = new Map<
+    string,
+    {
+      hourlyRateCents: number | null;
+      monthlySalaryCents: number | null;
+      payType: User["payType"];
+    }
+  >(
     (
       (rates.data as
-        { user_id: string; hourly_rate_cents: number | null }[] | null) ?? []
-    ).map((row) => [row.user_id, row.hourly_rate_cents]),
+        | {
+            user_id: string;
+            hourly_rate_cents: number | null;
+            monthly_salary_cents: number | null;
+            pay_type: User["payType"];
+          }[]
+        | null) ?? []
+    ).map((row) => [
+      row.user_id,
+      {
+        hourlyRateCents: row.hourly_rate_cents,
+        monthlySalaryCents: row.monthly_salary_cents,
+        payType: row.pay_type ?? "hourly",
+      },
+    ]),
   );
 
   return members.data.map((row) => {
@@ -283,7 +311,9 @@ export async function fetchUsers(restaurantId: string): Promise<User[]> {
       name,
       role: row.role as User["role"],
       position: (row.position as User["position"]) ?? null,
-      hourlyRateCents: rateByUser.get(id) ?? null,
+      hourlyRateCents: payByUser.get(id)?.hourlyRateCents ?? null,
+      monthlySalaryCents: payByUser.get(id)?.monthlySalaryCents ?? null,
+      payType: payByUser.get(id)?.payType ?? "hourly",
       initials: initialsOf(name),
       active: Boolean(row.active),
     };
@@ -1123,13 +1153,46 @@ export async function fetchCorrectionHistory(
 export interface StoredPayslip {
   id: string;
   userId: string;
-  status: "draft" | "review" | "approved";
+  status: "draft" | "review" | "approved" | "paid" | "cancelled";
   workedMinutes: number;
   baseCents: number;
   supplementsCents: number;
   grossCents: number;
   sourceFingerprint: string;
   approvedAt: string | null;
+
+  /**
+   * Jäädytetty verotus.
+   *
+   * Nämä ovat ne luvut jotka laskelmalle tallennettiin hyväksymisen
+   * hetkellä. Niitä ei lasketa uudelleen luettaessa: sääntöjen
+   * muuttuminen ei saa muuttaa jo maksettua palkkaa.
+   *
+   * Luonnoksella nämä ovat nollia, koska laskelmaa ei ole vielä
+   * tehty. Näkymä laskee silloin ennusteen erikseen.
+   */
+  benefitsCents: number;
+  taxableCents: number;
+  withholdingCents: number;
+  employeePensionCents: number;
+  employeeUnemploymentCents: number;
+  netCents: number;
+  employerPensionCents: number;
+  employerHealthCents: number;
+  employerUnemploymentCents: number;
+  employerAccidentCents: number;
+  employerGroupLifeCents: number;
+
+  noTaxCard: boolean;
+  payDate: string | null;
+  taxBasePercentUsed: number | null;
+  employeePensionRateUsed: number | null;
+  employeeUnemploymentRateUsed: number | null;
+  employerPensionRateUsed: number | null;
+  employerHealthRateUsed: number | null;
+  employerUnemploymentRateUsed: number | null;
+  employerAccidentRateUsed: number | null;
+  employerGroupLifeRateUsed: number | null;
 }
 
 export async function fetchPayslips(
@@ -1139,13 +1202,28 @@ export async function fetchPayslips(
   const { data, error } = await supabase
     .from("payslips")
     .select(
-      "id, user_id, status, worked_minutes, base_cents, supplements_cents, gross_cents, source_fingerprint, approved_at",
+      "id, user_id, status, worked_minutes, base_cents, supplements_cents, " +
+        "gross_cents, source_fingerprint, approved_at, pay_date, " +
+        "benefits_cents, taxable_cents, withholding_cents, net_cents, " +
+        "employee_pension_cents, employee_unemployment_cents, " +
+        "employer_pension_cents, employer_health_cents, " +
+        "employer_unemployment_cents, employer_accident_cents, " +
+        "employer_group_life_cents, no_tax_card, tax_base_percent_used, " +
+        "employee_pension_rate_used, employee_unemployment_rate_used, " +
+        "employer_pension_rate_used, employer_health_rate_used, " +
+        "employer_unemployment_rate_used, employer_accident_rate_used, " +
+        "employer_group_life_rate_used",
     )
     .eq("pay_period_id", periodId);
 
   if (error || !data) return [];
 
-  return data.map((row) => ({
+  /*
+   * Sarakelista on koottu paloista, eikä tyyppipäättely seuraa sitä.
+   * Muunnos on käsin tehty joka tapauksessa, joten rivi luetaan
+   * avainten kautta.
+   */
+  return (data as unknown as Record<string, unknown>[]).map((row) => ({
     id: row.id as string,
     userId: row.user_id as string,
     status: row.status as StoredPayslip["status"],
@@ -1155,7 +1233,48 @@ export async function fetchPayslips(
     grossCents: (row.gross_cents as number | null) ?? 0,
     sourceFingerprint: (row.source_fingerprint as string | null) ?? "",
     approvedAt: (row.approved_at as string | null) ?? null,
+
+    benefitsCents: (row.benefits_cents as number | null) ?? 0,
+    taxableCents: (row.taxable_cents as number | null) ?? 0,
+    withholdingCents: (row.withholding_cents as number | null) ?? 0,
+    employeePensionCents: (row.employee_pension_cents as number | null) ?? 0,
+    employeeUnemploymentCents:
+      (row.employee_unemployment_cents as number | null) ?? 0,
+    netCents: (row.net_cents as number | null) ?? 0,
+    employerPensionCents: (row.employer_pension_cents as number | null) ?? 0,
+    employerHealthCents: (row.employer_health_cents as number | null) ?? 0,
+    employerUnemploymentCents:
+      (row.employer_unemployment_cents as number | null) ?? 0,
+    employerAccidentCents: (row.employer_accident_cents as number | null) ?? 0,
+    employerGroupLifeCents:
+      (row.employer_group_life_cents as number | null) ?? 0,
+
+    noTaxCard: Boolean(row.no_tax_card),
+    payDate: (row.pay_date as string | null) ?? null,
+
+    /* numeric tulee merkkijonona, ja Number(null) olisi nolla. */
+    taxBasePercentUsed: num(row.tax_base_percent_used),
+    employeePensionRateUsed: num(row.employee_pension_rate_used),
+    employeeUnemploymentRateUsed: num(row.employee_unemployment_rate_used),
+    employerPensionRateUsed: num(row.employer_pension_rate_used),
+    employerHealthRateUsed: num(row.employer_health_rate_used),
+    employerUnemploymentRateUsed: num(row.employer_unemployment_rate_used),
+    employerAccidentRateUsed: num(row.employer_accident_rate_used),
+    employerGroupLifeRateUsed: num(row.employer_group_life_rate_used),
   }));
+}
+
+/**
+ * numeric merkkijonosta luvuksi, null nullina.
+ *
+ * PostgREST palauttaa numeric-sarakkeet merkkijonoina. Number(null)
+ * on nolla, ja nolla prosenttia on eri väite kuin "prosenttia ei ole
+ * tallennettu".
+ */
+function num(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  const luku = Number(value);
+  return Number.isFinite(luku) ? luku : null;
 }
 
 // ---------------------------------------------------------------------------

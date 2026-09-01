@@ -30,6 +30,9 @@ import type { ClockEvent, Shift, User } from "./types";
 // Tyypit
 // ---------------------------------------------------------------------------
 
+/* Sama jaksotus kuin luontoiseduilla: yksi laskutoimitus, yksi paikka. */
+import { prorateMonthly } from "./payroll-tax";
+
 export type PayComponentUnit = "per_hour" | "percent" | "fixed";
 
 export interface PayComponent {
@@ -62,7 +65,20 @@ export interface TimeCorrection {
 }
 
 export type PayrollIssueKind =
-  "missing_out" | "missing_rate" | "illogical" | "implausible" | "running";
+  /*
+   * Prosenttilisä kuukausipalkkaiselle.
+   *
+   * Prosenttilisä lasketaan tuntipalkasta, eikä kuukausipalkkaisella
+   * ole sellaista. Jakaja (158 h, 160 h, työehtosopimuksen oma)
+   * riippuu alasta ja sopimuksesta, eikä Kate saa valita sitä
+   * puolesta — arvattu jakaja olisi väärä lisä joka näyttää oikealta.
+   */
+  | "percent_needs_hourly"
+  | "missing_out"
+  | "missing_rate"
+  | "illogical"
+  | "implausible"
+  | "running";
 
 /**
  * Pisin uskottava yhtenäinen työjakso.
@@ -331,6 +347,16 @@ export function rankComponents(
  * yhteen päivään ja yhteen vuoroon. Summa pyöristetään vasta riviä
  * kohti: minuuttikohtainen pyöristys kertyisi kuukaudessa euroiksi.
  */
+/**
+ * Kuukausipalkka jaksolle.
+ *
+ * Kuukausipalkkaisen palkka ei riipu tehdyistä tunneista: se juoksee
+ * kalenterista. Puolikuukausikaudella maksetaan puolet, ja kaksi
+ * puolikasta summautuu takaisin kokonaiseksi kuukaudeksi.
+ *
+ * Tunnit kirjataan silti, koska lisät lasketaan niistä ja koska
+ * työaikakirjanpito on oma velvoitteensa.
+ */
 export function buildPayslip(input: {
   user: User;
   from: string;
@@ -356,11 +382,22 @@ export function buildPayslip(input: {
 
   const mine = events.filter((e) => e.userId === user.id);
   const rate = user.hourlyRateCents;
+  const monthly = user.payType === "monthly";
   const issues: PayrollIssue[] = [];
   const lines: PayslipLine[] = [];
   const workdays: Workday[] = [];
 
-  if (rate === null || rate === 0) {
+  /*
+   * Kumpi palkkatieto puuttuu.
+   *
+   * Kuukausipalkkaiselta tuntipalkan puuttuminen on normaalia, ja
+   * varoitus siitä olisi ollut varoitus joka ei koskaan poistu.
+   */
+  const palkkaPuuttuu = monthly
+    ? user.monthlySalaryCents === null || user.monthlySalaryCents === 0
+    : rate === null || rate === 0;
+
+  if (palkkaPuuttuu) {
     issues.push({
       kind: "missing_rate",
       userId: user.id,
@@ -392,22 +429,29 @@ export function buildPayslip(input: {
     workdays.push(workday);
 
     // --- Peruspalkka -----------------------------------------------------
+    //
+    // Kuukausipalkkaisella peruspalkka ei ole päivärivi vaan yksi
+    // jaksorivi, joka kirjoitetaan silmukan jälkeen. Päivärivi
+    // tuntipalkalla kertoisi väärän summan ja tuntipalkka nollana
+    // näyttäisi ilmaiselta työpäivältä.
 
-    const baseCents =
-      rate === null
-        ? 0
-        : Math.round(msToHours(workday.workedMinutes * 60000) * rate);
+    if (!monthly) {
+      const baseCents =
+        rate === null
+          ? 0
+          : Math.round(msToHours(workday.workedMinutes * 60000) * rate);
 
-    lines.push({
-      date,
-      shiftId: workday.shiftId,
-      componentId: null,
-      correctionId: workday.correctionId,
-      description: describeWorkday(workday, timezone),
-      minutes: workday.workedMinutes,
-      rateCents: rate ?? 0,
-      amountCents: baseCents,
-    });
+      lines.push({
+        date,
+        shiftId: workday.shiftId,
+        componentId: null,
+        correctionId: workday.correctionId,
+        description: describeWorkday(workday, timezone),
+        minutes: workday.workedMinutes,
+        rateCents: rate ?? 0,
+        amountCents: baseCents,
+      });
+    }
 
     // --- Lisät -----------------------------------------------------------
 
@@ -429,6 +473,29 @@ export function buildPayslip(input: {
     for (const component of applicable) {
       const minutes = componentMinutes(workday.segments, component, timezone);
       if (minutes === 0) continue;
+
+      /*
+       * Prosenttilisää ei lasketa kuukausipalkasta.
+       *
+       * Se tarkoittaa prosenttia tuntipalkasta, ja tuntipalkan
+       * johtaminen kuukausipalkasta vaatisi jakajan jota Kate ei
+       * tiedä. Lisä jätetään laskematta ja siitä kerrotaan — hiljaa
+       * ohitettu lisä olisi puuttuvaa palkkaa jota kukaan ei huomaa.
+       */
+      if (monthly && component.unit === "percent") {
+        if (!issues.some((i) => i.kind === "percent_needs_hourly")) {
+          issues.push({
+            kind: "percent_needs_hourly",
+            userId: user.id,
+            date,
+            message:
+              `${user.name}: ${component.name} on prosenttilisä, eikä sitä ` +
+              `voi laskea kuukausipalkasta ilman tuntipalkkaa. Lisä jäi ` +
+              `laskematta.`,
+          });
+        }
+        continue;
+      }
 
       const payable = component.stackable
         ? minutes
@@ -459,6 +526,27 @@ export function buildPayslip(input: {
         amountCents,
       });
     }
+  }
+
+  /*
+   * Kuukausipalkan jaksorivi.
+   *
+   * Yksi rivi koko kaudelta, kauden viimeisenä päivänä. Se maksetaan
+   * myös silloin kun tunteja ei ole yhtään: kuukausipalkka ei riipu
+   * tehdyistä tunneista, ja loman tai sairauden takia tyhjä kausi on
+   * juuri se tilanne jossa tuntipohjainen laskenta antaisi nollan.
+   */
+  if (monthly && user.monthlySalaryCents) {
+    lines.unshift({
+      date: to,
+      shiftId: null,
+      componentId: null,
+      correctionId: null,
+      description: `${from} – ${to}`,
+      minutes: workdays.reduce((sum, d) => sum + d.workedMinutes, 0),
+      rateCents: user.monthlySalaryCents,
+      amountCents: prorateMonthly(user.monthlySalaryCents, from, to),
+    });
   }
 
   const workedMinutes = workdays.reduce((sum, d) => sum + d.workedMinutes, 0);

@@ -23,6 +23,8 @@ function user(id: string, name: string): User {
     role: "employee",
     position: "waiter",
     hourlyRateCents: 1500,
+    payType: "hourly" as const,
+    monthlySalaryCents: null,
     active: true,
   };
 }
