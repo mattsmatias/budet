@@ -217,9 +217,10 @@ export default async function AdminReceiptDetailPage({
               className="px-4 text-[13px] leading-relaxed"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Kuitilla on {vat.rates.length} verokantaa:{" "}
-              {vat.rates.map(formatRate).join(" ja ")}. Rivien verot summautuvat
-              kuittiin merkittyyn ALV:hen.
+              {fill(t.kuitit.multipleRates, {
+                maara: String(vat.rates.length),
+                kannat: vat.rates.map(formatRate).join(t.kuva.orSep),
+              })}
             </p>
           ) : null}
 

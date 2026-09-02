@@ -279,7 +279,9 @@ export default async function PayrollPage({
               className="mt-3 text-[12px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              ja {data.issues.length - 8} muuta.
+              {fill(t.palkat.andMore, {
+                maara: String(data.issues.length - 8),
+              })}
             </p>
           ) : null}
         </Card>

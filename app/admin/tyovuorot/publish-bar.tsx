@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import { useFormStatus } from "react-dom";
 import { publishShifts, type AdminState } from "../actions";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -78,8 +79,10 @@ export function PublishBar({
             className="text-[13.5px] font-bold"
             style={{ color: "var(--rf-amber-text)" }}
           >
-            {drafts}{" "}
-            {drafts === 1 ? "julkaisematon vuoro" : "julkaisematonta vuoroa"}
+            {fill(
+              drafts === 1 ? t.vuoro.unpublishedOne : t.vuoro.unpublishedMany,
+              { maara: String(drafts) },
+            )}
           </p>
           <p
             className="mt-0.5 text-[12.5px] leading-relaxed"
@@ -118,7 +121,7 @@ export function PublishBar({
             className="text-[13px] font-bold"
             style={{ color: "var(--rf-amber-text)" }}
           >
-            Julkaise {monthLabel} työvuorot?
+            {fill(t.vuoro.publishAsk, { kuukausi: monthLabel })}
           </p>
 
           <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[12.5px]">

@@ -257,7 +257,9 @@ export default async function ShiftCalendarPage({
             tone={plan.missingRates > 0 ? "warn" : "muted"}
             conclusion={
               plan.missingRates > 0
-                ? `${plan.missingRates} ilman tuntipalkkaa — arvio on vajaa`
+                ? fill(t.vuoro.missingRatesNote, {
+                    maara: String(plan.missingRates),
+                  })
                 : t.vuoro.hoursTimesRate
             }
           />
@@ -391,7 +393,9 @@ export default async function ShiftCalendarPage({
                 className={`rf-cal w-full ${view === "viikko" ? "rf-cal-week-view" : ""}`}
               >
                 <caption className="sr-only">
-                  Työvuorokalenteri {formatMonth(viewMonth, locale)}
+                  {fill(t.vuoro.calendarCaption, {
+                    kuukausi: formatMonth(viewMonth, locale),
+                  })}
                 </caption>
 
                 <thead>

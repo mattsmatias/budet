@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { labels, type Labels } from "@/lib/i18n/labels";
+import { labels, shiftCountIn, type Labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import type { AdminText } from "@/lib/i18n/admin-text";
@@ -166,7 +166,9 @@ export default async function AdminShiftsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {upcoming.length} tulevaa
+            {fill(t.vuorot.upcomingCount, {
+              maara: String(upcoming.length),
+            })}
             {openShifts.length > 0
               ? fill(t.lauseet.openSuffix, { maara: String(openShifts.length) })
               : ""}
@@ -479,7 +481,9 @@ export default async function AdminShiftsPage() {
               className="mt-3 text-[12px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              Näytetään 12 ensimmäistä {deviations.length} poikkeamasta.
+              {fill(t.vuorot.deviationsShown, {
+                maara: String(deviations.length),
+              })}
             </p>
           ) : null}
         </Card>
@@ -657,8 +661,10 @@ export default async function AdminShiftsPage() {
                       className="rf-tabular text-[12px]"
                       style={{ color: "var(--rf-text-3)" }}
                     >
-                      {pattern.shiftCount} vuoroa · yhteensä{" "}
-                      {formatVariance(pattern.totalVarianceMs)}
+                      {fill(t.vuorot.patternTotal, {
+                        vuorot: shiftCountIn(pattern.shiftCount, locale),
+                        ero: formatVariance(pattern.totalVarianceMs),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -673,16 +679,20 @@ export default async function AdminShiftsPage() {
                           : "var(--rf-text-2)",
                     }}
                   >
-                    {formatVariance(pattern.averageVarianceMs)} / vuoro
+                    {fill(t.vuorot.perShift, {
+                      ero: formatVariance(pattern.averageVarianceMs),
+                    })}
                   </p>
                   {showsRates ? (
                     <p
                       className="rf-tabular text-[12px]"
                       style={{ color: "var(--rf-text-3)" }}
                     >
-                      {pattern.costImpactCents >= 0 ? "+" : "−"}
-                      {formatMoney(Math.abs(pattern.costImpactCents))}{" "}
-                      kustannusvaikutus
+                      {fill(t.vuorot.costImpact, {
+                        summa:
+                          (pattern.costImpactCents >= 0 ? "+" : "−") +
+                          formatMoney(Math.abs(pattern.costImpactCents)),
+                      })}
                     </p>
                   ) : null}
                 </div>
@@ -756,7 +766,7 @@ export default async function AdminShiftsPage() {
                         }}
                       >
                         {c.actualMs === 0
-                          ? "ei leimauksia"
+                          ? t.vuorot.noClockings
                           : formatVariance(c.varianceMs)}
                       </td>
                     </tr>
@@ -817,7 +827,10 @@ function ShiftRow({
               className="rf-tabular text-[12px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              oli {shift.previousStartTime}–{shift.previousEndTime}
+              {fill(t.vuorot.wasTime, {
+                alku: shift.previousStartTime,
+                loppu: shift.previousEndTime ?? "",
+              })}
             </p>
           ) : null}
         </div>

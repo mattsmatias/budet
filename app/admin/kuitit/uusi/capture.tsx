@@ -694,7 +694,10 @@ export function CaptureFlow({
 
           {previews.length > 1 ? (
             <p className="rf-tabular text-[13px] text-white/80">
-              Sivu {zoomed + 1} / {previews.length}
+              {fill(t.kuva.pageOfPages, {
+                sivu: String(zoomed + 1),
+                kaikki: String(previews.length),
+              })}
             </p>
           ) : null}
         </div>
@@ -1367,7 +1370,7 @@ function VatField({
           }}
         >
           {computed ? t.kuva.calculated + " " : ""}
-          Vastaa {formatRate(inferred)} kantaa
+          {fill(t.kuva.matchesRate, { kanta: formatRate(inferred) })}
           {mismatch
             ? fill(t.kuva.expectedRate, {
                 kannat: expected.map(formatRate).join(t.kuva.orSep),

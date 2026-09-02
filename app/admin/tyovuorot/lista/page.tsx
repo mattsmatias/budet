@@ -3,7 +3,7 @@ import type { AppLocale } from "@/lib/i18n/app-locales";
 import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
-import { labels, type Labels } from "@/lib/i18n/labels";
+import { labels, shiftCountIn, type Labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
@@ -171,7 +171,10 @@ export default async function RosterPage({
             {openCount > 0
               ? fill(t.vuoro.openSuffix, { maara: String(openCount) })
               : ""}{" "}
-            · {formatPlannedHours(roster.plannedMinutes)} suunniteltua työaikaa
+            ·{" "}
+            {fill(t.vuoro.plannedTimeLine, {
+              tunnit: formatPlannedHours(roster.plannedMinutes),
+            })}
           </p>
 
           {/*
@@ -193,9 +196,9 @@ export default async function RosterPage({
               <span className="mt-px shrink-0">
                 <RfIcon name="alert" size={15} />
               </span>
-              {draftCount} {draftCount === 1 ? "vuoro on" : "vuoroa on"} yhä
-              luonnoksena eikä näy työntekijöille. Julkaise ne työvuorosivulla
-              ennen kuin tulostat listan.
+              {fill(t.vuoro.draftWarning, {
+                vuorot: shiftCountIn(draftCount, locale),
+              })}
             </p>
           ) : null}
 
@@ -210,8 +213,9 @@ export default async function RosterPage({
               <div className="overflow-x-auto print:overflow-visible">
                 <table className="rf-roster w-full">
                   <caption className="sr-only">
-                    Työvuorot {formatMonth(viewMonth, locale)}, työntekijät
-                    riveinä ja päivät sarakkeina
+                    {fill(t.vuoro.rosterCaption, {
+                      kuukausi: formatMonth(viewMonth, locale),
+                    })}
                   </caption>
 
                   <thead>
@@ -321,7 +325,7 @@ export default async function RosterPage({
             className="hidden text-[10px] print:block"
             style={{ color: "var(--rf-text-3)" }}
           >
-            Luotu Katella {printedAt}
+            {fill(t.vuoro.printedBy, { aika: printedAt })}
           </p>
 
           <p

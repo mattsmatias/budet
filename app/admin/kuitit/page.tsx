@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { labels } from "@/lib/i18n/labels";
+import { hitCountIn, labels, receiptCountIn } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -161,8 +161,8 @@ export default async function AdminReceiptsPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-            {formatMonth(month, locale)} · {visible.length} kuittia ·{" "}
-            {formatMoney(total)}
+            {formatMonth(month, locale)} ·{" "}
+            {receiptCountIn(visible.length, locale)} · {formatMoney(total)}
             {reviewCount > 0 && filter === "all"
               ? fill(t.viimeiset.toCheckSuffix, { maara: String(reviewCount) })
               : ""}
@@ -173,8 +173,9 @@ export default async function AdminReceiptsPage({
               className="mt-1 text-[12.5px]"
               style={{ color: "var(--rf-text-3)" }}
             >
-              {elsewhere} {elsewhere === 1 ? "osuma" : "osumaa"} muilta
-              kuukausilta — vaihda kuukautta nähdäksesi ne.
+              {fill(t.kuitit.otherMonths, {
+                osumat: hitCountIn(elsewhere, locale),
+              })}
             </p>
           ) : null}
         </div>

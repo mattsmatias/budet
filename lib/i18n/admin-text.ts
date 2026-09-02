@@ -1978,6 +1978,22 @@ const fi = {
     noneCouldBeDeletedBody:
       "Yhtäkään valittua vuoroa ei voitu poistaa. Mennyttä nimettyä vuoroa ei voi poistaa, ja jo peruttu on jo peruttu.",
     createdAsDrafts: "{maara} luotu luonnoksena",
+    publishAsk: "Julkaise {kuukausi} työvuorot?",
+    missingRatesNote: "{maara} ilman tuntipalkkaa — arvio on vajaa",
+    calendarCaption: "Työvuorokalenteri {kuukausi}",
+    rosterCaption:
+      "Työvuorot {kuukausi}, työntekijät riveinä ja päivät sarakkeina",
+    printedBy: "Luotu Katella {aika}",
+    plannedTimeLine: "{tunnit} suunniteltua työaikaa",
+    draftWarning:
+      "{vuorot} on yhä luonnoksena eikä näy työntekijöille. Julkaise ne työvuorosivulla ennen kuin tulostat listan.",
+    removedNote: "{vuorot} poistetaan lopullisesti.",
+    cancelledNote:
+      "{vuorot} perutaan — työntekijä saa tiedon ja rivi jää historiaan.",
+    willBeBlocked:
+      "{vuorot} jää koskematta: mennyt nimetty vuoro tai jo peruttu.",
+    unpublishedOne: "{maara} julkaisematon vuoro",
+    unpublishedMany: "{maara} julkaisematonta vuoroa",
   },
   palkka: {
     periodApproved: "Palkkakausi on hyväksytty",
@@ -2138,6 +2154,7 @@ const fi = {
     cancelReason: "Syy",
     cancelReasonNeeded:
       "Kerro miksi laskelma perutaan. Peruttu palkka ilman perustelua on luku jota kukaan ei osaa selittää.",
+    payPeriodRange: "Palkkakausi {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "Viikkoa ei ole vielä luotu.",
@@ -2343,6 +2360,8 @@ const fi = {
     expectedRate: ", odotettu {kannat}",
     vatEuros: "ALV {maara} €",
     orSep: " tai ",
+    pageOfPages: "Sivu {sivu} / {kaikki}",
+    matchesRate: "Vastaa {kanta} kantaa",
   },
 
   matti: {
@@ -2571,6 +2590,9 @@ const fi = {
     onlyBooked: " · vain kirjatut",
     asOf: "Tilanne {paiva}",
     figuresFromBooks: "{kuukausi} · luvut kirjanpidosta",
+    voucherNumber: "Tosite {numero}",
+    sourceAmount: "Lähde {summa}",
+    ledgerAmount: "Kirjanpito {summa}",
   },
 
   toimittajat: {
@@ -2736,6 +2758,13 @@ const fi = {
     day: "Päivä",
     assignee: "Tekijä",
     pastShifts: "{maara} mennyttä vuoroa",
+    upcomingCount: "{maara} tulevaa",
+    deviationsShown: "Näytetään 12 ensimmäistä {maara} poikkeamasta.",
+    wasTime: "oli {alku}–{loppu}",
+    patternTotal: "{vuorot} · yhteensä {ero}",
+    perShift: "{ero} / vuoro",
+    costImpact: "{summa} kustannusvaikutus",
+    noClockings: "ei leimauksia",
   },
 
   henkilosto: {
@@ -2764,6 +2793,7 @@ const fi = {
     supplements: "Lisät",
     approved: "Hyväksytty",
     supplementsSuffix: " · lisät {summa}",
+    andMore: "ja {maara} muuta.",
   },
 
   luokat: {
@@ -2842,6 +2872,10 @@ const fi = {
       "Kuva arvioitiin epäselväksi. Tarkista luvut erityisen huolellisesti.",
     deleteWarning:
       "Poisto on peruuttamaton. Jos kyseessä on kaksoiskappale, poista se — jos erillinen ostos, jätä molemmat.",
+    otherMonths:
+      "{osumat} muilta kuukausilta — vaihda kuukautta nähdäksesi ne.",
+    multipleRates:
+      "Kuitilla on {maara} verokantaa: {kannat}. Rivien verot summautuvat kuittiin merkittyyn ALV:hen.",
   },
 
   kulut: {
@@ -4811,6 +4845,22 @@ const en: AdminText = {
     noneCouldBeDeletedBody:
       "None of the selected shifts could be deleted. A past named shift cannot be deleted, and one already cancelled is already cancelled.",
     createdAsDrafts: "{maara} created as drafts",
+    publishAsk: "Publish the shifts for {kuukausi}?",
+    missingRatesNote:
+      "{maara} without an hourly rate — the estimate is incomplete",
+    calendarCaption: "Shift calendar {kuukausi}",
+    rosterCaption: "Shifts {kuukausi}, staff as rows and days as columns",
+    printedBy: "Created with Kate {aika}",
+    plannedTimeLine: "{tunnit} of planned working time",
+    draftWarning:
+      "{vuorot} not yet published and not visible to staff. Publish them on the shifts page before printing the list.",
+    removedNote: "{vuorot} deleted permanently.",
+    cancelledNote:
+      "{vuorot} cancelled — staff are notified and the row stays in history.",
+    willBeBlocked:
+      "{vuorot} left untouched: a past named shift or already cancelled.",
+    unpublishedOne: "{maara} unpublished shift",
+    unpublishedMany: "{maara} unpublished shifts",
   },
   palkka: {
     periodApproved: "The pay period is approved",
@@ -4973,6 +5023,7 @@ const en: AdminText = {
     cancelReason: "Reason",
     cancelReasonNeeded:
       "Say why the payslip is cancelled. A cancelled payslip without a reason is a figure nobody can explain.",
+    payPeriodRange: "Pay period {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "The week has not been created yet.",
@@ -5180,6 +5231,8 @@ const en: AdminText = {
     expectedRate: ", expected {kannat}",
     vatEuros: "VAT {maara} €",
     orSep: " or ",
+    pageOfPages: "Page {sivu} / {kaikki}",
+    matchesRate: "Matches the {kanta} rate",
   },
 
   matti: {
@@ -5410,6 +5463,9 @@ const en: AdminText = {
     onlyBooked: " · booked only",
     asOf: "As of {paiva}",
     figuresFromBooks: "{kuukausi} · figures from the books",
+    voucherNumber: "Voucher {numero}",
+    sourceAmount: "Source {summa}",
+    ledgerAmount: "Ledger {summa}",
   },
 
   toimittajat: {
@@ -5575,6 +5631,13 @@ const en: AdminText = {
     day: "Day",
     assignee: "Assignee",
     pastShifts: "{maara} past shifts",
+    upcomingCount: "{maara} upcoming",
+    deviationsShown: "Showing the first 12 of {maara} deviations.",
+    wasTime: "was {alku}–{loppu}",
+    patternTotal: "{vuorot} · {ero} in total",
+    perShift: "{ero} / shift",
+    costImpact: "{summa} cost impact",
+    noClockings: "no clock-ins",
   },
 
   henkilosto: {
@@ -5604,6 +5667,7 @@ const en: AdminText = {
     supplements: "Supplements",
     approved: "Approved",
     supplementsSuffix: " · supplements {summa}",
+    andMore: "and {maara} more.",
   },
 
   luokat: {
@@ -5682,6 +5746,9 @@ const en: AdminText = {
       "The image was judged unclear. Check the figures especially carefully.",
     deleteWarning:
       "Deleting cannot be undone. If this is a duplicate, delete it — if a separate purchase, keep both.",
+    otherMonths: "{osumat} from other months — switch month to see them.",
+    multipleRates:
+      "The receipt has {maara} tax rates: {kannat}. The line taxes add up to the VAT written on the receipt.",
   },
 
   kulut: {
@@ -7641,6 +7708,21 @@ const sv: AdminText = {
     noneCouldBeDeletedBody:
       "Inget av de valda passen kunde tas bort. Ett passerat namngivet pass kan inte tas bort, och ett redan inställt är redan inställt.",
     createdAsDrafts: "{maara} skapade som utkast",
+    publishAsk: "Publicera passen för {kuukausi}?",
+    missingRatesNote: "{maara} utan timlön — uppskattningen är ofullständig",
+    calendarCaption: "Schemakalender {kuukausi}",
+    rosterCaption: "Pass {kuukausi}, personal som rader och dagar som kolumner",
+    printedBy: "Skapad med Kate {aika}",
+    plannedTimeLine: "{tunnit} planerad arbetstid",
+    draftWarning:
+      "{vuorot} är ännu utkast och syns inte för personalen. Publicera dem på passidan innan du skriver ut listan.",
+    removedNote: "{vuorot} raderas permanent.",
+    cancelledNote:
+      "{vuorot} avbokas — personalen får besked och raden stannar i historiken.",
+    willBeBlocked:
+      "{vuorot} lämnas orörda: ett passerat namngivet pass eller redan avbokat.",
+    unpublishedOne: "{maara} opublicerat pass",
+    unpublishedMany: "{maara} opublicerade pass",
   },
   palkka: {
     periodApproved: "Löneperioden är godkänd",
@@ -7804,6 +7886,7 @@ const sv: AdminText = {
     cancelReason: "Orsak",
     cancelReasonNeeded:
       "Ange varför lönespecifikationen annulleras. En annullerad lön utan motivering är en siffra ingen kan förklara.",
+    payPeriodRange: "Löneperiod {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "Veckan har inte skapats än.",
@@ -8011,6 +8094,8 @@ const sv: AdminText = {
     expectedRate: ", förväntat {kannat}",
     vatEuros: "Moms {maara} €",
     orSep: " eller ",
+    pageOfPages: "Sida {sivu} / {kaikki}",
+    matchesRate: "Motsvarar {kanta} skattesats",
   },
 
   matti: {
@@ -8240,6 +8325,9 @@ const sv: AdminText = {
     onlyBooked: " · endast bokförda",
     asOf: "Läget {paiva}",
     figuresFromBooks: "{kuukausi} · siffror ur bokföringen",
+    voucherNumber: "Verifikat {numero}",
+    sourceAmount: "Källa {summa}",
+    ledgerAmount: "Bokföring {summa}",
   },
 
   toimittajat: {
@@ -8405,6 +8493,13 @@ const sv: AdminText = {
     day: "Dag",
     assignee: "Person",
     pastShifts: "{maara} passerade pass",
+    upcomingCount: "{maara} kommande",
+    deviationsShown: "Visar de 12 första av {maara} avvikelser.",
+    wasTime: "var {alku}–{loppu}",
+    patternTotal: "{vuorot} · totalt {ero}",
+    perShift: "{ero} / pass",
+    costImpact: "{summa} kostnadseffekt",
+    noClockings: "inga stämplingar",
   },
 
   henkilosto: {
@@ -8434,6 +8529,7 @@ const sv: AdminText = {
     supplements: "Tillägg",
     approved: "Godkänt",
     supplementsSuffix: " · tillägg {summa}",
+    andMore: "och {maara} till.",
   },
 
   luokat: {
@@ -8511,6 +8607,9 @@ const sv: AdminText = {
       "Bilden bedömdes som otydlig. Kontrollera siffrorna extra noga.",
     deleteWarning:
       "Borttagning kan inte ångras. Är det en dubblett, ta bort den — är det ett separat köp, behåll båda.",
+    otherMonths: "{osumat} från andra månader — byt månad för att se dem.",
+    multipleRates:
+      "Kvittot har {maara} skattesatser: {kannat}. Radernas moms summerar till momsen på kvittot.",
   },
 
   kulut: {
@@ -10469,6 +10568,22 @@ const da: AdminText = {
     noneCouldBeDeletedBody:
       "Ingen af de valgte vagter kunne slettes. En passeret navngiven vagt kan ikke slettes, og en allerede aflyst er allerede aflyst.",
     createdAsDrafts: "{maara} oprettet som kladder",
+    publishAsk: "Udgiv vagterne for {kuukausi}?",
+    missingRatesNote: "{maara} uden timeløn — skønnet er ufuldstændigt",
+    calendarCaption: "Vagtkalender {kuukausi}",
+    rosterCaption:
+      "Vagter {kuukausi}, personale som rækker og dage som kolonner",
+    printedBy: "Oprettet med Kate {aika}",
+    plannedTimeLine: "{tunnit} planlagt arbejdstid",
+    draftWarning:
+      "{vuorot} er stadig kladde og vises ikke for personalet. Udgiv dem på vagtsiden før du printer listen.",
+    removedNote: "{vuorot} slettes permanent.",
+    cancelledNote:
+      "{vuorot} aflyses — personalet får besked og rækken bliver i historikken.",
+    willBeBlocked:
+      "{vuorot} røres ikke: en passeret navngiven vagt eller allerede aflyst.",
+    unpublishedOne: "{maara} ikke-udgivet vagt",
+    unpublishedMany: "{maara} ikke-udgivne vagter",
   },
   palkka: {
     periodApproved: "Lønperioden er godkendt",
@@ -10631,6 +10746,7 @@ const da: AdminText = {
     cancelReason: "Årsag",
     cancelReasonNeeded:
       "Angiv hvorfor lønsedlen annulleres. En annulleret løn uden begrundelse er et tal ingen kan forklare.",
+    payPeriodRange: "Lønperiode {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "Ugen er ikke oprettet endnu.",
@@ -10838,6 +10954,8 @@ const da: AdminText = {
     expectedRate: ", forventet {kannat}",
     vatEuros: "Moms {maara} €",
     orSep: " eller ",
+    pageOfPages: "Side {sivu} / {kaikki}",
+    matchesRate: "Svarer til {kanta} sats",
   },
 
   matti: {
@@ -11067,6 +11185,9 @@ const da: AdminText = {
     onlyBooked: " · kun bogførte",
     asOf: "Status {paiva}",
     figuresFromBooks: "{kuukausi} · tal fra bogføringen",
+    voucherNumber: "Bilag {numero}",
+    sourceAmount: "Kilde {summa}",
+    ledgerAmount: "Bogføring {summa}",
   },
 
   toimittajat: {
@@ -11232,6 +11353,13 @@ const da: AdminText = {
     day: "Dag",
     assignee: "Person",
     pastShifts: "{maara} passerede vagter",
+    upcomingCount: "{maara} kommende",
+    deviationsShown: "Viser de 12 første af {maara} afvigelser.",
+    wasTime: "var {alku}–{loppu}",
+    patternTotal: "{vuorot} · i alt {ero}",
+    perShift: "{ero} / vagt",
+    costImpact: "{summa} omkostningseffekt",
+    noClockings: "ingen stemplinger",
   },
 
   henkilosto: {
@@ -11261,6 +11389,7 @@ const da: AdminText = {
     supplements: "Tillæg",
     approved: "Godkendt",
     supplementsSuffix: " · tillæg {summa}",
+    andMore: "og {maara} mere.",
   },
 
   luokat: {
@@ -11338,6 +11467,9 @@ const da: AdminText = {
       "Billedet blev vurderet utydeligt. Tjek tallene ekstra grundigt.",
     deleteWarning:
       "Sletning kan ikke fortrydes. Er det en dublet, så slet den — er det et separat køb, så behold begge.",
+    otherMonths: "{osumat} fra andre måneder — skift måned for at se dem.",
+    multipleRates:
+      "Kvitteringen har {maara} satser: {kannat}. Linjernes moms summerer til momsen på kvitteringen.",
   },
 
   kulut: {
@@ -13289,6 +13421,22 @@ const tr: AdminText = {
     noneCouldBeDeletedBody:
       "Seçilen vardiyaların hiçbiri silinemedi. Geçmiş, adı belli bir vardiya silinemez ve zaten iptal edilmiş olan zaten iptal edilmiştir.",
     createdAsDrafts: "{maara} taslak olarak oluşturuldu",
+    publishAsk: "{kuukausi} vardiyaları yayımlansın mı?",
+    missingRatesNote: "{maara} saat ücreti olmadan — tahmin eksik",
+    calendarCaption: "Vardiya takvimi {kuukausi}",
+    rosterCaption:
+      "Vardiyalar {kuukausi}, personel satır ve günler sütun olarak",
+    printedBy: "Kate ile oluşturuldu {aika}",
+    plannedTimeLine: "{tunnit} planlanan çalışma süresi",
+    draftWarning:
+      "{vuorot} hâlâ taslak ve personele görünmüyor. Listeyi yazdırmadan önce vardiya sayfasından yayımlayın.",
+    removedNote: "{vuorot} kalıcı olarak silinecek.",
+    cancelledNote:
+      "{vuorot} iptal edilecek — personel bilgilendirilir ve satır geçmişte kalır.",
+    willBeBlocked:
+      "{vuorot} dokunulmadan kalır: geçmiş adlı vardiya veya zaten iptal.",
+    unpublishedOne: "{maara} yayımlanmamış vardiya",
+    unpublishedMany: "{maara} yayımlanmamış vardiya",
   },
   palkka: {
     periodApproved: "Bordro dönemi onaylandı",
@@ -13451,6 +13599,7 @@ const tr: AdminText = {
     cancelReason: "Sebep",
     cancelReasonNeeded:
       "Bordronun neden iptal edildiğini yazın. Gerekçesiz iptal edilen ücret, kimsenin açıklayamayacağı bir rakamdır.",
+    payPeriodRange: "Bordro dönemi {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "Hafta henüz oluşturulmadı.",
@@ -13657,6 +13806,8 @@ const tr: AdminText = {
     expectedRate: ", beklenen {kannat}",
     vatEuros: "KDV {maara} €",
     orSep: " ya da ",
+    pageOfPages: "Sayfa {sivu} / {kaikki}",
+    matchesRate: "{kanta} oranına denk geliyor",
   },
 
   matti: {
@@ -13885,6 +14036,9 @@ const tr: AdminText = {
     onlyBooked: " · yalnızca kaydedilenler",
     asOf: "{paiva} durumu",
     figuresFromBooks: "{kuukausi} · rakamlar muhasebeden",
+    voucherNumber: "Fiş {numero}",
+    sourceAmount: "Kaynak {summa}",
+    ledgerAmount: "Muhasebe {summa}",
   },
 
   toimittajat: {
@@ -14049,6 +14203,13 @@ const tr: AdminText = {
     day: "Gün",
     assignee: "Kişi",
     pastShifts: "geçmiş {maara} vardiya",
+    upcomingCount: "{maara} yaklaşan",
+    deviationsShown: "{maara} sapmadan ilk 12 tanesi gösteriliyor.",
+    wasTime: "önceki {alku}–{loppu}",
+    patternTotal: "{vuorot} · toplam {ero}",
+    perShift: "{ero} / vardiya",
+    costImpact: "{summa} maliyet etkisi",
+    noClockings: "damga yok",
   },
 
   henkilosto: {
@@ -14078,6 +14239,7 @@ const tr: AdminText = {
     supplements: "Ek ödemeler",
     approved: "Onaylandı",
     supplementsSuffix: " · ek ödemeler {summa}",
+    andMore: "ve {maara} tane daha.",
   },
 
   luokat: {
@@ -14154,6 +14316,9 @@ const tr: AdminText = {
       "Görsel belirsiz bulundu. Rakamları özellikle dikkatli kontrol et.",
     deleteWarning:
       "Silme geri alınamaz. Kopyaysa sil — ayrı bir alışverişse ikisini de bırak.",
+    otherMonths: "{osumat} başka aylardan — görmek için ayı değiştirin.",
+    multipleRates:
+      "Fişte {maara} vergi oranı var: {kannat}. Satır vergileri fişteki KDV'ye eşit toplanır.",
   },
 
   kulut: {
@@ -16100,6 +16265,22 @@ const et: AdminText = {
     noneCouldBeDeletedBody:
       "Ühtegi valitud vahetust ei saanud kustutada. Möödunud nimelist vahetust ei saa kustutada ja juba tühistatu on juba tühistatud.",
     createdAsDrafts: "{maara} loodud mustanditena",
+    publishAsk: "Kas avaldada {kuukausi} vahetused?",
+    missingRatesNote: "{maara} ilma tunnitasuta — hinnang on puudulik",
+    calendarCaption: "Vahetuste kalender {kuukausi}",
+    rosterCaption:
+      "Vahetused {kuukausi}, töötajad ridadena ja päevad veergudena",
+    printedBy: "Loodud Katega {aika}",
+    plannedTimeLine: "{tunnit} planeeritud tööaega",
+    draftWarning:
+      "{vuorot} on veel mustand ega ole töötajatele nähtav. Avalda need vahetuste lehel enne nimekirja printimist.",
+    removedNote: "{vuorot} kustutatakse jäädavalt.",
+    cancelledNote:
+      "{vuorot} tühistatakse — töötaja saab teate ja rida jääb ajalukku.",
+    willBeBlocked:
+      "{vuorot} jäävad puutumata: möödunud nimeline vahetus või juba tühistatud.",
+    unpublishedOne: "{maara} avaldamata vahetus",
+    unpublishedMany: "{maara} avaldamata vahetust",
   },
   palkka: {
     periodApproved: "Palgaperiood on kinnitatud",
@@ -16260,6 +16441,7 @@ const et: AdminText = {
     cancelReason: "Põhjus",
     cancelReasonNeeded:
       "Kirjuta, miks palgaleht tühistatakse. Põhjenduseta tühistatud palk on arv, mida keegi ei oska selgitada.",
+    payPeriodRange: "Palgaperiood {alku} – {loppu}",
   },
   lounas: {
     weekNotCreated: "Nädalat pole veel loodud.",
@@ -16466,6 +16648,8 @@ const et: AdminText = {
     expectedRate: ", oodatud {kannat}",
     vatEuros: "KM {maara} €",
     orSep: " või ",
+    pageOfPages: "Lehekülg {sivu} / {kaikki}",
+    matchesRate: "Vastab {kanta} määrale",
   },
 
   matti: {
@@ -16693,6 +16877,9 @@ const et: AdminText = {
     onlyBooked: " · ainult kirjendatud",
     asOf: "Seis {paiva}",
     figuresFromBooks: "{kuukausi} · numbrid raamatupidamisest",
+    voucherNumber: "Tõend {numero}",
+    sourceAmount: "Allikas {summa}",
+    ledgerAmount: "Raamatupidamine {summa}",
   },
 
   toimittajat: {
@@ -16859,6 +17046,13 @@ const et: AdminText = {
     day: "Päev",
     assignee: "Tegija",
     pastShifts: "{maara} möödunud vahetust",
+    upcomingCount: "{maara} tulemas",
+    deviationsShown: "Näidatakse {maara} kõrvalekaldest esimest 12.",
+    wasTime: "oli {alku}–{loppu}",
+    patternTotal: "{vuorot} · kokku {ero}",
+    perShift: "{ero} / vahetus",
+    costImpact: "{summa} kulumõju",
+    noClockings: "märkeid pole",
   },
 
   henkilosto: {
@@ -16888,6 +17082,7 @@ const et: AdminText = {
     supplements: "Lisatasud",
     approved: "Kinnitatud",
     supplementsSuffix: " · lisatasud {summa}",
+    andMore: "ja veel {maara}.",
   },
 
   luokat: {
@@ -16965,6 +17160,9 @@ const et: AdminText = {
       "Pilti hinnati ebaselgeks. Kontrolli numbreid eriti hoolikalt.",
     deleteWarning:
       "Kustutamist ei saa tagasi võtta. Kui tegu on duplikaadiga, kustuta — kui eraldi ostuga, jäta mõlemad.",
+    otherMonths: "{osumat} teistest kuudest — vaheta kuud, et neid näha.",
+    multipleRates:
+      "Tšekil on {maara} maksumäära: {kannat}. Ridade maksud liituvad tšekile märgitud käibemaksuks.",
   },
 
   kulut: {

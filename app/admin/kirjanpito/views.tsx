@@ -75,7 +75,10 @@ export function Paivakirja({
                     className="rf-tabular mt-0.5 text-[12px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    Tosite {entry.entryNumber} · {suomiPvm(entry.entryDate)} ·{" "}
+                    {fill(t.kirjanpito.voucherNumber, {
+                      numero: String(entry.entryNumber),
+                    })}{" "}
+                    · {suomiPvm(entry.entryDate)} ·{" "}
                     {nimet.ledgerSource[entry.sourceType]}
                   </p>
                 </div>
@@ -222,7 +225,9 @@ export function Paivakirja({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-[13.5px]">
                     <span className="rf-tabular font-semibold">
-                      Tosite {entry.entryNumber}
+                      {fill(t.kirjanpito.voucherNumber, {
+                        numero: String(entry.entryNumber),
+                      })}
                     </span>{" "}
                     · {entry.description} ·{" "}
                     <span className="rf-tabular">
@@ -253,7 +258,10 @@ export function Paivakirja({
                       className="flex flex-wrap items-center gap-3"
                     >
                       <span className="rf-tabular min-w-0 flex-1 truncate text-[13px]">
-                        Tosite {entry.entryNumber} · {entry.description}
+                        {fill(t.kirjanpito.voucherNumber, {
+                          numero: String(entry.entryNumber),
+                        })}{" "}
+                        · {entry.description}
                       </span>
                       <CorrectEntryForm t={t} id={entry.id} />
                     </div>
@@ -659,10 +667,12 @@ function Tasmays({
 
       <span className="rf-tabular flex flex-wrap items-baseline gap-4 text-[13px]">
         <span style={{ color: "var(--rf-text-2)" }}>
-          Lähde {formatMoney(lahde)}
+          {fill(t.kirjanpito.sourceAmount, { summa: formatMoney(lahde) })}
         </span>
         <span style={{ color: "var(--rf-text-2)" }}>
-          Kirjanpito {formatMoney(kirjanpito)}
+          {fill(t.kirjanpito.ledgerAmount, {
+            summa: formatMoney(kirjanpito),
+          })}
         </span>
         <span
           className="font-bold"

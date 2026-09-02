@@ -177,7 +177,10 @@ export default async function PayslipPage({
               {person.name}
             </h2>
             <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-              Palkkakausi {fi(startsOn)} – {fi(endsOn)}
+              {fill(t.palkka.payPeriodRange, {
+                alku: fi(startsOn),
+                loppu: fi(endsOn),
+              })}
             </p>
           </div>
 

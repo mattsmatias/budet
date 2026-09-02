@@ -2,7 +2,11 @@
 
 import { useActionState, useMemo, useState } from "react";
 import type { AppLocale } from "@/lib/i18n/app-locales";
-import { formatDayShortIn, weekdayShortIn } from "@/lib/i18n/labels";
+import {
+  formatDayShortIn,
+  shiftCountIn,
+  weekdayShortIn,
+} from "@/lib/i18n/labels";
 import { fill } from "@/lib/i18n/auth-text";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
@@ -282,19 +286,23 @@ export function BulkShifts({
                 <ul className="mt-1.5 space-y-0.5 text-[12.5px]">
                   {outcome.removed > 0 ? (
                     <li>
-                      {outcome.removed} luonnosta poistetaan lopullisesti.
+                      {fill(t.vuoro.removedNote, {
+                        vuorot: shiftCountIn(outcome.removed, locale),
+                      })}
                     </li>
                   ) : null}
                   {outcome.cancelled > 0 ? (
                     <li>
-                      {outcome.cancelled} julkaistua perutaan — työntekijä saa
-                      tiedon ja rivi jää historiaan.
+                      {fill(t.vuoro.cancelledNote, {
+                        vuorot: shiftCountIn(outcome.cancelled, locale),
+                      })}
                     </li>
                   ) : null}
                   {outcome.blocked > 0 ? (
                     <li style={{ color: "var(--rf-text-3)" }}>
-                      {outcome.blocked} jää koskematta: mennyt nimetty vuoro tai
-                      jo peruttu.
+                      {fill(t.vuoro.willBeBlocked, {
+                        vuorot: shiftCountIn(outcome.blocked, locale),
+                      })}
                     </li>
                   ) : null}
                 </ul>

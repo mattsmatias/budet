@@ -1089,6 +1089,7 @@ const MAARAT: Record<
     kuitti: [string, string];
     vuoro: [string, string];
     vieras: [string, string];
+    osuma: [string, string];
     paiva: [string, string];
     varaus: [string, string];
   }
@@ -1097,6 +1098,7 @@ const MAARAT: Record<
     kuitti: ["1 kuitti", "{n} kuittia"],
     vuoro: ["1 vuoro", "{n} vuoroa"],
     vieras: ["1 vieras", "{n} vierasta"],
+    osuma: ["1 osuma", "{n} osumaa"],
     paiva: ["1 päivä", "{n} päivää"],
     varaus: ["1 varaus", "{n} varausta"],
   },
@@ -1104,6 +1106,7 @@ const MAARAT: Record<
     kuitti: ["1 receipt", "{n} receipts"],
     vuoro: ["1 shift", "{n} shifts"],
     vieras: ["1 guest", "{n} guests"],
+    osuma: ["1 match", "{n} matches"],
     paiva: ["1 day", "{n} days"],
     varaus: ["1 reservation", "{n} reservations"],
   },
@@ -1111,6 +1114,7 @@ const MAARAT: Record<
     kuitti: ["1 kvitto", "{n} kvitton"],
     vuoro: ["1 pass", "{n} pass"],
     vieras: ["1 gäst", "{n} gäster"],
+    osuma: ["1 träff", "{n} träffar"],
     paiva: ["1 dag", "{n} dagar"],
     varaus: ["1 bokning", "{n} bokningar"],
   },
@@ -1118,6 +1122,7 @@ const MAARAT: Record<
     kuitti: ["1 kvittering", "{n} kvitteringer"],
     vuoro: ["1 vagt", "{n} vagter"],
     vieras: ["1 gæst", "{n} gæster"],
+    osuma: ["1 match", "{n} match"],
     paiva: ["1 dag", "{n} dage"],
     varaus: ["1 reservation", "{n} reservationer"],
   },
@@ -1125,6 +1130,7 @@ const MAARAT: Record<
     kuitti: ["1 fiş", "{n} fiş"],
     vuoro: ["1 vardiya", "{n} vardiya"],
     vieras: ["1 misafir", "{n} misafir"],
+    osuma: ["1 eşleşme", "{n} eşleşme"],
     paiva: ["1 gün", "{n} gün"],
     varaus: ["1 rezervasyon", "{n} rezervasyon"],
   },
@@ -1132,6 +1138,7 @@ const MAARAT: Record<
     kuitti: ["1 tšekk", "{n} tšekki"],
     vuoro: ["1 vahetus", "{n} vahetust"],
     vieras: ["1 külaline", "{n} külalist"],
+    osuma: ["1 vaste", "{n} vastet"],
     paiva: ["1 päev", "{n} päeva"],
     varaus: ["1 broneering", "{n} broneeringut"],
   },
@@ -1156,6 +1163,10 @@ export function shiftCountIn(count: number, locale: AppLocale): string {
 
 export function guestCountIn(count: number, locale: AppLocale): string {
   return maara(count, locale, "vieras");
+}
+
+export function hitCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "osuma");
 }
 
 export function dayCountIn(count: number, locale: AppLocale): string {
