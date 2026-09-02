@@ -245,7 +245,8 @@ export async function setStatus(
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!z.string().uuid().safeParse(id).success) return { error: t.varaus.errGeneric };
+  if (!z.string().uuid().safeParse(id).success)
+    return { error: t.varaus.errGeneric };
   if (!TILAT.includes(status as (typeof TILAT)[number])) {
     return { error: t.varaus.errGeneric };
   }
@@ -286,7 +287,8 @@ export async function fetchSlots(
   excludeId?: string,
 ): Promise<string[]> {
   if (!ISO_DATE.test(date)) return [];
-  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 200) return [];
+  if (!Number.isInteger(partySize) || partySize < 1 || partySize > 200)
+    return [];
 
   const { restaurant } = await requireContext("/admin/varaukset");
 
@@ -295,9 +297,10 @@ export async function fetchSlots(
     p_restaurant: restaurant.id,
     p_date: date,
     p_party: partySize,
-    p_exclude: excludeId && z.string().uuid().safeParse(excludeId).success
-      ? excludeId
-      : null,
+    p_exclude:
+      excludeId && z.string().uuid().safeParse(excludeId).success
+        ? excludeId
+        : null,
   });
 
   if (error || !data) return [];
@@ -336,4 +339,104 @@ export async function fetchFreeTables(
 
   if (error || !data) return [];
   return data as unknown as TableOption[];
+}
+
+// ---------------------------------------------------------------------------
+// Pöytäehdotukset
+// ---------------------------------------------------------------------------
+
+export interface TableSuggestion {
+  kind: "table" | "combination";
+  tableIds: string[];
+  /** "12" tai "12 + 13" — se miten pöydästä salissa puhutaan. */
+  label: string;
+  seatsMax: number;
+  /** Montako paikkaa jää käyttämättä. Nolla on täydellinen osuma. */
+  wasted: number;
+}
+
+/**
+ * Sopivat pöydät ja yhdistelmät annetulle ajalle ja seurueelle.
+ *
+ * Varausmoottori valitsee pienimmän sopivan ja se on oikein
+ * verkkovaraukselle: asiakas ei tiedä mikä pöytä on ikkunan vieressä
+ * eikä sen kuulu päättää siitä.
+ *
+ * Salissa se on väärin. Esihenkilö tietää että kahdeksan hengen
+ * seurue kannattaa laittaa 12+13 eikä 18+19, koska 18 on keittiön oven
+ * vieressä. Kate ei tiedä sitä eikä voi tietää — mutta se voi näyttää
+ * molemmat ja antaa ihmisen valita.
+ *
+ * Kesto tulee asetuksista samalla tavalla kuin varausta luotaessa.
+ * Jos se laskettaisiin tässä toisin, ehdotus koskisi eri aikaväliä
+ * kuin tallennus — ja lista tarjoaisi pöytää jonka tallennus hylkää.
+ */
+export async function fetchTableOptions(input: {
+  date: string;
+  time: string;
+  partySize: number;
+  excludeId?: string;
+}): Promise<TableSuggestion[]> {
+  const { restaurant } = await requireContext("/admin/varaukset");
+
+  const parsed = z
+    .object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      time: z.string().regex(/^\d{2}:\d{2}$/),
+      partySize: z.number().int().min(1).max(200),
+      excludeId: z.string().uuid().nullable(),
+    })
+    .safeParse({ ...input, excludeId: input.excludeId ?? null });
+
+  if (!parsed.success) return [];
+
+  const supabase = await createClient();
+
+  /*
+   * Alku ja loppu lasketaan kannassa, ei selaimessa.
+   *
+   * Ravintolan aikavyöhyke ja kesto ovat kannassa, ja niiden
+   * toistaminen täällä olisi toinen paikka jossa kesäaika menee
+   * pieleen. Funktio ottaa vastaan aikaleimat, joten ne muodostetaan
+   * yhdellä kyselyllä samasta lähteestä kuin varaus.
+   */
+  const { data: window, error: windowError } = await supabase.rpc(
+    "reservation_window",
+    {
+      p_restaurant: restaurant.id,
+      p_date: parsed.data.date,
+      p_time: parsed.data.time,
+    },
+  );
+
+  if (windowError || !window) return [];
+
+  const { startsAt, endsAt } = window as { startsAt: string; endsAt: string };
+
+  const { data, error } = await supabase.rpc("reservation_table_options", {
+    p_restaurant: restaurant.id,
+    p_start: startsAt,
+    p_end: endsAt,
+    p_party: parsed.data.partySize,
+    p_exclude: parsed.data.excludeId,
+    p_limit: 6,
+  });
+
+  if (error || !data) return [];
+
+  return (
+    data as {
+      kind: "table" | "combination";
+      table_ids: string[];
+      label: string;
+      seats_max: number;
+      wasted: number;
+    }[]
+  ).map((row) => ({
+    kind: row.kind,
+    tableIds: row.table_ids,
+    label: row.label,
+    seatsMax: row.seats_max,
+    wasted: row.wasted,
+  }));
 }

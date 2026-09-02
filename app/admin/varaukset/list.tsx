@@ -16,10 +16,12 @@ import {
   createReservation,
   fetchFreeTables,
   fetchSlots,
+  fetchTableOptions,
   setStatus,
   updateReservation,
   type ReservationState,
   type TableOption,
+  type TableSuggestion,
 } from "./actions";
 
 const initial: ReservationState = {};
@@ -153,6 +155,15 @@ export function ReservationDialog({
    * lomake tarjoaisi aikoja jotka moottori hylkää vasta lähetyksessä.
    */
   const [party, setParty] = useState(reservation?.partySize ?? OLETUS_SEURUE);
+
+  /*
+   * Kellonaika tilaan, jotta ehdotukset osaavat päivittyä.
+   *
+   * Kenttä oli ohjaamaton, ja se riitti kun aika luettiin vasta
+   * lähetyksessä. Pöytäehdotus koskee tiettyä aikaväliä, joten sen on
+   * tiedettävä aika samalla hetkellä kun käyttäjä valitsee sen.
+   */
+  const [time, setTime] = useState(reservation?.time ?? "");
   const [times, setTimes] = useState<string[]>(slots);
 
   /*
@@ -207,6 +218,59 @@ export function ReservationDialog({
     };
   }, [open, trigger, date, party, avain, ladattu]);
 
+  /*
+   * Sopivat pöydät ja yhdistelmät.
+   *
+   * Haetaan vasta kun aika ja seurueen koko ovat tiedossa: ilman
+   * kumpaakaan kysymys on vailla vastausta, eikä tyhjä lista ole sama
+   * asia kuin "ei vapaita pöytiä".
+   *
+   * null = ei haettu, [] = haettu eikä löytynyt. Ero näkyy
+   * käyttöliittymässä: edellinen ei näytä mitään, jälkimmäinen kertoo
+   * ettei sopivaa ole.
+   */
+  const [options, setOptions] = useState<TableSuggestion[] | null>(null);
+
+  /*
+   * Lataustila johdetaan, ei aseteta.
+   *
+   * Sama kuvio kuin vapaiden aikojen haussa: tulos kantaa mukanaan
+   * avaimen josta se haettiin, ja jos avain on muuttunut, haku on
+   * kesken. setState efektin alussa olisi ylimääräinen piirto ja
+   * juuri se kuvio jonka React-lint kieltää.
+   *
+   * Samalla vanhentunut tulos ei ehdi vilahtaa ruudulla: aikaa
+   * vaihdettaessa ehdotukset katoavat siihen asti kunnes uudet
+   * saapuvat, eivätkä näytä hetken edellisen ajan pöytiä.
+   */
+  const ehdotusAvain = `${date}|${time}|${party}`;
+  const [ehdotusLahde, setEhdotusLahde] = useState<string | null>(null);
+
+  const optionsLoading = open && time !== "" && ehdotusLahde !== ehdotusAvain;
+  const nakyvatEhdotukset = ehdotusLahde === ehdotusAvain ? options : null;
+
+  useEffect(() => {
+    if (!open || time === "" || ehdotusLahde === ehdotusAvain) return;
+
+    let voimassa = true;
+
+    fetchTableOptions({
+      date,
+      time,
+      partySize: party,
+      excludeId: reservation?.id,
+    }).then((tulos) => {
+      if (!voimassa) return;
+      setOptions(tulos);
+      setEhdotusLahde(ehdotusAvain);
+    });
+
+    return () => {
+      voimassa = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ehdotusAvain, ehdotusLahde]);
+
   /* Vapaat pöydät muokattaessa. */
   useEffect(() => {
     if (!open || !reservation) return;
@@ -224,6 +288,20 @@ export function ReservationDialog({
   function show() {
     setChosen(reservation?.tableIds ?? []);
     setTouched(false);
+    setEhdotusLahde(null);
+
+    /*
+     * Aika lähtötilaan avattaessa.
+     *
+     * Uudelle varaukselle se on listan ensimmäinen vapaa aika, sama
+     * jonka valitsin näyttää. Jos tila jäisi tyhjäksi, ehdotuksia ei
+     * haettaisi ennen kuin käyttäjä koskee aikavalitsimeen — vaikka
+     * valinta on jo tehty hänen puolestaan.
+     */
+    setTime(
+      reservation?.time ?? (trigger === "add" ? (times[0] ?? "") : nowTime()),
+    );
+
     setOpen(true);
     dialog.current?.showModal();
   }
@@ -240,7 +318,9 @@ export function ReservationDialog({
         <button
           type="button"
           onClick={show}
-          aria-label={fill(t.varaus.editNamed, { nimi: reservation?.guestName ?? "" })}
+          aria-label={fill(t.varaus.editNamed, {
+            nimi: reservation?.guestName ?? "",
+          })}
           className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
           style={{ color: "var(--rf-text-3)" }}
         >
@@ -326,6 +406,7 @@ export function ReservationDialog({
                       required
                       key={times.join(",")}
                       defaultValue={times[0]}
+                      onChange={(event) => setTime(event.target.value)}
                       className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                       style={{
                         background: "var(--rf-inset)",
@@ -345,6 +426,7 @@ export function ReservationDialog({
                       type="time"
                       required
                       defaultValue={reservation?.time ?? nowTime()}
+                      onChange={(event) => setTime(event.target.value)}
                       className="w-full px-3.5 py-2.5 text-[16px] outline-none"
                       style={{
                         background: "var(--rf-inset)",
@@ -450,6 +532,103 @@ export function ReservationDialog({
                   {t.varaus.tableAutoHint}
                 </p>
 
+                {/*
+                  Ehdotukset ennen pöytälistaa.
+
+                  Kahdeksan hengen seurue mahtuu harvoin yhteen
+                  pöytään, ja ilman ehdotusta esihenkilön on
+                  muistettava ulkoa mitkä pöydät saa yhdistää ja
+                  kumpi pari on vapaa. Kate tietää molemmat.
+
+                  Ehdotus ei tallenna mitään: se valitsee pöydät
+                  lomakkeelle, ja tallennus on yhä oma painalluksensa.
+                */}
+                {optionsLoading ? (
+                  <p
+                    className="mt-2 text-[12.5px]"
+                    style={{ color: "var(--rf-text-3)" }}
+                  >
+                    {t.varaus.suggestLoading}
+                  </p>
+                ) : null}
+
+                {!optionsLoading &&
+                nakyvatEhdotukset !== null &&
+                nakyvatEhdotukset.length > 0 ? (
+                  <div className="mt-2">
+                    <p className="text-[12.5px] font-semibold">
+                      {t.varaus.suggestTitle}
+                    </p>
+
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {nakyvatEhdotukset.map((option) => {
+                        const valittu =
+                          option.tableIds.length === chosen.length &&
+                          option.tableIds.every((id) => chosen.includes(id));
+
+                        return (
+                          <button
+                            key={option.tableIds.join("-")}
+                            type="button"
+                            aria-pressed={valittu}
+                            onClick={() => {
+                              setTouched(true);
+                              setChosen(option.tableIds);
+                            }}
+                            className="rf-press px-3 py-1.5 text-left text-[13px]"
+                            style={{
+                              background: valittu
+                                ? "var(--rf-accent)"
+                                : "var(--rf-inset)",
+                              color: valittu
+                                ? "var(--rf-on-accent)"
+                                : "var(--rf-text)",
+                              border: `1px solid ${
+                                option.kind === "combination" && !valittu
+                                  ? "var(--rf-accent)"
+                                  : "transparent"
+                              }`,
+                              borderRadius: "var(--rf-r-control)",
+                            }}
+                          >
+                            <span className="block font-semibold">
+                              {option.label}
+                            </span>
+                            <span
+                              className="block text-[11.5px]"
+                              style={{ opacity: 0.8 }}
+                            >
+                              {option.wasted === 0
+                                ? t.varaus.suggestExact
+                                : fill(t.varaus.suggestSpare, {
+                                    maara: String(option.wasted),
+                                  })}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <p
+                      className="mt-1.5 text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {t.varaus.suggestHint}
+                    </p>
+                  </div>
+                ) : null}
+
+                {!optionsLoading &&
+                nakyvatEhdotukset !== null &&
+                nakyvatEhdotukset.length === 0 ? (
+                  <p
+                    className="mt-2 text-[12.5px]"
+                    style={{ color: "var(--rf-amber-text)" }}
+                  >
+                    {t.varaus.suggestNone}
+                  </p>
+                ) : null}
+
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {tables
                     .filter((table) => table.active)
@@ -487,9 +666,10 @@ export function ReservationDialog({
                               : varattu
                                 ? "var(--rf-text-3)"
                                 : "var(--rf-text)",
-                            border: ahdas && !on
-                              ? "1px solid var(--rf-amber)"
-                              : "1px solid transparent",
+                            border:
+                              ahdas && !on
+                                ? "1px solid var(--rf-amber)"
+                                : "1px solid transparent",
                             borderRadius: "var(--rf-r-pill)",
                             /* Varattu näkyy himmeänä muttei katoa: sen voi
                                yhä valita, ja kanta kertoo jos se ei käy. */
