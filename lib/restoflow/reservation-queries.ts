@@ -15,6 +15,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { FloorElement } from "./floor-plan";
 import type { ReservationStats } from "./reservation-stats";
 import type {
+  FloorPlanImage,
   ReservationDay,
   ReservationSetup,
   RestaurantTable,
@@ -108,6 +109,7 @@ export async function loadReservationSetup(
     tables,
     combinations,
     elements,
+    plan,
   ] = await Promise.all([
     supabase
       .from("reservation_settings")
@@ -153,6 +155,11 @@ export async function loadReservationSetup(
       .select("*")
       .eq("restaurant_id", restaurantId)
       .order("sort_order"),
+    supabase
+      .from("floor_plan_images")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .maybeSingle(),
   ]);
 
   const s = settings.data as Record<string, unknown> | null;
@@ -249,7 +256,65 @@ export async function loadReservationSetup(
         (row.table_combination_members ?? []) as { table_id: string }[]
       ).map((member) => member.table_id),
     })),
+
+    plan: await signPlan(plan.data as PlanRow | null),
   };
+}
+
+interface PlanRow {
+  storage_path: string;
+  width: number;
+  height: number;
+  opacity: number | string;
+}
+
+/**
+ * Pohjapiirroksen rivi näytettäväksi osoitteeksi.
+ *
+ * Ämpäri on yksityinen, joten osoite allekirjoitetaan joka
+ * sivunlatauksella. Tunnin voimassaolo riittää: kartta katsotaan
+ * auki, ei jätetä auki vuorokaudeksi.
+ *
+ * Epäonnistunut allekirjoitus palauttaa rivin ilman osoitetta. Kartta
+ * piirtyy silloin ilman taustaa, mikä on huonompi mutta ei rikki —
+ * eikä koko asetussivu kaadu yhden linkin takia.
+ */
+async function signPlan(row: PlanRow | null): Promise<FloorPlanImage | null> {
+  if (!row) return null;
+
+  const supabase = await createClient();
+  const { data } = await supabase.storage
+    .from("floorplans")
+    .createSignedUrl(row.storage_path, 60 * 60);
+
+  return {
+    path: row.storage_path,
+    url: data?.signedUrl ?? null,
+    width: Number(row.width),
+    height: Number(row.height),
+    opacity: Number(row.opacity),
+  };
+}
+
+/**
+ * Pohjapiirros yksin.
+ *
+ * Salinäkymä ei lataa asetuksia, mutta piirtää saman kartan. Oma
+ * hakunsa on halvempi kuin koko asetuspaketti, ja pitää kuvan yhdessä
+ * paikassa molemmille näkymille.
+ */
+export async function loadFloorPlanImage(
+  restaurantId: string,
+): Promise<FloorPlanImage | null> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("floor_plan_images")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .maybeSingle();
+
+  return signPlan(data as PlanRow | null);
 }
 
 /**

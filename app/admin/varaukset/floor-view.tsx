@@ -34,6 +34,7 @@ import {
   type FloorElement,
   type PlanTable,
 } from "@/lib/restoflow/floor-plan";
+import type { FloorPlanImage } from "@/lib/restoflow/reservations";
 import { TablePanel } from "./table-panel";
 
 type States = ReturnType<typeof tableStates>;
@@ -42,11 +43,13 @@ export function FloorView({
   states,
   elements,
   areas,
+  plan,
   t,
 }: {
   states: States;
   elements: FloorElement[];
   areas: { id: string; name: string }[];
+  plan: FloorPlanImage | null;
   t: AdminText;
 }) {
   /*
@@ -66,6 +69,7 @@ export function FloorView({
         states={states}
         elements={elements}
         areas={areas}
+        plan={plan}
         t={t}
         selected={valittu}
         onSelect={(id) =>
@@ -92,6 +96,7 @@ function TableMap({
   elements,
   areas,
   t,
+  plan,
   selected,
   onSelect,
 }: {
@@ -99,6 +104,7 @@ function TableMap({
   elements: FloorElement[];
   areas: { id: string; name: string }[];
   t: AdminText;
+  plan: FloorPlanImage | null;
   selected: string | null;
   onSelect: (id: string) => void;
 }) {
@@ -158,14 +164,36 @@ function TableMap({
             <div
               className="relative w-full"
               style={{
-                aspectRatio: "1.5",
-                background: ROOM_BACKGROUND,
+                /*
+                 * Muoto tulee pohjapiirroksesta kun sellainen on.
+                 *
+                 * Sama sääntö kuin muokkaimessa, ja sen on oltava sama:
+                 * eri muoto tarkoittaisi että pöytä on eri kohdassa
+                 * salia riippuen siitä kummalla sivulla sitä katsoo.
+                 */
+                aspectRatio:
+                  plan && plan.height > 0
+                    ? String(plan.width / plan.height)
+                    : "1.5",
+                background: plan?.url ? undefined : ROOM_BACKGROUND,
                 backgroundColor: "var(--rf-inset)",
                 border: "1px solid var(--rf-line)",
                 borderRadius: "var(--rf-r-card)",
                 overflow: "hidden",
               }}
             >
+              {plan?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={plan.url}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="pointer-events-none absolute inset-0 h-full w-full select-none"
+                  style={{ objectFit: "fill", opacity: plan.opacity }}
+                />
+              ) : null}
+
               {/*
                 Kalusteet pöytien alla.
 

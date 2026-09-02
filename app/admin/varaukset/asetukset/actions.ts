@@ -591,3 +591,115 @@ export async function saveFloorPlan(input: {
   revalidate();
   return { notice: t.poytakartta.saved };
 }
+
+// ---------------------------------------------------------------------------
+// Pohjapiirroskuva
+// ---------------------------------------------------------------------------
+
+const PohjaSchema = z.object({
+  path: z.string().min(1).max(400),
+  width: z.coerce.number().int().min(1).max(20000),
+  height: z.coerce.number().int().min(1).max(20000),
+});
+
+/**
+ * Ladatun kuvan kytkeminen ravintolaan.
+ *
+ * Tiedosto on jo tallennustilassa: selain lataa sen suoraan, koska
+ * kymmenen megatavun kierrätys Next-palvelimen läpi ei tuo mitään.
+ * Kirjoitusoikeuden ratkaisee tallennuksen käytäntö, joka vaatii
+ * esihenkilön.
+ *
+ * Tämä toiminto kertoo kannalle mikä tiedosto on käytössä. Polku
+ * tarkistetaan siellä uudelleen: kannan funktio vaatii että se alkaa
+ * oman ravintolan tunnisteella, jottei riviä voi osoittaa toisen
+ * ravintolan kuvaan.
+ */
+export async function saveFloorPlanImage(input: {
+  path: string;
+  width: number;
+  height: number;
+}): Promise<SetupState> {
+  const { t, restaurant, supabase } = await konteksti();
+
+  const parsed = PohjaSchema.safeParse(input);
+  if (!parsed.success) return { error: t.varausAsetus.errFields };
+
+  const { data, error } = await supabase.rpc("save_floor_plan_image", {
+    p_restaurant: restaurant.id,
+    p_path: parsed.data.path,
+    p_width: parsed.data.width,
+    p_height: parsed.data.height,
+    p_opacity: null,
+  });
+
+  if (error) return { error: t.varausAsetus.errGeneric };
+
+  const tulos = data as { ok?: boolean; previousPath?: string | null };
+  if (!tulos?.ok) return { error: t.pohjakuva.errSave };
+
+  await poistaTiedosto(supabase, tulos.previousPath ?? null);
+
+  revalidate();
+  return { notice: t.pohjakuva.saved };
+}
+
+/** Taustan voimakkuus. Katseluasetus, ei salin tieto. */
+export async function setFloorPlanOpacity(
+  opacity: number,
+): Promise<SetupState> {
+  const { t, restaurant, supabase } = await konteksti();
+
+  const parsed = z.coerce.number().min(0.05).max(1).safeParse(opacity);
+  if (!parsed.success) return { error: t.varausAsetus.errFields };
+
+  const { data, error } = await supabase.rpc("set_floor_plan_opacity", {
+    p_restaurant: restaurant.id,
+    p_opacity: parsed.data,
+  });
+
+  if (error) return { error: t.varausAsetus.errGeneric };
+  if (!(data as { ok?: boolean })?.ok) return { error: t.pohjakuva.errSave };
+
+  revalidate();
+  return {};
+}
+
+/**
+ * Kuvan poisto.
+ *
+ * Rivi ensin, tiedosto sitten. Toisin päin jäisi rivi osoittamaan
+ * tiedostoon jota ei ole, ja kartta yrittäisi piirtää tyhjää.
+ */
+export async function deleteFloorPlanImage(): Promise<SetupState> {
+  const { t, restaurant, supabase } = await konteksti();
+
+  const { data, error } = await supabase.rpc("delete_floor_plan_image", {
+    p_restaurant: restaurant.id,
+  });
+
+  if (error) return { error: t.varausAsetus.errGeneric };
+
+  const tulos = data as { ok?: boolean; previousPath?: string | null };
+  if (!tulos?.ok) return { error: t.pohjakuva.errSave };
+
+  await poistaTiedosto(supabase, tulos.previousPath ?? null);
+
+  revalidate();
+  return { notice: t.pohjakuva.removed };
+}
+
+/**
+ * Korvattu tai poistettu tiedosto pois tallennustilasta.
+ *
+ * Epäonnistuminen ei kaada toimintoa: rivi on jo oikein, ja jäljelle
+ * jäänyt tiedosto on tilaa eikä virhettä. Käyttäjälle ei ole mitään
+ * kerrottavaa, koska hänen tekemänsä muutos meni läpi.
+ */
+async function poistaTiedosto(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string | null,
+): Promise<void> {
+  if (!path) return;
+  await supabase.storage.from("floorplans").remove([path]);
+}

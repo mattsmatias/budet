@@ -10,6 +10,7 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import {
   loadAdminSlots,
+  loadFloorPlanImage,
   loadReservationDay,
 } from "@/lib/restoflow/reservation-queries";
 import {
@@ -62,7 +63,16 @@ export default async function ReservationsPage({
   const requested = typeof params.pvm === "string" ? params.pvm : today;
   const date = ISO_DATE.test(requested) ? requested : today;
 
-  const day = await loadReservationDay(restaurant.id, date);
+  /*
+   * Päivä ja pohjapiirros rinnakkain.
+   *
+   * Kuva on kartan tausta eikä sen ehto: kumpikaan ei odota toista,
+   * ja jos kuvaa ei ole, kartta piirtyy ruudukolle kuten ennenkin.
+   */
+  const [day, plan] = await Promise.all([
+    loadReservationDay(restaurant.id, date),
+    loadFloorPlanImage(restaurant.id),
+  ]);
 
   if (!day) {
     return (
@@ -272,6 +282,7 @@ export default async function ReservationsPage({
             states={states}
             elements={day.elements}
             areas={day.areas}
+            plan={plan}
             t={t}
           />
         </Card>

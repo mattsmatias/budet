@@ -198,6 +198,27 @@ export const DEFAULT_SETTINGS: FullSettings = {
   themeRadius: 12,
 };
 
+/**
+ * Salin pohjapiirros kuvana.
+ *
+ * Tiedosto on yksityisessä tallennustilassa: pohjapiirros kertoo missä
+ * ovet ja hätäpoistumistiet ovat, eikä se kuulu julkiseen osoitteeseen.
+ * Osoite on siksi allekirjoitettu ja vanheneva, ja se haetaan
+ * palvelimella joka sivunlatauksella eikä tallenneta mihinkään.
+ *
+ * Leveys ja korkeus ovat kuvan omat pikselimitat. Vain niiden suhdetta
+ * käytetään: kartan laatikko ottaa kuvan muodon, jottei pohjapiirros
+ * veny.
+ */
+export interface FloorPlanImage {
+  path: string;
+  /** Allekirjoitettu osoite. Null jos linkin luonti epäonnistui. */
+  url: string | null;
+  width: number;
+  height: number;
+  opacity: number;
+}
+
 export interface ReservationSetup {
   settings: FullSettings;
   hours: ReservationHour[];
@@ -207,6 +228,7 @@ export interface ReservationSetup {
   tables: RestaurantTable[];
   elements: FloorElement[];
   combinations: TableCombination[];
+  plan: FloorPlanImage | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -54,15 +54,29 @@ import {
   type PlanTable,
   type TableShape,
 } from "@/lib/restoflow/floor-plan";
-import type { DiningArea, RestaurantTable } from "@/lib/restoflow/reservations";
+import type {
+  DiningArea,
+  FloorPlanImage,
+  RestaurantTable,
+} from "@/lib/restoflow/reservations";
+import {
+  matchDetections,
+  type DetectedFixture,
+  type DetectedTable,
+  type MatchResult,
+} from "@/lib/restoflow/floor-plan-ai";
 import { saveFloorPlan } from "./actions";
 
 /**
- * Kartan kuvasuhde.
+ * Kartan kuvasuhde ilman pohjapiirrosta.
  *
  * Sali on useimmiten leveämpi kuin syvä, ja 3:2 on lähempänä sitä kuin
  * neliö. Tarkka muoto ei ole tärkeä: pöydät ovat suhteessa toisiinsa,
  * ja se on se mitä kartalta luetaan.
+ *
+ * Pohjapiirroksen kanssa muoto tulee kuvasta. Venytetty pohjapiirros
+ * olisi väärä pohjapiirros: neliön muotoinen sali näyttäisi siinä
+ * leveältä ja pöytä osuisi seinän läpi.
  */
 const ROOM_WIDTH_PER_HEIGHT = 3 / 2;
 
@@ -117,11 +131,13 @@ export function FloorPlanEditor({
   tables,
   elements,
   areas,
+  plan,
 }: {
   t: AdminText;
   tables: RestaurantTable[];
   elements: FloorElement[];
   areas: DiningArea[];
+  plan: FloorPlanImage | null;
 }) {
   const [positions, setPositions] = useState(() => initialPositions(tables));
   const [items, setItems] = useState<EditorElement[]>(() =>
@@ -139,6 +155,21 @@ export function FloorPlanEditor({
   const [showChairs, setShowChairs] = useState(true);
 
   /*
+   * Tunnistuksen tila.
+   *
+   * Ehdotus on erillään kartasta: se on luettu kuvasta eikä
+   * käyttäjän tekemä, ja se päätyy karttaan vasta kun hän niin sanoo.
+   */
+  const [lukee, setLukee] = useState(false);
+  const [tunnistusVirhe, setTunnistusVirhe] = useState<string | null>(null);
+  const [ehdotus, setEhdotus] = useState<MatchResult | null>(null);
+  const [tunnistetut, setTunnistetut] = useState<{
+    tables: DetectedTable[];
+    fixtures: DetectedFixture[];
+  } | null>(null);
+  const [lisaaKalusteet, setLisaaKalusteet] = useState(true);
+
+  /*
    * Zoomaus ja siirto ovat katselutilaa, eivät kartan tilaa.
    *
    * Niitä ei tallenneta: seuraava avaus alkaa kokonaisesta salista,
@@ -151,6 +182,15 @@ export function FloorPlanEditor({
 
   const room = useRef<HTMLDivElement>(null);
   const eleRef = useRef<Drag | null>(null);
+
+  /*
+   * Salin muoto tulee pohjapiirroksesta kun sellainen on.
+   *
+   * Pöytien sijainnit ovat prosentteja, joten ne pysyvät samassa
+   * kohdassa salia vaikka laatikon muoto vaihtuu.
+   */
+  const suhde =
+    plan && plan.height > 0 ? plan.width / plan.height : ROOM_WIDTH_PER_HEIGHT;
 
   /* Palvelimen tuoreet rivit voittavat vain kun mitään ei ole kesken. */
   const avain = `${tables.map((x) => x.id).join("|")}#${elements
@@ -219,7 +259,7 @@ export function FloorPlanEditor({
       y,
       nykyinen.width ?? tableWidth(table.seatsMax),
       nykyinen.shape,
-      ROOM_WIDTH_PER_HEIGHT,
+      suhde,
       nykyinen.rotation,
     );
 
@@ -255,7 +295,7 @@ export function FloorPlanEditor({
           yhdistetty.y,
           yhdistetty.width ?? tableWidth(table.seatsMax),
           yhdistetty.shape,
-          ROOM_WIDTH_PER_HEIGHT,
+          suhde,
           yhdistetty.rotation,
         )
       : { x: yhdistetty.x, y: yhdistetty.y };
@@ -325,6 +365,116 @@ export function FloorPlanEditor({
     setItems((edelliset) => edelliset.filter((item) => item.key !== key));
     setSelected(null);
     muutos();
+  }
+
+  // --- Tunnistus pohjapiirroksesta -----------------------------------------
+
+  /**
+   * Pöytien luku kuvasta.
+   *
+   * Palvelin hakee kuvan itse ravintolan tallennustilasta: se ei ole
+   * selaimen lähetettävissä, ja luettava kuva on siten varmasti se joka
+   * kartalla on.
+   *
+   * Vastaus on ehdotus eikä muutos. Se sovitetaan ravintolan omiin
+   * pöytiin täällä, näytetään lukuina, ja karttaan se päätyy vasta kun
+   * käyttäjä painaa Sijoita — ja kantaan vasta kun hän tallentaa.
+   */
+  function tunnista(): void {
+    setTunnistusVirhe(null);
+    setEhdotus(null);
+    setTunnistetut(null);
+    setLukee(true);
+
+    void (async () => {
+      try {
+        const vastaus = await fetch("/api/pohjapiirros/tunnista", {
+          method: "POST",
+        });
+
+        const data = (await vastaus.json()) as {
+          error?: string;
+          tables?: DetectedTable[];
+          fixtures?: DetectedFixture[];
+        };
+
+        if (!vastaus.ok) {
+          setTunnistusVirhe(data.error ?? t.pohjakuva.errDetect);
+          return;
+        }
+
+        const loydetyt = data.tables ?? [];
+        setEhdotus(
+          matchDetections(loydetyt, nakyvatPoydat as unknown as PlanTable[]),
+        );
+        setTunnistetut({ tables: loydetyt, fixtures: data.fixtures ?? [] });
+      } catch {
+        setTunnistusVirhe(t.pohjakuva.errDetect);
+      } finally {
+        setLukee(false);
+      }
+    })();
+  }
+
+  /** Ehdotus kartalle. Ei kantaan: tallennus on yhä oma tekonsa. */
+  function sijoita(): void {
+    if (!ehdotus || !tunnistetut) return;
+
+    setPositions((edelliset) => {
+      const uusi = new Map(edelliset);
+
+      for (const osuma of ehdotus.matched) {
+        const nykyinen = uusi.get(osuma.id);
+        const table = tables.find((row) => row.id === osuma.id);
+        if (!nykyinen || !table) continue;
+
+        const rajattu = clampToRoom(
+          osuma.x,
+          osuma.y,
+          nykyinen.width ?? tableWidth(table.seatsMax),
+          osuma.shape,
+          suhde,
+          nykyinen.rotation,
+        );
+
+        uusi.set(osuma.id, {
+          ...nykyinen,
+          x: roundPercent(rajattu.x),
+          y: roundPercent(rajattu.y),
+          shape: osuma.shape,
+        });
+      }
+
+      return uusi;
+    });
+
+    if (lisaaKalusteet) {
+      setItems((edelliset) => [
+        ...edelliset,
+        ...tunnistetut.fixtures.map((row) => {
+          const rajattu = clampElement(row.x, row.y, row.width, row.height);
+
+          return {
+            key: `uusi-${crypto.randomUUID()}`,
+            id: null,
+            areaId: area,
+            kind: row.kind as ElementKind,
+            label: row.label ?? "",
+            x: roundPercent(rajattu.x),
+            y: roundPercent(rajattu.y),
+            width: roundPercent(row.width),
+            height: roundPercent(row.height),
+            rotation: 0,
+          };
+        }),
+      ]);
+    }
+
+    setEhdotus(null);
+    setTunnistetut(null);
+    setSelected(null);
+    setDirty(true);
+    setNotice(t.pohjakuva.applied);
   }
 
   // --- Tallennus -----------------------------------------------------------
@@ -425,6 +575,148 @@ export function FloorPlanEditor({
         </nav>
       ) : null}
 
+      {/* --- Tunnistus pohjapiirroksesta ---------------------------------- */}
+
+      {plan?.url ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              tone="secondary"
+              size="sm"
+              disabled={lukee || busy}
+              onClick={tunnista}
+            >
+              {lukee ? t.pohjakuva.detecting : t.pohjakuva.detect}
+            </Button>
+
+            {ehdotus ? (
+              <span
+                className="text-[12px]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {t.pohjakuva.review}
+              </span>
+            ) : null}
+          </div>
+
+          {tunnistusVirhe ? (
+            <p
+              className="text-[12.5px]"
+              style={{ color: "var(--rf-red-text)" }}
+            >
+              {tunnistusVirhe}
+            </p>
+          ) : null}
+
+          {ehdotus && tunnistetut ? (
+            <div
+              className="space-y-2 p-3"
+              style={{
+                background: "var(--rf-inset)",
+                borderRadius: "var(--rf-r-card)",
+              }}
+            >
+              <p className="text-[13px] font-semibold">
+                {tunnistetut.tables.length === 0
+                  ? t.pohjakuva.foundNone
+                  : fill(t.pohjakuva.found, {
+                      poydat: String(tunnistetut.tables.length),
+                      rakenteet: String(tunnistetut.fixtures.length),
+                    })}
+              </p>
+
+              {/*
+                Mihin sijoittelu perustuu.
+
+                Numeron mukaan tunnistettu on varma; järjestyksessä
+                sijoitettu on arvaus. Ero on käyttäjälle tärkeä, koska
+                se kertoo kuinka tarkkaan kartta pitää katsoa läpi.
+              */}
+              <ul
+                className="space-y-0.5 text-[12.5px]"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {ehdotus.matched.some((m) => m.by === "label") ? (
+                  <li>
+                    {fill(t.pohjakuva.byLabel, {
+                      maara: String(
+                        ehdotus.matched.filter((m) => m.by === "label").length,
+                      ),
+                    })}
+                  </li>
+                ) : null}
+
+                {ehdotus.matched.some((m) => m.by === "order") ? (
+                  <li>
+                    {fill(t.pohjakuva.byOrder, {
+                      maara: String(
+                        ehdotus.matched.filter((m) => m.by === "order").length,
+                      ),
+                    })}
+                  </li>
+                ) : null}
+
+                {ehdotus.extra.length > 0 ? (
+                  <li>
+                    {fill(t.pohjakuva.extraTables, {
+                      maara: String(ehdotus.extra.length),
+                    })}
+                  </li>
+                ) : null}
+
+                {ehdotus.missing.length > 0 ? (
+                  <li>
+                    {fill(t.pohjakuva.missingTables, {
+                      nimet: ehdotus.missing.map((m) => m.name).join(", "),
+                    })}
+                  </li>
+                ) : null}
+              </ul>
+
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <Button
+                  type="button"
+                  tone="primary"
+                  size="sm"
+                  disabled={ehdotus.matched.length === 0}
+                  onClick={sijoita}
+                >
+                  {t.pohjakuva.apply}
+                </Button>
+
+                <Button
+                  type="button"
+                  tone="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEhdotus(null);
+                    setTunnistetut(null);
+                  }}
+                >
+                  {t.pohjakuva.dismiss}
+                </Button>
+
+                {tunnistetut.fixtures.length > 0 ? (
+                  <label className="flex cursor-pointer items-center gap-1.5 text-[12.5px]">
+                    <input
+                      type="checkbox"
+                      checked={lisaaKalusteet}
+                      onChange={(event) =>
+                        setLisaaKalusteet(event.target.checked)
+                      }
+                      className="h-3.5 w-3.5"
+                      style={{ accentColor: "var(--rf-accent)" }}
+                    />
+                    {t.pohjakuva.withFixtures}
+                  </label>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* --- Työkalut ----------------------------------------------------- */}
 
       <div className="flex flex-wrap items-center gap-1.5">
@@ -482,7 +774,7 @@ export function FloorPlanEditor({
       <div
         className="w-full overflow-hidden"
         style={{
-          aspectRatio: String(ROOM_WIDTH_PER_HEIGHT),
+          aspectRatio: String(suhde),
           border: "1px solid var(--rf-line-strong)",
           borderRadius: "var(--rf-r-card)",
           background: "var(--rf-inset)",
@@ -492,7 +784,15 @@ export function FloorPlanEditor({
           ref={room}
           className="relative h-full w-full touch-none select-none"
           style={{
-            background: ROOM_BACKGROUND,
+            /*
+             * Ruudukko vain ilman pohjapiirrosta.
+             *
+             * Ruudukko on apu tyhjään saliin: se antaa silmälle jotain
+             * mihin verrata kun mitään muuta ei ole. Pohjapiirroksen
+             * päällä se on toinen viivasto ensimmäisen päällä, ja
+             * kumpaakaan ei sen jälkeen lue.
+             */
+            background: plan?.url ? undefined : ROOM_BACKGROUND,
             backgroundColor: "var(--rf-inset)",
             transform: `scale(${zoom}) translate(${pan.x}%, ${pan.y}%)`,
             transformOrigin: "center center",
@@ -544,6 +844,26 @@ export function FloorPlanEditor({
           onPointerUp={paataEle}
           onLostPointerCapture={paataEle}
         >
+          {/* --- Pohjapiirros kaiken alla --- */}
+
+          {plan?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={plan.url}
+              alt=""
+              /*
+               * Koristeena eikä sisältönä: tyhjä alt ja pointer-events
+               * pois. Kuva on se mihin pöydät sijoitetaan, ja jos se
+               * ottaisi osoittimen vastaan, tyhjän kohdan raahaus ei
+               * enää siirtäisi karttaa.
+               */
+              aria-hidden="true"
+              draggable={false}
+              className="pointer-events-none absolute inset-0 h-full w-full select-none"
+              style={{ objectFit: "fill", opacity: plan.opacity }}
+            />
+          ) : null}
+
           {/* --- Kalusteet pöytien alla --- */}
 
           {nakyvatKalusteet.map((item) => {

@@ -15,6 +15,7 @@ import {
   TableList,
 } from "./forms";
 import { FloorPlanEditor } from "./floorplan";
+import { PlanImagePanel } from "./plan-image";
 import { EmbedPanel } from "./embed";
 import { ReservationTabs } from "../tabs";
 
@@ -85,11 +86,28 @@ export default async function ReservationSettingsPage() {
       */}
       <Card>
         <CardHeader title={t.poytakartta.title} subtitle={t.poytakartta.hint} />
+
+        {/*
+          Pohjapiirros ennen karttaa.
+
+          Se on kartan pohja kirjaimellisesti: kuva ensin, pöydät sen
+          päälle. Kartan alle sijoitettuna se olisi asetus jonka löytää
+          vasta kun pöydät on jo raahattu tyhjälle ruudukolle.
+        */}
+        <div className="mb-4">
+          <PlanImagePanel
+            t={t}
+            restaurantId={restaurant.id}
+            plan={setup.plan}
+          />
+        </div>
+
         <FloorPlanEditor
           t={t}
           tables={setup.tables}
           elements={setup.elements}
           areas={setup.areas}
+          plan={setup.plan}
         />
       </Card>
 
