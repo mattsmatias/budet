@@ -32,6 +32,7 @@ import {
 import { ReservationDialog, StatusActions } from "./list";
 import { ReservationTabs } from "./tabs";
 import { FloorView } from "./floor-view";
+import { ReservationCalendar } from "./calendar";
 import { DayPicker, LiveRefresh } from "./live";
 
 export async function generateMetadata() {
@@ -214,9 +215,18 @@ export default async function ReservationsPage({
             {ordered.map((reservation, index) => (
               <li
                 key={reservation.id}
+                /*
+                 * Tunniste kalenterista tulevaa hyppyä varten.
+                 *
+                 * Kalenteri kertoo missä ilta menee; rivi kertoo kuka
+                 * ja millä numerolla. Napsautus vie toisesta toiseen
+                 * sen sijaan että sama tieto piirrettäisiin kahdesti.
+                 */
+                id={`varaus-${reservation.id}`}
                 style={{
                   borderTop:
                     index === 0 ? undefined : "1px solid var(--rf-line)",
+                  scrollMarginTop: "5rem",
                 }}
               >
                 <ReservationRow
@@ -234,6 +244,24 @@ export default async function ReservationsPage({
       )}
 
       {/* --- Pöytäkartta --- */}
+      {/*
+        Kalenteri listan yläpuolelle.
+        --------------------------------------------------------------
+
+        Ei välilehteä vaan molemmat näkyvissä. Ne vastaavat eri
+        kysymyksiin: kalenteri siihen milloin on ruuhka ja mikä pöytä
+        on tyhjänä, lista siihen kuka tulee ja millä numerolla.
+
+        Välilehti pakottaisi valitsemaan kysymyksen ennen kuin sen
+        tietää — ja vuoron aikana kysymys vaihtuu minuutissa.
+      */}
+      {day.tables.length > 0 ? (
+        <Card>
+          <CardHeader title={t.kalenteri.title} subtitle={`${day.date}`} />
+          <ReservationCalendar t={t} day={day} canManage={canManage} />
+        </Card>
+      ) : null}
+
       {day.tables.length > 0 ? (
         <Card>
           <CardHeader

@@ -111,6 +111,15 @@ export interface ReservationDay {
   tables: RestaurantTable[];
   elements: FloorElement[];
   reservations: Reservation[];
+
+  /**
+   * Päivän aukioloikkuna kalenterin aikajanaa varten.
+   *
+   * Null kun ravintola on kiinni tai aukioloaikoja ei ole asetettu.
+   * Kalenteri venyy silloin varausten mukaan — kiinni olevanakin
+   * saliin voi kirjata walk-inin.
+   */
+  hours: { opens: string; lastSeating: string } | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -68,6 +68,7 @@ function paiva(partial: Partial<ReservationDay> = {}): ReservationDay {
     timezone: "Europe/Helsinki",
     canManage: true,
     elements: [],
+    hours: null,
     settings: {
       enabled: true,
       slotMinutes: 30,
