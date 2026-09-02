@@ -8,7 +8,10 @@ import { formatDayIn, weekdayLongIn } from "@/lib/i18n/labels";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
-import { loadAdminSlots, loadReservationDay } from "@/lib/restoflow/reservation-queries";
+import {
+  loadAdminSlots,
+  loadReservationDay,
+} from "@/lib/restoflow/reservation-queries";
 import {
   OLETUS_SEURUE,
   sortForService,
@@ -29,6 +32,12 @@ import {
 } from "@/components/restoflow/ui";
 import { ReservationDialog, StatusActions } from "./list";
 import { ReservationTabs } from "./tabs";
+import { TableMark, ROOM_BACKGROUND } from "@/components/restoflow/table-mark";
+import {
+  placementsFor,
+  tableWidth,
+  type PlanTable,
+} from "@/lib/restoflow/floor-plan";
 import { DayPicker, LiveRefresh } from "./live";
 
 export async function generateMetadata() {
@@ -128,7 +137,10 @@ export default async function ReservationsPage({
           <h1 className="text-[22px] font-bold tracking-[-0.01em]">
             {dayHeading(date, today, locale, t)}
           </h1>
-          <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-0.5 text-[13px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {fill(t.varaus.summary, {
               varaukset: String(summary.active),
               vieraat: String(summary.guests),
@@ -198,7 +210,10 @@ export default async function ReservationsPage({
 
       {/* --- Varaukset --- */}
       {ordered.length === 0 ? (
-        <EmptyState title={t.varaus.emptyTitle} description={t.varaus.emptyBody} />
+        <EmptyState
+          title={t.varaus.emptyTitle}
+          description={t.varaus.emptyBody}
+        />
       ) : (
         <Card padded={false}>
           <ul>
@@ -309,7 +324,10 @@ function ReservationRow({
           ) : null}
         </div>
 
-        <p className="mt-0.5 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+        <p
+          className="mt-0.5 text-[12.5px]"
+          style={{ color: "var(--rf-text-2)" }}
+        >
           {fill(t.varaus.rowGuests, { maara: String(reservation.partySize) })}
           {" · "}
           {tables.length > 0 ? tables.join(", ") : t.varaus.unassigned}
@@ -336,7 +354,10 @@ function ReservationRow({
         </p>
 
         {reservation.note ? (
-          <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-2)" }}>
+          <p
+            className="mt-1 text-[12.5px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
             {reservation.note}
           </p>
         ) : null}
@@ -396,55 +417,109 @@ function TableMap({
     },
   ].filter((group) => group.items.length > 0);
 
+  /*
+   * Onko karttaa järjestetty.
+   *
+   * Ilman järjestelyä pöydät piirretään ruudukkoon. Se toimii, muttei
+   * ole sali — ja jos siitä ei kerrota, ravintoloitsija luulee Katen
+   * arvanneen salin muodon väärin.
+   */
+  const arranged = states.some(
+    (s) => s.table.posX !== null && s.table.posY !== null,
+  );
+
   return (
     <div className="space-y-4">
-      {groups.map((group) => (
-        <div key={group.id}>
-          {group.name ? (
-            <p
-              className="mb-2 text-[12px] font-semibold uppercase tracking-[0.04em]"
-              style={{ color: "var(--rf-text-3)" }}
+      {groups.map((group) => {
+        const sijainnit = new Map(
+          placementsFor(group.items.map((s) => s.table) as PlanTable[]).map(
+            (p) => [p.id, p],
+          ),
+        );
+
+        return (
+          <div key={group.id}>
+            {group.name ? (
+              <p
+                className="mb-2 text-[12px] font-semibold uppercase tracking-[0.04em]"
+                style={{ color: "var(--rf-text-3)" }}
+              >
+                {group.name}
+              </p>
+            ) : null}
+
+            {/*
+              Sali eikä lista.
+
+              Sama kartta kuin asetuksissa järjestetty, samat mitat ja
+              sama piirtotapa. Vuoron aikana katsotaan mikä pöytä on
+              vapaa, ja siihen vastaa sijainti — ei aakkosjärjestys.
+            */}
+            <div
+              className="relative w-full"
+              style={{
+                aspectRatio: "1.5",
+                background: ROOM_BACKGROUND,
+                backgroundColor: "var(--rf-inset)",
+                border: "1px solid var(--rf-line)",
+                borderRadius: "var(--rf-r-card)",
+                overflow: "hidden",
+              }}
             >
-              {group.name}
-            </p>
-          ) : null}
+              {group.items.map(({ table, state, reservation }) => {
+                const paikka = sijainnit.get(table.id);
+                if (!paikka) return null;
 
-          <div className="flex flex-wrap gap-2">
-            {group.items.map(({ table, state, reservation }) => {
-              const colors = STATE_COLORS[state];
+                const colors = STATE_COLORS[state];
 
-              return (
-                <div
-                  key={table.id}
-                  className="min-w-[86px] px-3 py-2"
-                  style={{
-                    background: colors.bg,
-                    color: colors.text,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: "var(--rf-r-control)",
-                  }}
-                  title={
-                    reservation
-                      ? `${reservation.time} ${reservation.guestName}`
-                      : stateLabel(state, t)
-                  }
-                >
-                  <p className="text-[14px] font-bold">{table.name}</p>
-                  <p className="text-[11px]">{stateLabel(state, t)}</p>
-                  <p className="text-[11px]" style={{ opacity: 0.75 }}>
-                    {reservation
-                      ? `${reservation.time} · ${reservation.partySize}`
-                      : fill(t.varaus.seatsRange, {
-                          min: String(table.seatsMin),
-                          max: String(table.seatsMax),
-                        })}
-                  </p>
-                </div>
-              );
-            })}
+                return (
+                  <span
+                    key={table.id}
+                    className="absolute flex items-center justify-center"
+                    style={{
+                      left: `${paikka.x}%`,
+                      top: `${paikka.y}%`,
+                      width: `${tableWidth(table.seatsMax)}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                    /*
+                     * Vieraan nimi ja kello osoittimen alle.
+                     *
+                     * Kartalle ne eivät mahdu, ja listassa ne ovat jo.
+                     * Kartta vastaa kysymykseen "mikä pöytä", lista
+                     * kysymykseen "kuka ja milloin".
+                     */
+                    title={
+                      reservation
+                        ? `${table.name} · ${reservation.time} ${reservation.guestName} · ${stateLabel(state, t)}`
+                        : `${table.name} · ${stateLabel(state, t)}`
+                    }
+                  >
+                    <TableMark
+                      name={table.name}
+                      shape={table.shape}
+                      rotation={table.rotation}
+                      widthPercent={100}
+                      colors={{
+                        bg: colors.bg,
+                        border: colors.border,
+                        text: colors.text,
+                        dashed: state === "disabled",
+                      }}
+                    />
+                  </span>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
+
+      {arranged ? null : (
+        <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          {t.poytakartta.noPlan}
+        </p>
+      )}
 
       {/*
         Selite vain niistä tiloista jotka kartalla ovat.
@@ -474,7 +549,6 @@ function TableMap({
     </div>
   );
 }
-
 /* Selitteen järjestys: vapaasta käytössä olevaan, lopuksi poissa. */
 const LEGEND_ORDER = [
   "free",

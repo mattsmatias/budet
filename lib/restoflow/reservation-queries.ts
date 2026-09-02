@@ -12,7 +12,11 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
-import type { ReservationDay, ReservationSetup } from "./reservations";
+import type {
+  ReservationDay,
+  ReservationSetup,
+  RestaurantTable,
+} from "./reservations";
 import { DEFAULT_SETTINGS } from "./reservations";
 
 /**
@@ -193,6 +197,8 @@ export async function loadReservationSetup(
       active: Boolean(row.active),
       posX: row.pos_x === null ? null : Number(row.pos_x),
       posY: row.pos_y === null ? null : Number(row.pos_y),
+      shape: (row.shape ?? "round") as RestaurantTable["shape"],
+      rotation: Number(row.rotation ?? 0),
     })),
 
     combinations: (combinations.data ?? []).map((row) => ({

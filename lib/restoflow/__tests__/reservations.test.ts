@@ -31,6 +31,8 @@ function poyta(partial: Partial<RestaurantTable> = {}): RestaurantTable {
     seatsMax: 4,
     active: true,
     posX: null,
+    shape: "round" as const,
+    rotation: 0,
     posY: null,
     ...partial,
   };

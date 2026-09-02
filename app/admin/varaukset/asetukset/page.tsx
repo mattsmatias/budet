@@ -14,6 +14,7 @@ import {
   SettingsForm,
   TableList,
 } from "./forms";
+import { FloorPlanEditor } from "./floorplan";
 import { EmbedPanel } from "./embed";
 import { ReservationTabs } from "../tabs";
 
@@ -72,6 +73,22 @@ export default async function ReservationSettingsPage() {
           subtitle={t.varausAsetus.tableSubtitle}
         />
         <TableList t={t} tables={setup.tables} areas={setup.areas} />
+      </Card>
+
+      {/*
+        --- 1b. Pöytäkartta ---
+
+        Oma korttinsa pöytälistan jälkeen, koska se on eri työ:
+        listassa päätetään mitä pöytiä on, kartalla missä ne ovat.
+        Sama kortti olisi kaksi lomaketta joilla ei ole tekemistä
+        toistensa kanssa.
+      */}
+      <Card>
+        <CardHeader
+          title={t.poytakartta.title}
+          subtitle={t.poytakartta.hint}
+        />
+        <FloorPlanEditor t={t} tables={setup.tables} areas={setup.areas} />
       </Card>
 
       {/* --- 2. Milloin otetaan varauksia --- */}

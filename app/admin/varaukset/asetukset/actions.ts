@@ -459,3 +459,55 @@ export async function removeCombination(formData: FormData): Promise<void> {
 
   revalidate();
 }
+
+// ---------------------------------------------------------------------------
+// Pöytäkartta
+// ---------------------------------------------------------------------------
+
+/**
+ * Pöytien paikat, muodot ja kierrot yhtenä eränä.
+ *
+ * Kartan järjestely on yksi teko eikä kaksitoista: käyttäjä siirtää
+ * pöytiä kunnes sali näyttää oikealta ja tallentaa kerran.
+ *
+ * Tarkistus on täällä ja kannassa. Täällä siksi että virheilmoitus
+ * olisi suomea, kannassa siksi että sääntö pätee myös silloin kun
+ * joku kirjoittaa rajapintaan suoraan.
+ */
+const SijaintiSchema = z.object({
+  id: z.string().uuid(),
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+  shape: z.enum(["round", "square", "rect"]),
+  rotation: z.number().int().min(0).max(359),
+});
+
+export async function saveFloorPlan(
+  positions: unknown,
+): Promise<SetupState> {
+  const { t, restaurant, supabase } = await konteksti();
+
+  const parsed = z.array(SijaintiSchema).max(200).safeParse(positions);
+  if (!parsed.success) return { error: t.varausAsetus.errFields };
+
+  /*
+   * Tyhjä erä on onnistuminen eikä virhe.
+   *
+   * Ravintola jolla ei ole vielä pöytiä avaa kartan ja painaa
+   * tallenna. Virheilmoitus siitä ettei mitään tallennettu olisi
+   * vastaus kysymykseen jota ei kysytty.
+   */
+  if (parsed.data.length === 0) {
+    return { notice: t.poytakartta.saved };
+  }
+
+  const { error } = await supabase.rpc("save_table_positions", {
+    p_restaurant: restaurant.id,
+    p_positions: parsed.data,
+  });
+
+  if (error) return { error: t.varausAsetus.errFields };
+
+  revalidate();
+  return { notice: t.poytakartta.saved };
+}

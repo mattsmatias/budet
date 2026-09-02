@@ -41,6 +41,8 @@ export const BLOCKING_STATUSES: ReservationStatus[] = [
   "arrived",
 ];
 
+import type { TableShape } from "./floor-plan";
+
 export interface DiningArea {
   id: string;
   name: string;
@@ -55,6 +57,16 @@ export interface RestaurantTable {
   active: boolean;
   posX: number | null;
   posY: number | null;
+
+  /**
+   * Muoto ja kierto pöytäkartalla.
+   *
+   * Pyöreä kuuden hengen pöytä ja pitkä kuuden hengen pöytä ovat
+   * salissa eri asioita, ja tarjoilija tunnistaa ne muodosta ennen
+   * kuin lukee numeron.
+   */
+  shape: TableShape;
+  rotation: number;
 }
 
 export interface Reservation {
