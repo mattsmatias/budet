@@ -1077,7 +1077,7 @@ export function labels(locale: AppLocale): Labels {
 // ---------------------------------------------------------------------------
 
 /**
- * Kuittien ja vuorojen lukumäärä lauseena.
+ * Lukumäärä lauseena.
  *
  * "1 kuittia" on kielioppivirhe joka pistää silmään heti, ja moni
  * kieli erottaa yksikön ja monikon eri tavalla kuin suomi — siksi
@@ -1085,33 +1085,85 @@ export function labels(locale: AppLocale): Labels {
  */
 const MAARAT: Record<
   AppLocale,
-  { kuitti: [string, string]; vuoro: [string, string] }
+  {
+    kuitti: [string, string];
+    vuoro: [string, string];
+    vieras: [string, string];
+    paiva: [string, string];
+    varaus: [string, string];
+  }
 > = {
-  fi: { kuitti: ["1 kuitti", "{n} kuittia"], vuoro: ["1 vuoro", "{n} vuoroa"] },
+  fi: {
+    kuitti: ["1 kuitti", "{n} kuittia"],
+    vuoro: ["1 vuoro", "{n} vuoroa"],
+    vieras: ["1 vieras", "{n} vierasta"],
+    paiva: ["1 päivä", "{n} päivää"],
+    varaus: ["1 varaus", "{n} varausta"],
+  },
   en: {
     kuitti: ["1 receipt", "{n} receipts"],
     vuoro: ["1 shift", "{n} shifts"],
+    vieras: ["1 guest", "{n} guests"],
+    paiva: ["1 day", "{n} days"],
+    varaus: ["1 reservation", "{n} reservations"],
   },
-  sv: { kuitti: ["1 kvitto", "{n} kvitton"], vuoro: ["1 pass", "{n} pass"] },
+  sv: {
+    kuitti: ["1 kvitto", "{n} kvitton"],
+    vuoro: ["1 pass", "{n} pass"],
+    vieras: ["1 gäst", "{n} gäster"],
+    paiva: ["1 dag", "{n} dagar"],
+    varaus: ["1 bokning", "{n} bokningar"],
+  },
   da: {
     kuitti: ["1 kvittering", "{n} kvitteringer"],
     vuoro: ["1 vagt", "{n} vagter"],
+    vieras: ["1 gæst", "{n} gæster"],
+    paiva: ["1 dag", "{n} dage"],
+    varaus: ["1 reservation", "{n} reservationer"],
   },
-  tr: { kuitti: ["1 fiş", "{n} fiş"], vuoro: ["1 vardiya", "{n} vardiya"] },
+  tr: {
+    kuitti: ["1 fiş", "{n} fiş"],
+    vuoro: ["1 vardiya", "{n} vardiya"],
+    vieras: ["1 misafir", "{n} misafir"],
+    paiva: ["1 gün", "{n} gün"],
+    varaus: ["1 rezervasyon", "{n} rezervasyon"],
+  },
   et: {
     kuitti: ["1 tšekk", "{n} tšekki"],
     vuoro: ["1 vahetus", "{n} vahetust"],
+    vieras: ["1 külaline", "{n} külalist"],
+    paiva: ["1 päev", "{n} päeva"],
+    varaus: ["1 broneering", "{n} broneeringut"],
   },
 };
 
-export function receiptCountIn(count: number, locale: AppLocale): string {
-  const [yksi, moni] = (MAARAT[locale] ?? MAARAT.fi).kuitti;
+function maara(
+  count: number,
+  locale: AppLocale,
+  avain: keyof (typeof MAARAT)["fi"],
+): string {
+  const [yksi, moni] = (MAARAT[locale] ?? MAARAT.fi)[avain];
   return count === 1 ? yksi : moni.replace("{n}", String(count));
 }
 
+export function receiptCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "kuitti");
+}
+
 export function shiftCountIn(count: number, locale: AppLocale): string {
-  const [yksi, moni] = (MAARAT[locale] ?? MAARAT.fi).vuoro;
-  return count === 1 ? yksi : moni.replace("{n}", String(count));
+  return maara(count, locale, "vuoro");
+}
+
+export function guestCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "vieras");
+}
+
+export function dayCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "paiva");
+}
+
+export function reservationCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "varaus");
 }
 
 /** "tammikuu" — kuukauden nimi pienellä, vertailulauseita varten. */

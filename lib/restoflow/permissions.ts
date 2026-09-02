@@ -322,6 +322,16 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    */
   { href: "/admin/varaukset/asetukset", requires: "reservations.manage" },
   /*
+   * Analytiikka on esihenkilön näkymä, ei tarjoilijan.
+   *
+   * Peruutusaste ja vieraiden määrä ovat liiketoiminnan lukuja samaan
+   * tapaan kuin myynti; illan varauslista riittää vuoron tekemiseen.
+   * Sama raja on kannassa: reservation_stats vaatii is_manager. Jos
+   * tämä rivi puuttuisi, tarjoilija pääsisi sivulle ja saisi tyhjän
+   * virheen — portti näyttäisi olevan kannassa vahingossa.
+   */
+  { href: "/admin/varaukset/analytiikka", requires: "reservations.manage" },
+  /*
    * Sosiaalisen median tili on omistajan asia.
    *
    * Yhdistäminen antaa Katelle oikeuden julkaista ravintolan nimissä,

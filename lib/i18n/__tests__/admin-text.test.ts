@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { APP_LOCALES } from "../app-locales";
 import { adminText } from "../admin-text";
-import { labels } from "../labels";
+import {
+  dayCountIn,
+  guestCountIn,
+  labels,
+  reservationCountIn,
+} from "../labels";
 
 /**
  * Hallintanäkymän käännösten täydellisyys.
@@ -109,3 +114,33 @@ for (const [nimi, hae] of OSAT) {
     });
   });
 }
+
+/**
+ * Taivutetut lukumäärät.
+ *
+ * "1 vierasta" on virhe joka pistää silmään heti, ja se syntyy heti
+ * kun luku liimataan sanaan käännöstiedostossa. Nämä kolme ovat
+ * taulukossa juuri siksi, joten testi tarkistaa nimenomaan yksikön.
+ */
+describe("lukumäärät", () => {
+  it("taivuttaa yksikön suomeksi", () => {
+    expect(guestCountIn(1, "fi")).toBe("1 vieras");
+    expect(dayCountIn(1, "fi")).toBe("1 päivä");
+    expect(reservationCountIn(1, "fi")).toBe("1 varaus");
+  });
+
+  it("käyttää monikkoa muualla", () => {
+    expect(guestCountIn(2, "fi")).toBe("2 vierasta");
+    expect(dayCountIn(0, "fi")).toBe("0 päivää");
+    expect(reservationCountIn(12, "fi")).toBe("12 varausta");
+  });
+
+  it("erottaa yksikön ja monikon jokaisella kielellä", () => {
+    for (const locale of APP_LOCALES) {
+      for (const laske of [guestCountIn, dayCountIn, reservationCountIn]) {
+        expect(laske(1, locale), `${locale} yksikkö`).toContain("1");
+        expect(laske(7, locale), `${locale} monikko`).toContain("7");
+      }
+    }
+  });
+});

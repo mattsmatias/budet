@@ -17,6 +17,7 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
+import { monthRange } from "./dates";
 import type { LedgerEntry, MonthState, VatSummary } from "./accounting";
 
 /** Tilikartan rivi näkymälle. */
@@ -259,21 +260,6 @@ export async function fetchBalanceSheet(
 }
 
 // ---------------------------------------------------------------------------
-
-/**
- * Kuukauden ensimmäinen ja viimeinen päivä.
- *
- * Viimeinen lasketaan seuraavan kuun nollannesta päivästä: helmikuun
- * pituutta ei tarvitse tietää eikä karkausvuotta muistaa.
- */
-function monthRange(month: string): { from: string; to: string } {
-  const [year, m] = month.split("-").map(Number);
-  const last = new Date(Date.UTC(year, m, 0));
-  return {
-    from: `${month}-01`,
-    to: `${month}-${String(last.getUTCDate()).padStart(2, "0")}`,
-  };
-}
 
 /**
  * Yhden lähdetapahtuman kirjanpitotila.

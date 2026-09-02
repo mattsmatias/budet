@@ -51,6 +51,13 @@ const MONTHLY = [
   /* Vain lista ja kalenteri lukevat kuukauden, ei koko työvuorosivu. */
   "/admin/tyovuorot/lista",
   "/admin/tyovuorot/kalenteri",
+  /*
+   * Varauksista vain analytiikka.
+   *
+   * Salinäkymä lukee päivän ja asetukset ei kumpaakaan. Kuukauden
+   * vaihtaminen niillä näyttäisi tekevän jotain mitä se ei tee.
+   */
+  "/admin/varaukset/analytiikka",
 ];
 
 /**

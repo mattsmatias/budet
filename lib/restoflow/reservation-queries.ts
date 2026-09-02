@@ -13,6 +13,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import type { FloorElement } from "./floor-plan";
+import type { ReservationStats } from "./reservation-stats";
 import type {
   ReservationDay,
   ReservationSetup,
@@ -249,4 +250,31 @@ export async function loadReservationSetup(
       ).map((member) => member.table_id),
     })),
   };
+}
+
+/**
+ * Jakson varausanalytiikka.
+ *
+ * Kanta laskee summat ja palauttaa lukumääriä. Tässä ei tulkita
+ * mitään: osuudet ja havainnot ovat reservation-stats.ts:ssä, jotta ne
+ * ovat testattavissa ilman kantaa.
+ *
+ * Palauttaa null virheessä eikä heitä. Analytiikka on sivun sisältö
+ * eikä sen ehto — jos luvut eivät tule, sivu kertoo sen eikä kaadu.
+ */
+export async function loadReservationStats(
+  restaurantId: string,
+  from: string,
+  to: string,
+): Promise<ReservationStats | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("reservation_stats", {
+    p_restaurant: restaurantId,
+    p_from: from,
+    p_to: to,
+  });
+
+  if (error || !data) return null;
+  return data as unknown as ReservationStats;
 }

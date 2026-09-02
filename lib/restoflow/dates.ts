@@ -168,3 +168,18 @@ export function monthFromParams(
   const value = typeof raw === "string" ? raw : fallback;
   return isIsoMonth(value) ? value : fallback;
 }
+
+/**
+ * Kuukauden ensimmäinen ja viimeinen päivä.
+ *
+ * Viimeinen lasketaan seuraavan kuun nollannesta päivästä: helmikuun
+ * pituutta ei tarvitse tietää eikä karkausvuotta muistaa.
+ */
+export function monthRange(month: string): { from: string; to: string } {
+  const [year, m] = month.split("-").map(Number);
+  const last = new Date(Date.UTC(year, m, 0));
+  return {
+    from: `${month}-01`,
+    to: `${month}-${String(last.getUTCDate()).padStart(2, "0")}`,
+  };
+}

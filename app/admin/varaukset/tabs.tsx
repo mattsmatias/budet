@@ -2,12 +2,16 @@ import Link from "next/link";
 import type { AdminText } from "@/lib/i18n/admin-text";
 
 /**
- * Pöytävarausten kaksi näkymää.
+ * Pöytävarausten kolme näkymää.
  *
  * Salinäkymä on päivittäinen työ, asetukset kertaluontoinen. Ne
  * kuuluvat silti yhteen: pöytä lisätään asetuksissa ja sitä katsotaan
  * salissa, ja aiemmin niiden välillä liikuttiin päävalikon ja
  * asetusten kautta eri puolilta sovellusta.
+ *
+ * Analytiikka on kolmas: sama aineisto, mutta kysymys on kuukausi eikä
+ * ilta. Se ei mahdu salinäkymään, koska salinäkymä kertoo tästä
+ * päivästä ja sitä katsotaan kesken vuoron.
  *
  * Linkkejä eikä painikkeita, koska valinta on osoitteessa: näkymän voi
  * linkittää ja selaimen paluunappi vie edelliseen eikä ulos.
@@ -17,10 +21,15 @@ export function ReservationTabs({
   current,
 }: {
   t: AdminText;
-  current: "sali" | "asetukset";
+  current: "sali" | "analytiikka" | "asetukset";
 }) {
   const kohdat = [
     { id: "sali" as const, href: "/admin/varaukset", label: t.varaus.tabDay },
+    {
+      id: "analytiikka" as const,
+      href: "/admin/varaukset/analytiikka",
+      label: t.varausTilasto.tab,
+    },
     {
       id: "asetukset" as const,
       href: "/admin/varaukset/asetukset",
