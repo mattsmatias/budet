@@ -119,11 +119,21 @@ export function TableMark({
         tulee pohja jotta se pysyy luettavana myös reunan päällä.
       */}
       <span
-        className="pointer-events-none absolute whitespace-nowrap px-1 text-[11.5px] font-semibold"
+        className="pointer-events-none absolute whitespace-nowrap text-[11.5px] font-semibold"
         style={{
           transform: `rotate(${-rotation}deg)`,
-          background: sävy.bg,
-          borderRadius: "var(--rf-r-pill)",
+
+          /*
+           * Ei pohjaa nimen takana.
+           *
+           * Pohja oli siellä jotta pitkä nimi pysyisi luettavana
+           * pöydän reunan päällä. Tuolien kanssa se kuitenkin peitti
+           * ne, ja pöydästä tuli valkoinen möykky — juuri se mitä
+           * kartta ei saa olla.
+           *
+           * Nimi saa yhä ylittää reunan. Se on luettavissa, koska
+           * tuolit ovat haaleita ja teksti on lihavoitu.
+           */
           maxWidth: "220%",
         }}
       >

@@ -41,7 +41,7 @@ export const BLOCKING_STATUSES: ReservationStatus[] = [
   "arrived",
 ];
 
-import type { TableShape } from "./floor-plan";
+import type { FloorElement, TableShape } from "./floor-plan";
 
 export interface DiningArea {
   id: string;
@@ -67,6 +67,14 @@ export interface RestaurantTable {
    */
   shape: TableShape;
   rotation: number;
+
+  /**
+   * Oma leveys prosentteina, jos ravintola on säätänyt sen.
+   *
+   * Null tarkoittaa "käytä paikkaluvusta johdettua". Se ei ole sama
+   * asia kuin nolla: johdettu koko seuraa paikkalukua, tallennettu ei.
+   */
+  width: number | null;
 }
 
 export interface Reservation {
@@ -103,6 +111,7 @@ export interface ReservationDay {
   settings: ReservationSettings | null;
   areas: DiningArea[];
   tables: RestaurantTable[];
+  elements: FloorElement[];
   reservations: Reservation[];
 }
 
@@ -177,6 +186,7 @@ export interface ReservationSetup {
   exceptions: ReservationException[];
   areas: DiningArea[];
   tables: RestaurantTable[];
+  elements: FloorElement[];
   combinations: TableCombination[];
 }
 

@@ -84,11 +84,13 @@ export default async function ReservationSettingsPage() {
         toistensa kanssa.
       */}
       <Card>
-        <CardHeader
-          title={t.poytakartta.title}
-          subtitle={t.poytakartta.hint}
+        <CardHeader title={t.poytakartta.title} subtitle={t.poytakartta.hint} />
+        <FloorPlanEditor
+          t={t}
+          tables={setup.tables}
+          elements={setup.elements}
+          areas={setup.areas}
         />
-        <FloorPlanEditor t={t} tables={setup.tables} areas={setup.areas} />
       </Card>
 
       {/* --- 2. Milloin otetaan varauksia --- */}

@@ -48,7 +48,10 @@ async function konteksti() {
 
 const AsetusSchema = z.object({
   enabled: z.coerce.boolean(),
-  slotMinutes: z.coerce.number().int().refine((n) => [15, 20, 30, 60].includes(n)),
+  slotMinutes: z.coerce
+    .number()
+    .int()
+    .refine((n) => [15, 20, 30, 60].includes(n)),
   defaultDurationMinutes: z.coerce.number().int().min(15).max(600),
   turnaroundMinutes: z.coerce.number().int().min(0).max(120),
   minParty: z.coerce.number().int().min(1),
@@ -129,8 +132,12 @@ export async function saveHours(
 ): Promise<SetupState> {
   const { t, restaurant, supabase } = await konteksti();
 
-  const rivit: { restaurant_id: string; weekday: number; opens: string; last_seating: string }[] =
-    [];
+  const rivit: {
+    restaurant_id: string;
+    weekday: number;
+    opens: string;
+    last_seating: string;
+  }[] = [];
 
   for (let weekday = 1; weekday <= 7; weekday++) {
     const opens = String(formData.get(`opens-${weekday}`) ?? "").trim();
@@ -184,7 +191,10 @@ export async function addDuration(
   if (!Number.isInteger(minParty) || minParty < 1) {
     return { error: t.varausAsetus.errFields };
   }
-  if (maxParty !== null && (!Number.isInteger(maxParty) || maxParty < minParty)) {
+  if (
+    maxParty !== null &&
+    (!Number.isInteger(maxParty) || maxParty < minParty)
+  ) {
     return { error: t.varausAsetus.errPartyRange };
   }
   if (!Number.isInteger(minutes) || minutes < 15 || minutes > 600) {
@@ -413,7 +423,11 @@ export async function saveCombination(
   const seatsMax = Number(formData.get("seatsMax"));
   const tables = formData.getAll("tableId").map(String).filter(Boolean);
 
-  if (!Number.isInteger(seatsMin) || !Number.isInteger(seatsMax) || seatsMin < 1) {
+  if (
+    !Number.isInteger(seatsMin) ||
+    !Number.isInteger(seatsMax) ||
+    seatsMin < 1
+  ) {
     return { error: t.varausAsetus.errFields };
   }
   if (seatsMax < seatsMin) return { error: t.varausAsetus.errSeatRange };
@@ -480,33 +494,82 @@ const SijaintiSchema = z.object({
   y: z.number().min(0).max(100),
   shape: z.enum(["round", "square", "rect"]),
   rotation: z.number().int().min(0).max(359),
+  /** Null = paikkaluvusta johdettu koko. */
+  width: z.number().min(3).max(40).nullable(),
 });
 
-export async function saveFloorPlan(
-  positions: unknown,
-): Promise<SetupState> {
+const KalusteSchema = z.object({
+  /** Uudella kalusteella ei ole vielä tunnistetta. */
+  id: z.string().uuid().nullable(),
+  kind: z.enum(["wall", "bar", "kitchen", "wc", "door", "entrance", "other"]),
+  label: z.string().max(40),
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(100),
+  width: z.number().min(2).max(100),
+  height: z.number().min(2).max(100),
+  rotation: z.number().int().min(0).max(359),
+});
+
+/**
+ * Pohjapiirros yhtenä tekona.
+ *
+ * Pöydät ja kalusteet tallennetaan samalla painalluksella, koska ne
+ * ovat samaa työtä: käyttäjä siirtää baaritiskiä ja sen viereistä
+ * pöytää peräkkäin eikä ajattele niitä eri asioina.
+ *
+ * Kaksi erillistä toimintoa tarkoittaisi että toinen voi onnistua ja
+ * toinen ei — ja puoliksi tallennettu sali on huonompi kuin
+ * tallentamaton, koska siinä ei ole enää sitä järjestystä joka oli
+ * ennen eikä sitä jota yritettiin.
+ *
+ * Tarkistus on täällä ja kannassa. Täällä siksi että virheilmoitus
+ * olisi suomea, kannassa siksi että sääntö pätee myös silloin kun
+ * joku kirjoittaa rajapintaan suoraan.
+ */
+export async function saveFloorPlan(input: {
+  tables: unknown;
+  elements: unknown;
+  areaId: string | null;
+}): Promise<SetupState> {
   const { t, restaurant, supabase } = await konteksti();
 
-  const parsed = z.array(SijaintiSchema).max(200).safeParse(positions);
-  if (!parsed.success) return { error: t.varausAsetus.errFields };
+  const poydat = z.array(SijaintiSchema).max(200).safeParse(input.tables);
+  const kalusteet = z.array(KalusteSchema).max(200).safeParse(input.elements);
 
-  /*
-   * Tyhjä erä on onnistuminen eikä virhe.
-   *
-   * Ravintola jolla ei ole vielä pöytiä avaa kartan ja painaa
-   * tallenna. Virheilmoitus siitä ettei mitään tallennettu olisi
-   * vastaus kysymykseen jota ei kysytty.
-   */
-  if (parsed.data.length === 0) {
-    return { notice: t.poytakartta.saved };
+  if (!poydat.success || !kalusteet.success) {
+    return { error: t.varausAsetus.errFields };
   }
 
-  const { error } = await supabase.rpc("save_table_positions", {
+  const alue =
+    input.areaId === null
+      ? null
+      : z.string().uuid().safeParse(input.areaId).success
+        ? input.areaId
+        : null;
+
+  if (poydat.data.length > 0) {
+    const { error } = await supabase.rpc("save_table_positions", {
+      p_restaurant: restaurant.id,
+      p_positions: poydat.data,
+    });
+
+    if (error) return { error: t.varausAsetus.errFields };
+  }
+
+  /*
+   * Kalusteet tallennetaan aina, myös tyhjänä.
+   *
+   * Tyhjä lista tarkoittaa "tältä alueelta poistettiin kaikki", ja se
+   * on yhtä lailla muutos kuin lisäys. Ohitus tyhjällä listalla
+   * tekisi viimeisen kalusteen poistamisesta mahdotonta.
+   */
+  const { error: kalusteVirhe } = await supabase.rpc("save_floor_elements", {
     p_restaurant: restaurant.id,
-    p_positions: parsed.data,
+    p_area: alue,
+    p_elements: kalusteet.data,
   });
 
-  if (error) return { error: t.varausAsetus.errFields };
+  if (kalusteVirhe) return { error: t.varausAsetus.errFields };
 
   revalidate();
   return { notice: t.poytakartta.saved };

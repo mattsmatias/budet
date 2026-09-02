@@ -11,6 +11,9 @@ import { describe, expect, it } from "vitest";
 import {
   aspectFor,
   autoLayout,
+  chairSpots,
+  clampElement,
+  defaultElementSize,
   clampToRoom,
   placementsFor,
   tableExtent,
@@ -363,5 +366,85 @@ describe("summarise", () => {
 
   it("ei laske käytöstä poistettua pöytää mukaan", () => {
     expect(summarise(tables, [], "19:00").tables).toBe(3);
+  });
+});
+
+// ===========================================================================
+// Kalusteet
+// ===========================================================================
+
+describe("defaultElementSize", () => {
+  it("tekee seinästä pitkän ja ohuen", () => {
+    const seina = defaultElementSize("wall");
+    expect(seina.width).toBeGreaterThan(seina.height * 5);
+  });
+
+  it("tekee keittiöstä laatikon", () => {
+    const keittio = defaultElementSize("kitchen");
+    expect(keittio.width).toBeGreaterThan(10);
+    expect(keittio.height).toBeGreaterThan(10);
+  });
+});
+
+describe("clampElement", () => {
+  it("pitää kalusteen kokonaan salissa", () => {
+    expect(clampElement(0, 0, 40, 10)).toEqual({ x: 20, y: 5 });
+    expect(clampElement(100, 100, 40, 10)).toEqual({ x: 80, y: 95 });
+  });
+
+  it("keskittää salia leveämmän kalusteen", () => {
+    expect(clampElement(10, 50, 120, 10).x).toBe(50);
+  });
+});
+
+// ===========================================================================
+// Tuolit
+// ===========================================================================
+
+describe("chairSpots", () => {
+  it("piirtää yhtä monta tuolia kuin paikkoja", () => {
+    expect(chairSpots(4, "round")).toHaveLength(4);
+    expect(chairSpots(8, "rect")).toHaveLength(8);
+  });
+
+  it("asettaa pyöreän pöydän tuolit kehälle", () => {
+    const tuolit = chairSpots(4, "round");
+
+    /* Kaikki yhtä kaukana keskipisteestä. */
+    const etaisyydet = tuolit.map((p) =>
+      Math.round(Math.hypot(p.x - 50, p.y - 50)),
+    );
+
+    expect(new Set(etaisyydet).size).toBe(1);
+  });
+
+  it("asettaa kahden hengen pöydän tuolit vastakkain", () => {
+    const tuolit = chairSpots(2, "square");
+
+    expect(tuolit).toHaveLength(2);
+    expect(tuolit[0].y).toBe(tuolit[1].y);
+    expect(tuolit[0].x).toBeLessThan(0);
+    expect(tuolit[1].x).toBeGreaterThan(100);
+  });
+
+  it("jakaa kahdeksan hengen pöydän kolme kummallekin sivulle", () => {
+    const tuolit = chairSpots(8, "rect");
+
+    const ylos = tuolit.filter((p) => p.y < 0).length;
+    const alas = tuolit.filter((p) => p.y > 100).length;
+    const paadyt = tuolit.filter((p) => p.y === 50).length;
+
+    expect(ylos).toBe(3);
+    expect(alas).toBe(3);
+    expect(paadyt).toBe(2);
+  });
+
+  it("ei piirrä tuoleja olemattomille paikoille", () => {
+    expect(chairSpots(0, "round")).toHaveLength(0);
+    expect(chairSpots(-3, "round")).toHaveLength(0);
+  });
+
+  it("rajaa järjettömän paikkaluvun", () => {
+    expect(chairSpots(500, "round").length).toBeLessThanOrEqual(20);
   });
 });

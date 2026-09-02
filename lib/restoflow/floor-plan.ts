@@ -380,3 +380,155 @@ export function summarise(
     freeSeats,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Kalusteet
+// ---------------------------------------------------------------------------
+
+export type ElementKind =
+  "wall" | "bar" | "kitchen" | "wc" | "door" | "entrance" | "other";
+
+export interface FloorElement {
+  id: string;
+  areaId: string | null;
+  kind: ElementKind;
+  label: string;
+  /** Keskikohta prosentteina. */
+  posX: number;
+  posY: number;
+  /** Leveys prosentteina salin leveydestä. */
+  width: number;
+  /** Korkeus prosentteina salin korkeudesta. */
+  height: number;
+  rotation: number;
+}
+
+/**
+ * Uuden kalusteen lähtömitat.
+ *
+ * Seinä on pitkä ja ohut, baari leveä ja matala, vessa pieni laatikko.
+ * Nämä eivät ole oikeita mittoja vaan tunnistettavia muotoja: käyttäjä
+ * venyttää ne kohdalleen, ja lähtökoko on siinä auttamassa eikä
+ * arvaamassa.
+ */
+export function defaultElementSize(kind: ElementKind): {
+  width: number;
+  height: number;
+} {
+  switch (kind) {
+    case "wall":
+      return { width: 40, height: 3 };
+    case "bar":
+      return { width: 30, height: 10 };
+    case "kitchen":
+      return { width: 25, height: 20 };
+    case "wc":
+      return { width: 12, height: 14 };
+    case "door":
+    case "entrance":
+      return { width: 12, height: 4 };
+    default:
+      return { width: 18, height: 12 };
+  }
+}
+
+/**
+ * Kaluste pysyy salissa.
+ *
+ * Sama sääntö kuin pöydillä, mutta mitat ovat suoraan prosentteja
+ * kummallakin akselilla — kalusteella ei ole kuvasuhdetta jota
+ * pitäisi muuntaa.
+ */
+export function clampElement(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): { x: number; y: number } {
+  const puoliLeveys = Math.min(50, width / 2);
+  const puoliKorkeus = Math.min(50, height / 2);
+
+  return {
+    x: Math.min(100 - puoliLeveys, Math.max(puoliLeveys, x)),
+    y: Math.min(100 - puoliKorkeus, Math.max(puoliKorkeus, y)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Tuolit
+// ---------------------------------------------------------------------------
+
+export interface ChairSpot {
+  /** Sijainti pöydän laatikossa, 0–100 % pöydän omasta koosta. */
+  x: number;
+  y: number;
+}
+
+/**
+ * Tuolien paikat pöydän ympärillä.
+ *
+ * Tuolit eivät ole tietoa vaan piirrosta: ne kertovat yhdellä
+ * silmäyksellä montako henkeä pöytään mahtuu, ilman että lukua
+ * tarvitsee lukea. Siksi ne johdetaan paikkaluvusta eikä tallenneta.
+ *
+ * Pyöreässä pöydässä tuolit ovat kehällä, kulmikkaassa sivuilla.
+ * Kulmikkaan jako on pitkille sivuille painottuva, koska niin ne
+ * salissakin asetetaan — kahdeksan hengen pöydässä istuu kolme
+ * kummallakin pitkällä sivulla ja yksi kummassakin päässä.
+ */
+export function chairSpots(seats: number, shape: TableShape): ChairSpot[] {
+  const maara = Math.max(0, Math.min(20, Math.round(seats)));
+  if (maara === 0) return [];
+
+  if (shape === "round") {
+    return Array.from({ length: maara }, (_, i) => {
+      const kulma = (i / maara) * Math.PI * 2 - Math.PI / 2;
+
+      /*
+       * Kehä hieman pöydän reunan ulkopuolella.
+       *
+       * Pöydän säde on 50, joten 58 asettaa tuolin reunaa vasten
+       * mutta ei irralleen. Kauempana ne alkavat näyttää omilta
+       * pöydiltään tiheässä salissa.
+       */
+      return {
+        x: 50 + Math.cos(kulma) * 58,
+        y: 50 + Math.sin(kulma) * 58,
+      };
+    });
+  }
+
+  /*
+   * Kulmikas: ensin päädyt, loput jaetaan pitkille sivuille.
+   *
+   * Kahden hengen pöytä on kaksi tuolia vastakkain, ja se on
+   * ravintolan yleisin pöytä — se on siis se tapaus jonka on
+   * näytettävä oikealta.
+   */
+  if (maara <= 2) {
+    return Array.from({ length: maara }, (_, i) => ({
+      x: i === 0 ? -8 : 108,
+      y: 50,
+    }));
+  }
+
+  const paadyt = maara >= 6 ? 2 : 0;
+  const sivuille = maara - paadyt;
+  const ylos = Math.ceil(sivuille / 2);
+  const alas = sivuille - ylos;
+
+  const spots: ChairSpot[] = [];
+
+  for (let i = 0; i < ylos; i++) {
+    spots.push({ x: ((i + 0.5) / ylos) * 100, y: -10 });
+  }
+  for (let i = 0; i < alas; i++) {
+    spots.push({ x: ((i + 0.5) / alas) * 100, y: 110 });
+  }
+  if (paadyt === 2) {
+    spots.push({ x: -8, y: 50 });
+    spots.push({ x: 108, y: 50 });
+  }
+
+  return spots;
+}

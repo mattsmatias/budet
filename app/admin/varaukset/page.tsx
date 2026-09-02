@@ -33,9 +33,12 @@ import {
 import { ReservationDialog, StatusActions } from "./list";
 import { ReservationTabs } from "./tabs";
 import { TableMark, ROOM_BACKGROUND } from "@/components/restoflow/table-mark";
+import { ElementMark } from "@/components/restoflow/element-mark";
 import {
+  chairSpots,
   placementsFor,
   tableWidth,
+  type FloorElement,
   type PlanTable,
 } from "@/lib/restoflow/floor-plan";
 import { DayPicker, LiveRefresh } from "./live";
@@ -246,7 +249,12 @@ export default async function ReservationsPage({
             title={t.varaus.tableMap}
             subtitle={t.varaus.tableMapHint}
           />
-          <TableMap states={states} areas={day.areas} t={t} />
+          <TableMap
+            states={states}
+            elements={day.elements}
+            areas={day.areas}
+            t={t}
+          />
         </Card>
       ) : canManage ? (
         <EmptyState
@@ -397,10 +405,12 @@ function ReservationRow({
  */
 function TableMap({
   states,
+  elements,
   areas,
   t,
 }: {
   states: ReturnType<typeof tableStates>;
+  elements: FloorElement[];
   areas: { id: string; name: string }[];
   t: AdminText;
 }) {
@@ -409,13 +419,15 @@ function TableMap({
       id: area.id,
       name: area.name,
       items: states.filter((s) => s.table.areaId === area.id),
+      elements: elements.filter((e) => e.areaId === area.id),
     })),
     {
       id: "none",
       name: areas.length > 0 ? t.varaus.noArea : "",
       items: states.filter((s) => s.table.areaId === null),
+      elements: elements.filter((e) => e.areaId === null),
     },
-  ].filter((group) => group.items.length > 0);
+  ].filter((group) => group.items.length > 0 || group.elements.length > 0);
 
   /*
    * Onko karttaa järjestetty.
@@ -466,6 +478,35 @@ function TableMap({
                 overflow: "hidden",
               }}
             >
+              {/*
+                Kalusteet pöytien alla.
+
+                Baaritiski ja keittiön ovi ovat ne kiintopisteet
+                joiden avulla ihminen lukee tilaa. Ne ovat harmaita ja
+                taustalla: kartalta luetaan pöytiä, ja värikäs
+                baaritiski veisi huomion siltä.
+              */}
+              {group.elements.map((element) => (
+                <span
+                  key={element.id}
+                  aria-hidden="true"
+                  className="absolute"
+                  style={{
+                    left: `${element.posX}%`,
+                    top: `${element.posY}%`,
+                    width: `${element.width}%`,
+                    height: `${element.height}%`,
+                    transform: `translate(-50%, -50%) rotate(${element.rotation}deg)`,
+                  }}
+                >
+                  <ElementMark
+                    kind={element.kind}
+                    label={element.label}
+                    rotation={element.rotation}
+                  />
+                </span>
+              ))}
+
               {group.items.map(({ table, state, reservation }) => {
                 const paikka = sijainnit.get(table.id);
                 if (!paikka) return null;
@@ -479,7 +520,7 @@ function TableMap({
                     style={{
                       left: `${paikka.x}%`,
                       top: `${paikka.y}%`,
-                      width: `${tableWidth(table.seatsMax)}%`,
+                      width: `${table.width ?? tableWidth(table.seatsMax)}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                     /*
@@ -495,6 +536,30 @@ function TableMap({
                         : `${table.name} · ${stateLabel(state, t)}`
                     }
                   >
+                    {/*
+                      Tuolit kertovat paikkaluvun ilman lukua.
+
+                      Sama piirros kuin muokkaimessa: kartan on
+                      näytettävä samalta siellä missä se järjestettiin.
+                    */}
+                    {chairSpots(table.seatsMax, table.shape).map((spot, i) => (
+                      <span
+                        key={i}
+                        aria-hidden="true"
+                        className="absolute"
+                        style={{
+                          left: `${spot.x}%`,
+                          top: `${spot.y}%`,
+                          width: "17%",
+                          aspectRatio: "1",
+                          transform: "translate(-50%, -50%)",
+                          background: "var(--rf-line-strong)",
+                          borderRadius: "50%",
+                          opacity: 0.45,
+                        }}
+                      />
+                    ))}
+
                     <TableMark
                       name={table.name}
                       shape={table.shape}

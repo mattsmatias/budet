@@ -12,6 +12,7 @@
  */
 
 import { createClient } from "@/utils/supabase/server";
+import type { FloorElement } from "./floor-plan";
 import type {
   ReservationDay,
   ReservationSetup,
@@ -97,8 +98,16 @@ export async function loadReservationSetup(
 ): Promise<ReservationSetup> {
   const supabase = await createClient();
 
-  const [settings, hours, durations, exceptions, areas, tables, combinations] =
-    await Promise.all([
+  const [
+    settings,
+    hours,
+    durations,
+    exceptions,
+    areas,
+    tables,
+    combinations,
+    elements,
+  ] = await Promise.all([
       supabase
         .from("reservation_settings")
         .select("*")
@@ -138,6 +147,11 @@ export async function loadReservationSetup(
         .select("*, table_combination_members(table_id)")
         .eq("restaurant_id", restaurantId)
         .order("seats_max"),
+      supabase
+        .from("floor_elements")
+        .select("*")
+        .eq("restaurant_id", restaurantId)
+        .order("sort_order"),
     ]);
 
   const s = settings.data as Record<string, unknown> | null;
@@ -198,6 +212,19 @@ export async function loadReservationSetup(
       posX: row.pos_x === null ? null : Number(row.pos_x),
       posY: row.pos_y === null ? null : Number(row.pos_y),
       shape: (row.shape ?? "round") as RestaurantTable["shape"],
+      rotation: Number(row.rotation ?? 0),
+      width: row.width === null || row.width === undefined ? null : Number(row.width),
+    })),
+
+    elements: (elements.data ?? []).map((row) => ({
+      id: String(row.id),
+      areaId: row.area_id === null ? null : String(row.area_id),
+      kind: row.kind as FloorElement["kind"],
+      label: String(row.label ?? ""),
+      posX: Number(row.pos_x),
+      posY: Number(row.pos_y),
+      width: Number(row.width),
+      height: Number(row.height),
       rotation: Number(row.rotation ?? 0),
     })),
 

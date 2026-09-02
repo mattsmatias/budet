@@ -33,6 +33,7 @@ function poyta(partial: Partial<RestaurantTable> = {}): RestaurantTable {
     posX: null,
     shape: "round" as const,
     rotation: 0,
+    width: null,
     posY: null,
     ...partial,
   };
@@ -65,6 +66,7 @@ function paiva(partial: Partial<ReservationDay> = {}): ReservationDay {
     date: "2026-09-05",
     timezone: "Europe/Helsinki",
     canManage: true,
+    elements: [],
     settings: {
       enabled: true,
       slotMinutes: 30,
