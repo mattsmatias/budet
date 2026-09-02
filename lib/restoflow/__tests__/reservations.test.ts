@@ -57,6 +57,7 @@ function varaus(partial: Partial<Reservation> = {}): Reservation {
     guestEmail: null,
     note: null,
     tableIds: ["p1"],
+    billRequestedAt: null,
     ...partial,
   };
 }

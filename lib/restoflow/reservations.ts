@@ -88,6 +88,9 @@ export interface Reservation {
   guestEmail: string | null;
   note: string | null;
   tableIds: string[];
+
+  /** Milloin lasku pyydettiin. Null kun sitä ei ole pyydetty. */
+  billRequestedAt: string | null;
 }
 
 export interface ReservationSettings {
@@ -211,6 +214,15 @@ export interface ReservationSetup {
 export type TableState =
   /** Pois käytöstä. Ei oteta varauksia, ei näy kartalla käytettävänä. */
   | "disabled"
+  /**
+   * Seurue on syönyt ja pyytänyt laskun.
+   *
+   * Ei enää "asiakkaat pöydässä" eikä vielä "vapaa". Tämä on se pöytä
+   * joka vapautuu kymmenessä minuutissa, ja se on eri tieto kuin
+   * kumpikaan naapuritilansa — juuri sitä kysytään kun ovella seisoo
+   * kaksi ihmistä.
+   */
+  | "billing"
   /** Seurue istuu pöydässä. */
   | "seated"
   /** Varausaika alkanut mutta seuruetta ei ole merkitty saapuneeksi. */
@@ -262,12 +274,23 @@ export function tableStates(day: ReservationDay, now: Date): TableStatus[] {
     );
 
     if (current) {
+      /*
+       * Laskua odottava voittaa saapuneen.
+       *
+       * Molemmat ovat totta — seurue istuu yhä pöydässä — mutta
+       * kartalta luetaan sitä mikä on seuraavaksi tapahtumassa, ei
+       * sitä mikä on jo tapahtunut.
+       */
+      const tila =
+        current.status !== "arrived"
+          ? ("late" as const)
+          : current.billRequestedAt
+            ? ("billing" as const)
+            : ("seated" as const);
+
       return {
         table,
-        state:
-          current.status === "arrived"
-            ? ("seated" as const)
-            : ("late" as const),
+        state: tila,
         reservation: current,
         reservations: mine,
       };

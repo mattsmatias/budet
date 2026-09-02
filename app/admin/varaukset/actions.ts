@@ -440,3 +440,43 @@ export async function fetchTableOptions(input: {
     wasted: row.wasted,
   }));
 }
+
+/**
+ * Laskun pyyntö päälle ja pois.
+ *
+ * Sama toiminto molempiin suuntiin, koska tarjoilija painaa väärää
+ * pöytää yhtä usein kuin oikeaa. Peruminen ilman erillistä painiketta
+ * on se ero jonka takia merkintää uskalletaan käyttää kesken vuoron.
+ *
+ * Ei esihenkilön oikeutta: laskun pyytäminen on salityötä, ja se on
+ * juuri se merkintä jonka tarjoilijan on voitava tehdä ohi mennessään.
+ * Kanta tarkistaa jäsenyyden.
+ */
+export async function setBill(
+  _prev: ReservationState,
+  formData: FormData,
+): Promise<ReservationState> {
+  const t = adminText(await resolveLocale());
+  await requireContext("/admin/varaukset");
+
+  const id = String(formData.get("id") ?? "");
+  const waiting = String(formData.get("waiting") ?? "") === "1";
+
+  if (!z.string().uuid().safeParse(id).success) {
+    return { error: t.varaus.errGeneric };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reservation_set_bill", {
+    p_reservation: id,
+    p_waiting: waiting,
+  });
+
+  if (error) return { error: t.varaus.errGeneric };
+
+  const result = data as { ok?: boolean; error?: string };
+  if (!result?.ok) return { error: explain(result?.error, t) };
+
+  revalidatePath("/admin/varaukset", "layout");
+  return {};
+}
