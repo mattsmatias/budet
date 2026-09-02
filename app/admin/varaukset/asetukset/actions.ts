@@ -58,6 +58,19 @@ const AsetusSchema = z.object({
   maxParty: z.coerce.number().int().min(1),
   maxDaysAhead: z.coerce.number().int().min(1).max(365),
   leadMinutes: z.coerce.number().int().min(0).max(10080),
+
+  /*
+   * Tyhjä kenttä tarkoittaa "ei rajaa".
+   *
+   * z.coerce muuttaisi tyhjän merkkijonon nollaksi, ja nolla
+   * kapasiteettia estäisi kaikki varaukset. Tyhjä käsitellään siis
+   * ennen muunnosta.
+   */
+  kitchenCapacity: z
+    .union([z.literal(""), z.coerce.number().int().min(1).max(2000)])
+    .transform((value) => (value === "" ? null : value)),
+
+  kitchenWindowMinutes: z.coerce.number().int().min(15).max(240),
   themeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   themeDark: z.coerce.boolean(),
   themeRadius: z.coerce.number().int().min(0).max(28),
@@ -78,6 +91,8 @@ export async function saveSettings(
     maxParty: formData.get("maxParty"),
     maxDaysAhead: formData.get("maxDaysAhead"),
     leadMinutes: formData.get("leadMinutes"),
+    kitchenCapacity: formData.get("kitchenCapacity") ?? "",
+    kitchenWindowMinutes: formData.get("kitchenWindowMinutes") ?? 60,
     themeColor: formData.get("themeColor"),
     themeDark: formData.get("themeDark") === "1",
     themeRadius: formData.get("themeRadius"),
@@ -99,6 +114,8 @@ export async function saveSettings(
       max_party: parsed.data.maxParty,
       max_days_ahead: parsed.data.maxDaysAhead,
       lead_minutes: parsed.data.leadMinutes,
+      kitchen_capacity: parsed.data.kitchenCapacity,
+      kitchen_window_minutes: parsed.data.kitchenWindowMinutes,
       theme_color: parsed.data.themeColor,
       theme_dark: parsed.data.themeDark,
       theme_radius: parsed.data.themeRadius,

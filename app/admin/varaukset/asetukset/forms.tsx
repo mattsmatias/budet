@@ -89,8 +89,7 @@ function Field({
   );
 }
 
-const INPUT =
-  "w-full px-3.5 py-2.5 text-[16px] outline-none";
+const INPUT = "w-full px-3.5 py-2.5 text-[16px] outline-none";
 const INPUT_STYLE = {
   background: "var(--rf-inset)",
   borderRadius: "var(--rf-r-control)",
@@ -130,7 +129,12 @@ function DeleteButton({
       <Button type="submit" size="sm" tone="danger">
         {confirm}
       </Button>
-      <Button type="button" size="sm" tone="ghost" onClick={() => setAsking(false)}>
+      <Button
+        type="button"
+        size="sm"
+        tone="ghost"
+        onClick={() => setAsking(false)}
+      >
         ×
       </Button>
     </form>
@@ -319,6 +323,55 @@ export function SettingsForm({
               max={10080}
               step={15}
               defaultValue={settings.leadMinutes}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          {/*
+            Keittiön kapasiteetti pöytäkapasiteetin viereen.
+
+            Ne ovat eri asioita ja vastaavat eri kysymyksiin: pöytiä
+            voi olla vapaana vaikka keittiö ei ehdi. Vierekkäin ne
+            kertovat sen ilman että kumpaakaan tarvitsee selittää.
+          */}
+          <Field
+            label={t.varausAsetus.kitchenCapacity}
+            htmlFor="rs-kitchen"
+            hint={t.varausAsetus.kitchenCapacityHint}
+          >
+            <input
+              id="rs-kitchen"
+              name="kitchenCapacity"
+              type="number"
+              min={1}
+              max={2000}
+              /*
+               * Tyhjä on sallittu arvo eikä puuttuva.
+               *
+               * Se tarkoittaa "ei rajaa", ja se on eri asia kuin
+               * nolla — nolla estäisi kaikki varaukset.
+               */
+              defaultValue={settings.kitchenCapacity ?? ""}
+              placeholder="—"
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
+          <Field
+            label={t.varausAsetus.kitchenWindow}
+            htmlFor="rs-kitchen-window"
+            hint={t.varausAsetus.kitchenWindowHint}
+          >
+            <input
+              id="rs-kitchen-window"
+              name="kitchenWindowMinutes"
+              type="number"
+              min={15}
+              max={240}
+              step={15}
+              defaultValue={settings.kitchenWindowMinutes}
               className={INPUT}
               style={INPUT_STYLE}
             />
@@ -553,7 +606,11 @@ export function DurationList({
             />
           </Field>
         </div>
-        <Button type="submit" tone="ghost" icon={<RfIcon name="plus" size={15} />}>
+        <Button
+          type="submit"
+          tone="ghost"
+          icon={<RfIcon name="plus" size={15} />}
+        >
           {t.varausAsetus.add}
         </Button>
       </form>
@@ -737,7 +794,11 @@ export function AreaList({ t, areas }: { t: AdminText; areas: DiningArea[] }) {
             />
           </Field>
         </div>
-        <Button type="submit" tone="ghost" icon={<RfIcon name="plus" size={15} />}>
+        <Button
+          type="submit"
+          tone="ghost"
+          icon={<RfIcon name="plus" size={15} />}
+        >
           {t.varausAsetus.add}
         </Button>
       </form>
@@ -798,7 +859,9 @@ export function TableList({
               <span className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => setEditing(table.id === editing ? null : table.id)}
+                  onClick={() =>
+                    setEditing(table.id === editing ? null : table.id)
+                  }
                   aria-label={fill(t.varaus.editNamed, { nimi: table.name })}
                   className="rf-press rf-icon-btn rf-hit flex h-7 w-7 items-center justify-center rounded-[7px]"
                   style={{ color: "var(--rf-text-3)" }}
@@ -828,7 +891,11 @@ export function TableList({
         className="mt-4 flex flex-wrap items-end gap-2"
       >
         {current ? <input type="hidden" name="id" value={current.id} /> : null}
-        <input type="hidden" name="active" value={current?.active === false ? "0" : "1"} />
+        <input
+          type="hidden"
+          name="active"
+          value={current?.active === false ? "0" : "1"}
+        />
 
         <div className="w-28">
           <Field label={t.varausAsetus.tableName} htmlFor="rt-name">
@@ -897,7 +964,11 @@ export function TableList({
           </div>
         ) : null}
 
-        <Button type="submit" tone="ghost" icon={<RfIcon name="plus" size={15} />}>
+        <Button
+          type="submit"
+          tone="ghost"
+          icon={<RfIcon name="plus" size={15} />}
+        >
           {current ? t.varaus.save : t.varausAsetus.add}
         </Button>
 
@@ -928,7 +999,8 @@ export function CombinationList({
   const [state, action] = useActionState(saveCombination, initial);
   const [chosen, setChosen] = useState<string[]>([]);
 
-  const nimi = (id: string) => tables.find((table) => table.id === id)?.name ?? "?";
+  const nimi = (id: string) =>
+    tables.find((table) => table.id === id)?.name ?? "?";
 
   return (
     <div>

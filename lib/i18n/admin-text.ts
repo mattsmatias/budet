@@ -482,6 +482,10 @@ const fi = {
     advanced: "Lisäasetukset",
     rarely: "Harvoin tarvittavat",
     tableSubtitle: "Aloita tästä: ilman pöytiä varauksia ei voi ottaa.",
+    kitchenCapacity: "Keittiön kapasiteetti",
+    kitchenCapacityHint: "Enintään näin monta ruokailijaa saapuu saman aikaikkunan sisällä. Tyhjä = ei rajaa. Verkkovaraus estyy rajan täyttyessä; salissa voit silti kirjata varauksen.",
+    kitchenWindow: "Aikaikkuna",
+    kitchenWindowHint: "Minuutteina. Ikkuna on liukuva: se lasketaan varauksen alkuhetkestä molempiin suuntiin.",
   },
   varaus: {
     todayHeading: "Tänään",
@@ -568,6 +572,8 @@ const fi = {
     suggestSpare: "{maara} paikkaa yli",
     suggestCombined: "Yhdistetty",
     combinedTable: "Yhdistetty pöytä",
+    kitchenLoad: "Keittiö klo {aika}: {kuorma}/{raja}",
+    kitchenFull: "Keittiön raja ylittyy tällä varauksella. Voit silti tallentaa — sali tietää enemmän kuin Kate.",
   },
   varausJulkinen: {
     bookTitle: "Varaa pöytä",
@@ -3134,6 +3140,10 @@ const en: AdminText = {
     advanced: "Advanced settings",
     rarely: "Rarely needed",
     tableSubtitle: "Start here: without tables there is nothing to book.",
+    kitchenCapacity: "Kitchen capacity",
+    kitchenCapacityHint: "At most this many diners arrive within the same window. Empty = no limit. Online booking stops at the limit; you can still take a booking in the room.",
+    kitchenWindow: "Time window",
+    kitchenWindowHint: "In minutes. The window slides: it is measured from the booking's start time in both directions.",
   },
   varaus: {
     todayHeading: "Today",
@@ -3220,6 +3230,8 @@ const en: AdminText = {
     suggestSpare: "{maara} seats spare",
     suggestCombined: "Combined",
     combinedTable: "Combined table",
+    kitchenLoad: "Kitchen at {aika}: {kuorma}/{raja}",
+    kitchenFull: "This booking exceeds the kitchen limit. You can still save it — the room knows more than Kate.",
   },
   varausJulkinen: {
     bookTitle: "Book a table",
@@ -5789,6 +5801,10 @@ const sv: AdminText = {
     advanced: "Fler inställningar",
     rarely: "Sällan använda",
     tableSubtitle: "Börja här: utan bord går det inte att boka.",
+    kitchenCapacity: "Kökets kapacitet",
+    kitchenCapacityHint: "Högst så här många gäster anländer inom samma tidsfönster. Tomt = ingen gräns. Onlinebokning stoppas vid gränsen; i salen kan du ändå ta emot bokningen.",
+    kitchenWindow: "Tidsfönster",
+    kitchenWindowHint: "I minuter. Fönstret är glidande: det mäts från bokningens starttid åt båda hållen.",
   },
   varaus: {
     todayHeading: "I dag",
@@ -5875,6 +5891,8 @@ const sv: AdminText = {
     suggestSpare: "{maara} platser över",
     suggestCombined: "Sammanslaget",
     combinedTable: "Sammanslaget bord",
+    kitchenLoad: "Köket kl. {aika}: {kuorma}/{raja}",
+    kitchenFull: "Denna bokning överskrider kökets gräns. Du kan ändå spara — salen vet mer än Kate.",
   },
   varausJulkinen: {
     bookTitle: "Boka bord",
@@ -8440,6 +8458,10 @@ const da: AdminText = {
     advanced: "Flere indstillinger",
     rarely: "Sjældent brugte",
     tableSubtitle: "Start her: uden borde kan der ikke bestilles.",
+    kitchenCapacity: "Køkkenets kapacitet",
+    kitchenCapacityHint: "Højst så mange gæster ankommer inden for samme tidsvindue. Tom = ingen grænse. Onlinebooking stopper ved grænsen; i lokalet kan du stadig tage imod.",
+    kitchenWindow: "Tidsvindue",
+    kitchenWindowHint: "I minutter. Vinduet er glidende: det måles fra bookingens starttidspunkt i begge retninger.",
   },
   varaus: {
     todayHeading: "I dag",
@@ -8526,6 +8548,8 @@ const da: AdminText = {
     suggestSpare: "{maara} pladser til overs",
     suggestCombined: "Sammensat",
     combinedTable: "Sammensat bord",
+    kitchenLoad: "Køkkenet kl. {aika}: {kuorma}/{raja}",
+    kitchenFull: "Denne booking overskrider køkkenets grænse. Du kan stadig gemme — lokalet ved mere end Kate.",
   },
   varausJulkinen: {
     bookTitle: "Book et bord",
@@ -11091,6 +11115,10 @@ const tr: AdminText = {
     advanced: "Gelişmiş ayarlar",
     rarely: "Nadiren gerekenler",
     tableSubtitle: "Buradan başla: masa olmadan rezervasyon alınamaz.",
+    kitchenCapacity: "Mutfak kapasitesi",
+    kitchenCapacityHint: "Aynı zaman aralığında en fazla bu kadar müşteri gelir. Boş = sınır yok. Sınıra ulaşınca çevrimiçi rezervasyon durur; salonda yine de kaydedebilirsiniz.",
+    kitchenWindow: "Zaman aralığı",
+    kitchenWindowHint: "Dakika olarak. Aralık kayar: rezervasyonun başlangıcından iki yöne doğru ölçülür.",
   },
   varaus: {
     todayHeading: "Bugün",
@@ -11177,6 +11205,8 @@ const tr: AdminText = {
     suggestSpare: "{maara} kişilik fazla",
     suggestCombined: "Birleştirilmiş",
     combinedTable: "Birleşik masa",
+    kitchenLoad: "Mutfak saat {aika}: {kuorma}/{raja}",
+    kitchenFull: "Bu rezervasyon mutfak sınırını aşıyor. Yine de kaydedebilirsiniz — salon Kate'den fazlasını bilir.",
   },
   varausJulkinen: {
     bookTitle: "Masa ayırt",
@@ -13734,6 +13764,10 @@ const et: AdminText = {
     advanced: "Lisaseaded",
     rarely: "Harva vajalikud",
     tableSubtitle: "Alusta siit: ilma laudadeta ei saa broneerida.",
+    kitchenCapacity: "Köögi läbilaskevõime",
+    kitchenCapacityHint: "Kõige rohkem nii palju sööjaid saabub sama ajaakna jooksul. Tühi = piirangut pole. Veebibroneering peatub piiril; saalis saad siiski broneeringu vastu võtta.",
+    kitchenWindow: "Ajaaken",
+    kitchenWindowHint: "Minutites. Aken on libisev: seda mõõdetakse broneeringu algusest mõlemas suunas.",
   },
   varaus: {
     todayHeading: "Täna",
@@ -13820,6 +13854,8 @@ const et: AdminText = {
     suggestSpare: "{maara} kohta üle",
     suggestCombined: "Ühendatud",
     combinedTable: "Ühendatud laud",
+    kitchenLoad: "Köök kell {aika}: {kuorma}/{raja}",
+    kitchenFull: "See broneering ületab köögi piiri. Saad siiski salvestada — saal teab rohkem kui Kate.",
   },
   varausJulkinen: {
     bookTitle: "Broneeri laud",

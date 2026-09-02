@@ -13,12 +13,7 @@
  */
 
 export type ReservationStatus =
-  | "pending"
-  | "confirmed"
-  | "arrived"
-  | "completed"
-  | "cancelled"
-  | "no_show";
+  "pending" | "confirmed" | "arrived" | "completed" | "cancelled" | "no_show";
 
 export type ReservationSource = "widget" | "link" | "admin" | "walk_in";
 
@@ -163,9 +158,21 @@ export interface FullSettings {
   themeColor: string;
   themeDark: boolean;
   themeRadius: number;
+
+  /**
+   * Keittiön kapasiteetti ruokailijoina aikaikkunassa.
+   *
+   * Null tarkoittaa ettei rajaa ole asetettu. Se ei ole sama asia
+   * kuin nolla: Kate ei keksi keittiölle kapasiteettia jota kukaan ei
+   * ole kertonut.
+   */
+  kitchenCapacity: number | null;
+  kitchenWindowMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: FullSettings = {
+  kitchenCapacity: null,
+  kitchenWindowMinutes: 60,
   enabled: false,
   slotMinutes: 30,
   defaultDurationMinutes: 90,
@@ -230,10 +237,7 @@ export interface TableStatus {
  * testattavissa. Kello funktion sisällä tekisi testistä sellaisen joka
  * menee läpi aamulla ja kaatuu illalla.
  */
-export function tableStates(
-  day: ReservationDay,
-  now: Date,
-): TableStatus[] {
+export function tableStates(day: ReservationDay, now: Date): TableStatus[] {
   const turnaroundMs = (day.settings?.turnaroundMinutes ?? 0) * 60_000;
   const nowMs = now.getTime();
 
@@ -243,20 +247,27 @@ export function tableStates(
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 
     if (!table.active) {
-      return { table, state: "disabled" as const, reservation: null, reservations: mine };
+      return {
+        table,
+        state: "disabled" as const,
+        reservation: null,
+        reservations: mine,
+      };
     }
 
     const blocking = mine.filter((r) => BLOCKING_STATUSES.includes(r.status));
 
     const current = blocking.find(
-      (r) =>
-        Date.parse(r.startsAt) <= nowMs && Date.parse(r.endsAt) > nowMs,
+      (r) => Date.parse(r.startsAt) <= nowMs && Date.parse(r.endsAt) > nowMs,
     );
 
     if (current) {
       return {
         table,
-        state: current.status === "arrived" ? ("seated" as const) : ("late" as const),
+        state:
+          current.status === "arrived"
+            ? ("seated" as const)
+            : ("late" as const),
         reservation: current,
         reservations: mine,
       };
@@ -277,16 +288,31 @@ export function tableStates(
       });
 
       if (justEnded) {
-        return { table, state: "cleaning" as const, reservation: null, reservations: mine };
+        return {
+          table,
+          state: "cleaning" as const,
+          reservation: null,
+          reservations: mine,
+        };
       }
     }
 
     const next = blocking.find((r) => Date.parse(r.startsAt) > nowMs);
     if (next) {
-      return { table, state: "reserved" as const, reservation: next, reservations: mine };
+      return {
+        table,
+        state: "reserved" as const,
+        reservation: next,
+        reservations: mine,
+      };
     }
 
-    return { table, state: "free" as const, reservation: null, reservations: mine };
+    return {
+      table,
+      state: "free" as const,
+      reservation: null,
+      reservations: mine,
+    };
   });
 }
 
@@ -314,7 +340,10 @@ export function sortForService(reservations: Reservation[]): Reservation[] {
   return [...reservations].sort((a, b) => {
     const order = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     if (order !== 0) return order;
-    return a.startsAt.localeCompare(b.startsAt) || a.guestName.localeCompare(b.guestName);
+    return (
+      a.startsAt.localeCompare(b.startsAt) ||
+      a.guestName.localeCompare(b.guestName)
+    );
   });
 }
 

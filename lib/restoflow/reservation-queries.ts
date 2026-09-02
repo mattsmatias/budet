@@ -108,51 +108,51 @@ export async function loadReservationSetup(
     combinations,
     elements,
   ] = await Promise.all([
-      supabase
-        .from("reservation_settings")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .maybeSingle(),
-      supabase
-        .from("reservation_hours")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("weekday")
-        .order("opens"),
-      supabase
-        .from("reservation_durations")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("min_party"),
-      supabase
-        .from("reservation_exceptions")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .gte("exception_date", new Date().toISOString().slice(0, 10))
-        .order("exception_date"),
-      supabase
-        .from("dining_areas")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("sort_order")
-        .order("name"),
-      supabase
-        .from("restaurant_tables")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("sort_order")
-        .order("name"),
-      supabase
-        .from("table_combinations")
-        .select("*, table_combination_members(table_id)")
-        .eq("restaurant_id", restaurantId)
-        .order("seats_max"),
-      supabase
-        .from("floor_elements")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("sort_order"),
-    ]);
+    supabase
+      .from("reservation_settings")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .maybeSingle(),
+    supabase
+      .from("reservation_hours")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("weekday")
+      .order("opens"),
+    supabase
+      .from("reservation_durations")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("min_party"),
+    supabase
+      .from("reservation_exceptions")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .gte("exception_date", new Date().toISOString().slice(0, 10))
+      .order("exception_date"),
+    supabase
+      .from("dining_areas")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("sort_order")
+      .order("name"),
+    supabase
+      .from("restaurant_tables")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("sort_order")
+      .order("name"),
+    supabase
+      .from("table_combinations")
+      .select("*, table_combination_members(table_id)")
+      .eq("restaurant_id", restaurantId)
+      .order("seats_max"),
+    supabase
+      .from("floor_elements")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("sort_order"),
+  ]);
 
   const s = settings.data as Record<string, unknown> | null;
 
@@ -167,6 +167,11 @@ export async function loadReservationSetup(
           maxParty: Number(s.max_party),
           maxDaysAhead: Number(s.max_days_ahead),
           leadMinutes: Number(s.lead_minutes),
+          kitchenCapacity:
+            s.kitchen_capacity === null || s.kitchen_capacity === undefined
+              ? null
+              : Number(s.kitchen_capacity),
+          kitchenWindowMinutes: Number(s.kitchen_window_minutes ?? 60),
           themeColor: String(s.theme_color),
           themeDark: Boolean(s.theme_dark),
           themeRadius: Number(s.theme_radius),
@@ -193,7 +198,9 @@ export async function loadReservationSetup(
       date: String(row.exception_date),
       closed: Boolean(row.closed),
       opens: row.opens ? String(row.opens).slice(0, 5) : null,
-      lastSeating: row.last_seating ? String(row.last_seating).slice(0, 5) : null,
+      lastSeating: row.last_seating
+        ? String(row.last_seating).slice(0, 5)
+        : null,
       note: row.note === null ? null : String(row.note),
     })),
 
@@ -213,7 +220,10 @@ export async function loadReservationSetup(
       posY: row.pos_y === null ? null : Number(row.pos_y),
       shape: (row.shape ?? "round") as RestaurantTable["shape"],
       rotation: Number(row.rotation ?? 0),
-      width: row.width === null || row.width === undefined ? null : Number(row.width),
+      width:
+        row.width === null || row.width === undefined
+          ? null
+          : Number(row.width),
     })),
 
     elements: (elements.data ?? []).map((row) => ({
@@ -240,4 +250,3 @@ export async function loadReservationSetup(
     })),
   };
 }
-
