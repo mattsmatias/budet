@@ -46,6 +46,8 @@ export function CancelForm({
     already: string;
     past: string;
     notFound: string;
+    /** Sisältää {tunnit}. */
+    cutoff: string;
   };
 }) {
   const [state, action] = useActionState(cancelReservation, initial);
@@ -73,11 +75,16 @@ export function CancelForm({
       ? labels.already
       : state.error === "past"
         ? labels.past
-        : state.error === "not_found"
-          ? labels.notFound
-          : state.error
-            ? labels.failed
-            : null;
+        : state.error === "cutoff"
+          ? labels.cutoff.replace(
+              "{tunnit}",
+              String(state.cutoffHours ?? 24),
+            )
+          : state.error === "not_found"
+            ? labels.notFound
+            : state.error
+              ? labels.failed
+              : null;
 
   return (
     <form action={action} className="mt-6">

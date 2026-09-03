@@ -73,6 +73,117 @@ export interface FreeTable {
   fits: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Varauslista
+// ---------------------------------------------------------------------------
+
+export interface SearchRow {
+  id: string;
+  reference: string | null;
+  startsAt: string;
+  endsAt: string;
+  date: string;
+  time: string;
+  endTime: string;
+  partySize: number;
+  status: string;
+  source: string;
+  guestName: string;
+  guestPhone: string | null;
+  guestEmail: string | null;
+  note: string | null;
+  allergies: string | null;
+  tableIds: string[];
+  /** Pöytien nimet valmiina: lista ei lataa salin pöytiä erikseen. */
+  tables: string[];
+}
+
+export interface SearchResult {
+  total: number;
+  limit: number;
+  offset: number;
+  timezone: string;
+  canManage: boolean;
+  rows: SearchRow[];
+}
+
+export type SearchScope = "upcoming" | "past" | "day" | "all";
+
+/**
+ * Varaukset jaksosta, ei päivästä.
+ *
+ * Salinäkymä osaa yhden illan kerrallaan, ja se on oikein vuoron
+ * aikana. Puhelimessa kysytään "varasin joskus ensi viikolle" — ja
+ * siihen vastaaminen päivä kerrallaan on seitsemän sivunlatausta.
+ */
+export async function loadReservationSearch(
+  restaurantId: string,
+  input: {
+    scope: SearchScope;
+    date?: string | null;
+    query?: string | null;
+    limit?: number;
+    offset?: number;
+  },
+): Promise<SearchResult | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("reservation_search", {
+    p_restaurant: restaurantId,
+    p_scope: input.scope,
+    p_date: input.date ?? null,
+    p_query: input.query ?? null,
+    p_limit: input.limit ?? 50,
+    p_offset: input.offset ?? 0,
+  });
+
+  if (error || !data) return null;
+  return data as unknown as SearchResult;
+}
+
+// ---------------------------------------------------------------------------
+// Keittiön kuorma
+// ---------------------------------------------------------------------------
+
+export interface KitchenLoad {
+  /** Onko rajaa asetettu lainkaan. */
+  limited: boolean;
+  /** Mahtuuko seurue rajaan. */
+  ok: boolean;
+  capacity?: number;
+  windowMinutes?: number;
+  load?: number;
+  remaining?: number;
+}
+
+/**
+ * Paljonko keittiöllä on kuormaa tähän aikaan.
+ *
+ * Kanta estää verkkovarauksen rajan täyttyessä mutta ei salin omaa.
+ * Esihenkilö tietää enemmän kuin Kate: kymmenen hengen seurue voi olla
+ * se joka tilaa kolme pizzaa. Kuorma näytetään siis lukuna eikä
+ * kieltona — mutta se näytetään, koska ilman sitä raja on olemassa
+ * vain siinä hetkessä jona verkkovaraus hylätään.
+ */
+export async function loadKitchenLoad(
+  restaurantId: string,
+  at: string,
+  partySize: number,
+  excludeReservationId?: string,
+): Promise<KitchenLoad | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("kitchen_check", {
+    p_restaurant: restaurantId,
+    p_at: at,
+    p_party: partySize,
+    p_exclude: excludeReservationId ?? null,
+  });
+
+  if (error || !data) return null;
+  return data as unknown as KitchenLoad;
+}
+
 /** Pöydät jotka ovat vapaana juuri tämän varauksen aikana. */
 export async function loadFreeTables(
   reservationId: string,
@@ -180,6 +291,7 @@ export async function loadReservationSetup(
               ? null
               : Number(s.kitchen_capacity),
           kitchenWindowMinutes: Number(s.kitchen_window_minutes ?? 60),
+          cancelCutoffHours: Number(s.cancel_cutoff_hours ?? 24),
           themeColor: String(s.theme_color),
           themeDark: Boolean(s.theme_dark),
           themeRadius: Number(s.theme_radius),

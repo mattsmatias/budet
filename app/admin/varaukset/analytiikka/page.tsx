@@ -1,14 +1,21 @@
+import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
+import type { AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { fill } from "@/lib/i18n/auth-text";
 import { decimal, integer, percent } from "@/lib/i18n/format";
-import { formatMonthIn } from "@/lib/i18n/labels";
-import { monthFromParams, monthRange } from "@/lib/restoflow/dates";
+import { formatDayIn, formatMonthIn } from "@/lib/i18n/labels";
+import {
+  monthFromParams,
+  rangeForMonth,
+  type RangeKind,
+} from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { loadReservationStats } from "@/lib/restoflow/reservation-queries";
 import {
   averageParty,
   cancellationRate,
+  change,
   findingsFor,
   noShowRate,
 } from "@/lib/restoflow/reservation-stats";
@@ -19,8 +26,11 @@ import {
   HourBars,
   OccupancyGrid,
   SourceBars,
+  TrendChart,
   WeekdayBars,
 } from "./panels";
+
+const RANGES: RangeKind[] = ["viikko", "kuukausi", "vuosi"];
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -48,14 +58,28 @@ export default async function ReservationStatsPage({
 }: PageProps<"/admin/varaukset/analytiikka">) {
   const locale = await resolveLocale();
   const t = adminText(locale);
-  const { restaurant, month: nykyinen } = await adminContext(
-    "/admin/varaukset/analytiikka",
-  );
+  const {
+    restaurant,
+    month: nykyinen,
+    today,
+  } = await adminContext("/admin/varaukset/analytiikka");
 
-  const month = monthFromParams(await searchParams, nykyinen);
-  const { from, to } = monthRange(month);
+  const params = await searchParams;
+  const month = monthFromParams(params, nykyinen);
+
+  const jaksoParam = typeof params.jakso === "string" ? params.jakso : "";
+  const range: RangeKind = (RANGES as string[]).includes(jaksoParam)
+    ? (jaksoParam as RangeKind)
+    : "kuukausi";
+
+  const { from, to } = rangeForMonth(range, month, today);
 
   const stats = await loadReservationStats(restaurant.id, from, to);
+
+  const jakso =
+    range === "kuukausi"
+      ? formatMonthIn(month, locale)
+      : `${formatDayIn(from, locale)} – ${formatDayIn(to, locale)}`;
 
   const otsikko = (
     <>
@@ -66,9 +90,11 @@ export default async function ReservationStatsPage({
           {t.varausTilasto.title}
         </h1>
         <p className="mt-0.5 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          {formatMonthIn(month, locale)} · {t.varausTilasto.intro}
+          {jakso} · {t.varausTilasto.intro}
         </p>
       </header>
+
+      <RangeTabs t={t} current={range} month={month} />
     </>
   );
 
@@ -100,6 +126,34 @@ export default async function ReservationStatsPage({
   const eiSaapunut = noShowRate(totals);
   const havainnot = findingsFor(stats);
 
+  /*
+   * Muutos edelliseen jaksoon.
+   *
+   * Null kun edellinen jakso oli tyhjä: nollasta kasvamiselle ei ole
+   * prosenttilukua, ja "+300 %" kolmesta varauksesta olisi tarkkuutta
+   * jota luvussa ei ole. Silloin pilleri jätetään pois eikä keksitä.
+   */
+  const previous = stats.previous;
+  const muutos = {
+    reservations: previous
+      ? change(totals.reservations, previous.reservations)
+      : null,
+    guests: previous ? change(totals.guests, previous.guests) : null,
+    cancelled: previous ? change(totals.cancelled, previous.cancelled) : null,
+    noShow: previous ? change(totals.noShow, previous.noShow) : null,
+  };
+
+  const delta = (arvo: number | null) =>
+    arvo === null
+      ? undefined
+      : {
+          text: `${arvo > 0 ? "+" : arvo < 0 ? "−" : ""}${percent(
+            Math.abs(arvo),
+            locale,
+            0,
+          )}`,
+        };
+
   return (
     <div className="rf-enter space-y-5">
       {otsikko}
@@ -117,11 +171,18 @@ export default async function ReservationStatsPage({
             <MetricCard
               label={t.varausTilasto.reservations}
               value={integer(totals.reservations, locale)}
+              delta={delta(muutos.reservations)}
+              hint={
+                muutos.reservations === null
+                  ? undefined
+                  : t.varausTilasto.vsPrevious
+              }
               highlight
             />
             <MetricCard
               label={t.varausTilasto.guests}
               value={integer(totals.guests, locale)}
+              delta={delta(muutos.guests)}
               hint={
                 seurue === null
                   ? undefined
@@ -133,6 +194,7 @@ export default async function ReservationStatsPage({
             <MetricCard
               label={t.varausTilasto.cancelled}
               value={integer(totals.cancelled, locale)}
+              delta={delta(muutos.cancelled)}
               hint={
                 peruutus === null ? undefined : percent(peruutus, locale, 0)
               }
@@ -148,6 +210,7 @@ export default async function ReservationStatsPage({
                * lause piilotti juuri sen sanan jonka takia se oli
                * kirjoitettu.
                */
+              delta={delta(muutos.noShow)}
               hint={
                 eiSaapunut === null ? undefined : percent(eiSaapunut, locale, 0)
               }
@@ -157,6 +220,15 @@ export default async function ReservationStatsPage({
           <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
             {t.varausTilasto.rateBasis}
           </p>
+
+          {/* --- Kehitys --- */}
+          <Card>
+            <CardHeader
+              title={t.varausTilasto.trendTitle}
+              subtitle={t.varausTilasto.trendHint}
+            />
+            <TrendChart t={t} locale={locale} stats={stats} />
+          </Card>
 
           {/* --- 2. Havainnot --- */}
           <Card>
@@ -212,5 +284,60 @@ export default async function ReservationStatsPage({
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Viikko, kuukausi, vuosi.
+ *
+ * Linkkejä eikä painikkeita: valinta on osoitteessa, joten näkymän voi
+ * linkittää ja paluunappi vie edelliseen jaksoon. Sama ratkaisu kuin
+ * varausten välilehdissä.
+ *
+ * Kuukausi kulkee mukana, koska se on yläpalkin valinta eikä tämän
+ * sivun — ilman sitä jakson vaihtaminen hyppäisi takaisin kuluvaan
+ * kuukauteen.
+ */
+function RangeTabs({
+  t,
+  current,
+  month,
+}: {
+  t: AdminText;
+  current: RangeKind;
+  month: string;
+}) {
+  const kohdat: { id: RangeKind; label: string }[] = [
+    { id: "viikko", label: t.varausTilasto.rangeWeek },
+    { id: "kuukausi", label: t.varausTilasto.rangeMonth },
+    { id: "vuosi", label: t.varausTilasto.rangeYear },
+  ];
+
+  return (
+    <nav
+      aria-label={t.varausTilasto.rangeLabel}
+      className="flex flex-wrap gap-1.5"
+    >
+      {kohdat.map((kohta) => {
+        const valittu = kohta.id === current;
+
+        return (
+          <Link
+            key={kohta.id}
+            href={`/admin/varaukset/analytiikka?jakso=${kohta.id}&kuukausi=${month}`}
+            aria-current={valittu ? "page" : undefined}
+            className="rf-press px-3.5 py-2 text-[13px] font-bold"
+            style={{
+              background: valittu ? "var(--rf-accent-bg)" : "var(--rf-card)",
+              color: valittu ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
+              border: "1px solid var(--rf-line)",
+              borderRadius: 999,
+            }}
+          >
+            {kohta.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

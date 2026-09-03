@@ -73,12 +73,30 @@ export interface StatsSource {
   count: number;
 }
 
+/**
+ * Yksi päivä jaksossa.
+ *
+ * Myös tyhjä päivä on rivi. Trendi on kuvio eikä luku, eikä kuviota näe
+ * ilman nollia: lista jossa on vain varauspäivät näyttää tasaiselta
+ * silloinkin kun joka toinen päivä on kiinni.
+ */
+export interface StatsDay {
+  date: string;
+  reservations: number;
+  guests: number;
+  cancelled: number;
+  noShow: number;
+}
+
 export interface ReservationStats {
   from: string;
   to: string;
   days: number;
   capacity: StatsCapacity;
   totals: StatsTotals;
+  /** Edeltävän yhtä pitkän jakson summat. */
+  previous?: StatsTotals;
+  byDay?: StatsDay[];
   bySource: StatsSource[];
   byHour: StatsHour[];
   byWeekday: StatsWeekday[];
@@ -179,6 +197,79 @@ export function occupancyRate(
 /** Varauksia keskimäärin yhtenä aukiolopäivänä. */
 export function perOpenDay(row: StatsWeekday): number | null {
   return osuus(row.reservations, row.openDays);
+}
+
+// ---------------------------------------------------------------------------
+// Vertailu edelliseen jaksoon
+// ---------------------------------------------------------------------------
+
+/**
+ * Suhteellinen muutos edelliseen jaksoon.
+ *
+ * Nollasta kasvaminen ei ole prosenttilukua. Kolme varausta kuukaudessa
+ * jona edellinen oli tyhjä on "kolme varausta", ei "ääretön kasvu" eikä
+ * "+300 %". Null tarkoittaa siis "ei vertailukelpoista" ja näkymä jättää
+ * merkinnän pois — se on rehellisempi kuin luku joka näyttää suurelta
+ * siksi että jakaja oli pieni.
+ *
+ * Molemmat nollia on sekin vertailukelvoton: kaksi tyhjää kuukautta
+ * eivät ole "ei muutosta" vaan "ei mitään mistä puhua".
+ */
+export function change(current: number, previous: number): number | null {
+  if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
+  if (previous <= 0) return null;
+  return (current - previous) / previous;
+}
+
+// ---------------------------------------------------------------------------
+// Trendi
+// ---------------------------------------------------------------------------
+
+/**
+ * Päivät niputettuna korkeintaan annettuun määrään pylväitä.
+ *
+ * Vuoden jakso on 365 päivää, ja 365 pylvästä puhelimen leveydellä on
+ * yhden pikselin viivoja joista ei näe mitään. Niputus säilyttää
+ * summat: kolme päivää yhdessä pylväässä on niiden kolmen päivän
+ * varaukset, ei niiden keskiarvo — muuten pylvään korkeus riippuisi
+ * jakson pituudesta eikä varausten määrästä.
+ *
+ * Pylvään päivämäärä on nipun ensimmäinen päivä, ja loppupäivä kulkee
+ * mukana, jotta näkymä voi kertoa mistä väliltä pylväs on.
+ */
+export interface TrendBar extends StatsDay {
+  /** Nipun viimeinen päivä. Sama kuin date, jos nipussa on yksi päivä. */
+  endDate: string;
+  /** Montako päivää nipussa on. */
+  days: number;
+}
+
+export function trendBars(days: StatsDay[], maxBars = 62): TrendBar[] {
+  if (days.length === 0) return [];
+
+  const koko = Math.max(1, Math.ceil(days.length / Math.max(1, maxBars)));
+  const bars: TrendBar[] = [];
+
+  for (let i = 0; i < days.length; i += koko) {
+    const nippu = days.slice(i, i + koko);
+
+    bars.push({
+      date: nippu[0].date,
+      endDate: nippu[nippu.length - 1].date,
+      days: nippu.length,
+      reservations: nippu.reduce((sum, d) => sum + d.reservations, 0),
+      guests: nippu.reduce((sum, d) => sum + d.guests, 0),
+      cancelled: nippu.reduce((sum, d) => sum + d.cancelled, 0),
+      noShow: nippu.reduce((sum, d) => sum + d.noShow, 0),
+    });
+  }
+
+  return bars;
+}
+
+/** Korkein pylväs. Nolla kun aineistoa ei ole: jakaja ei saa olla nolla. */
+export function trendPeak(bars: TrendBar[]): number {
+  return bars.reduce((max, bar) => Math.max(max, bar.reservations), 0);
 }
 
 // ---------------------------------------------------------------------------

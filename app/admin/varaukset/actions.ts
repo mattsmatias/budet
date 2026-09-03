@@ -20,6 +20,7 @@ import type { AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { createClient } from "@/utils/supabase/server";
+import type { KitchenLoad } from "@/lib/restoflow/reservation-queries";
 import { requireContext } from "@/lib/restoflow/session";
 
 export interface ReservationState {
@@ -70,6 +71,7 @@ const LuoSchema = z.object({
   phone: z.string().trim().max(40).optional(),
   email: z.string().trim().max(160).optional(),
   note: z.string().trim().max(500).optional(),
+  allergies: z.string().trim().max(200).optional(),
   walkIn: z.coerce.boolean().optional(),
   minutes: z.coerce.number().int().min(15).max(600).optional(),
 });
@@ -97,6 +99,7 @@ export async function createReservation(
     phone: formData.get("phone") || undefined,
     email: formData.get("email") || undefined,
     note: formData.get("note") || undefined,
+    allergies: formData.get("allergies") || undefined,
     walkIn: formData.get("walkIn") === "1" ? true : undefined,
     minutes: formData.get("minutes") || undefined,
   });
@@ -121,6 +124,7 @@ export async function createReservation(
     p_walk_in: parsed.data.walkIn ?? false,
     p_minutes: parsed.data.minutes ?? null,
     p_tables: tables.length > 0 ? tables : null,
+    p_allergies: parsed.data.allergies ?? null,
   });
 
   if (error) return { error: t.varaus.errGeneric };
@@ -147,6 +151,7 @@ const MuokkaaSchema = z.object({
   phone: z.string().trim().max(40).optional(),
   email: z.string().trim().max(160).optional(),
   note: z.string().trim().max(500).optional(),
+  allergies: z.string().trim().max(200).optional(),
 });
 
 /**
@@ -176,6 +181,9 @@ export async function updateReservation(
     phone: formData.has("phone") ? String(formData.get("phone")) : undefined,
     email: formData.has("email") ? String(formData.get("email")) : undefined,
     note: formData.has("note") ? String(formData.get("note")) : undefined,
+    allergies: formData.has("allergies")
+      ? String(formData.get("allergies"))
+      : undefined,
   });
 
   if (!parsed.success) return { error: t.varaus.errFields };
@@ -204,6 +212,7 @@ export async function updateReservation(
     p_email: parsed.data.email ?? null,
     p_note: parsed.data.note ?? null,
     p_tables: touchesTables && tables.length > 0 ? tables : null,
+    p_allergies: parsed.data.allergies ?? null,
   });
 
   if (error) return { error: t.varaus.errGeneric };
@@ -371,12 +380,39 @@ export interface TableSuggestion {
  * Jos se laskettaisiin tässä toisin, ehdotus koskisi eri aikaväliä
  * kuin tallennus — ja lista tarjoaisi pöytää jonka tallennus hylkää.
  */
+/**
+ * Kaikki mitä lomake tarvitsee valitusta ajasta.
+ *
+ * Kolme kysymystä yhdellä kutsulla: mihin pöytään seurue mahtuu,
+ * kestääkö keittiö sen, ja onko seuraava varaus tulossa pian. Ne
+ * kysytään aina samaan aikaan ja samasta ajasta — kolme erillistä
+ * hakua tarkoittaisi kolmea vastausta jotka voivat koskea eri hetkeä,
+ * koska käyttäjä ehtii vaihtaa kellonaikaa niiden välissä.
+ */
+export interface TablePlan {
+  options: TableSuggestion[];
+  kitchen: KitchenLoad | null;
+  /** Seuraava varaus tämän ajan jälkeen, jos se alkaa pian. */
+  next: { guestName: string; minutes: number } | null;
+}
+
+/**
+ * Kuinka pian seuraava varaus lasketaan "pian alkavaksi".
+ *
+ * Kaksi tuntia on tavallisen illallisen kesto: sitä lähempänä oleva
+ * varaus tarkoittaa, että walk-in joutuu lähtemään kesken tai
+ * seuraava seurue odottamaan. Kauempana oleva ei ole vielä kenenkään
+ * ongelma eikä siitä kannata varoittaa.
+ */
+const SOON_MINUTES = 120;
+
 export async function fetchTableOptions(input: {
   date: string;
   time: string;
   partySize: number;
   excludeId?: string;
-}): Promise<TableSuggestion[]> {
+}): Promise<TablePlan> {
+  const tyhja: TablePlan = { options: [], kitchen: null, next: null };
   const { restaurant } = await requireContext("/admin/varaukset");
 
   const parsed = z
@@ -388,7 +424,7 @@ export async function fetchTableOptions(input: {
     })
     .safeParse({ ...input, excludeId: input.excludeId ?? null });
 
-  if (!parsed.success) return [];
+  if (!parsed.success) return tyhja;
 
   const supabase = await createClient();
 
@@ -409,36 +445,91 @@ export async function fetchTableOptions(input: {
     },
   );
 
-  if (windowError || !window) return [];
+  if (windowError || !window) return tyhja;
 
   const { startsAt, endsAt } = window as { startsAt: string; endsAt: string };
 
-  const { data, error } = await supabase.rpc("reservation_table_options", {
-    p_restaurant: restaurant.id,
-    p_start: startsAt,
-    p_end: endsAt,
-    p_party: parsed.data.partySize,
-    p_exclude: parsed.data.excludeId,
-    p_limit: 6,
-  });
+  /*
+   * Kolme kysymystä rinnakkain.
+   *
+   * Ne eivät riipu toisistaan: keittiön kuorma ei muutu siitä mitä
+   * pöytiä on vapaana. Peräkkäin ne olisivat kolme edestakaista matkaa
+   * kantaan siinä hetkessä jona käyttäjä odottaa lomakkeen päivittyvän.
+   */
+  const [options, kitchen, next] = await Promise.all([
+    supabase.rpc("reservation_table_options", {
+      p_restaurant: restaurant.id,
+      p_start: startsAt,
+      p_end: endsAt,
+      p_party: parsed.data.partySize,
+      p_exclude: parsed.data.excludeId,
+      p_limit: 6,
+    }),
+    supabase.rpc("kitchen_check", {
+      p_restaurant: restaurant.id,
+      p_at: startsAt,
+      p_party: parsed.data.partySize,
+      p_exclude: parsed.data.excludeId,
+    }),
+    supabase
+      .from("reservations")
+      .select("starts_at, guest_name, status")
+      .eq("restaurant_id", restaurant.id)
+      .in("status", ["pending", "confirmed", "arrived"])
+      .gt("starts_at", startsAt)
+      .order("starts_at")
+      .limit(1),
+  ]);
 
-  if (error || !data) return [];
+  const suggestions = options.error
+    ? []
+    : (
+        (options.data ?? []) as {
+          kind: "table" | "combination";
+          table_ids: string[];
+          label: string;
+          seats_max: number;
+          wasted: number;
+        }[]
+      ).map((row) => ({
+        kind: row.kind,
+        tableIds: row.table_ids,
+        label: row.label,
+        seatsMax: row.seats_max,
+        wasted: row.wasted,
+      }));
 
-  return (
-    data as {
-      kind: "table" | "combination";
-      table_ids: string[];
-      label: string;
-      seats_max: number;
-      wasted: number;
-    }[]
-  ).map((row) => ({
-    kind: row.kind,
-    tableIds: row.table_ids,
-    label: row.label,
-    seatsMax: row.seats_max,
-    wasted: row.wasted,
-  }));
+  return {
+    options: suggestions,
+    kitchen: kitchen.error ? null : (kitchen.data as unknown as KitchenLoad),
+    next: seuraava(next.data?.[0], startsAt),
+  };
+}
+
+/**
+ * Seuraava varaus, jos se alkaa pian.
+ *
+ * Palautetaan minuutteina eikä kellonaikana. Aikaleiman muotoilu
+ * vaatisi ravintolan vyöhykkeen, ja kysymys johon salissa haetaan
+ * vastausta on joka tapauksessa "kauanko tässä pöydässä voi istua" —
+ * siihen vastaa erotus eikä kello.
+ *
+ * Kaukana oleva varaus palautetaan tyhjänä: varoitus joka koskee ensi
+ * viikkoa ei ole varoitus vaan kohinaa.
+ */
+function seuraava(
+  row: { starts_at: string; guest_name: string } | undefined,
+  startsAt: string,
+): TablePlan["next"] {
+  if (!row) return null;
+
+  const ero = Math.round(
+    (Date.parse(row.starts_at) - Date.parse(startsAt)) / 60000,
+  );
+
+  if (!Number.isFinite(ero) || ero < 0 || ero > SOON_MINUTES) return null;
+
+  return { guestName: row.guest_name, minutes: ero };
 }
 
 /**

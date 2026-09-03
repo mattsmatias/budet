@@ -109,6 +109,15 @@ const LuoSchema = z.object({
   note: z.string().trim().max(500).optional().nullable(),
 
   /*
+   * Allergiat omana kenttänään.
+   *
+   * Keittiö lukee tämän erikseen. Vanha widget-versio ei lähetä sitä
+   * lainkaan, ja se on kelvollinen pyyntö: kenttä on valinnainen,
+   * jolloin ravintolan sivulla oleva vanha upotus toimii yhä.
+   */
+  allergies: z.string().trim().max(200).optional().nullable(),
+
+  /*
    * Kieli vahvistusviestiä varten.
    *
    * Widget tietää millä kielellä asiakas asioi; palvelin ei. Ilman
@@ -210,6 +219,7 @@ export async function POST(request: Request): Promise<Response> {
       phone: parsed.data.phone,
       email: parsed.data.email ?? null,
       note: parsed.data.note ?? null,
+      allergies: parsed.data.allergies ?? null,
     });
 
     if (result.ok && result.cancelToken) {
@@ -266,6 +276,8 @@ async function lahetaVahvistus(
     partySize: result.partySize ?? input.partySize,
     tables: result.tables ?? [],
     guestName: input.name,
+    reference: result.reference ?? null,
+    cancelHours: result.cancelCutoffHours ?? 0,
     cancelUrl: `${await siteOrigin()}/varaus/${token}`,
   });
 

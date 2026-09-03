@@ -183,3 +183,67 @@ export function monthRange(month: string): { from: string; to: string } {
     to: `${month}-${String(last.getUTCDate()).padStart(2, "0")}`,
   };
 }
+
+/**
+ * Viikko jonka sisällä päivä on, maanantaista sunnuntaihin.
+ *
+ * ISO-viikko eikä "seitsemän viimeistä päivää": ravintolan viikko on
+ * maanantaista sunnuntaihin, ja liukuva ikkuna leikkaisi viikonlopun
+ * kahtia — juuri sen osan jonka takia viikkoa katsotaan.
+ */
+export function weekRange(isoDate: string): { from: string; to: string } {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return { from: isoDate, to: isoDate };
+
+  /* getUTCDay: sunnuntai on 0, ja maanantaialkuisessa viikossa se on 7. */
+  const arki = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+  const maanantai = new Date(d);
+  maanantai.setUTCDate(d.getUTCDate() - (arki - 1));
+
+  const sunnuntai = new Date(maanantai);
+  sunnuntai.setUTCDate(maanantai.getUTCDate() + 6);
+
+  return {
+    from: maanantai.toISOString().slice(0, 10),
+    to: sunnuntai.toISOString().slice(0, 10),
+  };
+}
+
+/** Kalenterivuosi kokonaan. */
+export function yearRange(year: number): { from: string; to: string } {
+  return { from: `${year}-01-01`, to: `${year}-12-31` };
+}
+
+export type RangeKind = "viikko" | "kuukausi" | "vuosi";
+
+/**
+ * Viikko, kuukausi tai vuosi yläpalkin kuukaudesta.
+ *
+ * Yläpalkissa valitaan kuukausi, ja se on kaikkien näkymien yhteinen
+ * ajankohta. Viikolle ja vuodelle tarvitaan silti yksi päivä, josta ne
+ * lasketaan — ja se päivä on kuluva päivä silloin kun katsotaan tätä
+ * kuukautta, muuten kuukauden viimeinen päivä.
+ *
+ * Sääntö on tämä siksi, että "viikko" tarkoittaa kuluvaa viikkoa
+ * silloin kun ollaan nykyhetkessä. Menneen kuukauden kohdalla kuluvaa
+ * viikkoa ei ole, ja kuukauden viimeinen viikko on ainoa jonka
+ * valinnasta voi päätellä mitä käyttäjä tarkoitti.
+ */
+export function rangeForMonth(
+  kind: RangeKind,
+  month: string,
+  today: string,
+): { from: string; to: string } {
+  if (kind === "vuosi") {
+    return yearRange(Number(month.slice(0, 4)));
+  }
+
+  if (kind === "kuukausi") {
+    return monthRange(month);
+  }
+
+  const kuukausi = monthRange(month);
+  const paiva = today.startsWith(month) ? today : kuukausi.to;
+
+  return weekRange(paiva);
+}

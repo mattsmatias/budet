@@ -44,7 +44,7 @@ import {
   conflictFor,
   durationOf,
   minutesAt,
-  minutesOf,
+  nightMinutes,
   reservationsInColumn,
   timeOf,
   type CalendarReservation,
@@ -218,6 +218,7 @@ export function ReservationCalendar({
       durationMinutes: veto.durationMinutes,
       others: calendarRows,
       turnaroundMinutes: day.settings?.turnaroundMinutes ?? 0,
+      night: axis.night,
     });
 
     if (este) {
@@ -432,7 +433,8 @@ export function ReservationCalendar({
                             setDrag({
                               id: row.id,
                               offsetMinutes:
-                                kohta.minutes - minutesOf(row.time),
+                                kohta.minutes -
+                                nightMinutes(row.time, axis.night),
                               durationMinutes: durationOf(
                                 row.time,
                                 row.endTime,

@@ -29,6 +29,8 @@ export interface PublicReservationConfig {
   maxDaysAhead?: number;
   /** Tämä päivä ravintolan vyöhykkeellä, ei selaimen. */
   today?: string;
+  /** Tunteja ennen varausta, jolloin verkkoperuutus vielä onnistuu. */
+  cancelCutoffHours?: number;
   theme?: ReservationTheme;
 }
 
@@ -66,10 +68,13 @@ export interface CreateResult {
   ok: boolean;
   error?: string;
   cancelToken?: string;
+  /** Varausnumero, joka asiakkaalle näytetään ja joka lukee viestissä. */
+  reference?: string;
   restaurantName?: string;
   date?: string;
   time?: string;
   partySize?: number;
+  cancelCutoffHours?: number;
   tables?: string[];
 }
 
@@ -82,6 +87,7 @@ export interface CreateInput {
   phone: string;
   email?: string | null;
   note?: string | null;
+  allergies?: string | null;
 }
 
 export async function createPublicReservation(
@@ -98,6 +104,7 @@ export async function createPublicReservation(
     p_phone: input.phone,
     p_email: input.email ?? null,
     p_note: input.note ?? null,
+    p_allergies: input.allergies ?? null,
   });
 
   if (error || !data) return { ok: false, error: "unknown" };
@@ -106,12 +113,22 @@ export async function createPublicReservation(
 
 export interface ReservationLookup {
   restaurantName: string;
+  reference: string | null;
   date: string;
   time: string;
   partySize: number;
   guestName: string;
   status: string;
   cancellable: boolean;
+  /**
+   * Miksi peruutusta ei voi tehdä: mennyt aika vai liian myöhäinen.
+   *
+   * Kanta päättää tämän, koska ero on kellonajassa. Sivu piirretään
+   * palvelimella, eikä kelloa lueta kesken piirron.
+   */
+  cancelBlocked: "past" | "cutoff" | null;
+  /** Tunteja ennen varausta, jolloin verkkoperuutus vielä onnistuu. */
+  cancelCutoffHours: number;
 }
 
 export async function lookupReservation(
@@ -130,6 +147,8 @@ export async function lookupReservation(
 export interface CancelResult {
   ok: boolean;
   error?: string;
+  /** Rajan tunnit, kun peruutus hylättiin liian myöhäisenä. */
+  cutoffHours?: number;
   restaurantName?: string;
   date?: string;
   time?: string;

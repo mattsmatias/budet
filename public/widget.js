@@ -104,7 +104,11 @@
       email: "Sähköposti",
       optional: "vapaaehtoinen",
       note: "Toiveet",
-      notePlaceholder: "Esimerkiksi allergiat tai juhlan aihe",
+      notePlaceholder: "Esimerkiksi pöytätoive tai juhlan aihe",
+      allergies: "Allergiat",
+      allergiesPlaceholder: "Esimerkiksi pähkinä, gluteeni, laktoosi",
+      reference: "Varausnumero",
+      cancelUntil: "Voit perua varauksen verkossa {tunnit} tuntia ennen varausaikaa. Sen jälkeen soita ravintolaan.",
       submit: "Vahvista varaus",
       submitting: "Lähetetään…",
       confirmed: "Varaus vahvistettu",
@@ -139,7 +143,11 @@
       email: "Email",
       optional: "optional",
       note: "Requests",
-      notePlaceholder: "For example allergies or an occasion",
+      notePlaceholder: "For example a table wish or an occasion",
+      allergies: "Allergies",
+      allergiesPlaceholder: "For example nuts, gluten, lactose",
+      reference: "Booking number",
+      cancelUntil: "You can cancel online up to {tunnit} hours before the booking. After that, please call the restaurant.",
       submit: "Confirm booking",
       submitting: "Sending…",
       confirmed: "Booking confirmed",
@@ -174,7 +182,11 @@
       email: "E-post",
       optional: "frivillig",
       note: "Önskemål",
-      notePlaceholder: "Till exempel allergier eller ett firande",
+      notePlaceholder: "Till exempel bordsönskemål eller ett firande",
+      allergies: "Allergier",
+      allergiesPlaceholder: "Till exempel nötter, gluten, laktos",
+      reference: "Bokningsnummer",
+      cancelUntil: "Du kan avboka på nätet fram till {tunnit} timmar före bokningen. Därefter, ring restaurangen.",
       submit: "Bekräfta bokningen",
       submitting: "Skickar…",
       confirmed: "Bokningen är bekräftad",
@@ -209,7 +221,11 @@
       email: "E-mail",
       optional: "valgfri",
       note: "Ønsker",
-      notePlaceholder: "For eksempel allergier eller en anledning",
+      notePlaceholder: "For eksempel bordønske eller en anledning",
+      allergies: "Allergier",
+      allergiesPlaceholder: "For eksempel nødder, gluten, laktose",
+      reference: "Reservationsnummer",
+      cancelUntil: "Du kan afbestille online indtil {tunnit} timer før reservationen. Derefter, ring til restauranten.",
       submit: "Bekræft bestillingen",
       submitting: "Sender…",
       confirmed: "Bestillingen er bekræftet",
@@ -244,7 +260,11 @@
       email: "E-posta",
       optional: "isteğe bağlı",
       note: "İstekler",
-      notePlaceholder: "Örneğin alerjiler ya da özel bir gün",
+      notePlaceholder: "Örneğin masa tercihi ya da özel bir gün",
+      allergies: "Alerjiler",
+      allergiesPlaceholder: "Örneğin fındık, gluten, laktoz",
+      reference: "Rezervasyon numarası",
+      cancelUntil: "Rezervasyondan {tunnit} saat öncesine kadar internetten iptal edebilirsiniz. Sonrasında lütfen restoranı arayın.",
       submit: "Rezervasyonu onayla",
       submitting: "Gönderiliyor…",
       confirmed: "Rezervasyon onaylandı",
@@ -279,7 +299,11 @@
       email: "E-post",
       optional: "vabatahtlik",
       note: "Soovid",
-      notePlaceholder: "Näiteks allergiad või tähtpäev",
+      notePlaceholder: "Näiteks lauasoov või tähtpäev",
+      allergies: "Allergiad",
+      allergiesPlaceholder: "Näiteks pähklid, gluteen, laktoos",
+      reference: "Broneeringu number",
+      cancelUntil: "Saad broneeringu veebis tühistada kuni {tunnit} tundi enne broneeringut. Pärast seda helista restorani.",
       submit: "Kinnita broneering",
       submitting: "Saadame…",
       confirmed: "Broneering on kinnitatud",
@@ -645,6 +669,22 @@
       placeholder: t.notePlaceholder,
     });
 
+    /*
+     * Allergiat omana kenttänään.
+     *
+     * Ne kulkivat ennen toivekentässä yhdessä pöytätoiveiden kanssa, ja
+     * keittiö luki lauseen "ikkunapöytä jos mahdollista, yksi kasvis,
+     * Villellä synttärit" toiveena. Oma kenttä on se ero jonka takia
+     * salinäkymä voi näyttää allergian varoituksena.
+     */
+    var allergiat = el("input", {
+      type: "text",
+      id: "k-allergies",
+      name: "allergies",
+      maxlength: "200",
+      placeholder: t.allergiesPlaceholder,
+    });
+
     tiedot.appendChild(
       el("div", { class: "row" }, [
         el("div", { class: "f" }, [
@@ -667,6 +707,19 @@
     toiveOtsikko.appendChild(el("span", { class: "opt", text: "(" + t.optional + ")" }));
 
     tiedot.appendChild(el("div", { class: "f" }, [toiveOtsikko, toive]));
+
+    var allergiaOtsikko = el("label", {
+      class: "l",
+      for: "k-allergies",
+      text: t.allergies + " ",
+    });
+    allergiaOtsikko.appendChild(
+      el("span", { class: "opt", text: "(" + t.optional + ")" }),
+    );
+
+    tiedot.appendChild(
+      el("div", { class: "f" }, [allergiaOtsikko, allergiat]),
+    );
 
     var laheta = el("button", { type: "submit", text: t.submit });
     var virhe = el("p", { class: "err hidden", role: "alert" });
@@ -762,6 +815,7 @@
           /* Vahvistus lähtee samalla kielellä jolla asiakas varasi. */
           locale: kieli,
           note: toive.value.trim() || null,
+          allergies: allergiat.value.trim() || null,
         }),
       })
         .then(function (data) {
@@ -816,6 +870,17 @@
     if (data.tables && data.tables.length) {
       rivi(t.confirmedTables, data.tables.join(", "));
     }
+
+    /*
+     * Varausnumero vahvistukseen.
+     *
+     * Se on se merkkijono jonka asiakas lukee puhelimessa ääneen, ja
+     * ilman sitä ravintola etsii varauksen nimellä — mikä on hidasta
+     * silloin kun nimiä on kolme samanlaista.
+     */
+    if (data.reference) {
+      rivi(t.reference, data.reference);
+    }
     laatikko.appendChild(dl);
 
     var linkki = origin + "/varaus/" + data.cancelToken;
@@ -823,6 +888,22 @@
       el("p", {}, [el("a", { href: linkki, text: t.cancelTitle })]),
     );
     laatikko.appendChild(el("p", { class: "hint", text: t.cancelHint }));
+
+    /*
+     * Peruutusraja sanotaan heti eikä vasta peruutusyrityksessä.
+     *
+     * Asiakas joka lukee tämän tietää soittaa; asiakas joka saa saman
+     * tiedon tuntia ennen varausta on jo myöhässä. Nollaa ei sanota:
+     * "voit perua 0 tuntia ennen" olisi hämmentävämpi kuin vaikeneminen.
+     */
+    if (data.cancelCutoffHours > 0) {
+      laatikko.appendChild(
+        el("p", {
+          class: "hint",
+          text: t.cancelUntil.replace("{tunnit}", String(data.cancelCutoffHours)),
+        }),
+      );
+    }
 
     wrap.appendChild(laatikko);
     wrap.appendChild(

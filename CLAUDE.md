@@ -31,8 +31,15 @@ words people read and leave the identifiers where they are.
 
 ## Scope is enforced in the data model
 
-Kate deliberately does NOT do: point of sale, sales tracking, bank
-integration, inventory, reservations, CRM, orders, delivery.
+Kate deliberately does NOT do: point of sale, bank integration, inventory,
+CRM, orders, delivery.
+
+Table reservations ARE in scope and shipped (`/admin/varaukset`,
+`app/varaa/[slug]`, `public/widget.js`): floor plan, calendar with drag and
+drop, walk-ins, a booking list with search, opening hours that may run past
+midnight, kitchen capacity, analytics, a public booking widget, and import
+from another system. Sales tracking is a separate question and stays out —
+see the next paragraph.
 
 **There is no field for sales anywhere in the data model.** This is not an
 oversight — it means no screen can accidentally present expenses as the
@@ -73,10 +80,13 @@ system font stack first, Inter as fallback.
 
 ## Notes
 
-- Demo data is fixed and does not depend on the current clock, so views are
-  reproducible. `DEMO_NOW` is the reference instant.
-- Nothing persists — no database is wired. Every view says so. Do not add a
-  control that appears to save when it does not.
+- Supabase is wired and everything persists. (This line used to say the
+  opposite; it was left over from the prototype and was wrong for a long
+  time. If a view still claims nothing is saved, that view is the bug.)
+- Reservation rules live in the database, not in the app: availability, the
+  advisory lock, the kitchen limit, opening hours and the booking reference
+  are all in `supabase/migrations/006[6-8]*` and `009[1-5]*`. The app
+  validates shape and translates errors; it does not decide.
 - The repo lives under OneDrive, so `node_modules` syncs to the cloud. This
   can slow things down and occasionally cause file-lock build failures.
 

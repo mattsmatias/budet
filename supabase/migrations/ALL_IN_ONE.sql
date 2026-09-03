@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 81 migraatiota:
+-- Sisältää 99 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -93,6 +93,24 @@
 --   0075_files_lifecycle_actions.sql
 --   0076_folder_default_key.sql
 --   0077_file_reminder.sql
+--   0078_file_activity.sql
+--   0079_payroll_tax_rules.sql
+--   0080_tax_cards.sql
+--   0081_payslip_tax.sql
+--   0082_floor_plan.sql
+--   0083_table_options.sql
+--   0084_floor_elements.sql
+--   0085_service_state.sql
+--   0086_reservation_update_poyta.sql
+--   0087_reservation_day.sql
+--   0088_reservation_stats.sql
+--   0089_floor_plan_image.sql
+--   0090_ledger_issue_codes.sql
+--   0091_reservation_fields.sql
+--   0092_reservation_engine_night.sql
+--   0093_reservation_search.sql
+--   0094_reservation_stats_trend.sql
+--   0095_reservation_import.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -18171,4 +18189,6108 @@ alter table files
 create index if not exists files_reminder
   on files (reminder_task_id)
   where reminder_task_id is not null;
+
+
+-- ===========================================================================
+-- 0078_file_activity.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0078 — Viimeksi käytetyt ja kansion viimeisin tapahtuma
+-- ---------------------------------------------------------------------------
+--
+-- Ravintoloitsija ei muista missä kansiossa vuokrasopimus on. Hän
+-- muistaa katsoneensa sitä viime viikolla.
+--
+-- "Viimeksi lisätyt" ei vastaa siihen: se kertoo mikä on uutta, ei mitä
+-- on käytetty. Sopimus on voitu tallentaa vuosi sitten ja avata eilen —
+-- ja juuri se eilinen avaus on se mistä sen löytää uudelleen.
+--
+-- ---------------------------------------------------------------------------
+-- AVAUS ON TIETO, EI LOKI
+-- ---------------------------------------------------------------------------
+--
+-- Sarake rivillä, ei erillistä tapahtumataulua. Kysymys on "milloin
+-- tätä viimeksi katsottiin", ei "kuka katsoi mitäkin milloin".
+-- Jälkimmäiseen vastaa audit_log, ja se on eri kysymys eri
+-- käyttötarkoitukseen.
+--
+-- Ei myöskään käyttäjäkohtaisesti. Ravintolassa on muutama esihenkilö
+-- ja he katsovat samoja papereita; "kuka viimeksi avasi" olisi tieto
+-- jota kukaan ei kysy.
+
+alter table files
+  add column if not exists last_opened_at timestamptz;
+
+create index if not exists files_recently_opened
+  on files (restaurant_id, last_opened_at desc)
+  where last_opened_at is not null and deleted_at is null;
+
+/**
+ * Avausajan merkintä.
+ *
+ * Lukuoikeus riittää: kirjanpitäjä saa avata tiedoston, ja hänen
+ * avauksensa on yhtä lailla tieto siitä että tiedostoa käytetään.
+ * files_write-käytäntö vaatisi esihenkilön, joten tämä on security
+ * definer omalla tarkistuksellaan.
+ *
+ * Tuntematon tunniste palautuu hiljaa. Avaus on jo tapahtunut tai
+ * epäonnistunut muualla, eikä merkinnän epäonnistuminen saa kaataa
+ * tiedoston lataamista.
+ */
+create or replace function mark_file_opened(p_file uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+begin
+  select restaurant_id into v_restaurant
+  from files where id = p_file and deleted_at is null;
+
+  if v_restaurant is null then return; end if;
+
+  if not can_read_finance(v_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  update files set last_opened_at = now() where id = p_file;
+end;
+$$;
+
+revoke execute on function mark_file_opened(uuid) from public, anon;
+grant execute on function mark_file_opened(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Kansion viimeisin tapahtuma
+-- ---------------------------------------------------------------------------
+--
+-- "86 tiedostoa · päivitetty tänään" kertoo yhdellä silmäyksellä missä
+-- eletään ja mikä on hiljaista. Aika lasketaan samassa kyselyssä kuin
+-- lukumäärä, joten se ei maksa erillistä kierrosta.
+--
+-- Paluutyyppi muuttuu, joten funktio on pudotettava ensin.
+
+drop function if exists folder_counts(uuid);
+
+create or replace function folder_counts(p_restaurant uuid)
+returns table (folder_id uuid, file_count bigint, last_activity timestamptz)
+language sql
+stable
+set search_path = public
+as $$
+  select f.folder_id, count(*), max(f.updated_at)
+  from files f
+  where f.restaurant_id = p_restaurant
+    and f.folder_id is not null
+    and f.deleted_at is null
+  group by f.folder_id;
+$$;
+
+revoke execute on function folder_counts(uuid) from public, anon;
+grant execute on function folder_counts(uuid) to authenticated;
+
+
+-- ===========================================================================
+-- 0079_payroll_tax_rules.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0079 — Palkanlaskennan vuosisäännöt
+-- ---------------------------------------------------------------------------
+--
+-- Suomalainen palkanlaskenta on täynnä lukuja jotka muuttuvat kerran
+-- vuodessa: työeläkemaksu, työttömyysvakuutusmaksu, työnantajan
+-- sairausvakuutusmaksu, luontoisetujen verotusarvot. Yksikään niistä
+-- ei ole sovelluslogiikkaa. Ne ovat tietoa jonka joku muu päättää.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI TAULU EIKÄ VAKIO
+-- ---------------------------------------------------------------------------
+--
+-- Kirjoitettuna koodiin "7,30 %" olisi oikein tasan vuoden. Kun
+-- prosentti muuttuu 2027, vaihtoehtoja olisi kaksi: muuttaa vakio ja
+-- rikkoa jokainen vuoden 2026 palkkalaskelma takautuvasti, tai
+-- kirjoittaa if-lause vuosiluvusta ja toinen ensi vuonna.
+--
+-- Taulu tekee vuosimuutoksesta yhden rivin. Vanhat laskelmat pysyvät
+-- ennallaan, koska ne lukevat oman vuotensa rivin — ja koska ne
+-- tallentavat käytetyt arvot itseensä (0081).
+--
+-- ---------------------------------------------------------------------------
+-- MITÄ TÄÄLLÄ EI OLE
+-- ---------------------------------------------------------------------------
+--
+-- Ennakonpidätysprosenttia ei ole. Kate ei laske työntekijän
+-- veroprosenttia — sen laskee Verohallinto ja se lukee verokortissa.
+-- Täällä on vain se prosentti jota laki käskee käyttää silloin kun
+-- verokorttia ei ole lainkaan.
+--
+-- Työnantajan tapaturmavakuutus- ja ryhmähenkivakuutusmaksua ei ole.
+-- Ne eivät ole kansallisia prosentteja vaan vakuutusyhtiön ja
+-- toimialan riskiluokan mukaisia, eikä keksitty luku ole parempi kuin
+-- puuttuva luku.
+--
+-- ---------------------------------------------------------------------------
+-- LÄHTEET
+-- ---------------------------------------------------------------------------
+--
+-- Vuoden 2026 arvot on haettu näistä:
+--
+--   Eläketurvakeskus, Työeläkemaksut vuonna 2026
+--   https://www.etk.fi/ajankohtaista/tyoelakemaksut-vuonna-2026/
+--
+--   Työeläkeyhtiö Elo, Sosiaalivakuutusmaksut 2026
+--   https://www.elo.fi/fi-fi/tyonantaja/tyel-vakuuttaminen/tyel-maksu/
+--   sosiaalivakuutusmaksut-2026
+--
+--   Verohallinto, Verokorttiohjeet maksajalle
+--   https://www.vero.fi/yritykset-ja-yhteisot/verot-ja-maksut/
+--   yritys_tyonantajana/verokorttiohjeet/
+--
+--   Verohallinnon päätös luontoisetujen laskentaperusteista 2026
+--   https://www.vero.fi/en/detailed-guidance/decisions/47380/
+--   in-kind-benefits-fringe-benefits-2026/
+--
+-- Lähde tallennetaan riville. Kun joku kysyy kahden vuoden päästä
+-- mistä 1,91 % tuli, vastaus on rivillä eikä kenenkään muistissa.
+
+-- ---------------------------------------------------------------------------
+-- 1. Vuosisäännöt
+-- ---------------------------------------------------------------------------
+
+create table if not exists payroll_tax_rules (
+  tax_year integer primary key,
+
+  -- --- Työntekijältä perittävät ------------------------------------------
+  --
+  -- Nämä kolme ovat ainoat jotka työnantaja pidättää palkasta
+  -- ennakonpidätyksen lisäksi. Työntekijän sairausvakuutusmaksu ei ole
+  -- listassa: se sisältyy verokortin pidätysprosenttiin eikä sitä
+  -- peritä erikseen. Erillisenä se veloitettaisiin kahdesti.
+
+  /** Työntekijän työeläkevakuutusmaksu, % palkasta. */
+  employee_pension_rate numeric(5, 2) not null,
+
+  /** Palkansaajan työttömyysvakuutusmaksu, % palkasta. */
+  employee_unemployment_rate numeric(5, 2) not null,
+
+  -- --- Työnantajan maksut -------------------------------------------------
+
+  /**
+   * Työnantajan työeläkevakuutusmaksu, % palkasta.
+   *
+   * Tämä on keskimääräinen luku. Todellinen maksu riippuu
+   * vakuutusyhtiöstä, yrityksen koosta ja asiakashyvityksistä, joten
+   * ravintola voi korvata sen omallaan (payroll_settings).
+   */
+  employer_pension_rate numeric(5, 2) not null,
+
+  /** Työnantajan sairausvakuutusmaksu, % palkasta. */
+  employer_health_rate numeric(5, 2) not null,
+
+  /*
+   * Työnantajan työttömyysvakuutusmaksu on porrastettu.
+   *
+   * Alempi prosentti rajaan asti, ylempi sen ylittävältä osalta.
+   * Raja lasketaan koko vuoden palkkasummasta, ei kuukaudesta.
+   */
+  employer_unemployment_low_rate numeric(5, 2) not null,
+  employer_unemployment_high_rate numeric(5, 2) not null,
+  employer_unemployment_threshold_cents bigint not null,
+
+  -- --- Ennakonpidätys -----------------------------------------------------
+
+  /**
+   * Pidätysprosentti kun verokorttia ei ole.
+   *
+   * Ei oletus eikä arvaus vaan laissa säädetty seuraus siitä ettei
+   * verokorttia esitetä. Kate ei keksi tähän mitään lievempää.
+   */
+  no_tax_card_rate numeric(5, 2) not null,
+
+  /** Suurin sallittu pidätysprosentti verokortilla. */
+  max_withholding_rate numeric(5, 2) not null default 60.00,
+
+  -- --- Ikärajat -----------------------------------------------------------
+  --
+  -- Maksuvelvollisuus alkaa ja päättyy iän mukaan. Rajat ovat
+  -- säännöissä eivätkä koodissa, koska nekin ovat muuttuneet
+  -- useammin kuin kerran.
+
+  pension_min_age smallint not null,
+  pension_max_age smallint not null,
+  unemployment_min_age smallint not null,
+  unemployment_max_age smallint not null,
+
+  -- --- Jäljitettävyys -----------------------------------------------------
+
+  /** Mistä luvut on otettu. Yksi tai useampi osoite, rivinvaihdoin. */
+  source_url text not null default '',
+  source_note text not null default '',
+
+  /*
+   * Vahvistettu vai alustava.
+   *
+   * Ensi vuoden luvut tiedetään usein loppusyksystä, mutta ne
+   * vahvistetaan myöhemmin. Merkintä kertoo laskelman lukijalle
+   * kummasta on kyse.
+   */
+  confirmed boolean not null default true,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint payroll_tax_rules_year check (tax_year between 2000 and 2100),
+  constraint payroll_tax_rules_rates check (
+    employee_pension_rate >= 0 and employee_pension_rate <= 100
+    and employee_unemployment_rate >= 0 and employee_unemployment_rate <= 100
+    and employer_pension_rate >= 0 and employer_pension_rate <= 100
+    and employer_health_rate >= 0 and employer_health_rate <= 100
+    and employer_unemployment_low_rate >= 0
+    and employer_unemployment_high_rate >= 0
+    and no_tax_card_rate >= 0 and no_tax_card_rate <= 100
+  ),
+  constraint payroll_tax_rules_ages check (
+    pension_min_age >= 0 and pension_max_age > pension_min_age
+    and unemployment_min_age >= 0 and unemployment_max_age > unemployment_min_age
+  )
+);
+
+-- ---------------------------------------------------------------------------
+-- 2. Luontoisetujen verotusarvot
+-- ---------------------------------------------------------------------------
+--
+-- Oma taulu eikä sarakkeita sääntöriville: etuja on kymmenkunta ja
+-- niitä tulee lisää. Sarakkeina jokainen uusi etu olisi migraatio.
+--
+-- Kaikkia ei voi arvottaa taulukosta. Autoedun ja asuntoedun arvo
+-- riippuu autosta ja asunnosta, joten niille tallennetaan arvo nollana
+-- ja merkintä siitä että arvo on syötettävä käsin. Kate ei arvaa
+-- työsuhdeauton verotusarvoa.
+
+do $$ begin
+  create type benefit_kind as enum (
+    'meal', 'phone', 'car', 'housing', 'bicycle', 'other'
+  );
+exception when duplicate_object then null; end $$;
+
+create table if not exists payroll_benefit_values (
+  tax_year integer not null references payroll_tax_rules(tax_year) on delete cascade,
+  kind benefit_kind not null,
+
+  /**
+   * Verotusarvo sentteinä.
+   *
+   * Ravintoedulla ateriaa kohti, muilla kuukaudessa. Nolla tarkoittaa
+   * ettei taulukkoarvoa ole — silloin arvo on aina syötettävä.
+   */
+  value_cents integer not null default 0,
+
+  /** 'per_month' tai 'per_meal'. Kertoo mitä value_cents tarkoittaa. */
+  unit text not null default 'per_month',
+
+  /**
+   * Vaatiiko käsin syötetyn arvon.
+   *
+   * Autoetu ja asuntoetu lasketaan aina tapauskohtaisesti. Merkintä
+   * estää käyttöliittymää tarjoamasta nollaa oletusarvona.
+   */
+  requires_manual_value boolean not null default false,
+
+  note text not null default '',
+
+  primary key (tax_year, kind),
+
+  constraint payroll_benefit_values_value check (value_cents >= 0),
+  constraint payroll_benefit_values_unit check (unit in ('per_month', 'per_meal'))
+);
+
+-- ---------------------------------------------------------------------------
+-- 3. Ravintolan omat palkka-asetukset
+-- ---------------------------------------------------------------------------
+--
+-- Kansallinen keskiarvo ei ole kenenkään todellinen maksu. Työnantajan
+-- TyEL-maksu riippuu vakuutusyhtiöstä ja asiakashyvityksistä,
+-- tapaturmavakuutus toimialan riskiluokasta. Nämä ravintola tietää ja
+-- Kate ei.
+--
+-- Rivi on vapaaehtoinen: ilman sitä käytetään vuosisääntöjen
+-- keskiarvoa, ja työnantajan kustannus on likiarvo. Sen sanotaan
+-- laskelmassa ääneen.
+
+create table if not exists payroll_settings (
+  restaurant_id uuid primary key references restaurants(id) on delete cascade,
+
+  /** Ravintolan oma työnantajan TyEL-%. Null = käytä vuoden keskiarvoa. */
+  employer_pension_rate numeric(5, 2),
+
+  /** Tapaturmavakuutusmaksu, %. Null = ei mukana laskelmassa. */
+  employer_accident_rate numeric(5, 2),
+
+  /** Ryhmähenkivakuutusmaksu, %. Null = ei mukana laskelmassa. */
+  employer_group_life_rate numeric(5, 2),
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint payroll_settings_rates check (
+    (employer_pension_rate is null or (employer_pension_rate >= 0 and employer_pension_rate <= 100))
+    and (employer_accident_rate is null or (employer_accident_rate >= 0 and employer_accident_rate <= 100))
+    and (employer_group_life_rate is null or (employer_group_life_rate >= 0 and employer_group_life_rate <= 100))
+  )
+);
+
+-- ---------------------------------------------------------------------------
+-- 4. Vuoden 2026 arvot
+-- ---------------------------------------------------------------------------
+--
+-- Vuoden 2026 muutos työeläkemaksussa: ikäryhmittäin eriytyneet
+-- työntekijämaksut poistuivat. Vuosina 2017–2025 53–62-vuotias maksoi
+-- korkeampaa maksua; 2026 alkaen kaikki maksavat 7,30 %.
+--
+-- Työnantajan 17,10 % on keskiarvo. Todellinen maksu on
+-- vakuutusyhtiökohtainen, ja ravintola voi korvata sen omallaan.
+
+insert into payroll_tax_rules (
+  tax_year,
+  employee_pension_rate,
+  employee_unemployment_rate,
+  employer_pension_rate,
+  employer_health_rate,
+  employer_unemployment_low_rate,
+  employer_unemployment_high_rate,
+  employer_unemployment_threshold_cents,
+  no_tax_card_rate,
+  max_withholding_rate,
+  pension_min_age,
+  pension_max_age,
+  unemployment_min_age,
+  unemployment_max_age,
+  source_url,
+  source_note,
+  confirmed
+) values (
+  2026,
+  7.30,
+  0.89,
+  17.10,
+  1.91,
+  0.31,
+  1.23,
+  250950000,
+  60.00,
+  60.00,
+  17,
+  68,
+  18,
+  65,
+  'https://www.etk.fi/ajankohtaista/tyoelakemaksut-vuonna-2026/' || chr(10) ||
+  'https://www.elo.fi/fi-fi/tyonantaja/tyel-vakuuttaminen/tyel-maksu/sosiaalivakuutusmaksut-2026' || chr(10) ||
+  'https://www.vero.fi/yritykset-ja-yhteisot/verot-ja-maksut/yritys_tyonantajana/verokorttiohjeet/',
+  'Tyontekijamaksun ikaporrastus poistui 2026 alkaen: kaikki ikaryhmat 7,30 %. ' ||
+  'Tyonantajan TyEL 17,10 % on keskiarvo, todellinen maksu on vakuutusyhtiokohtainen. ' ||
+  'Tyonantajan tyottomyysvakuutusmaksun raja 2 509 500 euroa vuoden palkkasummasta. ' ||
+  'Ennakonpidatys ilman verokorttia 60 %.',
+  true
+)
+on conflict (tax_year) do nothing;
+
+insert into payroll_benefit_values (tax_year, kind, value_cents, unit, requires_manual_value, note)
+values
+  (2026, 'meal',    880, 'per_meal',  false,
+   'Verohallinnon paatos 2026, 10 §. 8,80 euroa ateriaa kohti kun tyonantajan valittomat kustannukset ovat 8,80-14,00 euroa.'),
+  (2026, 'phone',  2000, 'per_month', false,
+   'Verohallinnon paatos 2026, 26 §. 20 euroa kuukaudessa.'),
+  (2026, 'bicycle',   0, 'per_month', true,
+   'Verohallinnon paatos 2026, 27 §. Arvo lasketaan pyoran hankintahinnasta; kunnossapito-osuus 30 e/kk sahkopyoralle ja 20 e/kk muulle. Syotettava kasin.'),
+  (2026, 'car',       0, 'per_month', true,
+   'Verohallinnon paatos 2026, 17 §. Arvo riippuu auton ika- ja hintaryhmasta. Syotettava kasin.'),
+  (2026, 'housing',   0, 'per_month', true,
+   'Verohallinnon paatos 2026, 2 §. Arvo riippuu sijainnista ja pinta-alasta. Syotettava kasin.'),
+  (2026, 'other',     0, 'per_month', true,
+   'Kayvan arvon mukaan, Verohallinnon paatos 2026, 28 §. Syotettava kasin.')
+on conflict (tax_year, kind) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- 5. Oikeudet
+-- ---------------------------------------------------------------------------
+--
+-- Vuosisäännöt ja luontoisetujen taulukkoarvot ovat julkista tietoa:
+-- ne lukevat Verohallinnon ja Eläketurvakeskuksen sivuilla. Jokainen
+-- kirjautunut saa lukea ne, koska palkkalaskelman lukijan on voitava
+-- tarkistaa mistä luku tuli.
+--
+-- Kirjoitusoikeutta ei anneta kenellekään. Nämä rivit tulevat
+-- migraatiosta, eikä ravintola saa muuttaa kansallisia prosentteja
+-- omassa kannassaan — muutettu prosentti olisi väärä palkka ilman
+-- että kukaan huomaisi.
+
+alter table payroll_tax_rules enable row level security;
+alter table payroll_benefit_values enable row level security;
+alter table payroll_settings enable row level security;
+
+drop policy if exists payroll_tax_rules_read on payroll_tax_rules;
+create policy payroll_tax_rules_read on payroll_tax_rules
+  for select to authenticated using (true);
+
+drop policy if exists payroll_benefit_values_read on payroll_benefit_values;
+create policy payroll_benefit_values_read on payroll_benefit_values
+  for select to authenticated using (true);
+
+/*
+ * Palkka-asetukset ovat ravintolan omia.
+ *
+ * Lukuoikeus jäsenille: työnantajan kustannus näkyy laskelmalla, ja
+ * sen tarkistaminen vaatii tiedon käytetystä prosentista.
+ * Kirjoitusoikeus vain esihenkilölle.
+ */
+drop policy if exists payroll_settings_read on payroll_settings;
+create policy payroll_settings_read on payroll_settings
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+drop policy if exists payroll_settings_write on payroll_settings;
+create policy payroll_settings_write on payroll_settings
+  for all to authenticated
+  using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+drop trigger if exists payroll_tax_rules_touch on payroll_tax_rules;
+create trigger payroll_tax_rules_touch before update on payroll_tax_rules
+  for each row execute function touch_updated_at();
+
+drop trigger if exists payroll_settings_touch on payroll_settings;
+create trigger payroll_settings_touch before update on payroll_settings
+  for each row execute function touch_updated_at();
+
+
+-- ===========================================================================
+-- 0080_tax_cards.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0080 — Verokortit, luontoisedut ja työsuhteen tiedot
+-- ---------------------------------------------------------------------------
+--
+-- Verokortti on ainoa paikka josta ennakonpidätysprosentti tulee. Kate
+-- ei laske sitä eikä arvaa sitä: Verohallinto laskee sen ja työntekijä
+-- tuo sen. Tämän tiedoston tehtävä on ottaa se vastaan niin, ettei
+-- kukaan voi myöhemmin kysyä "millä perusteella tästä pidätettiin
+-- kaksikymmentä prosenttia" ilman että vastaus löytyy.
+--
+-- ---------------------------------------------------------------------------
+-- VANHAA VEROKORTTIA EI KORVATA, SEN PÄÄLLE TULEE UUSI
+-- ---------------------------------------------------------------------------
+--
+-- Työntekijällä on vuoden aikana usein kaksi tai kolme verokorttia:
+-- tammikuun vanha, helmikuun uusi, ja kesällä muutosverokortti. Jos
+-- uusi kirjoittaisi vanhan yli, kesäkuussa maksetun palkan perustetta
+-- ei enää olisi olemassa.
+--
+-- Siksi verokortti on rivi jolla on voimassaoloväli, ja rivejä on niin
+-- monta kuin kortteja on ollut. Päällekkäisyys estetään kannassa
+-- exclude-rajoitteella eikä sovelluksessa: sovellustarkistus pätee
+-- siihen polkuun jonka joku muisti tarkistaa.
+--
+-- ---------------------------------------------------------------------------
+-- MAKSUPÄIVÄ VALITSEE KORTIN, EI TYÖPÄIVÄ
+-- ---------------------------------------------------------------------------
+--
+-- Verohallinnon ohje on yksiselitteinen: sovellettava verokortti
+-- määräytyy suorituksen maksupäivästä. Kesäkuussa tehty työ joka
+-- maksetaan heinäkuussa kuuluu heinäkuun kortille.
+--
+-- Tämä on helppo tehdä väärin, koska työvuoro on se jota katsotaan.
+-- Siksi hakufunktio ottaa parametrikseen maksupäivän ja sen nimi
+-- sanoo sen ääneen.
+--
+-- ---------------------------------------------------------------------------
+-- DOKUMENTTI MENEE TIEDOSTOKAAPPIIN, EI OMAAN SÄILÖÖNSÄ
+-- ---------------------------------------------------------------------------
+--
+-- Katessa on jo yksityinen tiedostokaappi käytäntöineen, käyttö-
+-- oikeuksineen ja välityspalvelimineen. Toinen säilö verokorteille
+-- olisi toinen paikka jossa yksityisyys pitäisi muistaa toteuttaa
+-- oikein.
+--
+-- Verokortin dokumentti on siis tavallinen files-rivi, ja verokortti
+-- viittaa siihen. Pelkkä PDF kansiossa ei kuitenkaan riitä
+-- palkanlaskentaan: prosentit luetaan aina tältä riviltä.
+
+create extension if not exists btree_gist;
+
+-- ---------------------------------------------------------------------------
+-- 1. Verokortti
+-- ---------------------------------------------------------------------------
+
+do $$ begin
+  create type tax_card_source as enum ('manual', 'document');
+exception when duplicate_object then null; end $$;
+
+create table if not exists tax_cards (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  /**
+   * Perusprosentti: pidätys tulorajaan asti.
+   *
+   * numeric eikä integer, koska verokortissa lukee 17,5 eikä 17.
+   */
+  base_percent numeric(5, 2) not null,
+
+  /** Lisäprosentti: pidätys tulorajan ylittävältä osalta. */
+  additional_percent numeric(5, 2) not null,
+
+  /** Vuositulorajа sentteinä. */
+  income_limit_cents bigint not null,
+
+  /**
+   * Ennen Katea kertynyt tulo samalle kortille.
+   *
+   * Ravintola ottaa Katen käyttöön kesken vuoden, ja tuloraja on
+   * koko vuoden raja. Ilman tätä kenttää tammi-toukokuun palkat
+   * olisivat rajan kannalta olemattomia ja lisäprosentti jäisi
+   * perimättä.
+   */
+  prior_income_cents bigint not null default 0,
+
+  valid_from date not null,
+
+  /** Null = toistaiseksi. Käytännössä vuoden loppu. */
+  valid_to date,
+
+  /** Verokortin kuva tai PDF tiedostokaapissa. */
+  file_id uuid references files(id) on delete set null,
+
+  /**
+   * Mistä arvot tulivat.
+   *
+   * 'document' tarkoittaa että ne luettiin dokumentista ja käyttäjä
+   * hyväksyi ne. Ei sitä että kone päätti — hyväksyntä on aina
+   * ihmisen.
+   */
+  source tax_card_source not null default 'manual',
+
+  note text not null default '',
+
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint tax_cards_percentages check (
+    base_percent >= 0 and base_percent <= 100
+    and additional_percent >= 0 and additional_percent <= 100
+  ),
+  constraint tax_cards_limit check (income_limit_cents >= 0),
+  constraint tax_cards_prior check (prior_income_cents >= 0),
+  constraint tax_cards_validity check (valid_to is null or valid_to >= valid_from),
+
+  /*
+   * Kaksi voimassa olevaa korttia samalle päivälle on mahdoton
+   * tilanne: laskenta joutuisi valitsemaan, eikä sillä ole perustetta
+   * valita.
+   *
+   * Rajoite kannassa eikä tarkistus sovelluksessa. Sovellustarkistus
+   * pätee siihen kirjoituspolkuun jonka joku muisti tarkistaa, ja
+   * niitä on aina enemmän kuin muistetaan.
+   */
+  constraint tax_cards_no_overlap exclude using gist (
+    restaurant_id with =,
+    user_id with =,
+    daterange(valid_from, coalesce(valid_to, 'infinity'::date), '[]') with &&
+  )
+);
+
+create index if not exists tax_cards_lookup
+  on tax_cards (restaurant_id, user_id, valid_from desc);
+
+-- ---------------------------------------------------------------------------
+-- 2. Luontoisedut
+-- ---------------------------------------------------------------------------
+--
+-- Luontoisetu on veronalaista palkkaa jota ei makseta rahana. Se
+-- kasvattaa ennakonpidätyksen ja vakuutusmaksujen perustetta mutta ei
+-- nettopalkkaa — ja juuri siksi se on helppo laskea väärin.
+--
+-- Arvo tallennetaan riville eikä lueta vuositaulukosta laskentahetkellä.
+-- Taulukkoarvo on lähtökohta jonka käyttöliittymä tarjoaa; rivillä on
+-- se mitä tälle työntekijälle sovittiin.
+
+create table if not exists employee_benefits (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+
+  kind benefit_kind not null,
+
+  /** Verotusarvo kuukaudessa sentteinä. */
+  monthly_value_cents integer not null,
+
+  /** Vapaa nimi kun laji on 'other'. */
+  label text not null default '',
+
+  valid_from date not null,
+  valid_to date,
+
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint employee_benefits_value check (monthly_value_cents >= 0),
+  constraint employee_benefits_validity check (valid_to is null or valid_to >= valid_from),
+
+  /*
+   * Sama etu kahteen kertaan samalle ajalle olisi kaksinkertainen
+   * verotusarvo. Eri lajit saavat olla päällekkäin: puhelinetu ja
+   * ravintoetu ovat molemmat tavallisia yhtä aikaa.
+   */
+  constraint employee_benefits_no_overlap exclude using gist (
+    restaurant_id with =,
+    user_id with =,
+    kind with =,
+    label with =,
+    daterange(valid_from, coalesce(valid_to, 'infinity'::date), '[]') with &&
+  )
+);
+
+create index if not exists employee_benefits_lookup
+  on employee_benefits (restaurant_id, user_id, valid_from desc);
+
+-- ---------------------------------------------------------------------------
+-- 3. Työsuhteen tiedot
+-- ---------------------------------------------------------------------------
+--
+-- Nämä kuuluvat jäsenyyteen eivätkä uuteen tauluun: jäsenyys on jo se
+-- rivi joka kertoo että tämä ihminen työskentelee tässä ravintolassa.
+-- Erillinen taulu olisi toinen paikka jossa sama tieto asuu.
+--
+-- Syntymäaika on täällä eikä profiilissa. Profiili on yhteinen
+-- kaikille ravintoloille joissa ihminen on töissä, ja syntymäaika on
+-- palkanlaskennan tietoa: se ratkaisee vakuuttamisvelvollisuuden
+-- ikärajat. Jäsenyydessä se on ravintolakohtainen ja rivikäytäntöjen
+-- suojaama.
+
+alter table memberships
+  add column if not exists employment_starts_on date;
+
+alter table memberships
+  add column if not exists employment_ends_on date;
+
+alter table memberships
+  add column if not exists birth_date date;
+
+alter table memberships
+  drop constraint if exists memberships_employment_range;
+
+alter table memberships
+  add constraint memberships_employment_range check (
+    employment_ends_on is null
+    or employment_starts_on is null
+    or employment_ends_on >= employment_starts_on
+  );
+
+/*
+ * Uudet sarakkeet eivät päädy rajapintaan.
+ *
+ * 0028 poisti taulutason lukuoikeuden ja antoi sen takaisin sarake
+ * kerrallaan. Syntymäaika ja työsuhteen päivät jäävät listan
+ * ulkopuolelle, joten PostgREST ei tarjoile niitä kenellekään.
+ * Esihenkilö lukee ne funktion kautta, työntekijä omansa.
+ */
+
+-- ---------------------------------------------------------------------------
+-- 4. Rivitason käytännöt
+-- ---------------------------------------------------------------------------
+--
+-- Verokortti on arkaluonteista henkilötietoa. Työntekijä näkee omansa
+-- — hänellä on oikeus tarkistaa millä perusteella hänen palkastaan
+-- pidätetään. Muiden kortteja hän ei näe.
+--
+-- Kirjanpitäjä ei näe verokortteja lainkaan. Hän tarvitsee
+-- palkkasummat kirjanpitoon, ei yksittäisen ihmisen veroprosenttia.
+
+alter table tax_cards enable row level security;
+alter table employee_benefits enable row level security;
+
+drop policy if exists tax_cards_read on tax_cards;
+create policy tax_cards_read on tax_cards
+  for select to authenticated
+  using (user_id = auth.uid() or is_manager(restaurant_id));
+
+drop policy if exists tax_cards_write on tax_cards;
+create policy tax_cards_write on tax_cards
+  for all to authenticated
+  using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+drop policy if exists employee_benefits_read on employee_benefits;
+create policy employee_benefits_read on employee_benefits
+  for select to authenticated
+  using (user_id = auth.uid() or is_manager(restaurant_id));
+
+drop policy if exists employee_benefits_write on employee_benefits;
+create policy employee_benefits_write on employee_benefits
+  for all to authenticated
+  using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+-- ---------------------------------------------------------------------------
+-- 5. Maksupäivän mukainen verokortti
+-- ---------------------------------------------------------------------------
+--
+-- Funktion nimi sanoo mitä parametri on. `tax_card_for(user, date)`
+-- olisi kutsuttu jonain päivänä työvuoron päivämäärällä, ja tulos
+-- olisi ollut väärä ilman että mikään kaatuu.
+
+create or replace function tax_card_on_pay_date(
+  p_restaurant uuid,
+  p_user uuid,
+  p_pay_date date
+)
+returns tax_cards
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select c.*
+  from tax_cards c
+  where c.restaurant_id = p_restaurant
+    and c.user_id = p_user
+    and c.valid_from <= p_pay_date
+    and (c.valid_to is null or c.valid_to >= p_pay_date)
+    and (c.user_id = auth.uid() or is_manager(c.restaurant_id))
+  order by c.valid_from desc
+  limit 1;
+$$;
+
+revoke all on function tax_card_on_pay_date(uuid, uuid, date) from public, anon;
+grant execute on function tax_card_on_pay_date(uuid, uuid, date) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 6. Työntekijän palkkaperustiedot
+-- ---------------------------------------------------------------------------
+--
+-- Yksi funktio joka kokoaa sen mitä palkanlaskenta tarvitsee
+-- jäsenyydestä. Esihenkilö saa kaikki, työntekijä omansa, muut eivät
+-- mitään.
+
+create or replace function employee_payroll_info(p_restaurant uuid)
+returns table (
+  user_id uuid,
+  pay_type pay_type,
+  hourly_rate_cents integer,
+  monthly_salary_cents integer,
+  employment_starts_on date,
+  employment_ends_on date,
+  birth_date date
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    m.user_id,
+    m.pay_type,
+    m.hourly_rate_cents,
+    m.monthly_salary_cents,
+    m.employment_starts_on,
+    m.employment_ends_on,
+    m.birth_date
+  from memberships m
+  where m.restaurant_id = p_restaurant
+    and (is_manager(p_restaurant) or m.user_id = auth.uid())
+    and m.restaurant_id in (select my_restaurant_ids());
+$$;
+
+revoke all on function employee_payroll_info(uuid) from public, anon;
+grant execute on function employee_payroll_info(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 7. Työsuhteen tietojen tallennus
+-- ---------------------------------------------------------------------------
+--
+-- Sarakkeisiin ei ole kirjoitusoikeutta rajapinnan kautta, joten
+-- tallennus kulkee funktion läpi. Funktio on samalla se paikka jossa
+-- tarkistukset tehdään kerran.
+
+create or replace function save_employment_details(
+  p_restaurant uuid,
+  p_user uuid,
+  p_starts_on date,
+  p_ends_on date,
+  p_birth_date date
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_ends_on is not null and p_starts_on is not null and p_ends_on < p_starts_on then
+    raise exception 'Tyosuhteen paattymispaiva ei voi olla ennen alkupaivaa.'
+      using errcode = 'check_violation';
+  end if;
+
+  /*
+   * Syntymäaika tulevaisuudessa tai 1900-luvun alussa on
+   * näppäilyvirhe. Ikäraja vaikuttaa vakuutusmaksuihin, joten virhe
+   * näkyisi palkassa eikä lomakkeella.
+   */
+  if p_birth_date is not null
+     and (p_birth_date > current_date or p_birth_date < date '1920-01-01') then
+    raise exception 'Syntymaaika ei ole uskottava.' using errcode = 'check_violation';
+  end if;
+
+  update memberships
+  set employment_starts_on = p_starts_on,
+      employment_ends_on = p_ends_on,
+      birth_date = p_birth_date
+  where restaurant_id = p_restaurant and user_id = p_user;
+
+  if not found then
+    raise exception 'Tyontekijaa ei loytynyt.' using errcode = 'no_data_found';
+  end if;
+end;
+$$;
+
+revoke all on function save_employment_details(uuid, uuid, date, date, date) from public, anon;
+grant execute on function save_employment_details(uuid, uuid, date, date, date) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 8. Toimintaloki
+-- ---------------------------------------------------------------------------
+--
+-- Lokiin kirjataan että verokortti lisättiin, muuttui tai poistettiin,
+-- ja mitä kenttiä muutos koski. Prosentteja ja tulorajaa ei kirjata:
+-- ne ovat juuri sitä arkaluonteista sisältöä jonka takia verokortti on
+-- suojattu, eikä loki saa olla kiertotie sen lukemiseen.
+--
+-- Muuttuneiden kenttien nimet riittävät siihen mihin lokia käytetään:
+-- kuka muutti veroprosenttia ja milloin. Arvon näkee kortilta, jos on
+-- oikeus nähdä.
+
+create or replace function audit_tax_cards()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row tax_cards := coalesce(new, old);
+  v_name text := audit_person_name(v_row.user_id);
+  v_period text := to_char(v_row.valid_from, 'DD.MM.YYYY') || '–' ||
+    coalesce(to_char(v_row.valid_to, 'DD.MM.YYYY'), 'toistaiseksi');
+  v_changed text[] := '{}';
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      v_row.restaurant_id, 'created', 'tax_card', v_row.id, v_name,
+      v_name || ': verokortti lisättiin (' || v_period || ').',
+      null, null, true
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      v_row.restaurant_id, 'deleted', 'tax_card', v_row.id, v_name,
+      v_name || ': verokortti poistettiin (' || v_period || ').',
+      null, null, true
+    );
+    return old;
+  end if;
+
+  if new.base_percent is distinct from old.base_percent then
+    v_changed := v_changed || 'veroprosentti';
+  end if;
+  if new.additional_percent is distinct from old.additional_percent then
+    v_changed := v_changed || 'lisäprosentti';
+  end if;
+  if new.income_limit_cents is distinct from old.income_limit_cents then
+    v_changed := v_changed || 'tuloraja';
+  end if;
+  if new.prior_income_cents is distinct from old.prior_income_cents then
+    v_changed := v_changed || 'aiempi tulo';
+  end if;
+  if new.valid_from is distinct from old.valid_from
+     or new.valid_to is distinct from old.valid_to then
+    v_changed := v_changed || 'voimassaolo';
+  end if;
+  if new.file_id is distinct from old.file_id then
+    v_changed := v_changed || 'dokumentti';
+  end if;
+
+  if array_length(v_changed, 1) is null then
+    return new;
+  end if;
+
+  perform write_audit(
+    v_row.restaurant_id, 'updated', 'tax_card', v_row.id, v_name,
+    v_name || ': verokorttia muutettiin (' || v_period || '). Muuttuneet: ' ||
+      array_to_string(v_changed, ', ') || '.',
+    null, null, true
+  );
+
+  return new;
+end;
+$$;
+
+revoke all on function audit_tax_cards() from public, anon, authenticated;
+
+drop trigger if exists tax_cards_audit on tax_cards;
+create trigger tax_cards_audit
+  after insert or update or delete on tax_cards
+  for each row execute function audit_tax_cards();
+
+/*
+ * Luontoisedun arvo kirjataan lokiin.
+ *
+ * Toisin kuin veroprosentti, luontoisetu on työsuhteen ehto eikä
+ * Verohallinnon päätös työntekijän henkilökohtaisesta verotuksesta.
+ * Sen muuttuminen on juuri se asia jonka takia lokia luetaan.
+ */
+create or replace function audit_employee_benefits()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row employee_benefits := coalesce(new, old);
+  v_name text := audit_person_name(v_row.user_id);
+  v_label text := coalesce(nullif(v_row.label, ''), v_row.kind::text);
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      v_row.restaurant_id, 'created', 'employee_benefit', v_row.id, v_name,
+      v_name || ': luontoisetu ' || v_label || ' lisättiin (' ||
+        audit_euros(v_row.monthly_value_cents) || '/kk).',
+      null,
+      jsonb_build_object('kind', v_row.kind, 'value_cents', v_row.monthly_value_cents),
+      true
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      v_row.restaurant_id, 'deleted', 'employee_benefit', v_row.id, v_name,
+      v_name || ': luontoisetu ' || v_label || ' poistettiin.',
+      jsonb_build_object('kind', v_row.kind, 'value_cents', v_row.monthly_value_cents),
+      null, true
+    );
+    return old;
+  end if;
+
+  if new.monthly_value_cents is distinct from old.monthly_value_cents
+     or new.valid_from is distinct from old.valid_from
+     or new.valid_to is distinct from old.valid_to then
+    perform write_audit(
+      v_row.restaurant_id, 'updated', 'employee_benefit', v_row.id, v_name,
+      v_name || ': luontoisetu ' || v_label || ' muuttui ' ||
+        audit_euros(old.monthly_value_cents) || ' → ' ||
+        audit_euros(new.monthly_value_cents) || '/kk.',
+      jsonb_build_object('value_cents', old.monthly_value_cents),
+      jsonb_build_object('value_cents', new.monthly_value_cents),
+      true
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function audit_employee_benefits() from public, anon, authenticated;
+
+drop trigger if exists employee_benefits_audit on employee_benefits;
+create trigger employee_benefits_audit
+  after insert or update or delete on employee_benefits
+  for each row execute function audit_employee_benefits();
+
+drop trigger if exists tax_cards_touch on tax_cards;
+create trigger tax_cards_touch before update on tax_cards
+  for each row execute function touch_updated_at();
+
+drop trigger if exists employee_benefits_touch on employee_benefits;
+create trigger employee_benefits_touch before update on employee_benefits
+  for each row execute function touch_updated_at();
+
+
+-- ===========================================================================
+-- 0081_payslip_tax.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0081 — Palkkalaskelman verotus, vähennykset ja työnantajan kustannus
+-- ---------------------------------------------------------------------------
+--
+-- 0027 laski bruttopalkan ja jätti kaksi saraketta odottamaan:
+-- deductions_cents ja employer_cost_cents. Tämä migraatio täyttää sen
+-- lupauksen — mutta ei yhtenä lukuna.
+--
+-- ---------------------------------------------------------------------------
+-- YKSI PROSENTTI EI RIITÄ
+-- ---------------------------------------------------------------------------
+--
+-- Houkutus on tallentaa "vähennykset" yhtenä summana. Silloin
+-- palkkalaskelmasta ei näkisi mitä siinä on, eikä kukaan voisi
+-- tarkistaa sitä. Ennakonpidätys menee Verohallinnolle,
+-- työeläkemaksu eläkeyhtiölle ja työttömyysvakuutusmaksu
+-- Työllisyysrahastolle. Ne ovat kolme eri maksua kolmelle eri
+-- vastaanottajalle, ja jokainen niistä on ilmoitettava erikseen
+-- tulorekisteriin.
+--
+-- Huomaa mitä listasta puuttuu: työntekijän sairausvakuutusmaksu.
+-- Se sisältyy verokortin pidätysprosenttiin. Erillisenä rivinä se
+-- perittäisiin kahdesti.
+--
+-- ---------------------------------------------------------------------------
+-- KÄYTETYT ARVOT JÄÄDYTETÄÄN
+-- ---------------------------------------------------------------------------
+--
+-- Vuoden 2027 tammikuussa työeläkemaksu on eri kuin nyt. Jos laskelma
+-- lukisi prosentin sääntötaulusta joka kerta kun se avataan, vuoden
+-- 2026 palkkalaskelma näyttäisi vuonna 2027 eri summat kuin sinä
+-- päivänä kun se maksettiin — ja työntekijän tiliotteella olisi se
+-- vanha summa.
+--
+-- Siksi jokainen laskennassa käytetty prosentti tallennetaan riville.
+-- Sääntötaulu kertoo mitä käytetään uutta laskettaessa; laskelma
+-- kertoo mitä käytettiin. Nämä ovat eri kysymyksiä.
+--
+-- ---------------------------------------------------------------------------
+-- MAKSUPÄIVÄ ON OMA PÄIVÄNSÄ
+-- ---------------------------------------------------------------------------
+--
+-- Kaudella on kolme päivää jotka on helppo sekoittaa:
+--
+--   työjakso      milloin työ tehtiin        (payslip_lines.work_date)
+--   palkkakausi   miltä ajalta palkka on     (pay_periods.starts_on/ends_on)
+--   maksupäivä    milloin raha liikkuu       (pay_periods.pay_date)
+--
+-- Verokortti ja verovuosi määräytyvät maksupäivästä. Kesäkuussa tehty
+-- työ joka maksetaan heinäkuussa kuuluu heinäkuun verokortille, ja
+-- joulukuun työ joka maksetaan tammikuussa kuuluu uuteen verovuoteen.
+
+-- ---------------------------------------------------------------------------
+-- 1. Maksupäivä
+-- ---------------------------------------------------------------------------
+
+alter table pay_periods
+  add column if not exists pay_date date;
+
+/*
+ * Maksupäivä ei ole pakollinen avoimella kaudella.
+ *
+ * Kausi avataan usein ennen kuin maksupäivä on tiedossa. Hyväksyntä
+ * sen sijaan vaatii sen — hyväksytty palkka ilman maksupäivää olisi
+ * palkka jonka verokorttia ei voi valita. Se tarkistetaan
+ * hyväksymisfunktiossa eikä check-rajoitteella, jotta virheilmoitus
+ * on suomea eikä rajoitteen nimi.
+ */
+
+alter table payslips
+  add column if not exists pay_date date;
+
+-- ---------------------------------------------------------------------------
+-- 2. Veronalainen palkka ja luontoisedut
+-- ---------------------------------------------------------------------------
+
+alter table payslips
+  add column if not exists benefits_cents integer not null default 0;
+
+/**
+ * Veronalainen palkka = rahapalkka + luontoisetujen verotusarvo.
+ *
+ * Tästä lasketaan ennakonpidätys ja vakuutusmaksut. Nettopalkasta
+ * luontoisetu vähennetään takaisin: sitä ei makseta rahana.
+ */
+alter table payslips
+  add column if not exists taxable_cents integer not null default 0;
+
+-- ---------------------------------------------------------------------------
+-- 3. Työntekijältä perittävät
+-- ---------------------------------------------------------------------------
+
+alter table payslips
+  add column if not exists withholding_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employee_pension_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employee_unemployment_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists net_cents integer not null default 0;
+
+-- ---------------------------------------------------------------------------
+-- 4. Työnantajan maksut
+-- ---------------------------------------------------------------------------
+--
+-- Nämä eivät vähennä työntekijän palkkaa. Ne kertovat mitä
+-- työntekijä oikeasti maksaa työnantajalle — luku jota ravintoloitsija
+-- tarvitsee hinnoitteluun ja jota palkkalaskelma ei perinteisesti
+-- kerro.
+
+alter table payslips
+  add column if not exists employer_pension_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employer_health_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employer_unemployment_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employer_accident_cents integer not null default 0;
+
+alter table payslips
+  add column if not exists employer_group_life_cents integer not null default 0;
+
+-- ---------------------------------------------------------------------------
+-- 5. Käytetyt laskenta-arvot
+-- ---------------------------------------------------------------------------
+--
+-- Sanoin ne ääneen tiedoston alussa: nämä ovat se syy miksi vuoden
+-- 2026 palkkalaskelma näyttää samalta vuonna 2027.
+
+alter table payslips
+  add column if not exists tax_rules_year_used integer;
+
+alter table payslips
+  add column if not exists tax_card_id uuid references tax_cards(id) on delete set null;
+
+alter table payslips
+  add column if not exists tax_base_percent_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists tax_additional_percent_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employee_pension_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employee_unemployment_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employer_pension_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employer_health_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employer_unemployment_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employer_accident_rate_used numeric(5, 2);
+
+alter table payslips
+  add column if not exists employer_group_life_rate_used numeric(5, 2);
+
+/**
+ * Verokortitta laskettu.
+ *
+ * Kun työntekijä ei ole esittänyt verokorttia, pidätys on lain mukaan
+ * 60 %. Merkintä erottaa sen siitä että joku olisi kirjannut kortille
+ * kuusikymmentä prosenttia — ja se on laskelmalla se lause jonka
+ * lukija tarvitsee.
+ */
+alter table payslips
+  add column if not exists no_tax_card boolean not null default false;
+
+-- ---------------------------------------------------------------------------
+-- 6. Tulorajan käyttö
+-- ---------------------------------------------------------------------------
+--
+-- Kaksi lukua: paljonko rajaa oli käytetty ennen tätä laskelmaa ja
+-- paljonko tämä käytti. Niistä saa jäljellä olevan ilman että
+-- mitään lasketaan uudelleen — ja ne kertovat myös miksi juuri tällä
+-- laskelmalla siirryttiin lisäprosenttiin.
+
+alter table payslips
+  add column if not exists income_limit_before_cents bigint;
+
+alter table payslips
+  add column if not exists income_limit_used_cents bigint;
+
+-- ---------------------------------------------------------------------------
+-- 7. Tila
+-- ---------------------------------------------------------------------------
+--
+-- payslip_status sai arvot 'paid' ja 'cancelled' edellisessä
+-- migraatiossa. Vain hyväksytty ja maksettu kerryttävät: luonnos on
+-- keskeneräinen arvio ja peruttu on virhe jota ei tapahtunut.
+
+alter table payslips
+  add column if not exists paid_at timestamptz;
+
+alter table payslips
+  add column if not exists cancelled_at timestamptz;
+
+alter table payslips
+  add column if not exists cancelled_reason text;
+
+-- ---------------------------------------------------------------------------
+-- 8. Palkkarivin laji
+-- ---------------------------------------------------------------------------
+--
+-- Ennen tätä rivin laji pääteltiin siitä onko pay_component_id null.
+-- Luontoisetu ei ole palkkalaji eikä peruspalkka, ja päättely olisi
+-- kertonut sen olevan peruspalkkaa.
+
+do $$ begin
+  create type payslip_line_kind as enum ('base', 'supplement', 'benefit');
+exception when duplicate_object then null; end $$;
+
+alter table payslip_lines
+  add column if not exists line_kind payslip_line_kind not null default 'base';
+
+/* Vanhat rivit: lisä jos palkkalaji, muuten peruspalkka. */
+update payslip_lines
+set line_kind = 'supplement'
+where pay_component_id is not null and line_kind = 'base';
+
+-- ---------------------------------------------------------------------------
+-- 9. Palkkakertymä
+-- ---------------------------------------------------------------------------
+--
+-- Kertymä lasketaan kannassa eikä selaimessa. Selaimessa laskettu
+-- kertymä olisi oikea vain niin kauan kuin sivulla on kaikki
+-- laskelmat — ja se ei ole koskaan totta.
+--
+-- Vuosi määräytyy maksupäivästä. Joulukuussa tehty työ joka maksetaan
+-- tammikuussa on seuraavan vuoden tuloa, ja verottaja katsoo sitä
+-- samalla tavalla.
+--
+-- Vain 'approved' ja 'paid'. Luonnos ei kerrytä mitään, eikä peruttu.
+
+create or replace function payroll_accrual(
+  p_restaurant uuid,
+  p_user uuid,
+  p_year integer
+)
+returns table (
+  gross_cents bigint,
+  benefits_cents bigint,
+  taxable_cents bigint,
+  withholding_cents bigint,
+  employee_pension_cents bigint,
+  employee_unemployment_cents bigint,
+  net_cents bigint,
+  employer_cost_cents bigint,
+  payslip_count integer
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    coalesce(sum(p.gross_cents), 0)::bigint,
+    coalesce(sum(p.benefits_cents), 0)::bigint,
+    coalesce(sum(p.taxable_cents), 0)::bigint,
+    coalesce(sum(p.withholding_cents), 0)::bigint,
+    coalesce(sum(p.employee_pension_cents), 0)::bigint,
+    coalesce(sum(p.employee_unemployment_cents), 0)::bigint,
+    coalesce(sum(p.net_cents), 0)::bigint,
+    coalesce(sum(
+      p.gross_cents + p.employer_pension_cents + p.employer_health_cents
+      + p.employer_unemployment_cents + p.employer_accident_cents
+      + p.employer_group_life_cents
+    ), 0)::bigint,
+    count(*)::integer
+  from payslips p
+  where p.restaurant_id = p_restaurant
+    and p.user_id = p_user
+    and p.status in ('approved', 'paid')
+    and p.pay_date is not null
+    and extract(year from p.pay_date) = p_year
+    and (p.user_id = auth.uid() or is_manager(p.restaurant_id));
+$$;
+
+revoke all on function payroll_accrual(uuid, uuid, integer) from public, anon;
+grant execute on function payroll_accrual(uuid, uuid, integer) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 10. Tulorajan tila
+-- ---------------------------------------------------------------------------
+--
+-- Kortin tuloraja koskee sitä aikaa jona kortti on voimassa.
+-- Muutosverokortti tuo mukanaan oman rajansa loppuvuodelle, joten
+-- käyttö lasketaan kortin voimassaoloajalta eikä koko kalenterivuodelta.
+--
+-- prior_income_cents kattaa sen mitä ennen Katea maksettiin. Ilman
+-- sitä kesken vuotta käyttöönotettu Kate luulisi rajaa koskemattomaksi
+-- ja jättäisi lisäprosentin perimättä.
+--
+-- ---------------------------------------------------------------------------
+-- PUUTTUVA KORTTI PALAUTTAA TYHJÄN, EI NOLLIA
+-- ---------------------------------------------------------------------------
+--
+-- Komposiittityyppiä palauttava funktio antaa osumatta jäädessään
+-- yhden rivin jossa kaikki kentät ovat null — ei nollaa riviä. Ilman
+-- `c.id is not null` tämä palautti verokortittomalle työntekijälle
+-- rivin jossa raja on 0 ja jäljellä 0, ja käyttöliittymä kertoi
+-- tulorajan olevan täynnä. Se on eri väite kuin "korttia ei ole", ja
+-- väärä.
+
+create or replace function income_limit_status(
+  p_restaurant uuid,
+  p_user uuid,
+  p_pay_date date
+)
+returns table (
+  tax_card_id uuid,
+  limit_cents bigint,
+  used_cents bigint,
+  remaining_cents bigint
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with card as (
+    select * from tax_card_on_pay_date(p_restaurant, p_user, p_pay_date)
+  ),
+  used as (
+    select coalesce(sum(p.taxable_cents), 0)::bigint as total
+    from payslips p, card c
+    where c.id is not null
+      and p.restaurant_id = p_restaurant
+      and p.user_id = p_user
+      and p.status in ('approved', 'paid')
+      and p.pay_date is not null
+      and p.pay_date >= c.valid_from
+      and (c.valid_to is null or p.pay_date <= c.valid_to)
+  )
+  select
+    c.id,
+    c.income_limit_cents,
+    c.prior_income_cents + u.total,
+    greatest(0, c.income_limit_cents - (c.prior_income_cents + u.total))
+  from card c, used u
+  where c.id is not null
+    and (p_user = auth.uid() or is_manager(p_restaurant));
+$$;
+
+revoke all on function income_limit_status(uuid, uuid, date) from public, anon;
+grant execute on function income_limit_status(uuid, uuid, date) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 11. Toimintaloki: palkkalaskelman elinkaari
+-- ---------------------------------------------------------------------------
+--
+-- Laskelman syntyminen, hyväksyminen, maksaminen ja peruminen ovat ne
+-- neljä hetkeä joiden takia palkkalokia luetaan. Summat kirjataan
+-- bruttona ja nettona; rivikohtaista erittelyä ei, koska se on
+-- laskelmalla eikä lokin tehtävä ole kopioida sitä.
+
+create or replace function audit_payslips()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row payslips := coalesce(new, old);
+  v_name text := audit_person_name(v_row.user_id);
+begin
+  if tg_op = 'INSERT' then
+    perform write_audit(
+      v_row.restaurant_id, 'created', 'payslip', v_row.id, v_name,
+      v_name || ': palkkalaskelma luotiin.',
+      null, null, false
+    );
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    perform write_audit(
+      v_row.restaurant_id, 'deleted', 'payslip', v_row.id, v_name,
+      v_name || ': palkkalaskelma poistettiin.',
+      null, null, true
+    );
+    return old;
+  end if;
+
+  if new.status is distinct from old.status then
+    perform write_audit(
+      v_row.restaurant_id,
+      case new.status
+        when 'cancelled' then 'cancelled'
+        when 'approved' then 'completed'
+        when 'paid' then 'completed'
+        else 'updated'
+      end,
+      'payslip', v_row.id, v_name,
+      v_name || ': palkkalaskelma ' ||
+      case new.status
+        when 'draft' then 'palautettiin luonnokseksi'
+        when 'review' then 'siirtyi tarkistettavaksi'
+        when 'approved' then 'hyväksyttiin'
+        when 'paid' then 'merkittiin maksetuksi'
+        when 'cancelled' then 'peruttiin'
+        else new.status::text
+      end ||
+      ' (brutto ' || audit_euros(new.gross_cents) ||
+      ', netto ' || audit_euros(new.net_cents) || ').',
+      jsonb_build_object('status', old.status),
+      jsonb_build_object('status', new.status),
+      new.status in ('approved', 'paid', 'cancelled')
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function audit_payslips() from public, anon, authenticated;
+
+drop trigger if exists payslips_audit on payslips;
+create trigger payslips_audit
+  after insert or update or delete on payslips
+  for each row execute function audit_payslips();
+
+
+-- ===========================================================================
+-- 0082_floor_plan.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0082 — Pöytäkartta
+-- ---------------------------------------------------------------------------
+--
+-- Pöytälista kertoo että pöytiä on kaksitoista. Se ei kerro kumpi
+-- niistä on ikkunan vieressä, mitkä kaksi ovat vierekkäin, tai mihin
+-- kuuden hengen seurue mahtuu.
+--
+-- Salissa se nähdään yhdellä silmäyksellä. Listassa ei nähdä
+-- ollenkaan, ja siksi varauksia siirrellään päässä eikä ruudulla.
+--
+-- ---------------------------------------------------------------------------
+-- PAIKKA OLI JO, SITÄ EI VAIN KÄYTETTY
+-- ---------------------------------------------------------------------------
+--
+-- pos_x ja pos_y ovat olleet taulussa alusta asti prosentteina salin
+-- leveydestä ja korkeudesta. Prosentti eikä pikseli, koska sama
+-- kartta piirretään puhelimen ruudulle ja työpöydän näytölle — ja
+-- pikselikoordinaatti tarkoittaisi eri paikkaa kummallakin.
+--
+-- Tässä lisätään se mitä paikan lisäksi tarvitaan tunnistamiseen.
+--
+-- ---------------------------------------------------------------------------
+-- MUOTO ON TUNNISTAMISTA VARTEN, EI PIIRUSTUS
+-- ---------------------------------------------------------------------------
+--
+-- Pyöreä kuuden hengen pöytä ja pitkä kuuden hengen pöytä ovat salissa
+-- eri asioita, ja tarjoilija tunnistaa ne muodosta ennen kuin lukee
+-- numeron. Kolme muotoa riittää siihen.
+--
+-- Kokoa ei kysytä erikseen. Se johdetaan paikkaluvusta: kahden hengen
+-- pöytä on pieni ja kymmenen hengen iso, eikä kukaan halua säätää
+-- leveyttä ja korkeutta erikseen kahdelletoista pöydälle. Tämä on
+-- pöytäkartta eikä pohjapiirustus.
+
+do $$ begin
+  create type table_shape as enum ('round', 'square', 'rect');
+exception when duplicate_object then null; end $$;
+
+alter table restaurant_tables
+  add column if not exists shape table_shape not null default 'round';
+
+/**
+ * Kierto asteina.
+ *
+ * Vain suorakaiteelle merkitsevä: pitkä pöytä seinän vierellä on
+ * pystyssä, keskellä salia poikittain. Pyöreä pöytä näyttää
+ * samalta joka asennossa, ja sen kiertäminen olisi säädin jolla ei
+ * tapahdu mitään.
+ */
+alter table restaurant_tables
+  add column if not exists rotation smallint not null default 0;
+
+alter table restaurant_tables
+  drop constraint if exists restaurant_tables_rotation;
+
+alter table restaurant_tables
+  add constraint restaurant_tables_rotation
+  check (rotation >= 0 and rotation < 360);
+
+-- ---------------------------------------------------------------------------
+-- Sijaintien tallennus yhtenä eränä
+-- ---------------------------------------------------------------------------
+--
+-- Kartan järjestely on yksi teko, ei kaksitoista. Käyttäjä siirtää
+-- pöytiä kunnes sali näyttää oikealta ja tallentaa kerran.
+--
+-- Rivi kerrallaan päivittäminen tarkoittaisi kahtatoista kyselyä ja
+-- sitä että puolet niistä voi onnistua. Puoliksi siirretty kartta on
+-- huonompi kuin siirtämätön: siinä ei ole enää sitä järjestystä joka
+-- oli ennen, eikä sitä jota yritettiin.
+--
+-- Tunniste tulee mukana, muttei ravintola: se luetaan riviltä. Näin
+-- kutsuja ei voi kirjoittaa toisen ravintolan pöytiä antamalla väärän
+-- tunnisteen — sama sääntö kuin tiedostokaapin toiminnoissa.
+
+create or replace function save_table_positions(
+  p_restaurant uuid,
+  p_positions jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row jsonb;
+  v_count integer := 0;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if jsonb_typeof(p_positions) <> 'array' then
+    raise exception 'Virheellinen syote.' using errcode = 'invalid_parameter_value';
+  end if;
+
+  /*
+   * Yli sadan pöydän erä on virhe eikä ravintola.
+   *
+   * Raja ei suojaa mitään laskennallista; se estää sen että
+   * väärinmuodostettu pyyntö kirjoittaisi mielivaltaisen määrän
+   * rivejä yhdellä kutsulla.
+   */
+  if jsonb_array_length(p_positions) > 200 then
+    raise exception 'Liian monta poytaa kerralla.'
+      using errcode = 'invalid_parameter_value';
+  end if;
+
+  for v_row in select * from jsonb_array_elements(p_positions)
+  loop
+    update restaurant_tables t
+    set
+      pos_x = round((v_row->>'x')::numeric, 2),
+      pos_y = round((v_row->>'y')::numeric, 2),
+      shape = coalesce((v_row->>'shape')::table_shape, t.shape),
+      rotation = coalesce((v_row->>'rotation')::smallint, t.rotation)
+    where t.id = (v_row->>'id')::uuid
+      /*
+       * Ravintola riviltä, ei parametrista.
+       *
+       * Parametri on jo tarkistettu is_managerilla, mutta rivin oma
+       * ravintola on se joka ratkaisee: näin toisen ravintolan
+       * pöydän tunniste ei osu mihinkään.
+       */
+      and t.restaurant_id = p_restaurant;
+
+    if found then v_count := v_count + 1; end if;
+  end loop;
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function save_table_positions(uuid, jsonb) from public, anon;
+grant execute on function save_table_positions(uuid, jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Muoto ja kierto myös päivänäkymään
+-- ---------------------------------------------------------------------------
+--
+-- reservation_day kokoaa illan yhdeksi JSON-vastaukseksi, ja pöytien
+-- kohdalla se listaa kentät nimeltä. Uusi sarake ei siis tule mukaan
+-- itsestään: ilman tätä salinäkymä piirtäisi jokaisen pöydän
+-- oletusmuodolla, ja järjestelty kartta näyttäisi eriltä kuin se jota
+-- järjesteltiin.
+--
+-- Funktio kirjoitetaan kokonaan uusiksi, koska sen runko on yksi
+-- json_build_object. Muutos on kaksi riviä 'tables'-osiossa; loppu on
+-- sama kuin 0068:ssa.
+
+create or replace function reservation_day(p_restaurant uuid, p_date date)
+returns json
+language plpgsql
+stable security definer
+set search_path to 'public'
+as $function$
+declare
+  v_tz text;
+  v_manager boolean;
+  v_from timestamptz;
+  v_to timestamptz;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  v_manager := is_manager(p_restaurant);
+
+  v_from := (p_date + time '00:00') at time zone v_tz;
+  v_to := ((p_date + 1) + time '00:00') at time zone v_tz;
+
+  return json_build_object(
+    'date', p_date,
+    'timezone', v_tz,
+    'canManage', v_manager,
+    'settings', (
+      select json_build_object(
+        'enabled', s.enabled,
+        'slotMinutes', s.slot_minutes,
+        'defaultDurationMinutes', s.default_duration_minutes,
+        'turnaroundMinutes', s.turnaround_minutes,
+        'minParty', s.min_party,
+        'maxParty', s.max_party
+      )
+      from reservation_settings s where s.restaurant_id = p_restaurant
+    ),
+    'areas', coalesce((
+      select json_agg(json_build_object('id', a.id, 'name', a.name)
+                      order by a.sort_order, a.name)
+      from dining_areas a where a.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'tables', coalesce((
+      select json_agg(json_build_object(
+        'id', t.id,
+        'name', t.name,
+        'areaId', t.area_id,
+        'seatsMin', t.seats_min,
+        'seatsMax', t.seats_max,
+        'active', t.active,
+        'posX', t.pos_x,
+        'posY', t.pos_y,
+        'shape', t.shape,
+        'rotation', t.rotation
+      ) order by t.sort_order, t.name)
+      from restaurant_tables t where t.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'reservations', coalesce((
+      select json_agg(json_build_object(
+        'id', r.id,
+        'startsAt', r.starts_at,
+        'endsAt', r.ends_at,
+        'time', to_char((r.starts_at at time zone v_tz)::time, 'HH24:MI'),
+        'endTime', to_char((r.ends_at at time zone v_tz)::time, 'HH24:MI'),
+        'partySize', r.party_size,
+        'status', r.status,
+        'source', r.source,
+        'guestName', r.guest_name,
+        'guestPhone', case when v_manager then r.guest_phone else null end,
+        'guestEmail', case when v_manager then r.guest_email else null end,
+        'note', r.note,
+        'tableIds', coalesce((
+          select json_agg(a.table_id) from reservation_table_assignments a
+          where a.reservation_id = r.id
+        ), '[]'::json)
+      ) order by r.starts_at, r.guest_name)
+      from reservations r
+      where r.restaurant_id = p_restaurant
+        and r.starts_at >= v_from
+        and r.starts_at < v_to
+    ), '[]'::json)
+  );
+end;
+$function$;
+
+
+-- ===========================================================================
+-- 0083_table_options.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0083 — Pöytäehdotukset varausta tehtäessä
+-- ---------------------------------------------------------------------------
+--
+-- reservation_pick_tables valitsee pienimmän sopivan pöydän tai
+-- yhdistelmän ja palauttaa sen. Se on oikea valinta verkkovaraukselle:
+-- asiakas ei tiedä mikä pöytä on ikkunan vieressä eikä sen kuulu
+-- päättää siitä.
+--
+-- Salissa se on väärä valinta. Esihenkilö tietää että kahdeksan hengen
+-- seurue kannattaa laittaa 12+13 eikä 18+19, koska 18 on keittiön oven
+-- vieressä. Kate ei tiedä sitä eikä voi tietää — mutta se voi näyttää
+-- molemmat ja antaa ihmisen valita.
+--
+-- ---------------------------------------------------------------------------
+-- SAMA SAATAVUUS, ERI MÄÄRÄ VASTAUKSIA
+-- ---------------------------------------------------------------------------
+--
+-- Tämä funktio ei ole toinen varausmoottori. Se käyttää täsmälleen
+-- samaa vapaana olemisen sääntöä kuin reservation_pick_tables:
+-- tyhjennysvälillä laajennettu aikaväli, estävät varaukset, käytöstä
+-- poistetut pöydät pois.
+--
+-- Jos säännöt eroaisivat, käyttöliittymä tarjoaisi pöytää jonka
+-- tallennus hylkää — ja se on pahempi kuin ehdotusten puuttuminen.
+--
+-- ---------------------------------------------------------------------------
+-- JÄRJESTYS ON MIELIPIDE, JA SE SANOTAAN ÄÄNEEN
+-- ---------------------------------------------------------------------------
+--
+-- Ensin ne joissa menee vähiten paikkoja hukkaan, sitten yksittäiset
+-- pöydät ennen yhdistelmiä. Kahden hengen seurue neljän pöydässä on
+-- kaksi menetettyä paikkaa; sama seurue kahdessa yhdistetyssä pöydässä
+-- on kaksi menetettyä paikkaa ja yksi ylimääräinen pöytä pois pelistä.
+--
+-- Järjestys on ehdotus. Lista näyttää kaikki, ja esihenkilö valitsee.
+
+create or replace function reservation_table_options(
+  p_restaurant uuid,
+  p_start timestamptz,
+  p_end timestamptz,
+  p_party int,
+  p_exclude uuid default null,
+  p_limit int default 6
+)
+returns table (
+  kind text,
+  table_ids uuid[],
+  label text,
+  seats_max int,
+  /** Montako paikkaa jää käyttämättä. Nolla on täydellinen osuma. */
+  wasted int
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_turnaround int;
+  v_range tstzrange;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select coalesce(s.turnaround_minutes, 0) into v_turnaround
+  from reservation_settings s where s.restaurant_id = p_restaurant;
+
+  v_range := tstzrange(
+    p_start - make_interval(mins => coalesce(v_turnaround, 0)),
+    p_end + make_interval(mins => coalesce(v_turnaround, 0)),
+    '[)'
+  );
+
+  return query
+  with vapaat as (
+    select t.id, t.name, t.seats_min, t.seats_max, t.sort_order
+    from restaurant_tables t
+    where t.restaurant_id = p_restaurant
+      and t.active
+      and not exists (
+        select 1 from reservation_table_assignments a
+        where a.table_id = t.id
+          and a.blocking
+          and a.during && v_range
+          and (p_exclude is null or a.reservation_id <> p_exclude)
+      )
+  ),
+
+  yksittaiset as (
+    select
+      'table'::text as kind,
+      array[v.id] as table_ids,
+      v.name as label,
+      v.seats_max,
+      v.seats_max - p_party as wasted,
+      0 as jarjestys,
+      v.sort_order
+    from vapaat v
+    where v.seats_min <= p_party and v.seats_max >= p_party
+  ),
+
+  yhdistelmat as (
+    select
+      'combination'::text as kind,
+      array_agg(m.table_id order by t.sort_order, t.name) as table_ids,
+      /*
+       * Nimi yhdistelmälle.
+       *
+       * Ravintola voi antaa oman nimen ("Ikkunapöydät"). Jos ei ole,
+       * nimi kootaan pöytien nimistä: "12 + 13" on se miten siitä
+       * salissa puhutaan.
+       */
+      coalesce(
+        nullif(btrim(c.name), ''),
+        string_agg(t.name, ' + ' order by t.sort_order, t.name)
+      ) as label,
+      c.seats_max,
+      c.seats_max - p_party as wasted,
+      1 as jarjestys,
+      min(t.sort_order) as sort_order
+    from table_combinations c
+    join table_combination_members m on m.combination_id = c.id
+    join vapaat t on t.id = m.table_id
+    where c.restaurant_id = p_restaurant
+      and c.active
+      and c.seats_min <= p_party
+      and c.seats_max >= p_party
+    group by c.id, c.name, c.seats_max
+    /*
+     * Yhdistelmä kelpaa vain kokonaisena.
+     *
+     * Liitos vapaisiin pöytiin pudottaa varatut jäsenet pois, joten
+     * ryhmän koko kertoo montako niistä oli vapaana. Ilman tätä
+     * ehtoa puoliksi varattu yhdistelmä näyttäisi vapaalta.
+     */
+    having count(*) = (
+      select count(*) from table_combination_members x
+      where x.combination_id = c.id
+    )
+  )
+
+  select o.kind, o.table_ids, o.label, o.seats_max, o.wasted
+  from (
+    select * from yksittaiset
+    union all
+    select * from yhdistelmat
+  ) o
+  order by o.wasted asc, o.jarjestys asc, o.sort_order asc, o.label asc
+  limit greatest(1, least(p_limit, 20));
+end;
+$$;
+
+revoke execute on function reservation_table_options(uuid, timestamptz, timestamptz, int, uuid, int)
+  from public, anon;
+
+grant execute on function reservation_table_options(uuid, timestamptz, timestamptz, int, uuid, int)
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Varauksen aikaväli yhdellä kutsulla
+-- ---------------------------------------------------------------------------
+--
+-- Ehdotusfunktio ottaa vastaan aikaleimat, mutta lomakkeella on
+-- päivämäärä ja kellonaika. Muunnos vaatii ravintolan aikavyöhykkeen
+-- ja oletuskeston, ja molemmat ovat kannassa.
+--
+-- Selaimessa laskettuna sama muunnos olisi toinen paikka jossa
+-- kesäaika menee pieleen — ja pahimmillaan ehdotus koskisi eri
+-- aikaväliä kuin tallennus, jolloin lista tarjoaisi pöytää jonka
+-- tallennus hylkää.
+
+create or replace function reservation_window(
+  p_restaurant uuid,
+  p_date date,
+  p_time text
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_tz text;
+  v_minutes int;
+  v_start timestamptz;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+
+  select coalesce(s.default_duration_minutes, 90) into v_minutes
+  from reservation_settings s where s.restaurant_id = p_restaurant;
+
+  v_minutes := coalesce(v_minutes, 90);
+
+  v_start := (p_date + p_time::time) at time zone v_tz;
+
+  return json_build_object(
+    'startsAt', v_start,
+    'endsAt', v_start + make_interval(mins => v_minutes)
+  );
+end;
+$$;
+
+revoke execute on function reservation_window(uuid, date, text) from public, anon;
+grant execute on function reservation_window(uuid, date, text) to authenticated;
+
+
+-- ===========================================================================
+-- 0084_floor_elements.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0084 — Salin kalusteet ja pöydän oma koko
+-- ---------------------------------------------------------------------------
+--
+-- Pöydät ilman seiniä on pistejoukko. Sama kaksitoista ympyrää
+-- näyttää samalta joka ravintolassa, eikä tarjoilija tunnista niistä
+-- omaa saliaan.
+--
+-- Baaritiski, keittiön ovi ja vessan käytävä ovat ne kiintopisteet
+-- joiden avulla ihminen lukee tilaa. Kun ne ovat kartalla, "pöytä 12"
+-- lakkaa olemasta numero ja alkaa olla paikka.
+--
+-- ---------------------------------------------------------------------------
+-- KALUSTE EI OLE PÖYTÄ
+-- ---------------------------------------------------------------------------
+--
+-- Oma taulunsa eikä lippu pöytärivillä. Kalusteella ei ole
+-- paikkalukua, sitä ei voi varata, se ei kuulu yhdistelmiin eikä sillä
+-- ole tilaa. Sama taulu tarkoittaisi puolet sarakkeista tyhjänä ja
+-- jokaisessa kyselyssä ehdon "and not is_furniture".
+--
+-- ---------------------------------------------------------------------------
+-- KOKO ON VAPAA, TOISIN KUIN PÖYDÄLLÄ
+-- ---------------------------------------------------------------------------
+--
+-- Pöydän koko johdetaan paikkaluvusta, koska kahden hengen pöytä on
+-- pieni ja kymmenen hengen iso — se on tosiasia salissa. Seinällä ei
+-- ole paikkalukua, ja sen pituus on juuri se mitä siitä pitää kertoa.
+--
+-- Leveys on prosenttia salin leveydestä ja korkeus prosenttia salin
+-- korkeudesta. Kaksi eri yksikköä samassa rivissä on epäkaunista,
+-- mutta vaihtoehto olisi tallentaa salin kuvasuhde jokaiselle
+-- kalusteelle — ja silloin kartan muodon muuttaminen siirtäisi
+-- kaikkea.
+
+do $$ begin
+  create type floor_element_kind as enum (
+    'wall', 'bar', 'kitchen', 'wc', 'door', 'entrance', 'other'
+  );
+exception when duplicate_object then null; end $$;
+
+create table if not exists floor_elements (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+
+  /* Sama aluejako kuin pöydillä: terassilla on oma karttansa. */
+  area_id uuid references dining_areas(id) on delete set null,
+
+  kind floor_element_kind not null,
+
+  /** Vapaa nimi. "Baari" riittää baarille, "Kabinetti 2" ovelle. */
+  label text not null default '',
+
+  /* Keskikohta prosentteina, kuten pöydillä. */
+  pos_x numeric(5, 2) not null,
+  pos_y numeric(5, 2) not null,
+
+  /** Leveys prosentteina salin leveydestä. */
+  width numeric(5, 2) not null default 20,
+
+  /** Korkeus prosentteina salin korkeudesta. */
+  height numeric(5, 2) not null default 6,
+
+  rotation smallint not null default 0,
+
+  sort_order int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+
+  constraint floor_elements_position check (
+    pos_x >= 0 and pos_x <= 100 and pos_y >= 0 and pos_y <= 100
+  ),
+
+  /*
+   * Alaraja ei ole nolla.
+   *
+   * Nollan levyinen seinä on olemassa kannassa muttei kartalla, eikä
+   * sitä saa enää tartuttua kiinni hiirellä. Kahden prosentin
+   * vähimmäiskoko on pienin joka pysyy osoitettavana.
+   */
+  constraint floor_elements_size check (
+    width >= 2 and width <= 100 and height >= 2 and height <= 100
+  ),
+
+  constraint floor_elements_rotation check (rotation >= 0 and rotation < 360)
+);
+
+create index if not exists floor_elements_restaurant_idx
+  on floor_elements (restaurant_id, sort_order);
+
+-- ---------------------------------------------------------------------------
+-- Pöydän oma koko
+-- ---------------------------------------------------------------------------
+--
+-- Koko johdetaan paikkaluvusta, ja se on oikea oletus. Se ei ole aina
+-- oikea: kuuden hengen pitkä juhlapöytä ja kuuden hengen pyöreä pöytä
+-- vievät salista eri määrän tilaa, ja ravintoloitsija näkee sen
+-- kartalta ennen kuin osaa sanoa miksi.
+--
+-- Null tarkoittaa "käytä paikkaluvusta johdettua". Se ei ole sama
+-- asia kuin nolla eikä sama asia kuin oletusarvo tallennettuna:
+-- johdettu koko seuraa paikkalukua, tallennettu ei.
+
+alter table restaurant_tables
+  add column if not exists width numeric(5, 2);
+
+alter table restaurant_tables
+  drop constraint if exists restaurant_tables_width;
+
+alter table restaurant_tables
+  add constraint restaurant_tables_width
+  check (width is null or (width >= 3 and width <= 40));
+
+-- ---------------------------------------------------------------------------
+-- Käytännöt
+-- ---------------------------------------------------------------------------
+--
+-- Sama jako kuin pöydillä: jäsen näkee salin, esihenkilö järjestää
+-- sen. Tarjoilijan on nähtävä missä baari on; sen siirtäminen ei
+-- kuulu hänelle.
+
+alter table floor_elements enable row level security;
+
+drop policy if exists floor_elements_read on floor_elements;
+create policy floor_elements_read on floor_elements
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+drop policy if exists floor_elements_write on floor_elements;
+create policy floor_elements_write on floor_elements
+  for all to authenticated
+  using (is_manager(restaurant_id))
+  with check (is_manager(restaurant_id));
+
+drop trigger if exists floor_elements_touch on floor_elements;
+create trigger floor_elements_touch before update on floor_elements
+  for each row execute function touch_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Kartan tallennus yhtenä eränä
+-- ---------------------------------------------------------------------------
+--
+-- Kartan järjestely on yksi teko. save_table_positions hoitaa pöydät;
+-- tämä hoitaa kalusteet, ja sen on osattava myös lisäys ja poisto —
+-- käyttäjä raahaa baarin kartalle ja poistaa väärin lisätyn seinän
+-- samalla istumalla.
+--
+-- Poisto on "kaikki mitä listassa ei ole". Se on ainoa tapa jolla
+-- selaimen tila ja kanta päätyvät samaan lopputulokseen ilman että
+-- jokainen poisto on oma verkkokierroksensa — ja puoliksi tallennettu
+-- kartta on huonompi kuin tallentamaton.
+
+create or replace function save_floor_elements(
+  p_restaurant uuid,
+  p_area uuid,
+  p_elements jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row jsonb;
+  v_ids uuid[] := '{}';
+  v_id uuid;
+  v_count integer := 0;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if jsonb_typeof(p_elements) <> 'array' then
+    raise exception 'Virheellinen syote.' using errcode = 'invalid_parameter_value';
+  end if;
+
+  if jsonb_array_length(p_elements) > 200 then
+    raise exception 'Liian monta kalustetta kerralla.'
+      using errcode = 'invalid_parameter_value';
+  end if;
+
+  for v_row in select * from jsonb_array_elements(p_elements)
+  loop
+    /*
+     * Tunniste kertoo onko kyseessä uusi vai vanha.
+     *
+     * Selain antaa uudelle kalusteelle tunnisteen vasta kun kanta
+     * antaa sen. Tyhjä tunniste on siis "tämä on uusi", ei virhe.
+     */
+    v_id := nullif(v_row->>'id', '')::uuid;
+
+    if v_id is null then
+      insert into floor_elements (
+        restaurant_id, area_id, kind, label,
+        pos_x, pos_y, width, height, rotation, sort_order
+      )
+      values (
+        p_restaurant,
+        p_area,
+        (v_row->>'kind')::floor_element_kind,
+        coalesce(left(btrim(v_row->>'label'), 40), ''),
+        round((v_row->>'x')::numeric, 2),
+        round((v_row->>'y')::numeric, 2),
+        round((v_row->>'width')::numeric, 2),
+        round((v_row->>'height')::numeric, 2),
+        coalesce((v_row->>'rotation')::smallint, 0),
+        v_count
+      )
+      returning id into v_id;
+    else
+      update floor_elements e
+      set
+        kind = (v_row->>'kind')::floor_element_kind,
+        label = coalesce(left(btrim(v_row->>'label'), 40), ''),
+        pos_x = round((v_row->>'x')::numeric, 2),
+        pos_y = round((v_row->>'y')::numeric, 2),
+        width = round((v_row->>'width')::numeric, 2),
+        height = round((v_row->>'height')::numeric, 2),
+        rotation = coalesce((v_row->>'rotation')::smallint, 0),
+        sort_order = v_count
+      where e.id = v_id
+        /* Ravintola riviltä, ei parametrista: vieras tunniste ei osu. */
+        and e.restaurant_id = p_restaurant;
+    end if;
+
+    v_ids := v_ids || v_id;
+    v_count := v_count + 1;
+  end loop;
+
+  /*
+   * Poistetut pois.
+   *
+   * Rajaus alueeseen on olennainen: ilman sitä terassin tallennus
+   * pyyhkisi salin kalusteet, koska ne eivät ole terassin listalla.
+   */
+  delete from floor_elements e
+  where e.restaurant_id = p_restaurant
+    and e.area_id is not distinct from p_area
+    and not (e.id = any(v_ids));
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function save_floor_elements(uuid, uuid, jsonb) from public, anon;
+grant execute on function save_floor_elements(uuid, uuid, jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Pöytien leveys mukaan sijaintitallennukseen
+-- ---------------------------------------------------------------------------
+--
+-- save_table_positions kirjoitti paikan, muodon ja kierron. Leveys on
+-- neljäs asia jota kartalla säädetään, ja se kuuluu samaan
+-- tallennukseen: erillinen kutsu tarkoittaisi että puolet muutoksista
+-- voi jäädä tallentumatta.
+
+create or replace function save_table_positions(
+  p_restaurant uuid,
+  p_positions jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row jsonb;
+  v_count integer := 0;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if jsonb_typeof(p_positions) <> 'array' then
+    raise exception 'Virheellinen syote.' using errcode = 'invalid_parameter_value';
+  end if;
+
+  if jsonb_array_length(p_positions) > 200 then
+    raise exception 'Liian monta poytaa kerralla.'
+      using errcode = 'invalid_parameter_value';
+  end if;
+
+  for v_row in select * from jsonb_array_elements(p_positions)
+  loop
+    update restaurant_tables t
+    set
+      pos_x = round((v_row->>'x')::numeric, 2),
+      pos_y = round((v_row->>'y')::numeric, 2),
+      shape = coalesce((v_row->>'shape')::table_shape, t.shape),
+      rotation = coalesce((v_row->>'rotation')::smallint, t.rotation),
+
+      /*
+       * Tyhjä leveys palauttaa johdetun koon.
+       *
+       * Null ei ole nolla eikä oletusarvo: se tarkoittaa "seuraa
+       * paikkalukua". Ravintoloitsijan on päästävä takaisin siihen
+       * ilman että hän arvaa mikä luku olisi ollut oikea.
+       */
+      width = case
+        when v_row ? 'width' and nullif(v_row->>'width', '') is not null
+          then round((v_row->>'width')::numeric, 2)
+        when v_row ? 'width' then null
+        else t.width
+      end
+    where t.id = (v_row->>'id')::uuid
+      and t.restaurant_id = p_restaurant;
+
+    if found then v_count := v_count + 1; end if;
+  end loop;
+
+  return v_count;
+end;
+$$;
+
+revoke execute on function save_table_positions(uuid, jsonb) from public, anon;
+grant execute on function save_table_positions(uuid, jsonb) to authenticated;
+
+
+-- ===========================================================================
+-- 0085_service_state.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0085 — Laskua odottava pöytä ja keittiön kapasiteetti
+-- ---------------------------------------------------------------------------
+--
+-- Kaksi asiaa jotka näkyvät salissa mutta eivät Katessa.
+--
+-- ---------------------------------------------------------------------------
+-- 1. LASKUA ODOTTAVA PÖYTÄ
+-- ---------------------------------------------------------------------------
+--
+-- Pöytä jossa on syöty ja lasku on pyydetty ei ole enää "asiakkaat
+-- pöydässä" eikä vielä "vapaa". Se on se pöytä jonka tarjoilija
+-- katsoo seuraavaksi, ja se on myös se pöytä joka vapautuu
+-- kymmenessä minuutissa — tieto jota tarvitaan kun ovella seisoo
+-- kaksi ihmistä.
+--
+-- Aikaleima eikä tila. reservation_status kertoo missä varaus menee
+-- (tuleva, saapunut, mennyt); laskun pyytäminen on tapahtuma sen
+-- sisällä. Uusi enum-arvo olisi pakottanut jokaisen tilasiirtymän
+-- käsittelemään sen, ja "peruttu lasku" ei tarkoita mitään.
+
+alter table reservations
+  add column if not exists bill_requested_at timestamptz;
+
+/**
+ * Laskun pyyntö päälle ja pois.
+ *
+ * Sama funktio molempiin suuntiin, koska tarjoilija painaa väärää
+ * pöytää yhtä usein kuin oikeaa. Peruminen ilman erillistä
+ * toimintoa on se ero jonka takia merkintää uskalletaan käyttää.
+ *
+ * Vain saapuneelle seurueelle: laskua ei voi pyytää pöydästä jossa
+ * ei istu ketään.
+ */
+create or replace function reservation_set_bill(
+  p_reservation uuid,
+  p_waiting boolean
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant uuid;
+  v_status reservation_status;
+begin
+  select r.restaurant_id, r.status into v_restaurant, v_status
+  from reservations r where r.id = p_reservation;
+
+  if v_restaurant is null then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  if not is_manager(v_restaurant)
+     and v_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_waiting and v_status <> 'arrived' then
+    return json_build_object('ok', false, 'error', 'not_arrived');
+  end if;
+
+  update reservations
+  set bill_requested_at = case when p_waiting then now() else null end
+  where id = p_reservation;
+
+  return json_build_object('ok', true);
+end;
+$$;
+
+revoke execute on function reservation_set_bill(uuid, boolean) from public, anon;
+grant execute on function reservation_set_bill(uuid, boolean) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2. KEITTIÖN KAPASITEETTI
+-- ---------------------------------------------------------------------------
+--
+-- Pöytiä voi olla vapaana vaikka keittiö ei ehdi. Kaksitoista
+-- neljän hengen pöytää tarkoittaa 48 paikkaa, mutta jos kaikki
+-- istuutuvat kello 18:00, keittiö tekee 48 annosta puolessa
+-- tunnissa — eikä tee.
+--
+-- Raja on annoksia aikaikkunassa, ei pöytiä. Kaksi eri asiaa:
+-- pöytäkapasiteetti kertoo mahtuuko seurue istumaan,
+-- keittiökapasiteetti ehtiikö keittiö ruokkia heidät.
+--
+-- ---------------------------------------------------------------------------
+-- IKKUNA ON LIUKUVA, EI TASATUNTI
+-- ---------------------------------------------------------------------------
+--
+-- "Enintään 40 henkeä tunnissa" tarkoittaa mitä tahansa tunnin
+-- mittaista jaksoa, ei kello 18–19 ja 19–20 erikseen. Tasatunneittain
+-- laskettuna 20 henkeä 18:55 ja 20 henkeä 19:05 mahtuisivat, vaikka
+-- keittiöön osuu neljäkymmentä kymmenessä minuutissa.
+--
+-- Siksi tarkistus katsoo uuden varauksen alkuhetkestä eteen- ja
+-- taaksepäin puoli ikkunaa, molemmat päät mukaan lukien.
+--
+-- Symmetria ei ollut ilmaista. Ensimmäinen toteutus käytti
+-- puoliavointa väliä, ja silloin klo 18:30 mitattuna 18:00 laskettiin
+-- mukaan mutta ei toisin päin: sama pari varauksia oli yhtä aikaa
+-- sekä liikaa että sopivasti riippuen siitä kummasta päästä katsoi.
+-- Testi löysi sen, ei silmä.
+
+alter table reservation_settings
+  add column if not exists kitchen_capacity integer;
+
+alter table reservation_settings
+  add column if not exists kitchen_window_minutes integer not null default 60;
+
+alter table reservation_settings
+  drop constraint if exists reservation_settings_kitchen;
+
+alter table reservation_settings
+  add constraint reservation_settings_kitchen check (
+    (kitchen_capacity is null or kitchen_capacity > 0)
+    and kitchen_window_minutes between 15 and 240
+  );
+
+/**
+ * Montako ruokailijaa keittiöön osuu tähän aikaan.
+ *
+ * Lasketaan alkuajoista: ruoka tehdään kun seurue saapuu, ei koko
+ * sen ajan kun se istuu. Kahden tunnin illallinen kuormittaa
+ * keittiötä alussa, ei lopussa.
+ *
+ * Peruttu ja no-show eivät kuormita ketään.
+ */
+create or replace function kitchen_load(
+  p_restaurant uuid,
+  p_at timestamptz,
+  p_exclude uuid default null
+)
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(sum(r.party_size), 0)::integer
+  from reservations r,
+       lateral (
+         select coalesce(s.kitchen_window_minutes, 60) as w
+         from reservation_settings s
+         where s.restaurant_id = p_restaurant
+       ) k
+  where r.restaurant_id = p_restaurant
+    and r.status in ('pending', 'confirmed', 'arrived', 'completed')
+    and (p_exclude is null or r.id <> p_exclude)
+    /*
+     * Etäisyys alkuhetkestä, molempiin suuntiin ja päät mukaan.
+     *
+     * abs() eikä kaksi vertailua: se on symmetrinen määritelmän
+     * tasolla, eikä sitä voi vahingossa kirjoittaa epäsymmetriseksi
+     * korjatessa. Sekunteina, koska minuuttien kokonaislukujako
+     * pyöristäisi parittoman ikkunan väärin.
+     */
+    and abs(extract(epoch from (r.starts_at - p_at))) <= k.w * 30;
+$$;
+
+revoke execute on function kitchen_load(uuid, timestamptz, uuid) from public, anon;
+grant execute on function kitchen_load(uuid, timestamptz, uuid) to authenticated;
+
+/**
+ * Mahtuuko seurue keittiön kapasiteettiin.
+ *
+ * Palauttaa tilanteen eikä pelkkää kyllä/ei: käyttöliittymän on
+ * voitava kertoa kuinka paljon tilaa on jäljellä, jotta
+ * ravintoloitsija näkee onko kyse yhdestä hengestä vai kymmenestä.
+ *
+ * Ilman asetettua rajaa vastaus on aina kyllä. Kate ei keksi
+ * keittiölle kapasiteettia jota kukaan ei ole kertonut.
+ */
+create or replace function kitchen_check(
+  p_restaurant uuid,
+  p_at timestamptz,
+  p_party integer,
+  p_exclude uuid default null
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_capacity integer;
+  v_window integer;
+  v_load integer;
+begin
+  select s.kitchen_capacity, coalesce(s.kitchen_window_minutes, 60)
+  into v_capacity, v_window
+  from reservation_settings s
+  where s.restaurant_id = p_restaurant;
+
+  if v_capacity is null then
+    return json_build_object('limited', false, 'ok', true);
+  end if;
+
+  v_load := kitchen_load(p_restaurant, p_at, p_exclude);
+
+  return json_build_object(
+    'limited', true,
+    'ok', v_load + p_party <= v_capacity,
+    'capacity', v_capacity,
+    'windowMinutes', v_window,
+    'load', v_load,
+    'remaining', greatest(0, v_capacity - v_load)
+  );
+end;
+$$;
+
+revoke execute on function kitchen_check(uuid, timestamptz, integer, uuid) from public, anon;
+grant execute on function kitchen_check(uuid, timestamptz, integer, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 3. Raja varausmoottoriin
+-- ---------------------------------------------------------------------------
+--
+-- Kapasiteetti joka näkyy vain ruudulla ei ole kapasiteetti. Se on
+-- kytkettävä siihen yhteen paikkaan josta kaikki varaukset kulkevat.
+--
+-- ---------------------------------------------------------------------------
+-- VERKKO ESTETÄÄN, SALI VAROITETAAN
+-- ---------------------------------------------------------------------------
+--
+-- Asiakas verkossa ei voi neuvotella keittiön kanssa: hänelle raja on
+-- raja, ja ylityksen salliminen tarkoittaisi ettei rajaa ole.
+--
+-- Esihenkilö sen sijaan tietää enemmän kuin Kate. Perjantain kymmenen
+-- hengen seurue voi olla se joka tilaa kolme pizzaa, ja kielto olisi
+-- silloin ohjelma joka väittää tietävänsä keittiöstä paremmin.
+-- Hallintanäkymä näyttää kuorman, mutta ei estä.
+--
+-- reservation_slots suodattaa täydet ajat pois julkiselta listalta.
+-- Ilman sitä asiakas valitsisi ajan jonka tallennus hylkää — ja se on
+-- huonompi kuin ajan puuttuminen listalta.
+
+create or replace function reservation_book(
+  p_restaurant uuid,
+  p_start timestamp with time zone,
+  p_party integer,
+  p_name text,
+  p_phone text,
+  p_email text,
+  p_note text,
+  p_source reservation_source,
+  p_status reservation_status default 'confirmed'::reservation_status,
+  p_minutes integer default null,
+  p_tables uuid[] default null,
+  p_cancel_token text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_minutes int;
+  v_end timestamptz;
+  v_tables uuid[];
+  v_id uuid;
+  v_table uuid;
+  v_kitchen json;
+begin
+  perform pg_advisory_xact_lock(hashtext('kate:reservation:' || p_restaurant::text));
+
+  v_minutes := coalesce(p_minutes, reservation_duration_for(p_restaurant, p_party));
+  v_end := p_start + make_interval(mins => v_minutes);
+
+  /* Keittiön raja koskee vain verkosta tulevia. */
+  if p_source in ('widget', 'link') then
+    v_kitchen := kitchen_check(p_restaurant, p_start, p_party);
+
+    if (v_kitchen->>'limited')::boolean and not (v_kitchen->>'ok')::boolean then
+      raise exception 'Keittio on varattu tahan aikaan.'
+        using errcode = 'exclusion_violation';
+    end if;
+  end if;
+
+  if p_tables is null or array_length(p_tables, 1) is null then
+    v_tables := reservation_pick_tables(p_restaurant, p_start, v_end, p_party);
+  else
+    if exists (
+      select 1 from unnest(p_tables) as x(id)
+      where not exists (
+        select 1 from restaurant_tables t
+        where t.id = x.id and t.restaurant_id = p_restaurant
+      )
+    ) then
+      raise exception 'Pöytä ei kuulu tähän ravintolaan.'
+        using errcode = 'check_violation';
+    end if;
+
+    v_tables := p_tables;
+  end if;
+
+  if v_tables is null or array_length(v_tables, 1) is null then
+    raise exception 'Vapaata pöytää ei ole tähän aikaan.'
+      using errcode = 'exclusion_violation';
+  end if;
+
+  insert into reservations (
+    restaurant_id, starts_at, ends_at, party_size, status, source,
+    guest_name, guest_phone, guest_email, note, cancel_token_hash, created_by
+  )
+  values (
+    p_restaurant, p_start, v_end, p_party, p_status, p_source,
+    trim(p_name), nullif(trim(coalesce(p_phone, '')), ''),
+    nullif(lower(trim(coalesce(p_email, ''))), ''),
+    nullif(trim(coalesce(p_note, '')), ''),
+    case when p_cancel_token is null then null
+         else encode(sha256(p_cancel_token::bytea), 'hex') end,
+    auth.uid()
+  )
+  returning id into v_id;
+
+  foreach v_table in array v_tables loop
+    insert into reservation_table_assignments
+      (reservation_id, table_id, starts_at, ends_at, blocking)
+    values (
+      v_id, v_table, p_start, v_end,
+      p_status in ('pending', 'confirmed', 'arrived')
+    );
+  end loop;
+
+  return v_id;
+end;
+$function$;
+
+create or replace function reservation_slots(
+  p_restaurant uuid,
+  p_date date,
+  p_party integer,
+  p_exclude uuid default null
+)
+returns table(slot_time time without time zone, starts_at timestamp with time zone)
+language plpgsql
+stable security definer
+set search_path to 'public'
+as $function$
+declare
+  v_tz text;
+  v_slot int;
+  v_lead int;
+  v_minutes int;
+begin
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  if v_tz is null then return; end if;
+
+  select s.slot_minutes, s.lead_minutes into v_slot, v_lead
+  from reservation_settings s where s.restaurant_id = p_restaurant;
+
+  if v_slot is null then return; end if;
+
+  v_minutes := reservation_duration_for(p_restaurant, p_party);
+
+  return query
+  with ikkunat as (
+    select w.opens, w.last_seating from reservation_windows(p_restaurant, p_date) w
+  ),
+  ajat as (
+    select
+      (w.opens + make_interval(mins => v_slot * g.n))::time as t
+    from ikkunat w
+    cross join lateral generate_series(
+      0,
+      greatest(0, floor(extract(epoch from (w.last_seating - w.opens)) / 60 / v_slot)::int)
+    ) as g(n)
+  ),
+  ehdokkaat as (
+    select distinct a.t,
+           ((p_date + a.t) at time zone v_tz) as alkaa
+    from ajat a
+  )
+  select e.t, e.alkaa
+  from ehdokkaat e
+  where
+    e.alkaa >= now() + make_interval(mins => coalesce(v_lead, 0))
+    and reservation_pick_tables(
+          p_restaurant,
+          e.alkaa,
+          e.alkaa + make_interval(mins => v_minutes),
+          p_party,
+          p_exclude
+        ) is not null
+    /* Täysi keittiö ei näy vapaana aikana. */
+    and (kitchen_check(p_restaurant, e.alkaa, p_party, p_exclude)->>'ok')::boolean
+  order by e.t;
+end;
+$function$;
+
+
+-- ===========================================================================
+-- 0086_reservation_update_poyta.sql
+-- ===========================================================================
+
+-- 0086 – Pöydän vaihto varaukseen korjattu
+--
+-- reservation_update kaatui poikkeukseen aina kun varaukselle
+-- annettiin pöytä:
+--
+--   malformed array literal: "pöytä"
+--
+-- Syy on muutoslokin rivi
+--
+--   v_muutos := v_muutos || 'pöytä';
+--
+-- jossa v_muutos on text[] ja literaali on tyypitön. Postgres valitsee
+-- silloin taulukko||taulukko -yhdistelmän ja yrittää lukea sanan
+-- "pöytä" taulukoksi. Kaksi edellistä lisäystä välttyivät tältä vain
+-- siksi, että ne olivat ||-yhdistelmiä ja siten valmiiksi text.
+--
+-- Korjaus on yksi tyyppimerkintä. Virhe nousi vasta onnistuneen
+-- päivityksen jälkeen, joten muutos peruuntui transaktion mukana ja
+-- käyttäjä näki vain yleisen "Toiminto ei onnistunut" -viestin.
+--
+-- Muu funktio on ennallaan.
+
+create or replace function public.reservation_update(
+  p_reservation uuid,
+  p_date date default null,
+  p_time time default null,
+  p_party int default null,
+  p_name text default null,
+  p_phone text default null,
+  p_email text default null,
+  p_note text default null,
+  p_tables uuid[] default null
+)
+returns json
+language plpgsql
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_old record;
+  v_tz text;
+  v_start timestamptz;
+  v_party int;
+  v_minutes int;
+  v_end timestamptz;
+  v_tables uuid[];
+  v_table uuid;
+  v_muutos text[] := array[]::text[];
+begin
+  select * into v_old from reservations where id = p_reservation;
+  if v_old.id is null or not is_manager(v_old.restaurant_id) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtext('kate:reservation:' || v_old.restaurant_id::text)
+  );
+
+  select r.timezone into v_tz from restaurants r where r.id = v_old.restaurant_id;
+
+  v_party := coalesce(p_party, v_old.party_size);
+  if v_party < 1 then
+    return json_build_object('ok', false, 'error', 'party');
+  end if;
+
+  if p_date is not null or p_time is not null then
+    v_start := (
+      coalesce(p_date, (v_old.starts_at at time zone v_tz)::date)
+      + coalesce(p_time, (v_old.starts_at at time zone v_tz)::time)
+    ) at time zone v_tz;
+  else
+    v_start := v_old.starts_at;
+  end if;
+
+  if v_party <> v_old.party_size then
+    v_minutes := reservation_duration_for(v_old.restaurant_id, v_party);
+  else
+    v_minutes := (extract(epoch from (v_old.ends_at - v_old.starts_at)) / 60)::int;
+  end if;
+  v_end := v_start + make_interval(mins => v_minutes);
+
+  if p_tables is not null then
+    if exists (
+      select 1 from unnest(p_tables) as x(id)
+      where not exists (
+        select 1 from restaurant_tables t
+        where t.id = x.id and t.restaurant_id = v_old.restaurant_id
+      )
+    ) then
+      return json_build_object('ok', false, 'error', 'table');
+    end if;
+    v_tables := p_tables;
+  elsif v_start <> v_old.starts_at
+        or v_end <> v_old.ends_at
+        or v_party <> v_old.party_size
+  then
+    v_tables := reservation_pick_tables(
+      v_old.restaurant_id, v_start, v_end, v_party, p_reservation
+    );
+    if v_tables is null then
+      return json_build_object('ok', false, 'error', 'taken');
+    end if;
+  end if;
+
+  begin
+    update reservations set
+      starts_at = v_start,
+      ends_at = v_end,
+      party_size = v_party,
+      guest_name = coalesce(nullif(left(trim(p_name), 120), ''), guest_name),
+      guest_phone = case when p_phone is null then guest_phone
+                         else nullif(left(trim(p_phone), 40), '') end,
+      guest_email = case when p_email is null then guest_email
+                         else nullif(lower(left(trim(p_email), 160)), '') end,
+      note = case when p_note is null then note
+                  else nullif(left(trim(p_note), 500), '') end
+    where id = p_reservation;
+
+    if v_tables is not null then
+      delete from reservation_table_assignments
+      where reservation_id = p_reservation
+        and table_id <> all (v_tables);
+
+      foreach v_table in array v_tables loop
+        insert into reservation_table_assignments
+          (reservation_id, table_id, starts_at, ends_at, blocking)
+        values (
+          p_reservation, v_table, v_start, v_end,
+          v_old.status in ('pending', 'confirmed', 'arrived')
+        )
+        on conflict (reservation_id, table_id) do update
+          set starts_at = excluded.starts_at,
+              ends_at = excluded.ends_at,
+              blocking = excluded.blocking;
+      end loop;
+    end if;
+  exception
+    when exclusion_violation then
+      return json_build_object('ok', false, 'error', 'taken');
+  end;
+
+  if v_start <> v_old.starts_at then
+    v_muutos := v_muutos || (
+      'aika ' || to_char(v_old.starts_at at time zone v_tz, 'DD.MM. HH24:MI')
+      || ' -> ' || to_char(v_start at time zone v_tz, 'DD.MM. HH24:MI')
+    );
+  end if;
+  if v_party <> v_old.party_size then
+    v_muutos := v_muutos || ('koko ' || v_old.party_size || ' -> ' || v_party);
+  end if;
+  if v_tables is not null then
+    -- Tyyppimerkintä on korjaus: ilman sitä Postgres lukee sanan
+    -- taulukoksi ja koko päivitys peruuntuu.
+    v_muutos := v_muutos || 'pöytä'::text;
+  end if;
+
+  perform write_audit(
+    v_old.restaurant_id, 'reservation.update', 'reservation',
+    p_reservation, v_old.guest_name,
+    'Muutti varausta: ' || v_old.guest_name
+      || case when array_length(v_muutos, 1) is null then ''
+              else ' (' || array_to_string(v_muutos, ', ') || ')' end,
+    jsonb_build_object('starts_at', v_old.starts_at, 'party_size', v_old.party_size),
+    jsonb_build_object('starts_at', v_start, 'party_size', v_party),
+    false
+  );
+
+  return json_build_object('ok', true);
+end;
+$fn$;
+
+revoke all on function public.reservation_update(
+  uuid, date, time, int, text, text, text, text, uuid[]
+) from anon;
+
+
+-- ===========================================================================
+-- 0087_reservation_day.sql
+-- ===========================================================================
+
+-- 0087 – reservation_day: kalusteet ja aukioloaika mukaan
+--
+-- Tämä migraatio kirjaa tiedostoon sen mikä kantaan oli jo tehty.
+-- Funktio kasvoi kahdessa vaiheessa pohjapiirroksen ja kalenterin
+-- mukana, ja välissä sitä muutettiin suoraan kannassa. Ilman tätä
+-- tiedostoa kantaa ei voi rakentaa uudelleen migraatioista, ja se on
+-- pahempi vika kuin kumpikaan lisätty kenttä.
+--
+-- Funktio listaa kentät nimeltä, joten uusi sarake ei tule mukaan
+-- itsestään — jokainen lisäys on oma rivinsä täällä:
+--
+--   0082  shape, rotation      pöydän muoto kartalla
+--   0084  width, elements      leveys ja kalusteet
+--   0085  billRequestedAt      laskua odottava pöytä
+--   tämä  hours                aukioloaika kalenterin aikajanalle
+--
+-- Aukioloaika tulee reservation_windows-funktiosta eikä suoraan
+-- taulusta: poikkeuspäivä syrjäyttää viikkorytmin, ja kalenterin
+-- pitää piirtää se päivä joka oikeasti on.
+
+create or replace function public.reservation_day(
+  p_restaurant uuid,
+  p_date date
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_tz text;
+  v_manager boolean;
+  v_from timestamptz;
+  v_to timestamptz;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  v_manager := is_manager(p_restaurant);
+
+  v_from := (p_date + time '00:00') at time zone v_tz;
+  v_to := ((p_date + 1) + time '00:00') at time zone v_tz;
+
+  return json_build_object(
+    'date', p_date,
+    'timezone', v_tz,
+    'canManage', v_manager,
+    'settings', (
+      select json_build_object(
+        'enabled', s.enabled,
+        'slotMinutes', s.slot_minutes,
+        'defaultDurationMinutes', s.default_duration_minutes,
+        'turnaroundMinutes', s.turnaround_minutes,
+        'minParty', s.min_party,
+        'maxParty', s.max_party
+      )
+      from reservation_settings s where s.restaurant_id = p_restaurant
+    ),
+    'hours', (
+      select json_build_object(
+        'opens', to_char(w.opens, 'HH24:MI'),
+        'lastSeating', to_char(w.last_seating, 'HH24:MI')
+      )
+      from reservation_windows(p_restaurant, p_date) w
+      limit 1
+    ),
+    'areas', coalesce((
+      select json_agg(json_build_object('id', a.id, 'name', a.name)
+                      order by a.sort_order, a.name)
+      from dining_areas a where a.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'tables', coalesce((
+      select json_agg(json_build_object(
+        'id', t.id,
+        'name', t.name,
+        'areaId', t.area_id,
+        'seatsMin', t.seats_min,
+        'seatsMax', t.seats_max,
+        'active', t.active,
+        'posX', t.pos_x,
+        'posY', t.pos_y,
+        'shape', t.shape,
+        'rotation', t.rotation,
+        'width', t.width
+      ) order by t.sort_order, t.name)
+      from restaurant_tables t where t.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'elements', coalesce((
+      select json_agg(json_build_object(
+        'id', e.id,
+        'areaId', e.area_id,
+        'kind', e.kind,
+        'label', e.label,
+        'posX', e.pos_x,
+        'posY', e.pos_y,
+        'width', e.width,
+        'height', e.height,
+        'rotation', e.rotation
+      ) order by e.sort_order, e.created_at)
+      from floor_elements e where e.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'reservations', coalesce((
+      select json_agg(json_build_object(
+        'id', r.id,
+        'startsAt', r.starts_at,
+        'endsAt', r.ends_at,
+        'time', to_char((r.starts_at at time zone v_tz)::time, 'HH24:MI'),
+        'endTime', to_char((r.ends_at at time zone v_tz)::time, 'HH24:MI'),
+        'partySize', r.party_size,
+        'status', r.status,
+        'source', r.source,
+        'guestName', r.guest_name,
+        'guestPhone', case when v_manager then r.guest_phone else null end,
+        'guestEmail', case when v_manager then r.guest_email else null end,
+        'note', r.note,
+        'billRequestedAt', r.bill_requested_at,
+        'tableIds', coalesce((
+          select json_agg(a.table_id) from reservation_table_assignments a
+          where a.reservation_id = r.id
+        ), '[]'::json)
+      ) order by r.starts_at, r.guest_name)
+      from reservations r
+      where r.restaurant_id = p_restaurant
+        and r.starts_at >= v_from
+        and r.starts_at < v_to
+    ), '[]'::json)
+  );
+end;
+$fn$;
+
+revoke all on function public.reservation_day(uuid, date) from anon;
+
+
+-- ===========================================================================
+-- 0088_reservation_stats.sql
+-- ===========================================================================
+
+-- 0088 – Varausanalytiikka
+--
+-- Yksi funktio joka lukee jakson varaukset kerran ja palauttaa niistä
+-- summat. Laskenta on kannassa siksi, että vaihtoehto olisi hakea
+-- vuoden varaukset selaimeen ja laskea siellä — ja silloin selain
+-- saisi jokaisen asiakkaan nimen ja puhelinnumeron nähtäväkseen
+-- voidakseen laskea montako heitä oli.
+--
+-- Funktio palauttaa lukumääriä, ei valmiita prosentteja. Osuudet ja
+-- keskiarvot lasketaan sovelluksessa omassa moduulissaan, jotta
+-- pyöristys on yhdessä paikassa ja testattavissa.
+--
+-- ---------------------------------------------------------------------
+-- MITÄ TÄYTTÖASTE TÄSSÄ TARKOITTAA
+-- ---------------------------------------------------------------------
+--
+-- Käytetyt paikat jaettuna salin paikoilla, viikonpäivän ja tunnin
+-- mukaan, keskiarvona jakson päivistä.
+--
+-- Kolme rajausta, jotta luku tarkoittaa jotain:
+--
+-- 1. Mukaan vain aukiolotunnit. Suljettu maanantai ei ole nolla
+--    prosenttia täynnä, se ei ole auki. Aukiolo haetaan päivä
+--    kerrallaan, koska poikkeuspäivä syrjäyttää viikkorytmin.
+--
+-- 2. Viimeinen istumisaika on viimeinen mitattu tunti. Sen jälkeen
+--    pöytää ei voi enää antaa, joten tyhjyys siellä ei ole
+--    käyttämätöntä kapasiteettia vaan sulkemisaika.
+--
+-- 3. Kapasiteetti on nykyisten käytössä olevien pöytien paikkamäärä.
+--    Tätä EI tiedetä menneisyydestä: jos sali on juuri laajennettu,
+--    vanhat viikot näyttävät tyhjemmiltä kuin olivat. Käyttöliittymän
+--    on sanottava tämä ääneen, ei piilotettava sitä prosenttiin.
+
+create or replace function public.reservation_stats(
+  p_restaurant uuid,
+  p_from date,
+  p_to date
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_tz text;
+  v_from timestamptz;
+  v_to timestamptz;
+  v_seats int;
+  v_tables int;
+  v_out json;
+begin
+  /*
+   * Esihenkilön tieto, ei koko henkilökunnan.
+   *
+   * Peruutusprosentti ja vieraiden määrä ovat liiketoiminnan lukuja
+   * samaan tapaan kuin myynti. Salinäkymä riittää vuoron tekemiseen.
+   */
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_from is null or p_to is null or p_to < p_from then
+    raise exception 'Virheellinen aikavali.' using errcode = '22007';
+  end if;
+
+  /*
+   * Yläraja on suoja eikä mielipide: aukiolo haetaan päivä kerrallaan,
+   * joten jakson pituus on suoraan kyselyiden määrä.
+   */
+  if (p_to - p_from) > 400 then
+    raise exception 'Liian pitka aikavali.' using errcode = '22003';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+
+  v_from := (p_from + time '00:00') at time zone v_tz;
+  v_to := ((p_to + 1) + time '00:00') at time zone v_tz;
+
+  select coalesce(sum(t.seats_max), 0), count(*)
+    into v_seats, v_tables
+  from restaurant_tables t
+  where t.restaurant_id = p_restaurant and t.active;
+
+  with varaukset as (
+    select
+      r.id,
+      r.party_size,
+      r.status::text as status,
+      r.source::text as source,
+      (r.starts_at at time zone v_tz) as alkaa,
+      (r.ends_at at time zone v_tz) as paattyy
+    from reservations r
+    where r.restaurant_id = p_restaurant
+      and r.starts_at >= v_from
+      and r.starts_at < v_to
+  ),
+
+  /*
+   * Varaus joka vie pöydän.
+   *
+   * Peruttu ja saapumatta jäänyt ovat merkintöjä siitä että joku aikoi
+   * tulla. Ne lasketaan omina lukuinaan, mutta ne eivät ole vieraita
+   * eivätkä täyttöastetta.
+   */
+  pitavat as (
+    select * from varaukset
+    where status in ('pending', 'confirmed', 'arrived', 'completed')
+  ),
+
+  paivat as (
+    select d::date as paiva
+    from generate_series(p_from, p_to, interval '1 day') d
+  ),
+
+  aukitunnit as (
+    select distinct
+      p.paiva,
+      h.tunti
+    from paivat p
+    cross join lateral reservation_windows(p_restaurant, p.paiva) w
+    cross join lateral generate_series(
+      extract(hour from w.opens)::int,
+      extract(hour from w.last_seating)::int,
+      1
+    ) as h(tunti)
+  ),
+
+  /*
+   * Varatut paikat tunneittain.
+   *
+   * Varaus lasketaan jokaiselle tunnille jonka se kattaa: kello 18
+   * alkava kahden tunnin varaus vie paikat myös yhdeksältä. Loppuhetki
+   * vähennetään minuutilla, jottei tasan 20:00 päättyvä varaus näy
+   * enää kahdeksalta.
+   *
+   * greatest pitää sarjan nousevana. Keskiyön yli menevä varaus jää
+   * muuten tyhjäksi sarjaksi, koska 23 ei ole pienempi kuin 0.
+   */
+  kaytetyt as (
+    select
+      v.alkaa::date as paiva,
+      gs.tunti,
+      sum(v.party_size)::int as paikat,
+      count(*)::int as varauksia
+    from pitavat v
+    cross join lateral generate_series(
+      extract(hour from v.alkaa)::int,
+      greatest(
+        extract(hour from v.alkaa)::int,
+        extract(hour from (v.paattyy - interval '1 minute'))::int
+      ),
+      1
+    ) as gs(tunti)
+    group by 1, 2
+  )
+
+  select json_build_object(
+    'from', p_from,
+    'to', p_to,
+    'days', (p_to - p_from) + 1,
+
+    'capacity', json_build_object('seats', v_seats, 'tables', v_tables),
+
+    'totals', (
+      select json_build_object(
+        'reservations', count(*),
+        'cancelled', count(*) filter (where status = 'cancelled'),
+        'noShow', count(*) filter (where status = 'no_show'),
+        'realised', count(*) filter (where status in ('arrived', 'completed')),
+        'upcoming', count(*) filter (where status in ('pending', 'confirmed')),
+        'guests', coalesce(sum(party_size) filter (
+          where status not in ('cancelled', 'no_show')), 0),
+        'partySum', coalesce(sum(party_size) filter (
+          where status not in ('cancelled', 'no_show')), 0),
+        'partyCount', count(*) filter (
+          where status not in ('cancelled', 'no_show'))
+      )
+      from varaukset
+    ),
+
+    'bySource', coalesce((
+      select json_agg(json_build_object('source', s.source, 'count', s.n)
+                      order by s.n desc, s.source)
+      from (
+        select source, count(*)::int as n from varaukset group by source
+      ) s
+    ), '[]'::json),
+
+    'byHour', coalesce((
+      select json_agg(json_build_object(
+               'hour', h.tunti,
+               'reservations', h.n,
+               'guests', h.paikat)
+             order by h.tunti)
+      from (
+        select extract(hour from alkaa)::int as tunti,
+               count(*)::int as n,
+               coalesce(sum(party_size), 0)::int as paikat
+        from pitavat group by 1
+      ) h
+    ), '[]'::json),
+
+    'byWeekday', coalesce((
+      select json_agg(json_build_object(
+               'weekday', w.vk,
+               'reservations', w.n,
+               'guests', w.paikat,
+               'days', w.paivia,
+               'openDays', w.auki)
+             order by w.vk)
+      from (
+        select
+          d.vk,
+          d.paivia,
+          coalesce(a.auki, 0) as auki,
+          coalesce(v.n, 0) as n,
+          coalesce(v.paikat, 0) as paikat
+        from (
+          select extract(isodow from paiva)::int as vk, count(*)::int as paivia
+          from paivat group by 1
+        ) d
+        left join (
+          select extract(isodow from paiva)::int as vk,
+                 count(distinct paiva)::int as auki
+          from aukitunnit group by 1
+        ) a on a.vk = d.vk
+        left join (
+          select extract(isodow from alkaa)::int as vk,
+                 count(*)::int as n,
+                 coalesce(sum(party_size), 0)::int as paikat
+          from pitavat group by 1
+        ) v on v.vk = d.vk
+      ) w
+    ), '[]'::json),
+
+    'occupancy', coalesce((
+      select json_agg(json_build_object(
+               'weekday', o.vk,
+               'hour', o.tunti,
+               'seats', o.paikat,
+               'days', o.paivia)
+             order by o.vk, o.tunti)
+      from (
+        select
+          extract(isodow from t.paiva)::int as vk,
+          t.tunti,
+          round(avg(coalesce(k.paikat, 0))::numeric, 2) as paikat,
+          count(*)::int as paivia
+        from aukitunnit t
+        left join kaytetyt k on k.paiva = t.paiva and k.tunti = t.tunti
+        group by 1, 2
+      ) o
+    ), '[]'::json)
+  )
+  into v_out;
+
+  return v_out;
+end;
+$fn$;
+
+revoke all on function public.reservation_stats(uuid, date, date) from anon;
+
+
+-- ===========================================================================
+-- 0089_floor_plan_image.sql
+-- ===========================================================================
+
+-- 0089 – Salin pohjapiirros kuvana
+--
+-- Ravintolalla on pohjapiirros: arkkitehdin kuva, paloturvallisuuden
+-- kaavio tai käsin piirretty luonnos. Pöytien raahaaminen tyhjälle
+-- ruudukolle on arvailua siitä missä seinät ovat; kuvan päälle
+-- raahattuna se on sen merkitsemistä mikä on jo tiedossa.
+--
+-- ---------------------------------------------------------------------
+-- YKSI KUVA RAVINTOLAA KOHTI
+-- ---------------------------------------------------------------------
+--
+-- Kartta on yksi laatikko, jonka sisällä alueet vaihtavat näkyviä
+-- pöytiä. Kuva alueittain vaatisi laatikon alueittain, eikä sitä ole.
+-- Useamman salin oma pohjapiirros on siis oma muutoksensa, ei tämän
+-- taulun rivi.
+--
+-- ---------------------------------------------------------------------
+-- KUVASUHDE TALLENNETAAN
+-- ---------------------------------------------------------------------
+--
+-- Kartan laatikko on ollut kiinteä 3:2. Pohjapiirros ei ole, ja
+-- venytetty pohjapiirros on väärä pohjapiirros: neliön muotoinen sali
+-- näyttäisi siinä leveältä ja pöytä osuisi seinän läpi.
+--
+-- Kun kuva on, laatikko ottaa kuvan muodon. Pöytien sijainnit ovat
+-- prosentteja, joten ne pysyvät samassa kohdassa salia.
+--
+-- ---------------------------------------------------------------------
+-- TIEDOSTO ON YKSITYINEN
+-- ---------------------------------------------------------------------
+--
+-- Pohjapiirros kertoo missä ovet ja hätäpoistumistiet ovat. Se ei
+-- kuulu julkiseen osoitteeseen, joten ämpäri on yksityinen ja kuva
+-- näytetään allekirjoitetulla linkillä kuten muutkin ravintolan
+-- dokumentit.
+
+-- ---------------------------------------------------------------------------
+-- Taulu
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.floor_plan_images (
+  restaurant_id uuid primary key
+    references public.restaurants(id) on delete cascade,
+  storage_path text not null,
+  /* Kuvan omat mitat pikseleinä. Vain suhde kiinnostaa. */
+  width int not null check (width > 0),
+  height int not null check (height > 0),
+  /*
+   * Kuvan peittävyys kartalla.
+   *
+   * Pohjapiirros on tausta eikä sisältö: täydellä voimakkuudella se
+   * kilpailee pöytien kanssa siitä kumpaa katsotaan. Säädettävä, koska
+   * kuvat ovat eri vahvuisia — valokuva paperista on tummempi kuin
+   * viivapiirros.
+   */
+  opacity numeric(3, 2) not null default 0.45
+    check (opacity >= 0.05 and opacity <= 1),
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users(id) on delete set null
+);
+
+alter table public.floor_plan_images enable row level security;
+
+drop policy if exists floor_plan_images_read on public.floor_plan_images;
+create policy floor_plan_images_read on public.floor_plan_images
+  for select to authenticated
+  using (restaurant_id in (select my_restaurant_ids()));
+
+/*
+ * Kirjoitus vain funktion kautta.
+ *
+ * Ei insert- eikä update-käytäntöä: tallennus kulkee
+ * save_floor_plan_image-funktion läpi, joka tarkistaa esihenkilön ja
+ * kirjoittaa muutoslokin. Suora oikeus tauluun olisi toinen reitti
+ * samaan riviin, ja toinen reitti on se joka unohtuu tarkistaa.
+ */
+
+-- ---------------------------------------------------------------------------
+-- Tallennus
+-- ---------------------------------------------------------------------------
+
+create or replace function public.save_floor_plan_image(
+  p_restaurant uuid,
+  p_path text,
+  p_width int,
+  p_height int,
+  p_opacity numeric default null
+)
+returns json
+language plpgsql
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_vanha text;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_path is null or length(trim(p_path)) = 0 then
+    return json_build_object('ok', false, 'error', 'path');
+  end if;
+
+  /*
+   * Polku alkaa ravintolan tunnisteella.
+   *
+   * Sama sääntö kuin tallennuskäytännöissä. Ilman tätä kutsuja voisi
+   * osoittaa rivin toisen ravintolan tiedostoon: rivin lukisi vain
+   * oma väki, mutta allekirjoitettu linkki tehtäisiin vieraaseen
+   * kuvaan.
+   */
+  if split_part(p_path, '/', 1) <> p_restaurant::text then
+    return json_build_object('ok', false, 'error', 'path');
+  end if;
+
+  if p_width is null or p_height is null or p_width <= 0 or p_height <= 0 then
+    return json_build_object('ok', false, 'error', 'size');
+  end if;
+
+  select storage_path into v_vanha
+  from floor_plan_images where restaurant_id = p_restaurant;
+
+  insert into floor_plan_images (
+    restaurant_id, storage_path, width, height, opacity, updated_by
+  )
+  values (
+    p_restaurant, trim(p_path), p_width, p_height,
+    coalesce(p_opacity, 0.45), auth.uid()
+  )
+  on conflict (restaurant_id) do update set
+    storage_path = excluded.storage_path,
+    width = excluded.width,
+    height = excluded.height,
+    opacity = excluded.opacity,
+    updated_at = now(),
+    updated_by = excluded.updated_by;
+
+  perform write_audit(
+    p_restaurant, 'floorplan.image', 'restaurant', p_restaurant, null,
+    case when v_vanha is null
+         then 'Lisäsi pohjapiirroksen'
+         else 'Vaihtoi pohjapiirroksen' end,
+    null, null, false
+  );
+
+  /*
+   * Vanha tiedosto palautetaan poistettavaksi.
+   *
+   * Kanta ei osaa poistaa tallennustilasta, ja korvattu kuva jäisi
+   * muuten maksamaan tilaa ikuisesti. Kutsuja poistaa sen — ja jos se
+   * epäonnistuu, rivi osoittaa silti uuteen kuvaan.
+   */
+  return json_build_object(
+    'ok', true,
+    'previousPath', case when v_vanha = trim(p_path) then null else v_vanha end
+  );
+end;
+$fn$;
+
+create or replace function public.set_floor_plan_opacity(
+  p_restaurant uuid,
+  p_opacity numeric
+)
+returns json
+language plpgsql
+security definer
+set search_path to 'public'
+as $fn$
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_opacity is null or p_opacity < 0.05 or p_opacity > 1 then
+    return json_build_object('ok', false, 'error', 'opacity');
+  end if;
+
+  update floor_plan_images
+  set opacity = p_opacity, updated_at = now(), updated_by = auth.uid()
+  where restaurant_id = p_restaurant;
+
+  if not found then
+    return json_build_object('ok', false, 'error', 'missing');
+  end if;
+
+  /* Ei muutoslokia: peittävyys on katseluasetus, ei salin tieto. */
+  return json_build_object('ok', true);
+end;
+$fn$;
+
+create or replace function public.delete_floor_plan_image(
+  p_restaurant uuid
+)
+returns json
+language plpgsql
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_path text;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  select storage_path into v_path
+  from floor_plan_images where restaurant_id = p_restaurant;
+
+  if v_path is null then
+    return json_build_object('ok', false, 'error', 'missing');
+  end if;
+
+  delete from floor_plan_images where restaurant_id = p_restaurant;
+
+  perform write_audit(
+    p_restaurant, 'floorplan.image', 'restaurant', p_restaurant, null,
+    'Poisti pohjapiirroksen', null, null, false
+  );
+
+  return json_build_object('ok', true, 'previousPath', v_path);
+end;
+$fn$;
+
+revoke all on function public.save_floor_plan_image(uuid, text, int, int, numeric)
+  from anon;
+revoke all on function public.set_floor_plan_opacity(uuid, numeric) from anon;
+revoke all on function public.delete_floor_plan_image(uuid) from anon;
+
+-- ---------------------------------------------------------------------------
+-- Tallennustila
+-- ---------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'floorplans', 'floorplans', false, 10485760,
+  array['image/jpeg', 'image/png', 'image/webp']
+)
+on conflict (id) do nothing;
+
+/*
+ * Luku koko väelle, kirjoitus esihenkilölle.
+ *
+ * Tarjoilija näkee kartan salinäkymässä ja kartta on kuvan päällä,
+ * joten lukuoikeus on sama kuin karttaan. Kuvan vaihtaminen on salin
+ * muuttamista, ja se on esihenkilön työtä.
+ */
+drop policy if exists floorplans_storage_read on storage.objects;
+create policy floorplans_storage_read on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'floorplans'
+    and (storage.foldername(name))[1]::uuid in (select my_restaurant_ids())
+  );
+
+drop policy if exists floorplans_storage_write on storage.objects;
+create policy floorplans_storage_write on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'floorplans'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  );
+
+drop policy if exists floorplans_storage_update on storage.objects;
+create policy floorplans_storage_update on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'floorplans'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  );
+
+drop policy if exists floorplans_storage_delete on storage.objects;
+create policy floorplans_storage_delete on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'floorplans'
+    and is_manager((storage.foldername(name))[1]::uuid)
+  );
+
+
+-- ===========================================================================
+-- 0090_ledger_issue_codes.sql
+-- ===========================================================================
+
+-- 0090 – Kirjanpidon huomiot koodeina, ei lauseina
+--
+-- ledger_month_status rakensi "Mitä sinun pitää tehdä" -listan otsikot
+-- ja selitteet valmiiksi suomeksi:
+--
+--   'title', 'Kirjausesityksiä odottaa'
+--   'detail', v_esityksia || ' esitystä odottaa hyväksyntää.'
+--
+-- Ne näkyivät suomeksi myös englannin, ruotsin, tanskan, turkin ja
+-- viron käyttäjille. Kanta ei tiedä kenelle se vastaa eikä millä
+-- kielellä, eikä sen kuulukaan tietää.
+--
+-- ---------------------------------------------------------------------
+-- KOODI ON TIETO, LAUSE ON ESITYSTAPA
+-- ---------------------------------------------------------------------
+--
+-- Funktio palautti jo valmiiksi kentän 'kind' jokaiselle huomiolle.
+-- Kaikki mitä lauseeseen tarvitaan on siis ollut olemassa: koodi,
+-- vakavuus, lukumäärä ja rahaero. Lause kootaan sovelluksessa, jossa
+-- käyttäjän kieli tiedetään.
+--
+-- Myös taivutus siirtyy sinne. Kanta valitsi yksikön ja monikon
+-- käsin — ' kuitti' tai ' kuittia' — ja se sääntö on eri jokaisella
+-- kielellä.
+--
+-- title ja detail POISTETAAN eikä jätetä varmuuden vuoksi. Jätettynä
+-- ne olisivat kaksi kenttää joita joku käyttää vahingossa, ja vika
+-- palaisi hiljaa takaisin.
+--
+-- Muu funktio on ennallaan: tila, luvut ja ALV lasketaan kuten ennen.
+
+create or replace function public.ledger_month_status(
+  p_restaurant uuid,
+  p_month date
+)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_alku date := date_trunc('month', p_month)::date;
+  v_loppu date := (date_trunc('month', p_month) + interval '1 month - 1 day')::date;
+  v_alv jsonb;
+  v_lukittu boolean;
+  v_esityksia int; v_kirjattuja int; v_hylattyja int;
+  v_kuitteja_ilman int; v_paivia_ilman int;
+  v_myyntiero bigint; v_alvero bigint;
+  v_ongelmat jsonb := '[]'::jsonb;
+  v_tila text;
+begin
+  if not can_read_finance(p_restaurant) then raise exception 'Ei oikeutta'; end if;
+
+  v_lukittu := exists (select 1 from closed_months
+                       where restaurant_id = p_restaurant and month = v_alku);
+
+  select count(*) filter (where status = 'proposed'),
+         count(*) filter (where status = 'posted'),
+         count(*) filter (where status = 'rejected')
+    into v_esityksia, v_kirjattuja, v_hylattyja
+  from ledger_entries
+  where restaurant_id = p_restaurant and entry_date between v_alku and v_loppu;
+
+  select count(*) into v_kuitteja_ilman from receipts rc
+  where rc.restaurant_id = p_restaurant and rc.receipt_date between v_alku and v_loppu
+    and not exists (select 1 from ledger_entries e
+      where e.restaurant_id = p_restaurant and e.source_type = 'receipt' and e.source_id = rc.id);
+
+  select count(*) into v_paivia_ilman from daily_sales ds
+  where ds.restaurant_id = p_restaurant and ds.sales_date between v_alku and v_loppu
+    and not exists (select 1 from ledger_entries e
+      where e.restaurant_id = p_restaurant and e.source_type = 'daily_sales' and e.source_id = ds.id);
+
+  v_alv := ledger_vat_summary(p_restaurant, v_alku);
+  v_myyntiero := (v_alv->>'salesGrossSource')::bigint - (v_alv->>'salesGrossLedger')::bigint;
+  v_alvero := (v_alv->>'salesVatSource')::bigint - (v_alv->>'salesVatLedger')::bigint;
+
+  if v_kuitteja_ilman > 0 then
+    v_ongelmat := v_ongelmat || jsonb_build_object(
+      'kind', 'receipts_missing', 'severity', 'warning',
+      'count', v_kuitteja_ilman);
+  end if;
+
+  if v_paivia_ilman > 0 then
+    v_ongelmat := v_ongelmat || jsonb_build_object(
+      'kind', 'sales_missing', 'severity', 'warning',
+      'count', v_paivia_ilman);
+  end if;
+
+  if v_esityksia > 0 then
+    v_ongelmat := v_ongelmat || jsonb_build_object(
+      'kind', 'proposals', 'severity', 'info',
+      'count', v_esityksia);
+  end if;
+
+  /*
+   * Täsmäämättömyydet ovat aina yksi huomio.
+   *
+   * count on lukumäärä listan oikeassa reunassa, ja "yksi ero" on
+   * oikea luku: ero on yksi asia jonka joku selvittää, ei kokoelma.
+   * Ero itse kulkee erikseen sentteinä.
+   */
+  if v_myyntiero <> 0 then
+    v_ongelmat := v_ongelmat || jsonb_build_object(
+      'kind', 'sales_mismatch', 'severity', 'critical', 'count', 1,
+      'differenceCents', v_myyntiero);
+  end if;
+
+  if v_alvero <> 0 then
+    v_ongelmat := v_ongelmat || jsonb_build_object(
+      'kind', 'vat_mismatch', 'severity', 'critical', 'count', 1,
+      'differenceCents', v_alvero);
+  end if;
+
+  if v_lukittu then
+    v_tila := 'locked';
+  elsif v_myyntiero <> 0 or v_alvero <> 0 then
+    v_tila := 'review';
+  elsif v_esityksia > 0 or v_kuitteja_ilman > 0 or v_paivia_ilman > 0 then
+    v_tila := 'open';
+  elsif v_kirjattuja > 0 then
+    v_tila := 'ready';
+  else
+    v_tila := 'open';
+  end if;
+
+  return jsonb_build_object(
+    'month', to_char(v_alku, 'YYYY-MM'),
+    'status', v_tila,
+    'proposed', v_esityksia,
+    'posted', v_kirjattuja,
+    'rejected', v_hylattyja,
+    'receiptsMissing', v_kuitteja_ilman,
+    'salesDaysMissing', v_paivia_ilman,
+    'vat', v_alv,
+    'issues', v_ongelmat
+  );
+end;
+$fn$;
+
+revoke all on function public.ledger_month_status(uuid, date) from anon;
+
+
+-- ===========================================================================
+-- 0091_reservation_fields.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0091 — Varausnumero, allergiat, peruutusraja ja keskiyön yli ulottuva ilta
+-- ---------------------------------------------------------------------------
+--
+-- Tämä migraatio on pelkkää rakennetta: sarakkeet, rajoitteet ja kolme
+-- pientä apufunktiota. Varausmoottorin funktiot kirjoitetaan seuraavassa
+-- migraatiossa kerralla uudelleen, jotta samaa nelisataa riviä plpgsql:ää
+-- ei muokata kahdesti peräkkäin — kaksi muokkausta samaan funktioon
+-- kahdessa tiedostossa on tapa saada kannan tila ja tiedostot eri linjalle.
+--
+-- ---------------------------------------------------------------------------
+-- 1. MIKSI AUKIOLO SAA YLITTÄÄ KESKIYÖN
+-- ---------------------------------------------------------------------------
+--
+-- Rajoite last_seating > opens tarkoitti, ettei yökahvilaa voinut
+-- kirjata: kello 18 avautuva ja 02 sulkeutuva ilta oli kannalle
+-- virheellinen. Kierto olisi ollut kaksi riviä (18–24 ja 00–02), mutta
+-- silloin ilta olisi kaksi aukioloa eri viikonpäivinä — ja kaikki mitä
+-- niistä lasketaan olisi laskettu kahdesti.
+--
+-- Uusi sääntö: kellonaika joka on avaamista pienempi tarkoittaa
+-- seuraavaa päivää. Aukiolon pituus on siis johdettu tieto eikä uusi
+-- sarake, ja se johdetaan yhdessä paikassa: reservation_span_minutes.
+--
+-- Ainoa kielletty tapaus on tyhjä ikkuna: last_seating = opens olisi
+-- joko nolla tai kaksikymmentäneljä tuntia, eikä kanta voi tietää kumpi.
+--
+-- ---------------------------------------------------------------------------
+-- 2. MIKSI VARAUSNUMERO ON KIRJAIMIA
+-- ---------------------------------------------------------------------------
+--
+-- Numero luetaan puhelimessa ääneen. Juokseva luku (varaus 412) on
+-- luettava mutta paljastaa ravintolan varausmäärän kenelle tahansa
+-- asiakkaalle, ja se on tieto joka ei kuulu kuittiin. Kuusi merkkiä
+-- aakkosista joista puuttuvat 0/O, 1/I ja 8/B on yhtä luettava eikä
+-- kerro mitään: 31^6 on 887 miljoonaa vaihtoehtoa.
+--
+-- Numero syntyy liipaisimessa eikä sovelluksessa. Varaus voi syntyä
+-- neljästä paikasta (widget, sali, walk-in, tuonti), ja neljä paikkaa
+-- jossa sama arvo pitää muistaa asettaa on kolme paikkaa liikaa.
+
+-- ---------------------------------------------------------------------------
+-- Aukiolon pituus
+-- ---------------------------------------------------------------------------
+
+create or replace function reservation_span_minutes(
+  p_opens time,
+  p_last_seating time
+)
+returns int
+language sql
+immutable
+as $fn$
+  select case
+    when p_opens is null or p_last_seating is null then null
+    when p_last_seating > p_opens then
+      (extract(epoch from (p_last_seating - p_opens)) / 60)::int
+    else
+      (extract(epoch from (p_last_seating - p_opens)) / 60)::int + 1440
+  end;
+$fn$;
+
+comment on function reservation_span_minutes(time, time) is
+  'Minuutit avaamisesta viimeiseen istumisaikaan. Keskiyon ylitys tulkitaan seuraavaksi paivaksi.';
+
+-- ---------------------------------------------------------------------------
+-- Aukiolon rajoitteet
+-- ---------------------------------------------------------------------------
+
+alter table reservation_hours
+  drop constraint if exists reservation_hours_order;
+
+alter table reservation_hours
+  drop constraint if exists reservation_hours_span;
+
+alter table reservation_hours
+  add constraint reservation_hours_span check (last_seating <> opens);
+
+/*
+ * Poikkeuspäivä samoilla säännöillä.
+ *
+ * Uudenvuodenaatto on juuri se päivä joka jatkuu keskiyön yli, joten
+ * poikkeus jossa sitä ei voi kirjata olisi väärässä paikassa tiukka.
+ */
+alter table reservation_exceptions
+  drop constraint if exists reservation_exceptions_hours;
+
+alter table reservation_exceptions
+  add constraint reservation_exceptions_hours check (
+    closed or (
+      opens is not null
+      and last_seating is not null
+      and last_seating <> opens
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- Päivän aukioloikkuna
+-- ---------------------------------------------------------------------------
+--
+-- Palautusarvo kasvaa yhdellä sarakkeella, joten funktio on pudotettava
+-- ennen luontia. Kutsujat ovat plpgsql-funktioita jotka sitovat nimen
+-- vasta ajossa, joten pudotus ei riko niitä — ne saavat uuden version
+-- heti seuraavalla kutsulla.
+
+drop function if exists reservation_windows(uuid, date);
+
+create or replace function reservation_windows(
+  p_restaurant uuid,
+  p_date date
+)
+returns table (opens time, last_seating time, span_minutes int)
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  with poikkeus as (
+    select * from reservation_exceptions e
+    where e.restaurant_id = p_restaurant and e.exception_date = p_date
+  )
+  select e.opens, e.last_seating,
+         reservation_span_minutes(e.opens, e.last_seating)
+  from poikkeus e
+  where not e.closed
+
+  union all
+
+  select h.opens, h.last_seating,
+         reservation_span_minutes(h.opens, h.last_seating)
+  from reservation_hours h
+  where h.restaurant_id = p_restaurant
+    and h.weekday = extract(isodow from p_date)::int
+    and not exists (select 1 from poikkeus);
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- Kellonaika todelliseksi hetkeksi
+-- ---------------------------------------------------------------------------
+--
+-- Kello 00:30 on illan varaus eikä aamun: se kuuluu siihen iltaan joka
+-- avautui edellisenä päivänä. Muunnos on yhdessä paikassa, koska sama
+-- kysymys esitetään neljästä kohdasta (verkkovaraus, salin varaus,
+-- muokkaus, pöytäehdotus) — ja neljä eri vastausta tarkoittaisi, että
+-- ehdotus koskee eri aikaväliä kuin tallennus.
+--
+-- Ilman aukioloaikaa (suljettu päivä, aukioloja ei asetettu) päivä on se
+-- joka annettiin. Walk-in kirjataan silloin sellaisenaan, eikä Kate ala
+-- arvailla kuuluuko kello kahden merkintä eiliseen.
+
+create or replace function reservation_start_at(
+  p_restaurant uuid,
+  p_date date,
+  p_time time
+)
+returns timestamptz
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_tz text;
+  v_opens time;
+  v_offset int;
+begin
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  if v_tz is null then return null; end if;
+
+  /*
+   * Se ikkuna johon kellonaika osuu.
+   *
+   * Etäisyys avaamisesta kierrätetään vuorokauden yli, jolloin 00:30 on
+   * 390 minuuttia 18:00:sta ja osuu iltaan jonka viimeinen aika on
+   * 02:00. Sama lasku kelpaa myös päivälle joka päättyy ennen keskiyötä:
+   * silloin ikkunan ulkopuolinen aika saa pituutta suuremman etäisyyden
+   * eikä kelpaa.
+   *
+   * Päiviä voi olla kaksi (lounas ja illallinen), joten lähin voittaa.
+   */
+  select w.opens, o.off into v_opens, v_offset
+  from reservation_windows(p_restaurant, p_date) w
+  cross join lateral (
+    select (((extract(epoch from (p_time - w.opens)) / 60)::int % 1440) + 1440) % 1440 as off
+  ) o
+  where o.off <= coalesce(w.span_minutes, 0)
+  order by o.off
+  limit 1;
+
+  /*
+   * Aukioloajan ulkopuolella päivä on se joka annettiin.
+   *
+   * Sali kirjaa walk-inin myös kiinni olevana päivänä, eikä Kate ala
+   * arvailla kuuluuko kello kahden merkintä eiliseen iltaan.
+   */
+  if v_opens is null then
+    return (p_date + p_time) at time zone v_tz;
+  end if;
+
+  return ((p_date + v_opens)::timestamp + make_interval(mins => v_offset))
+         at time zone v_tz;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- Varausnumero
+-- ---------------------------------------------------------------------------
+
+alter table reservations
+  add column if not exists reference text;
+
+/*
+ * Allergiat omana kenttänään.
+ *
+ * Ne kulkivat ennen samassa vapaassa toivekentässä kuin pöytätoiveet ja
+ * juhlan aihe. Keittiölle allergia on eri asia kuin toive: se on ainoa
+ * rivi jonka lukematta jättäminen vie ihmisen sairaalaan. Oma kenttä on
+ * se ero jonka takia sen voi näyttää salinäkymässä varoituksena eikä
+ * muistiinpanona.
+ */
+alter table reservations
+  add column if not exists allergies text;
+
+alter table reservations
+  drop constraint if exists reservations_allergies_length;
+
+alter table reservations
+  add constraint reservations_allergies_length
+  check (allergies is null or length(allergies) <= 200);
+
+create or replace function reservation_reference_candidate()
+returns text
+language sql
+volatile
+set search_path = public
+as $fn$
+  /*
+   * Kuusi merkkiä aakkosista ilman sekoittuvia.
+   *
+   * 0/O, 1/I ja 8/B luetaan puhelimessa väärin, ja väärin luettu
+   * varausnumero on huonompi kuin ei numeroa lainkaan. Satunnaisuus
+   * tulee gen_random_uuid():sta, joka on pg_catalogissa — pgcrypton
+   * gen_random_bytes asuu Supabasessa eri skeemassa eikä näy
+   * search_path = public -funktioille.
+   */
+  select string_agg(
+    substr(
+      '23456789ACDEFGHJKLMNPQRSTUVWXYZ',
+      1 + (get_byte(decode(replace(gen_random_uuid()::text, '-', ''), 'hex'), g.i) % 31),
+      1
+    ),
+    ''
+  )
+  from generate_series(0, 5) as g(i);
+$fn$;
+
+create or replace function reservation_set_reference()
+returns trigger
+language plpgsql
+set search_path = public
+as $fn$
+declare
+  v_try int := 0;
+  v_ref text;
+begin
+  if new.reference is not null and trim(new.reference) <> '' then
+    return new;
+  end if;
+
+  /*
+   * Kymmenen yritystä ja sitten yksilöivä rajoite.
+   *
+   * Törmäys on 887 miljoonan vaihtoehdon joukossa niin harvinainen,
+   * ettei silmukan tarvitse olla ikuinen. Jos kaikki kymmenen osuvat
+   * varattuun, indeksi hylkää rivin — ja se on oikea lopputulos:
+   * mieluummin yksi epäonnistunut varaus kuin kaksi samalla numerolla.
+   */
+  loop
+    v_try := v_try + 1;
+    v_ref := reservation_reference_candidate();
+
+    exit when not exists (
+      select 1 from reservations r
+      where r.restaurant_id = new.restaurant_id and r.reference = v_ref
+    );
+
+    exit when v_try >= 10;
+  end loop;
+
+  new.reference := v_ref;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists reservations_reference on reservations;
+
+create trigger reservations_reference
+  before insert on reservations
+  for each row execute function reservation_set_reference();
+
+/*
+ * Vanhat varaukset saavat numeron takautuvasti.
+ *
+ * Ilman tätä kannassa olisi kahdenlaisia varauksia, ja jokainen numeroa
+ * näyttävä näkymä tarvitsisi haaran tyhjälle. Silmukka rivi kerrallaan,
+ * koska yksi update kaikille antaisi saman arvon koko joukolle:
+ * volatile-funktio arvioidaan kyselyä kohti eikä riviä kohti.
+ */
+do $migr$
+declare
+  v_row record;
+begin
+  for v_row in
+    select id from reservations
+    where reference is null or trim(reference) = ''
+  loop
+    update reservations
+    set reference = reservation_reference_candidate()
+    where id = v_row.id;
+  end loop;
+end $migr$;
+
+create unique index if not exists reservations_reference_key
+  on reservations (restaurant_id, reference);
+
+-- ---------------------------------------------------------------------------
+-- Peruutusraja
+-- ---------------------------------------------------------------------------
+--
+-- Verkossa peruutus onnistui varauksen alkuhetkeen asti. Kello 19:00
+-- varatun pöydän peruminen 18:55 on ravintolalle sama kuin saapumatta
+-- jättäminen: ruoka on esivalmisteltu eikä aikaa ehdi myydä uudelleen.
+--
+-- Raja on tunneissa ja asetuksissa, koska se on ravintolan päätös eikä
+-- Katen. Nolla tarkoittaa entistä käytöstä: peruutus onnistuu alkuun
+-- asti. Oletus on 24 tuntia, joka on alalla tavallinen.
+--
+-- RAJA EI ESTÄ PERUMISTA VAAN VERKKOPERUUTUSTA. Asiakas soittaa, ja sali
+-- peruu varauksen salinäkymästä. Sitä ei rajoiteta: tieto siitä ettei
+-- seurue tule on ravintolalle arvokas myös kymmenen minuuttia ennen.
+
+alter table reservation_settings
+  add column if not exists cancel_cutoff_hours int not null default 24;
+
+alter table reservation_settings
+  drop constraint if exists reservation_settings_cutoff;
+
+alter table reservation_settings
+  add constraint reservation_settings_cutoff
+  check (cancel_cutoff_hours between 0 and 168);
+
+-- ---------------------------------------------------------------------------
+-- Oikeudet
+-- ---------------------------------------------------------------------------
+
+revoke all on function reservation_windows(uuid, date) from public, anon;
+revoke all on function reservation_start_at(uuid, date, time) from public, anon;
+revoke all on function reservation_reference_candidate() from public, anon;
+
+grant execute on function reservation_windows(uuid, date) to authenticated;
+grant execute on function reservation_start_at(uuid, date, time) to authenticated;
+grant execute on function reservation_span_minutes(time, time) to anon, authenticated;
+
+
+-- ===========================================================================
+-- 0092_reservation_engine_night.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0092 — Varausmoottori: yön yli jatkuva ilta, varausnumero, allergiat, raja
+-- ---------------------------------------------------------------------------
+--
+-- Edellinen migraatio antoi sarakkeet ja apufunktiot. Tämä kirjoittaa
+-- moottorin funktiot uudelleen niin, että jokainen niistä muuttuu
+-- täsmälleen kerran. Neljä muutosta kulkee samojen funktioiden läpi:
+--
+--   1. Ilta joka jatkuu keskiyön yli
+--      Kellonaika ei enää tarkoita annettua päivää vaan sitä hetkeä
+--      johon se aukiolossa osuu. Muunnos on reservation_start_at:ssä,
+--      ja jokainen kohta jossa päivä ja kello muutettiin aikaleimaksi
+--      kutsuu nyt sitä.
+--
+--   2. Varausnumero
+--      Syntyy liipaisimessa. Funktiot vain palauttavat sen eteenpäin —
+--      asiakkaalle vahvistukseen ja saliin listaan.
+--
+--   3. Allergiat omana kenttänään
+--      Kulkee widgetistä kantaan ja kannasta saliin erillään
+--      toivekentästä.
+--
+--   4. Peruutusraja
+--      public_cancel_reservation tarkistaa asetuksen. Salin oma
+--      peruutus ei kulje täältä eikä siihen kosketa.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI FUNKTIOT PUDOTETAAN ENNEN LUONTIA
+-- ---------------------------------------------------------------------------
+--
+-- Uusi parametri ei ole muutos vaan uusi funktio: create or replace
+-- jättäisi vanhan version pystyyn, ja kutsu ilman uutta parametria olisi
+-- sen jälkeen kaksiselitteinen. Pudotus on siis osa muutosta eikä
+-- siivousta.
+
+-- ---------------------------------------------------------------------------
+-- 1. Varauksen kirjaus
+-- ---------------------------------------------------------------------------
+
+drop function if exists reservation_book(
+  uuid, timestamptz, int, text, text, text, text,
+  reservation_source, reservation_status, int, uuid[], text
+);
+
+create or replace function reservation_book(
+  p_restaurant uuid,
+  p_start timestamptz,
+  p_party int,
+  p_name text,
+  p_phone text,
+  p_email text,
+  p_note text,
+  p_source reservation_source,
+  p_status reservation_status default 'confirmed',
+  p_minutes int default null,
+  p_tables uuid[] default null,
+  p_cancel_token text default null,
+  p_allergies text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_minutes int;
+  v_end timestamptz;
+  v_tables uuid[];
+  v_id uuid;
+  v_table uuid;
+  v_kitchen json;
+begin
+  /*
+   * Lukko ennen hakua.
+   *
+   * Kaikki tämän ravintolan varausyritykset kulkevat tästä jonossa.
+   * Transaktiokohtainen: vapautuu commitissa ja rollbackissa.
+   */
+  perform pg_advisory_xact_lock(hashtext('kate:reservation:' || p_restaurant::text));
+
+  v_minutes := coalesce(p_minutes, reservation_duration_for(p_restaurant, p_party));
+  v_end := p_start + make_interval(mins => v_minutes);
+
+  /* Keittiön raja koskee vain verkosta tulevia. */
+  if p_source in ('widget', 'link') then
+    v_kitchen := kitchen_check(p_restaurant, p_start, p_party);
+
+    if (v_kitchen->>'limited')::boolean and not (v_kitchen->>'ok')::boolean then
+      raise exception 'Keittio on varattu tahan aikaan.'
+        using errcode = 'exclusion_violation';
+    end if;
+  end if;
+
+  if p_tables is null or array_length(p_tables, 1) is null then
+    v_tables := reservation_pick_tables(p_restaurant, p_start, v_end, p_party);
+  else
+    /*
+     * Käsin annetut pöydät tarkistetaan silti.
+     *
+     * Ne kuuluvat tähän ravintolaan — muuten esihenkilö voisi kirjata
+     * varauksen toisen ravintolan pöytään.
+     */
+    if exists (
+      select 1 from unnest(p_tables) as x(id)
+      where not exists (
+        select 1 from restaurant_tables t
+        where t.id = x.id and t.restaurant_id = p_restaurant
+      )
+    ) then
+      raise exception 'Pöytä ei kuulu tähän ravintolaan.'
+        using errcode = 'check_violation';
+    end if;
+
+    v_tables := p_tables;
+  end if;
+
+  if v_tables is null or array_length(v_tables, 1) is null then
+    raise exception 'Vapaata pöytää ei ole tähän aikaan.'
+      using errcode = 'exclusion_violation';
+  end if;
+
+  insert into reservations (
+    restaurant_id, starts_at, ends_at, party_size, status, source,
+    guest_name, guest_phone, guest_email, note, allergies,
+    cancel_token_hash, created_by
+  )
+  values (
+    p_restaurant, p_start, v_end, p_party, p_status, p_source,
+    trim(p_name), nullif(trim(coalesce(p_phone, '')), ''),
+    nullif(lower(trim(coalesce(p_email, ''))), ''),
+    nullif(trim(coalesce(p_note, '')), ''),
+    nullif(trim(coalesce(p_allergies, '')), ''),
+    case when p_cancel_token is null then null
+         else encode(sha256(p_cancel_token::bytea), 'hex') end,
+    auth.uid()
+  )
+  returning id into v_id;
+
+  foreach v_table in array v_tables loop
+    insert into reservation_table_assignments
+      (reservation_id, table_id, starts_at, ends_at, blocking)
+    values (
+      v_id, v_table, p_start, v_end,
+      p_status in ('pending', 'confirmed', 'arrived')
+    );
+  end loop;
+
+  return v_id;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 2. Vapaat ajat
+-- ---------------------------------------------------------------------------
+--
+-- Ajat lasketaan paikallisina aikaleimoina eikä kellonaikoina.
+-- Kellonaika + minuutit kiertää vuorokauden ympäri hiljaa: 23:30 + 60
+-- minuuttia on 00:30, ja se näytti kuuluvan samaan päivään. Paikallinen
+-- aikaleima kasvaa seuraavaan päivään kuten ilta oikeasti kasvaa, ja
+-- vasta lopuksi se muutetaan hetkeksi ravintolan vyöhykkeellä — jolloin
+-- myös kesäajan vaihto osuu oikein.
+
+create or replace function reservation_slots(
+  p_restaurant uuid,
+  p_date date,
+  p_party int,
+  p_exclude uuid default null
+)
+returns table (slot_time time, starts_at timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_tz text;
+  v_slot int;
+  v_lead int;
+  v_minutes int;
+begin
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  if v_tz is null then return; end if;
+
+  select s.slot_minutes, s.lead_minutes into v_slot, v_lead
+  from reservation_settings s where s.restaurant_id = p_restaurant;
+
+  if v_slot is null then return; end if;
+
+  v_minutes := reservation_duration_for(p_restaurant, p_party);
+
+  return query
+  with ikkunat as (
+    select w.opens, w.span_minutes
+    from reservation_windows(p_restaurant, p_date) w
+  ),
+  ajat as (
+    select ((p_date + w.opens)::timestamp
+            + make_interval(mins => v_slot * g.n)) as paikallinen
+    from ikkunat w
+    cross join lateral generate_series(
+      0,
+      /* Viimeinen istumisaika on mukana, sen jälkeiset eivät. */
+      greatest(0, floor(coalesce(w.span_minutes, 0)::numeric / v_slot)::int)
+    ) as g(n)
+  ),
+  ehdokkaat as (
+    select distinct
+      a.paikallinen::time as t,
+      (a.paikallinen at time zone v_tz) as alkaa
+    from ajat a
+  )
+  select e.t, e.alkaa
+  from ehdokkaat e
+  where
+    /* Menneisyyteen ei varata, eikä liian lyhyellä varoitusajalla. */
+    e.alkaa >= now() + make_interval(mins => coalesce(v_lead, 0))
+    and reservation_pick_tables(
+          p_restaurant,
+          e.alkaa,
+          e.alkaa + make_interval(mins => v_minutes),
+          p_party,
+          p_exclude
+        ) is not null
+    /* Täysi keittiö ei näy vapaana aikana. */
+    and (kitchen_check(p_restaurant, e.alkaa, p_party, p_exclude)->>'ok')::boolean
+  /*
+   * Järjestys on hetki eikä kellonaika.
+   *
+   * Kellonajan mukaan lajiteltuna keskiyön jälkeiset ajat nousisivat
+   * listan kärkeen: 00:30 on pienempi luku kuin 18:00, mutta se on
+   * illan viimeinen aika eikä ensimmäinen.
+   */
+  order by e.alkaa;
+end;
+$fn$;
+
+create or replace function reservation_admin_slots(
+  p_restaurant uuid,
+  p_date date,
+  p_party int,
+  p_exclude uuid default null
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  return json_build_object(
+    'slots', coalesce((
+      select json_agg(to_char(s.slot_time, 'HH24:MI') order by s.starts_at)
+      from reservation_slots(p_restaurant, p_date, p_party, p_exclude) s
+    ), '[]'::json)
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 3. Varauksen aikaväli lomakkeelle
+-- ---------------------------------------------------------------------------
+
+create or replace function reservation_window(
+  p_restaurant uuid,
+  p_date date,
+  p_time text
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_minutes int;
+  v_start timestamptz;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select coalesce(s.default_duration_minutes, 90) into v_minutes
+  from reservation_settings s where s.restaurant_id = p_restaurant;
+
+  v_minutes := coalesce(v_minutes, 90);
+
+  /* Sama muunnos kuin tallennuksessa, jottei ehdotus koske eri iltaa. */
+  v_start := reservation_start_at(p_restaurant, p_date, p_time::time);
+
+  return json_build_object(
+    'startsAt', v_start,
+    'endsAt', v_start + make_interval(mins => v_minutes)
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 4. Varaus ja walk-in salista
+-- ---------------------------------------------------------------------------
+
+drop function if exists reservation_create_admin(
+  uuid, date, time, int, text, text, text, text, boolean, int, uuid[]
+);
+
+create or replace function reservation_create_admin(
+  p_restaurant uuid,
+  p_date date,
+  p_time time,
+  p_party int,
+  p_name text,
+  p_phone text default null,
+  p_email text default null,
+  p_note text default null,
+  p_walk_in boolean default false,
+  p_minutes int default null,
+  p_tables uuid[] default null,
+  p_allergies text default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_start timestamptz;
+  v_id uuid;
+  v_ref text;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    return json_build_object('ok', false, 'error', 'name');
+  end if;
+
+  if p_party < 1 then
+    return json_build_object('ok', false, 'error', 'party');
+  end if;
+
+  v_start := reservation_start_at(p_restaurant, p_date, p_time);
+
+  begin
+    v_id := reservation_book(
+      p_restaurant, v_start, p_party,
+      left(trim(p_name), 120),
+      left(trim(coalesce(p_phone, '')), 40),
+      left(trim(coalesce(p_email, '')), 160),
+      left(trim(coalesce(p_note, '')), 500),
+      case when p_walk_in then 'walk_in'::reservation_source
+           else 'admin'::reservation_source end,
+      case when p_walk_in then 'arrived'::reservation_status
+           else 'confirmed'::reservation_status end,
+      p_minutes, p_tables, null,
+      left(trim(coalesce(p_allergies, '')), 200)
+    );
+  exception
+    when exclusion_violation then
+      return json_build_object('ok', false, 'error', 'taken');
+  end;
+
+  select r.reference into v_ref from reservations r where r.id = v_id;
+
+  perform write_audit(
+    p_restaurant,
+    case when p_walk_in then 'reservation.walk_in' else 'reservation.create' end,
+    'reservation', v_id, trim(p_name),
+    case when p_walk_in then 'Lisäsi walk-inin: ' else 'Loi varauksen: ' end
+      || trim(p_name) || ', ' || p_party || ' hlö, '
+      || to_char(p_date, 'DD.MM.YYYY') || ' klo ' || to_char(p_time, 'HH24:MI'),
+    null,
+    jsonb_build_object('party_size', p_party, 'starts_at', v_start),
+    false
+  );
+
+  return json_build_object('ok', true, 'id', v_id, 'reference', v_ref);
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 5. Varauksen muokkaus
+-- ---------------------------------------------------------------------------
+
+drop function if exists reservation_update(
+  uuid, date, time, int, text, text, text, text, uuid[]
+);
+
+create or replace function reservation_update(
+  p_reservation uuid,
+  p_date date default null,
+  p_time time default null,
+  p_party int default null,
+  p_name text default null,
+  p_phone text default null,
+  p_email text default null,
+  p_note text default null,
+  p_tables uuid[] default null,
+  p_allergies text default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_old record;
+  v_tz text;
+  v_start timestamptz;
+  v_night date;
+  v_night_start timestamptz;
+  v_party int;
+  v_minutes int;
+  v_end timestamptz;
+  v_tables uuid[];
+  v_table uuid;
+  v_muutos text[] := array[]::text[];
+begin
+  select * into v_old from reservations where id = p_reservation;
+  if v_old.id is null or not is_manager(v_old.restaurant_id) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtext('kate:reservation:' || v_old.restaurant_id::text)
+  );
+
+  select r.timezone into v_tz from restaurants r where r.id = v_old.restaurant_id;
+
+  v_party := coalesce(p_party, v_old.party_size);
+  if v_party < 1 then
+    return json_build_object('ok', false, 'error', 'party');
+  end if;
+
+  /*
+   * Uusi hetki lasketaan samasta funktiosta kuin uusi varaus.
+   *
+   * Kalenterissa varausta raahataan kello kahteen yöllä, ja se kuuluu
+   * yhä siihen iltaan josta se raahattiin. Ilman yhteistä muunnosta
+   * siirto olisi hypännyt vuorokauden taaksepäin.
+   */
+  if p_date is not null or p_time is not null then
+    /*
+     * Oletuspäivä on illan päivä, ei kalenteripäivä.
+     *
+     * Kello 00:30 alkava varaus on tallennettu sunnuntain puolelle
+     * mutta se on lauantain iltaa. Jos siirto ilman päivämäärää
+     * käyttäisi kalenteripäivää, kalenterissa tehty pieni siirto
+     * hyppäisi vuorokauden eteenpäin.
+     */
+    v_night := (v_old.starts_at at time zone v_tz)::date;
+
+    select n.starts_at into v_night_start
+    from reservation_night_range(v_old.restaurant_id, v_night) n;
+
+    if v_night_start is not null and v_old.starts_at < v_night_start then
+      v_night := v_night - 1;
+    end if;
+
+    v_start := reservation_start_at(
+      v_old.restaurant_id,
+      coalesce(p_date, v_night),
+      coalesce(p_time, (v_old.starts_at at time zone v_tz)::time)
+    );
+  else
+    v_start := v_old.starts_at;
+  end if;
+
+  if v_party <> v_old.party_size then
+    v_minutes := reservation_duration_for(v_old.restaurant_id, v_party);
+  else
+    v_minutes := (extract(epoch from (v_old.ends_at - v_old.starts_at)) / 60)::int;
+  end if;
+  v_end := v_start + make_interval(mins => v_minutes);
+
+  if p_tables is not null then
+    if exists (
+      select 1 from unnest(p_tables) as x(id)
+      where not exists (
+        select 1 from restaurant_tables t
+        where t.id = x.id and t.restaurant_id = v_old.restaurant_id
+      )
+    ) then
+      return json_build_object('ok', false, 'error', 'table');
+    end if;
+    v_tables := p_tables;
+  elsif v_start <> v_old.starts_at
+        or v_end <> v_old.ends_at
+        or v_party <> v_old.party_size
+  then
+    v_tables := reservation_pick_tables(
+      v_old.restaurant_id, v_start, v_end, v_party, p_reservation
+    );
+    if v_tables is null then
+      return json_build_object('ok', false, 'error', 'taken');
+    end if;
+  end if;
+
+  begin
+    update reservations set
+      starts_at = v_start,
+      ends_at = v_end,
+      party_size = v_party,
+      guest_name = coalesce(nullif(left(trim(p_name), 120), ''), guest_name),
+      guest_phone = case when p_phone is null then guest_phone
+                         else nullif(left(trim(p_phone), 40), '') end,
+      guest_email = case when p_email is null then guest_email
+                         else nullif(lower(left(trim(p_email), 160)), '') end,
+      note = case when p_note is null then note
+                  else nullif(left(trim(p_note), 500), '') end,
+      allergies = case when p_allergies is null then allergies
+                       else nullif(left(trim(p_allergies), 200), '') end
+    where id = p_reservation;
+
+    if v_tables is not null then
+      delete from reservation_table_assignments
+      where reservation_id = p_reservation
+        and table_id <> all (v_tables);
+
+      foreach v_table in array v_tables loop
+        insert into reservation_table_assignments
+          (reservation_id, table_id, starts_at, ends_at, blocking)
+        values (
+          p_reservation, v_table, v_start, v_end,
+          v_old.status in ('pending', 'confirmed', 'arrived')
+        )
+        on conflict (reservation_id, table_id) do update
+          set starts_at = excluded.starts_at,
+              ends_at = excluded.ends_at,
+              blocking = excluded.blocking;
+      end loop;
+    end if;
+  exception
+    when exclusion_violation then
+      return json_build_object('ok', false, 'error', 'taken');
+  end;
+
+  if v_start <> v_old.starts_at then
+    v_muutos := v_muutos || (
+      'aika ' || to_char(v_old.starts_at at time zone v_tz, 'DD.MM. HH24:MI')
+      || ' -> ' || to_char(v_start at time zone v_tz, 'DD.MM. HH24:MI')
+    );
+  end if;
+  if v_party <> v_old.party_size then
+    v_muutos := v_muutos || ('koko ' || v_old.party_size || ' -> ' || v_party);
+  end if;
+  if v_tables is not null then
+    /* Tyyppimerkintä on korjaus (0086): ilman sitä sana luetaan taulukoksi. */
+    v_muutos := v_muutos || 'pöytä'::text;
+  end if;
+
+  perform write_audit(
+    v_old.restaurant_id, 'reservation.update', 'reservation',
+    p_reservation, v_old.guest_name,
+    'Muutti varausta: ' || v_old.guest_name
+      || case when array_length(v_muutos, 1) is null then ''
+              else ' (' || array_to_string(v_muutos, ', ') || ')' end,
+    jsonb_build_object('starts_at', v_old.starts_at, 'party_size', v_old.party_size),
+    jsonb_build_object('starts_at', v_start, 'party_size', v_party),
+    false
+  );
+
+  return json_build_object('ok', true);
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 6. Julkinen varaus
+-- ---------------------------------------------------------------------------
+
+create or replace function public_reservation_config(p_slug text)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_r record;
+  v_s record;
+begin
+  select id, name, timezone into v_r from restaurants where slug = p_slug;
+  if v_r.id is null then return null; end if;
+
+  select * into v_s from reservation_settings where restaurant_id = v_r.id;
+
+  if v_s.restaurant_id is null or not v_s.enabled then
+    return json_build_object(
+      'restaurantName', v_r.name,
+      'enabled', false
+    );
+  end if;
+
+  return json_build_object(
+    'restaurantName', v_r.name,
+    'enabled', true,
+    'timezone', v_r.timezone,
+    'minParty', v_s.min_party,
+    'maxParty', v_s.max_party,
+    'maxDaysAhead', v_s.max_days_ahead,
+    /* Widget kertoo rajan ennen varausta, ei vasta peruutusyrityksessä. */
+    'cancelCutoffHours', coalesce(v_s.cancel_cutoff_hours, 0),
+    'today', (now() at time zone v_r.timezone)::date,
+    'theme', json_build_object(
+      'color', v_s.theme_color,
+      'dark', v_s.theme_dark,
+      'radius', v_s.theme_radius
+    )
+  );
+end;
+$fn$;
+
+create or replace function public_reservation_slots(
+  p_slug text,
+  p_date date,
+  p_party int
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_r record;
+  v_s record;
+  v_today date;
+begin
+  select id, name, timezone into v_r from restaurants where slug = p_slug;
+  if v_r.id is null then return json_build_object('slots', '[]'::json); end if;
+
+  select * into v_s from reservation_settings where restaurant_id = v_r.id;
+  if v_s.restaurant_id is null or not v_s.enabled then
+    return json_build_object('slots', '[]'::json);
+  end if;
+
+  /* Rajat tarkistetaan täällä, ei selaimessa. */
+  if p_party < v_s.min_party or p_party > v_s.max_party then
+    return json_build_object('slots', '[]'::json, 'reason', 'party');
+  end if;
+
+  v_today := (now() at time zone v_r.timezone)::date;
+
+  if p_date < v_today or p_date > v_today + v_s.max_days_ahead then
+    return json_build_object('slots', '[]'::json, 'reason', 'date');
+  end if;
+
+  return json_build_object(
+    'slots', coalesce((
+      select json_agg(to_char(s.slot_time, 'HH24:MI') order by s.starts_at)
+      from reservation_slots(v_r.id, p_date, p_party) s
+    ), '[]'::json)
+  );
+end;
+$fn$;
+
+drop function if exists public_create_reservation(
+  text, date, time, int, text, text, text, text
+);
+
+create or replace function public_create_reservation(
+  p_slug text,
+  p_date date,
+  p_time time,
+  p_party int,
+  p_name text,
+  p_phone text,
+  p_email text default null,
+  p_note text default null,
+  p_allergies text default null
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_r record;
+  v_s record;
+  v_today date;
+  v_start timestamptz;
+  v_id uuid;
+  v_token text;
+  v_res record;
+begin
+  select id, name, timezone into v_r from restaurants where slug = p_slug;
+  if v_r.id is null then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  select * into v_s from reservation_settings where restaurant_id = v_r.id;
+  if v_s.restaurant_id is null or not v_s.enabled then
+    return json_build_object('ok', false, 'error', 'closed');
+  end if;
+
+  if p_party < v_s.min_party or p_party > v_s.max_party then
+    return json_build_object('ok', false, 'error', 'party');
+  end if;
+
+  if coalesce(trim(p_name), '') = '' then
+    return json_build_object('ok', false, 'error', 'name');
+  end if;
+
+  if coalesce(trim(p_phone), '') = '' then
+    return json_build_object('ok', false, 'error', 'phone');
+  end if;
+
+  v_today := (now() at time zone v_r.timezone)::date;
+  if p_date < v_today or p_date > v_today + v_s.max_days_ahead then
+    return json_build_object('ok', false, 'error', 'date');
+  end if;
+
+  /*
+   * Sama puhelinnumero, korkeintaan viisi tulevaa varausta.
+   *
+   * Julkinen rajapinta ilman kirjautumista on täytettävissä
+   * roskavarauksilla, ja täyteen varattu sali on ravintolalle sama asia
+   * kuin suljettu. Raja on puhelinnumerossa eikä IP-osoitteessa, koska
+   * numero kerätään joka tapauksessa.
+   */
+  if (
+    select count(*)
+    from reservations x
+    where x.restaurant_id = v_r.id
+      and x.guest_phone = left(trim(p_phone), 40)
+      and x.status in ('pending', 'confirmed')
+      and x.starts_at > now()
+  ) >= 5 then
+    return json_build_object('ok', false, 'error', 'too_many');
+  end if;
+
+  /*
+   * Aika on aukioloikkunan sisällä.
+   *
+   * Etäisyys avaamisesta kierrätetään vuorokauden yli, joten sama
+   * tarkistus kelpaa myös illalle joka jatkuu keskiyön yli: 00:30 on
+   * 390 minuuttia 18:00:sta ja mahtuu ikkunaan jonka pituus on 480.
+   */
+  if not exists (
+    select 1
+    from reservation_windows(v_r.id, p_date) w
+    cross join lateral (
+      select (((extract(epoch from (p_time - w.opens)) / 60)::int % 1440) + 1440) % 1440 as off
+    ) o
+    where o.off <= coalesce(w.span_minutes, 0)
+  ) then
+    return json_build_object('ok', false, 'error', 'closed');
+  end if;
+
+  if extract(epoch from p_time)::int % (v_s.slot_minutes * 60) <> 0 then
+    return json_build_object('ok', false, 'error', 'slot');
+  end if;
+
+  v_start := reservation_start_at(v_r.id, p_date, p_time);
+
+  if v_start < now() + make_interval(mins => v_s.lead_minutes) then
+    return json_build_object('ok', false, 'error', 'too_late');
+  end if;
+
+  /*
+   * Peruutustunnus arvotaan kannassa, ei clientissä.
+   *
+   * gen_random_uuid on pg_catalogissa ja käyttää samaa satunnaislähdettä
+   * kuin pgcrypton gen_random_bytes, joka Supabasessa asuu skeemassa
+   * jota search_path = public ei näe. Kaksi uuid:ta on 64 heksamerkkiä.
+   */
+  v_token := replace(gen_random_uuid()::text, '-', '')
+             || replace(gen_random_uuid()::text, '-', '');
+
+  begin
+    v_id := reservation_book(
+      v_r.id, v_start, p_party,
+      left(trim(p_name), 120),
+      left(trim(coalesce(p_phone, '')), 40),
+      left(trim(coalesce(p_email, '')), 160),
+      left(trim(coalesce(p_note, '')), 500),
+      'widget', 'confirmed', null, null, v_token,
+      left(trim(coalesce(p_allergies, '')), 200)
+    );
+  exception
+    when exclusion_violation then
+      /* Sekä "ei vapaata pöytää" että rajoitteen laukeaminen. */
+      return json_build_object('ok', false, 'error', 'taken');
+  end;
+
+  select r.starts_at, r.ends_at, r.party_size, r.reference into v_res
+  from reservations r where r.id = v_id;
+
+  return json_build_object(
+    'ok', true,
+    'cancelToken', v_token,
+    /* Numero on se jonka asiakas lukee puhelimessa ääneen. */
+    'reference', v_res.reference,
+    'restaurantName', v_r.name,
+    'date', (v_res.starts_at at time zone v_r.timezone)::date,
+    'time', to_char(p_time, 'HH24:MI'),
+    'partySize', v_res.party_size,
+    'cancelCutoffHours', coalesce(v_s.cancel_cutoff_hours, 0),
+    'tables', coalesce((
+      select json_agg(t.name order by t.sort_order, t.name)
+      from reservation_table_assignments a
+      join restaurant_tables t on t.id = a.table_id
+      where a.reservation_id = v_id
+    ), '[]'::json)
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 7. Asiakkaan oma peruutus
+-- ---------------------------------------------------------------------------
+
+create or replace function public_cancel_reservation(p_token text)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_res record;
+  v_cutoff int;
+begin
+  if coalesce(trim(p_token), '') = '' then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  select r.*, x.name as restaurant_name, x.timezone
+  into v_res
+  from reservations r
+  join restaurants x on x.id = r.restaurant_id
+  where r.cancel_token_hash = encode(sha256(trim(p_token)::bytea), 'hex');
+
+  if v_res.id is null then
+    return json_build_object('ok', false, 'error', 'not_found');
+  end if;
+
+  if v_res.status in ('cancelled', 'no_show', 'completed') then
+    return json_build_object('ok', false, 'error', 'already');
+  end if;
+
+  if v_res.starts_at < now() then
+    return json_build_object('ok', false, 'error', 'past');
+  end if;
+
+  select coalesce(s.cancel_cutoff_hours, 0) into v_cutoff
+  from reservation_settings s where s.restaurant_id = v_res.restaurant_id;
+
+  /*
+   * Raja koskee verkkoperuutusta, ei peruutusta.
+   *
+   * Asiakas soittaa ja sali peruu. Virhe kertoo rajan tunteina, jotta
+   * käyttöliittymä voi sanoa mihin asti linkki toimi — "peruutus ei
+   * onnistunut" ilman lukua on ohje soittaa arvaamalla.
+   */
+  if coalesce(v_cutoff, 0) > 0
+     and v_res.starts_at < now() + make_interval(hours => v_cutoff) then
+    return json_build_object(
+      'ok', false,
+      'error', 'cutoff',
+      'cutoffHours', v_cutoff
+    );
+  end if;
+
+  update reservations set status = 'cancelled' where id = v_res.id;
+
+  return json_build_object(
+    'ok', true,
+    'restaurantName', v_res.restaurant_name,
+    'date', (v_res.starts_at at time zone v_res.timezone)::date,
+    'time', to_char((v_res.starts_at at time zone v_res.timezone)::time, 'HH24:MI'),
+    'partySize', v_res.party_size
+  );
+end;
+$fn$;
+
+create or replace function public_reservation_lookup(p_token text)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_res record;
+  v_cutoff int;
+begin
+  if coalesce(trim(p_token), '') = '' then return null; end if;
+
+  select r.*, x.name as restaurant_name, x.timezone
+  into v_res
+  from reservations r
+  join restaurants x on x.id = r.restaurant_id
+  where r.cancel_token_hash = encode(sha256(trim(p_token)::bytea), 'hex');
+
+  if v_res.id is null then return null; end if;
+
+  select coalesce(s.cancel_cutoff_hours, 0) into v_cutoff
+  from reservation_settings s where s.restaurant_id = v_res.restaurant_id;
+
+  return json_build_object(
+    'restaurantName', v_res.restaurant_name,
+    'reference', v_res.reference,
+    'date', (v_res.starts_at at time zone v_res.timezone)::date,
+    'time', to_char((v_res.starts_at at time zone v_res.timezone)::time, 'HH24:MI'),
+    'partySize', v_res.party_size,
+    'guestName', v_res.guest_name,
+    'status', v_res.status,
+    'cancelCutoffHours', coalesce(v_cutoff, 0),
+    /*
+     * Miksi peruutusta ei voi tehdä.
+     *
+     * Sivu näyttää eri lauseen menneelle ajalle ja liian myöhäiselle:
+     * jälkimmäisessä asiakas voi yhä perua soittamalla. Ero on
+     * kellonajassa, ja kello kuuluu kantaan — sivu piirretään
+     * palvelimella, ja siellä kellon lukeminen kesken piirron on
+     * epävakaa tulos joka voi muuttua ilman että mikään muuttui.
+     */
+    'cancelBlocked', case
+      when v_res.status not in ('pending', 'confirmed') then null
+      when v_res.starts_at <= now() then 'past'
+      when coalesce(v_cutoff, 0) > 0
+           and v_res.starts_at < now() + make_interval(hours => v_cutoff)
+        then 'cutoff'
+      else null
+    end,
+    'cancellable', v_res.status in ('pending', 'confirmed')
+                   and v_res.starts_at > now()
+                   and (
+                     coalesce(v_cutoff, 0) = 0
+                     or v_res.starts_at >= now() + make_interval(hours => coalesce(v_cutoff, 0))
+                   )
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- 8. Päivän varaukset
+-- ---------------------------------------------------------------------------
+--
+-- ILTA KUULUU SIIHEN PÄIVÄÄN JONA SE AVAUTUI.
+--
+-- Kalenteripäivä oli oikea rajaus niin kauan kuin ilta päättyi ennen
+-- keskiyötä. Nyt kello 00:30 alkava varaus on lauantain iltaa, ja
+-- lauantain salinäkymän on näytettävä se — muuten se ilmestyisi
+-- sunnuntain aamuun, jolloin ravintola on kiinni.
+--
+-- Raja kulkee siis edellisen illan viimeisessä ajassa: sunnuntai alkaa
+-- siitä hetkestä johon lauantain ilta päättyi. Sama sääntö molemmissa
+-- päissä, joten yksikään varaus ei näy kahdesti eikä katoa.
+
+create or replace function reservation_night_range(
+  p_restaurant uuid,
+  p_date date
+)
+returns table (starts_at timestamptz, ends_at timestamptz)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_tz text;
+  v_prev_last time;
+  v_own_last time;
+begin
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  if v_tz is null then return; end if;
+
+  /* Edellisen illan viimeinen aika, jos se ylitti keskiyön. */
+  select max(w.last_seating) into v_prev_last
+  from reservation_windows(p_restaurant, p_date - 1) w
+  where w.last_seating < w.opens;
+
+  /* Tämän illan viimeinen aika, jos se ylittää keskiyön. */
+  select max(w.last_seating) into v_own_last
+  from reservation_windows(p_restaurant, p_date) w
+  where w.last_seating < w.opens;
+
+  return query select
+    case
+      when v_prev_last is null then (p_date + time '00:00') at time zone v_tz
+      /* Sekunti eteenpäin: tasan viimeiseen aikaan alkava kuuluu eiliseen. */
+      else ((p_date + v_prev_last)::timestamp + interval '1 second') at time zone v_tz
+    end,
+    case
+      when v_own_last is null then ((p_date + 1) + time '00:00') at time zone v_tz
+      else (((p_date + 1) + v_own_last)::timestamp + interval '1 second') at time zone v_tz
+    end;
+end;
+$fn$;
+
+create or replace function public.reservation_day(
+  p_restaurant uuid,
+  p_date date
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_tz text;
+  v_manager boolean;
+  v_from timestamptz;
+  v_to timestamptz;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  v_manager := is_manager(p_restaurant);
+
+  select n.starts_at, n.ends_at into v_from, v_to
+  from reservation_night_range(p_restaurant, p_date) n;
+
+  return json_build_object(
+    'date', p_date,
+    'timezone', v_tz,
+    'canManage', v_manager,
+    'settings', (
+      select json_build_object(
+        'enabled', s.enabled,
+        'slotMinutes', s.slot_minutes,
+        'defaultDurationMinutes', s.default_duration_minutes,
+        'turnaroundMinutes', s.turnaround_minutes,
+        'minParty', s.min_party,
+        'maxParty', s.max_party,
+        'kitchenCapacity', s.kitchen_capacity,
+        'kitchenWindowMinutes', s.kitchen_window_minutes
+      )
+      from reservation_settings s where s.restaurant_id = p_restaurant
+    ),
+    'hours', (
+      select json_build_object(
+        'opens', to_char(w.opens, 'HH24:MI'),
+        'lastSeating', to_char(w.last_seating, 'HH24:MI'),
+        /* Kalenterin aikajana venyy tällä keskiyön yli. */
+        'spanMinutes', w.span_minutes
+      )
+      from reservation_windows(p_restaurant, p_date) w
+      order by w.opens
+      limit 1
+    ),
+    'areas', coalesce((
+      select json_agg(json_build_object('id', a.id, 'name', a.name)
+                      order by a.sort_order, a.name)
+      from dining_areas a where a.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'tables', coalesce((
+      select json_agg(json_build_object(
+        'id', t.id,
+        'name', t.name,
+        'areaId', t.area_id,
+        'seatsMin', t.seats_min,
+        'seatsMax', t.seats_max,
+        'active', t.active,
+        'posX', t.pos_x,
+        'posY', t.pos_y,
+        'shape', t.shape,
+        'rotation', t.rotation,
+        'width', t.width
+      ) order by t.sort_order, t.name)
+      from restaurant_tables t where t.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'elements', coalesce((
+      select json_agg(json_build_object(
+        'id', e.id,
+        'areaId', e.area_id,
+        'kind', e.kind,
+        'label', e.label,
+        'posX', e.pos_x,
+        'posY', e.pos_y,
+        'width', e.width,
+        'height', e.height,
+        'rotation', e.rotation
+      ) order by e.sort_order, e.created_at)
+      from floor_elements e where e.restaurant_id = p_restaurant
+    ), '[]'::json),
+    'reservations', coalesce((
+      select json_agg(json_build_object(
+        'id', r.id,
+        'reference', r.reference,
+        'startsAt', r.starts_at,
+        'endsAt', r.ends_at,
+        'time', to_char((r.starts_at at time zone v_tz)::time, 'HH24:MI'),
+        'endTime', to_char((r.ends_at at time zone v_tz)::time, 'HH24:MI'),
+        'partySize', r.party_size,
+        'status', r.status,
+        'source', r.source,
+        'guestName', r.guest_name,
+        'guestPhone', case when v_manager then r.guest_phone else null end,
+        'guestEmail', case when v_manager then r.guest_email else null end,
+        'note', r.note,
+        /* Allergia näkyy myös tarjoilijalle: se on salityötä. */
+        'allergies', r.allergies,
+        'billRequestedAt', r.bill_requested_at,
+        'tableIds', coalesce((
+          select json_agg(a.table_id) from reservation_table_assignments a
+          where a.reservation_id = r.id
+        ), '[]'::json)
+      ) order by r.starts_at, r.guest_name)
+      from reservations r
+      where r.restaurant_id = p_restaurant
+        and r.starts_at >= v_from
+        and r.starts_at < v_to
+    ), '[]'::json)
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- Oikeudet
+-- ---------------------------------------------------------------------------
+
+revoke all on function reservation_book from public, anon;
+revoke all on function reservation_slots from public, anon;
+revoke all on function reservation_night_range(uuid, date) from public, anon;
+grant execute on function reservation_night_range(uuid, date) to authenticated;
+revoke all on function reservation_create_admin from public, anon;
+revoke all on function reservation_update from public, anon;
+revoke all on function public.reservation_day(uuid, date) from anon;
+
+grant execute on function reservation_book to authenticated;
+grant execute on function reservation_slots to authenticated;
+grant execute on function reservation_create_admin to authenticated;
+grant execute on function reservation_update to authenticated;
+grant execute on function reservation_admin_slots to authenticated;
+grant execute on function reservation_window(uuid, date, text) to authenticated;
+
+grant execute on function public_reservation_config to anon, authenticated;
+grant execute on function public_reservation_slots to anon, authenticated;
+grant execute on function public_create_reservation to anon, authenticated;
+grant execute on function public_cancel_reservation to anon, authenticated;
+grant execute on function public_reservation_lookup to anon, authenticated;
+
+
+-- ===========================================================================
+-- 0093_reservation_search.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0093 — Varauslista: haku nimellä ja suodatus yli päivärajojen
+-- ---------------------------------------------------------------------------
+--
+-- Salinäkymä vastaa kysymykseen "kuka tulee tänään". Se on oikea
+-- kysymys vuoron aikana ja väärä joka muuna hetkenä:
+--
+--   "Soitti Virtanen, sanoi varanneensa jollekin päivälle" — päivä on
+--   tuntematon, ja salinäkymä osaa vain yhden päivän kerrallaan.
+--
+--   "Onko ensi viikonlopulle paljon varauksia" — vastaus vaatii
+--   seitsemän sivunlatausta ja muistin.
+--
+-- Tämä funktio hakee varaukset jaksosta eikä päivästä, ja etsii nimellä
+-- tai varausnumerolla. Se on sama aineisto ja samat oikeudet kuin
+-- reservation_day:ssä — yhteystiedot vain esihenkilölle — mutta rajaus
+-- tulee kysymyksestä eikä kalenterista.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI HAKU ON KANNASSA
+-- ---------------------------------------------------------------------------
+--
+-- Vaihtoehto olisi hakea kaikki varaukset selaimeen ja suodattaa siellä.
+-- Silloin jokainen sivunlataus lähettäisi jokaisen asiakkaan nimen ja
+-- puhelinnumeron selaimeen, jotta niistä voitaisiin näyttää kymmenen.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI SIVUTUS ON RAJA EIKÄ EHDOTUS
+-- ---------------------------------------------------------------------------
+--
+-- Ravintolalla on vuodessa kymmeniä tuhansia varauksia. Ilman ylärajaa
+-- "kaikki menneet" olisi kysely joka palauttaa ne kaikki kerran per
+-- sivunlataus. Yläraja on kannassa eikä käyttöliittymässä, koska
+-- käyttöliittymiä voi olla monta ja kanta on yksi.
+
+create or replace function reservation_search(
+  p_restaurant uuid,
+  p_scope text default 'upcoming',
+  p_date date default null,
+  p_query text default null,
+  p_limit int default 50,
+  p_offset int default 0
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path = public
+as $fn$
+declare
+  v_tz text;
+  v_manager boolean;
+  v_from timestamptz;
+  v_to timestamptz;
+  v_limit int;
+  v_offset int;
+  v_q text;
+  v_total int;
+  v_rows json;
+  v_desc boolean;
+begin
+  if p_restaurant not in (select my_restaurant_ids()) then
+    raise exception 'Ei oikeutta tähän ravintolaan.'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+  v_manager := is_manager(p_restaurant);
+
+  v_limit := least(greatest(coalesce(p_limit, 50), 1), 200);
+  v_offset := greatest(coalesce(p_offset, 0), 0);
+
+  /*
+   * Tyhjä haku ja pelkät välilyönnit ovat sama asia kuin ei hakua.
+   *
+   * Ilman tätä yhden välilyönnin kirjoittaminen kenttään näyttäisi
+   * tyhjän listan ja väittäisi ettei varauksia ole.
+   */
+  v_q := nullif(trim(coalesce(p_query, '')), '');
+
+  /*
+   * Jakson rajat.
+   *
+   * Päivä käyttää samaa illan rajausta kuin salinäkymä: ilta kuuluu
+   * siihen päivään jona se avautui, myös keskiyön jälkeen.
+   */
+  if p_scope = 'day' and p_date is not null then
+    select n.starts_at, n.ends_at into v_from, v_to
+    from reservation_night_range(p_restaurant, p_date) n;
+    v_desc := false;
+  elsif p_scope = 'past' then
+    v_from := null;
+    v_to := now();
+    /* Menneet uusin ensin: lähin mennyt ilta on se jota kysytään. */
+    v_desc := true;
+  elsif p_scope = 'all' then
+    v_from := null;
+    v_to := null;
+    v_desc := true;
+  else
+    v_from := now();
+    v_to := null;
+    v_desc := false;
+  end if;
+
+  select count(*) into v_total
+  from reservations r
+  where r.restaurant_id = p_restaurant
+    and (v_from is null or r.starts_at >= v_from)
+    and (v_to is null or r.starts_at < v_to)
+    and (
+      v_q is null
+      or r.guest_name ilike '%' || v_q || '%'
+      or r.reference ilike v_q || '%'
+      or coalesce(r.guest_phone, '') ilike '%' || v_q || '%'
+      or coalesce(r.guest_email, '') ilike '%' || v_q || '%'
+    );
+
+  select coalesce(json_agg(x.rivi order by x.jarjestys), '[]'::json)
+  into v_rows
+  from (
+    select
+      json_build_object(
+        'id', r.id,
+        'reference', r.reference,
+        'startsAt', r.starts_at,
+        'endsAt', r.ends_at,
+        'date', (r.starts_at at time zone v_tz)::date,
+        'time', to_char((r.starts_at at time zone v_tz)::time, 'HH24:MI'),
+        'endTime', to_char((r.ends_at at time zone v_tz)::time, 'HH24:MI'),
+        'partySize', r.party_size,
+        'status', r.status,
+        'source', r.source,
+        'guestName', r.guest_name,
+        'guestPhone', case when v_manager then r.guest_phone else null end,
+        'guestEmail', case when v_manager then r.guest_email else null end,
+        'note', r.note,
+        'allergies', r.allergies,
+        'tableIds', coalesce((
+          select json_agg(a.table_id) from reservation_table_assignments a
+          where a.reservation_id = r.id
+        ), '[]'::json),
+        'tables', coalesce((
+          select json_agg(t.name order by t.sort_order, t.name)
+          from reservation_table_assignments a
+          join restaurant_tables t on t.id = a.table_id
+          where a.reservation_id = r.id
+        ), '[]'::json)
+      ) as rivi,
+      /*
+       * Järjestysavain erikseen.
+       *
+       * json_agg ei osaa lajitella rakentamansa olion kentän mukaan, ja
+       * aikaleima merkkijonona lajittuisi kirjaimittain. Käänteinen
+       * järjestys tehdään negaatiolla, jotta lajittelu on yksi lauseke
+       * eikä kaksi haaraa jotka voivat ajautua erilleen.
+       */
+      case when v_desc then -extract(epoch from r.starts_at)
+           else extract(epoch from r.starts_at) end as jarjestys
+    from reservations r
+    where r.restaurant_id = p_restaurant
+      and (v_from is null or r.starts_at >= v_from)
+      and (v_to is null or r.starts_at < v_to)
+      and (
+        v_q is null
+        or r.guest_name ilike '%' || v_q || '%'
+        or r.reference ilike v_q || '%'
+        or coalesce(r.guest_phone, '') ilike '%' || v_q || '%'
+        or coalesce(r.guest_email, '') ilike '%' || v_q || '%'
+      )
+    order by
+      case when v_desc then -extract(epoch from r.starts_at)
+           else extract(epoch from r.starts_at) end,
+      r.guest_name
+    limit v_limit
+    offset v_offset
+  ) x;
+
+  return json_build_object(
+    'total', v_total,
+    'limit', v_limit,
+    'offset', v_offset,
+    'timezone', v_tz,
+    'canManage', v_manager,
+    'rows', v_rows
+  );
+end;
+$fn$;
+
+/*
+ * Hakuindeksi nimelle ja numerolle.
+ *
+ * Ilman indeksiä ilike-haku lukee ravintolan kaikki varaukset. Se on
+ * nopeaa tuhannella rivillä ja hidasta sadallatuhannella, ja ero näkyy
+ * vasta silloin kun sitä ei ehdi korjata.
+ */
+create index if not exists reservations_restaurant_starts
+  on reservations (restaurant_id, starts_at desc);
+
+create index if not exists reservations_guest_name_search
+  on reservations (restaurant_id, lower(guest_name));
+
+revoke all on function reservation_search(uuid, text, date, text, int, int)
+  from public, anon;
+
+grant execute on function reservation_search(uuid, text, date, text, int, int)
+  to authenticated;
+
+
+-- ===========================================================================
+-- 0094_reservation_stats_trend.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0094 — Analytiikka: päivittäinen kehitys ja vertailu edelliseen jaksoon
+-- ---------------------------------------------------------------------------
+--
+-- Kolme lisäystä samaan funktioon:
+--
+--   1. byDay — jokainen jakson päivä omana rivinään, myös tyhjät.
+--      Trendi on kuvio eikä luku, eikä kuviota näe ilman nollia:
+--      lista jossa on vain ne päivät joina oli varauksia näyttää
+--      tasaiselta myös silloin kun joka toinen päivä on tyhjä.
+--
+--   2. previous — edellisen yhtä pitkän jakson summat.
+--      "142 varausta" ei kerro onko se paljon. "142, +18 %" kertoo.
+--      Vertailujakso on edeltävä yhtä pitkä jakso eikä "sama kuukausi
+--      viime vuonna": jälkimmäinen on parempi kysymys mutta vaatii
+--      vuoden aineiston, jota useimmilla ei vielä ole.
+--
+--   3. Aukiolo joka ylittää keskiyön (0091) mukaan täyttöasteeseen.
+--      Aiemmin tuntisarja laskettiin avaamistunnista viimeisen
+--      istumisajan tuntiin, ja keskiyön yli menevällä illalla se oli
+--      tyhjä sarja: 18 ei ole pienempi kuin 2.
+--
+-- ---------------------------------------------------------------------------
+-- MINKÄ PÄIVÄN VARAUS ON
+-- ---------------------------------------------------------------------------
+--
+-- Analytiikassa varaus kuuluu siihen kalenteripäivään jona se alkaa.
+-- Salinäkymässä ilta kuuluu avauspäiväänsä, joten kello 00:30 alkava
+-- varaus näkyy siellä lauantain iltana ja täällä sunnuntain rivillä.
+--
+-- Ero on tarkoituksellinen. Salissa kysymys on "kuka tulee tänä iltana"
+-- ja vastauksen on oltava yksi ilta. Analytiikassa kysymys on "miten
+-- varaukset jakautuvat", ja siinä kaikki luvut on laskettava samalla
+-- säännöllä — myös täyttöaste, joka lasketaan kellonajoista. Yksi
+-- sääntö koko funktiossa on tarkistettavissa; kaksi ei.
+
+-- ---------------------------------------------------------------------------
+-- Jakson summat
+-- ---------------------------------------------------------------------------
+--
+-- Omana funktionaan, koska sama laskenta tehdään kahdesti: nykyiselle
+-- jaksolle ja sitä edeltävälle. Kaksi kopiota samasta json_build_objectista
+-- olisi kaksi paikkaa joissa "vieras" tarkoittaa eri asiaa.
+
+create or replace function reservation_totals(
+  p_restaurant uuid,
+  p_from timestamptz,
+  p_to timestamptz
+)
+returns json
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select json_build_object(
+    'reservations', count(*),
+    'cancelled', count(*) filter (where r.status = 'cancelled'),
+    'noShow', count(*) filter (where r.status = 'no_show'),
+    'realised', count(*) filter (where r.status in ('arrived', 'completed')),
+    'upcoming', count(*) filter (where r.status in ('pending', 'confirmed')),
+    'guests', coalesce(sum(r.party_size) filter (
+      where r.status not in ('cancelled', 'no_show')), 0),
+    'partySum', coalesce(sum(r.party_size) filter (
+      where r.status not in ('cancelled', 'no_show')), 0),
+    'partyCount', count(*) filter (
+      where r.status not in ('cancelled', 'no_show'))
+  )
+  from reservations r
+  where r.restaurant_id = p_restaurant
+    and r.starts_at >= p_from
+    and r.starts_at < p_to;
+$fn$;
+
+revoke all on function reservation_totals(uuid, timestamptz, timestamptz)
+  from public, anon;
+grant execute on function reservation_totals(uuid, timestamptz, timestamptz)
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Analytiikka
+-- ---------------------------------------------------------------------------
+
+create or replace function public.reservation_stats(
+  p_restaurant uuid,
+  p_from date,
+  p_to date
+)
+returns json
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $fn$
+declare
+  v_tz text;
+  v_from timestamptz;
+  v_to timestamptz;
+  v_days int;
+  v_prev_from timestamptz;
+  v_seats int;
+  v_tables int;
+  v_out json;
+begin
+  /*
+   * Esihenkilön tieto, ei koko henkilökunnan.
+   *
+   * Peruutusprosentti ja vieraiden määrä ovat liiketoiminnan lukuja
+   * samaan tapaan kuin myynti. Salinäkymä riittää vuoron tekemiseen.
+   */
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if p_from is null or p_to is null or p_to < p_from then
+    raise exception 'Virheellinen aikavali.' using errcode = '22007';
+  end if;
+
+  /*
+   * Yläraja on suoja eikä mielipide: aukiolo haetaan päivä kerrallaan,
+   * joten jakson pituus on suoraan kyselyiden määrä.
+   */
+  if (p_to - p_from) > 400 then
+    raise exception 'Liian pitka aikavali.' using errcode = '22003';
+  end if;
+
+  select r.timezone into v_tz from restaurants r where r.id = p_restaurant;
+
+  v_days := (p_to - p_from) + 1;
+  v_from := (p_from + time '00:00') at time zone v_tz;
+  v_to := ((p_to + 1) + time '00:00') at time zone v_tz;
+
+  /* Edeltävä yhtä pitkä jakso, päivä ennen jakson alkua taaksepäin. */
+  v_prev_from := ((p_from - v_days) + time '00:00') at time zone v_tz;
+
+  select coalesce(sum(t.seats_max), 0), count(*)
+    into v_seats, v_tables
+  from restaurant_tables t
+  where t.restaurant_id = p_restaurant and t.active;
+
+  with varaukset as (
+    select
+      r.id,
+      r.party_size,
+      r.status::text as status,
+      r.source::text as source,
+      (r.starts_at at time zone v_tz) as alkaa,
+      (r.ends_at at time zone v_tz) as paattyy
+    from reservations r
+    where r.restaurant_id = p_restaurant
+      and r.starts_at >= v_from
+      and r.starts_at < v_to
+  ),
+
+  /*
+   * Varaus joka vie pöydän.
+   *
+   * Peruttu ja saapumatta jäänyt ovat merkintöjä siitä että joku aikoi
+   * tulla. Ne lasketaan omina lukuinaan, mutta ne eivät ole vieraita
+   * eivätkä täyttöastetta.
+   */
+  pitavat as (
+    select * from varaukset
+    where status in ('pending', 'confirmed', 'arrived', 'completed')
+  ),
+
+  paivat as (
+    select d::date as paiva
+    from generate_series(p_from, p_to, interval '1 day') d
+  ),
+
+  /*
+   * Aukiolotunnit paikallisina hetkinä.
+   *
+   * Sarja lasketaan avaamistunnista aukiolon pituuden yli, jolloin
+   * keskiyön ylittävä ilta jatkuu seuraavan päivän tunteihin sen sijaan
+   * että sarja jäisi tyhjäksi. Tunti pyöristetään alaspäin, jotta
+   * 18:30 avautuva ravintola on auki tunnilla 18 eikä puolikkaalla.
+   */
+  aukitunnit as (
+    select distinct
+      (h.hetki)::date as paiva,
+      extract(hour from h.hetki)::int as tunti
+    from paivat p
+    cross join lateral reservation_windows(p_restaurant, p.paiva) w
+    cross join lateral generate_series(
+      0,
+      floor(
+        (coalesce(w.span_minutes, 0) + extract(minute from w.opens)::int)::numeric / 60
+      )::int
+    ) as g(n)
+    cross join lateral (
+      select date_trunc('hour', (p.paiva + w.opens)::timestamp)
+             + make_interval(hours => g.n) as hetki
+    ) h
+  ),
+
+  /* Auki olleet päivät avauspäivän mukaan: viikonpäivä on avauspäivä. */
+  aukipaivat as (
+    select p.paiva
+    from paivat p
+    where exists (select 1 from reservation_windows(p_restaurant, p.paiva))
+  ),
+
+  /*
+   * Varatut paikat tunneittain.
+   *
+   * Varaus lasketaan jokaiselle tunnille jonka se kattaa: kello 18
+   * alkava kahden tunnin varaus vie paikat myös yhdeksältä. Loppuhetki
+   * vähennetään minuutilla, jottei tasan 20:00 päättyvä varaus näy enää
+   * kahdeksalta.
+   */
+  kaytetyt as (
+    select
+      h.hetki::date as paiva,
+      extract(hour from h.hetki)::int as tunti,
+      sum(v.party_size)::int as paikat,
+      count(*)::int as varauksia
+    from pitavat v
+    cross join lateral generate_series(
+      0,
+      greatest(
+        0,
+        floor(
+          extract(epoch from (
+            date_trunc('hour', v.paattyy - interval '1 minute')
+            - date_trunc('hour', v.alkaa)
+          )) / 3600
+        )::int
+      )
+    ) as gs(n)
+    cross join lateral (
+      select date_trunc('hour', v.alkaa) + make_interval(hours => gs.n) as hetki
+    ) h
+    group by 1, 2
+  )
+
+  select json_build_object(
+    'from', p_from,
+    'to', p_to,
+    'days', v_days,
+
+    'capacity', json_build_object('seats', v_seats, 'tables', v_tables),
+
+    'totals', reservation_totals(p_restaurant, v_from, v_to),
+
+    /* Edeltävä jakso samoilla säännöillä, samasta funktiosta. */
+    'previous', reservation_totals(p_restaurant, v_prev_from, v_from),
+
+    'byDay', coalesce((
+      select json_agg(json_build_object(
+               'date', d.paiva,
+               'reservations', d.n,
+               'guests', d.vieraat,
+               'cancelled', d.peruttu,
+               'noShow', d.ei_saapunut)
+             order by d.paiva)
+      from (
+        select
+          p.paiva,
+          coalesce(v.n, 0) as n,
+          coalesce(v.vieraat, 0) as vieraat,
+          coalesce(v.peruttu, 0) as peruttu,
+          coalesce(v.ei_saapunut, 0) as ei_saapunut
+        from paivat p
+        left join (
+          select
+            alkaa::date as paiva,
+            count(*)::int as n,
+            coalesce(sum(party_size) filter (
+              where status not in ('cancelled', 'no_show')), 0)::int as vieraat,
+            count(*) filter (where status = 'cancelled')::int as peruttu,
+            count(*) filter (where status = 'no_show')::int as ei_saapunut
+          from varaukset
+          group by 1
+        ) v on v.paiva = p.paiva
+      ) d
+    ), '[]'::json),
+
+    'bySource', coalesce((
+      select json_agg(json_build_object('source', s.source, 'count', s.n)
+                      order by s.n desc, s.source)
+      from (
+        select source, count(*)::int as n from varaukset group by source
+      ) s
+    ), '[]'::json),
+
+    'byHour', coalesce((
+      select json_agg(json_build_object(
+               'hour', h.tunti,
+               'reservations', h.n,
+               'guests', h.paikat)
+             order by h.tunti)
+      from (
+        select extract(hour from alkaa)::int as tunti,
+               count(*)::int as n,
+               coalesce(sum(party_size), 0)::int as paikat
+        from pitavat group by 1
+      ) h
+    ), '[]'::json),
+
+    'byWeekday', coalesce((
+      select json_agg(json_build_object(
+               'weekday', w.vk,
+               'reservations', w.n,
+               'guests', w.paikat,
+               'days', w.paivia,
+               'openDays', w.auki)
+             order by w.vk)
+      from (
+        select
+          d.vk,
+          d.paivia,
+          coalesce(a.auki, 0) as auki,
+          coalesce(v.n, 0) as n,
+          coalesce(v.paikat, 0) as paikat
+        from (
+          select extract(isodow from paiva)::int as vk, count(*)::int as paivia
+          from paivat group by 1
+        ) d
+        left join (
+          select extract(isodow from paiva)::int as vk,
+                 count(distinct paiva)::int as auki
+          from aukipaivat group by 1
+        ) a on a.vk = d.vk
+        left join (
+          select extract(isodow from alkaa)::int as vk,
+                 count(*)::int as n,
+                 coalesce(sum(party_size), 0)::int as paikat
+          from pitavat group by 1
+        ) v on v.vk = d.vk
+      ) w
+    ), '[]'::json),
+
+    'occupancy', coalesce((
+      select json_agg(json_build_object(
+               'weekday', o.vk,
+               'hour', o.tunti,
+               'seats', o.paikat,
+               'days', o.paivia)
+             order by o.vk, o.tunti)
+      from (
+        select
+          extract(isodow from t.paiva)::int as vk,
+          t.tunti,
+          round(avg(coalesce(k.paikat, 0))::numeric, 2) as paikat,
+          count(*)::int as paivia
+        from aukitunnit t
+        left join kaytetyt k on k.paiva = t.paiva and k.tunti = t.tunti
+        group by 1, 2
+      ) o
+    ), '[]'::json)
+  )
+  into v_out;
+
+  return v_out;
+end;
+$fn$;
+
+revoke all on function public.reservation_stats(uuid, date, date) from anon;
+grant execute on function public.reservation_stats(uuid, date, date) to authenticated;
+
+
+-- ===========================================================================
+-- 0095_reservation_import.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0095 — Pöytien ja varausten tuonti toisesta järjestelmästä
+-- ---------------------------------------------------------------------------
+--
+-- Ravintola joka vaihtaa varausjärjestelmää ei aloita tyhjästä salista.
+-- Sillä on pöydät, paikkaluvut ja kalenterillinen varauksia, ja ilman
+-- niitä uusi järjestelmä on käyttökelvoton juuri sinä päivänä jona se
+-- otetaan käyttöön.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI TUONTI KULKEE VARAUSMOOTTORIN LÄPI
+-- ---------------------------------------------------------------------------
+--
+-- Suora insert reservations-tauluun olisi nopeampi ja väärä: silloin
+-- tuodulla varauksella ei olisi liitosriviä pöytään, eikä se veisi
+-- pöytää keneltäkään. Sali näyttäisi tuodut varaukset listassa ja myisi
+-- samat pöydät uudelleen verkossa.
+--
+-- Tuonti kutsuu siis reservation_book:ia kuten jokainen muukin varaus.
+-- Siitä seuraa myös, että tuonti kunnioittaa päällekkäisyyttä: rivi joka
+-- ei mahdu saliin ei mene läpi, ja sen näkee raportista.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI RIVIN VIRHE EI KAADA TUONTIA
+-- ---------------------------------------------------------------------------
+--
+-- Tuhannen rivin tiedostossa on aina rivejä joissa on tyhjä nimi tai
+-- kahdesti sama pöytä. Jos yksi niistä peruisi koko tuonnin, ravintola
+-- korjaisi tiedostoa rivi kerrallaan tietämättä montako muuta odottaa.
+--
+-- Jokainen rivi on siis oma alitransaktionsa: se joko menee läpi tai
+-- palautuu yksin, ja raportti kertoo rivinumeroittain kumpi kävi.
+--
+-- ---------------------------------------------------------------------------
+-- MIKSI SAMAN TIEDOSTON VOI TUODA KAHDESTI
+-- ---------------------------------------------------------------------------
+--
+-- Tuonti keskeytyy: selain sulkeutuu, verkko katkeaa, tiedosto oli
+-- puolikas. Ainoa turvallinen tapa jatkaa on ajaa sama tiedosto
+-- uudelleen, joten rivi joka on jo kannassa (sama nimi, sama alkuhetki)
+-- ohitetaan eikä kahdenneta.
+
+-- ---------------------------------------------------------------------------
+-- Pöydät
+-- ---------------------------------------------------------------------------
+
+create or replace function reservation_import_tables(
+  p_restaurant uuid,
+  p_rows jsonb
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_row jsonb;
+  v_index int := 0;
+  v_name text;
+  v_min int;
+  v_max int;
+  v_area text;
+  v_area_id uuid;
+  v_shape text;
+  v_id uuid;
+  v_added int := 0;
+  v_skipped int := 0;
+  v_failed int := 0;
+  v_results jsonb := '[]'::jsonb;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if jsonb_typeof(p_rows) <> 'array' then
+    raise exception 'Virheellinen aineisto.' using errcode = '22023';
+  end if;
+
+  if jsonb_array_length(p_rows) > 500 then
+    raise exception 'Liian monta rivia kerralla.' using errcode = '22003';
+  end if;
+
+  for v_row in select * from jsonb_array_elements(p_rows) loop
+    v_index := v_index + 1;
+
+    begin
+      v_name := nullif(trim(coalesce(v_row->>'name', '')), '');
+      v_min := coalesce((v_row->>'seatsMin')::int, 1);
+      v_max := coalesce((v_row->>'seatsMax')::int, v_min);
+      v_area := nullif(trim(coalesce(v_row->>'area', '')), '');
+      v_shape := lower(coalesce(nullif(trim(coalesce(v_row->>'shape', '')), ''), 'round'));
+
+      if v_name is null then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'name');
+        continue;
+      end if;
+
+      if v_min < 1 or v_max < v_min or v_max > 200 then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'seats');
+        continue;
+      end if;
+
+      if v_shape not in ('round', 'square', 'rect') then
+        v_shape := 'round';
+      end if;
+
+      /* Sama nimi kahdesti on tuonnin uusinta eikä uusi pöytä. */
+      if exists (
+        select 1 from restaurant_tables t
+        where t.restaurant_id = p_restaurant
+          and lower(t.name) = lower(v_name)
+      ) then
+        v_skipped := v_skipped + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', true, 'skipped', true, 'name', v_name);
+        continue;
+      end if;
+
+      v_area_id := null;
+      if v_area is not null then
+        select a.id into v_area_id
+        from dining_areas a
+        where a.restaurant_id = p_restaurant and lower(a.name) = lower(v_area);
+
+        if v_area_id is null then
+          insert into dining_areas (restaurant_id, name)
+          values (p_restaurant, left(v_area, 60))
+          returning id into v_area_id;
+        end if;
+      end if;
+
+      insert into restaurant_tables
+        (restaurant_id, area_id, name, seats_min, seats_max, shape)
+      values
+        (p_restaurant, v_area_id, left(v_name, 60), v_min, v_max, v_shape::table_shape)
+      returning id into v_id;
+
+      v_added := v_added + 1;
+      v_results := v_results || jsonb_build_object(
+        'row', v_index, 'ok', true, 'id', v_id, 'name', v_name);
+
+    exception
+      when others then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'failed');
+    end;
+  end loop;
+
+  return json_build_object(
+    'added', v_added,
+    'skipped', v_skipped,
+    'failed', v_failed,
+    'rows', v_results
+  );
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------------
+-- Varaukset
+-- ---------------------------------------------------------------------------
+
+create or replace function reservation_import_reservations(
+  p_restaurant uuid,
+  p_rows jsonb
+)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  v_row jsonb;
+  v_index int := 0;
+  v_date date;
+  v_time time;
+  v_party int;
+  v_name text;
+  v_status reservation_status;
+  v_start timestamptz;
+  v_tables uuid[];
+  v_missing text;
+  v_id uuid;
+  v_added int := 0;
+  v_skipped int := 0;
+  v_failed int := 0;
+  v_results jsonb := '[]'::jsonb;
+begin
+  if not is_manager(p_restaurant) then
+    raise exception 'Ei oikeutta.' using errcode = 'insufficient_privilege';
+  end if;
+
+  if jsonb_typeof(p_rows) <> 'array' then
+    raise exception 'Virheellinen aineisto.' using errcode = '22023';
+  end if;
+
+  if jsonb_array_length(p_rows) > 200 then
+    raise exception 'Liian monta rivia kerralla.' using errcode = '22003';
+  end if;
+
+  for v_row in select * from jsonb_array_elements(p_rows) loop
+    v_index := v_index + 1;
+
+    begin
+      v_name := nullif(trim(coalesce(v_row->>'name', '')), '');
+      v_date := (v_row->>'date')::date;
+      v_time := (v_row->>'time')::time;
+      v_party := coalesce((v_row->>'partySize')::int, 0);
+
+      if v_name is null then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'name');
+        continue;
+      end if;
+
+      if v_date is null or v_time is null then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'time');
+        continue;
+      end if;
+
+      if v_party < 1 or v_party > 200 then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'party');
+        continue;
+      end if;
+
+      v_status := coalesce(
+        nullif(trim(coalesce(v_row->>'status', '')), ''), 'confirmed'
+      )::reservation_status;
+
+      v_start := reservation_start_at(p_restaurant, v_date, v_time);
+
+      /* Sama nimi samaan hetkeen on jo tuotu. */
+      if exists (
+        select 1 from reservations r
+        where r.restaurant_id = p_restaurant
+          and r.starts_at = v_start
+          and lower(r.guest_name) = lower(v_name)
+      ) then
+        v_skipped := v_skipped + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', true, 'skipped', true, 'name', v_name);
+        continue;
+      end if;
+
+      /*
+       * Pöydät nimeltä, jos tiedosto kertoo ne.
+       *
+       * Tuntematon pöydän nimi ei ole virhe vaan tieto siitä että
+       * salinäkymä on eri: rivi menee läpi ilman pöytää, jolloin
+       * moottori valitsee vapaan. Raportti kertoo rivin, jotta
+       * ravintola voi tarkistaa sen.
+       */
+      v_tables := null;
+      v_missing := null;
+
+      if jsonb_typeof(v_row->'tables') = 'array'
+         and jsonb_array_length(v_row->'tables') > 0 then
+        select
+          array_agg(t.id),
+          string_agg(x.nimi, ', ') filter (where t.id is null)
+        into v_tables, v_missing
+        from jsonb_array_elements_text(v_row->'tables') as x(nimi)
+        left join restaurant_tables t
+          on t.restaurant_id = p_restaurant
+         and lower(t.name) = lower(trim(x.nimi));
+
+        v_tables := (
+          select array_agg(id) from unnest(v_tables) as u(id) where id is not null
+        );
+      end if;
+
+      v_id := reservation_book(
+        p_restaurant,
+        v_start,
+        v_party,
+        left(v_name, 120),
+        left(trim(coalesce(v_row->>'phone', '')), 40),
+        left(trim(coalesce(v_row->>'email', '')), 160),
+        left(trim(coalesce(v_row->>'note', '')), 500),
+        'admin'::reservation_source,
+        v_status,
+        nullif((v_row->>'minutes'), '')::int,
+        v_tables,
+        null,
+        left(trim(coalesce(v_row->>'allergies', '')), 200)
+      );
+
+      v_added := v_added + 1;
+      v_results := v_results || jsonb_build_object(
+        'row', v_index, 'ok', true, 'id', v_id, 'name', v_name,
+        'unknownTables', v_missing);
+
+    exception
+      when exclusion_violation then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'taken');
+      when others then
+        v_failed := v_failed + 1;
+        v_results := v_results || jsonb_build_object(
+          'row', v_index, 'ok', false, 'error', 'failed');
+    end;
+  end loop;
+
+  return json_build_object(
+    'added', v_added,
+    'skipped', v_skipped,
+    'failed', v_failed,
+    'rows', v_results
+  );
+end;
+$fn$;
+
+revoke all on function reservation_import_tables(uuid, jsonb) from public, anon;
+revoke all on function reservation_import_reservations(uuid, jsonb) from public, anon;
+
+grant execute on function reservation_import_tables(uuid, jsonb) to authenticated;
+grant execute on function reservation_import_reservations(uuid, jsonb) to authenticated;
 

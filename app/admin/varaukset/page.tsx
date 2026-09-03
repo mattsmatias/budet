@@ -391,12 +391,44 @@ function ReservationRow({
           ) : null}
         </p>
 
+        {/*
+          Allergia omalle rivilleen ja väriin.
+
+          Se on ainoa varauksen tieto jonka lukematta jättämisellä on
+          seuraus jota ei voi korjata jälkikäteen. Toiveen kanssa samassa
+          harmaassa lauseessa se luetaan yhtä tarkasti kuin pöytätoive —
+          eli usein ei ollenkaan.
+        */}
+        {reservation.allergies ? (
+          <p
+            className="mt-1 text-[12.5px] font-semibold"
+            style={{ color: "var(--rf-amber-text)" }}
+          >
+            {`⚠ ${reservation.allergies}`}
+          </p>
+        ) : null}
+
         {reservation.note ? (
           <p
             className="mt-1 text-[12.5px]"
             style={{ color: "var(--rf-text-2)" }}
           >
             {reservation.note}
+          </p>
+        ) : null}
+
+        {/*
+          Varausnumero rivin loppuun.
+
+          Sitä ei lueta illan aikana vaan silloin kun asiakas soittaa ja
+          sanoo numeron. Siksi se on pieni ja harmaa muttei piilossa.
+        */}
+        {reservation.reference ? (
+          <p
+            className="mt-1 rf-num text-[11.5px] tracking-wide"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {reservation.reference}
           </p>
         ) : null}
       </div>

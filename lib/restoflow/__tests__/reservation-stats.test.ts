@@ -8,6 +8,7 @@ import {
   busiestHours,
   busiestWeekdays,
   cancellationRate,
+  change,
   findingsFor,
   noShowRate,
   occupancyForWeekday,
@@ -15,6 +16,8 @@ import {
   peakWindow,
   perOpenDay,
   quietWindow,
+  trendBars,
+  trendPeak,
   type ReservationStats,
   type StatsOccupancy,
   type StatsTotals,
@@ -509,5 +512,89 @@ describe("findingsFor", () => {
     const tunnisteet = havainnot.map((h) => h.id);
     expect(new Set(tunnisteet).size).toBe(tunnisteet.length);
     expect(havainnot.length).toBeGreaterThan(3);
+  });
+});
+
+// ===========================================================================
+// Vertailu edelliseen jaksoon
+// ===========================================================================
+
+describe("change", () => {
+  it("laskee kasvun ja laskun", () => {
+    expect(change(120, 100)).toBeCloseTo(0.2, 5);
+    expect(change(80, 100)).toBeCloseTo(-0.2, 5);
+  });
+
+  it("ei anna prosenttia nollasta kasvamiselle", () => {
+    /*
+     * Kolme varausta kuukaudessa jona edellinen oli tyhjä on "kolme
+     * varausta". "+300 %" olisi tarkkuutta jota luvussa ei ole.
+     */
+    expect(change(3, 0)).toBeNull();
+    expect(change(0, 0)).toBeNull();
+  });
+});
+
+// ===========================================================================
+// Trendi
+// ===========================================================================
+
+function paiva(date: string, reservations: number, cancelled = 0) {
+  return { date, reservations, guests: reservations * 2, cancelled, noShow: 0 };
+}
+
+describe("trendBars", () => {
+  it("pitää päivät sellaisenaan kun niitä on vähän", () => {
+    const bars = trendBars([paiva("2026-09-01", 3), paiva("2026-09-02", 5)]);
+
+    expect(bars).toHaveLength(2);
+    expect(bars[0].days).toBe(1);
+    expect(bars[0].endDate).toBe("2026-09-01");
+  });
+
+  it("niputtaa pitkän jakson säilyttäen summat", () => {
+    const days = Array.from({ length: 365 }, (_, i) =>
+      paiva(`2026-${String(Math.floor(i / 31) + 1).padStart(2, "0")}-01`, 2, 1),
+    );
+
+    const bars = trendBars(days, 60);
+
+    expect(bars.length).toBeLessThanOrEqual(60);
+
+    /* Summa säilyy: pylväs on varauksia eikä keskiarvo. */
+    const summa = bars.reduce((sum, bar) => sum + bar.reservations, 0);
+    expect(summa).toBe(365 * 2);
+  });
+
+  it("kertoo nipun alun ja lopun", () => {
+    const days = [
+      paiva("2026-09-01", 1),
+      paiva("2026-09-02", 1),
+      paiva("2026-09-03", 1),
+      paiva("2026-09-04", 1),
+    ];
+
+    const bars = trendBars(days, 2);
+
+    expect(bars[0].date).toBe("2026-09-01");
+    expect(bars[0].endDate).toBe("2026-09-02");
+    expect(bars[0].days).toBe(2);
+  });
+
+  it("palauttaa tyhjästä tyhjän", () => {
+    expect(trendBars([])).toEqual([]);
+  });
+});
+
+describe("trendPeak", () => {
+  it("antaa korkeimman pylvään", () => {
+    expect(
+      trendPeak(trendBars([paiva("2026-09-01", 3), paiva("2026-09-02", 7)])),
+    ).toBe(7);
+  });
+
+  it("antaa nollan tyhjästä eikä miinus ääretöntä", () => {
+    /* Nolla on turvallinen jakaja: Math.max(...[]) olisi -Infinity. */
+    expect(trendPeak([])).toBe(0);
   });
 });

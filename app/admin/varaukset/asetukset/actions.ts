@@ -71,6 +71,10 @@ const AsetusSchema = z.object({
     .transform((value) => (value === "" ? null : value)),
 
   kitchenWindowMinutes: z.coerce.number().int().min(15).max(240),
+
+  /* Nolla on käytössä oleva arvo: peruutus onnistuu alkuhetkeen asti. */
+  cancelCutoffHours: z.coerce.number().int().min(0).max(168),
+
   themeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   themeDark: z.coerce.boolean(),
   themeRadius: z.coerce.number().int().min(0).max(28),
@@ -93,6 +97,7 @@ export async function saveSettings(
     leadMinutes: formData.get("leadMinutes"),
     kitchenCapacity: formData.get("kitchenCapacity") ?? "",
     kitchenWindowMinutes: formData.get("kitchenWindowMinutes") ?? 60,
+    cancelCutoffHours: formData.get("cancelCutoffHours") ?? 24,
     themeColor: formData.get("themeColor"),
     themeDark: formData.get("themeDark") === "1",
     themeRadius: formData.get("themeRadius"),
@@ -116,6 +121,7 @@ export async function saveSettings(
       lead_minutes: parsed.data.leadMinutes,
       kitchen_capacity: parsed.data.kitchenCapacity,
       kitchen_window_minutes: parsed.data.kitchenWindowMinutes,
+      cancel_cutoff_hours: parsed.data.cancelCutoffHours,
       theme_color: parsed.data.themeColor,
       theme_dark: parsed.data.themeDark,
       theme_radius: parsed.data.themeRadius,
@@ -164,7 +170,16 @@ export async function saveHours(
     if (!KELLO.test(opens) || !KELLO.test(last)) {
       return { error: t.varausAsetus.errHours };
     }
-    if (last <= opens) return { error: t.varausAsetus.errHourOrder };
+
+    /*
+     * Viimeinen aika saa olla avaamista pienempi: se on seuraava päivä.
+     *
+     * Yökahvila avautuu kuudelta ja sulkee kahdelta, ja ennen tätä
+     * sellaista aukioloa ei voinut kirjata lainkaan. Sama ei silti
+     * tarkoita samaa: opens = last olisi joko nolla tai vuorokausi,
+     * eikä kukaan voi tietää kumpi.
+     */
+    if (last === opens) return { error: t.varausAsetus.errHourEqual };
 
     rivit.push({
       restaurant_id: restaurant.id,
@@ -262,7 +277,8 @@ export async function addException(
   const opens = String(formData.get("opens") ?? "").trim();
   const last = String(formData.get("last") ?? "").trim();
 
-  if (!closed && (!KELLO.test(opens) || !KELLO.test(last) || last <= opens)) {
+  /* Poikkeuspäivä saa jatkua keskiyön yli samoin kuin viikonpäivä. */
+  if (!closed && (!KELLO.test(opens) || !KELLO.test(last) || last === opens)) {
     return { error: t.varausAsetus.errHours };
   }
 

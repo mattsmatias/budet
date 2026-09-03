@@ -74,6 +74,14 @@ export interface RestaurantTable {
 
 export interface Reservation {
   id: string;
+  /**
+   * Varausnumero jonka asiakas sai vahvistuksessa.
+   *
+   * Kuusi merkkiä, ei juokseva luku. Sen ainoa tehtävä on olla se
+   * merkkijono jonka asiakas lukee puhelimessa ääneen ja jolla sali
+   * löytää varauksen ilman nimen tavaamista.
+   */
+  reference: string | null;
   startsAt: string;
   endsAt: string;
   /** Kellonaika ravintolan vyöhykkeellä, kannan muotoilemana. */
@@ -87,6 +95,15 @@ export interface Reservation {
   guestPhone: string | null;
   guestEmail: string | null;
   note: string | null;
+
+  /**
+   * Allergiat erillään toiveista.
+   *
+   * Toive on pöytä ikkunan vieressä, allergia on se rivi jonka
+   * lukematta jättäminen vie ihmisen sairaalaan. Siksi ne eivät ole
+   * samassa kentässä eivätkä näytä samalta.
+   */
+  allergies: string | null;
   tableIds: string[];
 
   /** Milloin lasku pyydettiin. Null kun sitä ei ole pyydetty. */
@@ -100,6 +117,9 @@ export interface ReservationSettings {
   turnaroundMinutes: number;
   minParty: number;
   maxParty: number;
+  /** Null kun rajaa ei ole asetettu. Ei sama asia kuin nolla. */
+  kitchenCapacity?: number | null;
+  kitchenWindowMinutes?: number;
 }
 
 export interface ReservationDay {
@@ -118,8 +138,18 @@ export interface ReservationDay {
    * Null kun ravintola on kiinni tai aukioloaikoja ei ole asetettu.
    * Kalenteri venyy silloin varausten mukaan — kiinni olevanakin
    * saliin voi kirjata walk-inin.
+   *
+   * spanMinutes on aukiolon pituus minuutteina. Se on eri tieto kuin
+   * kahden kellonajan erotus: ilta 18:00–02:00 on kahdeksan tuntia
+   * eikä miinus kuusitoista, ja aikajana piirretään pituuden mukaan.
    */
-  hours: { opens: string; lastSeating: string } | null;
+  hours: ReservationHours | null;
+}
+
+export interface ReservationHours {
+  opens: string;
+  lastSeating: string;
+  spanMinutes: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,6 +161,90 @@ export interface ReservationHour {
   weekday: number;
   opens: string;
   lastSeating: string;
+}
+
+/**
+ * Aukiolon pituus minuutteina.
+ *
+ * Viimeinen aika joka on avaamista pienempi tarkoittaa seuraavaa
+ * päivää: 18:00–02:00 on kahdeksan tuntia. Sama sääntö kuin kannan
+ * reservation_span_minutes-funktiossa, ja se on kirjoitettu tänne
+ * uudelleen vain siksi, että lomake varoittaa ennen tallennusta —
+ * päätöksen tekee silti kanta.
+ */
+export function hourSpanMinutes(opens: string, lastSeating: string): number {
+  const alku = clockMinutes(opens);
+  const loppu = clockMinutes(lastSeating);
+
+  if (alku === null || loppu === null) return 0;
+  return loppu > alku ? loppu - alku : loppu + 24 * 60 - alku;
+}
+
+/** "18:30" → 1110. Kelvoton syöte on null eikä nolla: 00:00 on aika. */
+function clockMinutes(value: string): number | null {
+  const osat = /^(\d{1,2}):(\d{2})$/.exec((value ?? "").trim());
+  if (!osat) return null;
+
+  const tunnit = Number(osat[1]);
+  const minuutit = Number(osat[2]);
+
+  if (tunnit > 23 || minuutit > 59) return null;
+  return tunnit * 60 + minuutit;
+}
+
+export interface HourConflict {
+  /** Päivä jonka ilta jatkuu seuraavan päälle. */
+  weekday: number;
+  /** Päivä johon se ulottuu. */
+  nextWeekday: number;
+  /** Mihin asti edellinen ilta jatkuu. */
+  until: string;
+}
+
+/**
+ * Illat jotka menevät päällekkäin.
+ *
+ * Keskiyön yli jatkuva ilta on nyt mahdollinen, ja sen myötä myös
+ * asetus jossa lauantai-ilta jatkuu kello kolmeen ja sunnuntai avautuu
+ * kello kahdelta. Kanta ottaa molemmat vastaan — ne ovat kaksi
+ * erillistä riviä eivätkä tiedä toisistaan — mutta salinäkymä joutuu
+ * silloin päättämään kumpaan iltaan kello 02:30 alkava varaus kuuluu,
+ * ja se päätös on aina toiselle väärä.
+ *
+ * Siksi tämä on varoitus eikä virhe: aukiolo on ravintolan asia, ja
+ * järjestelmä kertoo mitä siitä seuraa. Ilman varoitusta seuraus
+ * huomattaisiin vasta puuttuvasta varauksesta.
+ */
+export function hourConflicts(
+  hours: { weekday: number; opens: string; lastSeating: string }[],
+): HourConflict[] {
+  const conflicts: HourConflict[] = [];
+
+  for (const row of hours) {
+    const alku = clockMinutes(row.opens);
+    const loppu = clockMinutes(row.lastSeating);
+    if (alku === null || loppu === null) continue;
+
+    /* Ilta joka päättyy ennen keskiyötä ei voi osua seuraavaan. */
+    if (loppu > alku) continue;
+
+    const seuraava = (row.weekday % 7) + 1;
+    const naapuri = hours.find((h) => h.weekday === seuraava);
+    if (!naapuri) continue;
+
+    const naapurinAlku = clockMinutes(naapuri.opens);
+    if (naapurinAlku === null) continue;
+
+    if (naapurinAlku < loppu) {
+      conflicts.push({
+        weekday: row.weekday,
+        nextWeekday: seuraava,
+        until: row.lastSeating,
+      });
+    }
+  }
+
+  return conflicts;
 }
 
 export interface ReservationDuration {
@@ -180,11 +294,21 @@ export interface FullSettings {
    */
   kitchenCapacity: number | null;
   kitchenWindowMinutes: number;
+
+  /**
+   * Kuinka monta tuntia ennen varausta asiakas voi vielä perua itse.
+   *
+   * Nolla tarkoittaa alkuhetkeen asti. Raja koskee vain verkkoa: sali
+   * peruu varauksen milloin tahansa, koska tieto siitä ettei seurue
+   * tule on arvokas myös kymmenen minuuttia ennen.
+   */
+  cancelCutoffHours: number;
 }
 
 export const DEFAULT_SETTINGS: FullSettings = {
   kitchenCapacity: null,
   kitchenWindowMinutes: 60,
+  cancelCutoffHours: 24,
   enabled: false,
   slotMinutes: 30,
   defaultDurationMinutes: 90,

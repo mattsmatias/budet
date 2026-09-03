@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   BLOCKING_STATUSES,
+  hourConflicts,
+  hourSpanMinutes,
   nextStatuses,
   sortForService,
   summarise,
@@ -45,6 +47,7 @@ function varaus(partial: Partial<Reservation> = {}): Reservation {
 
   return {
     id: "v1",
+    reference: "ABC234",
     startsAt: alku.toISOString(),
     endsAt: loppu.toISOString(),
     time: "20:00",
@@ -56,6 +59,7 @@ function varaus(partial: Partial<Reservation> = {}): Reservation {
     guestPhone: null,
     guestEmail: null,
     note: null,
+    allergies: null,
     tableIds: ["p1"],
     billRequestedAt: null,
     ...partial,
@@ -347,5 +351,73 @@ describe("BLOCKING_STATUSES", () => {
       "confirmed",
       "pending",
     ]);
+  });
+});
+
+// ===========================================================================
+// Aukioloajat
+// ===========================================================================
+
+describe("hourSpanMinutes", () => {
+  it("laskee tavallisen illan", () => {
+    expect(hourSpanMinutes("11:00", "21:00")).toBe(600);
+  });
+
+  it("laskee keskiyön yli jatkuvan illan", () => {
+    /* Yökahvila: 18:00–02:00 on kahdeksan tuntia eikä miinus kuusitoista. */
+    expect(hourSpanMinutes("18:00", "02:00")).toBe(480);
+  });
+
+  it("palauttaa nollan kelvottomasta", () => {
+    expect(hourSpanMinutes("", "02:00")).toBe(0);
+    expect(hourSpanMinutes("18:00", "25:00")).toBe(0);
+  });
+});
+
+describe("hourConflicts", () => {
+  it("ei valita tavallisesta viikosta", () => {
+    const hours = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({
+      weekday,
+      opens: "11:00",
+      lastSeating: "21:00",
+    }));
+
+    expect(hourConflicts(hours)).toEqual([]);
+  });
+
+  it("huomaa illan joka jatkuu seuraavan avaamisen yli", () => {
+    /* Lauantai kolmeen ja sunnuntai auki kahdelta: sama tunti kahdesti. */
+    const conflicts = hourConflicts([
+      { weekday: 6, opens: "18:00", lastSeating: "03:00" },
+      { weekday: 7, opens: "02:00", lastSeating: "22:00" },
+    ]);
+
+    expect(conflicts).toEqual([
+      { weekday: 6, nextWeekday: 7, until: "03:00" },
+    ]);
+  });
+
+  it("sallii illan joka päättyy ennen seuraavan avaamista", () => {
+    expect(
+      hourConflicts([
+        { weekday: 6, opens: "18:00", lastSeating: "02:00" },
+        { weekday: 7, opens: "12:00", lastSeating: "22:00" },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("kiertää sunnuntaista maanantaihin", () => {
+    const conflicts = hourConflicts([
+      { weekday: 7, opens: "18:00", lastSeating: "04:00" },
+      { weekday: 1, opens: "03:00", lastSeating: "22:00" },
+    ]);
+
+    expect(conflicts[0]).toMatchObject({ weekday: 7, nextWeekday: 1 });
+  });
+
+  it("ei valita päivästä jonka jälkeinen on kiinni", () => {
+    expect(
+      hourConflicts([{ weekday: 6, opens: "18:00", lastSeating: "03:00" }]),
+    ).toEqual([]);
   });
 });

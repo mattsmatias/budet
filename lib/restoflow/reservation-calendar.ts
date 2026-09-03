@@ -92,6 +92,61 @@ export function durationOf(start: string, end: string): number {
 // Aikajana
 // ---------------------------------------------------------------------------
 
+/**
+ * Ilta jonka kalenteri piirtää.
+ *
+ * origin on avaamisaika minuutteina keskiyöstä ja span aukiolon pituus.
+ * Yhdessä ne kertovat mihin iltaan kellonaika kuuluu: kun ravintola
+ * avautuu 18:00 ja sulkee 02:00, kello 00:30 ei ole illan alku vaan sen
+ * loppu — ja aikajanalla se on minuutti 1470 eikä 30.
+ *
+ * Ilman tätä kaksi minuuttilukua olisivat vertailukelpoisia vain
+ * ennen keskiyötä, ja keskiyön yli jatkuvan illan varaukset hyppäisivät
+ * janan yläreunaan päällekkäin aamun kanssa.
+ */
+export interface Night {
+  origin: number;
+  span: number;
+}
+
+export const NO_NIGHT: Night = { origin: 0, span: 0 };
+
+/**
+ * Kuinka pitkälle viimeisen ajan yli varaus voi vielä kuulua iltaan.
+ *
+ * Viimeinen istumisaika on viimeinen aika johon voi varata, ei
+ * sulkemisaika: sali kirjaa walk-inin myös sen jälkeen. Kolme tuntia
+ * kattaa illan viimeiset seurueet ilman että aamupäivän merkintä
+ * tulkitaan edelliseksi yöksi.
+ */
+const NIGHT_SLACK = 180;
+
+export function nightFor(
+  hours: { opens: string; spanMinutes: number } | null,
+): Night {
+  if (!hours) return NO_NIGHT;
+
+  return {
+    origin: minutesOf(hours.opens),
+    span: Math.max(0, Math.round(hours.spanMinutes)),
+  };
+}
+
+/**
+ * Kellonaika illan minuuteiksi.
+ *
+ * Etäisyys avaamisesta kierrätetään vuorokauden yli. Illan ulkopuolelle
+ * jäävä aika palautetaan sellaisenaan: aamupäivän walk-in on kello
+ * kymmenen eikä seuraavan vuorokauden puolella.
+ */
+export function nightMinutes(time: string, night: Night): number {
+  const t = minutesOf(time);
+  if (night.span <= 0) return t;
+
+  const off = (((t - night.origin) % 1440) + 1440) % 1440;
+  return off <= night.span + NIGHT_SLACK ? night.origin + off : t;
+}
+
 export interface Axis {
   /** Ensimmäinen minuutti jonka kalenteri näyttää. */
   from: number;
@@ -99,6 +154,8 @@ export interface Axis {
   to: number;
   /** Tuntiviivojen minuutit. */
   ticks: number[];
+  /** Ilta jonka mukaan kellonajat tulkitaan. */
+  night: Night;
 }
 
 /**
@@ -114,19 +171,20 @@ export interface Axis {
  */
 export function axisFor(
   reservations: CalendarReservation[],
-  hours: { opens: string; lastSeating: string } | null,
+  hours: { opens: string; lastSeating: string; spanMinutes: number } | null,
 ): Axis {
+  const night = nightFor(hours);
   const alut: number[] = [];
   const loput: number[] = [];
 
   if (hours) {
-    alut.push(minutesOf(hours.opens));
+    alut.push(night.origin);
     /* Viimeinen istumisaika ei ole sulkemisaika: illallinen jatkuu. */
-    loput.push(minutesOf(hours.lastSeating) + 120);
+    loput.push(night.origin + night.span + 120);
   }
 
   for (const row of reservations) {
-    const alku = minutesOf(row.time);
+    const alku = nightMinutes(row.time, night);
     alut.push(alku);
     loput.push(alku + durationOf(row.time, row.endTime));
   }
@@ -138,12 +196,24 @@ export function axisFor(
   }
 
   const from = Math.max(0, Math.floor((Math.min(...alut) - 60) / 60) * 60);
-  const to = Math.min(24 * 60, Math.ceil((Math.max(...loput) + 60) / 60) * 60);
+
+  /*
+   * Jana ylittää keskiyön vain jos ilta ylittää sen.
+   *
+   * Ennen keskiyön yli ulottuvaa aukioloa jana katkesi aina
+   * vuorokauteen, ja se oli oikein: kello 23:59 päättyvän walk-inin
+   * jälkeen ei ole mitään näytettävää. Nyt raja on siirrettävä, mutta
+   * vain silloin kun illassa oikeasti on aamuyön puolta — muuten
+   * tavallisen illan jana kasvaisi tunnin tyhjää.
+   */
+  const viimeinen = Math.max(...loput);
+  const raja = viimeinen > 24 * 60 ? 36 * 60 : 24 * 60;
+  const to = Math.min(raja, Math.ceil((viimeinen + 60) / 60) * 60);
 
   const ticks: number[] = [];
   for (let m = from; m <= to; m += 60) ticks.push(m);
 
-  return { from, to: Math.max(to, from + 60), ticks };
+  return { from, to: Math.max(to, from + 60), ticks, night };
 }
 
 /**
@@ -163,7 +233,7 @@ export function blockPosition(
 ): { top: number; height: number } {
   const pituus = Math.max(1, axis.to - axis.from);
 
-  const alku = minutesOf(reservation.time);
+  const alku = nightMinutes(reservation.time, axis.night);
   const loppu = alku + durationOf(reservation.time, reservation.endTime);
 
   const rajattuAlku = Math.max(axis.from, Math.min(axis.to, alku));
@@ -254,6 +324,8 @@ export function conflictFor(input: {
   durationMinutes: number;
   others: CalendarReservation[];
   turnaroundMinutes?: number;
+  /** Ilta jonka mukaan muiden kellonajat tulkitaan. */
+  night?: Night;
 }): Conflict | null {
   const {
     reservation,
@@ -262,6 +334,7 @@ export function conflictFor(input: {
     durationMinutes,
     others,
     turnaroundMinutes = 0,
+    night = NO_NIGHT,
   } = input;
 
   if (!blocks(reservation.status)) return null;
@@ -273,7 +346,7 @@ export function conflictFor(input: {
     if (!blocks(other.status)) continue;
     if (!other.tableIds.some((id) => tableIds.includes(id))) continue;
 
-    const toinenAlku = minutesOf(other.time);
+    const toinenAlku = nightMinutes(other.time, night);
     const toinenLoppu = toinenAlku + durationOf(other.time, other.endTime);
 
     if (

@@ -322,6 +322,18 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    */
   { href: "/admin/varaukset/asetukset", requires: "reservations.manage" },
   /*
+   * Varauslista on samaa lukuoikeutta kuin salinäkymä.
+   *
+   * Tarjoilija saa etsiä varauksen nimellä: se on juuri sitä salityötä
+   * jota varten lista tehtiin. Yhteystiedot karsii kanta roolin mukaan,
+   * ei tämä rivi.
+   */
+  { href: "/admin/varaukset/lista", requires: "reservations.view" },
+  /*
+   * Tuonti on esihenkilön työkalu ja kirjoittaa satoja varauksia.
+   */
+  { href: "/admin/varaukset/tuonti", requires: "reservations.manage" },
+  /*
    * Analytiikka on esihenkilön näkymä, ei tarjoilijan.
    *
    * Peruutusaste ja vieraiden määrä ovat liiketoiminnan lukuja samaan

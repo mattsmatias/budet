@@ -16,6 +16,8 @@ import { cancelPublicReservation } from "@/lib/restoflow/public-reservations";
 
 export interface CancelState {
   error?: string;
+  /** Rajan tunnit, kun peruutus tuli liian myöhään. */
+  cutoffHours?: number;
   done?: boolean;
 }
 
@@ -30,7 +32,19 @@ export async function cancelReservation(
 
   const result = await cancelPublicReservation(token);
 
-  if (!result.ok) return { error: result.error ?? "unknown" };
+  if (!result.ok) {
+    return {
+      error: result.error ?? "unknown",
+      /*
+       * Rajan tunnit mukaan virheeseen.
+       *
+       * "Peruutus ei onnistunut" ilman lukua on ohje soittaa
+       * arvaamalla. Asiakkaan on nähtävä mihin asti linkki olisi
+       * toiminut, jotta hän tietää mistä on kyse.
+       */
+      cutoffHours: result.cutoffHours,
+    };
+  }
 
   revalidatePath(`/varaus/${token}`);
   return { done: true };

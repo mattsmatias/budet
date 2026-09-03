@@ -68,6 +68,25 @@ export default async function ReservationPage({
     [t.varausJulkinen.guestName, reservation.guestName],
   ];
 
+  /* Varausnumero viimeisenä: se etsitään täältä, sitä ei muisteta. */
+  if (reservation.reference) {
+    rows.push([t.varausJulkinen.reference, reservation.reference]);
+  }
+
+  /*
+   * Miksi peruutuspainiketta ei ole.
+   *
+   * Kaksi eri syytä näyttivät ennen samalta: mennyt aika ja liian
+   * lähellä oleva aika. Jälkimmäisessä asiakas voi yhä perua
+   * soittamalla, ja juuri se on se lause jota hän tältä sivulta hakee.
+   *
+   * Syyn päättää kanta. Se on kellonaikakysymys, ja kellon lukeminen
+   * kesken palvelinpiirron on tulos joka voi muuttua ilman että mikään
+   * muuttui.
+   */
+  const cutoff = reservation.cancelCutoffHours ?? 0;
+  const liianMyohaan = reservation.cancelBlocked === "cutoff";
+
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-12 sm:py-16">
       <h1 className="text-[24px] font-bold tracking-tight sm:text-[28px]">
@@ -104,6 +123,7 @@ export default async function ReservationPage({
             already: t.varausJulkinen.already,
             past: t.varausJulkinen.past,
             notFound: t.varausJulkinen.notFoundBody,
+            cutoff: t.varausJulkinen.cutoff,
           }}
         />
       ) : reservation.status === "cancelled" ? (
@@ -131,6 +151,10 @@ export default async function ReservationPage({
             {t.varausJulkinen.cancelledBody}
           </p>
         </div>
+      ) : liianMyohaan ? (
+        <p className="mt-6 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
+          {fill(t.varausJulkinen.cutoff, { tunnit: String(cutoff) })}
+        </p>
       ) : (
         <p className="mt-6 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
           {t.varausJulkinen.past}

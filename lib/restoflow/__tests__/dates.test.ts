@@ -8,6 +8,9 @@ import {
   isoDateOr,
   isoMonthOr,
   pickedMonth,
+  rangeForMonth,
+  weekRange,
+  yearRange,
 } from "../dates";
 
 /**
@@ -137,5 +140,77 @@ describe("startOfDayIso", () => {
     expect(startOfDayIso("2026-03-29", "Europe/Helsinki")).toBe(
       "2026-03-28T22:00:00.000Z",
     );
+  });
+});
+
+// ===========================================================================
+// Viikko ja vuosi
+// ===========================================================================
+
+describe("weekRange", () => {
+  it("antaa maanantaista sunnuntaihin", () => {
+    /* 2026-09-03 on torstai. */
+    expect(weekRange("2026-09-03")).toEqual({
+      from: "2026-08-31",
+      to: "2026-09-06",
+    });
+  });
+
+  it("pitää sunnuntain saman viikon lopussa", () => {
+    /*
+     * Sunnuntai on viikon viimeinen päivä eikä seuraavan ensimmäinen:
+     * ravintolan viikonloppu ei saa katketa kahtia.
+     */
+    expect(weekRange("2026-09-06")).toEqual({
+      from: "2026-08-31",
+      to: "2026-09-06",
+    });
+  });
+
+  it("ylittää kuukauden vaihteen", () => {
+    expect(weekRange("2026-09-01")).toEqual({
+      from: "2026-08-31",
+      to: "2026-09-06",
+    });
+  });
+});
+
+describe("yearRange", () => {
+  it("kattaa koko vuoden", () => {
+    expect(yearRange(2026)).toEqual({ from: "2026-01-01", to: "2026-12-31" });
+  });
+});
+
+describe("rangeForMonth", () => {
+  it("antaa kuukauden sellaisenaan", () => {
+    expect(rangeForMonth("kuukausi", "2026-09", "2026-09-03")).toEqual({
+      from: "2026-09-01",
+      to: "2026-09-30",
+    });
+  });
+
+  it("laskee viikon kuluvasta päivästä kun kuukausi on tämä", () => {
+    expect(rangeForMonth("viikko", "2026-09", "2026-09-03")).toEqual({
+      from: "2026-08-31",
+      to: "2026-09-06",
+    });
+  });
+
+  it("laskee viikon kuukauden lopusta kun kuukausi on mennyt", () => {
+    /*
+     * Menneessä kuukaudessa ei ole kuluvaa viikkoa. Kuukauden viimeinen
+     * viikko on ainoa jonka valinnasta voi päätellä mitä tarkoitettiin.
+     */
+    expect(rangeForMonth("viikko", "2026-07", "2026-09-03")).toEqual({
+      from: "2026-07-27",
+      to: "2026-08-02",
+    });
+  });
+
+  it("laskee vuoden kuukauden vuodesta", () => {
+    expect(rangeForMonth("vuosi", "2026-07", "2026-09-03")).toEqual({
+      from: "2026-01-01",
+      to: "2026-12-31",
+    });
   });
 });

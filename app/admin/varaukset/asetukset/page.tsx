@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { formatDayIn, weekdayByNumberIn } from "@/lib/i18n/labels";
@@ -193,6 +194,26 @@ export default async function ReservationSettingsPage() {
           <Card>
             <CardHeader title={t.varausAsetus.areaTitle} />
             <AreaList t={t} areas={setup.areas} />
+          </Card>
+
+          {/*
+            Tuonti harvoin tarvittavien joukkoon.
+
+            Se tehdään kerran, käyttöönottopäivänä. Omana välilehtenään
+            se olisi pysyvästi näkyvissä sitä yhtä päivää varten.
+          */}
+          <Card>
+            <CardHeader
+              title={t.varausTuonti.title}
+              subtitle={t.varausTuonti.intro}
+            />
+            <Link
+              href="/admin/varaukset/tuonti"
+              className="text-[13px] font-semibold"
+              style={{ color: "var(--rf-accent)" }}
+            >
+              {t.varausTuonti.open}
+            </Link>
           </Card>
         </div>
       </details>

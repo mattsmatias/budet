@@ -8,11 +8,14 @@ import {
   weekdayByNumberIn,
 } from "@/lib/i18n/labels";
 import { decimal, integer, percent } from "@/lib/i18n/format";
+import { formatDayIn } from "@/lib/i18n/labels";
 import {
   busiestHours,
   busiestWeekdays,
   occupancyForWeekday,
   perOpenDay,
+  trendBars,
+  trendPeak,
   type ReservationStats,
   type StatFinding,
 } from "@/lib/restoflow/reservation-stats";
@@ -78,6 +81,113 @@ function Bar({
           {meta}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Kehitys jakson aikana
+// ---------------------------------------------------------------------------
+
+/**
+ * Päivittäinen kehitys pystypalkkeina.
+ *
+ * KUVIO ON VASTAUS, LUKU EI.
+ *
+ * Kuukauden summa kertoo paljonko varauksia oli. Se ei kerro sitä että
+ * ne kaikki olivat kolmena perjantaina, eikä sitä että kaksi viikkoa
+ * sitten alkoi lasku joka jatkuu yhä. Molemmat näkee pylväistä
+ * yhdellä silmäyksellä ja kummastakaan ei ole lukua.
+ *
+ * Vuoden jakso niputetaan: 365 pylvästä puhelimen leveydellä on
+ * yhden pikselin viivoja. Nippu säilyttää summan, joten pylvään
+ * korkeus tarkoittaa aina varauksia — ei keskiarvoa joka riippuisi
+ * jakson pituudesta.
+ *
+ * Peruutukset piirtyvät saman pylvään sisään haaleampana: ne olivat
+ * varauksia, ja erillinen kaavio kysyisi lukijalta kahden kuvan
+ * vertaamista.
+ */
+export function TrendChart({
+  t,
+  locale,
+  stats,
+}: {
+  t: AdminText;
+  locale: AppLocale;
+  stats: ReservationStats;
+}) {
+  const bars = trendBars(stats.byDay ?? []);
+  if (bars.length === 0) {
+    return (
+      <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
+        {t.varausTilasto.empty}
+      </p>
+    );
+  }
+
+  const huippu = trendPeak(bars);
+
+  return (
+    <div>
+      <div
+        className="flex items-end gap-[3px] overflow-x-auto"
+        style={{ height: 132 }}
+        role="img"
+        aria-label={t.varausTilasto.trendTitle}
+      >
+        {bars.map((bar) => {
+          const korkeus =
+            huippu === 0 ? 0 : Math.round((bar.reservations / huippu) * 100);
+          const peruttu =
+            bar.reservations === 0
+              ? 0
+              : Math.round((bar.cancelled / bar.reservations) * korkeus);
+
+          return (
+            <div
+              key={bar.date}
+              className="flex min-w-[6px] flex-1 flex-col justify-end"
+              style={{ height: "100%" }}
+              title={`${formatDayIn(bar.date, locale)}${
+                bar.days > 1 ? `–${formatDayIn(bar.endDate, locale)}` : ""
+              }: ${reservationCountIn(bar.reservations, locale)}`}
+            >
+              {/* Peruutukset pylvään päälle, haaleana. */}
+              <div
+                style={{
+                  height: `${peruttu}%`,
+                  background: "var(--rf-text)",
+                  opacity: 0.22,
+                  borderRadius: "3px 3px 0 0",
+                }}
+              />
+              <div
+                style={{
+                  /* Nolla näkyy viivana: tyhjä päivä on tieto sekin. */
+                  height: `${Math.max(korkeus - peruttu, bar.reservations > 0 ? 3 : 1)}%`,
+                  background: "var(--rf-text)",
+                  opacity: bar.reservations > 0 ? 0.82 : 0.18,
+                  borderRadius: peruttu > 0 ? 0 : "3px 3px 0 0",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        className="mt-2 flex items-baseline justify-between text-[12px]"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        <span>{formatDayIn(stats.from, locale)}</span>
+        <span>
+          {fill(t.varausTilasto.trendPeak, {
+            maara: integer(huippu, locale),
+          })}
+        </span>
+        <span>{formatDayIn(stats.to, locale)}</span>
+      </div>
     </div>
   );
 }

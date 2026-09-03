@@ -23,7 +23,13 @@ Sovellus **ei**:
 - lue kassajärjestelmää eikä myyntiä
 - ota yhteyttä pankkitiliin
 - hallitse varastoa tai tilauksia
-- tee asiakasvarauksia, kanta-asiakkuuksia tai CRM:ää
+- tee kanta-asiakkuuksia tai CRM:ää
+
+**Pöytävaraukset kuuluvat sovellukseen** ja ovat käytössä: salinäkymä,
+kalenteri raahauksineen, pöytäkartta, varauslista hakuineen,
+aukioloajat myös keskiyön yli, keittiön kapasiteetti, analytiikka,
+julkinen varaussivu ja upotettava widget sekä tuonti toisesta
+järjestelmästä. Tämä rivi luki aiemmin toisin, ja se oli väärin.
 
 Tästä seuraa sääntö jota noudatetaan kaikkialla: **jokainen euromäärä
 tarkoittaa järjestelmään kirjattua kulua, ei ravintolan tulosta.**
@@ -44,7 +50,7 @@ kortti joka sanoo tämän ääneen.
 | Auth | Supabase Auth, `@supabase/ssr` |
 | Validointi | Zod 4 |
 | Kuittien luku | `@anthropic-ai/sdk`, `claude-opus-5` |
-| Testit | Vitest, 166 testiä |
+| Testit | Vitest, 1255 testiä |
 
 `proxy.ts` on Next 16:n uusi nimi `middleware.ts`:lle. Se virkistää
 istunnon jokaisella pyynnöllä.
@@ -384,7 +390,7 @@ ja loput "Lisää"-sivulla.
 
 ## 10. Testit ja tarkistukset
 
-166 testiä, 7 tiedostoa. Ne kohdistuvat päättelyyn, eivät
+1255 testiä, 59 tiedostoa. Ne kohdistuvat päättelyyn, eivät
 näkymiin.
 
 ```
@@ -443,3 +449,90 @@ niistä selviää mitä sovellus tekee ja kuka saa tehdä mitä. Sen jälkeen
 sovellus on erilainen kuin useimmat taloushallinnon näkymät:
 **tyhjä aineisto ei ole hyvä uutinen, ja sen sanominen ääneen on
 tärkeämpää kuin näyttää siistiltä.**
+
+---
+
+## 14. Pöytävaraukset
+
+Tämä osa on kirjoitettu myöhemmin kuin luvut 1–13, ja ne eivät vielä
+tunne sitä: luvun 4 tietomalli listaa 14 taulua, joista puuttuvat
+kaikki alla olevat. Varausmoduuli on silti tuotannossa, joten se
+kuvataan tässä kokonaisuudessaan.
+
+### 14.1 Taulut
+
+```
+restaurants ─┬─ reservation_settings      verkkovaraus, kestot, rajat
+             ├─ reservation_hours         viikonpäivän aukiolo
+             ├─ reservation_exceptions    poikkeuspäivä (voittaa viikon)
+             ├─ reservation_durations     kesto seurueen koon mukaan
+             ├─ dining_areas ── restaurant_tables ─┬─ table_combinations
+             │                                     └─ floor_elements
+             ├─ floor_plan_images         salin pohjapiirros kuvana
+             └─ reservations ──┬── reservation_table_assignments
+                               └── reservation_status_history
+```
+
+### 14.2 Aukiolo saa ylittää keskiyön
+
+Viimeinen istumisaika joka on avaamista pienempi tarkoittaa seuraavaa
+päivää: 18:00–02:00 on kahdeksan tuntia. Pituus on johdettu tieto ja
+johdetaan yhdessä paikassa, `reservation_span_minutes`.
+
+Tästä seuraa kaksi sääntöä joita ei saa rikkoa:
+
+1. **Kellonaika muutetaan hetkeksi vain `reservation_start_at`-funktiolla.**
+   Kello 00:30 kuuluu siihen iltaan joka avautui edellisenä päivänä.
+   Jokainen muu muunnos (`(p_date + p_time) at time zone tz`) on väärä
+   heti kun ravintola on auki keskiyön yli.
+
+2. **Ilta kuuluu avauspäiväänsä.** Salinäkymän ja varauslistan
+   päivärajaus tulee `reservation_night_range`-funktiosta, ei
+   kalenterivuorokaudesta. Analytiikka on tästä poikkeus ja käyttää
+   kalenteripäivää, koska sen kaikkien lukujen on oltava samalla
+   säännöllä laskettuja; se on kirjattu migraatioon 0094.
+
+### 14.3 Funktiot
+
+| Funktio | Tehtävä |
+|---|---|
+| `reservation_pick_tables` | pienin sopiva pöytä, sitten pienin yhdistelmä |
+| `reservation_book` | ainoa kirjoituspolku; lukko, keittiöraja, liitosrivit |
+| `reservation_slots` | päivän vapaat ajat paikallisina aikaleimoina |
+| `reservation_day` | salinäkymän aineisto, yhteystiedot roolin mukaan |
+| `reservation_search` | lista ja haku yli päivärajojen |
+| `reservation_stats` | jakson luvut, päivittäinen kehitys, edellinen jakso |
+| `kitchen_check` | keittiön kuorma; estää verkossa, varoittaa salissa |
+| `reservation_import_*` | tuonti rivi kerrallaan, virhe ei kaada muita |
+| `public_*` | asiakkaan pinta: asetukset, ajat, luonti, haku, peruutus |
+
+### 14.4 Varausnumero ja allergiat
+
+Varausnumero on kuusi merkkiä aakkosista joista puuttuvat sekoittuvat
+(0/O, 1/I, 8/B). Se syntyy liipaisimessa `reservations_reference`, ei
+sovelluksessa — varaus voi syntyä neljästä paikasta.
+
+Allergiat ovat oma sarakkeensa eivätkä osa toivekenttää. Ero on siinä,
+että toive on toive ja allergia on ainoa rivi jonka lukematta
+jättämisellä on peruuttamaton seuraus. Siksi se myös näkyy salissa
+varoituksena eikä muistiinpanona.
+
+### 14.5 Peruutusraja
+
+`reservation_settings.cancel_cutoff_hours` (oletus 24) koskee **vain**
+asiakkaan omaa peruutuslinkkiä. Sali peruu varauksen milloin tahansa:
+tieto siitä ettei seurue tule on ravintolalle arvokas myös kymmenen
+minuuttia ennen. Nolla tarkoittaa "alkuhetkeen asti".
+
+### 14.6 Reitit
+
+| Reitti | Kuka |
+|---|---|
+| `/admin/varaukset` | sali: ilta, kalenteri, pöytäkartta |
+| `/admin/varaukset/lista` | varauslista ja haku |
+| `/admin/varaukset/analytiikka` | esihenkilö: viikko, kuukausi, vuosi |
+| `/admin/varaukset/asetukset` | pöydät, aukiolo, widget |
+| `/admin/varaukset/tuonti` | CSV toisesta järjestelmästä |
+| `/varaa/[slug]` | asiakas: varaussivu (sama widget kuin upotus) |
+| `/varaus/[token]` | asiakas: oma varaus ja peruutus |
+| `/api/varaus` | widgetin koko rajapinta, neljä toimintoa |

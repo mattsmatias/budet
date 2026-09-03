@@ -21,7 +21,7 @@ import {
   updateReservation,
   type ReservationState,
   type TableOption,
-  type TableSuggestion,
+  type TablePlan,
 } from "./actions";
 
 const initial: ReservationState = {};
@@ -229,7 +229,7 @@ export function ReservationDialog({
    * käyttöliittymässä: edellinen ei näytä mitään, jälkimmäinen kertoo
    * ettei sopivaa ole.
    */
-  const [options, setOptions] = useState<TableSuggestion[] | null>(null);
+  const [plan, setPlan] = useState<TablePlan | null>(null);
 
   /*
    * Lataustila johdetaan, ei aseteta.
@@ -247,7 +247,8 @@ export function ReservationDialog({
   const [ehdotusLahde, setEhdotusLahde] = useState<string | null>(null);
 
   const optionsLoading = open && time !== "" && ehdotusLahde !== ehdotusAvain;
-  const nakyvatEhdotukset = ehdotusLahde === ehdotusAvain ? options : null;
+  const nakyvaSuunnitelma = ehdotusLahde === ehdotusAvain ? plan : null;
+  const nakyvatEhdotukset = nakyvaSuunnitelma?.options ?? null;
 
   useEffect(() => {
     if (!open || time === "" || ehdotusLahde === ehdotusAvain) return;
@@ -261,7 +262,7 @@ export function ReservationDialog({
       excludeId: reservation?.id,
     }).then((tulos) => {
       if (!voimassa) return;
-      setOptions(tulos);
+      setPlan(tulos);
       setEhdotusLahde(ehdotusAvain);
     });
 
@@ -520,6 +521,32 @@ export function ReservationDialog({
                 />
               </Field>
 
+              {/*
+                Allergiat erillään toiveista.
+
+                Sama kenttä olisi vähemmän täytettävää, ja juuri siksi
+                allergia hukkuisi lauseeseen "ikkunapöytä jos mahdollista,
+                yksi kasvis, Villellä synttärit". Keittiö lukee tämän
+                kentän eikä sitä toista.
+              */}
+              <Field label={t.varaus.allergies} htmlFor="rv-allergies">
+                <input
+                  id="rv-allergies"
+                  name="allergies"
+                  maxLength={200}
+                  defaultValue={reservation?.allergies ?? ""}
+                  placeholder={t.varaus.allergiesPlaceholder}
+                  className="w-full px-3.5 py-2.5 text-[16px] outline-none"
+                  style={{
+                    background: "var(--rf-inset)",
+                    borderRadius: "var(--rf-r-control)",
+                  }}
+                />
+              </Field>
+
+              {/* --- Keittiön kuorma ja seuraava varaus --- */}
+              <KitchenNotice t={t} plan={nakyvaSuunnitelma} time={time} />
+
               {/* --- Pöydät --- */}
               <fieldset>
                 <legend className="text-[13px] font-medium">
@@ -736,6 +763,68 @@ function SaveButton({ t }: { t: AdminText }) {
     <Button type="submit" tone="primary" disabled={pending}>
       {pending ? t.varaus.saving : t.varaus.save}
     </Button>
+  );
+}
+
+/**
+ * Keittiön kuorma ja seuraava varaus.
+ *
+ * KUMPIKAAN EI ESTÄ TALLENNUSTA.
+ *
+ * Keittiön raja pysäyttää verkkovarauksen, koska asiakas verkossa ei
+ * voi neuvotella keittiön kanssa. Salissa sama raja olisi ohjelma joka
+ * väittää tietävänsä keittiöstä paremmin kuin vuoropäällikkö: kymmenen
+ * hengen seurue voi olla se joka tilaa kolme pizzaa.
+ *
+ * Kuorma näytetään silti aina kun raja on asetettu — myös silloin kun
+ * mahtuu. Luku joka ilmestyy vasta ongelmassa on luku johon ei opita
+ * luottamaan, ja "9/40" kertoo yhdellä silmäyksellä että illassa on
+ * tilaa.
+ */
+function KitchenNotice({
+  t,
+  plan,
+  time,
+}: {
+  t: AdminText;
+  plan: TablePlan | null;
+  time: string;
+}) {
+  if (!plan) return null;
+
+  const kitchen = plan.kitchen;
+  const rajattu = Boolean(kitchen?.limited);
+  const taynna = rajattu && kitchen?.ok === false;
+
+  if (!rajattu && !plan.next) return null;
+
+  return (
+    <div className="space-y-1">
+      {rajattu ? (
+        <p
+          className="text-[12.5px]"
+          style={{
+            color: taynna ? "var(--rf-amber-text)" : "var(--rf-text-3)",
+          }}
+        >
+          {fill(t.varaus.kitchenLoad, {
+            aika: time,
+            kuorma: String(kitchen?.load ?? 0),
+            raja: String(kitchen?.capacity ?? 0),
+          })}
+          {taynna ? ` — ${t.varaus.kitchenFull}` : ""}
+        </p>
+      ) : null}
+
+      {plan.next ? (
+        <p className="text-[12.5px]" style={{ color: "var(--rf-amber-text)" }}>
+          {fill(t.varaus.nextSoon, {
+            maara: String(plan.next.minutes),
+            nimi: plan.next.guestName,
+          })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

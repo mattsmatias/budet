@@ -15,6 +15,7 @@ import type {
   RestaurantTable,
   TableCombination,
 } from "@/lib/restoflow/reservations";
+import { hourConflicts, hourSpanMinutes } from "@/lib/restoflow/reservations";
 import {
   addArea,
   addDuration,
@@ -377,6 +378,30 @@ export function SettingsForm({
             />
           </Field>
 
+          {/*
+            Peruutusraja verkkoasetusten joukkoon.
+
+            Se koskee vain asiakkaan omaa peruutuslinkkiä: sali peruu
+            varauksen milloin tahansa, koska tieto siitä ettei seurue
+            tule on arvokas myös kymmenen minuuttia ennen.
+          */}
+          <Field
+            label={t.varausAsetus.cancelCutoff}
+            htmlFor="rs-cutoff"
+            hint={t.varausAsetus.cancelCutoffHint}
+          >
+            <input
+              id="rs-cutoff"
+              name="cancelCutoffHours"
+              type="number"
+              min={0}
+              max={168}
+              defaultValue={settings.cancelCutoffHours}
+              className={INPUT}
+              style={INPUT_STYLE}
+            />
+          </Field>
+
           <Field label={t.varausAsetus.minParty} htmlFor="rs-min">
             <input
               id="rs-min"
@@ -449,6 +474,35 @@ export function SettingsForm({
 // Aukioloajat
 // ---------------------------------------------------------------------------
 
+/**
+ * Aukioloajat koko viikolle.
+ *
+ * ---------------------------------------------------------------------
+ * KOPIOINTI ON SE MIKSI TÄMÄ EI OLE SEITSEMÄN LOMAKETTA
+ * ---------------------------------------------------------------------
+ *
+ * Useimmilla ravintoloilla viikko on sama joka päivä paitsi
+ * viikonloppuna. Käsin se on neljätoista kellonaikaa näpyteltynä
+ * puhelimen aikavalitsimella, ja juuri siinä tehdään se virhe joka
+ * huomataan vasta kun asiakas ei saa varattua.
+ *
+ * "Kopioi muille" ottaa rivin kellonajat ja asettaa ne kaikkiin
+ * päiviin joissa on jo aika. Tyhjä päivä pysyy tyhjänä: tyhjä on
+ * merkintä "kiinni", eikä kopiointi saa avata suljettua päivää
+ * kysymättä.
+ *
+ * ---------------------------------------------------------------------
+ * VAROITUS EIKÄ ESTO
+ * ---------------------------------------------------------------------
+ *
+ * Kun ilta saa jatkua keskiyön yli, kaksi peräkkäistä päivää voi mennä
+ * päällekkäin: lauantai kolmeen ja sunnuntai avautuu kahdelta. Kanta
+ * ottaa molemmat vastaan, mutta salinäkymä joutuu silloin päättämään
+ * kumpaan iltaan kello 02:30 alkava varaus kuuluu.
+ *
+ * Aukiolo on ravintolan päätös, joten tämä kertoo seurauksen eikä estä
+ * tallennusta.
+ */
 export function HoursForm({
   t,
   hours,
@@ -460,27 +514,88 @@ export function HoursForm({
 }) {
   const [state, action] = useActionState(saveHours, initial);
 
+  /*
+   * Kentät ovat komponentin tilassa eivätkä ohjaamattomia.
+   *
+   * Kopiointi kirjoittaa toisen rivin arvot, ja varoitus lasketaan
+   * siitä mitä ruudulla lukee — kumpikaan ei onnistu ilman että
+   * lomake tietää arvonsa.
+   */
+  const [rows, setRows] = useState(() =>
+    [1, 2, 3, 4, 5, 6, 7].map((weekday) => {
+      const row = hours.find((h) => h.weekday === weekday);
+      return {
+        weekday,
+        opens: row?.opens ?? "",
+        lastSeating: row?.lastSeating ?? "",
+      };
+    }),
+  );
+
+  function aseta(weekday: number, kentta: "opens" | "lastSeating", arvo: string) {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.weekday === weekday ? { ...row, [kentta]: arvo } : row,
+      ),
+    );
+  }
+
+  /** Rivin ajat kaikkiin päiviin joissa on jo aika. */
+  function kopioi(weekday: number) {
+    const lahde = rows.find((row) => row.weekday === weekday);
+    if (!lahde || !lahde.opens || !lahde.lastSeating) return;
+
+    setRows((prev) =>
+      prev.map((row) =>
+        row.opens || row.lastSeating
+          ? { ...row, opens: lahde.opens, lastSeating: lahde.lastSeating }
+          : row,
+      ),
+    );
+  }
+
+  const taytetyt = rows.filter((row) => row.opens && row.lastSeating);
+  const conflicts = hourConflicts(taytetyt);
+
   return (
     <form action={action}>
       <p className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {t.varausAsetus.hoursHint}
       </p>
+      <p className="mt-1 text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+        {t.varausAsetus.hoursMidnight}
+      </p>
 
       <div className="mt-4 space-y-2">
-        {[1, 2, 3, 4, 5, 6, 7].map((weekday) => {
-          const row = hours.find((h) => h.weekday === weekday);
+        {rows.map((row) => {
+          const nimi = weekdayNames[row.weekday - 1];
+          const span =
+            row.opens && row.lastSeating
+              ? hourSpanMinutes(row.opens, row.lastSeating)
+              : 0;
+
+          /* Ilta joka ylittää keskiyön saa merkinnän: se on harvinainen. */
+          const yli =
+            span > 0 && row.lastSeating <= row.opens
+              ? fill(t.varausAsetus.hoursNextDay, {
+                  tunnit: String(Math.round((span / 60) * 10) / 10),
+                })
+              : null;
 
           return (
-            <div key={weekday} className="flex items-center gap-2">
+            <div key={row.weekday} className="flex items-center gap-2">
               <span className="w-24 shrink-0 text-[13px] font-medium">
-                {weekdayNames[weekday - 1]}
+                {nimi}
               </span>
 
               <input
                 type="time"
-                name={`opens-${weekday}`}
-                defaultValue={row?.opens ?? ""}
-                aria-label={`${weekdayNames[weekday - 1]} — ${t.varausAsetus.opens}`}
+                name={`opens-${row.weekday}`}
+                value={row.opens}
+                onChange={(event) =>
+                  aseta(row.weekday, "opens", event.target.value)
+                }
+                aria-label={`${nimi} — ${t.varausAsetus.opens}`}
                 className="min-w-0 flex-1 px-3 py-2 text-[15px] outline-none"
                 style={INPUT_STYLE}
               />
@@ -493,16 +608,61 @@ export function HoursForm({
               </span>
               <input
                 type="time"
-                name={`last-${weekday}`}
-                defaultValue={row?.lastSeating ?? ""}
-                aria-label={`${weekdayNames[weekday - 1]} — ${t.varausAsetus.lastSeating}`}
+                name={`last-${row.weekday}`}
+                value={row.lastSeating}
+                onChange={(event) =>
+                  aseta(row.weekday, "lastSeating", event.target.value)
+                }
+                aria-label={`${nimi} — ${t.varausAsetus.lastSeating}`}
                 className="min-w-0 flex-1 px-3 py-2 text-[15px] outline-none"
                 style={INPUT_STYLE}
               />
+
+              {yli ? (
+                <span
+                  className="shrink-0 text-[11.5px]"
+                  style={{ color: "var(--rf-text-3)" }}
+                >
+                  {yli}
+                </span>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={() => kopioi(row.weekday)}
+                disabled={!row.opens || !row.lastSeating}
+                className="rf-press shrink-0 px-2.5 py-1.5 text-[12px] font-semibold disabled:opacity-40"
+                style={{
+                  background: "var(--rf-inset)",
+                  color: "var(--rf-text-2)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+                title={t.varausAsetus.copyToOthers}
+              >
+                {t.varausAsetus.copyShort}
+              </button>
             </div>
           );
         })}
       </div>
+
+      {conflicts.length > 0 ? (
+        <p
+          role="status"
+          className="mt-3 text-[12.5px]"
+          style={{ color: "var(--rf-amber-text)" }}
+        >
+          {conflicts
+            .map((conflict) =>
+              fill(t.varausAsetus.hoursOverlap, {
+                paiva: weekdayNames[conflict.weekday - 1],
+                seuraava: weekdayNames[conflict.nextWeekday - 1],
+                aika: conflict.until,
+              }),
+            )
+            .join(" ")}
+        </p>
+      ) : null}
 
       <div className="mt-5">
         <SaveButton t={t} />

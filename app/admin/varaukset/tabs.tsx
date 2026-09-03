@@ -21,10 +21,21 @@ export function ReservationTabs({
   current,
 }: {
   t: AdminText;
-  current: "sali" | "analytiikka" | "asetukset";
+  current: "sali" | "lista" | "analytiikka" | "asetukset";
 }) {
   const kohdat = [
     { id: "sali" as const, href: "/admin/varaukset", label: t.varaus.tabDay },
+    {
+      /*
+       * Lista salin ja analytiikan väliin.
+       *
+       * Se on lähempänä salityötä kuin kuukauden lukuja: kysymys on yhä
+       * yksittäinen varaus, vain päivä on tuntematon.
+       */
+      id: "lista" as const,
+      href: "/admin/varaukset/lista",
+      label: t.varausLista.tab,
+    },
     {
       id: "analytiikka" as const,
       href: "/admin/varaukset/analytiikka",

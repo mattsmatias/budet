@@ -17,6 +17,9 @@ import {
   durationOf,
   minutesAt,
   minutesOf,
+  nightFor,
+  nightMinutes,
+  NO_NIGHT,
   reservationsInColumn,
   timeOf,
   timesOverlap,
@@ -98,7 +101,7 @@ describe("durationOf", () => {
 
 describe("axisFor", () => {
   it("kattaa aukioloajan marginaaleineen", () => {
-    const axis = axisFor([], { opens: "11:00", lastSeating: "21:00" });
+    const axis = axisFor([], { opens: "11:00", lastSeating: "21:00", spanMinutes: 600 });
 
     expect(axis.from).toBeLessThanOrEqual(10 * 60);
     /* Viimeinen istumisaika ei ole sulkemisaika: illallinen jatkuu. */
@@ -113,6 +116,7 @@ describe("axisFor", () => {
     const axis = axisFor([varaus({ time: "23:30", endTime: "23:59" })], {
       opens: "11:00",
       lastSeating: "14:00",
+      spanMinutes: 180,
     });
 
     expect(axis.to).toBe(24 * 60);
@@ -126,7 +130,7 @@ describe("axisFor", () => {
   });
 
   it("asettaa tuntiviivat tasatunneille", () => {
-    const axis = axisFor([], { opens: "11:00", lastSeating: "21:00" });
+    const axis = axisFor([], { opens: "11:00", lastSeating: "21:00", spanMinutes: 600 });
 
     for (const tick of axis.ticks) expect(tick % 60).toBe(0);
   });
@@ -142,7 +146,7 @@ describe("axisFor", () => {
 // ===========================================================================
 
 describe("blockPosition", () => {
-  const axis = { from: 600, to: 1440, ticks: [] };
+  const axis = { from: 600, to: 1440, ticks: [], night: NO_NIGHT };
 
   it("sijoittaa palkin alkuajan kohdalle", () => {
     const { top } = blockPosition(varaus({ time: "18:00" }), axis);
@@ -186,7 +190,7 @@ describe("blockPosition", () => {
 });
 
 describe("minutesAt", () => {
-  const axis = { from: 600, to: 1440, ticks: [] };
+  const axis = { from: 600, to: 1440, ticks: [], night: NO_NIGHT };
 
   it("muuntaa osuuden minuuteiksi", () => {
     expect(minutesAt(0, axis)).toBe(600);
@@ -440,5 +444,85 @@ describe("reservationsInColumn", () => {
       "a",
       "b",
     ]);
+  });
+});
+
+// ===========================================================================
+// Ilta joka jatkuu keskiyön yli
+// ===========================================================================
+
+describe("nightMinutes", () => {
+  /* Yökahvila: avataan 18, viimeinen aika 02. Kahdeksan tuntia. */
+  const yo = nightFor({ opens: "18:00", spanMinutes: 480 });
+
+  it("laskee illan alun avaamisajasta", () => {
+    expect(nightMinutes("18:00", yo)).toBe(18 * 60);
+    expect(nightMinutes("21:30", yo)).toBe(21 * 60 + 30);
+  });
+
+  it("jatkaa keskiyön yli eikä hyppää janan alkuun", () => {
+    /* 00:30 on illan viimeisiä aikoja, ei aamun ensimmäisiä. */
+    expect(nightMinutes("00:30", yo)).toBe(24 * 60 + 30);
+    expect(nightMinutes("02:00", yo)).toBe(26 * 60);
+  });
+
+  it("jättää illan ulkopuolisen ajan rauhaan", () => {
+    /*
+     * Aamupäivän walk-in ei ole edellisen yön jatkoa. Ilman tätä
+     * lounasaikaan kirjattu merkintä piirtyisi vuorokauden päähän.
+     */
+    expect(nightMinutes("10:00", yo)).toBe(10 * 60);
+  });
+
+  it("ei muuta mitään kun aukioloa ei ole", () => {
+    expect(nightMinutes("00:30", NO_NIGHT)).toBe(30);
+  });
+});
+
+describe("axisFor keskiyön yli", () => {
+  it("venyy vuorokauden yli aukioloajan mukaan", () => {
+    const axis = axisFor([], {
+      opens: "18:00",
+      lastSeating: "02:00",
+      spanMinutes: 480,
+    });
+
+    /* 02:00 + illallinen + marginaali on yli vuorokauden. */
+    expect(axis.to).toBeGreaterThan(24 * 60);
+    expect(axis.from).toBeLessThanOrEqual(18 * 60);
+  });
+
+  it("sijoittaa aamuyön varauksen janan loppuun", () => {
+    const axis = axisFor([varaus({ time: "00:30", endTime: "02:00" })], {
+      opens: "18:00",
+      lastSeating: "02:00",
+      spanMinutes: 480,
+    });
+
+    const { top } = blockPosition(
+      varaus({ time: "00:30", endTime: "02:00" }),
+      axis,
+    );
+
+    /* Yli puolivälin: ilta alkoi kuudelta ja tämä on sen loppua. */
+    expect(top).toBeGreaterThan(50);
+  });
+});
+
+describe("conflictFor keskiyön yli", () => {
+  it("huomaa päällekkäisyyden aamuyön varausten välillä", () => {
+    const yo = nightFor({ opens: "18:00", spanMinutes: 480 });
+
+    const este = conflictFor({
+      reservation: varaus({ id: "uusi", time: "00:00", endTime: "01:30" }),
+      tableIds: ["t1"],
+      /* 00:30 illan minuutteina. */
+      startMinutes: 24 * 60 + 30,
+      durationMinutes: 90,
+      others: [varaus({ id: "vanha", time: "01:00", endTime: "02:30" })],
+      night: yo,
+    });
+
+    expect(este?.reservationId).toBe("vanha");
   });
 });

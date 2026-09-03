@@ -49,6 +49,22 @@ export interface ConfirmationInput {
   partySize: number;
   tables: string[];
   guestName: string;
+  /**
+   * Varausnumero.
+   *
+   * Sähköposti on se paikka josta se löytyy silloin kun asiakas
+   * soittaa ravintolaan. Null vain siltä varalta ettei kanta
+   * palauttanut sitä — viesti ei kaadu numeron puuttumiseen.
+   */
+  reference?: string | null;
+  /**
+   * Tunteja ennen varausta, jolloin peruutuslinkki vielä toimii.
+   *
+   * Nolla tarkoittaa alkuhetkeen asti. Raja sanotaan viestissä eikä
+   * vasta siinä hetkessä jona linkki kieltäytyy: peruutuksen yrittäminen
+   * tuntia ennen on liian myöhäistä myös ravintolalle.
+   */
+  cancelHours?: number;
   cancelUrl: string;
 }
 
@@ -68,6 +84,8 @@ interface Texts {
   person: string;
   people: string;
   tables: string;
+  reference: string;
+  cancelUntil: string;
   cancelTitle: string;
   cancelBody: string;
   cancelAction: string;
@@ -86,6 +104,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "henkilö",
     people: "henkilöä",
     tables: "Pöytä",
+    reference: "Varausnumero",
+    cancelUntil: "Peruutuslinkki toimii {tunnit} tuntia ennen varausta.",
     cancelTitle: "Jos et pääsekään",
     cancelBody:
       "Peru varaus tästä linkistä. Säilytä tämä viesti — linkki toimii varaukseen asti.",
@@ -104,6 +124,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "person",
     people: "people",
     tables: "Table",
+    reference: "Booking number",
+    cancelUntil: "The cancellation link works until {tunnit} hours before the booking.",
     cancelTitle: "If your plans change",
     cancelBody:
       "Cancel your booking with this link. Keep this message — the link works until the booking.",
@@ -122,6 +144,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "person",
     people: "personer",
     tables: "Bord",
+    reference: "Bokningsnummer",
+    cancelUntil: "Avbokningslänken fungerar fram till {tunnit} timmar före bokningen.",
     cancelTitle: "Om planerna ändras",
     cancelBody:
       "Avboka med den här länken. Spara meddelandet — länken fungerar fram till bokningen.",
@@ -140,6 +164,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "person",
     people: "personer",
     tables: "Bord",
+    reference: "Reservationsnummer",
+    cancelUntil: "Afbestillingslinket virker indtil {tunnit} timer før reservationen.",
     cancelTitle: "Hvis planerne ændrer sig",
     cancelBody:
       "Afbestil med dette link. Gem beskeden — linket virker frem til reservationen.",
@@ -158,6 +184,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "kişi",
     people: "kişi",
     tables: "Masa",
+    reference: "Rezervasyon numarası",
+    cancelUntil: "İptal bağlantısı rezervasyondan {tunnit} saat öncesine kadar geçerlidir.",
     cancelTitle: "Planlarınız değişirse",
     cancelBody:
       "Rezervasyonu bu bağlantıdan iptal edebilirsiniz. Bu mesajı saklayın — bağlantı rezervasyona kadar geçerlidir.",
@@ -176,6 +204,8 @@ const TEKSTIT: Record<EmailLocale, Texts> = {
     person: "inimene",
     people: "inimest",
     tables: "Laud",
+    reference: "Broneeringu number",
+    cancelUntil: "Tühistamise link töötab kuni {tunnit} tundi enne broneeringut.",
     cancelTitle: "Kui plaanid muutuvad",
     cancelBody:
       "Tühista broneering selle lingiga. Hoia see kiri alles — link töötab kuni broneeringuni.",
@@ -248,6 +278,30 @@ export function confirmationEmail(input: ConfirmationInput): EmailContent {
   }
 
   /*
+   * Varausnumero viimeisenä rivinä.
+   *
+   * Ensimmäisenä se olisi ensimmäinen asia jonka asiakas lukee, ja
+   * hänen kysymyksensä on päivä ja kello. Numero tarvitaan vasta
+   * silloin kun hän soittaa ravintolaan — ja silloin se etsitään
+   * viestistä, ei muisteta ulkoa.
+   */
+  if (input.reference) {
+    rivit.push([t.reference, input.reference]);
+  }
+
+  /*
+   * Peruutusraja luetaan viestistä eikä linkin virheestä.
+   *
+   * Nolla tarkoittaa "alkuhetkeen asti", ja siitä ei kerrota erikseen:
+   * lause "linkki toimii 0 tuntia ennen" on hämmentävämpi kuin
+   * kertomatta jättäminen.
+   */
+  const raja =
+    input.cancelHours && input.cancelHours > 0
+      ? t.cancelUntil.replace("{tunnit}", String(input.cancelHours))
+      : null;
+
+  /*
    * Aihe kertoo ravintolan ja ajan.
    *
    * Postilaatikossa näkyy usein vain aihe. "Varaus vahvistettu" yksin
@@ -266,6 +320,7 @@ export function confirmationEmail(input: ConfirmationInput): EmailContent {
     `${t.cancelTitle}`,
     t.cancelBody,
     input.cancelUrl,
+    ...(raja ? [raja] : []),
     "",
     t.changeNote,
     "",
@@ -294,6 +349,7 @@ ${rivit
 <p style="margin-top:24px"><strong>${esc(t.cancelTitle)}</strong><br>${esc(t.cancelBody)}</p>
 <p><a href="${esc(input.cancelUrl)}" style="display:inline-block;padding:10px 18px;background:#1b1b1b;color:#fff;text-decoration:none;border-radius:8px">${esc(t.cancelAction)}</a></p>
 <p style="color:#666;font-size:13px">${esc(input.cancelUrl)}</p>
+${raja ? `<p style="color:#666;font-size:13px">${esc(raja)}</p>` : ""}
 <p style="color:#666;font-size:13px">${esc(t.changeNote)}</p>
 <p style="margin-top:24px">${esc(t.signature)}<br>${esc(input.restaurantName)}</p>
 </div>`;
