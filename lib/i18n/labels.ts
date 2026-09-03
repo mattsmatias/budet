@@ -1090,6 +1090,8 @@ const MAARAT: Record<
     vuoro: [string, string];
     vieras: [string, string];
     osuma: [string, string];
+    myyntipaiva: [string, string];
+    esitys: [string, string];
     paiva: [string, string];
     varaus: [string, string];
   }
@@ -1099,6 +1101,8 @@ const MAARAT: Record<
     vuoro: ["1 vuoro", "{n} vuoroa"],
     vieras: ["1 vieras", "{n} vierasta"],
     osuma: ["1 osuma", "{n} osumaa"],
+    myyntipaiva: ["1 myyntipäivä", "{n} myyntipäivää"],
+    esitys: ["1 esitys", "{n} esitystä"],
     paiva: ["1 päivä", "{n} päivää"],
     varaus: ["1 varaus", "{n} varausta"],
   },
@@ -1107,6 +1111,8 @@ const MAARAT: Record<
     vuoro: ["1 shift", "{n} shifts"],
     vieras: ["1 guest", "{n} guests"],
     osuma: ["1 match", "{n} matches"],
+    myyntipaiva: ["1 sales day", "{n} sales days"],
+    esitys: ["1 proposal", "{n} proposals"],
     paiva: ["1 day", "{n} days"],
     varaus: ["1 reservation", "{n} reservations"],
   },
@@ -1115,6 +1121,8 @@ const MAARAT: Record<
     vuoro: ["1 pass", "{n} pass"],
     vieras: ["1 gäst", "{n} gäster"],
     osuma: ["1 träff", "{n} träffar"],
+    myyntipaiva: ["1 försäljningsdag", "{n} försäljningsdagar"],
+    esitys: ["1 förslag", "{n} förslag"],
     paiva: ["1 dag", "{n} dagar"],
     varaus: ["1 bokning", "{n} bokningar"],
   },
@@ -1123,6 +1131,8 @@ const MAARAT: Record<
     vuoro: ["1 vagt", "{n} vagter"],
     vieras: ["1 gæst", "{n} gæster"],
     osuma: ["1 match", "{n} match"],
+    myyntipaiva: ["1 salgsdag", "{n} salgsdage"],
+    esitys: ["1 forslag", "{n} forslag"],
     paiva: ["1 dag", "{n} dage"],
     varaus: ["1 reservation", "{n} reservationer"],
   },
@@ -1131,6 +1141,8 @@ const MAARAT: Record<
     vuoro: ["1 vardiya", "{n} vardiya"],
     vieras: ["1 misafir", "{n} misafir"],
     osuma: ["1 eşleşme", "{n} eşleşme"],
+    myyntipaiva: ["1 satış günü", "{n} satış günü"],
+    esitys: ["1 öneri", "{n} öneri"],
     paiva: ["1 gün", "{n} gün"],
     varaus: ["1 rezervasyon", "{n} rezervasyon"],
   },
@@ -1139,6 +1151,8 @@ const MAARAT: Record<
     vuoro: ["1 vahetus", "{n} vahetust"],
     vieras: ["1 külaline", "{n} külalist"],
     osuma: ["1 vaste", "{n} vastet"],
+    myyntipaiva: ["1 müügipäev", "{n} müügipäeva"],
+    esitys: ["1 ettepanek", "{n} ettepanekut"],
     paiva: ["1 päev", "{n} päeva"],
     varaus: ["1 broneering", "{n} broneeringut"],
   },
@@ -1167,6 +1181,14 @@ export function guestCountIn(count: number, locale: AppLocale): string {
 
 export function hitCountIn(count: number, locale: AppLocale): string {
   return maara(count, locale, "osuma");
+}
+
+export function salesDayCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "myyntipaiva");
+}
+
+export function proposalCountIn(count: number, locale: AppLocale): string {
+  return maara(count, locale, "esitys");
 }
 
 export function dayCountIn(count: number, locale: AppLocale): string {

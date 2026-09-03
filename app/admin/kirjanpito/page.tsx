@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
-import { labels } from "@/lib/i18n/labels";
+import {
+  labels,
+  proposalCountIn,
+  receiptCountIn,
+  salesDayCountIn,
+} from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
 import { adminContext } from "@/lib/restoflow/page-context";
@@ -13,6 +18,7 @@ import {
   monthLabel,
   monthTone,
   sortIssues,
+  type MonthIssue,
   type MonthState,
 } from "@/lib/restoflow/accounting";
 import {
@@ -352,59 +358,63 @@ async function Yhteenveto({
           </div>
         ) : (
           <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
-            {issues.map((issue) => (
-              <li
-                key={issue.kind}
-                className="flex items-start gap-3.5 px-5 py-3.5"
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center"
-                  style={{
-                    background:
-                      issue.severity === "critical"
-                        ? "var(--rf-red-bg)"
-                        : issue.severity === "warning"
-                          ? "var(--rf-amber-bg)"
-                          : "var(--rf-blue-bg)",
-                    color:
-                      issue.severity === "critical"
-                        ? "var(--rf-red-text)"
-                        : issue.severity === "warning"
-                          ? "var(--rf-amber-text)"
-                          : "var(--rf-blue-text)",
-                    borderRadius: "50%",
-                  }}
+            {issues.map((issue) => {
+              const teksti = huomionTeksti(issue, t, locale);
+
+              return (
+                <li
+                  key={issue.kind}
+                  className="flex items-start gap-3.5 px-5 py-3.5"
                 >
-                  <RfIcon
-                    name={issue.severity === "critical" ? "alert" : "info"}
-                    size={16}
-                  />
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-medium">
-                    {issue.title}
-                  </span>
                   <span
-                    className="mt-0.5 block text-[13px] leading-relaxed"
-                    style={{ color: "var(--rf-text-2)" }}
+                    aria-hidden="true"
+                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center"
+                    style={{
+                      background:
+                        issue.severity === "critical"
+                          ? "var(--rf-red-bg)"
+                          : issue.severity === "warning"
+                            ? "var(--rf-amber-bg)"
+                            : "var(--rf-blue-bg)",
+                      color:
+                        issue.severity === "critical"
+                          ? "var(--rf-red-text)"
+                          : issue.severity === "warning"
+                            ? "var(--rf-amber-text)"
+                            : "var(--rf-blue-text)",
+                      borderRadius: "50%",
+                    }}
                   >
-                    {issue.detail}
-                    {issue.differenceCents !== undefined
-                      ? " " +
-                        fill(t.kirja.differenceIs, {
-                          summa: formatMoney(Math.abs(issue.differenceCents)),
-                        })
-                      : ""}
+                    <RfIcon
+                      name={issue.severity === "critical" ? "alert" : "info"}
+                      size={16}
+                    />
                   </span>
-                </span>
 
-                <span className="rf-tabular shrink-0 text-[13px] font-semibold">
-                  {issue.count}
-                </span>
-              </li>
-            ))}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-medium">
+                      {teksti.title}
+                    </span>
+                    <span
+                      className="mt-0.5 block text-[13px] leading-relaxed"
+                      style={{ color: "var(--rf-text-2)" }}
+                    >
+                      {teksti.detail}
+                      {issue.differenceCents !== undefined
+                        ? " " +
+                          fill(t.kirja.differenceIs, {
+                            summa: formatMoney(Math.abs(issue.differenceCents)),
+                          })
+                        : ""}
+                    </span>
+                  </span>
+
+                  <span className="rf-tabular shrink-0 text-[13px] font-semibold">
+                    {issue.count}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </Card>
@@ -517,13 +527,72 @@ async function Yhteenveto({
               className="text-[13px] leading-relaxed"
               style={{ color: "var(--rf-text-2)" }}
             >
-              {monthLabel(month, locale)} on suljettu. Tapahtumat säilyvät
-              sellaisinaan; korjaus tehdään uudella tositteella joka viittaa
-              alkuperäiseen.
+              {fill(t.kirja.monthClosedNote, {
+                kuukausi: monthLabel(month, locale),
+              })}
             </p>
           </div>
         </Card>
       ) : null}
     </div>
   );
+}
+
+/**
+ * Huomion otsikko ja selite käyttäjän kielellä.
+ *
+ * Kanta palauttaa koodin, lukumäärän ja mahdollisen rahaeron. Lause
+ * kootaan tässä, koska vasta täällä tiedetään mitä kieltä käyttäjä
+ * lukee — ja koska yksikkö ja monikko taipuvat eri tavalla joka
+ * kielessä.
+ *
+ * Tuntematon koodi saa yleisen otsikon eikä katoa. Uudempi kanta voi
+ * palauttaa koodin jota tämä versio ei tunne, ja silloin rivi kertoo
+ * edes että jotain on tarkistettavana.
+ */
+function huomionTeksti(
+  issue: MonthIssue,
+  t: AdminText,
+  locale: AppLocale,
+): { title: string; detail: string } {
+  switch (issue.kind) {
+    case "receipts_missing":
+      return {
+        title: t.kirja.issueReceiptsTitle,
+        detail: fill(t.kirja.issueReceiptsDetail, {
+          kuitit: receiptCountIn(issue.count, locale),
+        }),
+      };
+
+    case "sales_missing":
+      return {
+        title: t.kirja.issueSalesDaysTitle,
+        detail: fill(t.kirja.issueSalesDaysDetail, {
+          paivat: salesDayCountIn(issue.count, locale),
+        }),
+      };
+
+    case "proposals":
+      return {
+        title: t.kirja.issueProposalsTitle,
+        detail: fill(t.kirja.issueProposalsDetail, {
+          esitykset: proposalCountIn(issue.count, locale),
+        }),
+      };
+
+    case "sales_mismatch":
+      return {
+        title: t.kirja.issueSalesMismatchTitle,
+        detail: t.kirja.issueSalesMismatchDetail,
+      };
+
+    case "vat_mismatch":
+      return {
+        title: t.kirja.issueVatMismatchTitle,
+        detail: t.kirja.issueVatMismatchDetail,
+      };
+
+    default:
+      return { title: t.kirja.issueOtherTitle, detail: "" };
+  }
 }

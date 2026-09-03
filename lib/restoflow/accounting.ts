@@ -54,12 +54,26 @@ export interface LedgerEntry {
   lines: LedgerLine[];
 }
 
+/**
+ * Yksi asia joka pitää tehdä ennen kuukauden sulkemista.
+ *
+ * KOODI, EI LAUSE.
+ *
+ * Kanta palautti aiemmin valmiin otsikon ja selitteen suomeksi, ja ne
+ * näkyivät suomeksi myös muunkielisille. Nyt tulee koodi, vakavuus,
+ * lukumäärä ja rahaero — lause kootaan siellä missä käyttäjän kieli
+ * tiedetään.
+ *
+ * kind on merkkijono eikä unioni tarkoituksella: arvo tulee kannasta
+ * ajonaikana. Tuntematon koodi on mahdollinen — uudempi kanta vanhemman
+ * sovelluksen kanssa — ja silloin rivi näytetään yleisellä otsikolla
+ * eikä jätetä tyhjäksi. Tyhjä rivi olisi huomio jota kukaan ei osaa
+ * selvittää.
+ */
 export interface MonthIssue {
   kind: string;
   severity: IssueSeverity;
   count: number;
-  title: string;
-  detail: string;
   differenceCents?: number;
 }
 

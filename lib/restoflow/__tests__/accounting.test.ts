@@ -76,8 +76,6 @@ const kriittinen: MonthIssue = {
   kind: "vat_mismatch",
   severity: "critical",
   count: 1,
-  title: "ALV ei täsmää",
-  detail: "Erotus 300 €",
   differenceCents: 30000,
 };
 
@@ -85,16 +83,12 @@ const varoitus: MonthIssue = {
   kind: "receipts_missing",
   severity: "warning",
   count: 3,
-  title: "Kuitteja ei ole kirjattu",
-  detail: "3 kuittia",
 };
 
 const tiedote: MonthIssue = {
   kind: "proposals",
   severity: "info",
   count: 12,
-  title: "Kirjausesityksiä odottaa",
-  detail: "12 esitystä",
 };
 
 describe("tositteen tasapaino", () => {

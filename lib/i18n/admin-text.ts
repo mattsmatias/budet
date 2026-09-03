@@ -1587,6 +1587,19 @@ const fi = {
     noEventsHint:
       "Tällä rajauksella ei ole tapahtumia. Kokeile pidempää ajanjaksoa tai poista suodattimet.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Kuitteja ei ole kirjattu",
+    issueReceiptsDetail: "{kuitit} ei ole vielä kirjanpidossa.",
+    issueSalesDaysTitle: "Myyntipäiviä ei ole kirjattu",
+    issueSalesDaysDetail: "{paivat} ei ole vielä kirjanpidossa.",
+    issueProposalsTitle: "Kirjausesityksiä odottaa",
+    issueProposalsDetail: "{esitykset} odottaa hyväksyntää.",
+    issueSalesMismatchTitle: "Myynti ei täsmää",
+    issueSalesMismatchDetail: "Myyntiraportti ja kirjanpito eroavat.",
+    issueVatMismatchTitle: "ALV ei täsmää",
+    issueVatMismatchDetail: "Kassan ALV-erittely ja kirjanpito eroavat.",
+    issueOtherTitle: "Tarkistettavaa",
+    monthClosedNote:
+      "{kuukausi} on suljettu. Tapahtumat säilyvät sellaisinaan; korjaus tehdään uudella tositteella joka viittaa alkuperäiseen.",
   },
   tiimi: {
     inviteUser: "Kutsu käyttäjä",
@@ -4455,6 +4468,19 @@ const en: AdminText = {
     noEventsHint:
       "There are no events with this filtering. Try a longer period or remove the filters.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Receipts not in the ledger",
+    issueReceiptsDetail: "{kuitit} not in the ledger yet.",
+    issueSalesDaysTitle: "Sales days not in the ledger",
+    issueSalesDaysDetail: "{paivat} not in the ledger yet.",
+    issueProposalsTitle: "Proposed entries are waiting",
+    issueProposalsDetail: "{esitykset} awaiting approval.",
+    issueSalesMismatchTitle: "Sales do not match",
+    issueSalesMismatchDetail: "The sales report and the ledger differ.",
+    issueVatMismatchTitle: "VAT does not match",
+    issueVatMismatchDetail: "The till's VAT breakdown and the ledger differ.",
+    issueOtherTitle: "Needs checking",
+    monthClosedNote:
+      "{kuukausi} is closed. The entries stay as they are; a correction is made with a new voucher that refers to the original.",
   },
   tiimi: {
     inviteUser: "Invite a user",
@@ -7318,6 +7344,21 @@ const sv: AdminText = {
     noEventsHint:
       "Det finns inga händelser med den här avgränsningen. Prova en längre period eller ta bort filtren.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Kvitton är inte bokförda",
+    issueReceiptsDetail: "{kuitit} är ännu inte i bokföringen.",
+    issueSalesDaysTitle: "Försäljningsdagar är inte bokförda",
+    issueSalesDaysDetail: "{paivat} är ännu inte i bokföringen.",
+    issueProposalsTitle: "Bokföringsförslag väntar",
+    issueProposalsDetail: "{esitykset} väntar på godkännande.",
+    issueSalesMismatchTitle: "Försäljningen stämmer inte",
+    issueSalesMismatchDetail:
+      "Försäljningsrapporten och bokföringen skiljer sig.",
+    issueVatMismatchTitle: "Momsen stämmer inte",
+    issueVatMismatchDetail:
+      "Kassans momsspecifikation och bokföringen skiljer sig.",
+    issueOtherTitle: "Behöver kontrolleras",
+    monthClosedNote:
+      "{kuukausi} är stängd. Posterna står kvar som de är; en rättelse görs med ett nytt verifikat som hänvisar till originalet.",
   },
   tiimi: {
     inviteUser: "Bjud in en användare",
@@ -10178,6 +10219,19 @@ const da: AdminText = {
     noEventsHint:
       "Der er ingen hændelser med denne afgrænsning. Prøv en længere periode, eller fjern filtrene.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Kvitteringer er ikke bogført",
+    issueReceiptsDetail: "{kuitit} er endnu ikke i bogføringen.",
+    issueSalesDaysTitle: "Salgsdage er ikke bogført",
+    issueSalesDaysDetail: "{paivat} er endnu ikke i bogføringen.",
+    issueProposalsTitle: "Bogføringsforslag venter",
+    issueProposalsDetail: "{esitykset} venter på godkendelse.",
+    issueSalesMismatchTitle: "Salget stemmer ikke",
+    issueSalesMismatchDetail: "Salgsrapporten og bogføringen afviger.",
+    issueVatMismatchTitle: "Momsen stemmer ikke",
+    issueVatMismatchDetail: "Kassens momsspecifikation og bogføringen afviger.",
+    issueOtherTitle: "Skal kontrolleres",
+    monthClosedNote:
+      "{kuukausi} er lukket. Posteringerne står som de er; en rettelse laves med et nyt bilag der henviser til originalen.",
   },
   tiimi: {
     inviteUser: "Inviter en bruger",
@@ -13035,6 +13089,19 @@ const tr: AdminText = {
     noEventsHint:
       "Bu daraltmayla hareket yok. Daha uzun bir dönem dene ya da filtreleri kaldır.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Fişler muhasebeye işlenmedi",
+    issueReceiptsDetail: "{kuitit} henüz muhasebede değil.",
+    issueSalesDaysTitle: "Satış günleri muhasebeye işlenmedi",
+    issueSalesDaysDetail: "{paivat} henüz muhasebede değil.",
+    issueProposalsTitle: "Kayıt önerileri bekliyor",
+    issueProposalsDetail: "{esitykset} onay bekliyor.",
+    issueSalesMismatchTitle: "Satışlar uyuşmuyor",
+    issueSalesMismatchDetail: "Satış raporu ile muhasebe farklı.",
+    issueVatMismatchTitle: "KDV uyuşmuyor",
+    issueVatMismatchDetail: "Kasanın KDV dökümü ile muhasebe farklı.",
+    issueOtherTitle: "Kontrol gerekiyor",
+    monthClosedNote:
+      "{kuukausi} kapatıldı. Kayıtlar olduğu gibi kalır; düzeltme, aslına atıf yapan yeni bir fişle yapılır.",
   },
   tiimi: {
     inviteUser: "Kullanıcı davet et",
@@ -15877,6 +15944,20 @@ const et: AdminText = {
     noEventsHint:
       "Selle piiritlusega sündmusi ei ole. Proovi pikemat ajavahemikku või eemalda filtrid.",
     entitySuffix: " · {kohde}",
+    issueReceiptsTitle: "Tšekke ei ole raamatupidamisse kantud",
+    issueReceiptsDetail: "{kuitit} ei ole veel raamatupidamises.",
+    issueSalesDaysTitle: "Müügipäevi ei ole raamatupidamisse kantud",
+    issueSalesDaysDetail: "{paivat} ei ole veel raamatupidamises.",
+    issueProposalsTitle: "Kanded ootavad kinnitamist",
+    issueProposalsDetail: "{esitykset} ootab kinnitamist.",
+    issueSalesMismatchTitle: "Müük ei klapi",
+    issueSalesMismatchDetail: "Müügiaruanne ja raamatupidamine erinevad.",
+    issueVatMismatchTitle: "Käibemaks ei klapi",
+    issueVatMismatchDetail:
+      "Kassa käibemaksu jaotus ja raamatupidamine erinevad.",
+    issueOtherTitle: "Vajab kontrollimist",
+    monthClosedNote:
+      "{kuukausi} on suletud. Kanded jäävad muutmata; parandus tehakse uue tõendiga, mis viitab algsele.",
   },
   tiimi: {
     inviteUser: "Kutsu kasutaja",
