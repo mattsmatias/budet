@@ -213,7 +213,7 @@ export function MetricCard({
 
   const body = (
     <div
-      className="rf-card-lift flex h-full flex-col overflow-hidden"
+      className="rf-card-lift rf-spot flex h-full flex-col overflow-hidden"
       style={{
         background: "var(--rf-card)",
         border: "1px solid var(--rf-line)",
@@ -226,7 +226,7 @@ export function MetricCard({
           {icon ? (
             <span
               aria-hidden="true"
-              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center"
+              className="rf-metric-icon flex h-[34px] w-[34px] shrink-0 items-center justify-center"
               style={{
                 background: skin.bg,
                 color: skin.fg,

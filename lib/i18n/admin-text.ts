@@ -1640,6 +1640,15 @@ const fi = {
       "Kirjaa kuukauden palkat sivukuluineen kuluna Henkilöstö-luokkaan.",
     staffNoSales: "Myyntiä ei ole kirjattu, joten osuutta ei voi laskea.",
     staffShareNote: "Palkat sivukuluineen suhteessa kuukauden myyntiin.",
+    resultTitle: "Tulos",
+    resultFormula: "Myynti {myynti} − kulut {kulut}",
+    resultKept: "Jäi käteen",
+    resultCosts: "Kuluihin",
+    resultOfSales: "{osuus} % myynnistä",
+    resultLoss: "Kulut ylittävät myynnin",
+    resultNoSales: "Kirjaa kuukauden myynti, niin näet paljonko jäi käteen.",
+    resultAddSales: "Kirjaa myynti",
+    resultSoFar: "tähän mennessä",
   },
 
   kuitit: {
@@ -3315,6 +3324,15 @@ const en: AdminText = {
       "Record the month's wages and employer costs as an expense in the Staff category.",
     staffNoSales: "No sales recorded, so the share cannot be calculated.",
     staffShareNote: "Wages and employer costs relative to the month's sales.",
+    resultTitle: "Result",
+    resultFormula: "Sales {myynti} − expenses {kulut}",
+    resultKept: "Kept",
+    resultCosts: "To expenses",
+    resultOfSales: "{osuus}% of sales",
+    resultLoss: "Expenses exceed sales",
+    resultNoSales: "Record this month's sales to see how much you kept.",
+    resultAddSales: "Record sales",
+    resultSoFar: "so far",
   },
 
   kuitit: {
@@ -4983,6 +5001,15 @@ const sv: AdminText = {
     staffNoSales: "Ingen försäljning bokförd, så andelen kan inte beräknas.",
     staffShareNote:
       "Löner med bikostnader i förhållande till månadens försäljning.",
+    resultTitle: "Resultat",
+    resultFormula: "Försäljning {myynti} − kostnader {kulut}",
+    resultKept: "Blev kvar",
+    resultCosts: "Till kostnader",
+    resultOfSales: "{osuus} % av försäljningen",
+    resultLoss: "Kostnaderna överstiger försäljningen",
+    resultNoSales: "Registrera månadens försäljning så ser du hur mycket som blev kvar.",
+    resultAddSales: "Registrera försäljning",
+    resultSoFar: "hittills",
   },
 
   kuitit: {
@@ -6651,6 +6678,15 @@ const da: AdminText = {
     staffNoSales: "Intet salg bogført, så andelen kan ikke beregnes.",
     staffShareNote:
       "Lønninger med arbejdsgiverudgifter i forhold til månedens salg.",
+    resultTitle: "Resultat",
+    resultFormula: "Salg {myynti} − udgifter {kulut}",
+    resultKept: "Tilbage",
+    resultCosts: "Til udgifter",
+    resultOfSales: "{osuus} % af salget",
+    resultLoss: "Udgifterne overstiger salget",
+    resultNoSales: "Registrér månedens salg, så ser du hvor meget der er tilbage.",
+    resultAddSales: "Registrér salg",
+    resultSoFar: "indtil nu",
   },
 
   kuitit: {
@@ -8312,6 +8348,15 @@ const tr: AdminText = {
     staffNoSales: "Satış kaydedilmedi, bu yüzden oran hesaplanamaz.",
     staffShareNote:
       "İşveren maliyetleri dahil maaşların ayın satışlarına oranı.",
+    resultTitle: "Sonuç",
+    resultFormula: "Satış {myynti} − gider {kulut}",
+    resultKept: "Kalan",
+    resultCosts: "Giderlere",
+    resultOfSales: "Satışın %{osuus}'i",
+    resultLoss: "Giderler satışı aşıyor",
+    resultNoSales: "Ne kadar kaldığını görmek için bu ayın satışlarını girin.",
+    resultAddSales: "Satış gir",
+    resultSoFar: "şu ana kadar",
   },
 
   kuitit: {
@@ -9971,6 +10016,15 @@ const et: AdminText = {
       "Kirjenda kuu palgad koos tööandja kuludega kuluna kategooriasse Personal.",
     staffNoSales: "Müüki ei ole kirjendatud, seega osakaalu ei saa arvutada.",
     staffShareNote: "Palgad koos tööandja kuludega võrreldes kuu müügiga.",
+    resultTitle: "Tulemus",
+    resultFormula: "Müük {myynti} − kulud {kulut}",
+    resultKept: "Jäi kätte",
+    resultCosts: "Kuludeks",
+    resultOfSales: "{osuus}% müügist",
+    resultLoss: "Kulud ületavad müügi",
+    resultNoSales: "Sisesta kuu müük, et näha, kui palju kätte jäi.",
+    resultAddSales: "Sisesta müük",
+    resultSoFar: "seni",
   },
 
   kuitit: {

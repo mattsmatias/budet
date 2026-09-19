@@ -1298,3 +1298,179 @@ details[open] .rf-summary-chevron {
     transform: none;
   }
 }
+
+/* --------------------------------------------------------------------- */
+/* Yleiskatsaus: tulos ja kortit                                          */
+/*                                                                        */
+/* Sama kieli kuin etusivulla: tunnusvärien pehmeä hehku, valo joka       */
+/* seuraa osoitinta ja liike joka näyttää mitä luku tarkoittaa.           */
+/* Kaikki kerran, paitsi osoittimen seuraaminen.                          */
+/* --------------------------------------------------------------------- */
+
+.rf-result-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 22px 22px 20px;
+  border-radius: var(--rf-r-card);
+  background: var(--rf-card);
+  border: 1px solid var(--rf-line);
+  box-shadow: var(--rf-shadow-sm);
+}
+
+@media (min-width: 768px) {
+  .rf-result-hero {
+    padding: 26px 28px 24px;
+  }
+}
+
+/* Reuna: tunnusvärien liukuma ohuena kehänä. */
+.rf-result-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--rf-accent) 55%, transparent),
+    transparent 35%,
+    transparent 65%,
+    rgba(123, 118, 232, 0.5)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+@keyframes rf-glow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rf-result-glow {
+  position: absolute;
+  inset: -40% -10% auto auto;
+  width: 70%;
+  height: 180%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 40% at 70% 40%, rgba(74, 163, 240, 0.16), transparent 70%),
+    radial-gradient(35% 35% at 40% 60%, color-mix(in srgb, var(--rf-accent) 14%, transparent), transparent 70%),
+    radial-gradient(30% 30% at 85% 75%, rgba(123, 118, 232, 0.14), transparent 70%);
+  filter: blur(10px);
+  animation: rf-glow-in 1400ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
+}
+
+.rf-result-number {
+  animation: rf-fade-up 600ms cubic-bezier(0.16, 1, 0.3, 1) 150ms both;
+}
+
+/* Jakopalkki: kulut ja käteen jäänyt kasvavat vasemmalta. */
+.rf-split {
+  display: flex;
+  gap: 3px;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--rf-inset);
+}
+
+.rf-split > span {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+}
+
+.rf-split-cost {
+  border-radius: 999px 3px 3px 999px;
+  background: linear-gradient(90deg, #f0913a, #f5ad66);
+  animation: rf-split-grow 1100ms cubic-bezier(0.16, 1, 0.3, 1) 350ms both;
+}
+
+.rf-split-kept {
+  border-radius: 3px 999px 999px 3px;
+  background: linear-gradient(90deg, var(--rf-green), #2fa86a);
+  animation: rf-split-grow 1100ms cubic-bezier(0.16, 1, 0.3, 1) 650ms both;
+}
+
+.rf-split-cost:only-child {
+  border-radius: 999px;
+}
+
+@keyframes rf-split-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.rf-split-dot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  flex-shrink: 0;
+  border-radius: 3px;
+}
+
+/* Avainlukukortit: valo seuraa osoitinta (Spotlight). */
+.rf-spot {
+  position: relative;
+  isolation: isolate;
+}
+
+.rf-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px circle at var(--spot-x, -400px) var(--spot-y, -400px),
+    color-mix(in srgb, var(--rf-accent) 9%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.rf-spot:hover::before {
+  opacity: 1;
+}
+
+/* Kuvakelaatta nousee ja kallistuu hieman osoitettaessa. */
+.rf-metric-icon {
+  transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rf-spot:hover .rf-metric-icon {
+  transform: translateY(-2px) rotate(-6deg) scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-result-glow,
+  .rf-result-number,
+  .rf-split-cost,
+  .rf-split-kept {
+    animation: none;
+  }
+
+  .rf-spot:hover .rf-metric-icon {
+    transform: none;
+  }
+}

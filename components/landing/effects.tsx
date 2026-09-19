@@ -76,9 +76,12 @@ export function Tilt({
 export function Spotlight({
   children,
   className = "",
+  selector = ".bd-spot",
 }: {
   children: React.ReactNode;
   className?: string;
+  /** Mitkä lapset valaistaan. Hallinnassa .rf-spot, etusivulla .bd-spot. */
+  selector?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -86,7 +89,7 @@ export function Spotlight({
     const node = ref.current;
     if (!node || event.pointerType !== "mouse") return;
 
-    for (const card of node.querySelectorAll<HTMLElement>(".bd-spot")) {
+    for (const card of node.querySelectorAll<HTMLElement>(selector)) {
       const rect = card.getBoundingClientRect();
       card.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
       card.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);

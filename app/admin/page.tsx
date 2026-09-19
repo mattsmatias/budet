@@ -48,6 +48,8 @@ import {
   Sparkline,
 } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
+import { Spotlight } from "@/components/landing/effects";
+import { ResultHero } from "./home/result-hero";
 import { fetchPosVatRates, fetchSalesLines } from "@/lib/restoflow/queries";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import {
@@ -306,9 +308,12 @@ export default async function AdminDashboard({
     .filter((r) => r.category === "staff")
     .reduce((sum, r) => sum + r.totalCents, 0);
 
-  const monthSalesCents = totalSalesCents(
-    salesBetween(sales, `${viewMonth}-01`, `${viewMonth}-31`),
+  const monthSalesRows = salesBetween(
+    sales,
+    `${viewMonth}-01`,
+    `${viewMonth}-31`,
   );
+  const monthSalesCents = totalSalesCents(monthSalesRows);
 
   const staffShare =
     staffCents > 0 ? labourShareOfSales(staffCents, monthSalesCents) : null;
@@ -459,9 +464,25 @@ export default async function AdminDashboard({
         sivulta johon valikko vie — säädinrivi ennen sisältöä oli
         ainoa asia joka erotti näkymän suunnitelmasta.
       */}
-      {/* 2. KPI-kortit */}
-      <section
-        aria-label={t.sanat.keyFigures}
+      {/*
+        1b. Kuukauden tulos: paljonko tuli ja paljonko jäi käteen.
+        Näkyy vain niille, jotka näkevät myynnin ja kulut.
+      */}
+      {can(role, "sales.view") && can(role, "expenses.view") ? (
+        <ResultHero
+          t={t}
+          monthLabel={formatMonth(viewMonth, locale)}
+          salesCents={monthSalesRows.length > 0 ? monthSalesCents : null}
+          costCents={totals.totalCents}
+          soFar={isCurrentMonth}
+          canAddSales={can(role, "sales.manage")}
+        />
+      ) : null}
+
+      {/* 2. KPI-kortit. Valo seuraa osoitinta kortista toiseen. */}
+      <section aria-label={t.sanat.keyFigures}>
+      <Spotlight
+        selector=".rf-spot"
         className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
       >
         <StatCard
@@ -710,6 +731,7 @@ export default async function AdminDashboard({
           href="/admin/kulut"
           linkLabel={t.sanat.expenses}
         />
+      </Spotlight>
       </section>
 
       {/*
