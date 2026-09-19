@@ -4,7 +4,13 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
 import { HtmlLang } from "./html-lang";
 import { LandingNav, Reveal } from "./nav";
 import { Logo } from "@/components/brand/logo";
-import { HeroPreview, MonthPreview, TodoPreview } from "./preview";
+import {
+  HeroFloaters,
+  HeroPreview,
+  MonthPreview,
+  TodoPreview,
+} from "./preview";
+import { ParallaxStage } from "./effects";
 
 /**
  * Katen etusivu.
@@ -101,22 +107,39 @@ function Hero({ appHref, t }: { appHref: string | null; t: Dictionary }) {
         </div>
       </div>
 
-      {/* Tuotteen oma käyttöliittymä. Sivun tärkein kuva. */}
-      <div
+      {/*
+        Tuotteen oma käyttöliittymä. Sivun tärkein kuva.
+
+        Kehys kääntyy kallistuksesta suoraksi, sen takana syttyy hehku ja
+        reunoille ponnahtavat Matin huomio ja päivän tulos. Kerrokset ovat
+        eri syvyyksillä ja liikkuvat osoittimen mukaan.
+      */}
+      <ParallaxStage
         id="tuote"
-        className="bd-rise bd-d4 relative mx-auto mt-12 max-w-5xl sm:mt-16"
+        className="bd-stage relative mx-auto mt-12 max-w-5xl sm:mt-16"
       >
-        <div className="bd-frame">
-          <HeroPreview t={t} />
+        <div className="bd-stage-glow" aria-hidden="true" />
+
+        <div
+          className="bd-depth relative"
+          style={{ "--depth": 8 } as React.CSSProperties}
+        >
+          <div className="bd-frame-in">
+            <div className="bd-frame">
+              <HeroPreview t={t} />
+            </div>
+          </div>
         </div>
 
+        <HeroFloaters t={t} />
+
         <p
-          className="mt-3.5 text-center text-[12px]"
+          className="relative mt-3.5 text-center text-[12px]"
           style={{ color: "var(--bd-text-3)" }}
         >
           {t.hero.previewNote}
         </p>
-      </div>
+      </ParallaxStage>
     </section>
   );
 }

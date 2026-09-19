@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Osoittimeen reagoivat pinnat.
@@ -95,6 +95,114 @@ export function Spotlight({
 
   return (
     <div ref={ref} className={className} onPointerMove={move}>
+      {children}
+    </div>
+  );
+}
+
+/** 5240 → "5 240" kapealla sitovalla välilyönnillä, kielestä riippumatta. */
+function groupDigits(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/**
+ * Luku joka rullaa nollasta paikalleen.
+ *
+ * Teksti kirjoitetaan suoraan solmuun animaation ajan: Reactin tila
+ * renderöisi komponentin kuusikymmentä kertaa sekunnissa. Palvelin
+ * piirtää valmiin luvun, joten ilman JavaScriptiä ja hakukoneelle luku
+ * on oikein.
+ */
+export function CountIn({
+  to,
+  delay = 0,
+  duration = 1400,
+}: {
+  to: number;
+  delay?: number;
+  duration?: number;
+}) {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || reduced()) return;
+
+    const format = (value: number) => groupDigits(Math.round(value));
+
+    let frame = 0;
+    let start = 0;
+    node.textContent = format(0);
+
+    const step = (now: number) => {
+      if (!start) start = now;
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      node.textContent = format(to * eased);
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    const timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(step);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+      node.textContent = format(to);
+    };
+  }, [to, delay, duration]);
+
+  return (
+    <span ref={ref}>
+      {groupDigits(to)}
+    </span>
+  );
+}
+
+/**
+ * Näyttämö jonka kerrokset liikkuvat osoittimen mukaan eri syvyyksillä.
+ *
+ * Kerros lukee muuttujat --px ja --py (-1…1) ja kertoo ne omalla
+ * syvyydellään (ks. landing.css, .bd-depth). Liike on pieni: tarkoitus
+ * on tuntua kolmiulotteiselta, ei heilua.
+ */
+export function ParallaxStage({
+  children,
+  className = "",
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  function move(event: React.PointerEvent<HTMLDivElement>) {
+    const node = ref.current;
+    if (!node || event.pointerType !== "mouse" || reduced()) return;
+    const rect = node.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    node.style.setProperty("--px", x.toFixed(3));
+    node.style.setProperty("--py", y.toFixed(3));
+  }
+
+  function leave() {
+    const node = ref.current;
+    if (!node) return;
+    node.style.setProperty("--px", "0");
+    node.style.setProperty("--py", "0");
+  }
+
+  return (
+    <div
+      ref={ref}
+      id={id}
+      className={className}
+      onPointerMove={move}
+      onPointerLeave={leave}
+    >
       {children}
     </div>
   );
