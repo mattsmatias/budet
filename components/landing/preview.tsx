@@ -593,23 +593,23 @@ export function MonthPreview({ t }: { t: Dictionary }) {
         <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
           <Metric
             label={t.preview.sales}
-            value={<Euro value="58 420" />}
+            value={<Euro value={<CountIn to={58420} />} />}
             hint={t.preview.ledgerRevenue}
           />
           <Metric
             label={t.preview.expenses}
-            value={<Euro value="41 840" />}
+            value={<Euro value={<CountIn to={41840} delay={100} />} />}
             hint={t.preview.ledgerExpenses}
           />
           <Metric
             label={t.preview.result}
-            value={<Euro value="16 580" />}
+            value={<Euro value={<CountIn to={16580} delay={200} />} />}
             hint={t.preview.resultHint}
             tone="good"
           />
           <Metric
             label={t.preview.vat}
-            value={<Euro value="5 240" />}
+            value={<Euro value={<CountIn to={5240} delay={300} />} />}
             hint={t.preview.vatHint}
           />
         </div>
@@ -644,12 +644,14 @@ export function MonthPreview({ t }: { t: Dictionary }) {
                   style={{ background: "#eef1f6" }}
                 >
                   <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${row.share}%`,
-                      background: "#d13831",
-                      opacity: 0.75,
-                    }}
+                    className="bd-grow-bar h-full rounded-full"
+                    style={
+                      {
+                        width: `${row.share}%`,
+                        background: "linear-gradient(90deg, #d13831, #e0612c)",
+                        "--i": rows.indexOf(row),
+                      } as React.CSSProperties
+                    }
                   />
                 </div>
               </li>
@@ -688,20 +690,22 @@ export function TodoPreview({ t }: { t: Dictionary }) {
         <p className="text-[14px] font-bold tracking-[-0.01em]">
           {t.todo.cardTitle}
         </p>
-        <span
-          className="bd-num text-[12px] font-bold"
-          style={{ color: "var(--bd-accent)" }}
-        >
+        <span className="bd-todo-count bd-num" aria-hidden="true">
           3
         </span>
       </div>
 
       <ul className="mt-3 space-y-0.5">
-        {items.map((item) => (
+        {items.map((item, i) => (
           <li
             key={item.text}
-            className="flex items-center gap-2.5 rounded-[10px] px-2.5 py-2.5"
-            style={{ background: "var(--bd-bg-2)" }}
+            className="bd-todo-item flex items-center gap-2.5 rounded-[10px] px-2.5 py-2.5"
+            style={
+              {
+                background: "var(--bd-bg-2)",
+                "--i": i,
+              } as React.CSSProperties
+            }
           >
             <i
               aria-hidden="true"
@@ -711,6 +715,13 @@ export function TodoPreview({ t }: { t: Dictionary }) {
               }}
             />
             <span className="min-w-0 flex-1 text-[12.5px]">{item.text}</span>
+            <span
+              className="shrink-0 text-[13px]"
+              style={{ color: "var(--bd-text-3)" }}
+              aria-hidden="true"
+            >
+              →
+            </span>
           </li>
         ))}
       </ul>

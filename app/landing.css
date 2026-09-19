@@ -1525,3 +1525,571 @@ a:focus-visible > .bd-logo-mark {
     stroke-dashoffset: 0;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Etusivun osiot: hyödyt, tiedonkulku, kuukausi, tehtävät, ominaisuudet,
+   hinta
+   ---------------------------------------------------------------------------
+   Kaikki käynnistyvät kun osio tulee näkyviin: Reveal asettaa
+   data-shown="true", ja alla olevat valitsimet kuuntelevat sitä.
+   Jokainen liike tapahtuu kerran ja näyttää osion lupauksen.
+*/
+
+/* --- Hyötykorttien kuvitukset ------------------------------------------ */
+
+.bd-benefit-visual {
+  position: relative;
+  height: 148px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--bd-line);
+  background:
+    radial-gradient(80% 90% at 50% 0%, color-mix(in srgb, var(--bd-accent) 7%, transparent), transparent 70%),
+    var(--bd-bg-2);
+}
+
+.bd-mini {
+  position: absolute;
+  inset: 18px 22px;
+}
+
+/* Kuitti: paperi, lukuviiva ja poimitut tiedot. */
+.bd-paper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 44%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 12px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 24px -14px rgba(15, 23, 41, 0.45);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+
+.bd-paper i {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6e9ef;
+}
+
+.bd-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--bd-accent) 30%, transparent) 70%,
+    var(--bd-accent) 100%
+  );
+  opacity: 0;
+}
+
+@keyframes bd-scan {
+  0% {
+    transform: translateY(-24px);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120px);
+    opacity: 0;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-scanline {
+  animation: bd-scan 1300ms cubic-bezier(0.45, 0, 0.2, 1) 300ms both;
+}
+
+.bd-chips {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  transform: translateY(-50%);
+}
+
+.bd-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--bd-text);
+  background: var(--bd-card);
+  border: 1px solid var(--bd-line);
+  box-shadow: 0 6px 14px -10px rgba(15, 23, 41, 0.4);
+  opacity: 0;
+  transform: translateX(-14px) scale(0.9);
+}
+
+.bd-chip-ok {
+  color: var(--bd-green);
+  background: var(--bd-green-bg);
+  border-color: transparent;
+}
+
+@keyframes bd-chip-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-chip {
+  animation: bd-chip-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.bd-reveal[data-shown="true"] .bd-chip-1 { animation-delay: 1100ms; }
+.bd-reveal[data-shown="true"] .bd-chip-2 { animation-delay: 1300ms; }
+.bd-reveal[data-shown="true"] .bd-chip-3 { animation-delay: 1550ms; }
+
+/* Tulos: palkit kasvavat, summa rullaa. */
+.bd-bars {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 34px;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.bd-bars i {
+  flex: 1;
+  height: var(--h);
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(to top, #4aa3f0, #7cc0f6);
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+.bd-bars i:last-child {
+  background: linear-gradient(to top, #17803d, #3fb468);
+}
+
+@keyframes bd-bar-up {
+  to {
+    transform: none;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-bars i {
+  animation: bd-bar-up 700ms cubic-bezier(0.34, 1.3, 0.64, 1) both;
+  animation-delay: calc(200ms + var(--i) * 80ms);
+}
+
+.bd-mini-result {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.bd-mini-result strong {
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--bd-green);
+}
+
+/* Kirjanpito: kirjaukset syntyvät rivi kerrallaan. */
+.bd-mini-ledger {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.bd-ledger-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--bd-card);
+  border: 1px solid var(--bd-line);
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.bd-ledger-row i {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: #e6e9ef;
+}
+
+.bd-ledger-row b {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--bd-text-3);
+}
+
+.bd-ledger-tick {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--bd-green);
+  background: var(--bd-green-bg);
+}
+
+.bd-reveal[data-shown="true"] .bd-ledger-row {
+  animation: bd-chip-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(250ms + var(--i) * 180ms);
+}
+
+/* --- Tiedonkulku: aikajana ----------------------------------------------- */
+
+.bd-timeline {
+  position: relative;
+}
+
+.bd-timeline-list {
+  position: relative;
+  display: grid;
+  gap: 22px;
+}
+
+.bd-timeline-track {
+  position: absolute;
+  left: 27px;
+  top: 28px;
+  bottom: 28px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--bd-line);
+  overflow: hidden;
+}
+
+.bd-timeline-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, #4aa3f0, var(--bd-accent), #7b76e8);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.bd-timeline-step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.bd-timeline-node {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  color: var(--bd-text);
+  background: var(--bd-card);
+  border: 1px solid var(--bd-line);
+  box-shadow: 0 10px 24px -14px rgba(15, 23, 41, 0.35);
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bd-timeline-step:hover .bd-timeline-node {
+  transform: translateY(-3px) scale(1.05);
+}
+
+.bd-timeline-node-kate {
+  border-color: color-mix(in srgb, var(--bd-accent) 40%, var(--bd-line));
+  box-shadow:
+    0 12px 28px -14px rgba(209, 56, 49, 0.55),
+    0 0 0 6px color-mix(in srgb, var(--bd-accent) 9%, transparent);
+}
+
+@keyframes bd-fill-down {
+  to {
+    transform: none;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-timeline-fill {
+  animation: bd-fill-down 1600ms cubic-bezier(0.45, 0, 0.2, 1) 200ms both;
+}
+
+.bd-reveal[data-shown="true"] .bd-timeline-step {
+  animation: bd-chip-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(150ms + var(--i) * 300ms);
+}
+
+@keyframes bd-node-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bd-accent) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-timeline-node-kate {
+  animation: bd-node-glow 1000ms ease-out 900ms 2;
+}
+
+@media (min-width: 900px) {
+  .bd-timeline-list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .bd-timeline-track {
+    left: 10%;
+    right: 10%;
+    top: 27px;
+    bottom: auto;
+    width: auto;
+    height: 3px;
+  }
+
+  .bd-timeline-fill {
+    background: linear-gradient(to right, #4aa3f0, var(--bd-accent), #7b76e8);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .bd-timeline-step {
+    flex-direction: column;
+    text-align: center;
+    gap: 14px;
+  }
+}
+
+/* --- Kuukausinäkymä ja tehtävät ------------------------------------------ */
+
+.bd-grow-bar {
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+@keyframes bd-grow-x {
+  to {
+    transform: none;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-grow-bar {
+  animation: bd-grow-x 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(400ms + var(--i) * 150ms);
+}
+
+.bd-todo-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--bd-accent);
+  box-shadow: 0 6px 14px -6px rgba(209, 56, 49, 0.7);
+}
+
+@keyframes bd-count-pop {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-todo-count {
+  animation:
+    bd-count-pop 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 1000ms both,
+    bd-node-glow 1200ms ease-out 1600ms 2;
+}
+
+.bd-todo-item {
+  opacity: 0;
+  transform: translateX(-12px);
+  transition: background 200ms ease;
+}
+
+.bd-todo-item:hover {
+  background: color-mix(in srgb, var(--bd-accent) 6%, var(--bd-bg-2)) !important;
+}
+
+.bd-reveal[data-shown="true"] .bd-todo-item {
+  animation: bd-chip-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(300ms + var(--i) * 200ms);
+}
+
+/* --- Ominaisuudet -------------------------------------------------------- */
+
+.bd-feature-grid {
+  background: var(--bd-line);
+  border: 1px solid var(--bd-line);
+}
+
+.bd-feature-cell {
+  display: flex;
+}
+
+.bd-feature {
+  width: 100%;
+  background: var(--bd-card);
+}
+
+.bd-feature-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  color: var(--bd-accent-strong);
+  background: var(--bd-accent-bg);
+  transition:
+    transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.bd-feature:hover .bd-feature-icon {
+  transform: translateY(-3px) rotate(-6deg);
+  color: #fff;
+  background: var(--bd-accent);
+}
+
+/* --- Hinta ---------------------------------------------------------------- */
+
+@property --bd-ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes bd-ring-spin {
+  to {
+    --bd-ring-angle: 360deg;
+  }
+}
+
+.bd-price-ring {
+  position: relative;
+  padding: 1.5px;
+  border-radius: 23.5px;
+  background: conic-gradient(
+    from var(--bd-ring-angle),
+    var(--bd-line-2),
+    var(--bd-accent),
+    #7b76e8,
+    #4aa3f0,
+    var(--bd-line-2) 60%,
+    var(--bd-line-2)
+  );
+  box-shadow: 0 40px 80px -40px rgba(209, 56, 49, 0.45);
+  animation: bd-ring-spin 6s linear infinite;
+}
+
+.bd-price-item {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.bd-reveal[data-shown="true"] .bd-price-item {
+  animation: bd-chip-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(500ms + var(--i) * 60ms);
+}
+
+/* --- Meistä-sivun oranssi loppuosio -------------------------------------- */
+
+.bd-cta-orange::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(70% 80% at 50% 50%, #000, transparent);
+}
+
+.bd-cta-orange::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -30%;
+  width: 30%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-18deg);
+  opacity: 0;
+}
+
+@keyframes bd-sweep {
+  0% {
+    opacity: 1;
+    transform: skewX(-18deg) translateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: skewX(-18deg) translateX(560%);
+  }
+}
+
+.bd-reveal[data-shown="true"] .bd-cta-orange::after {
+  animation: bd-sweep 1600ms cubic-bezier(0.45, 0, 0.2, 1) 400ms both;
+}
+
+.bd-cta-orange > * {
+  position: relative;
+}
+
+/* --- Vähennetty liike: lopputila heti ------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-scanline,
+  .bd-cta-orange::after {
+    display: none;
+  }
+
+  .bd-chip,
+  .bd-bars i,
+  .bd-ledger-row,
+  .bd-timeline-fill,
+  .bd-timeline-step,
+  .bd-grow-bar,
+  .bd-todo-item,
+  .bd-price-item {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
+
+  .bd-todo-count,
+  .bd-timeline-node-kate,
+  .bd-price-ring {
+    animation: none !important;
+  }
+}

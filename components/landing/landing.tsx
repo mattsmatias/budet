@@ -10,7 +10,8 @@ import {
   MonthPreview,
   TodoPreview,
 } from "./preview";
-import { ParallaxStage } from "./effects";
+import { CountIn, ParallaxStage, Spotlight } from "./effects";
+import { RfIcon } from "@/components/restoflow/icons";
 import { ContactForm } from "./contact-form";
 
 /**
@@ -152,17 +153,17 @@ function Benefits({ t }: { t: Dictionary }) {
     {
       title: t.benefits.receiptsTitle,
       body: t.benefits.receiptsBody,
-      icon: <IconReceipt />,
+      visual: <ReceiptScan t={t} />,
     },
     {
       title: t.benefits.financeTitle,
       body: t.benefits.financeBody,
-      icon: <IconChart />,
+      visual: <ResultBars t={t} />,
     },
     {
       title: t.benefits.ledgerTitle,
       body: t.benefits.ledgerBody,
-      icon: <IconLedger />,
+      visual: <LedgerRows />,
     },
   ];
 
@@ -176,9 +177,7 @@ function Benefits({ t }: { t: Dictionary }) {
           >
             {t.benefits.headingA}
             <br />
-            <span style={{ color: "var(--bd-text-2)" }}>
-              {t.benefits.headingB}
-            </span>
+            <span className="bd-gradient-text">{t.benefits.headingB}</span>
           </h2>
 
           <p
@@ -189,34 +188,103 @@ function Benefits({ t }: { t: Dictionary }) {
           </p>
         </Reveal>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        <Spotlight className="mt-10 grid gap-4 sm:grid-cols-3">
           {items.map((item, i) => (
-            <Reveal key={item.title} delay={i * 70}>
-              <div className="bd-card bd-card-hover h-full p-5">
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-[11px]"
-                  style={{
-                    background: "var(--bd-bg-2)",
-                    color: "var(--bd-text)",
-                  }}
-                >
-                  {item.icon}
-                </span>
-                <h3 className="mt-4 text-[16px] font-bold tracking-[-0.01em]">
-                  {item.title}
-                </h3>
-                <p
-                  className="mt-1.5 text-[14px] leading-relaxed"
-                  style={{ color: "var(--bd-text-2)" }}
-                >
-                  {item.body}
-                </p>
+            <Reveal key={item.title} delay={i * 90}>
+              <div className="bd-card bd-card-hover bd-spot h-full overflow-hidden">
+                <div className="bd-benefit-visual" aria-hidden="true">
+                  {item.visual}
+                </div>
+                <div className="p-5 pt-4">
+                  <h3 className="text-[16px] font-bold tracking-[-0.01em]">
+                    {item.title}
+                  </h3>
+                  <p
+                    className="mt-1.5 text-[14px] leading-relaxed"
+                    style={{ color: "var(--bd-text-2)" }}
+                  >
+                    {item.body}
+                  </p>
+                </div>
               </div>
             </Reveal>
           ))}
-        </div>
+        </Spotlight>
       </div>
     </section>
+  );
+}
+
+/*
+ * Hyötykorttien pienet kuvitukset.
+ *
+ * Jokainen näyttää korttinsa lupauksen liikkeenä eikä kuvakkeena:
+ * kuitti luetaan, tulos kasvaa, kirjaukset syntyvät. Liike alkaa kun
+ * kortti tulee näkyviin (Reveal) ja tapahtuu kerran.
+ */
+
+function ReceiptScan({ t }: { t: Dictionary }) {
+  return (
+    <div className="bd-mini bd-mini-receipt">
+      <div className="bd-paper">
+        <i style={{ width: "70%" }} />
+        <i style={{ width: "45%" }} />
+        <i style={{ width: "85%" }} />
+        <i style={{ width: "60%" }} />
+        <i style={{ width: "40%" }} />
+        <span className="bd-scanline" />
+      </div>
+      <div className="bd-chips">
+        <span className="bd-chip bd-chip-1">{t.preview.catFood}</span>
+        <span className="bd-chip bd-chip-2">{t.preview.vat} 13,5 %</span>
+        <span className="bd-chip bd-chip-3 bd-chip-ok">✓ 184,20 €</span>
+      </div>
+    </div>
+  );
+}
+
+function ResultBars({ t }: { t: Dictionary }) {
+  const bars = [42, 58, 50, 72, 64, 88, 80];
+  return (
+    <div className="bd-mini bd-mini-bars">
+      <div className="bd-bars">
+        {bars.map((h, i) => (
+          <i
+            key={i}
+            style={
+              {
+                "--h": `${h}%`,
+                "--i": i,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+      <span className="bd-mini-result">
+        <span style={{ color: "var(--bd-text-3)" }}>{t.preview.result}</span>
+        <strong className="bd-num">
+          +<CountIn to={3420} delay={500} /> €
+        </strong>
+      </span>
+    </div>
+  );
+}
+
+function LedgerRows() {
+  return (
+    <div className="bd-mini bd-mini-ledger">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="bd-ledger-row"
+          style={{ "--i": i } as React.CSSProperties}
+        >
+          <span className="bd-ledger-tick">✓</span>
+          <i style={{ width: `${[62, 48, 70, 54][i]}%` }} />
+          <b className="bd-num">{["3000", "4000", "2939", "1910"][i]}</b>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -225,16 +293,18 @@ function Benefits({ t }: { t: Dictionary }) {
 /**
  * Automaattinen tiedonkulku.
  *
- * Katen tärkein myyntiväite yhtenä kuvana. Ketju luetaan kerran ja
- * se on ymmärretty — kappale samasta asiasta ei olisi.
+ * Katen tärkein myyntiväite yhtenä kuvana: aikajana, jonka viiva
+ * täyttyy vasemmalta oikealle kun osio tulee näkyviin ja pisteet
+ * syttyvät vuorollaan. Kate on ketjun keskellä omalla tunnuksellaan,
+ * koska kaikki kulkee sen kautta.
  */
 function Flow({ t }: { t: Dictionary }) {
   const steps = [
-    { label: t.flow.step1, note: t.flow.step1Note },
-    { label: t.flow.step2, note: t.flow.step2Note },
-    { label: t.flow.step3, note: t.flow.step3Note },
-    { label: t.flow.step4, note: t.flow.step4Note },
-    { label: t.flow.step5, note: t.flow.step5Note },
+    { label: t.flow.step1, note: t.flow.step1Note, icon: "sales" as const },
+    { label: t.flow.step2, note: t.flow.step2Note, icon: "camera" as const },
+    { label: t.flow.step3, note: t.flow.step3Note, icon: null },
+    { label: t.flow.step4, note: t.flow.step4Note, icon: "file" as const },
+    { label: t.flow.step5, note: t.flow.step5Note, icon: "trend" as const },
   ];
 
   return (
@@ -261,67 +331,50 @@ function Flow({ t }: { t: Dictionary }) {
         </Reveal>
 
         <Reveal delay={90}>
-          <ol className="mt-10 flex flex-col items-stretch gap-2 min-[900px]:flex-row min-[900px]:items-center">
+          <div className="bd-timeline mt-12">
+            <span className="bd-timeline-track" aria-hidden="true">
+              <span className="bd-timeline-fill" />
+            </span>
+
+            <ol className="bd-timeline-list">
+
             {steps.map((step, i) => (
               <li
                 key={step.label}
-                className="flex items-center gap-2 min-[900px]:flex-1 min-[900px]:flex-col"
+                className="bd-timeline-step"
+                style={{ "--i": i } as React.CSSProperties}
               >
-                <div
-                  className="flex-1 rounded-[13px] px-4 py-3.5 text-center min-[900px]:w-full min-[900px]:flex-none"
-                  style={{
-                    background: "var(--bd-card)",
-                    border: "1px solid var(--bd-line)",
-                    boxShadow: "var(--bd-shadow-sm)",
-                  }}
+                <span
+                  className={`bd-timeline-node ${step.icon === null ? "bd-timeline-node-kate" : ""}`}
                 >
-                  <p className="text-[14px] font-bold tracking-[-0.01em]">
+                  {step.icon === null ? (
+                    <Logo size={30} />
+                  ) : (
+                    <RfIcon name={step.icon} size={20} />
+                  )}
+                </span>
+                <span className="bd-timeline-text">
+                  <span className="block text-[15px] font-bold tracking-[-0.01em]">
                     {step.label}
-                  </p>
-                  <p
-                    className="mt-0.5 text-[11.5px]"
+                  </span>
+                  <span
+                    className="mt-0.5 block text-[12.5px]"
                     style={{ color: "var(--bd-text-3)" }}
                   >
                     {step.note}
-                  </p>
-                </div>
-
-                {i < steps.length - 1 ? (
-                  <span
-                    className="bd-flow-arrow shrink-0 min-[900px]:hidden"
-                    aria-hidden="true"
-                  >
-                    <Arrow />
                   </span>
-                ) : null}
+                </span>
               </li>
             ))}
-          </ol>
+            </ol>
+          </div>
         </Reveal>
       </div>
     </section>
   );
 }
 
-function Arrow() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M3 8h10m0 0-3.5-3.5M13 8l-3.5 3.5"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 
@@ -390,17 +443,17 @@ function Todo({ t }: { t: Dictionary }) {
 
 function Features({ t }: { t: Dictionary }) {
   const features = [
-    { title: t.features.receipts, body: t.features.receiptsBody },
-    { title: t.features.expenses, body: t.features.expensesBody },
-    { title: t.features.sales, body: t.features.salesBody },
-    { title: t.features.till, body: t.features.tillBody },
-    { title: t.features.ledger, body: t.features.ledgerBody },
-    { title: t.features.vat, body: t.features.vatBody },
-    { title: t.features.reports, body: t.features.reportsBody },
-    { title: t.features.staff, body: t.features.staffBody },
-    { title: t.features.tasks, body: t.features.tasksBody },
-    { title: t.features.files, body: t.features.filesBody },
-  ];
+    { title: t.features.receipts, body: t.features.receiptsBody, icon: "receipt" },
+    { title: t.features.expenses, body: t.features.expensesBody, icon: "expenses" },
+    { title: t.features.sales, body: t.features.salesBody, icon: "sales" },
+    { title: t.features.till, body: t.features.tillBody, icon: "camera" },
+    { title: t.features.ledger, body: t.features.ledgerBody, icon: "file" },
+    { title: t.features.vat, body: t.features.vatBody, icon: "budget" },
+    { title: t.features.reports, body: t.features.reportsBody, icon: "report" },
+    { title: t.features.staff, body: t.features.staffBody, icon: "staff" },
+    { title: t.features.tasks, body: t.features.tasksBody, icon: "check" },
+    { title: t.features.files, body: t.features.filesBody, icon: "folder" },
+  ] as const;
 
   return (
     <section id="ominaisuudet" className="px-4 py-20 sm:px-6 sm:py-28">
@@ -411,20 +464,25 @@ function Features({ t }: { t: Dictionary }) {
           </h2>
         </Reveal>
 
-        <div
-          className="mt-10 grid gap-px overflow-hidden rounded-[20px] sm:grid-cols-2 lg:grid-cols-5"
-          style={{
-            background: "var(--bd-line)",
-            border: "1px solid var(--bd-line)",
-          }}
+        {/*
+          Ohut ruudukko, jossa jokaisella ominaisuudella on oma kuvake.
+          Valo seuraa osoitinta solusta toiseen, ja kuvake nousee kun
+          solua osoitetaan.
+        */}
+        <Spotlight
+          className="bd-feature-grid mt-10 grid gap-px overflow-hidden rounded-[20px] sm:grid-cols-2 lg:grid-cols-5"
         >
           {features.map((feature, i) => (
-            <Reveal key={feature.title} delay={Math.min(i, 4) * 50}>
-              <div
-                className="h-full p-5"
-                style={{ background: "var(--bd-card)" }}
-              >
-                <h3 className="text-[15px] font-bold tracking-[-0.01em]">
+            <Reveal
+              key={feature.title}
+              delay={Math.min(i, 4) * 50}
+              className="bd-feature-cell"
+            >
+              <div className="bd-spot bd-feature h-full p-5">
+                <span className="bd-feature-icon" aria-hidden="true">
+                  <RfIcon name={feature.icon} size={18} />
+                </span>
+                <h3 className="mt-4 text-[15px] font-bold tracking-[-0.01em]">
                   {feature.title}
                 </h3>
                 <p
@@ -436,7 +494,7 @@ function Features({ t }: { t: Dictionary }) {
               </div>
             </Reveal>
           ))}
-        </div>
+        </Spotlight>
 
         {/*
           Veroasioista sanotaan mitä Kate oikeasti tekee.
@@ -447,9 +505,12 @@ function Features({ t }: { t: Dictionary }) {
         */}
         <Reveal delay={120}>
           <p
-            className="mt-5 max-w-2xl text-[13px] leading-relaxed"
+            className="mt-5 flex max-w-2xl items-start gap-2 text-[13px] leading-relaxed"
             style={{ color: "var(--bd-text-3)" }}
           >
+            <span className="mt-[1px] shrink-0" aria-hidden="true">
+              <RfIcon name="info" size={15} />
+            </span>
             {t.features.taxNote}
           </p>
         </Reveal>
@@ -477,7 +538,7 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
   return (
     <section
       id="hinta"
-      className="px-4 py-20 sm:px-6 sm:py-28"
+      className="relative overflow-clip px-4 py-20 sm:px-6 sm:py-28"
       style={{
         background: "var(--bd-bg-2)",
         borderBlock: "1px solid var(--bd-line)",
@@ -499,64 +560,71 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
         </Reveal>
 
         <Reveal delay={90}>
-          <div
-            className="mx-auto mt-10 max-w-md overflow-hidden rounded-[22px]"
-            style={{
-              background: "var(--bd-card)",
-              border: "1px solid var(--bd-line-2)",
-              boxShadow: "var(--bd-shadow)",
-            }}
-          >
-            <div className="p-7 text-center">
-              <p className="text-[14px] font-bold tracking-[-0.01em]">Kate</p>
-
-              <p className="mt-4">
-                <span className="bd-num text-[46px] font-bold leading-none tracking-[-0.04em]">
-                  79
-                </span>
-                <span
-                  className="ml-1 text-[16px] font-semibold"
-                  style={{ color: "var(--bd-text-2)" }}
-                >
-                  {t.pricing.perMonth}
-                </span>
-              </p>
-
-              <p
-                className="mt-2 text-[13px]"
-                style={{ color: "var(--bd-text-3)" }}
-              >
-                {t.pricing.yearly}
-              </p>
-
-              <PrimaryCta
-                appHref={appHref}
-                t={t}
-                className="mt-6 w-full"
-              />
-
-              <p
-                className="mt-3 text-[12.5px]"
-                style={{ color: "var(--bd-text-3)" }}
-              >
-                {t.pricing.note}
-              </p>
-            </div>
-
-            <ul
-              className="grid gap-x-6 gap-y-2.5 border-t px-7 py-6 sm:grid-cols-2"
-              style={{ borderColor: "var(--bd-line)" }}
+          {/*
+            Hintakortti hehkuvalla reunalla: tunnusvärien kehä kiertää
+            kortin ympäri hitaasti. Sivun ainoa jatkuvasti liikkuva reuna,
+            koska tämä on se kohta jossa päätös tehdään.
+          */}
+          <div className="bd-price-ring mx-auto mt-10 max-w-md">
+            <div
+              className="relative overflow-hidden rounded-[22px]"
+              style={{ background: "var(--bd-card)" }}
             >
-              {included.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-center gap-2.5 text-[14px]"
+              <div className="p-7 text-center">
+                <p className="inline-flex items-center gap-2 text-[14px] font-bold tracking-[-0.01em]">
+                  <Logo size={22} />
+                  Kate
+                </p>
+
+                <p className="mt-4">
+                  <span className="bd-num text-[52px] font-bold leading-none tracking-[-0.04em]">
+                    <CountIn to={79} duration={900} />
+                  </span>
+                  <span
+                    className="ml-1 text-[16px] font-semibold"
+                    style={{ color: "var(--bd-text-2)" }}
+                  >
+                    {t.pricing.perMonth}
+                  </span>
+                </p>
+
+                <p
+                  className="mt-2 text-[13px]"
+                  style={{ color: "var(--bd-text-3)" }}
                 >
-                  <Check />
-                  {item}
-                </li>
-              ))}
-            </ul>
+                  {t.pricing.yearly}
+                </p>
+
+                <PrimaryCta
+                  appHref={appHref}
+                  t={t}
+                  className="mt-6 w-full"
+                />
+
+                <p
+                  className="mt-3 text-[12.5px]"
+                  style={{ color: "var(--bd-text-3)" }}
+                >
+                  {t.pricing.note}
+                </p>
+              </div>
+
+              <ul
+                className="grid gap-x-6 gap-y-2.5 border-t px-7 py-6 sm:grid-cols-2"
+                style={{ borderColor: "var(--bd-line)" }}
+              >
+                {included.map((item, i) => (
+                  <li
+                    key={item}
+                    className="bd-price-item flex items-center gap-2.5 text-[14px]"
+                    style={{ "--i": i } as React.CSSProperties}
+                  >
+                    <Check />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </Reveal>
       </div>
@@ -740,6 +808,9 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
               <Link href={pathFor(locale, "about")}>{t.nav.about}</Link>
             </li>
             <li>
+              <a href="#yhteys">{t.nav.start}</a>
+            </li>
+            <li>
               <Link href="/kirjaudu">{t.nav.login}</Link>
             </li>
           </ul>
@@ -753,71 +824,5 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
         © {new Date().getFullYear()} Kate
       </p>
     </footer>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Kuvakkeet
-//
-// Kolme kuvaketta piirrettynä tähän eikä sovelluksen sarjasta: sarja on
-// mitoitettu 15–20 pikselin kokoon tiheässä näkymässä, ja tässä ne ovat
-// kaksinkertaisia. Sama piirros suurennettuna näyttäisi ohuelta.
-
-function IconReceipt() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M6 3.5v17l2-1.3 2 1.3 2-1.3 2 1.3 2-1.3 2 1.3v-17zM9.5 8h5M9.5 12h5M9.5 16h3"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconChart() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M4 20V10M10 20V4M16 20v-7M22 20H2"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconLedger() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M6 3h8l4 4v14H6zM14 3v4h4M9.5 12.5h5M9.5 16.5h3"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

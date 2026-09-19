@@ -353,7 +353,7 @@ function Cta({
     <section className="px-4 pb-20 sm:px-6 sm:pb-28">
       <Reveal>
         <div
-          className="mx-auto max-w-5xl overflow-hidden px-6 py-16 text-center sm:px-10 sm:py-20"
+          className="bd-cta-orange relative mx-auto max-w-5xl overflow-hidden px-6 py-16 text-center sm:px-10 sm:py-20"
           style={{ background: "var(--bd-orange)", borderRadius: 26 }}
         >
           <h2
@@ -430,6 +430,9 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
             </li>
             <li>
               <Link href={pathFor(locale, "about")}>{t.nav.about}</Link>
+            </li>
+            <li>
+              <Link href={`${home}#yhteys`}>{t.nav.start}</Link>
             </li>
             <li>
               <Link href="/kirjaudu">{t.nav.login}</Link>

@@ -142,11 +142,35 @@ export function CountIn({
       if (progress < 1) frame = requestAnimationFrame(step);
     };
 
-    const timer = window.setTimeout(() => {
-      frame = requestAnimationFrame(step);
-    }, delay);
+    /*
+     * Rullaus alkaa vasta kun luku tulee näkyviin. Sivun alaosan luku
+     * joka rullaa latauksen aikana on jo valmis kun sen näkee.
+     */
+    let timer = 0;
+    const begin = () => {
+      timer = window.setTimeout(() => {
+        frame = requestAnimationFrame(step);
+      }, delay);
+    };
+
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver === "undefined") {
+      begin();
+    } else {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            observer?.disconnect();
+            begin();
+          }
+        },
+        { rootMargin: "0px 0px -60px 0px" },
+      );
+      observer.observe(node);
+    }
 
     return () => {
+      observer?.disconnect();
       window.clearTimeout(timer);
       cancelAnimationFrame(frame);
       node.textContent = format(to);
