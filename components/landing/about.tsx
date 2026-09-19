@@ -152,16 +152,54 @@ function Team({ t }: { t: Dictionary }) {
 
 // ---------------------------------------------------------------------------
 
+/**
+ * Miksi Kate.
+ *
+ * Teksti sanoo "tuoda nämä yhteen", ja kuvio näyttää sen: Katen osat
+ * ovat ensin hajallaan kuin eri järjestelmissä, ja kun osio tulee
+ * näkyviin, ne liukuvat kehälle K-tunnuksen ympärille ja niistä
+ * vedetään viivat keskelle. Yksi ele, joka toistaa otsikon ajatuksen.
+ *
+ * Kehällä on vain asioita joita Katessa oikeasti on.
+ */
+const ORBIT_COUNT = 8;
+
 function Why({ t }: { t: Dictionary }) {
+  const parts = [
+    t.features.sales,
+    t.features.receipts,
+    t.features.expenses,
+    t.features.till,
+    t.features.ledger,
+    t.features.reports,
+    t.features.tasks,
+    t.features.files,
+  ];
+
+  /*
+   * Lähtöpaikat hajallaan ja vinossa. Kiinteät arvot eivätkä
+   * satunnaiset: palvelin ja selain piirtävät saman kuvan.
+   */
+  const scatter = [
+    [-60, -150, -14],
+    [150, -110, 11],
+    [190, 40, -9],
+    [120, 170, 16],
+    [-20, 190, -12],
+    [-170, 120, 9],
+    [-200, -10, -18],
+    [-150, -170, 13],
+  ];
+
   return (
     <section
-      className="px-4 py-20 sm:px-6 sm:py-28"
+      className="overflow-hidden px-4 py-20 sm:px-6 sm:py-28"
       style={{
         background: "var(--bd-bg-2)",
         borderBlock: "1px solid var(--bd-line)",
       }}
     >
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto grid max-w-5xl items-center gap-14 lg:grid-cols-[1fr_minmax(0,440px)] lg:gap-16">
         <Reveal>
           <p
             className="text-[12.5px] font-semibold uppercase tracking-[0.09em]"
@@ -187,6 +225,60 @@ function Why({ t }: { t: Dictionary }) {
           <p className="mt-4 text-[16px] font-bold tracking-[-0.01em]">
             {t.about.whyEmphasis}
           </p>
+        </Reveal>
+
+        <Reveal delay={120}>
+          <div className="bd-orbit" aria-hidden="true">
+            <div className="bd-orbit-ring" />
+
+            <svg
+              className="bd-orbit-lines"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+            >
+              {parts.map((_, i) => {
+                const angle = (i / ORBIT_COUNT) * Math.PI * 2 - Math.PI / 2;
+                return (
+                  <line
+                    key={i}
+                    x1="50"
+                    y1="50"
+                    x2={(50 + Math.cos(angle) * 38).toFixed(2)}
+                    y2={(50 + Math.sin(angle) * 38).toFixed(2)}
+                    pathLength={1}
+                    style={{ "--i": i } as React.CSSProperties}
+                  />
+                );
+              })}
+            </svg>
+
+            <div className="bd-orbit-core">
+              <Logo size={64} />
+            </div>
+
+            {parts.map((label, i) => {
+              const angle = (i / ORBIT_COUNT) * Math.PI * 2 - Math.PI / 2;
+              const [sx, sy, sr] = scatter[i];
+              return (
+                <span
+                  key={label}
+                  className="bd-orbit-chip"
+                  style={
+                    {
+                      left: `${(50 + Math.cos(angle) * 38).toFixed(2)}%`,
+                      top: `${(50 + Math.sin(angle) * 38).toFixed(2)}%`,
+                      "--sx": `${sx}px`,
+                      "--sy": `${sy}px`,
+                      "--sr": `${sr}deg`,
+                      "--i": i,
+                    } as React.CSSProperties
+                  }
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
         </Reveal>
       </div>
     </section>
