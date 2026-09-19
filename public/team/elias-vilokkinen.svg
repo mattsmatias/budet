@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" width="720" height="900">
+  <!-- Väliaikainen kuvitus: savimainen 3D-hahmo, ei valokuva. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fde8e1"/>
+      <stop offset="0.55" stop-color="#f3e6f3"/>
+      <stop offset="1" stop-color="#e3e4fb"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="skin" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#fbdcc4"/>
+      <stop offset="0.55" stop-color="#eeb893"/>
+      <stop offset="1" stop-color="#c98865"/>
+    </radialGradient>
+    <linearGradient id="neck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c98865"/>
+      <stop offset="1" stop-color="#e5ac86"/>
+    </linearGradient>
+    <radialGradient id="ear" cx="0.4" cy="0.4" r="0.7">
+      <stop offset="0" stop-color="#f3c6a6"/>
+      <stop offset="1" stop-color="#cf8f6b"/>
+    </radialGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a5236"/>
+      <stop offset="0.5" stop-color="#5a3a26"/>
+      <stop offset="1" stop-color="#3a2519"/>
+    </linearGradient>
+    <linearGradient id="sweater" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34466f"/>
+      <stop offset="0.6" stop-color="#1f2c4c"/>
+      <stop offset="1" stop-color="#141c33"/>
+    </linearGradient>
+    <linearGradient id="collar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe3ee"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="720" height="900" fill="url(#bg)"/>
+  <circle cx="360" cy="380" r="330" fill="url(#glow)"/>
+  <circle cx="610" cy="140" r="90" fill="#d13831" opacity="0.08"/>
+  <circle cx="110" cy="250" r="60" fill="#7b76e8" opacity="0.1"/>
+
+  <!-- Varjo hartioiden takana -->
+  <ellipse cx="360" cy="900" rx="330" ry="120" fill="#141c33" opacity="0.18" filter="url(#soft)"/>
+
+  <!-- Vartalo -->
+  <path d="M110 900 C110 760 190 672 300 652 L420 652 C530 672 610 760 610 900 Z" fill="url(#sweater)"/>
+  <path d="M170 900 C175 800 215 730 280 700" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Kaula -->
+  <path d="M310 560 L410 560 L416 668 C392 690 328 690 304 668 Z" fill="url(#neck)"/>
+
+  <!-- Kaulus -->
+  <path d="M296 652 L360 735 L424 652 L446 664 L360 770 L274 664 Z" fill="url(#collar)"/>
+  <path d="M322 660 L360 712 L398 660" fill="#e9b28c"/>
+
+  <!-- Korvat -->
+  <ellipse cx="212" cy="410" rx="30" ry="44" fill="url(#ear)"/>
+  <ellipse cx="508" cy="410" rx="30" ry="44" fill="url(#ear)"/>
+
+  <!-- Pää -->
+  <ellipse cx="360" cy="400" rx="150" ry="172" fill="url(#skin)"/>
+  <ellipse cx="310" cy="330" rx="70" ry="50" fill="url(#shine)"/>
+
+  <!-- Hiukset -->
+  <path d="M206 392 C196 268 262 196 362 196 C468 196 530 262 516 386 C502 330 470 300 430 292 C392 318 318 322 262 300 C236 318 216 350 206 392 Z" fill="url(#hair)"/>
+  <path d="M280 236 C330 214 404 216 452 244" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Kulmat -->
+  <path d="M272 378 C292 364 318 364 336 374" fill="none" stroke="#4a2f20" stroke-width="10" stroke-linecap="round"/>
+  <path d="M384 374 C402 364 428 364 448 378" fill="none" stroke="#4a2f20" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Silmät -->
+  <ellipse cx="305" cy="414" rx="15" ry="18" fill="#2a1c14"/>
+  <ellipse cx="415" cy="414" rx="15" ry="18" fill="#2a1c14"/>
+  <circle cx="310" cy="408" r="5" fill="#ffffff"/>
+  <circle cx="420" cy="408" r="5" fill="#ffffff"/>
+
+  <!-- Nenä -->
+  <path d="M360 430 C352 456 348 470 360 476 C368 478 374 474 376 470" fill="none" stroke="#b97451" stroke-width="7" stroke-linecap="round" stroke-opacity="0.7"/>
+
+  <!-- Posket -->
+  <ellipse cx="270" cy="470" rx="26" ry="15" fill="#e8876f" opacity="0.35"/>
+  <ellipse cx="450" cy="470" rx="26" ry="15" fill="#e8876f" opacity="0.35"/>
+
+  <!-- Hymy -->
+  <path d="M318 510 C344 536 378 536 402 510" fill="none" stroke="#8a4a36" stroke-width="9" stroke-linecap="round"/>
+</svg>

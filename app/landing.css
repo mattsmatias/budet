@@ -813,3 +813,35 @@ a:focus-visible > .bd-logo-mark {
     background-position: -20% 0;
   }
 }
+
+/*
+ * Tiimin kortit porrastettuina.
+ *
+ * Jokainen kortti käy saman sarjan läpi (verho, hehku, merkki, nimi),
+ * ja seuraava alkaa hieman perässä. Yhtä aikaa alkava sarja kahdessa
+ * kortissa näyttäisi kopiolta, porrastettuna se näyttää rytmiltä.
+ */
+.bd-member .bd-portrait,
+.bd-member .bd-portrait-img {
+  animation-delay: var(--bd-member-delay, 0ms);
+}
+
+.bd-member .bd-aurora {
+  animation-delay: calc(200ms + var(--bd-member-delay, 0ms));
+}
+
+.bd-member .bd-badge {
+  animation-delay: calc(1150ms + var(--bd-member-delay, 0ms));
+}
+
+.bd-member .bd-member-rise {
+  animation-delay: calc(650ms + var(--bd-member-delay, 0ms));
+}
+
+.bd-member .bd-member-rise + .bd-member-rise {
+  animation-delay: calc(760ms + var(--bd-member-delay, 0ms));
+}
+
+.bd-member .bd-member-rise + .bd-member-rise + .bd-member-rise {
+  animation-delay: calc(870ms + var(--bd-member-delay, 0ms));
+}

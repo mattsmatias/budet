@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
-import { FOUNDER } from "@/lib/team";
+import { TEAM } from "@/lib/team";
 import { HtmlLang } from "./html-lang";
 import { LandingNav, Reveal } from "./nav";
 import { Spotlight, Tilt } from "./effects";
@@ -15,7 +15,7 @@ import { Logo } from "@/components/brand/logo";
  *
  * Sivun tehtävä on vastata kysymykseen "kuka tämän takana on".
  * Pitkä yrityskertomus ei vastaa siihen; kuva ja nimi vastaavat.
- * Siksi sivu alkaa perustajasta ja tekstiä on vähän.
+ * Siksi sivu alkaa tiimistä ja tekstiä on vähän.
  */
 export function About({
   appHref,
@@ -32,7 +32,7 @@ export function About({
       <LandingNav appHref={appHref} locale={locale} page="about" t={t} />
 
       <main>
-        <Founder t={t} />
+        <Team t={t} />
         <Why t={t} />
         <Beliefs t={t} />
         <Cta appHref={appHref} locale={locale} t={t} />
@@ -46,77 +46,104 @@ export function About({
 // ---------------------------------------------------------------------------
 
 /**
- * Perustaja.
+ * Tiimi.
  *
- * Sivun avaus: kasvot ja nimi ensin, sillä ne vastaavat kysymykseen
- * "kuka tämän takana on" nopeammin kuin mikään kertomus.
+ * Sivun avaus: kasvot ja nimet ensin, sillä ne vastaavat kysymykseen
+ * "kuka tämän takana on" nopeammin kuin mikään kertomus. Jokainen
+ * henkilö saa saman kortin — samankokoinen kuva kertoo, että kyse on
+ * tiimistä eikä yhdestä ihmisestä ja apulaisesta.
  *
  * Liike kertoo järjestyksen: kuva paljastuu verhon takaa ja asettuu,
  * sen takana syttyy tunnusvärien hehku, K-merkki ponnahtaa kuvan
- * kulmaan ja nimi nousee viimeisenä. Osoittimella kuva kallistuu ja
- * sen pinnalla liikkuu heijastus.
+ * kulmaan ja nimi nousee viimeisenä. Toinen kortti seuraa hieman
+ * perässä. Osoittimella kuva kallistuu ja sen pinnalla liikkuu
+ * heijastus.
  */
-function Founder({ t }: { t: Dictionary }) {
+function Team({ t }: { t: Dictionary }) {
+  const text = {
+    founder: {
+      role: t.about.founderRole,
+      bio: t.about.founderBio,
+      label: t.about.founderLabel,
+    },
+    finance: {
+      role: t.about.financeRole,
+      bio: t.about.financeBio,
+      label: t.about.financeLabel,
+    },
+  };
+
   return (
     <section className="relative overflow-hidden px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-16">
       <div className="bd-hero-glow" aria-hidden="true" />
 
-      <div className="relative mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16">
-        <div className="bd-portrait-stage mx-auto w-full max-w-[380px] lg:max-w-none">
-          <div className="bd-aurora" aria-hidden="true" />
+      <div className="relative mx-auto max-w-5xl">
+        <h1 className="bd-rise text-center text-[clamp(2rem,5.6vw,3.4rem)] font-extrabold leading-[1.05] tracking-[-0.04em]">
+          <span className="bd-shine">{t.about.teamHeading}</span>
+        </h1>
 
-          <Tilt className="bd-portrait-tilt">
-            <div className="bd-portrait">
-              <Image
-                src={FOUNDER.image}
-                alt={FOUNDER.name}
-                fill
-                priority
-                sizes="(max-width: 1024px) 380px, 420px"
-                className="bd-portrait-img"
-              />
-              <span className="bd-portrait-glare" aria-hidden="true" />
-            </div>
+        <div className="mt-12 grid gap-14 sm:mt-16 md:grid-cols-2 md:gap-10 lg:gap-16">
+          {TEAM.map((person, i) => {
+            const own = text[person.key];
+            return (
+              <article
+                key={person.name}
+                className="bd-member"
+                style={{ "--bd-member-delay": `${i * 260}ms` } as React.CSSProperties}
+              >
+                <div className="bd-portrait-stage mx-auto w-full max-w-[360px]">
+                  <div className="bd-aurora" aria-hidden="true" />
 
-            <div className="bd-badge">
-              <Logo size={30} />
-              <span>
-                <span className="block text-[13px] font-bold leading-tight">
-                  Kate
-                </span>
-                <span
-                  className="block text-[11.5px] leading-tight"
-                  style={{ color: "var(--bd-text-2)" }}
-                >
-                  {t.about.founderLabel}
-                </span>
-              </span>
-            </div>
-          </Tilt>
-        </div>
+                  <Tilt className="bd-portrait-tilt">
+                    <div className="bd-portrait">
+                      <Image
+                        src={person.image}
+                        alt={person.name}
+                        fill
+                        priority
+                        unoptimized={person.image.endsWith(".svg")}
+                        sizes="(max-width: 768px) 360px, 400px"
+                        className="bd-portrait-img"
+                      />
+                      <span className="bd-portrait-glare" aria-hidden="true" />
+                    </div>
 
-        <div>
-          <p
-            className="bd-rise bd-d2 text-[12.5px] font-semibold uppercase tracking-[0.09em]"
-            style={{ color: "var(--bd-text-3)" }}
-          >
-            {t.about.teamHeading}
-          </p>
+                    <div className="bd-badge">
+                      <Logo size={30} />
+                      <span>
+                        <span className="block text-[13px] font-bold leading-tight">
+                          Kate
+                        </span>
+                        <span
+                          className="block text-[11.5px] leading-tight"
+                          style={{ color: "var(--bd-text-2)" }}
+                        >
+                          {own.label}
+                        </span>
+                      </span>
+                    </div>
+                  </Tilt>
+                </div>
 
-          <h1 className="bd-rise bd-d3 mt-4 text-[clamp(2.4rem,6.4vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.04em]">
-            <span className="bd-shine">{FOUNDER.name}</span>
-          </h1>
+                <div className="mx-auto mt-8 max-w-[360px] text-center">
+                  <h2 className="bd-rise bd-member-rise text-[clamp(1.7rem,3.6vw,2.2rem)] font-extrabold leading-[1.08] tracking-[-0.035em]">
+                    {person.name}
+                  </h2>
 
-          <p className="bd-rise bd-d4 mt-5">
-            <span className="bd-role">{t.about.founderRole}</span>
-          </p>
+                  <p className="bd-rise bd-member-rise mt-3">
+                    <span className="bd-role">{own.role}</span>
+                  </p>
 
-          <p
-            className="bd-rise bd-d5 mt-6 max-w-lg text-[17px] leading-relaxed sm:text-[18px]"
-            style={{ color: "var(--bd-text-2)", textWrap: "pretty" }}
-          >
-            {t.about.founderBio}
-          </p>
+                  <p
+                    className="bd-rise bd-member-rise mt-4 text-[15.5px] leading-relaxed"
+                    style={{ color: "var(--bd-text-2)", textWrap: "pretty" }}
+                  >
+                    {own.bio}
+                  </p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

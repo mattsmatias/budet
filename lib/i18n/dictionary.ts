@@ -224,6 +224,9 @@ const fi = {
     founderRole: "Perustaja ja toimitusjohtaja",
     founderBio: "Rakentaa Katea, jotta ravintoloitsija näkee yhdellä silmäyksellä, paljonko rahaa tulee ja mihin se menee.",
     founderLabel: "Perustaja",
+    financeRole: "Talousjohtaja",
+    financeBio: "Pitää huolen Katen omasta taloudesta: luvuista, laskuista ja siitä, että kaikki täsmää.",
+    financeLabel: "Talous",
   },
 } as const;
 
@@ -421,6 +424,9 @@ const en: Dictionary = {
     founderRole: "Founder & CEO",
     founderBio: "Building Kate so restaurant owners can see at a glance how much money comes in and where it goes.",
     founderLabel: "Founder",
+    financeRole: "Head of Finance",
+    financeBio: "Looks after Kate's own finances: the numbers, the invoices and making sure everything adds up.",
+    financeLabel: "Finance",
   },
 };
 
@@ -611,6 +617,9 @@ const sv: Dictionary = {
     founderRole: "Grundare och vd",
     founderBio: "Bygger Kate så att krögaren med en blick ser hur mycket pengar som kommer in och vart de tar vägen.",
     founderLabel: "Grundare",
+    financeRole: "Ekonomichef",
+    financeBio: "Tar hand om Kates egen ekonomi: siffrorna, fakturorna och att allt stämmer.",
+    financeLabel: "Ekonomi",
   },
 };
 
@@ -803,6 +812,9 @@ const da: Dictionary = {
     founderRole: "Stifter og administrerende direktør",
     founderBio: "Bygger Kate, så restauratøren med ét blik kan se, hvor mange penge der kommer ind, og hvor de går hen.",
     founderLabel: "Stifter",
+    financeRole: "Økonomichef",
+    financeBio: "Tager sig af Kates egen økonomi: tallene, fakturaerne og at alt stemmer.",
+    financeLabel: "Økonomi",
   },
 };
 
@@ -992,6 +1004,9 @@ const tr: Dictionary = {
     founderRole: "Kurucu ve CEO",
     founderBio: "Kate'i, restoran sahipleri ne kadar para girdiğini ve nereye gittiğini bir bakışta görebilsin diye geliştiriyor.",
     founderLabel: "Kurucu",
+    financeRole: "Finans Müdürü",
+    financeBio: "Kate'in kendi finansını yönetir: rakamlar, faturalar ve her şeyin tutması.",
+    financeLabel: "Finans",
   },
 };
 
@@ -1181,6 +1196,9 @@ const et: Dictionary = {
     founderRole: "Asutaja ja tegevjuht",
     founderBio: "Ehitab Kate'i, et restoranipidaja näeks ühe pilguga, kui palju raha tuleb sisse ja kuhu see läheb.",
     founderLabel: "Asutaja",
+    financeRole: "Finantsjuht",
+    financeBio: "Hoolitseb Kate'i enda rahaasjade eest: numbrid, arved ja see, et kõik klapiks.",
+    financeLabel: "Rahandus",
   },
 };
 
