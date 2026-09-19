@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { spendRhythm } from "../spend-rhythm";
+import { dailyFlow, spendRhythm } from "../spend-rhythm";
 import type { Receipt } from "../types";
 
 /*
@@ -190,5 +190,41 @@ describe("viikonpäivän rytmi", () => {
 
     // 27.8. on tulevaisuudessa, joten se ei saa kääntää rytmiä torstailta.
     expect(result.peakWeekday?.label).toBe("torstai");
+  });
+});
+
+describe("dailyFlow", () => {
+  it("kerryttää kulut ja myynnin päivittäin ja lopettaa tähän päivään", () => {
+    const flow = dailyFlow(
+      [receipt("2026-08-03", 1000), receipt("2026-08-03", 500), receipt("2026-08-10", 2000)],
+      [
+        { date: "2026-08-02", netCents: 4000 },
+        { date: "2026-08-10", netCents: 3000 },
+      ],
+      MONTH,
+      TODAY,
+    );
+
+    expect(flow.labels).toHaveLength(31);
+    expect(flow.dates[11]).toBe("12.8.");
+    expect(flow.costs[0]).toBe(0);
+    expect(flow.costs[2]).toBe(1500);
+    expect(flow.costs[9]).toBe(3500);
+    expect(flow.sales[1]).toBe(4000);
+    expect(flow.sales[9]).toBe(7000);
+    expect(flow.costs[23]).toBe(3500);
+    expect(flow.costs[24]).toBeNull();
+    expect(flow.sales[24]).toBeNull();
+    expect(flow.hasData).toBe(true);
+  });
+
+  it("ei piirrä myyntiä nollana jos sitä ei ole kirjattu", () => {
+    const flow = dailyFlow([receipt("2026-08-05", 800)], [], MONTH, TODAY);
+    expect(flow.sales.every((v) => v === null)).toBe(true);
+    expect(flow.costs[4]).toBe(800);
+  });
+
+  it("kertoo ettei tyhjässä kuussa ole piirrettävää", () => {
+    expect(dailyFlow([], [], MONTH, TODAY).hasData).toBe(false);
   });
 });

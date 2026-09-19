@@ -258,6 +258,89 @@ export function monthlyFlow(
   };
 }
 
+export interface DailyFlow {
+  /** Päivän numero akselille: "1", "2" … */
+  labels: string[];
+  /** Päivämäärä osoitetun pisteen otsikoksi: "12.9." */
+  dates: string[];
+  /** Kertyneet kulut päivän loppuun mennessä. Null tulevilla päivillä. */
+  costs: (number | null)[];
+  /** Kertynyt myynti. Null jos kuussa ei ole myyntiä tai päivä on tulossa. */
+  sales: (number | null)[];
+  /** Onko kuussa yhtään kirjausta? Ilman niitä kaaviota ei piirretä. */
+  hasData: boolean;
+}
+
+/**
+ * Kuukauden kertymä päivittäin.
+ *
+ * YKSI KUUKAUSI EI OLE TRENDI, MUTTA SE ON KÄYRÄ.
+ *
+ * Kuukausikaavio tarvitsee historiaa. Uudella ravintolalla sitä ei ole,
+ * ja kuuden kuukauden kaaviossa näkyi viisi nollaa ja yksi piste. Sama
+ * kuukausi päivä kerrallaan kertyvänä näyttää heti, kulkeeko myynti
+ * kulujen yläpuolella ja kuinka kaukana.
+ *
+ * Kertymä, ei päiväkohtainen summa: yksittäisen päivän kulu on
+ * sattumaa (tukkulasku tulee kerran viikossa), kertymä kertoo suunnan.
+ *
+ * Tulevat päivät ovat null eivätkä kertymän jatkoa: viiva loppuu
+ * tähän päivään eikä väitä mitään huomisesta.
+ */
+export function dailyFlow(
+  receipts: Receipt[],
+  sales: { date: string; netCents: number }[],
+  month: string,
+  today: string,
+): DailyFlow {
+  const [year, m] = month.split("-").map(Number);
+  const days = new Date(Date.UTC(year, m, 0)).getUTCDate();
+
+  const monthReceipts = receiptsInMonth(receipts, month);
+  const monthSales = sales.filter((s) => s.date.startsWith(month));
+
+  const costByDay = new Map<string, number>();
+  for (const r of monthReceipts) {
+    costByDay.set(r.date, (costByDay.get(r.date) ?? 0) + r.totalCents);
+  }
+  const salesByDay = new Map<string, number>();
+  for (const s of monthSales) {
+    salesByDay.set(s.date, (salesByDay.get(s.date) ?? 0) + s.netCents);
+  }
+
+  const labels: string[] = [];
+  const dates: string[] = [];
+  const costs: (number | null)[] = [];
+  const salesPoints: (number | null)[] = [];
+  let costSum = 0;
+  let salesSum = 0;
+
+  for (let d = 1; d <= days; d += 1) {
+    const date = `${month}-${String(d).padStart(2, "0")}`;
+    labels.push(String(d));
+    dates.push(`${d}.${m}.`);
+
+    if (date > today) {
+      costs.push(null);
+      salesPoints.push(null);
+      continue;
+    }
+
+    costSum += costByDay.get(date) ?? 0;
+    salesSum += salesByDay.get(date) ?? 0;
+    costs.push(costSum);
+    salesPoints.push(monthSales.length === 0 ? null : salesSum);
+  }
+
+  return {
+    labels,
+    dates,
+    costs,
+    sales: salesPoints,
+    hasData: monthReceipts.length > 0 || monthSales.length > 0,
+  };
+}
+
 /**
  * "2026-08" → "Elo"
  *

@@ -58,7 +58,11 @@ import {
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
-import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
+import {
+  dailyFlow,
+  monthlyFlow,
+  spendRhythm,
+} from "@/lib/restoflow/spend-rhythm";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -111,15 +115,31 @@ export default async function AdminDashboard({
    * säilyy linkkiä jaettaessa.
    */
   const CHART_RANGES = [
+    { months: 1, label: t.yleiskatsaus.rangeMonth },
     { months: 3, label: "3 kk" },
     { months: 6, label: "6 kk" },
     { months: 12, label: t.loput.year },
   ] as const;
 
+  /*
+   * Oletusjakso aineiston mukaan.
+   *
+   * Kuuden kuukauden kaavio uudella ravintolalla oli viisi nollaa ja
+   * yksi piste — tyhjä kuva joka ei kerro mitään. Jos historiaa on alle
+   * kaksi kuukautta, aloitetaan kuluvan kuukauden päiväkertymästä.
+   */
   const requestedChart = Number(params.kaavio);
-  const chartMonths = CHART_RANGES.some((r) => r.months === requestedChart)
+  const history = monthlyFlow(receipts, sales, viewMonth, 6, locale);
+  const monthsWithData = history.costs.filter(
+    (cost, i) => cost > 0 || history.sales[i] !== null,
+  ).length;
+  const chartMonths: number = CHART_RANGES.some(
+    (r) => r.months === requestedChart,
+  )
     ? requestedChart
-    : 6;
+    : monthsWithData < 2
+      ? 1
+      : 6;
 
   // Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
   const selectable: string[] = [];
@@ -324,7 +344,56 @@ export default async function AdminDashboard({
    * ettei kukaan ehtinyt kirjata sitä — kaavio katkaisee viivan siitä
    * kohtaa eikä vedä sitä pohjaan.
    */
-  const flow = monthlyFlow(receipts, sales, viewMonth, chartMonths, locale);
+  const flow =
+    chartMonths === 6
+      ? history
+      : monthlyFlow(receipts, sales, viewMonth, chartMonths, locale);
+  const daily = dailyFlow(
+    receipts,
+    sales,
+    viewMonth,
+    isCurrentMonth ? today : `${viewMonth}-31`,
+  );
+  const isDaily = chartMonths === 1;
+
+  /*
+   * Tyhjän kuukauden kaavio osoittaa sinne missä kirjaukset ovat.
+   * Kuun vaihteessa kuluva kuukausi on tyhjä, ja pelkkä "ei kirjauksia"
+   * jätti paneelin seisomaan tyhjänä vaikka edellisessä kuussa on dataa.
+   */
+  const latestDataMonth = [
+    ...receipts.map((r) => r.date),
+    ...sales.map((s) => s.date),
+  ]
+    .map((date) => date.slice(0, 7))
+    .filter((m) => m !== viewMonth && m <= month)
+    .sort()
+    .at(-1);
+
+  /* Jakson summat kaavion selitteeseen. */
+  const lastValue = (points: (number | null)[]) =>
+    points.reduce<number | null>((last, v) => (v === null ? last : v), null);
+  const periodSalesCents = isDaily
+    ? lastValue(daily.sales)
+    : flow.sales.some((v) => v !== null)
+      ? flow.sales.reduce<number>((sum, v) => sum + (v ?? 0), 0)
+      : null;
+  const periodCostCents = isDaily
+    ? (lastValue(daily.costs) ?? 0)
+    : flow.costs.reduce((sum, v) => sum + v, 0);
+
+  /* Akselille lyhyt muoto, lukemaan tarkka summa. */
+  const axisMoney = (cents: number) => {
+    const euros = cents / 100;
+    return euros >= 1000
+      ? `${(euros / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })} k`
+      : `${Math.round(euros)} €`;
+  };
+  const dayCount = daily.labels.length;
+  const dailyTicks = daily.labels
+    .map((_, i) => i)
+    .filter((i) => i === 0 || (i + 1) % 5 === 0 || i === dayCount - 1)
+    .filter((i) => !(i === dayCount - 2 && (i + 1) % 5 === 0));
 
   /*
    * Tämän päivän täsmäytys.
@@ -749,35 +818,63 @@ export default async function AdminDashboard({
             </div>
           }
         >
-          {flow.labels.length < 2 ? (
-            <PanelEmpty text={t.yleiskatsaus.trendNeedsTwoMonths} />
+          {isDaily && !daily.hasData ? (
+            <PanelEmpty
+              text={t.yleiskatsaus.chartMonthEmpty}
+              {...(latestDataMonth
+                ? {
+                    cta: fill(t.loput.openMonth, {
+                      kuukausi: formatMonth(latestDataMonth, locale).toLowerCase(),
+                    }),
+                    href: `/admin?kuukausi=${latestDataMonth}&kaavio=1`,
+                  }
+                : {})}
+            />
           ) : (
             <>
+              {/*
+                Avain jakson mukaan: jakson vaihto piirtää kaavion
+                uudelleen alusta, ja liike näyttää mitä vaihtui.
+              */}
               <AreaChart
-                labels={flow.labels}
+                key={chartMonths}
+                labels={isDaily ? daily.labels : flow.labels}
+                tipLabels={isDaily ? daily.dates : flow.labels}
+                ticks={isDaily ? dailyTicks : undefined}
+                ariaLabel={isDaily ? t.yleiskatsaus.chartDailyAria : undefined}
                 series={[
                   {
                     label: t.sanat.sales,
                     color: SALES_COLOR,
-                    points: flow.sales,
+                    points: isDaily ? daily.sales : flow.sales,
                   },
                   {
                     label: t.sanat.expenses,
                     color: COST_COLOR,
-                    points: flow.costs,
+                    points: isDaily ? daily.costs : flow.costs,
                   },
                 ]}
-                format={(value) => `${Math.round(value / 100000)} k`}
+                format={axisMoney}
+                formatTip={(value) => formatMoney(Math.round(value))}
               />
 
-              <ul className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px]">
+              <ul className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">
                 <li className="flex items-center gap-2">
                   <span
                     aria-hidden="true"
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: SALES_COLOR }}
                   />
-                  {t.sanat.sales}
+                  <span style={{ color: "var(--rf-text-2)" }}>
+                    {t.sanat.sales}
+                  </span>
+                  <span className="rf-tabular font-semibold">
+                    {periodSalesCents === null ? (
+                      "—"
+                    ) : (
+                      <CountUp to={periodSalesCents} format="money" />
+                    )}
+                  </span>
                 </li>
                 <li className="flex items-center gap-2">
                   <span
@@ -785,9 +882,18 @@ export default async function AdminDashboard({
                     className="h-[3px] w-2.5 rounded-[2px]"
                     style={{ background: COST_COLOR }}
                   />
-                  {t.sanat.expenses}
+                  <span style={{ color: "var(--rf-text-2)" }}>
+                    {t.sanat.expenses}
+                  </span>
+                  <span className="rf-tabular font-semibold">
+                    <CountUp to={periodCostCents} format="money" />
+                  </span>
                 </li>
-                {flow.salesMissing ? (
+                {isDaily ? (
+                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
+                    {t.yleiskatsaus.chartDailyHint}
+                  </li>
+                ) : flow.salesMissing ? (
                   <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
                     {t.yleiskatsaus.salesGapNote}
                   </li>

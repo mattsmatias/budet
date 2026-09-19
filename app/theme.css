@@ -828,6 +828,113 @@ a:hover > .rf-card-lift,
 }
 
 /*
+ * Myynti ja kulut -kaavio.
+ *
+ * Järjestys kertoo lukujärjestyksen: ensin pinta nousee pohjaviivalta,
+ * sitten viiva piirtyy ajan suuntaan, lopuksi viimeinen piste ja sen
+ * lukema. Rengas laajenee kerran ja häipyy — se näyttää mistä luku
+ * luetaan, ei jää sykkimään.
+ */
+@keyframes rf-chart-line {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes rf-chart-area {
+  from {
+    opacity: 0;
+    transform: scaleY(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rf-chart-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rf-chart-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+.rf-chart-line {
+  stroke-dasharray: 1;
+  animation: rf-chart-line 1100ms cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+.rf-chart-area {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: rf-chart-area 900ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.rf-chart-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rf-chart-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) 1150ms both;
+}
+.rf-chart-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: rf-chart-ring 1200ms cubic-bezier(0.2, 0.6, 0.3, 1) 1350ms;
+}
+.rf-chart-badge {
+  animation: rf-fade-up 320ms cubic-bezier(0.32, 0.72, 0, 1) 1300ms both;
+}
+
+/* Osoitettu piste: lukema esiin, oletuskorostus väistyy. */
+.rf-chart-mark {
+  transition: opacity 160ms ease;
+}
+.rf-chart-tip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.rf-chart-col {
+  cursor: crosshair;
+  outline: none;
+}
+.rf-chart-col:hover .rf-chart-tip,
+.rf-chart-col:focus-visible .rf-chart-tip {
+  opacity: 1;
+}
+.rf-chart:has(.rf-chart-col:hover) .rf-chart-mark,
+.rf-chart:has(.rf-chart-col:focus-visible) .rf-chart-mark {
+  opacity: 0;
+}
+/* Hiiri voittaa näppäimistön: kaksi lukemaa yhtä aikaa ei kerro kumpaa katsotaan. */
+.rf-chart:has(.rf-chart-col:hover) .rf-chart-col:not(:hover) .rf-chart-tip {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-chart-line,
+  .rf-chart-area,
+  .rf-chart-dot,
+  .rf-chart-ring,
+  .rf-chart-badge {
+    animation: none !important;
+  }
+}
+
+/*
  * Donitsin siivut kasvavat paikalleen.
  *
  * Sama ele kuin palkeissa: osuus kasvaa nollasta, joten kokoluokan näkee
