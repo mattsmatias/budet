@@ -16,7 +16,7 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { getActiveRestaurant, getUser } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
-import { monthIn } from "@/lib/restoflow/clock-context";
+import { monthIn } from "@/lib/restoflow/local-time";
 import { REPORT_KINDS, type ReportKind } from "@/lib/restoflow/report-rows";
 import { buildReportFile, isReportProblem } from "@/lib/restoflow/report-file";
 

@@ -83,14 +83,6 @@ export default async function AdminMorePage() {
         </section>
       ) : null}
 
-      {/*
-        Työntekijänäkymä oli tässä listan toisena.
-
-        Se vei hallinnasta ulos toiseen sovellukseen saman tunnuksen
-        alla, eikä listasta käynyt ilmi että paluu on eri paikassa.
-        Ravintoloitsijan työpöytä ja työntekijän näkymä ovat eri
-        työkaluja.
-      */}
       <section>
         <SectionLabel>{t.loput.change}</SectionLabel>
         <Card padded={false}>

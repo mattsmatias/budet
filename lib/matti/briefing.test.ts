@@ -4,10 +4,9 @@ import {
   expenseObservation,
   greeting,
   salesObservation,
-  shiftObservation,
 } from "./briefing";
 import { addDays } from "@/lib/restoflow/dates";
-import type { Receipt, Shift } from "@/lib/restoflow/types";
+import type { Receipt } from "@/lib/restoflow/types";
 import type { DailySales } from "@/lib/restoflow/sales";
 
 /** Testit lukevat suomenkielisen tekstin, joten kieli on kiinnitetty. */
@@ -43,19 +42,6 @@ function myynti(date: string, netCents: number): DailySales {
     grossCents: null,
     vatCents: null,
   } as unknown as DailySales;
-}
-
-function vuoro(date: string, n: number): Shift {
-  return {
-    id: `s-${date}-${n}`,
-    restaurantId: "x",
-    userId: "u",
-    date,
-    startTime: "10:00",
-    endTime: "18:00",
-    location: "sali",
-    status: "published",
-  } as unknown as Shift;
 }
 
 /** n kuittia jokaiselle päivälle välillä [alku, alku+7). */
@@ -160,42 +146,6 @@ describe("salesObservation", () => {
     ];
 
     expect(salesObservation(sales, TANAAN, suomi)?.tone).toBe("neutral");
-  });
-});
-
-describe("shiftObservation", () => {
-  it("ei sano mitään ilman neljän viikon historiaa", () => {
-    const shifts = [vuoro(addDays(TANAAN, 8), 1), vuoro(addDays(TANAAN, 9), 2)];
-    expect(shiftObservation(shifts, TANAAN, suomi)).toBeNull();
-  });
-
-  /*
-   * Kynnys on vuoroina eikä prosentteina.
-   *
-   * Pienessä ravintolassa yksi vuoro on kymmenen prosenttia, ja
-   * prosenttikynnys nostaisi havainnon joka viikko.
-   */
-  it("vaikenee yhden vuoron erosta", () => {
-    const shifts = [
-      ...[1, 2, 3].map((i) => vuoro(addDays(TANAAN, 7 + i), i)),
-      ...[1, 2, 3, 4].flatMap((viikko) =>
-        [1, 2].map((i) => vuoro(addDays(TANAAN, -7 * viikko + i), i)),
-      ),
-    ];
-    expect(shiftObservation(shifts, TANAAN, suomi)).toBeNull();
-  });
-
-  it("huomaa kun ensi viikolle on suunniteltu selvästi enemmän", () => {
-    const shifts = [
-      ...[1, 2, 3, 4, 5, 6].map((i) => vuoro(addDays(TANAAN, 7 + i), i)),
-      ...[1, 2, 3, 4].flatMap((viikko) =>
-        [1, 2].map((i) => vuoro(addDays(TANAAN, -7 * viikko + i), i)),
-      ),
-    ];
-
-    const havainto = shiftObservation(shifts, TANAAN, suomi);
-    expect(havainto?.text).toContain("enemmän");
-    expect(havainto?.text).toContain("4 vuoroa");
   });
 });
 

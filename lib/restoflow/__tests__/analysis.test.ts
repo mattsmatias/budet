@@ -17,13 +17,6 @@ import {
 } from "../suppliers";
 import { budgetProgress, budgetStatus, spendByCategory } from "../budgets";
 import {
-  compareShift,
-  formatVariance,
-  shiftDurationMinutes,
-  timeToMinutes,
-  variancePatterns,
-} from "../shifts";
-import {
   moreNavFor,
   primaryNavFor,
   adminNavFor,
@@ -32,9 +25,10 @@ import {
   canAddReceipts,
   capabilityForPath,
   landingFor,
-  seesPayRates,
 } from "../permissions";
 import { buildAlerts, type AlertContext } from "../alerts";
+import type { DailySales } from "../sales";
+import type { Task } from "../tasks";
 import {
   MockReceiptExtractor,
   emptyResult,
@@ -42,13 +36,10 @@ import {
 } from "../receipt-ai";
 import type {
   Budget,
-  ClockEvent,
   ExpenseCategory,
   Receipt,
   ReceiptItem,
-  Shift,
   Supplier,
-  User,
 } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -609,131 +600,10 @@ describe("budjetit", () => {
   });
 });
 
-describe("työvuoro vs. toteutunut", () => {
-  const users: User[] = [
-    {
-      id: "u1",
-      restaurantId: "rest-1",
-      name: "Ali",
-      role: "employee",
-      position: "waiter",
-      hourlyRateCents: 1500,
-      payType: "hourly" as const,
-      monthlySalaryCents: null,
-      initials: "A",
-      active: true,
-    },
-  ];
-
-  const shift: Shift = {
-    id: "sh1",
-    restaurantId: "rest-1",
-    userId: "u1",
-    date: "2026-08-20",
-    startTime: "14:00",
-    endTime: "22:00",
-    location: "Sali",
-    status: "accepted",
-    breakMinutes: 0,
-    note: null,
-    publishedAt: "2026-08-01T00:00:00.000Z",
-    createdAt: "2026-08-01T00:00:00.000Z",
-    cancelledAt: null,
-  };
-
-  const ZONE = "Europe/Helsinki";
-
-  /*
-   * Aikaleimat ovat UTC:tä, vuoron kellonajat paikallisia.
-   *
-   * Vuoro 14:00-22:00 Helsingissä on 11:00-19:00 UTC. Aiemmin tässä luki
-   * 14:04Z ja 22:17Z, mikä Helsingissä tarkoittaa 17:04 ja seuraavan
-   * päivän 01:17. Testi meni läpi vain koska päivä poimittiin
-   * merkkijonosta UTC:nä.
-   */
-  const events: ClockEvent[] = [
-    { id: "e1", userId: "u1", type: "in", at: "2026-08-20T11:04:00.000Z" },
-    { id: "e2", userId: "u1", type: "out", at: "2026-08-20T19:17:00.000Z" },
-  ];
-
-  it("laskee vuoron keston", () => {
-    expect(shiftDurationMinutes(shift)).toBe(480);
-    expect(timeToMinutes("14:30")).toBe(870);
-  });
-
-  it("käsittelee yön yli menevän vuoron", () => {
-    expect(
-      shiftDurationMinutes({ ...shift, startTime: "22:00", endTime: "02:00" }),
-    ).toBe(240);
-  });
-
-  it("laskee eron suunnitellun ja toteutuneen välillä", () => {
-    const c = compareShift(
-      shift,
-      users,
-      events,
-      "2026-08-21T00:00:00.000Z",
-      ZONE,
-    );
-    expect(c.plannedMs).toBe(480 * 60000);
-    expect(c.actualMs).toBe(493 * 60000);
-    expect(c.varianceMs).toBe(13 * 60000);
-  });
-
-  it("laskee kustannuseron tuntipalkasta", () => {
-    const c = compareShift(
-      shift,
-      users,
-      events,
-      "2026-08-21T00:00:00.000Z",
-      ZONE,
-    );
-    expect(c.plannedCostCents).toBe(12000); // 8 h × 15 €
-    expect(c.actualCostCents).toBeGreaterThan(c.plannedCostCents);
-  });
-
-  it("ei arvaa toteutunutta kun leimauksia ei ole", () => {
-    const c = compareShift(shift, users, [], "2026-08-21T00:00:00.000Z", ZONE);
-    expect(c.actualMs).toBe(0);
-    expect(c.actualStart).toBeNull();
-  });
-
-  it("muotoilee eron luettavasti", () => {
-    expect(formatVariance(13 * 60000)).toBe("+13 min");
-    expect(formatVariance(-22 * 60000)).toBe("−22 min");
-    expect(formatVariance(0)).toBe("tasan");
-    expect(formatVariance(90 * 60000)).toBe("+1 h 30 min");
-  });
-
-  it("tunnistaa toistuvan ylityksen mutta ohittaa tekemättömät vuorot", () => {
-    const day2 = { ...shift, id: "sh2", date: "2026-08-19" };
-    const day3 = { ...shift, id: "sh3", date: "2026-08-18" };
-    const more: ClockEvent[] = [
-      ...events,
-      { id: "e3", userId: "u1", type: "in", at: "2026-08-19T14:05:00.000Z" },
-      { id: "e4", userId: "u1", type: "out", at: "2026-08-19T22:20:00.000Z" },
-    ];
-
-    const patterns = variancePatterns(
-      [
-        compareShift(shift, users, more, "2026-08-21T00:00:00.000Z", ZONE),
-        compareShift(day2, users, more, "2026-08-21T00:00:00.000Z", ZONE),
-        compareShift(day3, users, more, "2026-08-21T00:00:00.000Z", ZONE),
-      ],
-      2,
-    );
-
-    expect(patterns).toHaveLength(1);
-    // Vain kaksi vuoroa toteutui — kolmas ei kerro kuviosta.
-    expect(patterns[0].shiftCount).toBe(2);
-    expect(patterns[0].averageVarianceMs).toBeGreaterThan(0);
-  });
-});
-
 describe("oikeudet", () => {
   it("antaa omistajalle täydet oikeudet", () => {
     expect(can("owner", "budgets.edit")).toBe(true);
-    expect(can("owner", "staff.manage")).toBe(true);
+    expect(can("owner", "settings.edit")).toBe(true);
   });
 
   it("estää manageria muokkaamasta budjetteja", () => {
@@ -741,11 +611,16 @@ describe("oikeudet", () => {
     expect(can("manager", "budgets.edit")).toBe(false);
   });
 
-  it("rajaa työntekijän omiin tietoihinsa", () => {
+  /*
+   * Työntekijällä ei ole Katessa omaa näkymää: palkat maksetaan
+   * palkkapalvelussa. Hänelle osoitetut tehtävät hän silti näkee.
+   */
+  it("rajaa työntekijän omiin tehtäviinsä", () => {
     expect(can("employee", "receipts.view")).toBe(false);
     expect(can("employee", "expenses.view")).toBe(false);
-    expect(can("employee", "time.track.own")).toBe(true);
-    expect(can("employee", "shifts.view.own")).toBe(true);
+    expect(can("employee", "sales.view")).toBe(false);
+    expect(can("employee", "tasks.view")).toBe(true);
+    expect(can("employee", "tasks.manage")).toBe(false);
   });
 
   /**
@@ -761,18 +636,18 @@ describe("oikeudet", () => {
     expect(can("accountant", "receipts.view")).toBe(true);
   });
 
-  it("antaa kirjanpitäjälle talouden muttei tuntipalkkoja", () => {
+  it("antaa kirjanpitäjälle talouden muttei muokkausta", () => {
     expect(can("accountant", "expenses.view")).toBe(true);
     expect(can("accountant", "reports.export")).toBe(true);
-    expect(can("accountant", "staff.rates.view")).toBe(false);
-    expect(seesPayRates("accountant")).toBe(false);
-    expect(seesPayRates("manager")).toBe(true);
+    expect(can("accountant", "accounting.view")).toBe(true);
+    expect(can("accountant", "accounting.manage")).toBe(false);
+    expect(can("accountant", "settings.view")).toBe(false);
   });
 
   it("suodattaa navigaation rooleittain", () => {
     const accountantNav = adminNavFor("accountant").map((e) => e.href);
     expect(accountantNav).toContain("/admin/kulut");
-    expect(accountantNav).not.toContain("/admin/tyovuorot");
+    expect(accountantNav).not.toContain("/admin/tehtavat");
     expect(adminNavFor("owner").length).toBeGreaterThan(accountantNav.length);
   });
 
@@ -783,7 +658,7 @@ describe("oikeudet", () => {
    */
   it("johtaa polusta saman oikeuden kuin navigaatio", () => {
     expect(capabilityForPath("/admin/kulut")).toBe("expenses.view");
-    expect(capabilityForPath("/admin/tyontekijat")).toBe("staff.view");
+    expect(capabilityForPath("/admin/tehtavat")).toBe("tasks.view");
     expect(capabilityForPath("/admin/budjetit")).toBe("budgets.view");
   });
 
@@ -799,24 +674,25 @@ describe("oikeudet", () => {
    * Tuntematon hallintapolku perii juuren vaatimuksen. Se on tahallista:
    * uusi sivu on suljettu kunnes se lisätään taulukkoon, eikä auki
    * siihen asti kun joku muistaa.
+   *
+   * Tämä koskee myös poistettuja sivuja. Vanha kirjanmerkki
+   * /admin/tyovuorot ei avaa mitään, vaan perii juuren vaatimuksen.
    */
   it("sulkeutuu tuntemattomalla hallintapolulla", () => {
     expect(capabilityForPath("/admin/tuntematon")).toBe("expenses.view");
+    expect(capabilityForPath("/admin/tyovuorot")).toBe("expenses.view");
     expect(can("employee", capabilityForPath("/admin/tuntematon")!)).toBe(
       false,
     );
   });
 
   it("ei vaadi mitään hallinnan ulkopuolelta", () => {
-    expect(capabilityForPath("/app/vuorot")).toBeNull();
     expect(capabilityForPath("/kirjaudu")).toBeNull();
   });
 
-  it("estää työntekijältä hallintanäkymät ja ohjaa omaan näkymään", () => {
-    const required = capabilityForPath("/admin/tyontekijat");
-    expect(required).not.toBeNull();
-    expect(can("employee", required!)).toBe(false);
-    expect(landingFor("employee")).toBe("/app");
+  it("ohjaa työntekijän omiin tehtäviinsä", () => {
+    expect(landingFor("employee")).toBe("/admin/tehtavat");
+    expect(can("employee", capabilityForPath("/admin")!)).toBe(false);
   });
 
   it("ohjaa kirjanpitäjän ensimmäiseen näkymään johon oikeus riittää", () => {
@@ -854,40 +730,29 @@ describe("oikeudet", () => {
    * Valikon koko on tuotepäätös, ei sattuma.
    *
    * Luku on tässä siksi, että uusi sivu ei valu valikkoon huomaamatta.
-   * Kahdestoista kohta on Tehtävät: määräaika on päivittäinen asia, ja
-   * juuri sen takia Kate avataan aamulla.
-   *
-   * Kolmastoista on Kirjanpito. Se on oma työtilansa eikä analyysiä
-   * muusta, joten sitä ei voi tavoittaa toisen sivun osiosta niin
-   * kuin Toimittajia tai Havaintoja.
-   *
-   * Neljästoista on Pöytävaraukset. Se on illan aikana avoinna oleva
-   * näkymä eikä asetus: seurue saapuu, pöytä vaihtuu, walk-in
-   * istuutuu. Sitä ei voi hakea asetusten takaa kesken vuoron.
-   *
-   * Viidestoista on Tiedostot. Kaappi jota ei löydä valikosta ei ole
-   * kaappi vaan kansio jonka osoitteen joutuu muistamaan — ja juuri
-   * silloin dokumentit jäävät sähköpostiin niin kuin ennenkin.
+   * Kate näyttää ravintolan rahan: paljonko tuli, mihin se meni ja
+   * miten se jakautui. Kymmenen kohtaa kattaa sen, ja jokainen uusi
+   * kohta on päätös siitä kuuluuko se siihen kysymykseen.
    */
-  it("pitää päävalikon viidessätoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(15);
+  it("pitää päävalikon kymmenessä kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(10);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 
   /**
    * Sivupalkin kasvu ei saa muuttaa alapalkkia.
    *
-   * Alapalkki otti aiemmin sivupalkin neljä ensimmäistä kohtaa. Kun
-   * Budjetit lisättiin Kulut-kohdan perään, Työvuorot olisi tipahtanut
-   * ylivuotovalikkoon ilman että kukaan päätti niin.
+   * Alapalkki luetellaan nimeltä eikä oteta sivupalkin neljästä
+   * ensimmäisestä. Myynti on alapalkissa, koska kassan päiväraportti
+   * kirjataan joka ilta — useimmiten puhelimella.
    */
-  it("pitää työvuorot puhelimen alapalkissa", () => {
+  it("pitää myynnin puhelimen alapalkissa", () => {
     const bar = primaryNavFor("owner").map((entry) => entry.href);
     expect(bar).toEqual([
       "/admin",
+      "/admin/myynti",
       "/admin/kuitit",
       "/admin/kulut",
-      "/admin/tyovuorot",
     ]);
   });
 
@@ -905,7 +770,6 @@ describe("oikeudet", () => {
     expect(sections.map((s) => s.id)).toEqual([
       "main",
       "finance",
-      "staff",
       "restaurant",
     ]);
 
@@ -923,30 +787,25 @@ describe("oikeudet", () => {
   });
 
   /*
-   * Tyhjä osastootsikko lupaa kohtia joita ei ole. Kirjanpitäjä ei näe
-   * henkilöstöä lainkaan, joten hänelle ei saa jäädä HENKILÖSTÖ-otsikkoa
-   * ilman yhtään riviä sen alla.
+   * Tyhjä osastootsikko lupaa kohtia joita ei ole.
    */
   it("ei jätä tyhjää osastoa", () => {
-    for (const role of ["owner", "manager", "accountant"] as const) {
+    for (const role of [
+      "owner",
+      "manager",
+      "accountant",
+      "employee",
+    ] as const) {
       for (const section of adminNavSectionsFor(role)) {
         expect(section.items.length).toBeGreaterThan(0);
       }
     }
 
-    const accountant = adminNavSectionsFor("accountant").map((s) => s.id);
-    expect(accountant).not.toContain("staff");
-
     /*
-     * Kirjanpitäjä näkee Tiedostot ja Raportoinnin muttei Lounasta,
-     * ja kaikki kolme ovat samassa "Muut"-ryhmässä. Ryhmä siis jää
-     * mutta kutistuu — se on eri asia kuin tyhjä ryhmä.
-     *
-     * Tiedostot on hänelle nimenomaan kuuluva kohta: sopimukset,
-     * verodokumentit ja palkkatositteet ovat juuri sitä mitä hän
-     * työssään tarvitsee. Lukuoikeus riittää — kaapin järjestys on
-     * ravintolan oma asia, ja sen muuttaminen ulkopuolelta olisi
-     * sekaannus jota kukaan ei pyytänyt.
+     * Tiedostot on kirjanpitäjälle nimenomaan kuuluva kohta:
+     * sopimukset ja verodokumentit ovat juuri sitä mitä hän työssään
+     * tarvitsee. Lukuoikeus riittää — kaapin järjestys on ravintolan
+     * oma asia.
      */
     const muut = adminNavSectionsFor("accountant").find(
       (x) => x.id === "restaurant",
@@ -989,36 +848,14 @@ describe("oikeudet", () => {
   it("suodattaa ylivuotovalikon rooleittain", () => {
     const accountant = moreNavFor("accountant").map((entry) => entry.href);
     expect(accountant).toContain("/admin/budjetit");
-    expect(accountant).not.toContain("/admin/tyontekijat");
-  });
-
-  it("estää kirjanpitäjältä työvuorot", () => {
-    expect(can("accountant", capabilityForPath("/admin/tyovuorot")!)).toBe(
-      false,
-    );
+    expect(accountant).not.toContain("/admin/tehtavat");
   });
 });
 
 describe("poikkeamat", () => {
-  const users: User[] = [
-    {
-      id: "u1",
-      restaurantId: "rest-1",
-      name: "Ali",
-      role: "employee",
-      position: "waiter",
-      hourlyRateCents: 1500,
-      payType: "hourly" as const,
-      monthlySalaryCents: null,
-      initials: "A",
-      active: true,
-    },
-  ];
-
   /*
-   * Nykyhetki ja vyöhyke ovat pakollisia, mutta useimmat poikkeamat
-   * eivät riipu niistä. Apuri antaa niille kiinteän arvon, jotta
-   * jokainen testi kertoo vain siitä mitä se tutkii.
+   * Apuri antaa tyhjät oletukset, jotta jokainen testi kertoo vain
+   * siitä mitä se tutkii.
    */
   const alertsOf = (
     input: Partial<AlertContext> & Pick<AlertContext, "month" | "today">,
@@ -1026,17 +863,59 @@ describe("poikkeamat", () => {
     buildAlerts({
       receipts: [],
       budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [],
-      openShifts: [],
       sales: [],
-      now: `${input.today}T12:00:00Z`,
-      timezone: "Europe/Helsinki",
       locale: "fi" as const,
       ...input,
     });
+
+  function sale(
+    date: string,
+    netCents: number,
+    targetCents: number | null = null,
+  ): DailySales {
+    return {
+      date,
+      netCents,
+      targetCents,
+      note: null,
+      grossCents: null,
+      vatCents: null,
+      transactions: null,
+      source: "manual",
+      posGrossCents: null,
+      posVatCents: null,
+    };
+  }
+
+  function task(partial: Partial<Task> = {}): Task {
+    return {
+      id: "t1",
+      restaurantId: "rest-1",
+      title: "Maksa vuokra",
+      description: null,
+      dueOn: "2026-08-20",
+      dueTime: null,
+      priority: "normal",
+      visibility: "managers",
+      assignedTo: null,
+      completedAt: null,
+      completedBy: null,
+      cancelledAt: null,
+      cancelledBy: null,
+      recurrence: "none",
+      parentTaskId: null,
+      remindDaysBefore: [1],
+      remindOnDue: true,
+      remindWhenOverdue: true,
+      createdBy: "u1",
+      createdAt: "2026-08-01T10:00:00.000Z",
+      ...partial,
+    };
+  }
+
+  const kinds = (
+    input: Partial<AlertContext> & Pick<AlertContext, "month" | "today">,
+  ) => alertsOf(input).map((a) => a.kind);
 
   it("nostaa kaksoiskappaleen kriittiseksi", () => {
     const dup = {
@@ -1047,11 +926,6 @@ describe("poikkeamat", () => {
     };
     const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [],
       month: "2026-08",
       today: "2026-08-20",
     });
@@ -1078,46 +952,10 @@ describe("poikkeamat", () => {
         }),
       ],
       budgets,
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [],
       month: "2026-08",
       today: "2026-08-20",
     });
     expect(alerts.some((a) => a.kind === "budget_exceeded")).toBe(true);
-  });
-
-  it("huomaa sulkematta jääneen työajan", () => {
-    const alerts = alertsOf({
-      receipts: [],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [
-        { id: "e1", userId: "u1", type: "in", at: "2026-08-18T16:00:00.000Z" },
-      ],
-      absences: [],
-      month: "2026-08",
-      today: "2026-08-20",
-    });
-    expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(true);
-  });
-
-  it("ei hälytä tänään käynnissä olevasta vuorosta", () => {
-    const alerts = alertsOf({
-      receipts: [],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [
-        { id: "e1", userId: "u1", type: "in", at: "2026-08-20T09:00:00.000Z" },
-      ],
-      absences: [],
-      month: "2026-08",
-      today: "2026-08-20",
-    });
-    expect(alerts.some((a) => a.kind === "unclosed_shift")).toBe(false);
   });
 
   it("järjestää vakavimmat ensin", () => {
@@ -1129,110 +967,13 @@ describe("poikkeamat", () => {
     };
     const alerts = alertsOf({
       receipts: [receipt(dup), receipt(dup)],
-      budgets: [],
-      shifts: [
-        {
-          id: "sh1",
-          restaurantId: "rest-1",
-          userId: "u1",
-          date: "2026-08-25",
-          startTime: "14:00",
-          endTime: "22:00",
-          location: "Sali",
-          status: "pending",
-          breakMinutes: 0,
-          note: null,
-          publishedAt: "2026-08-01T00:00:00.000Z",
-          createdAt: "2026-08-01T00:00:00.000Z",
-          cancelledAt: null,
-        },
-      ],
-      users,
-      clockEvents: [],
-      absences: [],
+      /* Tänään erääntyvä tavallinen tehtävä on varoitus, ei kriittinen. */
+      tasks: [task({ dueOn: "2026-08-20" })],
       month: "2026-08",
       today: "2026-08-20",
     });
     expect(alerts[0].severity).toBe("critical");
-  });
-
-  it("nostaa poissaoloilmoituksen kriittiseksi", () => {
-    const alerts = alertsOf({
-      receipts: [],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [
-        {
-          id: "a1",
-          userId: "u1",
-          date: "2026-08-22",
-          endDate: "2026-08-22",
-          kind: "sick",
-          note: null,
-          reportedAt: "2026-08-22T06:00:00.000Z",
-          certificateSeenAt: null,
-        },
-      ],
-      month: "2026-08",
-      today: "2026-08-20",
-    });
-    const absence = alerts.find((a) => a.kind === "absence_reported");
-    expect(absence?.severity).toBe("critical");
-  });
-
-  // Sairausloma kestää yli päivän. Jos suodatus osuisi alkupäivään, kesken
-  // oleva jakso katoaisi huomioista heti seuraavana aamuna — juuri silloin
-  // kun tekijää vielä etsitään.
-  it("pitää kesken olevan jakson näkyvissä", () => {
-    const alerts = alertsOf({
-      receipts: [],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [
-        {
-          id: "a1",
-          userId: "u1",
-          date: "2026-08-18",
-          endDate: "2026-08-24",
-          kind: "sick",
-          note: null,
-          reportedAt: "2026-08-18T06:00:00.000Z",
-          certificateSeenAt: null,
-        },
-      ],
-      month: "2026-08",
-      today: "2026-08-20",
-    });
-    expect(alerts.some((a) => a.kind === "absence_reported")).toBe(true);
-  });
-
-  it("unohtaa päättyneen jakson", () => {
-    const alerts = alertsOf({
-      receipts: [],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [
-        {
-          id: "a1",
-          userId: "u1",
-          date: "2026-08-10",
-          endDate: "2026-08-14",
-          kind: "sick",
-          note: null,
-          reportedAt: "2026-08-10T06:00:00.000Z",
-          certificateSeenAt: null,
-        },
-      ],
-      month: "2026-08",
-      today: "2026-08-20",
-    });
-    expect(alerts.some((a) => a.kind === "absence_reported")).toBe(false);
+    expect(alerts.some((a) => a.severity === "warning")).toBe(true);
   });
 
   it("ei tuota hälytyksiä puhtaasta aineistosta", () => {
@@ -1245,15 +986,182 @@ describe("poikkeamat", () => {
           category: "food",
         }),
       ],
-      budgets: [],
-      shifts: [],
-      users,
-      clockEvents: [],
-      absences: [],
       month: "2026-08",
       today: "2026-08-20",
     });
     expect(alerts).toHaveLength(0);
+  });
+
+  describe("myynti alle vertailukohdan", () => {
+    const today = "2026-08-24";
+    const yesterday = "2026-08-23";
+
+    it("huomauttaa tavoitteesta jäämisestä", () => {
+      const alerts = alertsOf({
+        sales: [sale(yesterday, 80_000, 100_000)],
+        month: "2026-08",
+        today,
+      });
+
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].kind).toBe("sales_shortfall");
+      expect(alerts[0].title).toContain("20 %");
+    });
+
+    it("vaikenee kun tavoite lähes täyttyi", () => {
+      // 95 % tavoitteesta on tavallista vaihtelua, ei poikkeama.
+      expect(
+        kinds({
+          sales: [sale(yesterday, 95_000, 100_000)],
+          month: "2026-08",
+          today,
+        }),
+      ).toEqual([]);
+    });
+
+    /*
+     * Ilman vertailukohtaa ei ole mistä jäädä. Pelkkä pieni luku ei ole
+     * poikkeama: hiljainen sunnuntai on hiljainen sunnuntai.
+     */
+    it("vaikenee ilman tavoitetta ja ilman historiaa", () => {
+      expect(
+        kinds({ sales: [sale(yesterday, 10_000)], month: "2026-08", today }),
+      ).toEqual([]);
+    });
+
+    it("käyttää saman viikonpäivän historiaa kun tavoitetta ei ole", () => {
+      // 23.8.2026 on sunnuntai; 16.8. ja 9.8. ovat sunnuntaita.
+      const alerts = alertsOf({
+        sales: [
+          sale(yesterday, 50_000),
+          sale("2026-08-16", 100_000),
+          sale("2026-08-09", 100_000),
+        ],
+        month: "2026-08",
+        today,
+      });
+
+      expect(alerts).toHaveLength(1);
+      expect(alerts[0].detail).toContain("viikonpäivän");
+    });
+
+    it("ei arvioi kesken olevaa päivää", () => {
+      // Tämän päivän myynti on vasta puolessa välissä; vertailu koko
+      // päivän tavoitteeseen antaisi aina hälytyksen.
+      expect(
+        kinds({
+          sales: [sale(today, 10_000, 100_000)],
+          month: "2026-08",
+          today,
+        }),
+      ).toEqual([]);
+    });
+  });
+
+  describe("kuittitauko", () => {
+    const today = "2026-08-24";
+
+    it("huomauttaa kun kuitteja ei ole kirjattu mutta myyntiä on", () => {
+      const alerts = alertsOf({
+        receipts: [receipt({ date: "2026-08-01", totalCents: 5000 })],
+        sales: [sale("2026-08-20", 100_000)],
+        month: "2026-08",
+        today,
+      });
+
+      const gap = alerts.find((a) => a.kind === "receipt_gap");
+      expect(gap).toBeDefined();
+      expect(gap?.title).toContain("23");
+    });
+
+    /*
+     * Suljettu ravintola ei osta mitään. Ilman tätä ehtoa lomaviikko
+     * tuottaisi hälytyksen joka kerta. Myynti on merkki siitä että
+     * ravintola on auki — ja juuri se raha jonka rinnalla kulut puuttuvat.
+     */
+    it("vaikenee kun tauon aikana ei ole myyty", () => {
+      expect(
+        kinds({
+          receipts: [receipt({ date: "2026-08-01", totalCents: 5000 })],
+          month: "2026-08",
+          today,
+        }),
+      ).not.toContain("receipt_gap");
+    });
+
+    it("vaikenee kun myynti on ennen viimeistä kuittia", () => {
+      expect(
+        kinds({
+          receipts: [receipt({ date: "2026-08-01", totalCents: 5000 })],
+          sales: [sale("2026-07-30", 100_000)],
+          month: "2026-08",
+          today,
+        }),
+      ).not.toContain("receipt_gap");
+    });
+
+    it("vaikenee tuoreesta kuitista", () => {
+      expect(
+        kinds({
+          receipts: [receipt({ date: "2026-08-20", totalCents: 5000 })],
+          sales: [sale("2026-08-22", 100_000)],
+          month: "2026-08",
+          today,
+        }),
+      ).not.toContain("receipt_gap");
+    });
+
+    it("vaikenee kun kuitteja ei ole lainkaan", () => {
+      // Uusi ravintola ei ole myöhässä mistään.
+      expect(
+        kinds({ sales: [sale("2026-08-20", 100_000)], month: "2026-08", today }),
+      ).not.toContain("receipt_gap");
+    });
+  });
+
+  describe("tehtävien määräajat", () => {
+    const today = "2026-08-20";
+
+    it("nostaa myöhässä olevan kriittiseksi", () => {
+      const alerts = alertsOf({
+        tasks: [task({ dueOn: "2026-08-18" })],
+        month: "2026-08",
+        today,
+      });
+      const late = alerts.find((a) => a.kind === "task_overdue");
+      expect(late?.severity).toBe("critical");
+    });
+
+    it("huomauttaa tänään erääntyvästä", () => {
+      const alerts = alertsOf({
+        tasks: [task({ dueOn: today })],
+        month: "2026-08",
+        today,
+      });
+      const due = alerts.find((a) => a.kind === "task_due");
+      expect(due?.severity).toBe("warning");
+    });
+
+    it("ei hälytä tulevasta tehtävästä", () => {
+      expect(
+        kinds({ tasks: [task({ dueOn: "2026-08-27" })], month: "2026-08", today }),
+      ).toEqual([]);
+    });
+
+    it("ei hälytä tehdystä tehtävästä", () => {
+      expect(
+        kinds({
+          tasks: [
+            task({
+              dueOn: "2026-08-18",
+              completedAt: "2026-08-18T12:00:00.000Z",
+            }),
+          ],
+          month: "2026-08",
+          today,
+        }),
+      ).toEqual([]);
+    });
   });
 });
 

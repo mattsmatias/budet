@@ -15,7 +15,6 @@ import { formatRate } from "@/lib/money";
 import { summarise } from "./sales-vat";
 import {
   fetchBudgets,
-  fetchClockEvents,
   fetchDailySales,
   fetchReceipts,
   fetchSalesGroups,
@@ -29,9 +28,6 @@ import {
 } from "@/lib/restoflow/expenses";
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
-import { staffCostCents, workedBetween } from "@/lib/restoflow/timeclock";
-import { windowStartIso } from "@/lib/restoflow/clock-context";
-import {} from "@/lib/restoflow/types";
 
 export type ReportKind =
   | "kulut"
@@ -39,8 +35,6 @@ export type ReportKind =
   | "kuitit"
   | "toimittajat"
   | "budjetit"
-  | "tyoaika"
-  | "henkilostokulut"
   | "alv"
   /*
    * Kirjanpidon raportit samaan koneistoon.
@@ -61,8 +55,6 @@ export const REPORT_KINDS: ReportKind[] = [
   "kuitit",
   "toimittajat",
   "budjetit",
-  "tyoaika",
-  "henkilostokulut",
   "alv",
   "paivakirja",
   "paakirja",
@@ -88,9 +80,6 @@ export async function buildReportRows(
 ): Promise<string[][]> {
   const nimet = labels(locale);
   const t = adminText(locale);
-  // Tuntipalkat ovat henkilötietoa: kirjanpitäjä saa tunnit muttei palkkoja.
-  const showsRates = can(role, "staff.rates.view");
-
   /*
    * ALV-raportti lukee myyntiä eikä kuitteja.
    *
@@ -104,83 +93,6 @@ export async function buildReportRows(
 
   if (ACCOUNTING_KINDS.includes(kind)) {
     return accountingReportRows(kind, restaurantId, month, t);
-  }
-
-  if (kind === "tyoaika" || kind === "henkilostokulut") {
-    const [users, events] = await Promise.all([
-      fetchUsers(restaurantId),
-      fetchClockEvents(restaurantId, windowStartIso(`${month}-01`)),
-    ]);
-
-    const now = new Date().toISOString();
-    const [year, m] = month.split("-").map(Number);
-    const lastDay = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
-
-    const rows = users.map((u) => {
-      const worked = workedBetween(
-        events.filter((e) => e.userId === u.id),
-        `${month}-01`,
-        lastDay,
-        now,
-        timezone,
-      );
-      const hours = Math.round((worked.workedMs / 3600000) * 100) / 100;
-      return {
-        user: u,
-        hours,
-        cost: staffCostCents(worked.workedMs, u.hourlyRateCents ?? 0),
-      };
-    });
-
-    if (kind === "tyoaika") {
-      return [
-        [t.vienti.employee, t.vienti.position, t.vienti.hours],
-        ...rows.map((r) => [
-          r.user.name,
-          r.user.position ? nimet.positions[r.user.position] : "—",
-          money(Math.round(r.hours * 100)),
-        ]),
-        [],
-        [
-          t.vienti.total,
-          "",
-          money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
-        ],
-      ];
-    }
-
-    if (!showsRates) {
-      return [[t.vienti.labourReport], [t.vienti.note, t.vienti.noRateAccess]];
-    }
-
-    return [
-      [t.vienti.labourReport],
-      [t.vienti.month, month],
-      [t.vienti.note, t.vienti.calculatedNote],
-      [],
-      [
-        t.vienti.employee,
-        t.vienti.position,
-        t.vienti.hours,
-        t.vienti.hourlyRate,
-        t.vienti.cost,
-      ],
-      ...rows.map((r) => [
-        r.user.name,
-        r.user.position ? nimet.positions[r.user.position] : "—",
-        money(Math.round(r.hours * 100)),
-        money(r.user.hourlyRateCents ?? 0),
-        money(r.cost),
-      ]),
-      [],
-      [
-        t.vienti.total,
-        "",
-        money(Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100)),
-        "",
-        money(rows.reduce((s, r) => s + r.cost, 0)),
-      ],
-    ];
   }
 
   const receipts = await fetchReceipts(restaurantId);

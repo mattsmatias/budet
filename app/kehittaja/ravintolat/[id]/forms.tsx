@@ -383,7 +383,7 @@ export function UserRow({
  * VAHVISTUS VAIN SILLE MIKÄ KATKAISEE PÄÄSYN.
  *
  * Roolin vaihto on korjattavissa yhdellä klikkauksella takaisin.
- * Käytöstä poisto lukitsee ihmisen ulos kesken työvuoron, joten se
+ * Käytöstä poisto lukitsee ihmisen ulos kesken työpäivän, joten se
  * kysyy varmistuksen.
  */
 export function UserControls({
@@ -695,7 +695,7 @@ export function DangerZone({
 }: {
   id: string;
   name: string;
-  counts: { users: number; receipts: number; shifts: number; tasks: number };
+  counts: { users: number; receipts: number; tasks: number };
 }) {
   const [state, action] = useActionState(deleteRestaurant, initial);
   const [auki, setAuki] = useState(false);
@@ -763,10 +763,6 @@ export function DangerZone({
         <li className="flex justify-between gap-4">
           <span>Kuitit</span>
           <span className="rf-tabular font-semibold">{counts.receipts}</span>
-        </li>
-        <li className="flex justify-between gap-4">
-          <span>Työvuorot</span>
-          <span className="rf-tabular font-semibold">{counts.shifts}</span>
         </li>
         <li className="flex justify-between gap-4">
           <span>Tehtävät</span>

@@ -102,25 +102,6 @@ export function TwoColumnSkeleton() {
   );
 }
 
-/** Kalenteriruudukko: työvuorot ja tehtävien kalenterinäkymä. */
-export function CalendarSkeleton() {
-  return (
-    <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <LoadingLabel />
-
-      <Otsikko />
-
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <Rivi key={i} height="h-[110px]" />
-        ))}
-      </div>
-
-      <Rivi height="h-[520px]" />
-    </div>
-  );
-}
-
 /**
  * Yksityiskohtasivu: leveä sisältö ja kapea sivupalsta.
  *
@@ -146,7 +127,7 @@ export function DetailSkeleton() {
   );
 }
 
-/** Päällekkäiset kortit: myyntipäivä ja työntekijän palkkasivu. */
+/** Päällekkäiset kortit: myyntipäivä ja tulostettava raportti. */
 export function StackSkeleton({ cards = 3 }: { cards?: number }) {
   return (
     <div className="space-y-4" aria-busy="true" aria-live="polite">
@@ -157,18 +138,6 @@ export function StackSkeleton({ cards = 3 }: { cards?: number }) {
       {Array.from({ length: cards }, (_, i) => (
         <Rivi key={i} height={i === 0 ? "h-56" : "h-44"} />
       ))}
-    </div>
-  );
-}
-
-/** Yksi leveä taulukko: kuukauden työvuorolista. */
-export function TableSkeleton() {
-  return (
-    <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <LoadingLabel />
-
-      <Otsikko />
-      <Rivi height="h-[620px]" />
     </div>
   );
 }

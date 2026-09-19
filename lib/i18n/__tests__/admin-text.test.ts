@@ -3,17 +3,15 @@ import { APP_LOCALES } from "../app-locales";
 import { adminText } from "../admin-text";
 import {
   dayCountIn,
-  guestCountIn,
+  receiptCountIn,
   labels,
-  reservationCountIn,
 } from "../labels";
 
 /**
  * Hallintanäkymän käännösten täydellisyys.
  *
- * Sama vartiointi kuin työntekijänäkymässä, mutta huomattavasti
- * suuremmalle sanakirjalle: hallinnassa on yli tuhat merkkijonoa
- * kolmessakymmenessä osiossa.
+ * Vartiointi on tarpeen, koska hallinnan sanakirja on suuri: siinä on
+ * yli tuhat merkkijonoa kymmenissä osioissa.
  *
  * Tyyppi takaa jo että jokaisella kielellä on jokainen avain — tyyppi
  * johdetaan suomesta. Nämä testit koskevat sitä mitä tyyppi ei näe:
@@ -118,26 +116,24 @@ for (const [nimi, hae] of OSAT) {
 /**
  * Taivutetut lukumäärät.
  *
- * "1 vierasta" on virhe joka pistää silmään heti, ja se syntyy heti
- * kun luku liimataan sanaan käännöstiedostossa. Nämä kolme ovat
+ * "1 kuittia" on virhe joka pistää silmään heti, ja se syntyy heti
+ * kun luku liimataan sanaan käännöstiedostossa. Nämä ovat
  * taulukossa juuri siksi, joten testi tarkistaa nimenomaan yksikön.
  */
 describe("lukumäärät", () => {
   it("taivuttaa yksikön suomeksi", () => {
-    expect(guestCountIn(1, "fi")).toBe("1 vieras");
+    expect(receiptCountIn(1, "fi")).toBe("1 kuitti");
     expect(dayCountIn(1, "fi")).toBe("1 päivä");
-    expect(reservationCountIn(1, "fi")).toBe("1 varaus");
   });
 
   it("käyttää monikkoa muualla", () => {
-    expect(guestCountIn(2, "fi")).toBe("2 vierasta");
+    expect(receiptCountIn(2, "fi")).toBe("2 kuittia");
     expect(dayCountIn(0, "fi")).toBe("0 päivää");
-    expect(reservationCountIn(12, "fi")).toBe("12 varausta");
   });
 
   it("erottaa yksikön ja monikon jokaisella kielellä", () => {
     for (const locale of APP_LOCALES) {
-      for (const laske of [guestCountIn, dayCountIn, reservationCountIn]) {
+      for (const laske of [receiptCountIn, dayCountIn]) {
         expect(laske(1, locale), `${locale} yksikkö`).toContain("1");
         expect(laske(7, locale), `${locale} monikko`).toContain("7");
       }

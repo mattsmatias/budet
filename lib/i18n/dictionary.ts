@@ -78,7 +78,7 @@ const fi = {
     railReceipts: "Kuitit",
     railExpenses: "Kulut",
     railLedger: "Kirjanpito",
-    railShifts: "Työvuorot",
+    railBudgets: "Budjetit",
   },
 
   todo: {
@@ -151,16 +151,16 @@ const fi = {
     vatBody: "Luvut valmiina, ohjeet mukana.",
     reports: "Raportit",
     reportsBody: "Päiväkirja, pääkirja, tuloslaskelma ja tase.",
-    staff: "Työntekijät",
-    staffBody: "Työvuorot, työaika ja palkkalaskelmat.",
+    staff: "Henkilöstökulut",
+    staffBody: "Palkkakulut osuutena myynnistä, kuukausi kerrallaan.",
     taxNote:
       "Kate valmistelee ALV-luvut kirjanpidosta ja kertoo mitä sinun pitää " +
       "tehdä. Ilmoituksen teet itse OmaVerossa — Kate ei lähetä sitä " +
       "puolestasi.",
-    lunch: "Lounaslista",
-    lunchBody: "Viikko kerrallaan, oveen ja verkkoon.",
-    reservations: "Pöytävaraukset",
-    reservationsBody: "Varauslomake omalle sivulle, salinäkymä puhelimeen.",
+    tasks: "Tehtävät",
+    tasksBody: "Muistutukset ja määräpäivät, ettei mikään unohdu.",
+    files: "Tiedostot",
+    filesBody: "Sopimukset ja tositteet yksityisesti tallessa.",
   },
 
   pricing: {
@@ -174,10 +174,10 @@ const fi = {
     incLedger: "Kirjanpito",
     incVat: "ALV & veroasiat",
     incReports: "Raportit",
-    incStaff: "Työntekijät",
+    incStaff: "Henkilöstökulut",
     incAssistant: "Matti-avustaja",
-    incLunch: "Lounaslista",
-    incReservations: "Pöytävaraukset",
+    incTasks: "Tehtävät",
+    incFiles: "Tiedostot",
   },
 
   finalCta: {
@@ -217,9 +217,9 @@ const fi = {
       "Ravintolan pyörittäminen ei saisi tuntua kymmenen eri järjestelmän " +
       "hallitsemiselta.",
     whyBody:
-      "Ravintolan arjessa myynti, kuitit, kulut, työntekijät, työvuorot, " +
-      "lounaslistat ja raportointi liittyvät kaikki toisiinsa. Silti niitä " +
-      "hallitaan usein eri paikoissa.",
+      "Ravintolan arjessa myynti, kuitit, kulut, toimittajat, budjetit ja " +
+      "raportointi liittyvät kaikki toisiinsa. Silti niitä hallitaan usein " +
+      "eri paikoissa.",
     whyEmphasis: "Katen tarkoitus on tuoda nämä yhteen.",
     beliefsLabel: "Mitä uskomme",
     belief1Title: "Yksinkertaisuus",
@@ -298,7 +298,7 @@ const en: Dictionary = {
     railReceipts: "Receipts",
     railExpenses: "Expenses",
     railLedger: "Bookkeeping",
-    railShifts: "Shifts",
+    railBudgets: "Budgets",
   },
   todo: {
     cardTitle: "What needs your attention",
@@ -364,16 +364,16 @@ const en: Dictionary = {
     vatBody: "Figures ready, guidance included.",
     reports: "Reports",
     reportsBody: "Journal, ledger, income statement and balance sheet.",
-    staff: "Staff",
-    staffBody: "Shifts, hours and payslips.",
+    staff: "Staff costs",
+    staffBody: "Wage costs as a share of sales, month by month.",
     taxNote:
       "Kate prepares your VAT figures from the ledger and tells you what to " +
       "do. You file the return yourself in the tax authority's service — " +
       "Kate does not submit it for you.",
-    lunch: "Lunch menu",
-    lunchBody: "A week at a time, for the door and the web.",
-    reservations: "Table bookings",
-    reservationsBody: "A booking form for your own site, the floor on your phone.",
+    tasks: "Tasks",
+    tasksBody: "Reminders and due dates, so nothing slips.",
+    files: "Files",
+    filesBody: "Contracts and records, kept private.",
   },
   pricing: {
     heading: "One price. Everything included.",
@@ -386,10 +386,10 @@ const en: Dictionary = {
     incLedger: "Bookkeeping",
     incVat: "VAT & tax",
     incReports: "Reports",
-    incStaff: "Staff",
+    incStaff: "Staff costs",
     incAssistant: "Matti assistant",
-    incLunch: "Lunch menu",
-    incReservations: "Table bookings",
+    incTasks: "Tasks",
+    incFiles: "Files",
   },
   finalCta: {
     titleA: "Restaurant finances.",
@@ -426,7 +426,7 @@ const en: Dictionary = {
       "Running a restaurant should not feel like managing ten different " +
       "systems.",
     whyBody:
-      "Sales, receipts, expenses, staff, shifts, lunch menus and reporting all " +
+      "Sales, receipts, expenses, suppliers, budgets and reporting all " +
       "belong to the same day. They are still usually handled in separate " +
       "places.",
     whyEmphasis: "Kate exists to bring them together.",
@@ -501,7 +501,7 @@ const sv: Dictionary = {
     railReceipts: "Kvitton",
     railExpenses: "Utgifter",
     railLedger: "Bokföring",
-    railShifts: "Skift",
+    railBudgets: "Budgetar",
   },
   todo: {
     cardTitle: "Det här behöver du göra",
@@ -567,16 +567,16 @@ const sv: Dictionary = {
     vatBody: "Siffrorna klara, anvisningar med.",
     reports: "Rapporter",
     reportsBody: "Dagbok, huvudbok, resultat- och balansräkning.",
-    staff: "Personal",
-    staffBody: "Skift, arbetstid och lönebesked.",
+    staff: "Personalkostnader",
+    staffBody: "Lönekostnader som andel av försäljningen, månad för månad.",
     taxNote:
       "Kate förbereder momsuppgifterna utifrån bokföringen och berättar vad " +
       "du ska göra. Deklarationen lämnar du in själv hos Skatteförvaltningen " +
       "— Kate skickar den inte åt dig.",
-    lunch: "Lunchlista",
-    lunchBody: "En vecka i taget, till dörren och webben.",
-    reservations: "Bordsbokningar",
-    reservationsBody: "Ett bokningsformulär till egna sidan, salen i telefonen.",
+    tasks: "Uppgifter",
+    tasksBody: "Påminnelser och förfallodagar, så att inget glöms.",
+    files: "Filer",
+    filesBody: "Avtal och verifikat, privat förvarade.",
   },
   pricing: {
     heading: "Ett pris. Allt ingår.",
@@ -589,10 +589,10 @@ const sv: Dictionary = {
     incLedger: "Bokföring",
     incVat: "Moms & skatt",
     incReports: "Rapporter",
-    incStaff: "Personal",
+    incStaff: "Personalkostnader",
     incAssistant: "Matti-assistenten",
-    incLunch: "Lunchlista",
-    incReservations: "Bordsbokningar",
+    incTasks: "Uppgifter",
+    incFiles: "Filer",
   },
   finalCta: {
     titleA: "Restaurangens ekonomi.",
@@ -628,7 +628,7 @@ const sv: Dictionary = {
       "Att driva en restaurang borde inte kännas som att sköta tio olika " +
       "system.",
     whyBody:
-      "Försäljning, kvitton, utgifter, personal, skift, lunchlistor och " +
+      "Försäljning, kvitton, utgifter, leverantörer, budgetar och " +
       "rapportering hör till samma dag. Ändå sköts de oftast på olika håll.",
     whyEmphasis: "Kate finns för att föra ihop dem.",
     beliefsLabel: "Vad vi tror på",
@@ -701,7 +701,7 @@ const da: Dictionary = {
     railReceipts: "Kvitteringer",
     railExpenses: "Udgifter",
     railLedger: "Bogføring",
-    railShifts: "Vagter",
+    railBudgets: "Budgetter",
   },
   todo: {
     cardTitle: "Det skal du se på",
@@ -767,16 +767,16 @@ const da: Dictionary = {
     vatBody: "Tallene klar, vejledning med.",
     reports: "Rapporter",
     reportsBody: "Dagbog, hovedbog, resultatopgørelse og balance.",
-    staff: "Medarbejdere",
-    staffBody: "Vagter, arbejdstid og lønsedler.",
+    staff: "Personaleomkostninger",
+    staffBody: "Lønomkostninger som andel af salget, måned for måned.",
     taxNote:
       "Kate klargør momstallene ud fra bogføringen og fortæller, hvad du skal " +
       "gøre. Angivelsen indsender du selv hos skattemyndigheden — Kate sender " +
       "den ikke for dig.",
-    lunch: "Frokostmenu",
-    lunchBody: "En uge ad gangen, til døren og nettet.",
-    reservations: "Bordbestillinger",
-    reservationsBody: "En bestillingsformular til egen side, salen i telefonen.",
+    tasks: "Opgaver",
+    tasksBody: "Påmindelser og frister, så intet bliver glemt.",
+    files: "Filer",
+    filesBody: "Kontrakter og bilag, opbevaret privat.",
   },
   pricing: {
     heading: "Én pris. Det hele er med.",
@@ -789,10 +789,10 @@ const da: Dictionary = {
     incLedger: "Bogføring",
     incVat: "Moms & skat",
     incReports: "Rapporter",
-    incStaff: "Medarbejdere",
+    incStaff: "Personaleomkostninger",
     incAssistant: "Matti-assistenten",
-    incLunch: "Frokostmenu",
-    incReservations: "Bordbestillinger",
+    incTasks: "Opgaver",
+    incFiles: "Filer",
   },
   finalCta: {
     titleA: "Restaurantens økonomi.",
@@ -828,7 +828,7 @@ const da: Dictionary = {
       "At drive en restaurant burde ikke føles som at styre ti forskellige " +
       "systemer.",
     whyBody:
-      "Salg, kvitteringer, udgifter, medarbejdere, vagter, frokostmenuer og " +
+      "Salg, kvitteringer, udgifter, leverandører, budgetter og " +
       "rapportering hører til samme dag. Alligevel håndteres de oftest hver " +
       "for sig.",
     whyEmphasis: "Kate findes for at samle dem.",
@@ -903,7 +903,7 @@ const tr: Dictionary = {
     railReceipts: "Fişler",
     railExpenses: "Giderler",
     railLedger: "Muhasebe",
-    railShifts: "Vardiyalar",
+    railBudgets: "Bütçeler",
   },
   todo: {
     cardTitle: "Yapmanız gerekenler",
@@ -969,16 +969,16 @@ const tr: Dictionary = {
     vatBody: "Rakamlar hazır, yönerge yanında.",
     reports: "Raporlar",
     reportsBody: "Yevmiye, defteri kebir, gelir tablosu ve bilanço.",
-    staff: "Çalışanlar",
-    staffBody: "Vardiya, çalışma saati ve bordro.",
+    staff: "Personel giderleri",
+    staffBody: "Maaş giderleri satışın payı olarak, ay ay.",
     taxNote:
       "Kate KDV rakamlarını muhasebeden hazırlar ve ne yapmanız gerektiğini " +
       "söyler. Beyannameyi vergi idaresine kendiniz verirsiniz — Kate sizin " +
       "adınıza göndermez.",
-    lunch: "Öğle menüsü",
-    lunchBody: "Haftalık olarak, kapıya ve web'e.",
-    reservations: "Masa rezervasyonları",
-    reservationsBody: "Kendi siteniz için rezervasyon formu, salon telefonunuzda.",
+    tasks: "Görevler",
+    tasksBody: "Hatırlatmalar ve son tarihler, hiçbir şey unutulmasın.",
+    files: "Dosyalar",
+    filesBody: "Sözleşmeler ve belgeler, gizli olarak saklanır.",
   },
   pricing: {
     heading: "Tek fiyat. Her şey dahil.",
@@ -991,10 +991,10 @@ const tr: Dictionary = {
     incLedger: "Muhasebe",
     incVat: "KDV & vergi",
     incReports: "Raporlar",
-    incStaff: "Çalışanlar",
+    incStaff: "Personel giderleri",
     incAssistant: "Matti asistanı",
-    incLunch: "Öğle menüsü",
-    incReservations: "Masa rezervasyonları",
+    incTasks: "Görevler",
+    incFiles: "Dosyalar",
   },
   finalCta: {
     titleA: "Restoran finansı.",
@@ -1029,8 +1029,8 @@ const tr: Dictionary = {
     whyHeading:
       "Bir restoranı işletmek, on ayrı sistemi yönetmek gibi hissettirmemeli.",
     whyBody:
-      "Satış, fiş, gider, çalışanlar, vardiyalar, öğle menüleri ve raporlama " +
-      "aynı güne aittir. Yine de çoğu zaman ayrı yerlerde yönetilir.",
+      "Satış, fiş, gider, tedarikçiler, bütçeler ve raporlama aynı güne " +
+      "aittir. Yine de çoğu zaman ayrı yerlerde yönetilir.",
     whyEmphasis: "Kate bunları bir araya getirmek için var.",
     beliefsLabel: "Neye inanıyoruz",
     belief1Title: "Sadelik",
@@ -1102,7 +1102,7 @@ const et: Dictionary = {
     railReceipts: "Kviitungid",
     railExpenses: "Kulud",
     railLedger: "Raamatupidamine",
-    railShifts: "Vahetused",
+    railBudgets: "Eelarved",
   },
   todo: {
     cardTitle: "Mida tuleb teha",
@@ -1167,16 +1167,16 @@ const et: Dictionary = {
     vatBody: "Numbrid valmis, juhised kaasas.",
     reports: "Aruanded",
     reportsBody: "Päevaraamat, pearaamat, kasumiaruanne ja bilanss.",
-    staff: "Töötajad",
-    staffBody: "Vahetused, tööaeg ja palgateatised.",
+    staff: "Personalikulud",
+    staffBody: "Palgakulud osana müügist, kuu kaupa.",
     taxNote:
       "Kate valmistab käibemaksunumbrid raamatupidamisest ja ütleb, mida sul " +
       "tuleb teha. Deklaratsiooni esitad ise maksuameti teenuses — Kate ei " +
       "saada seda sinu eest.",
-    lunch: "Lõunamenüü",
-    lunchBody: "Nädal korraga, uksele ja veebi.",
-    reservations: "Lauabroneeringud",
-    reservationsBody: "Broneerimisvorm oma lehele, saal telefonis.",
+    tasks: "Ülesanded",
+    tasksBody: "Meeldetuletused ja tähtajad, et midagi ei ununeks.",
+    files: "Failid",
+    filesBody: "Lepingud ja dokumendid, privaatselt hoiul.",
   },
   pricing: {
     heading: "Üks hind. Kõik sees.",
@@ -1189,10 +1189,10 @@ const et: Dictionary = {
     incLedger: "Raamatupidamine",
     incVat: "Käibemaks & maksud",
     incReports: "Aruanded",
-    incStaff: "Töötajad",
+    incStaff: "Personalikulud",
     incAssistant: "Matti assistent",
-    incLunch: "Lõunamenüü",
-    incReservations: "Lauabroneeringud",
+    incTasks: "Ülesanded",
+    incFiles: "Failid",
   },
   finalCta: {
     titleA: "Restorani rahaasjad.",
@@ -1226,8 +1226,8 @@ const et: Dictionary = {
     whyHeading:
       "Restorani pidamine ei peaks tunduma kümne eri süsteemi haldamisena.",
     whyBody:
-      "Müük, kviitungid, kulud, töötajad, vahetused, lõunamenüüd ja aruandlus " +
-      "kuuluvad samasse päeva. Ometi hallatakse neid enamasti eri kohtades.",
+      "Müük, kviitungid, kulud, tarnijad, eelarved ja aruandlus kuuluvad " +
+      "samasse päeva. Ometi hallatakse neid enamasti eri kohtades.",
     whyEmphasis: "Kate on selleks, et need kokku tuua.",
     beliefsLabel: "Mida usume",
     belief1Title: "Lihtsus",

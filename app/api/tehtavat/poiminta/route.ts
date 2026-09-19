@@ -35,7 +35,7 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 import { explainAiError } from "@/lib/matti/errors";
 import { can } from "@/lib/restoflow/permissions";
 import { requireContext } from "@/lib/restoflow/session";
-import { todayIn } from "@/lib/restoflow/clock-context";
+import { todayIn } from "@/lib/restoflow/local-time";
 import { DEFAULT_MODEL, isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import {
   checkUploads,

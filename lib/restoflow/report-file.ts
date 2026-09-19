@@ -75,8 +75,6 @@ export function reportSheetNames(t: AdminText): Record<ReportKind, string> {
     kuitit: t.raportti.receiptsWord,
     toimittajat: t.raportti.suppliersWord,
     budjetit: t.raportti.budgetsWord,
-    tyoaika: t.raportti.sheetHours,
-    henkilostokulut: t.raportti.staffCosts,
     alv: "ALV",
     paivakirja: t.raportti.sheetJournal,
     paakirja: t.raportti.sheetLedger,

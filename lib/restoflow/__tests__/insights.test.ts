@@ -55,13 +55,8 @@ function context(partial: Partial<InsightContext> = {}): InsightContext {
   return {
     receipts: [],
     budgets: [],
-    shifts: [],
-    users: [],
-    clockEvents: [],
     month: "2026-08",
     today: "2026-08-15",
-    now: "2026-08-15T12:00:00.000Z",
-    timezone: "Europe/Helsinki",
     locale: "fi" as const,
     ...partial,
   };

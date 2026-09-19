@@ -2,17 +2,14 @@
 
 import { useActionState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
-import { changePassword, updateProfile } from "@/app/app/actions";
+import { changePassword, updateProfile } from "./account-actions";
 import type { AdminState } from "../actions";
 import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
 
 /**
  * Oman tunnuksen asetukset.
  *
- * Toiminnot ovat työntekijäpuolen moduulissa eikä niitä monisteta
- * tänne: nimi ja salasana ovat samat riippumatta siitä kummasta
- * näkymästä ne vaihdetaan, ja kaksi kopiota samasta toiminnosta
- * ajautuisi erilleen ensimmäisen korjauksen kohdalla.
+ * Toiminnot ovat omassa moduulissaan account-actions.ts:ssä.
  */
 const initial: AdminState = {};
 

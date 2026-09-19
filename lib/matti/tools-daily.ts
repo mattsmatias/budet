@@ -7,16 +7,9 @@ import {
   periodTotals,
   receiptsInMonth,
 } from "@/lib/restoflow/expenses";
-import { monthStartDate } from "@/lib/restoflow/clock-context";
+import { monthRange } from "@/lib/restoflow/dates";
 import { attention, evaluability, focusItems } from "@/lib/restoflow/dashboard";
 import { buildInsights } from "@/lib/restoflow/insights";
-import {
-  formatHours,
-  labourCost,
-  loadPayroll,
-  summarise,
-} from "@/lib/restoflow/payroll-data";
-import { monthPeriod } from "@/lib/restoflow/payroll";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import {
   compareSales,
@@ -36,10 +29,10 @@ import type { MattiContext } from "./context";
 /**
  * Päivän ohjaustyökalut.
  *
- * Matin ensimmäiset kahdeksan työkalua osasivat kertoa kuluista,
- * toimittajista ja lounaslistasta. Yksikään ei osannut vastata siihen
- * mitä ravintoloitsija oikeasti kysyy aamulla: onko kaikki kunnossa,
- * paljonko eilen myytiin, mihin työvoimakustannus asettui.
+ * Matin ensimmäiset työkalut osasivat kertoa kuluista ja
+ * toimittajista. Yksikään ei osannut vastata siihen mitä
+ * ravintoloitsija oikeasti kysyy aamulla: onko kaikki kunnossa,
+ * paljonko eilen myytiin, paljonko palkat maksoivat.
  *
  * Nämä viisi lukevat samasta laskennasta kuin yleiskuva. Se on
  * tarkoituksellista: jos Matti laskisi luvun itse, hän ja näyttö
@@ -52,17 +45,10 @@ function dashboardInput(ctx: MattiContext, month: string) {
   return {
     receipts: ctx.data.receipts,
     budgets: ctx.data.budgets,
-    shifts: ctx.data.shifts,
-    users: ctx.data.users,
-    clockEvents: ctx.data.clockEvents,
-    absences: ctx.data.absences,
-    openShifts: ctx.data.openShifts,
     sales: ctx.data.sales,
     tasks: ctx.data.tasks,
     month,
     today: ctx.today,
-    now: ctx.now,
-    timezone: ctx.timezone,
     locale: ctx.locale,
   };
 }
@@ -73,7 +59,7 @@ const getBriefing = defineTool({
   name: "get_daily_briefing",
   description:
     "Päivän tilannekatsaus: kokonaistila, tärkeimmät huomiota vaativat asiat, " +
-    "tämän päivän myynti, työvoimakustannus ja kulut sekä kuukauden karkea tulos. " +
+    "tämän päivän myynti ja kulut sekä kuukauden karkea tulos. " +
     "Käytä tätä kun käyttäjä kysyy miten menee, mitä pitäisi tehdä tai " +
     "pyytää päivän yhteenvedon.",
   level: "read",
@@ -81,18 +67,7 @@ const getBriefing = defineTool({
   schema: z.object({}),
   async run(ctx) {
     const input = dashboardInput(ctx, ctx.month);
-    const insights = buildInsights({
-      receipts: ctx.data.receipts,
-      budgets: ctx.data.budgets,
-      shifts: ctx.data.shifts,
-      users: ctx.data.users,
-      clockEvents: ctx.data.clockEvents,
-      month: ctx.month,
-      today: ctx.today,
-      now: ctx.now,
-      timezone: ctx.timezone,
-      locale: ctx.locale,
-    });
+    const insights = buildInsights(input);
 
     const items = focusItems(input, insights);
     const status = overallStatus(
@@ -101,25 +76,11 @@ const getBriefing = defineTool({
       adminText(ctx.locale),
     );
 
-    const [today, month] = await Promise.all([
-      labourCost(ctx.restaurantId, ctx.timezone, ctx.today, ctx.today, ctx.now),
-      labourCost(
-        ctx.restaurantId,
-        ctx.timezone,
-        monthStartDate(ctx.month),
-        ctx.today,
-        ctx.now,
-      ),
-    ]);
-
     const pulse = todayPulse({
       today: ctx.today,
       month: ctx.month,
       receipts: ctx.data.receipts,
       sales: ctx.data.sales,
-      labourTodayCents: today.cents,
-      labourTodayMinutes: today.minutes,
-      labourMonthCents: month.cents,
     });
 
     /*
@@ -138,7 +99,6 @@ const getBriefing = defineTool({
           ? `Kärjessä: ${top.map((i) => i.title).join("; ")}. `
           : "") +
         `Tänään: myynti ${pulse.sales.cents === null ? "ei kirjattu" : formatMoney(pulse.sales.cents)}, ` +
-        `työvoima ${formatMoney(pulse.labour.cents)}, ` +
         `kulut ${formatMoney(pulse.expenses.cents)}. ` +
         (pulse.monthToDate.resultCents === null
           ? "Kuukauden tulosta ei voi laskea ilman myyntitietoja."
@@ -158,8 +118,6 @@ const getBriefing = defineTool({
         moreCount: Math.max(0, items.length - top.length),
         today: {
           salesCents: pulse.sales.cents,
-          labourCents: pulse.labour.cents,
-          labourMinutes: pulse.labour.minutes,
           expenseCents: pulse.expenses.cents,
           receiptCount: pulse.expenses.receiptCount,
         },
@@ -175,7 +133,7 @@ const getBriefing = defineTool({
           pulse.sales.cents === null
             ? "Myyntiä ei kirjattu tänään"
             : `Myynti tänään ${formatMoney(pulse.sales.cents)}`,
-          `Työvoima tänään ${formatMoney(pulse.labour.cents)}`,
+          `Kulut tänään ${formatMoney(pulse.expenses.cents)}`,
           pulse.monthToDate.resultCents === null
             ? "Kuukauden tulos vaatii myyntitiedon"
             : "Kuukauden karkea tulos",
@@ -193,8 +151,8 @@ const getAlerts = defineTool({
   name: "get_alerts",
   description:
     "Kaikki tällä hetkellä avoimet poikkeamat ja huomiot: kaksoiskappaleet, " +
-    "budjetin ylitykset, sulkematon vuoro, myöhässä oleva leimaus, tekijätön " +
-    "vuoro, myynti alle tavoitteen, kuittitauko. Käytä kun kysytään mikä on " +
+    "budjetin ylitykset, ALV-poikkeamat, myynti alle tavoitteen, kuittitauko " +
+    "ja erääntyvät tehtävät. Käytä kun kysytään mikä on " +
     "vialla tai mihin pitää reagoida.",
   level: "read",
   requires: "alerts.view",
@@ -335,59 +293,53 @@ const getSales = defineTool({
 
 // ---------------------------------------------------------------------------
 
-const getLabourCost = defineTool({
-  name: "get_labour_cost",
+/*
+ * Henkilöstökulut kuluista.
+ *
+ * Palkat maksetaan palkkapalvelussa ja kirjataan Kateen kuluna
+ * Henkilöstö-luokkaan. Luku on siis sama kuin yleiskuvan kortissa ja
+ * kuluraportissa — Matti ei laske omaansa.
+ */
+const getStaffCosts = defineTool({
+  name: "get_staff_costs",
   description:
-    "Työvoimakustannus ja tehdyt tunnit kuukaudelta palkkamoottorista, sekä " +
-    "osuus myynnistä jos myynti on kirjattu. Käytä kun kysytään paljonko " +
-    "palkat maksavat tai onko työvoimakustannus liian suuri.",
+    "Henkilöstökulut (palkat sivukuluineen) kuukaudelta Henkilöstö-" +
+    "kululuokasta, sekä osuus myynnistä jos myynti on kirjattu. Käytä kun " +
+    "kysytään paljonko palkat maksavat tai onko henkilöstökulu liian suuri.",
   level: "read",
-  requires: "payroll.view",
+  requires: "expenses.view",
   schema: z.object({
     month: monthSchema.optional().describe("Oletus: kuluva kuukausi"),
   }),
   async run(ctx, input) {
     const month = input.month ?? ctx.month;
-    const period = monthPeriod(month);
+    const { from, to } = monthRange(month);
 
     /*
-     * Kuluva kuukausi lasketaan vain tähän päivään asti. Koko kuun
-     * loppuun laskettu luku näyttäisi pieneltä keskeneräisenä ja
-     * vertailu myyntiin menisi pieleen samasta syystä.
+     * Kuluva kuukausi myynnin osalta vain tähän päivään asti. Koko kuun
+     * myynti puuttuu vielä, ja osuus näyttäisi suuremmalta kuin on.
      */
-    const endsOn = month === ctx.month ? ctx.today : period.endsOn;
+    const salesTo = month === ctx.month ? ctx.today : to;
 
-    const data = await loadPayroll(
-      ctx.restaurantId,
-      ctx.timezone,
-      { startsOn: period.startsOn, endsOn },
-      ctx.now,
-    );
-    const totals = summarise(data);
+    const staffCents = receiptsInMonth(ctx.data.receipts, month)
+      .filter((r) => r.category === "staff")
+      .reduce((sum, r) => sum + r.totalCents, 0);
 
-    const sales = totalSalesCents(
-      salesBetween(ctx.data.sales, period.startsOn, endsOn),
-    );
-    const share = labourShareOfSales(totals.grossCents, sales);
+    const sales = totalSalesCents(salesBetween(ctx.data.sales, from, salesTo));
+    const share =
+      staffCents > 0 ? labourShareOfSales(staffCents, sales) : null;
 
     return {
       summary:
-        `${month}: työvoima ${formatMoney(totals.grossCents)}, ` +
-        `${formatHours(totals.workedMinutes)}, ${totals.staffCount} henkilöä` +
-        (share === null
-          ? ". Osuutta myynnistä ei voi laskea, koska myyntiä ei ole kirjattu."
-          : `, ${Math.round(share * 100)} % myynnistä`) +
-        (totals.needsReview > 0
-          ? `. ${totals.needsReview} laskelmassa on tarkistettavaa.`
-          : "."),
+        staffCents === 0
+          ? `${month}: henkilöstökuluja ei ole kirjattu. Palkat kirjataan kuluna Henkilöstö-luokkaan.`
+          : `${month}: henkilöstökulut ${formatMoney(staffCents)}` +
+            (share === null
+              ? ". Osuutta myynnistä ei voi laskea, koska myyntiä ei ole kirjattu."
+              : `, ${Math.round(share * 100)} % myynnistä.`),
       data: {
         month,
-        from: period.startsOn,
-        to: endsOn,
-        grossCents: totals.grossCents,
-        workedMinutes: totals.workedMinutes,
-        staffCount: totals.staffCount,
-        needsReview: totals.needsReview,
+        staffCents,
         netSalesCents: sales > 0 ? sales : null,
         shareOfSales: share,
       },
@@ -395,16 +347,14 @@ const getLabourCost = defineTool({
         title: fill(adminText(ctx.locale).kortti.labourTitle, {
           kuukausi: formatMonth(month, ctx.locale),
         }),
-        value: formatMoney(totals.grossCents),
+        value: staffCents === 0 ? "—" : formatMoney(staffCents),
         meta: [
-          formatHours(totals.workedMinutes),
-          `${totals.staffCount} henkilöä`,
           share === null
-            ? "Myyntiä ei kirjattu"
+            ? "Osuus myynnistä ei saatavilla"
             : `${Math.round(share * 100)} % myynnistä`,
         ],
-        href: `/admin/palkat?kuukausi=${month}`,
-        linkLabel: adminText(ctx.locale).korttiLinkki.openPayroll,
+        href: `/admin/kulut?kuukausi=${month}`,
+        linkLabel: adminText(ctx.locale).korttiLinkki.showExpenses,
       },
     };
   },
@@ -416,7 +366,7 @@ const getTrends = defineTool({
   name: "get_trends",
   description:
     "Kehityssuunnat: kulujen muutos edelliseen kuukauteen, kategoriasiirtymät, " +
-    "toimittajakeskittymä, budjetin tahti ja työvoiman osuus. Käytä kun " +
+    "toimittajakeskittymä ja budjetin tahti. Käytä kun " +
     "kysytään mihin suuntaan ollaan menossa tai mikä on muuttunut.",
   level: "read",
   requires: "expenses.view",
@@ -426,18 +376,7 @@ const getTrends = defineTool({
   async run(ctx, input) {
     const month = input.month ?? ctx.month;
 
-    const insights = buildInsights({
-      receipts: ctx.data.receipts,
-      budgets: ctx.data.budgets,
-      shifts: ctx.data.shifts,
-      users: ctx.data.users,
-      clockEvents: ctx.data.clockEvents,
-      month,
-      today: ctx.today,
-      now: ctx.now,
-      timezone: ctx.timezone,
-      locale: ctx.locale,
-    });
+    const insights = buildInsights(dashboardInput(ctx, month));
 
     if (insights.length === 0) {
       const totals = periodTotals(ctx.data.receipts, month);
@@ -501,6 +440,6 @@ export const DAILY_TOOLS: ToolDefinition[] = [
   getBriefing,
   getAlerts,
   getSales,
-  getLabourCost,
+  getStaffCosts,
   getTrends,
 ];

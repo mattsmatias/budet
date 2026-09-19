@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
-import { labels } from "@/lib/i18n/labels";
+import { formatDayIn, labels } from "@/lib/i18n/labels";
+import { fill } from "@/lib/i18n/auth-text";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { previousMonth } from "@/lib/restoflow/expenses";
@@ -9,10 +10,16 @@ import { Pill, ScopeNotice } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
-import { RestaurantForm, ShiftRulesForm } from "./forms";
+import { RestaurantForm } from "./forms";
 import { NameForm, PasswordForm } from "./profile-forms";
 import { SalesGroups, PosMappings } from "./vat-settings";
-import { fetchPosMappings, fetchSalesGroups } from "@/lib/restoflow/queries";
+import {
+  fetchInvitations,
+  fetchPosMappings,
+  fetchSalesGroups,
+} from "@/lib/restoflow/queries";
+import { revokeInvitation } from "../actions";
+import { InviteForm, MemberForm } from "./users";
 import { SectionNav } from "./section-nav";
 import { sectionFor } from "./sections";
 
@@ -59,6 +66,12 @@ export default async function SettingsPage({
         }
       : null;
 
+  /* Avoimet kutsut vain Käyttäjät-osastolle, samasta syystä. */
+  const invitations =
+    section.id === "kayttajat" && canEdit
+      ? await fetchInvitations(restaurant.id)
+      : [];
+
   /*
    * Osasto jota ei saa nähdä putoaa omaan tunnukseen.
    *
@@ -89,7 +102,7 @@ export default async function SettingsPage({
                 <Divider />
 
                 {/*
-                  Kolme tietoa joita ei voi muuttaa mutta jotka kysytään
+                  Tiedot joita ei voi muuttaa mutta jotka kysytään
                   yleensä juuri asetuksista. Ne eivät ole lomakkeessa,
                   koska harmaana näkyvä kenttä lupaa muutosta jota ei
                   tule.
@@ -97,11 +110,6 @@ export default async function SettingsPage({
                 <Facts
                   rows={[
                     { label: t.asetus.currency, value: restaurant.currency },
-                    {
-                      label: t.asetus.lunchPageAddress,
-                      value: `/lounas/${restaurant.slug}`,
-                      href: `/lounas/${restaurant.slug}`,
-                    },
                     { label: t.asetus.usersWord, value: String(users.length) },
                   ]}
                   note={t.asetus.fixedSettingsHint}
@@ -132,12 +140,117 @@ export default async function SettingsPage({
               </>
             ) : null}
 
-            {shown.id === "vuorot" ? (
-              <ShiftRulesForm
-                t={t}
-                clockInEarlyMinutes={restaurant.clockInEarlyMinutes}
-                openShiftClaiming={restaurant.openShiftClaiming}
-              />
+            {shown.id === "kayttajat" ? (
+              <div className="space-y-4">
+                <p
+                  className="text-[13px] leading-relaxed"
+                  style={{ color: "var(--rf-text-2)" }}
+                >
+                  {t.asetus.roleHint}
+                </p>
+
+                <InviteForm t={t} nimet={nimet} />
+
+                {invitations.length > 0 ? (
+                  <div>
+                    <h3 className="text-[13.5px] font-bold">
+                      {t.henkilosto2.openInvites}
+                    </h3>
+                    <p
+                      className="mt-1 text-[12.5px] leading-relaxed"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {t.henkilosto.codeOnce}
+                    </p>
+                    <ul
+                      className="mt-2 divide-y"
+                      style={{ borderColor: "var(--rf-line)" }}
+                    >
+                      {invitations.map((inv) => (
+                        <li
+                          key={inv.id}
+                          className="flex flex-wrap items-center justify-between gap-3 py-3"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[14px] font-medium">
+                              {inv.label ?? nimet.roles[inv.role]}
+                            </p>
+                            <p
+                              className="rf-tabular text-[12px]"
+                              style={{ color: "var(--rf-text-3)" }}
+                            >
+                              ···{inv.codeHint} · {nimet.roles[inv.role]} ·{" "}
+                              {fill(t.tiimi.validUntil, {
+                                paiva: formatDayIn(
+                                  inv.expiresAt.slice(0, 10),
+                                  locale,
+                                ),
+                              })}
+                            </p>
+                          </div>
+                          <form action={revokeInvitation}>
+                            <input
+                              type="hidden"
+                              name="invitationId"
+                              value={inv.id}
+                            />
+                            <button
+                              type="submit"
+                              className="rf-press px-3 py-1.5 text-[13px] font-medium"
+                              style={{
+                                background: "var(--rf-red-bg)",
+                                color: "var(--rf-red-text)",
+                                borderRadius: "var(--rf-r-control)",
+                              }}
+                            >
+                              {t.henkilosto.revoke}
+                            </button>
+                          </form>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div>
+                  <h3 className="text-[13.5px] font-bold">
+                    {t.asetus.membersTitle}
+                  </h3>
+                  <ul
+                    className="mt-2 divide-y"
+                    style={{ borderColor: "var(--rf-line)" }}
+                  >
+                    {users.map((member) => (
+                      <li
+                        key={member.id}
+                        className="flex flex-wrap items-center justify-between gap-3 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[14px] font-medium">
+                            {member.name}
+                            {member.id === user.id
+                              ? ` (${t.asetus.you})`
+                              : ""}
+                          </p>
+                          <p
+                            className="text-[12px]"
+                            style={{ color: "var(--rf-text-3)" }}
+                          >
+                            {nimet.roles[member.role]}
+                          </p>
+                        </div>
+                        <MemberForm
+                          t={t}
+                          nimet={nimet}
+                          userId={member.id}
+                          role={member.role}
+                          self={member.id === user.id}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             ) : null}
 
             {shown.id === "verotus" && vat ? (

@@ -30,17 +30,6 @@ const ICONS: Record<AlertKind, IconName> = {
   supplier_spike: "trend",
   sales_shortfall: "trend",
 
-  // Vuoro on kalenterissa, leimaus kellossa. Ero on siinä kumpaa
-  // katsotaan: suunnitelmaa vai sitä mitä oikeasti tapahtui.
-  open_shift: "calendar",
-  unassigned_shift: "calendar",
-  absence_reported: "staff",
-
-  late_clock_in: "clock",
-  shift_overrun: "clock",
-  unclosed_shift: "clock",
-  shift_variance: "clock",
-
   // Tehtävä on rasti ruutuun, myöhässä oleva huutomerkki: sama
   // asia kahdessa tilassa, ja tila on se mitä listasta luetaan.
   task_due: "check",

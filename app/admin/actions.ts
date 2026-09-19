@@ -14,11 +14,11 @@ import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { lineVatCents } from "@/lib/restoflow/vat";
 import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
-import { ISO_DATE, ISO_MONTH } from "@/lib/restoflow/dates";
+import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
-import { can, canAddReceipts } from "@/lib/restoflow/permissions";
+import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { reviewReasonsForSave } from "@/lib/restoflow/receipt-ai";
 import {
   isAutoMatch,
@@ -30,7 +30,6 @@ import type {
   ExpenseCategory,
   PaymentMethod,
   Role,
-  StaffPosition,
 } from "@/lib/restoflow/types";
 
 export interface AdminState {
@@ -58,9 +57,17 @@ function parseEuros(value: FormDataEntryValue | null): number | null {
 // Kutsut
 // ---------------------------------------------------------------------------
 
+/*
+ * Roolit joihin voi kutsua.
+ *
+ * Työntekijärooli ei ole mukana: Kate näyttää ravintolan rahan
+ * omistajalle, esihenkilölle ja kirjanpitäjälle. Palkat maksetaan
+ * palkkapalvelussa, eikä työntekijällä ole Katessa mitään tehtävää.
+ */
+const ROLES = ["owner", "manager", "accountant"] as const;
+
 const inviteSchema = z.object({
-  role: z.enum(["owner", "manager", "employee", "accountant"]),
-  position: z.enum(["waiter", "kitchen", "manager", "cleaning"]).nullable(),
+  role: z.enum(ROLES),
   label: z.string().trim().max(80).nullable(),
 });
 
@@ -69,12 +76,10 @@ export async function createInvitation(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant } = await requireContext("/admin/tyontekijat");
+  const { restaurant } = await requireContext("/admin/asetukset");
 
-  const rawPosition = String(formData.get("position") ?? "");
   const parsed = inviteSchema.safeParse({
     role: formData.get("role"),
-    position: rawPosition === "" ? null : rawPosition,
     label: (formData.get("label") as string) || null,
   });
 
@@ -84,14 +89,12 @@ export async function createInvitation(
   const { data, error } = await supabase.rpc("create_invitation", {
     p_restaurant: restaurant.id,
     p_role: parsed.data.role,
-    p_position: parsed.data.position,
-    p_hourly_rate_cents: parseEuros(formData.get("hourlyRate")),
     p_label: parsed.data.label,
   });
 
   if (error) return { error: explain(error, t.toiminnot.inviteFailed, t) };
 
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/asetukset");
   return { code: data as string, notice: t.toiminnot.inviteCreated };
 }
 
@@ -99,11 +102,11 @@ export async function revokeInvitation(formData: FormData): Promise<void> {
   const id = String(formData.get("invitationId") ?? "");
   if (!id) return;
 
-  await requireContext("/admin/tyontekijat");
+  await requireContext("/admin/asetukset");
   const supabase = await createClient();
   await supabase.from("invitations").delete().eq("id", id);
 
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/asetukset");
 }
 
 /** Lunastaa koodin. Kutsuja ei vielä kuulu ravintolaan, joten ei requireContext. */
@@ -141,8 +144,7 @@ export async function acceptInvitation(
 
 const membershipSchema = z.object({
   userId: z.string().uuid(),
-  role: z.enum(["owner", "manager", "employee", "accountant"]),
-  position: z.enum(["waiter", "kitchen", "manager", "cleaning"]).nullable(),
+  role: z.enum(ROLES),
   active: z.boolean(),
 });
 
@@ -151,13 +153,11 @@ export async function updateMembership(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant } = await requireContext("/admin/tyontekijat");
+  const { restaurant } = await requireContext("/admin/asetukset");
 
-  const rawPosition = String(formData.get("position") ?? "");
   const parsed = membershipSchema.safeParse({
     userId: formData.get("userId"),
     role: formData.get("role"),
-    position: rawPosition === "" ? null : rawPosition,
     active: formData.get("active") !== "false",
   });
 
@@ -168,8 +168,6 @@ export async function updateMembership(
     p_restaurant: restaurant.id,
     p_user: parsed.data.userId,
     p_role: parsed.data.role as Role,
-    p_position: parsed.data.position as StaffPosition | null,
-    p_hourly_rate_cents: parseEuros(formData.get("hourlyRate")),
     p_active: parsed.data.active,
   });
 
@@ -261,172 +259,6 @@ export async function deleteReceipt(formData: FormData): Promise<void> {
   await supabase.rpc("delete_receipt", { p_receipt: id });
 
   revalidatePath("/admin", "layout");
-}
-
-// ---------------------------------------------------------------------------
-// Työvuorot
-// ---------------------------------------------------------------------------
-
-const shiftSchema = (t: AdminText) =>
-  z.object({
-    date: z.string().regex(ISO_DATE, t.toiminnot.checkDate),
-    start: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkStart),
-    end: z.string().regex(/^\d{2}:\d{2}$/, t.toiminnot.checkEnd),
-    location: z.string().trim().max(80),
-  });
-
-export async function saveShift(
-  _prev: AdminState,
-  formData: FormData,
-): Promise<AdminState> {
-  const t = adminText(await resolveLocale());
-  const { restaurant } = await requireContext("/admin/tyovuorot");
-
-  const parsed = shiftSchema(t).safeParse({
-    date: formData.get("date"),
-    start: formData.get("start"),
-    end: formData.get("end"),
-    location: (formData.get("location") as string) ?? "",
-  });
-
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  if (parsed.data.start === parsed.data.end) {
-    return { error: t.toiminnot.sameTimes };
-  }
-
-  const userId = String(formData.get("userId") ?? "");
-  const shiftId = String(formData.get("shiftId") ?? "");
-  const position = String(formData.get("position") ?? "");
-
-  /*
-   * Tauko luetaan minuutteina.
-   *
-   * Kelvoton arvo on nolla eikä virhe: tauoton vuoro on kelvollinen
-   * vuoro, ja tyhjä kenttä tarkoittaa juuri sitä. Yläraja on kannassa,
-   * joka hylkää vuorokauden mittaisen tauon.
-   */
-  const breakRaw = Number(String(formData.get("break") ?? "0").trim() || "0");
-  const breakMinutes =
-    Number.isFinite(breakRaw) && breakRaw > 0 ? Math.round(breakRaw) : 0;
-
-  const note = String(formData.get("note") ?? "")
-    .trim()
-    .slice(0, 200);
-
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("upsert_shift", {
-    p_restaurant: restaurant.id,
-    p_shift: shiftId || null,
-    p_user: userId || null,
-    p_date: parsed.data.date,
-    p_start: parsed.data.start,
-    p_end: parsed.data.end,
-    p_location: parsed.data.location,
-    p_position: position || null,
-    p_break: breakMinutes,
-    p_note: note || null,
-  });
-
-  if (error) return { error: explain(error, t.toiminnot.shiftSaveFailed, t) };
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
-
-  return {
-    notice: shiftId
-      ? t.toiminnot.shiftUpdated
-      : /*
-         * Uusi vuoro syntyy luonnoksena.
-         *
-         * Kuukauden suunnittelu on keskeneräistä siihen asti kun se
-         * julkaistaan, eikä keskeneräinen suunnitelma kuulu
-         * työntekijän kalenteriin. Viesti sanoo sen ääneen, jottei
-         * kukaan jää odottamaan että vuoro ilmestyisi itsestään.
-         */
-        t.toiminnot.shiftDraft,
-  };
-}
-
-/**
- * Julkaisee kuukauden luonnokset.
- *
- * Aikaväli kerralla: kuukausi suunnitellaan kokonaisuutena ja se myös
- * luvataan kokonaisuutena. Vuoro kerrallaan julkaiseminen jättäisi
- * työntekijälle puolikkaan kuukauden, eikä hän tietäisi onko loppu
- * tulossa.
- */
-export async function publishShifts(
-  _prev: AdminState,
-  formData: FormData,
-): Promise<AdminState> {
-  const t = adminText(await resolveLocale());
-  const { restaurant, role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return { error: t.toiminnot.noPublishRight };
-
-  const month = String(formData.get("month") ?? "");
-  if (!ISO_MONTH.test(month)) return { error: t.toiminnot.checkMonth };
-
-  const [year, m] = month.split("-").map(Number);
-  const from = `${month}-01`;
-  const to = new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("publish_shifts", {
-    p_restaurant: restaurant.id,
-    p_from: from,
-    p_to: to,
-  });
-
-  if (error) return { error: explain(error, t.toiminnot.publishFailed, t) };
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
-
-  const count = Number(data ?? 0);
-
-  return {
-    notice:
-      count === 0
-        ? t.toiminnot.noDrafts
-        : fill(t.toiminnot.shiftsPublished, {
-            maara: String(count),
-            yksikko: count === 1 ? t.toiminnot.shiftOne : t.toiminnot.shiftMany,
-          }),
-  };
-}
-
-/**
- * Peruu julkaistun vuoron.
- *
- * Ei poista: poistettu rivi veisi mukanaan tiedon siitä että vuoro oli
- * olemassa, ja juuri se tieto tarvitaan kun kysytään miksi joku ei
- * ollut töissä.
- */
-export async function cancelShift(formData: FormData): Promise<void> {
-  const id = String(formData.get("shiftId") ?? "");
-  if (!id) return;
-
-  const { role } = await requireContext("/admin/tyovuorot");
-  if (!can(role, "shifts.manage")) return;
-
-  const supabase = await createClient();
-  await supabase.rpc("cancel_shift", { p_shift: id });
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
-}
-
-export async function deleteShift(formData: FormData): Promise<void> {
-  const id = String(formData.get("shiftId") ?? "");
-  if (!id) return;
-
-  await requireContext("/admin/tyovuorot");
-  const supabase = await createClient();
-  await supabase.rpc("delete_shift", { p_shift: id });
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 // ---------------------------------------------------------------------------
@@ -563,7 +395,6 @@ export async function saveReceipt(
   );
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 
   return { notice: t.toiminnot.receiptSaved, receiptId: data as string };
 }
@@ -725,49 +556,8 @@ export async function updateRestaurant(
     return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 
   return { notice: t.toiminnot.restaurantSaved };
-}
-
-/**
- * Vuoro- ja leimaussäännöt.
- *
- * Leimausikkuna on ollut kannassa alusta asti mutta lukittuna
- * kolmeenkymmeneen minuuttiin, koska sitä ei voinut muuttaa mistään.
- * Ravintoloiden käytännöt eroavat: toisessa tullaan varttia ennen,
- * toisessa tunti.
- */
-export async function updateShiftRules(
-  _prev: AdminState,
-  formData: FormData,
-): Promise<AdminState> {
-  const t = adminText(await resolveLocale());
-  const minutes = Number(formData.get("clockInEarlyMinutes"));
-
-  if (!Number.isInteger(minutes) || minutes < 0 || minutes > 240) {
-    return { error: t.toiminnot.clockWindowRange };
-  }
-
-  const { restaurant } = await requireContext("/admin/asetukset");
-  const supabase = await createClient();
-
-  const { error } = await supabase.rpc("update_restaurant", {
-    p_restaurant: restaurant.id,
-    // Valintaruutu ei lähetä mitään kun se on pois päältä, joten
-    // arvoa ei voi lukea sen olemassaolosta — lomake on aina tämä,
-    // joten poissaolo tarkoittaa tässä varmasti "ei".
-    p_open_shift_claiming: formData.get("openShiftClaiming") === "on",
-    p_clock_in_early_minutes: minutes,
-  });
-
-  if (error)
-    return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
-
-  return { notice: t.toiminnot.shiftSettingsSaved };
 }
 
 // ---------------------------------------------------------------------------
@@ -822,53 +612,6 @@ export async function reopenMonth(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/admin", "layout");
-}
-
-// ---------------------------------------------------------------------------
-// Poissaolot
-// ---------------------------------------------------------------------------
-
-/** Peruu poissaoloilmoituksen. RLS sallii oman tai esihenkilölle kenen tahansa. */
-export async function cancelAbsence(formData: FormData): Promise<void> {
-  const id = String(formData.get("absenceId") ?? "");
-  if (!id) return;
-
-  await requireContext("/admin/tyovuorot");
-  const supabase = await createClient();
-  await supabase.from("absences").delete().eq("id", id);
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
-}
-
-/**
- * Merkitsee sairauslomatodistuksen nähdyksi, tai poistaa merkinnän.
- *
- * Todistusta itseään ei tallenneta. Lääkärintodistus on terveystieto ja
- * siinä lukee usein diagnoosi; työnantajalle kuuluu tieto poissaolosta ja
- * sen kestosta, ei sen syystä. Kateen jää merkintä siitä että todistus
- * on nähty ja mille ajalle poissaolo on ilmoitettu — se mitä
- * palkanmaksuun tarvitaan.
- */
-export async function markAbsenceCertificate(
-  formData: FormData,
-): Promise<void> {
-  const id = String(formData.get("absenceId") ?? "");
-  if (!id) return;
-
-  // Merkinnän voi myös purkaa: väärään ilmoitukseen osunut kuittaus
-  // jäisi muuten pysyväksi väitteeksi.
-  const seen = formData.get("seen") === "true";
-
-  await requireContext("/admin/tyovuorot");
-  const supabase = await createClient();
-  await supabase.rpc("mark_absence_certificate", {
-    p_absence: id,
-    p_seen: seen,
-  });
-
-  revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 // ---------------------------------------------------------------------------

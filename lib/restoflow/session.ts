@@ -12,8 +12,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, isConfigured } from "@/utils/supabase/server";
 import { verifiedUser } from "@/utils/supabase/claims";
-import { isLunchTheme, type LunchTheme } from "./lunch-themes";
-import type { Role, StaffPosition } from "./types";
+import type { Role } from "./types";
 
 export const ACTIVE_RESTAURANT_COOKIE = "rf_restaurant";
 
@@ -42,19 +41,11 @@ export interface SessionUser {
 export interface RestaurantMembership {
   id: string;
   name: string;
-  /** Julkisen osoitteen tunnus, esim. "cafe-monami". */
+  /** Ravintolan tunnus osoitteissa, esim. "cafe-monami". */
   slug: string;
-  /** Julkisen lounassivun teema. */
-  lunchTheme: LunchTheme;
-  /** Kuinka monta minuuttia ennen vuoroa saa leimata sisään. */
-  clockInEarlyMinutes: number;
-  /** Saako työntekijä ottaa avoimen vuoron itselleen? */
-  openShiftClaiming: boolean;
   timezone: string;
   currency: string;
   role: Role;
-  position: StaffPosition | null;
-  hourlyRateCents: number | null;
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -94,7 +85,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, lunch_theme, timezone, currency, role, position, hourly_rate_cents, clock_in_early_minutes, open_shift_claiming",
+          "id, name, slug, timezone, currency, role",
         )
         .order("name");
 
@@ -104,15 +95,9 @@ export const getMemberships = cache(
         id: row.id as string,
         name: row.name as string,
         slug: row.slug as string,
-        lunchTheme: isLunchTheme(row.lunch_theme) ? row.lunch_theme : "light",
-        clockInEarlyMinutes:
-          (row.clock_in_early_minutes as number | null) ?? 30,
-        openShiftClaiming: (row.open_shift_claiming as boolean | null) ?? true,
         timezone: row.timezone as string,
         currency: row.currency as string,
         role: row.role as Role,
-        position: (row.position as StaffPosition | null) ?? null,
-        hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
       }));
     } catch {
       return [];

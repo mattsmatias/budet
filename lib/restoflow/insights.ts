@@ -27,14 +27,7 @@ import {
   totalsByCategory,
 } from "./expenses";
 import { supplierTotalsInMonth } from "./suppliers";
-import { compareShifts, labourSummary } from "./shifts";
-import {
-  type Budget,
-  type ClockEvent,
-  type Receipt,
-  type Shift,
-  type User,
-} from "./types";
+import type { Budget, Receipt } from "./types";
 
 export type InsightTone = "good" | "neutral" | "watch";
 
@@ -51,7 +44,7 @@ export interface Insight {
    * Pakollinen eikä oletusarvoinen: havainnot päätyvät yleiskuvan
    * huomiolistaan hälytysten rinnalle, ja siellä ikoni kertoo mistä
    * rivi on. Uusi havainto ei käänny ennen kuin joku on päättänyt
-   * onko se kuitti, vuoro vai kulusuunta.
+   * onko se kuitti, budjetti vai kulusuunta.
    */
   icon: IconName;
 }
@@ -59,14 +52,8 @@ export interface Insight {
 export interface InsightContext {
   receipts: Receipt[];
   budgets: Budget[];
-  shifts: Shift[];
-  users: User[];
-  clockEvents: ClockEvent[];
   month: string;
   today: string;
-  now: string;
-  /** Ravintolan aikavyöhyke: leimauksen päivä luetaan siinä ajassa. */
-  timezone: string;
   /** Käyttöliittymän kieli: havaintojen teksti kirjoitetaan sillä. */
   locale: AppLocale;
 }
@@ -83,7 +70,6 @@ export function buildInsights(ctx: InsightContext): Insight[] {
     ...categoryShift(ctx),
     ...supplierConcentration(ctx),
     ...budgetPace(ctx),
-    ...labourShare(ctx),
     ...reviewDiscipline(ctx),
   ];
 }
@@ -260,39 +246,6 @@ function budgetPace(ctx: InsightContext): Insight[] {
         budjetti: formatMoney(ahead.budgetCents ?? 0),
       }),
       href: "/admin/budjetit",
-    },
-  ];
-}
-
-function labourShare(ctx: InsightContext): Insight[] {
-  const t = adminText(ctx.locale);
-  const past = ctx.shifts.filter(
-    (s) => s.date < ctx.today && s.date.startsWith(ctx.month),
-  );
-  if (past.length === 0) return [];
-
-  const summary = labourSummary(
-    compareShifts(past, ctx.users, ctx.clockEvents, ctx.now, ctx.timezone),
-  );
-
-  if (summary.actualMs === 0) return [];
-
-  const overtimeHours = summary.varianceMs / 3600000;
-  if (Math.abs(overtimeHours) < 2) return [];
-
-  return [
-    {
-      id: "labour-variance",
-      icon: "clock",
-      tone: overtimeHours > 0 ? "watch" : "neutral",
-      title:
-        overtimeHours > 0 ? t.havainto.overtimeOver : t.havainto.overtimeUnder,
-      detail: fill(t.havainto.overtimeBody, {
-        tunnit: `${overtimeHours > 0 ? "+" : "−"}${Math.abs(Math.round(overtimeHours * 10) / 10)} h`,
-        maara: String(summary.shiftCount),
-        summa: `${summary.varianceCostCents >= 0 ? "+" : "−"}${formatMoney(Math.abs(summary.varianceCostCents))}`,
-      }),
-      href: "/admin/tyovuorot",
     },
   ];
 }

@@ -1,25 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isoWeek, monthCalendar, shiftsOn } from "../calendar";
-import type { Shift } from "../types";
+import { isoWeek, monthCalendar } from "../calendar";
 
-function shift(partial: Partial<Shift> = {}): Shift {
-  return {
-    id: "s1",
-    restaurantId: "r",
-    userId: "u1",
-    date: "2026-09-01",
-    startTime: "10:00",
-    endTime: "18:00",
-    location: "",
-    status: "accepted",
-    breakMinutes: 0,
-    note: null,
-    publishedAt: "2026-08-20T10:00:00.000Z",
-    createdAt: "2026-08-20T10:00:00.000Z",
-    cancelledAt: null,
-    ...partial,
-  };
-}
 
 describe("isoWeek", () => {
   it("laskee viikon vuoden keskellä", () => {
@@ -118,42 +99,5 @@ describe("monthCalendar", () => {
 
   it("kestää kelvottoman kuukauden", () => {
     expect(monthCalendar("roska", "2026-09-10")).toEqual([]);
-  });
-});
-
-describe("shiftsOn", () => {
-  it("antaa päivän vuorot aikajärjestyksessä", () => {
-    const list = shiftsOn(
-      [
-        shift({ id: "a", startTime: "17:00" }),
-        shift({ id: "b", startTime: "09:00" }),
-        shift({ id: "c", date: "2026-09-02" }),
-      ],
-      "2026-09-01",
-    );
-
-    expect(list.map((s) => s.id)).toEqual(["b", "a"]);
-  });
-
-  /*
-   * Peruttu ei katoa mutta jää viimeiseksi.
-   *
-   * Suunnittelija tarvitsee tiedon siitä että vuoro peruttiin, muttei
-   * lue sitä ensimmäisenä — päivän miehitys on se mitä hän katsoo.
-   */
-  it("siirtää perutut viimeiseksi", () => {
-    const list = shiftsOn(
-      [
-        shift({
-          id: "a",
-          startTime: "09:00",
-          cancelledAt: "2026-08-25T08:00:00.000Z",
-        }),
-        shift({ id: "b", startTime: "17:00" }),
-      ],
-      "2026-09-01",
-    );
-
-    expect(list.map((s) => s.id)).toEqual(["b", "a"]);
   });
 });

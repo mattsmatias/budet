@@ -102,9 +102,9 @@ export function compareSales(
 }
 
 /**
- * Työvoiman osuus myynnistä.
+ * Henkilöstökulujen osuus myynnistä.
  *
- * Ravintola-alan tunnusluku. Null jos myyntiä ei ole kirjattu tai se on
+ * Ravintola-alan tunnusluku: palkat sivukuluineen suhteessa myyntiin. Null jos myyntiä ei ole kirjattu tai se on
  * nolla: nollalla jakaminen antaisi äärettömän, ja ääretön näyttää
  * ruudulla luvulta.
  */
@@ -117,19 +117,21 @@ export function labourShareOfSales(
 }
 
 /**
- * Karkea tulos: myynti miinus kirjatut kulut ja työvoima.
+ * Karkea tulos: myynti miinus kirjatut kulut.
+ *
+ * Palkat ovat kirjattujen kulujen joukossa Henkilöstö-luokassa. Niitä ei
+ * vähennetä erikseen — erillinen työvoimarivi tämän lisäksi laskisi
+ * saman palkan kahteen kertaan.
  *
  * TÄRKEÄ RAJAUS: tämä ei ole tulos kirjanpidon mielessä. Se ei sisällä
- * vuokraa, sivukuluja, poistoja eikä mitään mikä ei kulje Katen läpi.
- * Käyttöliittymän on sanottava se, jottei lukua käytetä päätöksiin
- * joihin se ei riitä.
+ * poistoja eikä mitään mikä ei kulje Katen läpi. Käyttöliittymän on
+ * sanottava se, jottei lukua käytetä päätöksiin joihin se ei riitä.
  */
 export function roughResult(input: {
   netSalesCents: number;
   expenseCents: number;
-  labourCents: number;
 }): number {
-  return input.netSalesCents - input.expenseCents - input.labourCents;
+  return input.netSalesCents - input.expenseCents;
 }
 
 /** Myynti aikaväliltä, päättömät päivät pois. */

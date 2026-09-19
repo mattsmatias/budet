@@ -122,9 +122,7 @@ export interface RestaurantDetail {
   invitations: Invitation[];
   usage: {
     receipts: number;
-    shifts: number;
     tasks: number;
-    lunchMenus: number;
     salesDays: number;
     aiChats: number;
     activeUsers: number;
@@ -145,7 +143,6 @@ export interface DetailUser {
   name: string | null;
   email: string | null;
   role: string;
-  position: string | null;
   active: boolean;
   isSuperAdmin: boolean;
   lastSignInAt: string | null;

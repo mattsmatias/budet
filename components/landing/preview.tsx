@@ -134,7 +134,7 @@ function Rail({ t }: { t: Dictionary }) {
     t.preview.railReceipts,
     t.preview.railExpenses,
     t.preview.railLedger,
-    t.preview.railShifts,
+    t.preview.railBudgets,
   ];
 
   return (

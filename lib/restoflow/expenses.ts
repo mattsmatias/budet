@@ -10,7 +10,7 @@
  * eikä tietomallissa ole kenttää myynnille.
  */
 
-import { labels, receiptCountIn, shiftCountIn } from "@/lib/i18n/labels";
+import { labels, receiptCountIn } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import {
   formatMonthIn,
@@ -301,11 +301,6 @@ export function sortByDateDesc(receipts: Receipt[]): Receipt[] {
  */
 export function receiptCountLabel(count: number, locale: AppLocale): string {
   return receiptCountIn(count, locale);
-}
-
-/** Sama vuoroille. */
-export function shiftCountLabel(count: number, locale: AppLocale): string {
-  return shiftCountIn(count, locale);
 }
 
 // ---------------------------------------------------------------------------

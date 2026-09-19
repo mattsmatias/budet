@@ -20,7 +20,6 @@
 import { receiptsInMonth } from "./expenses";
 import {
   compareSales,
-  labourShareOfSales,
   roughResult,
   salesBetween,
   totalSalesCents,
@@ -33,9 +32,6 @@ export interface Pulse {
   /** Tämän päivän myynti. Null jos ei kirjattu. */
   sales: { cents: number | null; comparison: SalesComparison };
 
-  /** Tämän päivän työvoima palkkamoottorista. */
-  labour: { cents: number; minutes: number; shareOfSales: number | null };
-
   /** Tänään kirjatut kuitit. Ei vertailua — ks. tiedoston alku. */
   expenses: { cents: number; receiptCount: number };
 
@@ -43,7 +39,6 @@ export interface Pulse {
   monthToDate: {
     salesCents: number;
     expenseCents: number;
-    labourCents: number;
     /** Null jos myyntiä ei ole kirjattu kuukaudelle lainkaan. */
     resultCents: number | null;
     /** Monelta kuukauden menneeltä päivältä myynti puuttuu. */
@@ -56,11 +51,6 @@ export function todayPulse(input: {
   month: string;
   receipts: Receipt[];
   sales: DailySales[];
-  /** Tämän päivän työvoimakustannus palkkamoottorista. */
-  labourTodayCents: number;
-  labourTodayMinutes: number;
-  /** Kuukauden työvoimakustannus tähän asti. */
-  labourMonthCents: number;
 }): Pulse {
   const { today, month, receipts, sales } = input;
 
@@ -95,24 +85,14 @@ export function todayPulse(input: {
       : roughResult({
           netSalesCents: monthSalesCents,
           expenseCents: monthExpenseCents,
-          labourCents: input.labourMonthCents,
         });
 
   return {
     sales: { cents: salesCents, comparison },
-    labour: {
-      cents: input.labourTodayCents,
-      minutes: input.labourTodayMinutes,
-      shareOfSales:
-        salesCents === null
-          ? null
-          : labourShareOfSales(input.labourTodayCents, salesCents),
-    },
     expenses: { cents: expenseCents, receiptCount: todayReceipts.length },
     monthToDate: {
       salesCents: monthSalesCents,
       expenseCents: monthExpenseCents,
-      labourCents: input.labourMonthCents,
       resultCents,
       missingSalesDays: countMissing(month, today, sales),
     },

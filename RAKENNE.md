@@ -10,31 +10,31 @@ kehittäjälle: se riittää sovelluksen ymmärtämiseen ja jatkamiseen.
 
 ## 1. Mitä sovellus on
 
-Ravintolan **kulujen, kuittien, työvuorojen ja työajan** hallinta.
-Kaksi käyttöliittymää samassa sovelluksessa:
-
-- **`/admin`** — esihenkilön näkymä, toimii työpöydällä ja puhelimessa
-- **`/app`** — työntekijän näkymä, suunniteltu puhelimelle
+Kate näyttää ravintolalle **paljonko rahaa tuli, mihin se meni ja miten
+se jakautui**: myynti, kuitit ja kulut, toimittajat, budjetit,
+kirjanpito ja raportit. Lisäksi tehtävät, tiedostot, matkakulut ja
+Matti-avustaja. Käyttöliittymä on `/admin`, ja se toimii työpöydällä ja
+puhelimessa.
 
 ### Rajaus, joka on tarkoituksellinen
 
 Sovellus **ei**:
 
-- lue kassajärjestelmää eikä myyntiä
-- ota yhteyttä pankkitiliin
+- ota yhteyttä pankkitiliin eikä lue kassajärjestelmää suoraan
+  (kassan päiväraportti kirjataan tai kuvataan)
 - hallitse varastoa tai tilauksia
-- tee kanta-asiakkuuksia tai CRM:ää
+- suunnittele työvuoroja, seuraa työaikaa eikä laske palkkoja
+- ota pöytävarauksia eikä julkaise lounaslistoja
 
-**Pöytävaraukset kuuluvat sovellukseen** ja ovat käytössä: salinäkymä,
-kalenteri raahauksineen, pöytäkartta, varauslista hakuineen,
-aukioloajat myös keskiyön yli, keittiön kapasiteetti, analytiikka,
-julkinen varaussivu ja upotettava widget sekä tuonti toisesta
-järjestelmästä. Tämä rivi luki aiemmin toisin, ja se oli väärin.
+Pöytävaraukset, lounaslista ja some-julkaisut, työvuorot, leimaukset,
+poissaolot, palkanlaskenta ja verokortit poistettiin kokonaan
+migraatiossa `0096_kate_rajaus.sql`. Palkat maksetaan palkkapalvelussa;
+Katessa **palkkakulu kirjataan kuluksi Henkilöstö-kategoriaan**
+(`staff`), esimerkiksi palkkapalvelun kuukausiyhteenvedosta. Yleiskuva
+näyttää henkilöstökulut ja niiden osuuden myynnistä.
 
-Tästä seuraa sääntö jota noudatetaan kaikkialla: **jokainen euromäärä
-tarkoittaa järjestelmään kirjattua kulua, ei ravintolan tulosta.**
-Kannattavuutta ei lasketa, koska myyntiä ei tunneta. Yleiskuvassa on
-kortti joka sanoo tämän ääneen.
+Karkea tulos on **myynti miinus kulut**. Henkilöstökulua ei lisätä
+erikseen, koska se on jo kuluissa.
 
 ---
 
@@ -68,72 +68,43 @@ sekä navigaatiota että pääsytarkistusta — jos ne lukisivat eri listaa,
 ne ajautuisivat eri linjalle ja piilotettu linkki näyttäisi
 turvatoimelta olematta sellainen.
 
-| Oikeus | Owner | Manager | Employee | Accountant |
-|---|:-:|:-:|:-:|:-:|
-| `receipts.view` | ✓ | ✓ | | ✓ |
-| `receipts.add` | ✓ | ✓ | | |
-| `receipts.edit` | ✓ | ✓ | | |
-| `expenses.view` | ✓ | ✓ | | ✓ |
-| `suppliers.view` | ✓ | ✓ | | ✓ |
-| `budgets.view` | ✓ | ✓ | | ✓ |
-| `budgets.edit` | ✓ | | | |
-| `shifts.view.own` | ✓ | ✓ | ✓ | |
-| `shifts.view.all` | ✓ | ✓ | | |
-| `shifts.manage` | ✓ | ✓ | | |
-| `time.track.own` | ✓ | ✓ | ✓ | |
-| `time.view.all` | ✓ | ✓ | | ✓ |
-| `staff.view` | ✓ | ✓ | | |
-| `staff.rates.view` | ✓ | ✓ | | |
-| `staff.manage` | ✓ | | | |
-| `reports.view` | ✓ | ✓ | | ✓ |
-| `reports.export` | ✓ | ✓ | | ✓ |
-| `alerts.view` | ✓ | ✓ | | ✓ |
-| `settings.view` | ✓ | ✓ | | |
-| `settings.edit` | ✓ | | | |
+- **Owner** — kaikki, myös käyttäjien kutsuminen ja roolit
+  (Asetukset → Käyttäjät), budjetit ja kuukauden sulkeminen.
+- **Manager** — päivittäinen työ: kuitit, myynti, tehtävät, tiedostot.
+- **Accountant** — lukee talouden: kulut, raportit, kirjanpito.
+- **Employee** — näkee vain hänelle osoitetut tehtävät. Roolia ei
+  enää tarjota kutsuissa, mutta arvo on `app_role`-enumissa.
 
-Kaksi kohtaa jotka eivät ole vahinkoja:
-
-- **Kirjanpitäjä ei näe tuntipalkkoja.** Hän tarvitsee kulut, ALV:t ja
-  raportit, ei henkilöstön henkilötietoja. Työaika näkyy hänelle
-  kokonaistunteina.
-- **Työntekijä ei lisää kuitteja.** Kuitti on ravintolan
-  kirjanpitoaineistoa, ei työntekijän ilmoitus: kuka tahansa vuorossa
-  oleva ei saa synnyttää kulukirjausta jota kukaan ei ole hyväksynyt.
+Käyttäjä kutsutaan kutsukoodilla (`create_invitation`), ja koodi
+hyväksytään kirjautuneena (`accept_invitation`).
 
 ---
 
 ## 4. Tietomalli
 
-14 taulua. Kaikilla RLS päällä, yhteensä **39 politiikkaa** ja
-**4 liipaisinta**.
+Kaikilla tauluilla RLS päällä. Ydin:
 
 ```
 profiles ─┬─ memberships ─── restaurants
           │                      │
-          │     ┌────────────────┼────────────────┬──────────────┐
-          │     │                │                │              │
-          │  suppliers        receipts         shifts       clock_events
-          │     │                │                │
-          │  supplier_       receipt_items    absences
-          │  category_
-          │  overrides
+          │     ┌────────────────┼──────────────┬──────────────┐
+          │     │                │              │              │
+          │  suppliers        receipts      daily_sales      tasks
+          │                      │
+          │                  receipt_items
           │
           └── restaurant_invitations, budgets, closed_months,
-              expense_categories
+              expense_categories, sales_groups, files, folders
 ```
 
 ### Enumit
 
 ```sql
 app_role         owner | manager | employee | accountant
-staff_position   waiter | kitchen | manager | cleaning
 expense_category food | alcohol | soft_drinks | cleaning |
                  kitchen_supplies | packaging | staff | transport | other
 payment_method   card | cash | invoice | unknown
 receipt_status   confirmed | needs_review
-shift_status     draft | pending | accepted | declined | changed
-clock_event_type in | break_start | break_end | out
-absence_kind     sick | other | cannot_attend
 ```
 
 ### Keskeiset ratkaisut
@@ -141,10 +112,6 @@ absence_kind     sick | other | cannot_attend
 **Raha on aina kokonaisluku senttejä.** Pyöristys tehdään kerran,
 lopussa. Liukuluku euroina tuottaisi sentin virheitä jotka kertyvät
 raportissa.
-
-**Työajan tila johdetaan tapahtumista, ei tallenneta.** `clock_events`
-on tapahtumaloki; "onko töissä" lasketaan siitä joka kerta. Tallennettu
-tila ajautuisi erilleen tapahtumista ensimmäisen keskeytyksen kohdalla.
 
 **Omat kulukategoriat kartoittuvat yhdeksään perusluokkaan.**
 `expense_categories` antaa ravintolan nimetä "Viinit", mutta se kuuluu
@@ -159,8 +126,8 @@ allekirjoitetun osoitteen joka vanhenee tunnissa.
 
 ## 5. Tietokantafunktiot ja turvakerrokset
 
-27 funktiota. Kaikki kirjoittavat toiminnot kulkevat funktion kautta,
-joka tarkistaa oikeuden itse.
+Kaikki kirjoittavat toiminnot kulkevat funktion kautta, joka tarkistaa
+oikeuden itse.
 
 ### Apufunktiot (`security definer`, katkaisevat politiikkarekursion)
 
@@ -180,8 +147,6 @@ joka tarkistaa oikeuden itse.
 | `review_receipt` | `is_manager` |
 | `delete_receipt` | `is_manager` |
 | `set_budget` | `is_owner` |
-| `upsert_shift` / `delete_shift` | `is_manager` |
-| `record_clock_event` | jäsenyys + siirtymän kelvollisuus |
 | `update_restaurant` | `is_owner` + aikavyöhykkeen olemassaolo |
 | `close_month` / `reopen_month` | `is_owner` |
 | `upsert_expense_category` / `delete_expense_category` | `is_owner` |
@@ -189,7 +154,6 @@ joka tarkistaa oikeuden itse.
 ### Liipaisimet
 
 - `handle_new_user` — luo profiilin rekisteröityessä
-- `guard_shift_response` — työntekijä saa muuttaa vuoron **tilaa** muttei aikoja
 - `guard_closed_month` — suljetun kuukauden kuittia ei lisätä, muuteta eikä poisteta
 - `touch_updated_at`
 
@@ -220,10 +184,12 @@ ole pääsynhallintaa.
 /aloitus               ravintolan perustus tai liittyminen koodilla
 ```
 
-### Esihenkilö
+### Hallinta
 
 ```
-/admin                 yleiskuva
+/admin                 yleiskuva: myynti, kulut, tulos, henkilöstökulut
+/admin/myynti          myyntipäivät ja kassan täsmäytys
+/admin/myynti/[paiva]  yhden päivän myynti
 /admin/kuitit          kuittilista, suodattimet, duplikaattivaroitus
 /admin/kuitit/[id]     kuitin yksityiskohdat + kuva
 /admin/kuitit/uusi     kuitin lisäys
@@ -231,33 +197,29 @@ ole pääsynhallintaa.
 /admin/toimittajat     toimittajalista
 /admin/toimittajat/[id] yhden toimittajan kulut ja trendi
 /admin/budjetit        budjettien asetus
-/admin/tyovuorot       vuorot, poissaolot, toteutumavertailu
-/admin/tyontekijat     jäsenet, kutsut, roolit, tuntipalkat
+/admin/kirjanpito      kirjaukset, ALV, kuukauden sulkeminen
+/admin/tehtavat        tehtävät lista- ja kalenterinäkymänä
+/admin/tiedostot       yksityiset tiedostot kansioissa
 /admin/havainnot       trendit ja poikkeamat
 /admin/ilmoitukset     hälytykset
+/admin/loki            toimintaloki
 /admin/raportit        CSV, Excel, PDF
 /admin/raportit/csv    CSV-vienti (reitti)
 /admin/raportit/xlsx   Excel-vienti (reitti)
 /admin/raportit/tulosta tulostettava kuukausiraportti
-/admin/asetukset       ravintola, kategoriat, kuukauden sulkeminen
+/admin/asetukset       ravintola, kategoriat, käyttäjät, oma tili
 /admin/lisaa           puhelimen ylivuotovalikko
-```
-
-### Työntekijä
-
-```
-/app                   koti: työaika, seuraava vuoro
-/app/tyoaika           leimaus
-/app/vuorot            omat vuorot, poissaoloilmoitus
-/app/ilmoitukset       omat ilmoitukset
-/app/asetukset         nimi, salasana
-/app/lisaa             valikko
 ```
 
 ### API
 
 ```
 POST /api/kuitit/poiminta   kuitin luku kuvasta
+POST /api/myynti/poiminta   kassaraportin luku kuvasta
+POST /api/tehtavat/poiminta tehtävien luku tekstistä
+POST /api/matti             Matti-avustaja
+GET  /api/tiedostot/[id]    yksityisen tiedoston avaus (kirjautuminen + jäsenyys)
+POST /api/tiedostot/ehdotus tiedoston kansioehdotus
 ```
 
 ---
@@ -274,15 +236,12 @@ testattavissa ilman selainta tai tietokantaa.
 | `session.ts` | istunto, aktiivinen ravintola, `requireContext` |
 | `page-context.ts` | sivujen yhteinen konteksti + **rooliportti** |
 | `queries.ts` | tietokanta → domain-mallit |
-| `timeclock.ts` | työajan tila ja kesto tapahtumista |
-| `shifts.ts` | suunniteltu vs. toteutunut, poikkeamakuviot |
 | `expenses.ts` | kulujen summat, kategoriat, kuukausisarjat |
 | `budgets.ts` | budjettien toteuma ja tila |
 | `suppliers.ts` | toimittajakohtaiset summat ja trendit |
 | `vat.ts` | ALV-tarkistus |
 | `duplicates.ts` | kaksoiskappaleiden tunnistus |
 | `alerts.ts` | esihenkilön hälytykset |
-| `employee-alerts.ts` | työntekijän ilmoitukset |
 | `dashboard.ts` | yleiskuvan päättely, arvioitavuus |
 | `insights.ts` | trendit ja havainnot |
 | `receipt-ai.ts` | poiminnan rajapinta, jäljitelmä, palvelinpoimija |
@@ -300,7 +259,7 @@ Nämä ovat sovelluksen selkäranka. Jos muutat jotain, älä muuta näitä.
 ### Älä koskaan keksi lukua
 
 - Vertailuprosenttia ei näytetä ilman vertailujaksoa → **"Ei vertailukohtaa"**
-- Henkilöstökulun osuutta ei lasketa jos kuluja on nolla → nollalla
+- Henkilöstökulun osuutta ei lasketa jos myyntiä ei ole → nollalla
   jakaminen antaisi luvun joka näyttäisi tiedolta
 - ALV:tä ei lasketa jos sitä ei ole kuitissa
 - Kuvan laatua ei arvioida jos kuvaa ei ole katsottu
@@ -335,12 +294,11 @@ korjaushistoriasta näytetään — käyttäjä painaa "Käytä".
 ### Väri ei koskaan yksin
 
 Tila luetaan aina myös sanoina ja lukuna. Budjettipalkin vieressä on
-prosentti ja sana ("Kriittinen"). Vuoron tilalla on oma muotonsa, ei
-vain väri.
+prosentti ja sana ("Kriittinen").
 
 ### Aika lasketaan ravintolan aikavyöhykkeellä
 
-Palvelin käy UTC:ssä. Väärä vyöhyke siirtäisi yövuorot väärälle
+Palvelin käy UTC:ssä. Väärä vyöhyke siirtäisi illan myynnin väärälle
 päivälle ja laskisi kuukauden rajat väärin. `nowIso` on aina
 parametri, ei `Date.now()` funktion sisällä — muuten testejä ei voi
 kirjoittaa.
@@ -395,11 +353,10 @@ näkymiin.
 
 ```
 analysis.test.ts    ALV, duplikaatit, toimittajat, budjetit,
-                    vuorot, oikeudet, hälytykset, poiminta
+                    oikeudet, hälytykset, poiminta
 dashboard.test.ts   arvioitavuus, vertailut, budjettien tila
 insights.test.ts    havainnot ja niiden perustelut
 expenses.test.ts    summat ja kuukausirajat
-timeclock.test.ts   työajan tila ja kesto
 money.test.ts       senttien muotoilu
 xlsx.test.ts        ZIP-rakenne ja lukujen tyypit
 ```
@@ -450,89 +407,3 @@ sovellus on erilainen kuin useimmat taloushallinnon näkymät:
 **tyhjä aineisto ei ole hyvä uutinen, ja sen sanominen ääneen on
 tärkeämpää kuin näyttää siistiltä.**
 
----
-
-## 14. Pöytävaraukset
-
-Tämä osa on kirjoitettu myöhemmin kuin luvut 1–13, ja ne eivät vielä
-tunne sitä: luvun 4 tietomalli listaa 14 taulua, joista puuttuvat
-kaikki alla olevat. Varausmoduuli on silti tuotannossa, joten se
-kuvataan tässä kokonaisuudessaan.
-
-### 14.1 Taulut
-
-```
-restaurants ─┬─ reservation_settings      verkkovaraus, kestot, rajat
-             ├─ reservation_hours         viikonpäivän aukiolo
-             ├─ reservation_exceptions    poikkeuspäivä (voittaa viikon)
-             ├─ reservation_durations     kesto seurueen koon mukaan
-             ├─ dining_areas ── restaurant_tables ─┬─ table_combinations
-             │                                     └─ floor_elements
-             ├─ floor_plan_images         salin pohjapiirros kuvana
-             └─ reservations ──┬── reservation_table_assignments
-                               └── reservation_status_history
-```
-
-### 14.2 Aukiolo saa ylittää keskiyön
-
-Viimeinen istumisaika joka on avaamista pienempi tarkoittaa seuraavaa
-päivää: 18:00–02:00 on kahdeksan tuntia. Pituus on johdettu tieto ja
-johdetaan yhdessä paikassa, `reservation_span_minutes`.
-
-Tästä seuraa kaksi sääntöä joita ei saa rikkoa:
-
-1. **Kellonaika muutetaan hetkeksi vain `reservation_start_at`-funktiolla.**
-   Kello 00:30 kuuluu siihen iltaan joka avautui edellisenä päivänä.
-   Jokainen muu muunnos (`(p_date + p_time) at time zone tz`) on väärä
-   heti kun ravintola on auki keskiyön yli.
-
-2. **Ilta kuuluu avauspäiväänsä.** Salinäkymän ja varauslistan
-   päivärajaus tulee `reservation_night_range`-funktiosta, ei
-   kalenterivuorokaudesta. Analytiikka on tästä poikkeus ja käyttää
-   kalenteripäivää, koska sen kaikkien lukujen on oltava samalla
-   säännöllä laskettuja; se on kirjattu migraatioon 0094.
-
-### 14.3 Funktiot
-
-| Funktio | Tehtävä |
-|---|---|
-| `reservation_pick_tables` | pienin sopiva pöytä, sitten pienin yhdistelmä |
-| `reservation_book` | ainoa kirjoituspolku; lukko, keittiöraja, liitosrivit |
-| `reservation_slots` | päivän vapaat ajat paikallisina aikaleimoina |
-| `reservation_day` | salinäkymän aineisto, yhteystiedot roolin mukaan |
-| `reservation_search` | lista ja haku yli päivärajojen |
-| `reservation_stats` | jakson luvut, päivittäinen kehitys, edellinen jakso |
-| `kitchen_check` | keittiön kuorma; estää verkossa, varoittaa salissa |
-| `reservation_import_*` | tuonti rivi kerrallaan, virhe ei kaada muita |
-| `public_*` | asiakkaan pinta: asetukset, ajat, luonti, haku, peruutus |
-
-### 14.4 Varausnumero ja allergiat
-
-Varausnumero on kuusi merkkiä aakkosista joista puuttuvat sekoittuvat
-(0/O, 1/I, 8/B). Se syntyy liipaisimessa `reservations_reference`, ei
-sovelluksessa — varaus voi syntyä neljästä paikasta.
-
-Allergiat ovat oma sarakkeensa eivätkä osa toivekenttää. Ero on siinä,
-että toive on toive ja allergia on ainoa rivi jonka lukematta
-jättämisellä on peruuttamaton seuraus. Siksi se myös näkyy salissa
-varoituksena eikä muistiinpanona.
-
-### 14.5 Peruutusraja
-
-`reservation_settings.cancel_cutoff_hours` (oletus 24) koskee **vain**
-asiakkaan omaa peruutuslinkkiä. Sali peruu varauksen milloin tahansa:
-tieto siitä ettei seurue tule on ravintolalle arvokas myös kymmenen
-minuuttia ennen. Nolla tarkoittaa "alkuhetkeen asti".
-
-### 14.6 Reitit
-
-| Reitti | Kuka |
-|---|---|
-| `/admin/varaukset` | sali: ilta, kalenteri, pöytäkartta |
-| `/admin/varaukset/lista` | varauslista ja haku |
-| `/admin/varaukset/analytiikka` | esihenkilö: viikko, kuukausi, vuosi |
-| `/admin/varaukset/asetukset` | pöydät, aukiolo, widget |
-| `/admin/varaukset/tuonti` | CSV toisesta järjestelmästä |
-| `/varaa/[slug]` | asiakas: varaussivu (sama widget kuin upotus) |
-| `/varaus/[token]` | asiakas: oma varaus ja peruutus |
-| `/api/varaus` | widgetin koko rajapinta, neljä toimintoa |

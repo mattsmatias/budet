@@ -11,7 +11,7 @@ import { Card } from "@/components/restoflow/ui";
  * määräajat ovat päivien päällä: kolme laskua saman viikon sisällä on
  * listassa kolme riviä mutta kalenterissa ruuhka.
  *
- * Sama ruudukko kuin työvuorokalenterissa: viikot riveinä ja
+ * Kuukausiruudukko: viikot riveinä ja
  * maanantai ensin.
  */
 export function TaskCalendar({

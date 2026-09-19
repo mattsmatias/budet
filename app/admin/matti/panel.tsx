@@ -475,8 +475,8 @@ function Working({ t }: { t: AdminText }) {
  * SIVU KERTOO MITÄ IHMINEN ON TEKEMÄSSÄ.
  *
  * Sama viisi nappia joka sivulla on lista jonka lukemisen lopettaa
- * kolmannella kerralla. Kuittisivulla oleva ei ensimmäisenä halua
- * tehdä lounaslistaa, ja budjettisivulla oleva kysyy budjetista.
+ * kolmannella kerralla. Kuittisivulla oleva kysyy kuiteista, ja
+ * budjettisivulla oleva kysyy budjetista.
  *
  * Ehdotukset ovat kysymyksiä eivätkä komentoja. "Miksi työvoimakulut
  * ovat yli budjetin" johtaa vastaukseen jota voi käyttää; "tarkista
@@ -511,20 +511,6 @@ function quickActions(
       { label: t.mattiKysy.grewMostShort, prompt: t.mattiKysy.grewMostFull },
       { label: t.mattiKysy.expensesShort, prompt: t.mattiKysy.expensesFull },
     ],
-    "/admin/tyovuorot": [
-      {
-        label: t.mattiKysy.rosterCostShort,
-        prompt: t.mattiKysy.rosterCostFull,
-      },
-      {
-        label: t.mattiKysy.openShiftsShort,
-        prompt: t.mattiKysy.openShiftsFull,
-      },
-    ],
-    "/admin/lounas": [
-      { label: t.mattiKysy.lunchListShort, prompt: t.mattiKysy.lunchListFull },
-      { label: t.mattiKysy.lunchMostShort, prompt: t.mattiKysy.lunchMostFull },
-    ],
     "/admin/myynti": [
       {
         label: t.mattiKysy.salesTrendShort,
@@ -533,12 +519,6 @@ function quickActions(
       {
         label: t.mattiKysy.salesTargetShort,
         prompt: t.mattiKysy.salesTargetFull,
-      },
-    ],
-    "/admin/palkat": [
-      {
-        label: t.mattiKysy.labourCostShort,
-        prompt: t.mattiKysy.labourCostShort,
       },
     ],
     "/admin/tehtavat": [
@@ -878,13 +858,7 @@ const tyokalut = (t: AdminText): Record<string, string> => ({
   get_top_suppliers: t.mattiTyo.topSuppliers,
   search_receipts: t.mattiTyo.receipts,
   get_budget_status: t.mattiTyo.budgets,
-  get_lunch_week: t.mattiTyo.lunchWeek,
-  get_staff: t.mattiTyo.staff,
-  get_shifts: t.mattiTyo.shifts,
-  propose_lunch_items: t.mattiTyo.preparedLunch,
-  propose_lunch_price: t.mattiTyo.preparedPrice,
-  propose_copy_lunch_week: t.mattiTyo.preparedCopy,
-  propose_publish_lunch_week: t.mattiTyo.preparedPublish,
+  get_staff_costs: t.mattiTyo.staffCosts,
 });
 
 // ---------------------------------------------------------------------------

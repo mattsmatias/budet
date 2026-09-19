@@ -49,16 +49,6 @@ const raportit = (t: AdminText) =>
       title: "ALV-raportti",
       description: t.raportti.vatHint,
     },
-    {
-      kind: "tyoaika",
-      title: t.raportti.timeReport,
-      description: t.raportti.timeReportHint,
-    },
-    {
-      kind: "henkilostokulut",
-      title: t.raportti.staffCosts,
-      description: t.raportti.staffCostsHint,
-    },
   ] as const;
 
 export default async function ReportsPage({
@@ -264,7 +254,7 @@ export default async function ReportsPage({
 
           {accountants.length === 0 ? (
             <Link
-              href="/admin/tyontekijat"
+              href="/admin/asetukset?osio=kayttajat"
               className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
               style={{
                 background: "var(--rf-inset)",

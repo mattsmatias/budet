@@ -374,8 +374,8 @@ function Features({ t }: { t: Dictionary }) {
     { title: t.features.vat, body: t.features.vatBody },
     { title: t.features.reports, body: t.features.reportsBody },
     { title: t.features.staff, body: t.features.staffBody },
-    { title: t.features.lunch, body: t.features.lunchBody },
-    { title: t.features.reservations, body: t.features.reservationsBody },
+    { title: t.features.tasks, body: t.features.tasksBody },
+    { title: t.features.files, body: t.features.filesBody },
   ];
 
   return (
@@ -445,8 +445,8 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
     t.pricing.incVat,
     t.pricing.incReports,
     t.pricing.incStaff,
-    t.pricing.incLunch,
-    t.pricing.incReservations,
+    t.pricing.incTasks,
+    t.pricing.incFiles,
     t.pricing.incAssistant,
   ];
 

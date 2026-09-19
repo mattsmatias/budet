@@ -149,7 +149,7 @@ export async function saveTask(
     };
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
+
   return { notice: t.tiimi.taskCreated };
 }
 
@@ -170,7 +170,6 @@ export async function completeTask(formData: FormData): Promise<void> {
   await supabase.rpc("complete_task", { p_task: id });
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 export async function cancelTask(formData: FormData): Promise<void> {
@@ -184,7 +183,6 @@ export async function cancelTask(formData: FormData): Promise<void> {
   await supabase.rpc("cancel_task", { p_task: id });
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 export async function reopenTask(formData: FormData): Promise<void> {
@@ -198,7 +196,6 @@ export async function reopenTask(formData: FormData): Promise<void> {
   await supabase.rpc("reopen_task", { p_task: id });
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 /**
@@ -222,7 +219,6 @@ export async function postponeTask(formData: FormData): Promise<void> {
   await supabase.from("tasks").update({ due_on: dueOn }).eq("id", id);
 
   revalidatePath("/admin", "layout");
-  revalidatePath("/app", "layout");
 }
 
 export async function deleteTask(formData: FormData): Promise<void> {

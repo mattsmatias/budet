@@ -303,15 +303,8 @@ function NotificationMenu({
  * Tunnusvalikko.
  *
  * Asetukset ja uloskirjautuminen eivät ole päivittäisiä tehtäviä eivätkä
- * kuulu samaan listaan kuin Kuitit ja Työvuorot — ne ovat tilin
+ * kuulu samaan listaan kuin Kuitit ja Kulut — ne ovat tilin
  * hallintaa, ja tilin hallinta löytyy tunnuksen takaa.
- *
- * TÄSSÄ OLI MYÖS LINKKI TYÖNTEKIJÄNÄKYMÄÄN.
- *
- * Se vei hallinnasta ulos toiseen sovellukseen saman tunnuksen
- * alla, eikä valikosta käynyt ilmi että paluu on eri paikassa.
- * Ravintoloitsijan työpöytä ja työntekijän näkymä ovat eri
- * työkaluja; tämä valikko koskee vain tätä.
  */
 function UserMenu({
   nimet,
@@ -363,33 +356,6 @@ function UserMenu({
           </div>
 
           <div className="p-1.5">
-            {/*
-              Työntekijänäkymä tunnusvalikosta.
-
-              Vanha etusivu oli sisäänkäynti kahteen näkymään: kaksi
-              korttia joista valittiin työntekijä tai manager. Uusi
-              etusivu on tuotesivu ja vie kirjautuneen suoraan hänen
-              omaan näkymäänsä — jolloin esihenkilöltä katosi ainoa
-              tie työntekijänäkymään.
-
-              Se on silti sama sovellus samalle ihmiselle: omistaja
-              leimaa itsensä töihin ja lisää kuitteja puhelimella.
-              Linkki kuuluu tunnusvalikkoon, koska kyse on siitä
-              missä näkymässä olen, ei siitä mitä ravintolassa tapahtuu.
-            */}
-            <Link
-              href="/app"
-              role="menuitem"
-              onClick={close}
-              className="rf-press flex items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-[14px]"
-              style={{ color: "var(--rf-text)" }}
-            >
-              <span style={{ color: "var(--rf-text-3)" }}>
-                <RfIcon name="clock" size={17} />
-              </span>
-              {t.kuori.workerView}
-            </Link>
-
             {canOpenSettings ? (
               <Link
                 href="/admin/asetukset"

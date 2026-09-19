@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { labels, type Labels } from "@/lib/i18n/labels";
+import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
-import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
+import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
@@ -16,7 +16,6 @@ import { MobileMonthBar } from "./month-scope";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import type { SearchItem } from "./search";
-import type { StaffPosition } from "@/lib/restoflow/types";
 
 /**
  * Managerin kuori.
@@ -40,16 +39,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const alerts = buildAlerts({
     receipts: data.receipts,
     budgets: data.budgets,
-    shifts: data.shifts,
-    users: data.users,
-    clockEvents: data.clockEvents,
-    absences: data.absences,
     month,
     today,
-    now,
-    timezone: restaurant.timezone,
     locale,
-    openShifts: data.openShifts,
     sales: data.sales,
     tasks: data.tasks,
   });
@@ -66,7 +58,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     alerts,
     receipts: data.receipts,
     sales: data.sales,
-    shifts: data.shifts,
     today,
     t,
   });
@@ -108,7 +99,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
    */
   const counts: Record<string, number> = {
     "/admin/kuitit": needsReview(data.receipts).length,
-    "/admin/tyovuorot": data.openShifts.filter((s) => s.date >= today).length,
     "/admin/tehtavat": countTasks(data.tasks, today).needsAttention,
   };
 
@@ -189,7 +179,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             alerts={alerts}
             userName={userName}
             role={role}
-            search={searchItems(role, data.suppliers, data.users, t, nimet)}
+            search={searchItems(role, data.suppliers, t)}
             canAddReceipt={can(role, "receipts.add")}
             canOpenSettings={can(role, "settings.view")}
             months={months}
@@ -247,14 +237,7 @@ function longDate(iso: string, timeZone: string, locale: AppLocale): string {
 function searchItems(
   role: Parameters<typeof adminNavFor>[0],
   suppliers: { id: string; name: string }[],
-  users: {
-    id: string;
-    name: string;
-    position: StaffPosition | null;
-    active: boolean;
-  }[],
   t: AdminText,
-  nimet: Labels,
 ): SearchItem[] {
   const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, t.nav[s.key]]));
 
@@ -279,20 +262,5 @@ function searchItems(
       }))
     : [];
 
-  const staffItems: SearchItem[] = can(role, "staff.view")
-    ? users
-        .filter((person) => person.active)
-        .map((person) => ({
-          id: `staff-${person.id}`,
-          label: person.name,
-          detail: person.position
-            ? nimet.positions[person.position]
-            : t.kuori.employee,
-          href: "/admin/tyontekijat",
-          icon: "staff" as const,
-          group: t.kuori.groupPerson,
-        }))
-    : [];
-
-  return [...pages, ...supplierItems, ...staffItems];
+  return [...pages, ...supplierItems];
 }

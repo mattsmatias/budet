@@ -44,16 +44,9 @@ export default async function NotificationsPage() {
   const alerts = buildAlerts({
     receipts: data.receipts,
     budgets: data.budgets,
-    shifts: data.shifts,
-    users: data.users,
-    clockEvents: data.clockEvents,
-    absences: data.absences,
     month: data.month,
     today: data.today,
-    now: data.now,
-    timezone: data.restaurant.timezone,
     locale,
-    openShifts: data.openShifts,
     sales: data.sales,
     tasks: data.tasks,
   });

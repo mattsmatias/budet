@@ -26,18 +26,11 @@ import { revalidatePath } from "next/cache";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
-import { fill } from "@/lib/i18n/auth-text";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import { findTool } from "@/lib/matti/tools";
-import { formatMoney } from "@/lib/money";
-import {
-  inheritedIncludes,
-  previousWeek,
-  weekStartOf,
-} from "@/lib/restoflow/lunch";
 
 export interface MattiActionState {
   ok?: boolean;
@@ -147,11 +140,7 @@ export async function confirmMattiAction(
   }
 
   try {
-    const result = await execute(
-      supabase,
-      action,
-      args.data as Record<string, unknown>,
-    );
+    const result = await execute(action);
 
     await log(
       supabase,
@@ -165,7 +154,6 @@ export async function confirmMattiAction(
     );
 
     revalidatePath("/admin", "layout");
-    revalidatePath("/lounas", "layout");
 
     return {
       ok: true,
@@ -233,313 +221,20 @@ interface ExecutionResult {
  * JSONina — ja JSON kannassa on dataa jonka muotoon ei luoteta
  * sokeasti.
  */
-async function execute(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  action: PendingRow,
-  args: Record<string, unknown>,
-): Promise<ExecutionResult> {
+async function execute(action: PendingRow): Promise<ExecutionResult> {
   const t = adminText(await resolveLocale());
+  /*
+   * Ei kirjoittavia työkaluja tällä hetkellä.
+   *
+   * Matin ainoat kirjoittavat työkalut olivat lounaslistan ehdotuksia,
+   * ja lounas poistui Katesta. Koneisto jää: se on se reitti jota
+   * pitkin tuleva kirjoittava työkalu kulkee, ja sen turvallisuus on
+   * jo rakennettu ja testattu. Tuntematon ehdotus hylätään.
+   */
   switch (action.tool) {
-    case "propose_lunch_items": {
-      const { days, replace, priceEuros, includesDessert, includesCoffee } =
-        args as {
-          priceEuros?: number;
-          includesDessert?: boolean;
-          includesCoffee?: boolean;
-          days: {
-            date: string;
-            items: {
-              name: string;
-              description?: string;
-              diets?: string[];
-              allergens?: string[];
-            }[];
-          }[];
-          replace?: boolean;
-        };
-
-      const { restaurant } = await requireContext("/admin");
-
-      /*
-       * Viikko avataan ensin.
-       *
-       * "Tee ensi viikon lounaslista" osuu yleensä viikkoon jota ei ole
-       * vielä olemassa. Ilman tätä ehdotuksen hyväksyminen kaatuisi
-       * siihen ettei päivää löydy — ja käyttäjän pitäisi tietää käydä
-       * luomassa viikko itse ensin.
-       */
-      const weeks = new Set(days.map((d) => weekStartOf(d.date)));
-      const menuIds: string[] = [];
-
-      // Mitkä viikot olivat olemassa jo ennen tätä. Vain uusi viikko
-      // perii asetukset edelliseltä; olemassa olevalla on omansa.
-      const existingWeeks = new Set<string>();
-
-      for (const week of weeks) {
-        const { data: before } = await supabase
-          .from("lunch_menus")
-          .select("id")
-          .eq("week_start", week)
-          .maybeSingle();
-
-        const { data, error } = await supabase.rpc("open_lunch_week", {
-          p_restaurant: restaurant.id,
-          p_week_start: week,
-        });
-        if (error) throw new Error(error.message);
-
-        if (data) {
-          menuIds.push(data as string);
-          if (before) existingWeeks.add(data as string);
-        }
-      }
-
-      // Hinta ja sisältyvät ovat viikon ominaisuuksia, joten ne
-      // asetetaan kerran viikkoa kohti eikä päivien silmukassa.
-      if (priceEuros !== undefined) {
-        for (const menuId of menuIds) {
-          const { error } = await supabase.rpc("set_lunch_price", {
-            p_menu: menuId,
-            p_name: t.loput.lunchWord,
-            p_cents: Math.round(priceEuros * 100),
-          });
-          if (error) throw new Error(error.message);
-        }
-      }
-
-      /*
-       * Jälkiruoka ja kahvi: nimenomainen valinta, muuten perintö.
-       *
-       * Sama sääntö kuin esikatselussa ja samasta funktiosta. Jos
-       * suoritus päättelisi toisin kuin esikatselu, käyttäjä hyväksyisi
-       * yhden asian ja saisi toisen.
-       */
-      for (const menuId of menuIds) {
-        const { data: current } = await supabase
-          .from("lunch_menus")
-          .select("week_start, includes_dessert, includes_coffee")
-          .eq("id", menuId)
-          .maybeSingle();
-
-        const { data: earlier } = await supabase
-          .from("lunch_menus")
-          .select("includes_dessert, includes_coffee")
-          .eq("week_start", previousWeek(String(current?.week_start ?? "")))
-          .maybeSingle();
-
-        // Viikolla joka oli jo olemassa on oma asetuksensa; se voittaa
-        // perinnön. Vasta luodulla ei ole, joten se perii.
-        const base = existingWeeks.has(menuId)
-          ? {
-              includesDessert: Boolean(current?.includes_dessert),
-              includesCoffee: Boolean(current?.includes_coffee),
-            }
-          : earlier
-            ? {
-                includesDessert: Boolean(earlier.includes_dessert),
-                includesCoffee: Boolean(earlier.includes_coffee),
-              }
-            : null;
-
-        const includes = inheritedIncludes(
-          { includesDessert, includesCoffee },
-          base,
-        );
-
-        const { error } = await supabase.rpc("set_lunch_includes", {
-          p_menu: menuId,
-          p_dessert: includes.includesDessert,
-          p_coffee: includes.includesCoffee,
-        });
-        if (error) throw new Error(error.message);
-      }
-
-      let added = 0;
-      const touched: string[] = [];
-
-      for (const day of days) {
-        const row = await lunchDay(supabase, day.date);
-        if (!row)
-          throw new Error(fill(t.loput.dayNotFound, { paiva: day.date }));
-
-        touched.push(row.id);
-
-        if (replace) {
-          const { error } = await supabase.rpc("clear_lunch_day_items", {
-            p_day: row.id,
-          });
-          if (error) throw new Error(error.message);
-        }
-
-        for (const item of day.items) {
-          const { error } = await supabase.rpc("save_lunch_item", {
-            p_day: row.id,
-            p_item: null,
-            p_name: item.name,
-            p_description: item.description ?? null,
-            p_diets: item.diets ?? [],
-            p_allergens: item.allergens ?? [],
-          });
-          if (error) throw new Error(error.message);
-
-          added += 1;
-        }
-      }
-
-      const week = weekStartOf(days[0].date);
-
-      return {
-        message:
-          fill(t.loput.doneAddedDishes, {
-            maara: String(added),
-            paivat: String(days.length),
-          }) +
-          " " +
-          t.loput.listIsDraft,
-        target: touched.join(","),
-        before: null,
-        after: { days: days.length, items: added, weekStart: week },
-        href: `/admin/lounas?viikko=${week}`,
-        linkLabel: t.loput.openLunchList,
-      };
-    }
-
-    case "propose_lunch_price": {
-      const {
-        weekStart: rawWeek,
-        euros,
-        priceName,
-      } = args as {
-        weekStart: string;
-        euros: number;
-        priceName?: string;
-      };
-
-      const week = weekStartOf(rawWeek);
-      const name = priceName ?? t.loput.lunchWord;
-      const cents = Math.round(euros * 100);
-
-      const menu = await lunchMenu(supabase, week);
-      if (!menu) throw new Error(t.loput.weekNotFound);
-
-      const { error } = await supabase.rpc("set_lunch_price", {
-        p_menu: menu.id,
-        p_name: name,
-        p_cents: cents,
-      });
-      if (error) throw new Error(error.message);
-
-      return {
-        message: fill(t.loput.donePriceSet, {
-          nimi: name,
-          summa: formatMoney(cents),
-        }),
-        target: menu.id,
-        before: { cents: menu.priceCents },
-        after: { cents },
-        href: `/admin/lounas?viikko=${week}`,
-        linkLabel: t.loput.openLunchList,
-      };
-    }
-
-    case "propose_copy_lunch_week": {
-      const { fromWeekStart, toWeekStart } = args as {
-        fromWeekStart: string;
-        toWeekStart: string;
-      };
-
-      const { restaurant } = await requireContext("/admin");
-
-      const { error } = await supabase.rpc("copy_lunch_week", {
-        p_restaurant: restaurant.id,
-        p_from_week: weekStartOf(fromWeekStart),
-        p_to_week: weekStartOf(toWeekStart),
-      });
-      if (error) throw new Error(error.message);
-
-      return {
-        message: t.loput.doneCopiedDraft,
-        target: weekStartOf(toWeekStart),
-        before: null,
-        after: { weekStart: weekStartOf(toWeekStart), status: "draft" },
-        href: `/admin/lounas?viikko=${weekStartOf(toWeekStart)}`,
-        linkLabel: t.loput.openDraft,
-      };
-    }
-
-    case "propose_publish_lunch_week": {
-      const { weekStart } = args as { weekStart: string };
-
-      const week = weekStartOf(weekStart);
-      const menu = await lunchMenu(supabase, week);
-      if (!menu) throw new Error(t.loput.weekNotFound);
-
-      const { error } = await supabase.rpc("publish_lunch_week", {
-        p_menu: menu.id,
-      });
-      if (error) throw new Error(error.message);
-
-      return {
-        message: t.loput.donePublished,
-        target: menu.id,
-        before: { status: menu.status },
-        after: { status: "published" },
-        href: `/admin/lounas?viikko=${week}`,
-        linkLabel: t.loput.openLunchList,
-      };
-    }
-
     default:
       throw new Error(t.loput.unknownActionShort);
   }
-}
-
-async function lunchDay(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  date: string,
-): Promise<{ id: string; prices: { name: string; cents: number }[] } | null> {
-  const { data } = await supabase
-    .from("lunch_days")
-    .select("id, lunch_prices ( name, price_cents )")
-    .eq("date", date)
-    .maybeSingle();
-
-  if (!data) return null;
-
-  return {
-    id: data.id as string,
-    prices: (
-      (data.lunch_prices as unknown as {
-        name: string;
-        price_cents: number;
-      }[]) ?? []
-    ).map((p) => ({ name: p.name, cents: p.price_cents })),
-  };
-}
-
-async function lunchMenu(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  weekStart: string,
-): Promise<{ id: string; status: string; priceCents: number | null } | null> {
-  const t = adminText(await resolveLocale());
-  const { data } = await supabase
-    .from("lunch_menus")
-    .select("id, status, lunch_prices ( name, price_cents )")
-    .eq("week_start", weekStart)
-    .maybeSingle();
-
-  if (!data) return null;
-
-  const prices =
-    (data.lunch_prices as unknown as { name: string; price_cents: number }[]) ??
-    [];
-
-  return {
-    id: data.id as string,
-    status: data.status as string,
-    priceCents:
-      prices.find((p) => p.name === t.loput.lunchWord)?.price_cents ?? null,
-  };
 }
 
 async function log(
@@ -574,7 +269,6 @@ async function log(
 /** Kannan virheteksti luettavaksi. */
 function readable(message: string, t: AdminText): string {
   if (message.includes("Vain esihenkilö")) return message;
-  if (message.includes("Tyhjää lounaslistaa")) return message;
   if (message.includes("ei löytynyt")) return message;
 
   return t.loput.couldNotChange;

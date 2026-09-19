@@ -27,37 +27,15 @@ import {
   receiptsInMonth,
   relativeChange,
 } from "./expenses";
-import type {
-  Absence,
-  Alert,
-  Budget,
-  ClockEvent,
-  OpenShift,
-  Receipt,
-  Shift,
-  User,
-} from "./types";
+import type { Alert, Budget, Receipt } from "./types";
 import type { DailySales } from "./sales";
 import type { Task } from "./tasks";
 
 export interface DashboardInput {
   receipts: Receipt[];
   budgets: Budget[];
-  shifts: Shift[];
-  users: User[];
-  clockEvents: ClockEvent[];
-  absences: Absence[];
   month: string;
   today: string;
-
-  /*
-   * Toiminnalliset poikkeamat tarvitsevat nykyhetken ja vyöhykkeen:
-   * "vuoro alkoi 20 minuuttia sitten" ei ole pääteltävissä päivästä.
-   * Avoimet vuorot ja myynti kulkevat samassa paketissa.
-   */
-  now: string;
-  timezone: string;
-  openShifts?: OpenShift[];
   /* Tehtävät kulkevat samassa paketissa: yksi kysymys, yksi lista. */
   tasks?: Task[];
   sales?: DailySales[];
@@ -80,7 +58,7 @@ export interface Evaluability {
  * Mitä pystyimme tarkastamaan tällä aineistolla.
  *
  * Ilman kuitteja ei voi etsiä kaksoiskappaleita, ilman budjetteja ei voi
- * havaita ylityksiä, ilman vuoroja ei voi huomata sulkematonta vuoroa.
+ * havaita ylityksiä, ilman myyntiä ei voi huomata myynnin notkahdusta.
  * Jos yhtään tarkastusta ei voitu tehdä, tulos ei ole "ei ongelmia" vaan
  * "ei arviota".
  */
@@ -91,7 +69,7 @@ export function evaluability(input: DashboardInput): Evaluability {
   if (inMonth.length > 0) performed.push("receipts");
   if (inMonth.length >= 2) performed.push("duplicates");
   if (input.budgets.length > 0 && inMonth.length > 0) performed.push("budgets");
-  if (input.shifts.length > 0) performed.push("shifts");
+  if ((input.sales ?? []).length > 0) performed.push("sales");
 
   const before = receiptsInMonth(input.receipts, previousMonth(input.month));
   if (before.length > 0 && inMonth.length > 0) performed.push("trend");
@@ -117,16 +95,9 @@ export function attention(input: DashboardInput): Attention {
   const alerts = buildAlerts({
     receipts: input.receipts,
     budgets: input.budgets,
-    shifts: input.shifts,
-    users: input.users,
-    clockEvents: input.clockEvents,
-    absences: input.absences,
     month: input.month,
     today: input.today,
     locale: input.locale,
-    now: input.now,
-    timezone: input.timezone,
-    openShifts: input.openShifts,
     sales: input.sales,
     tasks: input.tasks,
   });
@@ -176,15 +147,6 @@ export function compareToPreviousMonth(
   };
 }
 
-/** Sama vertailu tunneille. Null jos edellistä kuukautta ei ole mitattu. */
-export function compareHours(
-  currentHours: number,
-  previousHours: number | null,
-): number | null {
-  if (previousHours === null || previousHours === 0) return null;
-  return (currentHours - previousHours) / previousHours;
-}
-
 // ---------------------------------------------------------------------------
 // KPI-korttien selitteet
 // ---------------------------------------------------------------------------
@@ -222,23 +184,6 @@ export function receiptSplit(
           });
 
   return { total: inMonth.length, reviewed, pending, label };
-}
-
-/**
- * Henkilöstökulun osuus kirjatuista kuluista.
- *
- * Null jos kuluja ei ole: nollalla jakaminen antaisi joko äärettömän tai
- * nollan, ja kumpikin näyttäisi tiedolta. Null jos henkilöstökulu on
- * nolla mutta tunteja on — silloin tuntipalkkoja ei ole asetettu, eikä
- * osuus kerro mitään.
- */
-export function staffCostShare(
-  staffCostCents: number,
-  expenseTotalCents: number,
-): number | null {
-  if (expenseTotalCents <= 0) return null;
-  if (staffCostCents <= 0) return null;
-  return staffCostCents / expenseTotalCents;
 }
 
 // ---------------------------------------------------------------------------

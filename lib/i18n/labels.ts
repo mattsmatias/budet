@@ -11,10 +11,6 @@ import type {
   MonthStatus,
   SourceState,
 } from "@/lib/restoflow/accounting";
-import type { DeviationKind } from "@/lib/restoflow/deviations";
-import type { LunchTheme } from "@/lib/restoflow/lunch-themes";
-import type { LunchStatus } from "@/lib/restoflow/lunch";
-import type { Publication } from "@/lib/restoflow/shift-planning";
 import type {
   TaskPriority,
   TaskRecurrence,
@@ -27,11 +23,10 @@ import type {
  *
  * MIKSI OMA TIEDOSTO EIKÄ ADMIN-TEXT.
  *
- * Rooli, tehtävä, poissaolon laji ja vuoron tila esiintyvät kaikissa
- * kolmessa näkymässä: kirjautumisessa, työntekijän puolella ja
- * hallinnassa. Jos ne asuisivat yhdessä näkymän sanakirjassa, kaksi
- * muuta joutuisivat lainaamaan sitä — ja sama nimike päätyisi ennen
- * pitkää kolmeen paikkaan eri sanoilla.
+ * Rooli, kuitin tila ja lokin nimikkeet esiintyvät sekä kirjautumisessa
+ * että hallinnassa. Jos ne asuisivat yhden näkymän sanakirjassa, toinen
+ * joutuisi lainaamaan sitä — ja sama nimike päätyisi ennen pitkää
+ * kahteen paikkaan eri sanoilla.
  *
  * Kuukausien nimet tulevat Intl:stä eivätkä taulukosta. Kovakoodattu
  * lista olisi käännettävä kuudesti, ja se olisi väärässä sijamuodossa
@@ -45,21 +40,6 @@ export interface Labels {
     employee: string;
     accountant: string;
   };
-  positions: {
-    waiter: string;
-    kitchen: string;
-    manager: string;
-    cleaning: string;
-  };
-  absences: { sick: string; other: string; cannot_attend: string };
-  absenceShort: { sick: string; other: string; cannot_attend: string };
-  shiftStatus: {
-    draft: string;
-    pending: string;
-    accepted: string;
-    declined: string;
-    changed: string;
-  };
   categories: Record<ExpenseCategory, string>;
   payments: Record<PaymentMethod, string>;
   reviewReasons: Record<ReviewReason, string>;
@@ -70,11 +50,6 @@ export interface Labels {
   sourceState: Record<SourceState, string>;
   auditAction: Record<string, string>;
   auditEntity: Record<string, string>;
-  deviation: Record<DeviationKind, string>;
-  lunchTheme: Record<LunchTheme, string>;
-  lunchThemeHint: Record<LunchTheme, string>;
-  lunchStatus: Record<LunchStatus, string>;
-  publication: Record<Publication, string>;
   taskPriority: Record<TaskPriority, string>;
   taskVisibility: Record<TaskVisibility, string>;
   taskRecurrence: Record<TaskRecurrence, string>;
@@ -88,25 +63,6 @@ const fi: Labels = {
     manager: "Esihenkilö",
     employee: "Työntekijä",
     accountant: "Kirjanpitäjä",
-  },
-  positions: {
-    waiter: "Tarjoilija",
-    kitchen: "Keittiö",
-    manager: "Vuoropäällikkö",
-    cleaning: "Siivous",
-  },
-  absences: {
-    sick: "Sairaus",
-    other: "Muu poissaolo",
-    cannot_attend: "En pääse vuoroon",
-  },
-  absenceShort: { sick: "SL", other: "P", cannot_attend: "EP" },
-  shiftStatus: {
-    draft: "Luonnos",
-    pending: "Odottaa vastausta",
-    accepted: "Vahvistettu",
-    declined: "Ei pääse",
-    changed: "Muuttunut",
   },
   categories: {
     food: "Ruoka",
@@ -187,33 +143,6 @@ const fi: Labels = {
     folder: "Kansiot",
     file: "Tiedostot",
   },
-  deviation: {
-    no_clock_in: "Ei leimausta",
-    late: "Myöhästyminen",
-    overrun: "Ylitys",
-    shift_missing: "Työvuoro puuttuu",
-    overlap: "Päällekkäinen vuoro",
-  },
-  lunchTheme: {
-    light: "Vaalea",
-    dark: "Tumma",
-    classic: "Klassinen",
-  },
-  lunchThemeHint: {
-    light: "Selkeä ja kevyt. Sopii puhelimeen ja QR-koodiin.",
-    dark: "Ruudulle saliin tai tiskille. Ei hohda hämärässä.",
-    classic: "Painetun ruokalistan tuntu. Lämmin sävy ja antiikva otsikko.",
-  },
-  lunchStatus: {
-    draft: "Luonnos",
-    published: "Julkaistu",
-    archived: "Arkistoitu",
-  },
-  publication: {
-    draft: "Luonnos",
-    published: "Julkaistu",
-    cancelled: "Peruttu",
-  },
   taskPriority: {
     normal: "Normaali",
     important: "Tärkeä",
@@ -252,25 +181,6 @@ const en: Labels = {
     manager: "Manager",
     employee: "Employee",
     accountant: "Accountant",
-  },
-  positions: {
-    waiter: "Waiter",
-    kitchen: "Kitchen",
-    manager: "Shift manager",
-    cleaning: "Cleaning",
-  },
-  absences: {
-    sick: "Sickness",
-    other: "Other absence",
-    cannot_attend: "Cannot make the shift",
-  },
-  absenceShort: { sick: "SL", other: "A", cannot_attend: "NO" },
-  shiftStatus: {
-    draft: "Draft",
-    pending: "Awaiting an answer",
-    accepted: "Confirmed",
-    declined: "Cannot make it",
-    changed: "Changed",
   },
   categories: {
     food: "Food",
@@ -351,33 +261,6 @@ const en: Labels = {
     folder: "Folders",
     file: "Files",
   },
-  deviation: {
-    no_clock_in: "No clocking",
-    late: "Lateness",
-    overrun: "Overrun",
-    shift_missing: "The shift is missing",
-    overlap: "Overlapping shift",
-  },
-  lunchTheme: {
-    light: "Light",
-    dark: "Dark",
-    classic: "Classic",
-  },
-  lunchThemeHint: {
-    light: "Clear and light. Suits a phone and a QR code.",
-    dark: "For a screen in the dining room or at the counter. It does not glare in dim light.",
-    classic: "The feel of a printed menu. A warm tone and a serif heading.",
-  },
-  lunchStatus: {
-    draft: "Draft",
-    published: "Published",
-    archived: "Archived",
-  },
-  publication: {
-    draft: "Draft",
-    published: "Published",
-    cancelled: "Cancelled",
-  },
   taskPriority: {
     normal: "Normal",
     important: "Important",
@@ -416,25 +299,6 @@ const sv: Labels = {
     manager: "Chef",
     employee: "Anställd",
     accountant: "Bokförare",
-  },
-  positions: {
-    waiter: "Servitör",
-    kitchen: "Kök",
-    manager: "Skiftchef",
-    cleaning: "Städning",
-  },
-  absences: {
-    sick: "Sjukdom",
-    other: "Annan frånvaro",
-    cannot_attend: "Kan inte ta passet",
-  },
-  absenceShort: { sick: "SJ", other: "F", cannot_attend: "EJ" },
-  shiftStatus: {
-    draft: "Utkast",
-    pending: "Väntar på svar",
-    accepted: "Bekräftat",
-    declined: "Kan inte",
-    changed: "Ändrat",
   },
   categories: {
     food: "Mat",
@@ -515,33 +379,6 @@ const sv: Labels = {
     folder: "Mappar",
     file: "Filer",
   },
-  deviation: {
-    no_clock_in: "Ingen stämpling",
-    late: "Försening",
-    overrun: "Överskridning",
-    shift_missing: "Passet saknas",
-    overlap: "Överlappande pass",
-  },
-  lunchTheme: {
-    light: "Ljust",
-    dark: "Mörkt",
-    classic: "Klassiskt",
-  },
-  lunchThemeHint: {
-    light: "Tydligt och lätt. Passar telefon och QR-kod.",
-    dark: "För en skärm i matsalen eller vid disken. Bländar inte i dunkel.",
-    classic: "Känslan av en tryckt meny. Varm ton och antikva rubrik.",
-  },
-  lunchStatus: {
-    draft: "Utkast",
-    published: "Publicerad",
-    archived: "Arkiverad",
-  },
-  publication: {
-    draft: "Utkast",
-    published: "Publicerad",
-    cancelled: "Inställt",
-  },
   taskPriority: {
     normal: "Normal",
     important: "Viktig",
@@ -580,25 +417,6 @@ const da: Labels = {
     manager: "Leder",
     employee: "Medarbejder",
     accountant: "Bogholder",
-  },
-  positions: {
-    waiter: "Tjener",
-    kitchen: "Køkken",
-    manager: "Vagtleder",
-    cleaning: "Rengøring",
-  },
-  absences: {
-    sick: "Sygdom",
-    other: "Andet fravær",
-    cannot_attend: "Kan ikke tage vagten",
-  },
-  absenceShort: { sick: "SY", other: "F", cannot_attend: "KI" },
-  shiftStatus: {
-    draft: "Kladde",
-    pending: "Afventer svar",
-    accepted: "Bekræftet",
-    declined: "Kan ikke",
-    changed: "Ændret",
   },
   categories: {
     food: "Mad",
@@ -679,33 +497,6 @@ const da: Labels = {
     folder: "Mapper",
     file: "Filer",
   },
-  deviation: {
-    no_clock_in: "Ingen stempling",
-    late: "Forsinkelse",
-    overrun: "Overskridelse",
-    shift_missing: "Vagten mangler",
-    overlap: "Overlappende vagt",
-  },
-  lunchTheme: {
-    light: "Lyst",
-    dark: "Mørkt",
-    classic: "Klassisk",
-  },
-  lunchThemeHint: {
-    light: "Klart og let. Passer til telefon og QR-kode.",
-    dark: "Til en skærm i restauranten eller ved disken. Blænder ikke i halvmørke.",
-    classic: "Følelsen af en trykt menu. Varm tone og antikva-overskrift.",
-  },
-  lunchStatus: {
-    draft: "Kladde",
-    published: "Udgivet",
-    archived: "Arkiveret",
-  },
-  publication: {
-    draft: "Kladde",
-    published: "Udgivet",
-    cancelled: "Aflyst",
-  },
   taskPriority: {
     normal: "Normal",
     important: "Vigtig",
@@ -744,25 +535,6 @@ const tr: Labels = {
     manager: "Yönetici",
     employee: "Çalışan",
     accountant: "Muhasebeci",
-  },
-  positions: {
-    waiter: "Garson",
-    kitchen: "Mutfak",
-    manager: "Vardiya amiri",
-    cleaning: "Temizlik",
-  },
-  absences: {
-    sick: "Hastalık",
-    other: "Diğer devamsızlık",
-    cannot_attend: "Vardiyaya gelemiyorum",
-  },
-  absenceShort: { sick: "HS", other: "D", cannot_attend: "GE" },
-  shiftStatus: {
-    draft: "Taslak",
-    pending: "Yanıt bekliyor",
-    accepted: "Onaylandı",
-    declined: "Gelemiyor",
-    changed: "Değişti",
   },
   categories: {
     food: "Yiyecek",
@@ -843,33 +615,6 @@ const tr: Labels = {
     folder: "Klasörler",
     file: "Dosyalar",
   },
-  deviation: {
-    no_clock_in: "Kayıt yok",
-    late: "Gecikme",
-    overrun: "Aşım",
-    shift_missing: "Vardiya eksik",
-    overlap: "Çakışan vardiya",
-  },
-  lunchTheme: {
-    light: "Açık",
-    dark: "Koyu",
-    classic: "Klasik",
-  },
-  lunchThemeHint: {
-    light: "Net ve hafif. Telefona ve QR koda uygun.",
-    dark: "Salondaki ya da tezgâhtaki ekran için. Loş ışıkta göz almaz.",
-    classic: "Basılı menü hissi. Sıcak bir ton ve serif başlık.",
-  },
-  lunchStatus: {
-    draft: "Taslak",
-    published: "Yayınlandı",
-    archived: "Arşivlendi",
-  },
-  publication: {
-    draft: "Taslak",
-    published: "Yayınlandı",
-    cancelled: "İptal edildi",
-  },
   taskPriority: {
     normal: "Normal",
     important: "Önemli",
@@ -908,25 +653,6 @@ const et: Labels = {
     manager: "Juhataja",
     employee: "Töötaja",
     accountant: "Raamatupidaja",
-  },
-  positions: {
-    waiter: "Ettekandja",
-    kitchen: "Köök",
-    manager: "Vahetuse juht",
-    cleaning: "Koristus",
-  },
-  absences: {
-    sick: "Haigus",
-    other: "Muu puudumine",
-    cannot_attend: "Ei saa vahetusse",
-  },
-  absenceShort: { sick: "HG", other: "P", cannot_attend: "EI" },
-  shiftStatus: {
-    draft: "Mustand",
-    pending: "Ootab vastust",
-    accepted: "Kinnitatud",
-    declined: "Ei saa",
-    changed: "Muutunud",
   },
   categories: {
     food: "Toit",
@@ -1007,33 +733,6 @@ const et: Labels = {
     folder: "Kaustad",
     file: "Failid",
   },
-  deviation: {
-    no_clock_in: "Registreeringut ei ole",
-    late: "Hilinemine",
-    overrun: "Ületamine",
-    shift_missing: "Vahetus puudub",
-    overlap: "Kattuv vahetus",
-  },
-  lunchTheme: {
-    light: "Hele",
-    dark: "Tume",
-    classic: "Klassikaline",
-  },
-  lunchThemeHint: {
-    light: "Selge ja kerge. Sobib telefoni ja QR-koodi jaoks.",
-    dark: "Ekraanile saali või leti juurde. Ei helenda hämaras.",
-    classic: "Trükitud menüü tunne. Soe toon ja seriifidega pealkiri.",
-  },
-  lunchStatus: {
-    draft: "Mustand",
-    published: "Avaldatud",
-    archived: "Arhiveeritud",
-  },
-  publication: {
-    draft: "Mustand",
-    published: "Avaldatud",
-    cancelled: "Tühistatud",
-  },
   taskPriority: {
     normal: "Tavaline",
     important: "Tähtis",
@@ -1087,74 +786,53 @@ const MAARAT: Record<
   AppLocale,
   {
     kuitti: [string, string];
-    vuoro: [string, string];
-    vieras: [string, string];
     osuma: [string, string];
     myyntipaiva: [string, string];
     esitys: [string, string];
     paiva: [string, string];
-    varaus: [string, string];
   }
 > = {
   fi: {
     kuitti: ["1 kuitti", "{n} kuittia"],
-    vuoro: ["1 vuoro", "{n} vuoroa"],
-    vieras: ["1 vieras", "{n} vierasta"],
     osuma: ["1 osuma", "{n} osumaa"],
     myyntipaiva: ["1 myyntipäivä", "{n} myyntipäivää"],
     esitys: ["1 esitys", "{n} esitystä"],
     paiva: ["1 päivä", "{n} päivää"],
-    varaus: ["1 varaus", "{n} varausta"],
   },
   en: {
     kuitti: ["1 receipt", "{n} receipts"],
-    vuoro: ["1 shift", "{n} shifts"],
-    vieras: ["1 guest", "{n} guests"],
     osuma: ["1 match", "{n} matches"],
     myyntipaiva: ["1 sales day", "{n} sales days"],
     esitys: ["1 proposal", "{n} proposals"],
     paiva: ["1 day", "{n} days"],
-    varaus: ["1 reservation", "{n} reservations"],
   },
   sv: {
     kuitti: ["1 kvitto", "{n} kvitton"],
-    vuoro: ["1 pass", "{n} pass"],
-    vieras: ["1 gäst", "{n} gäster"],
     osuma: ["1 träff", "{n} träffar"],
     myyntipaiva: ["1 försäljningsdag", "{n} försäljningsdagar"],
     esitys: ["1 förslag", "{n} förslag"],
     paiva: ["1 dag", "{n} dagar"],
-    varaus: ["1 bokning", "{n} bokningar"],
   },
   da: {
     kuitti: ["1 kvittering", "{n} kvitteringer"],
-    vuoro: ["1 vagt", "{n} vagter"],
-    vieras: ["1 gæst", "{n} gæster"],
     osuma: ["1 match", "{n} match"],
     myyntipaiva: ["1 salgsdag", "{n} salgsdage"],
     esitys: ["1 forslag", "{n} forslag"],
     paiva: ["1 dag", "{n} dage"],
-    varaus: ["1 reservation", "{n} reservationer"],
   },
   tr: {
     kuitti: ["1 fiş", "{n} fiş"],
-    vuoro: ["1 vardiya", "{n} vardiya"],
-    vieras: ["1 misafir", "{n} misafir"],
     osuma: ["1 eşleşme", "{n} eşleşme"],
     myyntipaiva: ["1 satış günü", "{n} satış günü"],
     esitys: ["1 öneri", "{n} öneri"],
     paiva: ["1 gün", "{n} gün"],
-    varaus: ["1 rezervasyon", "{n} rezervasyon"],
   },
   et: {
     kuitti: ["1 tšekk", "{n} tšekki"],
-    vuoro: ["1 vahetus", "{n} vahetust"],
-    vieras: ["1 külaline", "{n} külalist"],
     osuma: ["1 vaste", "{n} vastet"],
     myyntipaiva: ["1 müügipäev", "{n} müügipäeva"],
     esitys: ["1 ettepanek", "{n} ettepanekut"],
     paiva: ["1 päev", "{n} päeva"],
-    varaus: ["1 broneering", "{n} broneeringut"],
   },
 };
 
@@ -1171,14 +849,6 @@ export function receiptCountIn(count: number, locale: AppLocale): string {
   return maara(count, locale, "kuitti");
 }
 
-export function shiftCountIn(count: number, locale: AppLocale): string {
-  return maara(count, locale, "vuoro");
-}
-
-export function guestCountIn(count: number, locale: AppLocale): string {
-  return maara(count, locale, "vieras");
-}
-
 export function hitCountIn(count: number, locale: AppLocale): string {
   return maara(count, locale, "osuma");
 }
@@ -1193,10 +863,6 @@ export function proposalCountIn(count: number, locale: AppLocale): string {
 
 export function dayCountIn(count: number, locale: AppLocale): string {
   return maara(count, locale, "paiva");
-}
-
-export function reservationCountIn(count: number, locale: AppLocale): string {
-  return maara(count, locale, "varaus");
 }
 
 /** "tammikuu" — kuukauden nimi pienellä, vertailulauseita varten. */

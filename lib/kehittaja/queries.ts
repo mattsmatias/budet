@@ -139,9 +139,7 @@ export const fetchRestaurant = cache(
       invitations: (raw.invitations as RestaurantDetail["invitations"]) ?? [],
       usage: {
         receipts: Number(usage.receipts ?? 0),
-        shifts: Number(usage.shifts ?? 0),
         tasks: Number(usage.tasks ?? 0),
-        lunchMenus: Number(usage.lunchMenus ?? 0),
         salesDays: Number(usage.salesDays ?? 0),
         aiChats: Number(usage.aiChats ?? 0),
         activeUsers: Number(usage.activeUsers ?? 0),
@@ -191,45 +189,4 @@ export const fetchAudit = cache(async (limit = 100): Promise<AuditRow[]> => {
 
 export const fetchFlags = cache(async (): Promise<Flag[]> =>
   rpc<Flag[]>("sa_flags", {}, []),
-);
-
-// ---------------------------------------------------------------------------
-// Meta-integraation diagnostiikka
-// ---------------------------------------------------------------------------
-
-export interface MetaDiagnostics {
-  pageId: string;
-  pageName: string;
-  instagramId: string | null;
-  instagramUsername: string | null;
-  status: string;
-  statusDetail: string | null;
-  scopes: string[];
-  hasToken: boolean;
-  tokenExpiresAt: string | null;
-  connectedAt: string;
-  lastOk: string | null;
-  lastFailed: string | null;
-  lastError: string | null;
-  publications: number;
-}
-
-/**
- * Meta-yhteyden tila tukea varten.
- *
- * Tokenia ei ole mukana. Kysymykseen "miksi julkaisu ei toimi" vastaa
- * tieto siitä onko tokeni tallessa ja mikä oli viimeisin virhe — ei
- * tokeni itse, jolla ylläpitäjä voisi julkaista asiakkaan sivulle.
- */
-export const fetchMetaDiagnostics = cache(
-  async (restaurantId: string): Promise<MetaDiagnostics | null> => {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase.rpc("sa_meta_diagnostics", {
-      p_restaurant: restaurantId,
-    });
-
-    if (error || !data) return null;
-    return data as unknown as MetaDiagnostics;
-  },
 );

@@ -99,7 +99,7 @@ describe("vertailu saman viikonpäivän historiaan", () => {
   });
 });
 
-describe("työvoiman osuus myynnistä", () => {
+describe("henkilöstökulujen osuus myynnistä", () => {
   it("laskee osuuden", () => {
     expect(labourShareOfSales(61200, 306000)).toBeCloseTo(0.2, 5);
   });
@@ -110,12 +110,12 @@ describe("työvoiman osuus myynnistä", () => {
 });
 
 describe("karkea tulos", () => {
-  it("vähentää kulut ja työvoiman myynnistä", () => {
+  it("vähentää kulut myynnistä", () => {
+    /* Palkat ovat kuluissa Henkilöstö-luokassa, ei erillisenä rivinä. */
     expect(
       roughResult({
         netSalesCents: 400000,
-        expenseCents: 120000,
-        labourCents: 90000,
+        expenseCents: 210000,
       }),
     ).toBe(190000);
   });
@@ -124,8 +124,7 @@ describe("karkea tulos", () => {
     expect(
       roughResult({
         netSalesCents: 100000,
-        expenseCents: 120000,
-        labourCents: 90000,
+        expenseCents: 210000,
       }),
     ).toBeLessThan(0);
   });

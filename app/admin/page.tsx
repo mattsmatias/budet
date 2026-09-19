@@ -24,7 +24,6 @@ import {
   sortByDateDesc,
   totalsByCustomCategory,
 } from "@/lib/restoflow/expenses";
-import { currentState } from "@/lib/restoflow/timeclock";
 import { can } from "@/lib/restoflow/permissions";
 import { formatMoney } from "@/lib/money";
 import { initials } from "@/lib/restoflow/initials";
@@ -49,18 +48,16 @@ import {
   Sparkline,
 } from "@/components/restoflow/dashboard-ui";
 import { AreaChart } from "@/components/restoflow/area-chart";
-import { shiftBounds } from "@/lib/restoflow/shift-window";
 import { fetchPosVatRates, fetchSalesLines } from "@/lib/restoflow/queries";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
-import { labourCost } from "@/lib/restoflow/payroll-data";
+import {
+  labourShareOfSales,
+  salesBetween,
+  totalSalesCents,
+} from "@/lib/restoflow/sales";
 import { todayPulse } from "@/lib/restoflow/pulse";
 import { overallStatus } from "@/lib/restoflow/status";
 import { evaluability } from "@/lib/restoflow/dashboard";
-import {
-  dayIn,
-  minutesOfDayIn,
-  monthStartDate,
-} from "@/lib/restoflow/clock-context";
 import { monthlyFlow, spendRhythm } from "@/lib/restoflow/spend-rhythm";
 
 export async function generateMetadata() {
@@ -88,17 +85,10 @@ export default async function AdminDashboard({
   const params = await searchParams;
   const {
     receipts,
-    users,
     budgets,
-    shifts,
-    clockEvents,
-    absences,
-    openShifts,
     sales,
     month,
     today,
-    now,
-    monthlyHours,
     restaurant,
     role,
     categories: customCategories,
@@ -213,16 +203,9 @@ export default async function AdminDashboard({
   const dashboardInput = {
     receipts,
     budgets,
-    shifts,
-    users,
-    clockEvents,
-    absences,
-    openShifts,
     sales,
     month: viewMonth,
     today,
-    now,
-    timezone: restaurant.timezone,
     locale,
   };
 
@@ -230,12 +213,7 @@ export default async function AdminDashboard({
   // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
   // asioita joihin pitää reagoida, ja kahdesta listasta toinen jäisi
   // katsomatta.
-  const insights = buildInsights({
-    ...dashboardInput,
-    now,
-    timezone: restaurant.timezone,
-    locale,
-  });
+  const insights = buildInsights(dashboardInput);
   const items = focusItems(dashboardInput, insights);
 
   /*
@@ -283,56 +261,37 @@ export default async function AdminDashboard({
 
   const budgets_ = budgetLines(t, receipts, budgets, viewMonth);
 
-  // Tunnit ja henkilöstökulu lasketaan vain kuluvalle kuukaudelle:
-  // monthlyHours tulee kontekstista kuluvana kuukautena, eikä
-  // menneen kuukauden tunteja saa esittää kuluvan lukuina.
-  const totalHours = isCurrentMonth
-    ? Object.values(monthlyHours).reduce((sum, hours) => sum + hours, 0)
+  /*
+   * Päivän tilanne vain kuluvalle kuukaudelle.
+   *
+   * Menneen kuukauden "tänään" ei ole mitään, ja vanhan kuun kärki
+   * näyttäisi tyhjältä ilman syytä.
+   */
+  const pulse = isCurrentMonth
+    ? todayPulse({ today, month, receipts, sales })
     : null;
 
   /*
-   * "Työaika tänään" laski tässä ketkä ovat sisällä.
+   * Henkilöstökulut kuluista, ei vuoroista.
    *
-   * Palvelupäivän aikajana näyttää saman ja enemmän: kuka on töissä,
-   * kuka tauolla, kuka myöhässä ja kuka tulossa. Paneelissa oli myös
-   * seitsemäs kerta samaa virhettä — since.slice(11, 16) luki UTC-ajan,
-   * joten kesällä sisäänleimaus 13.55 näkyi muodossa 10.55.
+   * Palkat maksetaan palkkapalvelussa, ja kuukauden palkkakulu kirjataan
+   * Kateen kuluna Henkilöstö-luokkaan kuten mikä tahansa muu kulu. Se on
+   * silloin mukana kuluissa ja tuloksessa sellaisenaan — erillinen
+   * työvoimarivi laskisi saman palkan kahteen kertaan.
+   *
+   * Osuus lasketaan myynnistä, koska se on alan tunnusluku: kuinka suuri
+   * osa jokaisesta myydystä eurosta menee palkkoihin.
    */
+  const staffCents = receiptsInMonth(receipts, viewMonth)
+    .filter((r) => r.category === "staff")
+    .reduce((sum, r) => sum + r.totalCents, 0);
 
-  /*
-   * Kärjen tiedot.
-   *
-   * Työvoima haetaan erikseen palkkamoottorista, jotta kärjen luku on
-   * sama kuin palkkalaskelmassa. Myynti tulee jaetusta paketista.
-   *
-   * Vain kuluvalle kuukaudelle. Menneen kuukauden "tänään" ei ole
-   * mitään, ja vanhan kuun kärki näyttäisi tyhjältä ilman syytä.
-   */
-  const [labourToday, labourMonth] = isCurrentMonth
-    ? await Promise.all([
-        labourCost(restaurant.id, restaurant.timezone, today, today, now),
-        labourCost(
-          restaurant.id,
-          restaurant.timezone,
-          monthStartDate(month),
-          today,
-          now,
-        ),
-      ])
-    : [null, null];
+  const monthSalesCents = totalSalesCents(
+    salesBetween(sales, `${viewMonth}-01`, `${viewMonth}-31`),
+  );
 
-  const pulse =
-    isCurrentMonth && labourToday && labourMonth
-      ? todayPulse({
-          today,
-          month,
-          receipts,
-          sales,
-          labourTodayCents: labourToday.cents,
-          labourTodayMinutes: labourToday.minutes,
-          labourMonthCents: labourMonth.cents,
-        })
-      : null;
+  const staffShare =
+    staffCents > 0 ? labourShareOfSales(staffCents, monthSalesCents) : null;
 
   const status = overallStatus(items, evaluability(dashboardInput).canJudge, t);
 
@@ -402,47 +361,6 @@ export default async function AdminDashboard({
   const budgetSpent = budgets_.reduce((sum, line) => sum + line.spentCents, 0);
   const budgetLeft = budgetTotal - budgetSpent;
   const budgetUsed = budgetTotal > 0 ? budgetSpent / budgetTotal : null;
-
-  /*
-   * Ketkä ovat sisällä juuri nyt.
-   *
-   * Tila luetaan leimauksista eikä tallenneta mihinkään. Päivä luetaan
-   * ravintolan ajassa — merkkijonon viipale on UTC:tä, ja yöllä tehty
-   * leimaus osuisi väärälle päivälle.
-   */
-  const onDuty = isCurrentMonth
-    ? users.filter((u) => {
-        const mine = clockEvents.filter(
-          (e) =>
-            e.userId === u.id && dayIn(restaurant.timezone, e.at) === today,
-        );
-        return currentState(mine) !== "off";
-      }).length
-    : null;
-
-  const staffTotal = users.filter((u) => u.position !== null).length;
-
-  /*
-   * Seuraava alkava vuoro tänään.
-   *
-   * Kertoo milloin salissa on taas enemmän väkeä. Päättynyt vuoro ei
-   * kelpaa: sama sääntö kuin työntekijän omassa näkymässä.
-   */
-  const nextToday = shifts
-    .filter((sh) => sh.date === today && sh.status !== "declined")
-    .map((sh) => ({ sh, bounds: shiftBounds(sh) }))
-    .filter(
-      ({ bounds }) =>
-        bounds.startMin > minutesOfDayIn(restaurant.timezone, now),
-    )
-    .sort((a, b) => a.bounds.startMin - b.bounds.startMin)[0];
-
-  const upcomingToday = shifts.filter(
-    (sh) =>
-      sh.date === today &&
-      sh.status !== "declined" &&
-      shiftBounds(sh).startMin > minutesOfDayIn(restaurant.timezone, now),
-  ).length;
 
   return (
     <div className="rf-stagger space-y-5 md:space-y-6">
@@ -689,58 +607,40 @@ export default async function AdminDashboard({
           linkLabel={t.loput.budgetsTitle}
         />
 
-        {onDuty !== null ? (
-          <StatCard
-            label={t.yleiskatsaus.atWorkNow}
-            tileTone="blue"
-            value={`${onDuty} / ${staffTotal}`}
-            delta={
-              upcomingToday > 0
-                ? {
-                    text: fill(t.loput.upcomingToday, {
-                      maara: String(upcomingToday),
-                    }),
-                  }
-                : undefined
-            }
-            conclusion={
-              nextToday
-                ? fill(t.loput.nextShift, {
-                    nimi:
-                      users.find((u) => u.id === nextToday.sh.userId)?.name ??
-                      t.loput.shiftFallback,
-                    aika: nextToday.sh.startTime,
-                  })
-                : onDuty === 0
-                  ? t.yleiskatsaus.nobodyClockedIn
-                  : t.yleiskatsaus.noMoreShiftsToday
-            }
-            tone="muted"
-            icon={<RfIcon name="staff" size={17} />}
-            href="/admin/tyovuorot"
-            linkLabel={t.loput.shifts}
-          />
-        ) : (
-          <StatCard
-            label={t.yleiskatsaus.hours}
-            tileTone="blue"
-            value={
-              totalHours === null ? (
-                "—"
-              ) : (
-                <CountUp to={totalHours} format="hours" />
-              )
-            }
-            conclusion={
-              totalHours === null
-                ? t.loput.currentMonthOnly
-                : t.loput.fromClockings
-            }
-            tone="muted"
-            icon={<RfIcon name="clock" size={17} />}
-            href="/admin/tyovuorot"
-          />
-        )}
+        <StatCard
+          label={t.yleiskatsaus.staffCosts}
+          tileTone="blue"
+          value={
+            staffCents === 0 ? "—" : <CountUp to={staffCents} format="money" />
+          }
+          delta={
+            staffShare === null
+              ? undefined
+              : {
+                  text: fill(t.yleiskatsaus.staffShareOfSales, {
+                    osuus: String(Math.round(staffShare * 100)),
+                  }),
+                }
+          }
+          /*
+           * Puuttuva palkkakulu ei ole nolla.
+           *
+           * Nolla euroa henkilöstökuluja tarkoittaisi ettei kukaan ole
+           * töissä. Todennäköisempää on ettei palkkoja ole vielä kirjattu,
+           * ja kortti kertoo miten se tehdään.
+           */
+          conclusion={
+            staffCents === 0
+              ? t.yleiskatsaus.staffCostsHowTo
+              : staffShare === null
+                ? t.yleiskatsaus.staffNoSales
+                : t.yleiskatsaus.staffShareNote
+          }
+          tone="muted"
+          icon={<RfIcon name="staff" size={17} />}
+          href="/admin/kulut"
+          linkLabel={t.sanat.expenses}
+        />
       </section>
 
       {/*

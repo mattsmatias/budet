@@ -9,7 +9,7 @@ import type { AdminText } from "@/lib/i18n/admin-text";
  *
  * Nimi luetaan reitistä eikä anneta jokaiselta sivulta erikseen.
  * Kaksi totuutta samasta nimestä ajautuu erilleen: valikossa lukisi
- * "Työvuorot" ja otsikossa "Vuorolista", eikä kumpikaan olisi väärin
+ * "Kulut" ja otsikossa "Menot", eikä kumpikaan olisi väärin
  * omalla tavallaan.
  *
  * Pisin osuma voittaa, jotta /admin/kuitit/uusi saa nimensä

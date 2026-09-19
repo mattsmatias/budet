@@ -1,10 +1,10 @@
 /**
- * Nykyhetki ravintolan aikavyöhykkeellä.
+ * Nykyhetki ja päivämäärät ravintolan aikavyöhykkeellä.
  *
- * Työaika ja kuukausirajat lasketaan ravintolan ajassa, ei palvelimen.
+ * Kuukausirajat ja "tänään" lasketaan ravintolan ajassa, ei palvelimen.
  * Vercelin palvelin on UTC:ssä; ilman muunnosta klo 01:30 Helsingissä
- * kirjautuisi edelliselle päivälle ja kuukauden viimeisen päivän kuitit
- * putoaisivat väärään kuukauteen.
+ * kirjautunut myynti menisi edelliselle päivälle ja kuukauden viimeisen
+ * päivän kuitit putoaisivat väärään kuukauteen.
  */
 
 /** ISO-päivä ("2026-08-20") annetulla vyöhykkeellä. */

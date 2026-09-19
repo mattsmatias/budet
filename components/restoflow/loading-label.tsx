@@ -13,17 +13,17 @@ import { useSyncExternalStore } from "react";
  * näkyisi lainkaan. Kieltä ei siis voi hakea evästeestä täällä.
  *
  * Siksi kieli luetaan <html lang> -attribuutista, jonka juurisommittelu
- * on jo asettanut, ja teksti tulee tästä pienestä taulukosta. Kaksi
- * lausetta ei ansaitse omaa sanakirjaansa, mutta ansaitsee kääntyä.
+ * on jo asettanut, ja teksti tulee tästä pienestä taulukosta. Yksi
+ * lause ei ansaitse omaa sanakirjaansa, mutta ansaitsee kääntyä.
  */
 
-const TEKSTIT: Record<string, { yleinen: string; lounas: string }> = {
-  fi: { yleinen: "Ladataan…", lounas: "Ladataan lounaslistaa…" },
-  en: { yleinen: "Loading…", lounas: "Loading the lunch menu…" },
-  sv: { yleinen: "Laddar…", lounas: "Laddar lunchlistan…" },
-  da: { yleinen: "Indlæser…", lounas: "Indlæser frokostmenuen…" },
-  tr: { yleinen: "Yükleniyor…", lounas: "Öğle menüsü yükleniyor…" },
-  et: { yleinen: "Laadin…", lounas: "Laadin lõunamenüüd…" },
+const TEKSTIT: Record<string, string> = {
+  fi: "Ladataan…",
+  en: "Loading…",
+  sv: "Laddar…",
+  da: "Indlæser…",
+  tr: "Yükleniyor…",
+  et: "Laadin…",
 };
 
 /** Kieli ei vaihdu kesken sivun: tilaus on tyhjä eikä sitä pureta. */
@@ -35,14 +35,10 @@ const selaimessa = () =>
 /** Palvelimella teksti on suomeksi ja korjautuu ensimmäisessä piirrossa. */
 const palvelimella = () => "fi";
 
-export function LoadingLabel({
-  kind = "yleinen",
-}: {
-  kind?: "yleinen" | "lounas";
-}) {
+export function LoadingLabel() {
   const kieli = useSyncExternalStore(tilaa, selaimessa, palvelimella);
 
   return (
-    <span className="sr-only">{(TEKSTIT[kieli] ?? TEKSTIT.fi)[kind]}</span>
+    <span className="sr-only">{TEKSTIT[kieli] ?? TEKSTIT.fi}</span>
   );
 }

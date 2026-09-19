@@ -12,7 +12,7 @@
  * KAKSI ERI RAAHAUSTA, KAKSI ERI TARKOITUSTA
  * ---------------------------------------------------------------------
  *
- * Kansion KAHVA järjestää: pointer-tapahtumilla, kuten lounaslistalla,
+ * Kansion KAHVA järjestää: pointer-tapahtumilla,
  * joten se toimii myös kosketuksella ja näppäimistön nuolilla.
  *
  * Tiedoston VETO siirtää kansioon: selaimen oma vetotapahtuma, joka ei
@@ -250,7 +250,7 @@ export function FileBrowser(props: Props) {
   // Kansioiden järjestäminen kahvasta
   // -------------------------------------------------------------------------
   //
-  // Sama kuvio kuin lounaslistalla: pointer-tapahtumat kattavat hiiren,
+  // Pointer-tapahtumat kattavat hiiren,
   // kosketuksen ja kynän samalla koodilla, ja järjestys tallennetaan
   // vasta irrotettaessa. Jokainen ohitettu rivi ei ole oma
   // tallennuksensa — se olisi kymmenen kutsua yhdestä siirrosta, ja

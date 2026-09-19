@@ -44,7 +44,7 @@ export default async function SetupPage({
     });
 
     await clearInvite();
-    if (!error) redirect("/app");
+    if (!error) redirect("/admin");
   }
 
   if (await getActiveRestaurant()) redirect("/admin");

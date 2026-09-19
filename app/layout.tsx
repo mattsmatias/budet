@@ -45,13 +45,12 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kate — ravintolan kulut, kuitit ja työaika",
+    default: "Kate — ravintolan myynti, kulut ja tulos",
     template: "%s · Kate",
   },
   description:
-    "Ravintolan kuitit, kulut, työvuorot ja työaika yhdessä näkymässä. " +
-    "Ei kassajärjestelmää, ei pankkiyhteyttä — vain se mitä kulujen ja " +
-    "työajan hallintaan tarvitaan.",
+    "Näe paljonko ravintola tuottaa ja mihin raha menee: myynti, kuitit, " +
+    "kulut ja kirjanpito yhdessä näkymässä.",
   metadataBase: new URL("https://budet-app.vercel.app"),
   openGraph: {
     type: "website",

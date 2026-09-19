@@ -41,13 +41,8 @@ export default async function InsightsPage({
   const {
     receipts,
     budgets,
-    shifts,
-    users,
-    clockEvents,
     month: nykyinen,
     today,
-    now,
-    restaurant,
   } = await adminContext("/admin/havainnot");
 
   const month = monthFromParams(await searchParams, nykyinen);
@@ -56,13 +51,8 @@ export default async function InsightsPage({
     buildInsights({
       receipts,
       budgets,
-      shifts,
-      users,
-      clockEvents,
       month,
       today,
-      now,
-      timezone: restaurant.timezone,
       locale,
     }),
   );

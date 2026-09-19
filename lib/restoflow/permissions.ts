@@ -22,41 +22,19 @@ export type Capability =
   | "suppliers.view"
   | "budgets.view"
   | "budgets.edit"
-  | "shifts.view.own"
-  | "shifts.view.all"
-  | "shifts.manage"
-  | "time.track.own"
-  | "time.view.all"
-  | "staff.view"
-  | "staff.rates.view"
-  | "staff.manage"
-  | "payroll.view"
-  | "payroll.view.own"
-  | "payroll.manage"
   | "sales.view"
   | "sales.manage"
   | "reports.view"
   | "reports.export"
   | "alerts.view"
-  | "lunch.view"
-  | "lunch.manage"
-  /*
-   * Pöytävaraukset kahtena oikeutena.
-   *
-   * Tarjoilija tarvitsee illan varauslistan tehdäkseen työnsä, muttei
-   * saa siirtää eikä perua varauksia. Sama raja on kannassa:
-   * reservation_day palvelee kaikkia jäseniä ja jättää yhteystiedot
-   * pois, kun taas muokkausfunktiot vaativat is_manager.
-   */
-  | "reservations.view"
-  | "reservations.manage"
   | "matti.use"
   /*
    * Tehtävät kahtena oikeutena.
    *
-   * Työntekijä näkee omat tehtävänsä ja kuittaa ne tehdyiksi, muttei
-   * luo eikä siirrä määräaikoja. Kanta rajaa saman: merkintä tehdyksi
-   * kulkee funktion kautta, muokkaus vaatii esihenkilön.
+   * Tehtävän voi osoittaa henkilölle, joka näkee omansa ja kuittaa ne
+   * tehdyiksi muttei luo eikä siirrä määräaikoja. Kanta rajaa saman:
+   * merkintä tehdyksi kulkee funktion kautta, muokkaus vaatii
+   * esihenkilön.
    */
   | "tasks.view"
   | "tasks.manage"
@@ -74,10 +52,9 @@ export type Capability =
   /*
    * Tiedostot kahtena oikeutena.
    *
-   * Kaappiin päätyy työsopimuksia, palkkalaskelmia ja vuokrasopimuksia.
+   * Kaappiin päätyy sopimuksia, lupia ja palkkapalvelun yhteenvetoja.
    * Kirjanpitäjä tarvitsee ne työhönsä ja saa lukea; työntekijä ei näe
-   * kaappia lainkaan, koska sen sisältö koskee häntä muttei kuulu
-   * hänelle. Kanta rajaa saman: luku on my_restaurant_ids(), kirjoitus
+   * kaappia lainkaan. Kanta rajaa saman: luku on my_restaurant_ids(), kirjoitus
    * is_manager().
    *
    * Roolirajan ja kannan on oltava samaa mieltä. Jos valikko näyttäisi
@@ -100,25 +77,10 @@ const OWNER: Capability[] = [
   "suppliers.view",
   "budgets.view",
   "budgets.edit",
-  "shifts.view.own",
-  "shifts.view.all",
-  "shifts.manage",
-  "time.track.own",
-  "time.view.all",
-  "staff.view",
-  "staff.rates.view",
-  "staff.manage",
-  "payroll.view",
-  "payroll.view.own",
-  "payroll.manage",
   "sales.view",
   "sales.manage",
   "reports.view",
   "reports.export",
-  "lunch.view",
-  "lunch.manage",
-  "reservations.view",
-  "reservations.manage",
   "matti.use",
   "tasks.view",
   "tasks.manage",
@@ -127,7 +89,7 @@ const OWNER: Capability[] = [
   /*
    * Toimintaloki on omistajan näkymä.
    *
-   * Se sisältää palkkamuutokset, käyttöoikeudet ja verokannat.
+   * Se sisältää käyttöoikeuksien ja verokantojen muutokset.
    * Vuoropäällikkö näkee oman työnsä jäljet kohteiden omista
    * näkymistä; koko yrityksen loki on omistajan.
    */
@@ -146,24 +108,10 @@ const MANAGER: Capability[] = [
   "expenses.view",
   "suppliers.view",
   "budgets.view",
-  "shifts.view.own",
-  "shifts.view.all",
-  "shifts.manage",
-  "time.track.own",
-  "time.view.all",
-  "staff.view",
-  "staff.rates.view",
-  "payroll.view",
-  "payroll.view.own",
-  "payroll.manage",
   "sales.view",
   "sales.manage",
   "reports.view",
   "reports.export",
-  "lunch.view",
-  "lunch.manage",
-  "reservations.view",
-  "reservations.manage",
   "matti.use",
   "tasks.view",
   "tasks.manage",
@@ -174,38 +122,25 @@ const MANAGER: Capability[] = [
 ];
 
 /**
- * Työntekijä: oma työaika ja omat vuorot, ei kuluja.
+ * Työntekijä: vain omat tehtävät.
+ *
+ * Kate näyttää ravintolan rahan omistajalle, esihenkilölle ja
+ * kirjanpitäjälle; palkat maksetaan palkkapalvelussa eikä
+ * työntekijällä ole Katessa omaa näkymää. Rooli on silti olemassa,
+ * koska tehtävän voi osoittaa henkilölle — ja silloin hän näkee sen.
  *
  * Ei `receipts.add`. Kuitti on ravintolan kirjanpitoaineistoa, ei
- * työntekijän ilmoitus: kuka tahansa vuorossa oleva ei saa synnyttää
- * kulukirjausta jota kukaan ei ole hyväksynyt. Ravintola lisää kuitit
- * itse hallintanäkymässä.
+ * työntekijän ilmoitus: kuka tahansa ei saa synnyttää kulukirjausta
+ * jota kukaan ei ole hyväksynyt.
  */
 const EMPLOYEE: Capability[] = [
-  "shifts.view.own",
-  "time.track.own",
   // Omat tehtävät ja niiden kuittaus. Rivikäytäntö rajaa mitkä
   // tehtävät hän näkee — oikeus ei avaa talous- eikä hallintotehtäviä.
   "tasks.view",
-  // Oma palkkakertymä, ei muiden. Työntekijän on nähtävä mitä hänelle
-  // kertyy; muiden palkka ei kuulu hänelle.
-  "payroll.view.own",
-  /*
-   * Illan varauslista, ilman asiakkaiden yhteystietoja.
-   *
-   * Salivuorossa on tiedettävä montako seuruetta on tulossa ja mihin
-   * pöytiin. Puhelinnumero ei kuulu siihen: sillä soittaa esihenkilö
-   * jos ilta muuttuu. Kanta karsii kentät, ei käyttöliittymä.
-   */
-  "reservations.view",
 ];
 
 /**
- * Kirjanpitäjä: talous kyllä, henkilöstön yksityiskohdat ei.
- *
- * Ei `staff.rates.view` — tuntipalkat ovat henkilötietoa jota kirjanpitäjä
- * ei tarvitse kuluraportin lukemiseen. Työaika näkyy kokonaistunteina
- * raporteissa.
+ * Kirjanpitäjä: talous kyllä, muokkaus ei.
  */
 const ACCOUNTANT: Capability[] = [
   /*
@@ -222,7 +157,6 @@ const ACCOUNTANT: Capability[] = [
   "budgets.view",
   "reports.view",
   "reports.export",
-  "time.view.all",
   // Kirjanpitäjä lukee myynnin raportteja varten muttei kirjaa sitä.
   "sales.view",
   /*
@@ -262,11 +196,6 @@ export function canAddReceipts(role: Role): boolean {
   return can(role, "receipts.add");
 }
 
-/** Näytetäänkö tuntipalkat ja niistä lasketut summat? */
-export function seesPayRates(role: Role): boolean {
-  return can(role, "staff.rates.view");
-}
-
 // ---------------------------------------------------------------------------
 // Reitit ja navigaatio
 // ---------------------------------------------------------------------------
@@ -299,58 +228,22 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/kulut", requires: "expenses.view" },
   { href: "/admin/toimittajat", requires: "suppliers.view" },
   { href: "/admin/budjetit", requires: "budgets.view" },
-  { href: "/admin/tyovuorot", requires: "shifts.view.all" },
-  { href: "/admin/tehtavat", requires: "tasks.manage" },
+  /*
+   * Tehtävät lukuoikeudella.
+   *
+   * Sivu näyttää hallinnan toiminnot vain tasks.manage-oikeudella, ja
+   * kanta rajaa mitkä tehtävät kukin näkee. Näin tehtävän saanut
+   * henkilö näkee omansa samalla sivulla kuin esihenkilö.
+   */
+  { href: "/admin/tehtavat", requires: "tasks.view" },
   { href: "/admin/loki", requires: "audit.view" },
-  { href: "/admin/tyontekijat", requires: "staff.view" },
-  { href: "/admin/palkat", requires: "payroll.view" },
   { href: "/admin/myynti", requires: "sales.view" },
   { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
-  { href: "/admin/lounas", requires: "lunch.view" },
   { href: "/admin/tiedostot", requires: "files.view" },
-  { href: "/admin/varaukset", requires: "reservations.view" },
   { href: "/admin/raportit", requires: "reports.view" },
   { href: "/admin/ilmoitukset", requires: "alerts.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
-  /*
-   * Varausasetukset ovat asetusten alla mutta oma vaatimuksensa.
-   *
-   * settings.edit on vain omistajalla, mutta pöytäkartta ja aukioloajat
-   * ovat vuoropäällikön työtä — ja kanta on samaa mieltä: siellä raja
-   * on is_manager.
-   */
-  { href: "/admin/varaukset/asetukset", requires: "reservations.manage" },
-  /*
-   * Varauslista on samaa lukuoikeutta kuin salinäkymä.
-   *
-   * Tarjoilija saa etsiä varauksen nimellä: se on juuri sitä salityötä
-   * jota varten lista tehtiin. Yhteystiedot karsii kanta roolin mukaan,
-   * ei tämä rivi.
-   */
-  { href: "/admin/varaukset/lista", requires: "reservations.view" },
-  /*
-   * Tuonti on esihenkilön työkalu ja kirjoittaa satoja varauksia.
-   */
-  { href: "/admin/varaukset/tuonti", requires: "reservations.manage" },
-  /*
-   * Analytiikka on esihenkilön näkymä, ei tarjoilijan.
-   *
-   * Peruutusaste ja vieraiden määrä ovat liiketoiminnan lukuja samaan
-   * tapaan kuin myynti; illan varauslista riittää vuoron tekemiseen.
-   * Sama raja on kannassa: reservation_stats vaatii is_manager. Jos
-   * tämä rivi puuttuisi, tarjoilija pääsisi sivulle ja saisi tyhjän
-   * virheen — portti näyttäisi olevan kannassa vahingossa.
-   */
-  { href: "/admin/varaukset/analytiikka", requires: "reservations.manage" },
-  /*
-   * Sosiaalisen median tili on omistajan asia.
-   *
-   * Yhdistäminen antaa Katelle oikeuden julkaista ravintolan nimissä,
-   * ja se on eri päätös kuin lounaslistan kirjoittaminen. Julkaisu
-   * itse vaatii lunch.manage, joka on myös vuoropäälliköllä.
-   */
-  { href: "/admin/asetukset/some", requires: "settings.edit" },
 ];
 
 /**
@@ -370,12 +263,11 @@ export const ROUTE_ACCESS: RouteAccess[] = [
 export const NAV_SECTIONS = [
   { id: "main", key: "sectionMain" },
   { id: "finance", key: "sectionFinance" },
-  { id: "staff", key: "sectionStaff" },
   /*
    * Ravintola ja Raportointi olivat kaksi omaa osastoaan, joissa
    * kummassakin oli yksi rivi. Yhden rivin osasto ei ryhmittele
    * mitään — se vain jakaa listan pienempiin paloihin. Nyt ne ovat
-   * yhtä: kaikki mikä ei ole rahaa eikä väkeä.
+   * yhtä: kaikki mikä ei ole rahaa.
    */
   { id: "restaurant", key: "sectionOther" },
 ] as const;
@@ -499,64 +391,17 @@ export const ADMIN_NAV: NavEntry[] = [
    * jonka määräaika lähestyy on juuri se vastaus, joten se kuuluu
    * valikkoon eikä asetusten taakse.
    *
-   * Vaatii tasks.manage eikä tasks.view: työntekijällä on tasks.view
-   * omia tehtäviään varten, mutta hänen näkymänsä on /app eikä
-   * hallinta. Ilman tätä eroa työntekijä ohjautuisi kirjautuessaan
-   * hallinnan tehtäväsivulle.
+   * Lukuoikeus riittää: henkilö jolle tehtävä on osoitettu näkee
+   * omansa täällä. Hallinnan toiminnot sivu näyttää vain esihenkilölle.
    */
   {
     href: "/admin/tehtavat",
     key: "tasks",
     icon: "check",
-    requires: "tasks.manage",
+    requires: "tasks.view",
     section: "main",
   },
 
-  {
-    href: "/admin/tyovuorot",
-    key: "shifts",
-    icon: "calendar",
-    requires: "shifts.view.all",
-    section: "staff",
-  },
-  {
-    href: "/admin/tyontekijat",
-    key: "staff",
-    icon: "staff",
-    requires: "staff.view",
-    section: "staff",
-  },
-  {
-    href: "/admin/palkat",
-    key: "payroll",
-    icon: "payroll",
-    requires: "payroll.view",
-    section: "staff",
-  },
-
-  /*
-   * Pöytävaraukset vaatii reservations.manage eikä .view.
-   *
-   * Sama syy kuin Tehtävissä: työntekijällä on reservations.view
-   * salivuoroa varten, mutta hänen näkymänsä on /app. Jos valikkokohta
-   * vaatisi vain lukuoikeutta, landingFor ohjaisi hänet kirjautuessaan
-   * hallinnan varaussivulle.
-   */
-  {
-    href: "/admin/varaukset",
-    key: "reservations",
-    icon: "tables",
-    requires: "reservations.manage",
-    section: "restaurant",
-  },
-
-  {
-    href: "/admin/lounas",
-    key: "lunch",
-    icon: "lunch",
-    requires: "lunch.view",
-    section: "restaurant",
-  },
   {
     href: "/admin/tiedostot",
     key: "files",
@@ -590,13 +435,6 @@ export const ADMIN_NAV: NavEntry[] = [
  */
 export const MORE_NAV: NavEntry[] = [
   {
-    href: "/admin/tyontekijat",
-    key: "staff",
-    icon: "staff",
-    requires: "staff.view",
-    section: "staff",
-  },
-  {
     href: "/admin/budjetit",
     key: "budgets",
     icon: "budget",
@@ -619,8 +457,7 @@ export function adminNavFor(role: Role): NavEntry[] {
 /**
  * Valikko osastoittain, tyhjät osastot pois.
  *
- * Kirjanpitäjä ei näe henkilöstöä lainkaan, joten HENKILÖSTÖ-otsikko
- * olisi hänelle tyhjä väliotsikko — otsikko ilman sisältöä lupaa
+ * Rooli näkee vain osan kohdista, ja tyhjä väliotsikko lupaisi
  * kohtia joita ei ole.
  */
 export function adminNavSectionsFor(
@@ -640,9 +477,8 @@ export function adminNavSectionsFor(
  *
  * Lueteltu nimeltä eikä otettu sivupalkin neljää ensimmäistä. Muuten
  * sivupalkkiin lisätty kohta työntäisi viimeisen ylivuotovalikkoon
- * hiljaa — niin kävi kun Budjetit lisättiin Kulut-kohdan perään ja
- * Työvuorot olisi tipahtanut pois. Puhelimessa vuorot ovat tärkeämmät
- * kuin budjetit, eikä sitä valintaa saa tehdä järjestysluku.
+ * hiljaa. Puhelimessa illan myynnin kirjaus on tärkeämpi kuin
+ * budjetit, eikä sitä valintaa saa tehdä järjestysluku.
  *
  * Neljä kohtaa, ei enempää: viides tekee kosketuskohteista liian
  * kapeita. Loput ovat Lisää-välilehdellä.
@@ -651,7 +487,7 @@ const PRIMARY_HREFS = [
   "/admin",
   "/admin/kuitit",
   "/admin/kulut",
-  "/admin/tyovuorot",
+  "/admin/myynti",
 ];
 
 export function primaryNavFor(role: Role): NavEntry[] {
@@ -692,9 +528,9 @@ export function capabilityForPath(path: string): Capability | null {
 /**
  * Mihin rooli ohjataan kun sillä ei ole pääsyä pyydettyyn näkymään.
  *
- * Ensimmäinen näkymä johon oikeus riittää. Työntekijällä ei ole yhtään,
- * joten hän päätyy omaan näkymäänsä.
+ * Ensimmäinen näkymä johon oikeus riittää. Jos yhtään ei ole,
+ * aloitussivu: sieltä voi liittyä ravintolaan tai kirjautua ulos.
  */
 export function landingFor(role: Role): string {
-  return adminNavFor(role)[0]?.href ?? "/app";
+  return adminNavFor(role)[0]?.href ?? "/aloitus";
 }

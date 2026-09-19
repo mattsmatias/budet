@@ -13,7 +13,6 @@
 
 import { cache } from "react";
 
-import type { PayComponent, TimeCorrection } from "./payroll";
 import type {
   PosMapping,
   PosVatRate,
@@ -24,21 +23,15 @@ import type { DailySales } from "./sales";
 import type { Task } from "./tasks";
 import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
-import type { AllergenType, DietType, LunchWeek } from "./lunch";
 import { createClient } from "@/utils/supabase/server";
 import type {
   MerchantCategory,
   CustomCategory,
-  Absence,
   Budget,
-  OpenShift,
-  ClockEvent,
   ExpenseCategory,
   Receipt,
   ReceiptItem,
   ReviewReason,
-  Shift,
-  StaffPosition,
   Supplier,
   User,
 } from "./types";
@@ -240,80 +233,33 @@ export async function fetchReceiptImageUrls(
 // ---------------------------------------------------------------------------
 
 /**
- * Ravintolan henkilöstö.
+ * Ravintolan aktiiviset käyttäjät.
  *
- * Palkka ei tule jäsenriviltä vaan erillisestä funktiosta. Sarakkeen
- * lukuoikeus on poistettu kannasta (migraatio 0028), koska rivikäytäntö
- * antoi jokaiselle jäsenelle koko henkilöstön palkat rajapinnan kautta.
- *
- * Jos kutsuja ei ole esihenkilö, funktio palauttaa tyhjän ja palkaksi
- * jää null. Se on sama arvo jonka tyyppi on aina sallinut, joten
- * kutsuva koodi käsittelee sen jo.
+ * Nimi ja rooli. Tehtävien vastuuhenkilöt, toimintaloki ja raporttien
+ * vastaanottajat tarvitsevat nämä — palkkatietoja Katessa ei ole, koska
+ * palkat maksetaan palkkapalvelussa.
  */
 export async function fetchUsers(restaurantId: string): Promise<User[]> {
   const supabase = await createClient();
 
-  const [members, rates] = await Promise.all([
-    supabase
-      .from("memberships")
-      .select("user_id, role, position, active, profiles ( full_name )")
-      .eq("restaurant_id", restaurantId)
-      .eq("active", true),
-    supabase.rpc("staff_pay_rates", { p_restaurant: restaurantId }),
-  ]);
+  const { data, error } = await supabase
+    .from("memberships")
+    .select("user_id, role, active, profiles ( full_name )")
+    .eq("restaurant_id", restaurantId)
+    .eq("active", true);
 
-  if (members.error || !members.data) return [];
+  if (error || !data) return [];
 
-  /*
-   * Palkkatiedot kokonaisina, ei pelkkänä tuntipalkkana.
-   *
-   * staff_pay_rates on palauttanut palkkatyypin ja kuukausipalkan
-   * alusta asti, mutta ne jätettiin lukematta. Kuukausipalkkaisen
-   * palkka laskettiin siksi tunneista — eli nollaksi, koska
-   * tuntipalkkaa ei ole.
-   */
-  const payByUser = new Map<
-    string,
-    {
-      hourlyRateCents: number | null;
-      monthlySalaryCents: number | null;
-      payType: User["payType"];
-    }
-  >(
-    (
-      (rates.data as
-        | {
-            user_id: string;
-            hourly_rate_cents: number | null;
-            monthly_salary_cents: number | null;
-            pay_type: User["payType"];
-          }[]
-        | null) ?? []
-    ).map((row) => [
-      row.user_id,
-      {
-        hourlyRateCents: row.hourly_rate_cents,
-        monthlySalaryCents: row.monthly_salary_cents,
-        payType: row.pay_type ?? "hourly",
-      },
-    ]),
-  );
-
-  return members.data.map((row) => {
+  return data.map((row) => {
     const name =
       (row.profiles as unknown as { full_name: string | null } | null)
         ?.full_name ?? "Nimetön";
-    const id = row.user_id as string;
 
     return {
-      id,
+      id: row.user_id as string,
       restaurantId,
       name,
       role: row.role as User["role"],
-      position: (row.position as User["position"]) ?? null,
-      hourlyRateCents: payByUser.get(id)?.hourlyRateCents ?? null,
-      monthlySalaryCents: payByUser.get(id)?.monthlySalaryCents ?? null,
-      payType: payByUser.get(id)?.payType ?? "hourly",
       initials: initialsOf(name),
       active: Boolean(row.active),
     };
@@ -394,158 +340,8 @@ export async function fetchBudgets(restaurantId: string): Promise<Budget[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Työvuorot
+// Kuukaudet ja kategoriat
 // ---------------------------------------------------------------------------
-
-export async function fetchShifts(
-  restaurantId: string,
-  fromDate?: string,
-): Promise<Shift[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("shifts")
-    .select(
-      "id, user_id, position, shift_date, start_time, end_time, location, status, previous_start_time, previous_end_time, break_minutes, note, published_at, cancelled_at, created_at",
-    )
-    .eq("restaurant_id", restaurantId)
-    .order("shift_date");
-
-  if (fromDate) query = query.gte("shift_date", fromDate);
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  return data
-    .filter((row) => row.user_id !== null)
-    .map((row) => ({
-      id: row.id as string,
-      restaurantId,
-      userId: row.user_id as string,
-      date: row.shift_date as string,
-      startTime: hhmm(row.start_time as string),
-      endTime: hhmm(row.end_time as string),
-      location: (row.location as string) ?? "",
-      status: row.status as Shift["status"],
-      previousStartTime: row.previous_start_time
-        ? hhmm(row.previous_start_time as string)
-        : undefined,
-      previousEndTime: row.previous_end_time
-        ? hhmm(row.previous_end_time as string)
-        : undefined,
-      breakMinutes: (row.break_minutes as number | null) ?? 0,
-      note: (row.note as string | null) ?? null,
-      publishedAt: (row.published_at as string | null) ?? null,
-      cancelledAt: (row.cancelled_at as string | null) ?? null,
-      createdAt: row.created_at as string,
-    }));
-}
-
-/** Avoimet vuorot — user_id on null. */
-export async function fetchOpenShifts(
-  restaurantId: string,
-  fromDate?: string,
-): Promise<OpenShift[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("shifts")
-    .select(
-      "id, position, shift_date, start_time, end_time, status, break_minutes, note, published_at, cancelled_at, created_at",
-    )
-    .eq("restaurant_id", restaurantId)
-    .is("user_id", null)
-    .order("shift_date");
-
-  if (fromDate) query = query.gte("shift_date", fromDate);
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    restaurantId,
-    date: row.shift_date as string,
-    startTime: hhmm(row.start_time as string),
-    endTime: hhmm(row.end_time as string),
-    position:
-      (row.position as "waiter" | "kitchen" | "manager" | "cleaning") ??
-      "waiter",
-    status: row.status as OpenShift["status"],
-    breakMinutes: (row.break_minutes as number | null) ?? 0,
-    note: (row.note as string | null) ?? null,
-    publishedAt: (row.published_at as string | null) ?? null,
-    cancelledAt: (row.cancelled_at as string | null) ?? null,
-    createdAt: row.created_at as string,
-  }));
-}
-
-/** Postgresin time palautuu muodossa "14:00:00". */
-function hhmm(value: string): string {
-  return value.slice(0, 5);
-}
-
-// ---------------------------------------------------------------------------
-// Työaika
-// ---------------------------------------------------------------------------
-
-export async function fetchClockEvents(
-  restaurantId: string,
-  fromIso?: string,
-): Promise<ClockEvent[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("clock_events")
-    .select("id, user_id, event_type, occurred_at")
-    .eq("restaurant_id", restaurantId)
-    .order("occurred_at");
-
-  if (fromIso) query = query.gte("occurred_at", fromIso);
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    type: row.event_type as ClockEvent["type"],
-    at: row.occurred_at as string,
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// Poissaolot
-// ---------------------------------------------------------------------------
-
-export async function fetchAbsences(
-  restaurantId: string,
-  fromDate?: string,
-): Promise<Absence[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("absences")
-    .select(
-      "id, user_id, absence_date, end_date, kind, note, created_at, certificate_seen_at",
-    )
-    .eq("restaurant_id", restaurantId)
-    .order("absence_date", { ascending: false });
-
-  // Rajaus loppupäivään eikä alkuun: eilen alkanut sairausloma on yhä
-  // voimassa tänään, ja alkupäivään rajaus pudottaisi sen listalta.
-  if (fromDate) query = query.gte("end_date", fromDate);
-
-  const { data, error } = await query;
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    date: row.absence_date as string,
-    endDate: (row.end_date as string) ?? (row.absence_date as string),
-    kind: row.kind as Absence["kind"],
-    note: (row.note as string | null) ?? null,
-    reportedAt: row.created_at as string,
-    certificateSeenAt: (row.certificate_seen_at as string | null) ?? null,
-  }));
-}
 
 /**
  * Suljetut kuukaudet muodossa "2026-07".
@@ -655,178 +451,11 @@ export async function fetchMerchantCategories(): Promise<MerchantCategory[]> {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Lounas
-// ---------------------------------------------------------------------------
-//
-// Nämä eivät ole fetchRestaurantDatassa. Se paketti ladataan jokaisella
-// hallintasivulla, ja lounasviikko kiinnostaa vain yhtä sivua — mukaan
-// otettuna se hidastaisi kaikkia muita.
-
-/** Yhden viikon lounaslista päivineen, hintoineen ja ruokineen. */
-export async function fetchLunchWeek(
-  restaurantId: string,
-  weekStart: string,
-): Promise<LunchWeek | null> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("lunch_menus")
-    .select(
-      "id, week_start, week_end, status, published_at, content_updated_at, includes_dessert, includes_coffee, lunch_prices ( id, name, price_cents, sort_order ), lunch_days ( id, date, lunch_items ( id, name, description, sort_order, lunch_item_diets ( diet_type ), lunch_item_allergens ( allergen_type ) ) )",
-    )
-    .eq("restaurant_id", restaurantId)
-    .eq("week_start", weekStart)
-    .maybeSingle();
-
-  if (error || !data) return null;
-
-  const days = ((data.lunch_days as unknown as LunchDayRow[]) ?? [])
-    .map((day) => ({
-      id: day.id,
-      date: day.date,
-      items: (day.lunch_items ?? [])
-        .map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description ?? null,
-          sortOrder: item.sort_order,
-          diets: (item.lunch_item_diets ?? []).map((d) => d.diet_type),
-          allergens: (item.lunch_item_allergens ?? []).map(
-            (a) => a.allergen_type,
-          ),
-        }))
-        .sort((a, b) => a.sortOrder - b.sortOrder),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  const prices = (
-    (data.lunch_prices as unknown as {
-      id: string;
-      name: string;
-      price_cents: number;
-      sort_order: number;
-    }[]) ?? []
-  )
-    .map((price) => ({
-      id: price.id,
-      name: price.name,
-      cents: price.price_cents,
-      sortOrder: price.sort_order,
-    }))
-    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
-
-  return {
-    id: data.id as string,
-    weekStart: data.week_start as string,
-    weekEnd: data.week_end as string,
-    prices,
-    includesDessert: Boolean(data.includes_dessert),
-    includesCoffee: Boolean(data.includes_coffee),
-    status: data.status as LunchWeek["status"],
-    publishedAt: (data.published_at as string | null) ?? null,
-    contentUpdatedAt: data.content_updated_at as string,
-    days,
-  };
-}
-
-interface LunchDayRow {
-  id: string;
-  date: string;
-  lunch_items:
-    | {
-        id: string;
-        name: string;
-        description: string | null;
-        sort_order: number;
-        lunch_item_diets: { diet_type: string }[] | null;
-        lunch_item_allergens: { allergen_type: string }[] | null;
-      }[]
-    | null;
-}
-
-export interface LunchWeekSummary {
-  id: string;
-  weekStart: string;
-  weekEnd: string;
-  status: LunchWeek["status"];
-  publishedAt: string | null;
-  itemCount: number;
-}
-
-/** Aiemmat viikot historialistaa varten, uusin ensin. */
-export async function fetchLunchHistory(
-  restaurantId: string,
-  limit = 12,
-): Promise<LunchWeekSummary[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("lunch_menus")
-    .select(
-      "id, week_start, week_end, status, published_at, lunch_days ( lunch_items ( id ) )",
-    )
-    .eq("restaurant_id", restaurantId)
-    .order("week_start", { ascending: false })
-    .limit(limit);
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    weekStart: row.week_start as string,
-    weekEnd: row.week_end as string,
-    status: row.status as LunchWeek["status"],
-    publishedAt: (row.published_at as string | null) ?? null,
-    itemCount: (
-      (row.lunch_days as unknown as { lunch_items: unknown[] | null }[]) ?? []
-    ).reduce((sum, day) => sum + (day.lunch_items?.length ?? 0), 0),
-  }));
-}
-
-/** Ruokavaliot ja allergeenit. Sanastot kannassa, ei koodissa. */
-export async function fetchDietTypes(): Promise<DietType[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("diet_types")
-    .select("id, label, short_label")
-    .order("sort_order");
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    label: row.label as string,
-    shortLabel: row.short_label as string,
-  }));
-}
-
-export async function fetchAllergenTypes(): Promise<AllergenType[]> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("allergen_types")
-    .select("id, label")
-    .order("sort_order");
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    label: row.label as string,
-  }));
-}
-
 export interface RestaurantData {
   receipts: Receipt[];
-  openShifts: OpenShift[];
   users: User[];
   suppliers: Supplier[];
   budgets: Budget[];
-  shifts: Shift[];
-  clockEvents: ClockEvent[];
-  absences: Absence[];
   /** Kuukaudet jotka on lukittu kirjanpitoon, uusin ensin. */
   closedMonths: string[];
   /** Ravintolan omat kulukategoriat. */
@@ -850,34 +479,6 @@ export interface RestaurantData {
 }
 
 /**
- * Kaikki mitä hallintanäkymä tarvitsee, yhdellä kierroksella.
- *
- * Rinnakkain: kyselyt eivät riipu toisistaan, ja peräkkäin ajettuna
- * sivunlataus kestäisi yhdeksän kyselyn verran.
- */
-/**
- * Kuinka kauas taaksepäin jaettu aineisto ulottuu.
- *
- * Kolmetoista kuukautta on sama ikkuna kuin yläpalkin
- * kuukausivalitsimessa: kaikki mihin näkymistä pääsee, mutta ei
- * enempää. Ilman rajaa leimaukset ja vuorot ladattiin ensimmäisestä
- * päivästä lähtien jokaisella sivunlatauksella — vuoden päästä se on
- * kymmeniä tuhansia rivejä joita yksikään näkymä ei lue.
- *
- * Rajaus on tässä eikä kutsupaikoissa, koska jaettu aineisto on yksi
- * asia: kaksi eri ikkunaa samalle taululle tarkoittaisi kahta eri
- * käsitystä siitä mitä "kaikki vuorot" tarkoittaa.
- */
-const SHARED_WINDOW_MONTHS = 13;
-
-function sharedWindowStart(): string {
-  const start = new Date();
-  start.setUTCMonth(start.getUTCMonth() - SHARED_WINDOW_MONTHS, 1);
-  start.setUTCHours(0, 0, 0, 0);
-  return start.toISOString();
-}
-
-/**
  * Koko ravintolan aineisto yhdellä kutsulla.
  *
  * YKSI HAKU PYYNTÖÄ KOHTI.
@@ -895,18 +496,11 @@ export const fetchRestaurantData = cache(loadRestaurantData);
 async function loadRestaurantData(
   restaurantId: string,
 ): Promise<RestaurantData> {
-  const since = sharedWindowStart();
-  const sinceDate = since.slice(0, 10);
-
   const [
     receipts,
     users,
     suppliers,
     budgets,
-    shifts,
-    openShifts,
-    clockEvents,
-    absences,
     closedMonths,
     categories,
     merchants,
@@ -920,10 +514,6 @@ async function loadRestaurantData(
     fetchUsers(restaurantId),
     fetchSuppliers(restaurantId),
     fetchBudgets(restaurantId),
-    fetchShifts(restaurantId, sinceDate),
-    fetchOpenShifts(restaurantId),
-    fetchClockEvents(restaurantId, since),
-    fetchAbsences(restaurantId),
     fetchClosedMonths(restaurantId),
     fetchExpenseCategories(restaurantId),
     fetchMerchants(),
@@ -939,10 +529,6 @@ async function loadRestaurantData(
     users,
     suppliers,
     budgets,
-    shifts,
-    openShifts,
-    clockEvents,
-    absences,
     closedMonths,
     categories,
     merchants,
@@ -963,8 +549,6 @@ export interface Invitation {
   /** Koodin neljä viimeistä merkkiä. Koko koodia ei voi hakea. */
   codeHint: string;
   role: User["role"];
-  position: User["position"];
-  hourlyRateCents: number | null;
   label: string | null;
   expiresAt: string;
   createdAt: string;
@@ -978,7 +562,7 @@ export async function fetchInvitations(
   const { data, error } = await supabase
     .from("restaurant_invitations")
     .select(
-      "id, code_hint, role, position, hourly_rate_cents, label, expires_at, created_at",
+      "id, code_hint, role, label, expires_at, created_at",
     )
     .eq("restaurant_id", restaurantId)
     .is("accepted_at", null)
@@ -991,351 +575,10 @@ export async function fetchInvitations(
     id: row.id as string,
     codeHint: row.code_hint as string,
     role: row.role as User["role"],
-    position: (row.position as User["position"]) ?? null,
-    hourlyRateCents: (row.hourly_rate_cents as number | null) ?? null,
     label: (row.label as string | null) ?? null,
     expiresAt: row.expires_at as string,
     createdAt: row.created_at as string,
   }));
-}
-
-// ---------------------------------------------------------------------------
-// Palkat
-// ---------------------------------------------------------------------------
-//
-// Nämä eivät ole fetchRestaurantDatassa. Se paketti ladataan jokaisella
-// hallintasivulla, ja palkkatietoja tarvitsee vain Palkat-sivu.
-
-export async function fetchPayComponents(
-  restaurantId: string,
-): Promise<PayComponent[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("pay_components")
-    .select(
-      "id, name, code, unit, value, weekdays, from_minute, to_minute, stackable, valid_from, valid_to, active",
-    )
-    .eq("restaurant_id", restaurantId)
-    .order("name");
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    name: row.name as string,
-    code: row.code as string,
-    unit: row.unit as PayComponent["unit"],
-    // numeric tulee merkkijonona: Number() ennen laskentaa.
-    value: Number(row.value),
-    weekdays: (row.weekdays as number[] | null) ?? [],
-    fromMinute: (row.from_minute as number | null) ?? null,
-    toMinute: (row.to_minute as number | null) ?? null,
-    stackable: Boolean(row.stackable),
-    validFrom: row.valid_from as string,
-    validTo: (row.valid_to as string | null) ?? null,
-    active: Boolean(row.active),
-  }));
-}
-
-export interface PayPeriod {
-  id: string;
-  startsOn: string;
-  endsOn: string;
-  status: "open" | "review" | "approved" | "paid";
-  approvedAt: string | null;
-  paidAt: string | null;
-
-  /**
-   * Palkan maksupäivä.
-   *
-   * Eri asia kuin kauden alku ja loppu: kausi kertoo miltä ajalta
-   * palkka on, maksupäivä milloin raha liikkuu. Maksupäivä ratkaisee
-   * verokortin ja verovuoden, eikä se ole pääteltävissä kauden
-   * lopusta — palkka maksetaan usein vasta seuraavassa kuussa.
-   */
-  payDate: string | null;
-}
-
-export async function fetchPayPeriods(
-  restaurantId: string,
-): Promise<PayPeriod[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("pay_periods")
-    .select("id, starts_on, ends_on, status, approved_at, paid_at, pay_date")
-    .eq("restaurant_id", restaurantId)
-    .order("starts_on", { ascending: false })
-    .limit(24);
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    startsOn: row.starts_on as string,
-    endsOn: row.ends_on as string,
-    status: row.status as PayPeriod["status"],
-    payDate: row.pay_date,
-    approvedAt: (row.approved_at as string | null) ?? null,
-    paidAt: (row.paid_at as string | null) ?? null,
-  }));
-}
-
-/** Korjaukset aikaväliltä. Palkkalaskenta tarvitsee vain kauden omat. */
-export async function fetchTimeCorrections(
-  restaurantId: string,
-  fromDate: string,
-  toDate: string,
-): Promise<TimeCorrection[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("time_corrections")
-    .select(
-      "id, user_id, work_date, corrected_in, corrected_out, corrected_break_minutes, reason",
-    )
-    .eq("restaurant_id", restaurantId)
-    .gte("work_date", fromDate)
-    .lte("work_date", toDate);
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    workDate: row.work_date as string,
-    correctedIn: row.corrected_in as string,
-    correctedOut: row.corrected_out as string,
-    correctedBreakMinutes: (row.corrected_break_minutes as number | null) ?? 0,
-    reason: row.reason as string,
-  }));
-}
-
-/** Yhden korjauksen koko tarina, tarkastusnäkymään. */
-export interface CorrectionRecord extends TimeCorrection {
-  originalIn: string | null;
-  originalOut: string | null;
-  createdBy: string;
-  createdAt: string;
-}
-
-export async function fetchCorrectionHistory(
-  restaurantId: string,
-  fromDate: string,
-  toDate: string,
-): Promise<CorrectionRecord[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("time_corrections")
-    .select(
-      "id, user_id, work_date, original_in, original_out, corrected_in, corrected_out, corrected_break_minutes, reason, created_by, created_at",
-    )
-    .eq("restaurant_id", restaurantId)
-    .gte("work_date", fromDate)
-    .lte("work_date", toDate)
-    .order("created_at", { ascending: false });
-
-  if (error || !data) return [];
-
-  return data.map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    workDate: row.work_date as string,
-    originalIn: (row.original_in as string | null) ?? null,
-    originalOut: (row.original_out as string | null) ?? null,
-    correctedIn: row.corrected_in as string,
-    correctedOut: row.corrected_out as string,
-    correctedBreakMinutes: (row.corrected_break_minutes as number | null) ?? 0,
-    reason: row.reason as string,
-    createdBy: row.created_by as string,
-    createdAt: row.created_at as string,
-  }));
-}
-
-export interface StoredPayslip {
-  id: string;
-  userId: string;
-  status: "draft" | "review" | "approved" | "paid" | "cancelled";
-  workedMinutes: number;
-  baseCents: number;
-  supplementsCents: number;
-  grossCents: number;
-  sourceFingerprint: string;
-  approvedAt: string | null;
-
-  /**
-   * Jäädytetty verotus.
-   *
-   * Nämä ovat ne luvut jotka laskelmalle tallennettiin hyväksymisen
-   * hetkellä. Niitä ei lasketa uudelleen luettaessa: sääntöjen
-   * muuttuminen ei saa muuttaa jo maksettua palkkaa.
-   *
-   * Luonnoksella nämä ovat nollia, koska laskelmaa ei ole vielä
-   * tehty. Näkymä laskee silloin ennusteen erikseen.
-   */
-  benefitsCents: number;
-  taxableCents: number;
-  withholdingCents: number;
-  employeePensionCents: number;
-  employeeUnemploymentCents: number;
-  netCents: number;
-  employerPensionCents: number;
-  employerHealthCents: number;
-  employerUnemploymentCents: number;
-  employerAccidentCents: number;
-  employerGroupLifeCents: number;
-
-  noTaxCard: boolean;
-  payDate: string | null;
-  taxBasePercentUsed: number | null;
-  employeePensionRateUsed: number | null;
-  employeeUnemploymentRateUsed: number | null;
-  employerPensionRateUsed: number | null;
-  employerHealthRateUsed: number | null;
-  employerUnemploymentRateUsed: number | null;
-  employerAccidentRateUsed: number | null;
-  employerGroupLifeRateUsed: number | null;
-}
-
-export async function fetchPayslips(
-  periodId: string,
-): Promise<StoredPayslip[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("payslips")
-    .select(
-      "id, user_id, status, worked_minutes, base_cents, supplements_cents, " +
-        "gross_cents, source_fingerprint, approved_at, pay_date, " +
-        "benefits_cents, taxable_cents, withholding_cents, net_cents, " +
-        "employee_pension_cents, employee_unemployment_cents, " +
-        "employer_pension_cents, employer_health_cents, " +
-        "employer_unemployment_cents, employer_accident_cents, " +
-        "employer_group_life_cents, no_tax_card, tax_base_percent_used, " +
-        "employee_pension_rate_used, employee_unemployment_rate_used, " +
-        "employer_pension_rate_used, employer_health_rate_used, " +
-        "employer_unemployment_rate_used, employer_accident_rate_used, " +
-        "employer_group_life_rate_used",
-    )
-    .eq("pay_period_id", periodId);
-
-  if (error || !data) return [];
-
-  /*
-   * Sarakelista on koottu paloista, eikä tyyppipäättely seuraa sitä.
-   * Muunnos on käsin tehty joka tapauksessa, joten rivi luetaan
-   * avainten kautta.
-   */
-  return (data as unknown as Record<string, unknown>[]).map((row) => ({
-    id: row.id as string,
-    userId: row.user_id as string,
-    status: row.status as StoredPayslip["status"],
-    workedMinutes: (row.worked_minutes as number | null) ?? 0,
-    baseCents: (row.base_cents as number | null) ?? 0,
-    supplementsCents: (row.supplements_cents as number | null) ?? 0,
-    grossCents: (row.gross_cents as number | null) ?? 0,
-    sourceFingerprint: (row.source_fingerprint as string | null) ?? "",
-    approvedAt: (row.approved_at as string | null) ?? null,
-
-    benefitsCents: (row.benefits_cents as number | null) ?? 0,
-    taxableCents: (row.taxable_cents as number | null) ?? 0,
-    withholdingCents: (row.withholding_cents as number | null) ?? 0,
-    employeePensionCents: (row.employee_pension_cents as number | null) ?? 0,
-    employeeUnemploymentCents:
-      (row.employee_unemployment_cents as number | null) ?? 0,
-    netCents: (row.net_cents as number | null) ?? 0,
-    employerPensionCents: (row.employer_pension_cents as number | null) ?? 0,
-    employerHealthCents: (row.employer_health_cents as number | null) ?? 0,
-    employerUnemploymentCents:
-      (row.employer_unemployment_cents as number | null) ?? 0,
-    employerAccidentCents: (row.employer_accident_cents as number | null) ?? 0,
-    employerGroupLifeCents:
-      (row.employer_group_life_cents as number | null) ?? 0,
-
-    noTaxCard: Boolean(row.no_tax_card),
-    payDate: (row.pay_date as string | null) ?? null,
-
-    /* numeric tulee merkkijonona, ja Number(null) olisi nolla. */
-    taxBasePercentUsed: num(row.tax_base_percent_used),
-    employeePensionRateUsed: num(row.employee_pension_rate_used),
-    employeeUnemploymentRateUsed: num(row.employee_unemployment_rate_used),
-    employerPensionRateUsed: num(row.employer_pension_rate_used),
-    employerHealthRateUsed: num(row.employer_health_rate_used),
-    employerUnemploymentRateUsed: num(row.employer_unemployment_rate_used),
-    employerAccidentRateUsed: num(row.employer_accident_rate_used),
-    employerGroupLifeRateUsed: num(row.employer_group_life_rate_used),
-  }));
-}
-
-/**
- * numeric merkkijonosta luvuksi, null nullina.
- *
- * PostgREST palauttaa numeric-sarakkeet merkkijonoina. Number(null)
- * on nolla, ja nolla prosenttia on eri väite kuin "prosenttia ei ole
- * tallennettu".
- */
-function num(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  const luku = Number(value);
-  return Number.isFinite(luku) ? luku : null;
-}
-
-// ---------------------------------------------------------------------------
-// Työyhteisö
-// ---------------------------------------------------------------------------
-
-export interface Colleague {
-  id: string;
-  name: string;
-  initials: string;
-  /** Työtehtävä, ei käyttöoikeusrooli. Null jos tehtävää ei ole merkitty. */
-  position: StaffPosition | null;
-  avatarUrl: string | null;
-  /** Päivä ja kuukausi. Vuotta ei ole kannassa. */
-  birthDay: number | null;
-  birthMonth: number | null;
-}
-
-/**
- * Oman ravintolan aktiiviset työntekijät.
- *
- * Ei palkkoja eikä yhteystietoja: nimi, tehtävä, kuva ja syntymäpäivä.
- * Rajaus toiseen ravintolaan ei ole tämän kyselyn varassa vaan RLS:n:
- * profiles_read vaatii yhteisen jäsenyyden.
- */
-export async function fetchColleagues(
-  restaurantId: string,
-): Promise<Colleague[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("memberships")
-    .select(
-      "user_id, position, profiles ( full_name, avatar_url, birth_day, birth_month )",
-    )
-    .eq("restaurant_id", restaurantId)
-    .eq("active", true);
-
-  if (error || !data) return [];
-
-  return data
-    .map((row) => {
-      const profile = row.profiles as unknown as {
-        full_name: string | null;
-        avatar_url: string | null;
-        birth_day: number | null;
-        birth_month: number | null;
-      } | null;
-
-      const name = profile?.full_name ?? "Nimetön";
-
-      return {
-        id: row.user_id as string,
-        name,
-        initials: initialsOf(name),
-        position: (row.position as StaffPosition | null) ?? null,
-        avatarUrl: profile?.avatar_url ?? null,
-        birthDay: profile?.birth_day ?? null,
-        birthMonth: profile?.birth_month ?? null,
-      };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name, "fi"));
 }
 
 // ---------------------------------------------------------------------------

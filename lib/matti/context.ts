@@ -1,8 +1,7 @@
 import { requireContext } from "@/lib/restoflow/session";
-import { fetchLunchWeek, fetchRestaurantData } from "@/lib/restoflow/queries";
-import { monthIn, nowIso, todayIn } from "@/lib/restoflow/clock-context";
+import { fetchRestaurantData } from "@/lib/restoflow/queries";
+import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
 import type { RestaurantData } from "@/lib/restoflow/queries";
-import type { LunchWeek } from "@/lib/restoflow/lunch";
 import type { Role } from "@/lib/restoflow/types";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -28,7 +27,7 @@ export interface MattiContext {
   month: string;
   /** Kuluva päivä "2026-08-23". */
   today: string;
-  /** Nykyhetki ISO-muodossa. Kesken oleva vuoro tarvitsee sen. */
+  /** Nykyhetki ISO-muodossa. */
   now: string;
   /** Ravintolan aikavyöhyke. Päivä luetaan aina siinä ajassa. */
   timezone: string;
@@ -42,8 +41,6 @@ export interface MattiContext {
    */
   locale: AppLocale;
   data: RestaurantData;
-  /** Lounasviikko haetaan erikseen: sitä ei tarvita joka kysymykseen. */
-  lunchWeek: (weekStart: string) => Promise<LunchWeek | null>;
 }
 
 export async function mattiContext(
@@ -52,8 +49,6 @@ export async function mattiContext(
   const ctx = await requireContext("/admin");
 
   const data = await fetchRestaurantData(ctx.restaurant.id);
-
-  const weekCache = new Map<string, Promise<LunchWeek | null>>();
 
   return {
     restaurantId: ctx.restaurant.id,
@@ -68,13 +63,5 @@ export async function mattiContext(
     // Kieli ratkaistaan samalla ketjulla kuin muualla sovelluksessa.
     locale: await resolveLocale(),
     data,
-    lunchWeek(weekStart) {
-      const existing = weekCache.get(weekStart);
-      if (existing) return existing;
-
-      const promise = fetchLunchWeek(ctx.restaurant.id, weekStart);
-      weekCache.set(weekStart, promise);
-      return promise;
-    },
   };
 }

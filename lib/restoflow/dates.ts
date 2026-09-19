@@ -150,10 +150,10 @@ export function startOfDayIso(isoDate: string, timezone: string): string {
  *
  * EI KORVAA VANHOJA KOPIOITA.
  *
- * Sama kuvio on kirjoitettu erikseen Kuluilla, Palkoilla,
+ * Sama kuvio on kirjoitettu erikseen Kuluilla,
  * Raportoinnissa ja neljällä muulla sivulla. Niitä ei ole yhdistetty
  * tähän kahdesta syystä: osa rajaa tulevaisuuden pois ja osa ei —
- * työvuorokalenteri katsoo tarkoituksella eteenpäin — ja kaikissa
+ * tehtäväkalenteri katsoo tarkoituksella eteenpäin — ja kaikissa
  * seitsemässä paikallinen muuttuja on jo nimeltään viewMonth, joten
  * tuonti varjostaisi sen.
  *

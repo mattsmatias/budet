@@ -6,13 +6,13 @@
  *              → Supplier
  *              → Receipt → ReceiptItem
  *              → Budget
- *              → Shift ⇄ TimeEntry
+ *              → DailySales (sales.ts)
+ *              → Task (tasks.ts)
  *              → Notification (johdettu, ei tallennettu)
  *
- * Rajaus on tarkoituksellinen: kuitit, kulut, työvuorot ja työaika. Ei
- * myyntiä, ei kassaa, ei pankkiyhteyttä, ei varastoa. Tietomallissa ei ole
- * kenttää liikevaihdolle, jotta käyttöliittymä ei voi vahingossa esittää
- * kulutietoja ravintolan tuloksena.
+ * Rajaus on tarkoituksellinen: paljonko rahaa tuli, mihin se meni ja
+ * miten se jakautui. Ei pankkiyhteyttä, ei varastoa, ei työvuoroja eikä
+ * palkanlaskentaa — palkkakulu kirjataan kuluna Henkilöstö-kategoriaan.
  *
  * Rahamäärät ovat AINA sentteinä kokonaislukuina. Liukuluku ei kelpaa
  * rahaan: 0.1 + 0.2 ei ole 0.3.
@@ -25,7 +25,7 @@
 export interface Restaurant {
   id: string;
   name: string;
-  /** IANA-vyöhyke. Työaika lasketaan tässä ajassa. */
+  /** IANA-vyöhyke. Päivät ja kuukaudet lasketaan tässä ajassa. */
   timezone: string;
   currency: "EUR";
 }
@@ -34,34 +34,17 @@ export interface Restaurant {
  * Roolit.
  *
  * Owner ja manager eroavat vain siinä että owner voi hallita käyttäjiä ja
- * budjetteja. Accountant on lukuoikeus talouteen ilman henkilöstön
- * yksityiskohtia. Employee näkee vain omansa.
+ * budjetteja. Accountant on lukuoikeus talouteen. Employee näkee vain
+ * hänelle osoitetut tehtävät — kutsuissa tätä roolia ei enää tarjota,
+ * mutta arvo on kannan enum-tyypissä ja voi esiintyä vanhassa datassa.
  */
 export type Role = "owner" | "manager" | "employee" | "accountant";
-
-export type StaffPosition = "waiter" | "kitchen" | "manager" | "cleaning";
 
 export interface User {
   id: string;
   restaurantId: string;
   name: string;
   role: Role;
-  position: StaffPosition | null;
-  /** Tuntipalkka sentteinä. Null kirjanpitäjälle. */
-  hourlyRateCents: number | null;
-
-  /**
-   * Tunti- vai kuukausipalkka.
-   *
-   * Ravintolassa on molempia: keittiöpäällikkö kuukausipalkalla ja
-   * tarjoilijat tunneittain. Palkkatyypin puuttuminen tarkoitti että
-   * kuukausipalkkaisen palkka laskettiin tunneista — eli useimmiten
-   * nollaksi.
-   */
-  payType: "hourly" | "monthly";
-
-  /** Kuukausipalkka sentteinä. Null tuntipalkkaisella. */
-  monthlySalaryCents: number | null;
   initials: string;
   active: boolean;
 }
@@ -319,123 +302,6 @@ export interface Budget {
 export type BudgetStatus = "ok" | "warning" | "exceeded" | "none";
 
 // ---------------------------------------------------------------------------
-// Työvuorot ja työaika
-// ---------------------------------------------------------------------------
-
-export type ShiftStatus =
-  "draft" | "pending" | "accepted" | "declined" | "changed";
-
-export interface Shift {
-  id: string;
-  restaurantId: string;
-  userId: string;
-  date: string;
-  /** "14:00" */
-  startTime: string;
-  endTime: string;
-  location: string;
-  status: ShiftStatus;
-  previousStartTime?: string;
-  previousEndTime?: string;
-
-  /**
-   * Suunniteltu tauko minuutteina.
-   *
-   * Vähennetään suunnitellusta työajasta. Erillään alku- ja
-   * loppuajasta: tauko ei ole vuoron reunoilla vaan sen sisällä.
-   */
-  breakMinutes: number;
-
-  /** Vapaa lisätieto: "avaus", "tilaisuus salissa". */
-  note: string | null;
-
-  /**
-   * Milloin vuoro kirjattiin.
-   *
-   * JÄLKIKÄTEEN LISÄTTY VUORO EI VOI ODOTTAA LEIMAUSTA.
-   *
-   * Kuukauden vuorot lisätään usein jälkikäteen: kirjanpitoa varten,
-   * tai kun suunnittelu otetaan käyttöön kesken kuun. Sellaiseen
-   * vuoroon ei ole voinut leimata sisään, koska sitä ei ollut
-   * olemassa silloin kun työ olisi tehty.
-   */
-  createdAt: string;
-
-  /**
-   * Milloin vuoro tuli työntekijän näkyviin. Null = luonnos.
-   *
-   * Julkaisu on eri akseli kuin status. Status on työntekijän vastaus
-   * vuoroon; tämä on työnantajan lupaus siitä että vuoro on voimassa.
-   */
-  publishedAt: string | null;
-
-  /** Milloin vuoro peruttiin. Peruttu vuoro säilyy, jottei se katoa jäljettömiin. */
-  cancelledAt: string | null;
-}
-
-export interface OpenShift {
-  id: string;
-  restaurantId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  position: StaffPosition;
-
-  /*
-   * Avoin vuoro on vuoro.
-   *
-   * Se elää samaa elinkaarta kuin nimetty vuoro: luonnos, julkaistu,
-   * peruttu. Ilman näitä kenttiä julkaisematon avoin vuoro olisi
-   * tarjolla työntekijöille ja peruttu jäisi listalle — kumpikin
-   * lupaus jota ei ole tarkoitettu.
-   */
-  status: ShiftStatus;
-  breakMinutes: number;
-  note: string | null;
-  publishedAt: string | null;
-  cancelledAt: string | null;
-  createdAt: string;
-}
-
-export type ClockEventType = "in" | "break_start" | "break_end" | "out";
-
-/** Yksittäinen leimaus. Työaika johdetaan näistä, ei tallenneta erikseen. */
-export interface ClockEvent {
-  id: string;
-  userId: string;
-  type: ClockEventType;
-  at: string;
-}
-
-export type ClockState = "off" | "working" | "on_break";
-
-// ---------------------------------------------------------------------------
-// Poissaolot
-// ---------------------------------------------------------------------------
-
-export type AbsenceKind = "sick" | "other" | "cannot_attend";
-
-export interface Absence {
-  id: string;
-  userId: string;
-  /** Jakson ensimmäinen päivä. */
-  date: string;
-  /** Jakson viimeinen päivä. Yhden päivän poissaolossa sama kuin date. */
-  endDate: string;
-  kind: AbsenceKind;
-  note: string | null;
-  reportedAt: string;
-  /**
-   * Milloin esihenkilö kuittasi nähneensä todistuksen, tai null.
-   *
-   * Todistusta itseään ei tallenneta. Lääkärintodistus on terveystieto
-   * ja siinä lukee usein diagnoosi; työnantajalle kuuluu tieto
-   * poissaolosta ja sen kestosta, ei sen syystä.
-   */
-  certificateSeenAt: string | null;
-}
-
-// ---------------------------------------------------------------------------
 // Ilmoitukset ja poikkeamat
 // ---------------------------------------------------------------------------
 
@@ -449,14 +315,6 @@ export type AlertKind =
   | "receipt_needs_review"
   | "missing_payment_method"
   | "vat_mismatch"
-  | "unclosed_shift"
-  | "absence_reported"
-  | "open_shift"
-  | "shift_variance"
-  // Toiminnalliset poikkeamat: mitä juuri nyt on menossa pieleen.
-  | "late_clock_in"
-  | "shift_overrun"
-  | "unassigned_shift"
   | "sales_shortfall"
   | "receipt_gap"
   // Määräaika: tehtävä joka erääntyy tänään tai on jo myöhässä.

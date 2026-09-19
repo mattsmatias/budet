@@ -45,13 +45,11 @@ async function lookup(code: string): Promise<InvitePreview | null> {
   const row = data[0] as {
     restaurant_name: string;
     role: string;
-    position: string | null;
   };
 
   return {
     restaurantName: row.restaurant_name,
     role: row.role,
-    position: row.position,
   };
 }
 

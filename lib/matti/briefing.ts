@@ -14,7 +14,7 @@
  * puuttuva, koska sen perusteella tehdään päätöksiä.
  */
 
-import type { Alert, Receipt, Shift } from "@/lib/restoflow/types";
+import type { Alert, Receipt } from "@/lib/restoflow/types";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import type { DailySales } from "@/lib/restoflow/sales";
@@ -164,50 +164,6 @@ export function salesObservation(
   };
 }
 
-/** Työvuorot: ensi viikko vs. neljän edellisen viikon keskiarvo. */
-export function shiftObservation(
-  shifts: Shift[],
-  today: string,
-  t: AdminText,
-): Observation | null {
-  const alku = addDays(today, 7);
-  const loppu = addDays(today, 14);
-  const ensiViikko = countBetween(shifts, alku, loppu);
-
-  const viikot: number[] = [];
-  for (let i = 1; i <= 4; i++) {
-    const a = addDays(today, -7 * i);
-    const b = addDays(today, -7 * (i - 1));
-    const n = countBetween(shifts, a, b);
-    if (n === 0) return null;
-    viikot.push(n);
-  }
-
-  const keskiarvo = viikot.reduce((a, b) => a + b, 0) / viikot.length;
-  const erotus = ensiViikko - keskiarvo;
-
-  /*
-   * Kynnys on vuoroina eikä prosentteina.
-   *
-   * Pienessä ravintolassa yksi vuoro on kymmenen prosenttia, ja
-   * prosenttikynnys nostaisi joka viikko havainnon jota ei ole.
-   */
-  if (Math.abs(erotus) < 2) return null;
-
-  const maara = Math.round(Math.abs(erotus));
-
-  return {
-    id: "vuorot-ensi-viikko",
-    text:
-      erotus > 0
-        ? fill(t.brief.shiftsMore, { maara: String(maara) })
-        : fill(t.brief.shiftsFewer, { maara: String(maara) }),
-    href: "/admin/tyovuorot",
-    linkLabel: t.brief.checkShifts,
-    tone: "warn",
-  };
-}
-
 // ---------------------------------------------------------------------------
 
 /**
@@ -221,14 +177,12 @@ export function buildBriefing({
   alerts,
   receipts,
   sales,
-  shifts,
   today,
   t,
 }: {
   alerts: Alert[];
   receipts: Receipt[];
   sales: DailySales[];
-  shifts: Shift[];
   today: string;
   /** Hallinnan tekstit: havainnot kirjoitetaan niillä. */
   t: AdminText;
@@ -236,7 +190,6 @@ export function buildBriefing({
   const observations = [
     expenseObservation(receipts, today, t),
     salesObservation(sales, today, t),
-    shiftObservation(shifts, today, t),
   ].filter((o): o is Observation => o !== null);
 
   return {

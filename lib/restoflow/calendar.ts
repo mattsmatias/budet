@@ -12,7 +12,6 @@
  * täynnä". Numero on siksi rivin alussa eikä koristeena.
  */
 
-import type { Shift } from "./types";
 
 export interface CalendarDay {
   date: string;
@@ -107,21 +106,4 @@ export function monthCalendar(month: string, today: string): CalendarWeek[] {
   }
 
   return weeks;
-}
-
-/**
- * Päivän vuorot aikajärjestyksessä.
- *
- * Perutut jäävät mukaan mutta viimeisiksi: peruutus on tieto jonka
- * suunnittelija tarvitsee, muttei se mitä hän ensin lukee.
- */
-export function shiftsOn(shifts: Shift[], date: string): Shift[] {
-  return shifts
-    .filter((shift) => shift.date === date)
-    .sort((a, b) => {
-      const aCancelled = a.cancelledAt !== null ? 1 : 0;
-      const bCancelled = b.cancelledAt !== null ? 1 : 0;
-      if (aCancelled !== bCancelled) return aCancelled - bCancelled;
-      return a.startTime.localeCompare(b.startTime);
-    });
 }

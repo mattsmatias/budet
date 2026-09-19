@@ -24,13 +24,9 @@ const TODAY = "2026-08-24";
 function emptyData(partial: Partial<RestaurantData> = {}): RestaurantData {
   return {
     receipts: [],
-    openShifts: [],
     users: [],
     suppliers: [],
     budgets: [],
-    shifts: [],
-    clockEvents: [],
-    absences: [],
     closedMonths: [],
     categories: [],
     merchants: [],
@@ -56,7 +52,6 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
     currentPage: null,
     locale: "fi" as const,
     data: emptyData(partial),
-    lunchWeek: async () => null,
   };
 }
 
@@ -114,12 +109,12 @@ const run = (
 // ---------------------------------------------------------------------------
 
 describe("työkalujen rekisteröinti", () => {
-  it("tuntee kaikki viisi uutta työkalua", () => {
+  it("tuntee kaikki viisi päivätyökalua", () => {
     for (const name of [
       "get_daily_briefing",
       "get_alerts",
       "get_sales",
-      "get_labour_cost",
+      "get_staff_costs",
       "get_trends",
     ]) {
       expect(findTool(name), name).not.toBeNull();
@@ -128,14 +123,14 @@ describe("työkalujen rekisteröinti", () => {
   });
 
   /*
-   * Kirjanpitäjä näkee myynnin muttei palkkoja: tuntipalkat ovat
-   * henkilötietoa. Jos tämä testi kaatuu, rooliportissa on reikä.
+   * Henkilöstökulu on kulu muiden joukossa, ja kirjanpitäjä näkee
+   * kulut. Henkilökohtaisia palkkatietoja Katessa ei enää ole.
    */
-  it("ei anna kirjanpitäjälle työvoimakustannusta", () => {
+  it("antaa kirjanpitäjälle henkilöstökulut kuluna", () => {
     const names = toolsFor("accountant").map((t) => t.name);
     expect(names).toContain("get_sales");
     expect(names).toContain("get_alerts");
-    expect(names).not.toContain("get_labour_cost");
+    expect(names).toContain("get_staff_costs");
   });
 
   it("ei anna työntekijälle mitään näistä", () => {

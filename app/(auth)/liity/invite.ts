@@ -19,5 +19,4 @@ export interface InviteState {
 export interface InvitePreview {
   restaurantName: string;
   role: string;
-  position: string | null;
 }

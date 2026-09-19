@@ -23,7 +23,6 @@ import { MonthPicker } from "./month-picker";
 const MONTHLY = [
   "/admin",
   "/admin/kulut",
-  "/admin/palkat",
   "/admin/raportit",
   /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
   "/admin/kirjanpito",
@@ -48,16 +47,6 @@ const MONTHLY = [
   "/admin/toimittajat",
   "/admin/budjetit",
   "/admin/havainnot",
-  /* Vain lista ja kalenteri lukevat kuukauden, ei koko työvuorosivu. */
-  "/admin/tyovuorot/lista",
-  "/admin/tyovuorot/kalenteri",
-  /*
-   * Varauksista vain analytiikka.
-   *
-   * Salinäkymä lukee päivän ja asetukset ei kumpaakaan. Kuukauden
-   * vaihtaminen niillä näyttäisi tekevän jotain mitä se ei tee.
-   */
-  "/admin/varaukset/analytiikka",
 ];
 
 /**

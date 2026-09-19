@@ -4,13 +4,11 @@ import {
   attention,
   budgetLines,
   budgetTone,
-  compareHours,
   compareToPreviousMonth,
   evaluability,
   focusItems,
   hasChartHistory,
   receiptSplit,
-  staffCostShare,
   type DashboardInput,
 } from "../dashboard";
 import type { Budget, ExpenseCategory, Receipt } from "../types";
@@ -66,14 +64,8 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
   return {
     receipts: [],
     budgets: [],
-    shifts: [],
-    users: [],
-    clockEvents: [],
-    absences: [],
     month: "2026-08",
     today: "2026-08-15",
-    now: "2026-08-15T12:00:00Z",
-    timezone: "Europe/Helsinki",
     locale: "fi" as const,
     ...partial,
   };
@@ -176,12 +168,6 @@ describe("vertailu", () => {
     expect(result.baseMonth).toBe("2026-07");
     expect(result.change).toBeCloseTo(0.5);
   });
-
-  it("ei vertaa tunteja nollaan", () => {
-    expect(compareHours(100, 0)).toBeNull();
-    expect(compareHours(100, null)).toBeNull();
-    expect(compareHours(120, 100)).toBeCloseTo(0.2);
-  });
 });
 
 describe("kuittien tila", () => {
@@ -215,21 +201,6 @@ describe("kuittien tila", () => {
     );
 
     expect(split.label).toBe("Kaikki tarkistettu");
-  });
-});
-
-describe("henkilöstökulun osuus", () => {
-  /** Nollalla jakaminen antaisi luvun joka näyttäisi tiedolta. */
-  it("ei laske osuutta ilman kuluja", () => {
-    expect(staffCostShare(50000, 0)).toBeNull();
-  });
-
-  it("ei laske osuutta kun tuntipalkkoja ei ole asetettu", () => {
-    expect(staffCostShare(0, 100000)).toBeNull();
-  });
-
-  it("laskee osuuden kun molemmat ovat tiedossa", () => {
-    expect(staffCostShare(20000, 100000)).toBeCloseTo(0.2);
   });
 });
 

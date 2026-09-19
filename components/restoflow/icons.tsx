@@ -24,7 +24,6 @@ export type IconName =
   | "receipt"
   | "expenses"
   | "suppliers"
-  | "lunch"
   | "sparkle"
   | "trash"
   | "budget"
@@ -33,7 +32,6 @@ export type IconName =
   | "report"
   | "bell"
   | "settings"
-  | "payroll"
   | "clock"
   | "camera"
   | "image"
@@ -53,9 +51,7 @@ export type IconName =
   | "logout"
   | "sales"
   | "trend"
-  | "tables"
-  | "drag"
-  | "share";
+  | "drag";
 
 /**
  * Ikonipolut.
@@ -87,9 +83,6 @@ const PATHS: Record<IconName, string> = {
   sparkle:
     "M12 3.5 13.6 9 19 10.6 13.6 12.2 12 17.7 10.4 12.2 5 10.6 10.4 9zM18.5 16.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z",
 
-  // Tarjoilukupu — lounas on tarjoiltava annos, ei ostos.
-  lunch: "M3 18.5h18M4.8 18.5a7.2 7.2 0 0 1 14.4 0M12 8.3V6.2M10.6 6.2h2.8",
-
   // Myymälä/varasto — toimittaja on paikka, ei kuljetusväline.
   suppliers: "M3.5 20.5V10L12 4.5l8.5 5.5v10.5zM9.5 20.5v-6h5v6M3.5 20.5h17",
 
@@ -99,19 +92,9 @@ const PATHS: Record<IconName, string> = {
 
   calendar: "M4 6.5h16v14H4zM4 10.5h16M8.5 3.5v4M15.5 3.5v4",
 
-  // Kolme solmua ja niiden valiset viivat: jakaminen. Sama merkki
-  // kuin jarjestelmissa yleisesti, joten se tunnistetaan ilman selitetta.
-  share:
-    "M17.5 7.8a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM6.5 14.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM17.5 20.8a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6ZM8.5 11.1l7-3.2M8.5 12.9l7 3.2",
-
   // Kaksi viivaa: raahauskahva. Kolme olisi hampurilaisvalikko, ja
   // sama merkki kahdelle eri asialle opettaa ohittamaan molemmat.
   drag: "M7 10h10M7 14h10",
-
-  // Pyöreä pöytä ylhäältä, neljä tuolia ympärillä. Varaus koskee
-  // pöytää, ei kalenteria — kalenteri on jo työvuorojen merkki.
-  tables:
-    "M12 17.6a5.6 5.6 0 1 0 0-11.2 5.6 5.6 0 0 0 0 11.2ZM12 3.4v2.2M12 18.4v2.2M3.4 12h2.2M18.4 12h2.2",
 
   staff:
     "M14.5 20.5v-1.6a3.9 3.9 0 0 0-3.9-3.9H7.4a3.9 3.9 0 0 0-3.9 3.9v1.6M9 12.4a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM20.5 20.5v-1.6a3.9 3.9 0 0 0-2.9-3.8M15.6 4.8a3.9 3.9 0 0 1 0 7.6",
@@ -122,10 +105,6 @@ const PATHS: Record<IconName, string> = {
 
   // Liu'ut, ei ratas — sopii paremmin tähän geometriaan.
   settings: "M4 7.5h8M16 7.5h4M4 16.5h4M12 16.5h8M14 5v5M10 14v5",
-
-  // Seteli — palkka on maksu, ei kalenteri eikä sydän.
-  payroll:
-    "M3 6.5h18v11H3zM12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM6.2 10.2h.01M17.8 13.8h.01",
 
   clock: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.5V12l3 2",
 
@@ -251,19 +230,6 @@ const SHAPES: Partial<Record<IconName, ReactNode>> = {
       <circle cx="9" cy="8" r="3.4" />
       <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
       <path d="M16 5.4a3.4 3.4 0 0 1 0 5.2M18 14.4a6.5 6.5 0 0 1 3.5 5.6" />
-    </>
-  ),
-
-  // Valuuttamerkki — palkka on rahaa, ei seteli esineenä.
-  payroll: (
-    <path d="M12 2.5v19M16.5 6.5H9.8a2.8 2.8 0 0 0 0 5.6h4.4a2.8 2.8 0 0 1 0 5.6H7" />
-  ),
-
-  // Rakennus pylväineen — lounas on paikka johon tullaan.
-  lunch: (
-    <>
-      <path d="M4 20h16M6 20V9.5M18 20V9.5" />
-      <path d="M3.5 9.5 12 4l8.5 5.5z" />
     </>
   ),
 
@@ -398,52 +364,6 @@ export function CategoryIcon({
       role={label ? "img" : undefined}
     >
       <path d={CATEGORY_PATHS[category]} />
-    </svg>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Työvuoron tila
-// ---------------------------------------------------------------------------
-
-/**
- * Tilamerkit vuoroille.
- *
- * Muoto kantaa merkityksen, väri vahvistaa sen. Pelkkä väri ei riitä:
- * noin joka kahdeskymmenes mies erottaa punaisen ja vihreän huonosti.
- */
-export function ShiftStatusIcon({
-  status,
-  size = 16,
-}: {
-  status: "draft" | "pending" | "accepted" | "declined" | "changed";
-  size?: number;
-}) {
-  const paths: Record<typeof status, string> = {
-    draft: "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Z",
-    pending:
-      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM12 7.8V12l2.8 1.8",
-    accepted:
-      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Zm-3.6-8.8 2.6 2.6 4.6-5",
-    declined:
-      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6",
-    changed:
-      "M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17ZM8.5 13.5h7M8.5 13.5l2.4-2.4M15.5 10.5h-7M15.5 10.5l-2.4 2.4",
-  };
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={paths[status]} />
     </svg>
   );
 }

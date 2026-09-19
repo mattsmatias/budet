@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchMetaDiagnostics, fetchRestaurant } from "@/lib/kehittaja/queries";
+import { fetchRestaurant } from "@/lib/kehittaja/queries";
 import {
   PLAN_LABELS,
   STATUS_LABELS,
@@ -59,8 +59,6 @@ export default async function DevRestaurantPage({
 
   const detail = await fetchRestaurant(id);
 
-  /* Meta-diagnostiikka: null jos yhteytta ei ole tai oikeus puuttuu. */
-  const meta = await fetchMetaDiagnostics(id);
   if (!detail) notFound();
 
   const { restaurant: r, users, invitations, usage, flags } = detail;
@@ -264,7 +262,6 @@ export default async function DevRestaurantPage({
                 <Rivi label="Sähköposti" value={r.email} />
                 <Rivi label="Verkkosivu" value={r.website} />
                 <Rivi label="Aikavyöhyke" value={r.timezone} />
-                <Rivi label="Julkinen osoite" value={`/lounas/${r.slug}`} />
               </dl>
             </Card>
           </div>
@@ -352,13 +349,6 @@ export default async function DevRestaurantPage({
               hint="Kaikkiaan"
             />
             <MetricCard
-              label="Työvuoroja"
-              value={usage.shifts}
-              icon={<RfIcon name="calendar" size={17} />}
-              tileTone="blue"
-              hint="Tässä kuussa"
-            />
-            <MetricCard
               label="Tehtäviä"
               value={usage.tasks}
               icon={<RfIcon name="check" size={17} />}
@@ -371,13 +361,6 @@ export default async function DevRestaurantPage({
               icon={<RfIcon name="sales" size={17} />}
               tileTone="violet"
               hint="Kirjattuja päiviä"
-            />
-            <MetricCard
-              label="Lounaslistoja"
-              value={usage.lunchMenus}
-              icon={<RfIcon name="lunch" size={17} />}
-              tileTone="warn"
-              hint="Julkaistuja ja luonnoksia"
             />
             <MetricCard
               label="Matti-keskusteluja"
@@ -417,74 +400,6 @@ export default async function DevRestaurantPage({
             </p>
           </Card>
 
-          {/*
-            Meta-integraatio tukea varten.
-
-            Tokenia ei näytetä eikä sen loppuakaan. Ylläpitäjän
-            kysymys on "miksi julkaisu ei toimi", ja siihen vastaa
-            tila, oikeudet ja viimeisin virhe — ei tokeni, jolla hän
-            voisi julkaista asiakkaan sivulle.
-          */}
-          {meta ? (
-            <Card>
-              <CardHeader
-                title="Facebook ja Instagram"
-                subtitle={meta.pageName}
-              />
-
-              <dl
-                className="mt-2 grid gap-x-6 gap-y-1.5 text-[13px]"
-                style={{ gridTemplateColumns: "auto 1fr" }}
-              >
-                <MetaRivi
-                  otsikko="Tila"
-                  arvo={
-                    meta.statusDetail
-                      ? meta.status + " · " + meta.statusDetail
-                      : meta.status
-                  }
-                />
-                <MetaRivi otsikko="Page ID" arvo={meta.pageId} />
-                <MetaRivi
-                  otsikko="Instagram"
-                  arvo={
-                    meta.instagramId
-                      ? meta.instagramId +
-                        (meta.instagramUsername
-                          ? " (@" + meta.instagramUsername + ")"
-                          : "")
-                      : "Ei yhdistetty"
-                  }
-                />
-                <MetaRivi
-                  otsikko="Tokeni"
-                  arvo={meta.hasToken ? "Tallessa" : "Puuttuu"}
-                />
-                <MetaRivi
-                  otsikko="Oikeudet"
-                  arvo={meta.scopes.join(", ") || "—"}
-                />
-                <MetaRivi
-                  otsikko="Julkaisuja"
-                  arvo={String(meta.publications)}
-                />
-                <MetaRivi otsikko="Viim. onnistunut" arvo={aika(meta.lastOk)} />
-                <MetaRivi
-                  otsikko="Viim. epäonnistunut"
-                  arvo={aika(meta.lastFailed)}
-                />
-              </dl>
-
-              {meta.lastError ? (
-                <p
-                  className="mt-2 text-[12.5px]"
-                  style={{ color: "var(--rf-red-text)" }}
-                >
-                  {meta.lastError}
-                </p>
-              ) : null}
-            </Card>
-          ) : null}
         </div>
       ) : null}
 
@@ -520,7 +435,6 @@ export default async function DevRestaurantPage({
             counts={{
               users: users.length,
               receipts: usage.receipts,
-              shifts: usage.shifts,
               tasks: usage.tasks,
             }}
           />
@@ -537,19 +451,4 @@ function Rivi({ label, value }: { label: string; value: string | null }) {
       <dd className="text-right font-medium">{value ?? "—"}</dd>
     </div>
   );
-}
-
-/** Yksi rivi diagnostiikkalistassa. */
-function MetaRivi({ otsikko, arvo }: { otsikko: string; arvo: string }) {
-  return (
-    <>
-      <dt style={{ color: "var(--rf-text-2)" }}>{otsikko}</dt>
-      <dd className="rf-tabular break-all">{arvo}</dd>
-    </>
-  );
-}
-
-/** Aikaleima minuutin tarkkuudella, tai viiva jos sitä ei ole. */
-function aika(iso: string | null): string {
-  return iso ? iso.slice(0, 16).replace("T", " ") : "—";
 }

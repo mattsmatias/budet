@@ -2,7 +2,7 @@ import Link from "next/link";
 import { labels } from "@/lib/i18n/labels";
 import { isConfigured } from "@/utils/supabase/server";
 import { readInvite } from "../liity/actions";
-import type { Role, StaffPosition } from "@/lib/restoflow/types";
+import type { Role } from "@/lib/restoflow/types";
 import { SignUpForm } from "./form";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText } from "@/lib/i18n/auth-text";
@@ -65,9 +65,7 @@ export default async function SignUpPage({
             {invite.preview.restaurantName}
           </p>
           <p className="mt-0.5 text-[13px]">
-            {invite.preview.position
-              ? nimet.positions[invite.preview.position as StaffPosition]
-              : nimet.roles[invite.preview.role as Role]}
+            {nimet.roles[invite.preview.role as Role]}
           </p>
           <p className="mt-2 text-[12px] leading-relaxed">
             {t.rekisteroidy.joiningNote}

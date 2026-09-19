@@ -31,7 +31,7 @@ import {
   type SalesExtraction,
 } from "@/lib/restoflow/sales-ai";
 import { plausibleReportDate } from "@/lib/restoflow/sales-report";
-import { todayIn } from "@/lib/restoflow/clock-context";
+import { todayIn } from "@/lib/restoflow/local-time";
 import type { Extracted } from "@/lib/restoflow/types";
 
 /** Poiminta voi kestää: iso kuva ja tarkka luku vievät aikaa. */

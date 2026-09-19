@@ -307,7 +307,7 @@ async function runTool({
     /*
      * Työkalun tulos on DATAA eikä ohje.
      *
-     * Kuitin toimittajanimessä tai lounasruoan kuvauksessa voi lukea
+     * Kuitin toimittajanimessä tai tehtävän kuvauksessa voi lukea
      * mitä tahansa, myös tekstiä joka on muotoiltu ohjeeksi mallille.
      * Rajaus tekee näkyväksi mistä teksti alkaa ja mihin se loppuu.
      */

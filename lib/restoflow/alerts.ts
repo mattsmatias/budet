@@ -20,21 +20,10 @@ import { formatMoney } from "../money";
 import { needsReview, receiptsInMonth } from "./expenses";
 import { supplierTrends } from "./suppliers";
 import { checkVat } from "./vat";
-import type { Task } from "./tasks";
-import {
-  type Absence,
-  type Alert,
-  type Budget,
-  type ClockEvent,
-  type Receipt,
-  type OpenShift,
-  type Shift,
-  type User,
-} from "./types";
-import { currentState } from "./timeclock";
-import { dayIn } from "./clock-context";
-import { operationalAlerts } from "./operations";
-import type { DailySales } from "./sales";
+import { daysLate, statusOf, type Task } from "./tasks";
+import type { Alert, Budget, Receipt } from "./types";
+import { addDays, daysBetween } from "./dates";
+import { compareSales, type DailySales } from "./sales";
 
 /** Toimittajan kulunousu joka ylittää tämän nostaa hälytyksen. */
 const SUPPLIER_SPIKE_THRESHOLD = 0.25;
@@ -42,29 +31,22 @@ const SUPPLIER_SPIKE_THRESHOLD = 0.25;
 /** Alle tämän summan nousut eivät hälytä — pieni euromäärä, iso prosentti. */
 const SUPPLIER_SPIKE_MIN_CENTS = 20000;
 
+/** Näin monen päivän kuittitauko huomautetaan. */
+const RECEIPT_GAP_DAYS = 14;
+
+/** Myynti tämän verran alle vertailukohdan nostaa huomautuksen. */
+const SALES_SHORTFALL = 0.1;
+
 export interface AlertContext {
   receipts: Receipt[];
   budgets: Budget[];
-  shifts: Shift[];
-  users: User[];
-  clockEvents: ClockEvent[];
-  absences: Absence[];
   month: string;
   today: string;
-
   /*
-   * Toiminnallisten poikkeamien lisätiedot.
-   *
-   * Nykyhetki ja vyöhyke ovat pakollisia: "vuoro alkoi 20 minuuttia
-   * sitten" ei ole pääteltävissä päivämäärästä.
-   *
-   * Avoimet vuorot ja myynti ovat valinnaisia vain siksi että ne
-   * lisättiin myöhemmin; molemmat kulkevat samassa datapaketissa kuin
-   * muutkin, joten käytännössä ne ovat aina mukana.
+   * Myynti on valinnainen vain siksi että se lisättiin myöhemmin; se
+   * kulkee samassa datapaketissa kuin muutkin, joten käytännössä se on
+   * aina mukana.
    */
-  now: string;
-  timezone: string;
-  openShifts?: OpenShift[];
   sales?: DailySales[];
   /*
    * Tehtävät samassa paketissa muiden kanssa.
@@ -91,21 +73,9 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
     ...supplierSpikeAlerts(ctx),
     ...vatMismatchAlerts(ctx),
     ...receiptReviewAlerts(ctx),
-    ...unclosedShiftAlerts(ctx),
-    ...shiftAlerts(ctx),
-    ...operationalAlerts({
-      users: ctx.users,
-      shifts: ctx.shifts,
-      openShifts: ctx.openShifts ?? [],
-      clockEvents: ctx.clockEvents,
-      receipts: ctx.receipts,
-      sales: ctx.sales ?? [],
-      tasks: ctx.tasks ?? [],
-      today: ctx.today,
-      now: ctx.now,
-      timezone: ctx.timezone,
-      locale: ctx.locale,
-    }),
+    ...salesShortfall(ctx),
+    ...receiptGap(ctx),
+    ...taskDeadlines(ctx),
   ].sort((a, b) => severityRank(a) - severityRank(b));
 }
 
@@ -261,96 +231,142 @@ function receiptReviewAlerts(ctx: AlertContext): Alert[] {
 }
 
 /**
- * Sulkematon työaika.
+ * Myynti jäi selvästi vertailukohdasta.
  *
- * Jos työntekijä on unohtanut leimata ulos, tunnit kertyvät loputtomiin ja
- * palkka on väärin. Tämä on tyypillisin työaikaseurannan virhe.
+ * Vain kun vertailukohta on olemassa: oma tavoite tai saman viikonpäivän
+ * historia. Ilman kumpaakaan ei ole mitään mistä jäädä.
+ *
+ * Eilinen eikä tämä päivä: kesken olevaa päivää ei voi verrata koko
+ * päivän lukuun.
  */
-function unclosedShiftAlerts(ctx: AlertContext): Alert[] {
+function salesShortfall(ctx: AlertContext): Alert[] {
   const t = adminText(ctx.locale);
-  const alerts: Alert[] = [];
+  const sales = ctx.sales ?? [];
+  const yesterday = addDays(ctx.today, -1);
+  const day = sales.find((s) => s.date === yesterday);
+  if (!day) return [];
 
-  for (const user of ctx.users) {
-    const events = ctx.clockEvents.filter((e) => e.userId === user.id);
+  const comparison = compareSales(day, sales);
+  if (comparison.kind === "none") return [];
+  if (comparison.ratio >= 1 - SALES_SHORTFALL) return [];
 
-    // Vain eiliseen tai vanhempaan jäänyt avoin leimaus on ongelma —
-    // tänään käynnissä oleva vuoro on normaali tila.
-    // Päivä ravintolan ajassa. Merkkijonon viipale on UTC:tä, jolloin
-    // yöllä tehty leimaus osuisi väärälle päivälle.
-    const older = events.filter((e) => dayIn(ctx.timezone, e.at) < ctx.today);
-    if (older.length === 0) continue;
+  const shortfall = Math.round((1 - comparison.ratio) * 100);
+  const benchmark =
+    comparison.kind === "target"
+      ? fill(t.havainto.fromTarget, {
+          summa: formatMoney(comparison.targetCents),
+        })
+      : fill(t.havainto.fromWeekdayAverage, {
+          summa: formatMoney(comparison.averageCents),
+        });
 
-    const lastDay = dayIn(ctx.timezone, older[older.length - 1].at);
-    const dayEvents = older.filter(
-      (e) => dayIn(ctx.timezone, e.at) === lastDay,
-    );
-
-    if (currentState(dayEvents) !== "off") {
-      alerts.push({
-        id: `unclosed-${user.id}-${lastDay}`,
-        kind: "unclosed_shift",
-        severity: "warning",
-        title: fill(t.havainto.clockLeftOpen, { nimi: user.name }),
-        detail: fill(t.havainto.clockStillOpen, {
-          paiva: formatDate(lastDay, ctx.locale),
-        }),
-        href: "/admin/tyontekijat",
-        entityId: user.id,
-      });
-    }
-  }
-
-  return alerts;
+  return [
+    {
+      id: `sales-short-${yesterday}`,
+      kind: "sales_shortfall",
+      severity: "warning",
+      title: fill(t.havainto.yesterdayShortfall, {
+        osuus: String(shortfall),
+      }),
+      detail: fill(t.havainto.yesterdayShortfallBody, {
+        summa: formatMoney(day.netCents),
+        osuus: String(shortfall),
+        vertailu: benchmark,
+      }),
+      href: "/admin/myynti",
+      entityId: yesterday,
+    },
+  ];
 }
 
-function shiftAlerts(ctx: AlertContext): Alert[] {
+/**
+ * Kuitteja ei ole kirjattu pitkään aikaan.
+ *
+ * Vain jos ravintola on selvästi toiminnassa: myyntiä on kirjattu tauon
+ * aikana. Suljettu ravintola ei osta mitään, eikä hiljaisuus silloin ole
+ * poikkeama. Myynti on tähän parempi merkki kuin mikään muu — se on
+ * täsmälleen se raha jonka rinnalla kulut puuttuvat.
+ */
+function receiptGap(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
+  if (ctx.receipts.length === 0) return [];
+
+  const latest = ctx.receipts.reduce(
+    (max, r) => (r.date > max ? r.date : max),
+    "",
+  );
+  const gap = daysBetween(latest, ctx.today);
+  if (gap < RECEIPT_GAP_DAYS) return [];
+
+  const operating = (ctx.sales ?? []).some((s) => s.date > latest);
+  if (!operating) return [];
+
+  return [
+    {
+      id: `receipt-gap-${latest}`,
+      kind: "receipt_gap",
+      severity: "warning",
+      title: fill(t.havainto.noReceiptsForDays, { maara: String(gap) }),
+      detail: fill(t.havainto.noReceiptsBody, {
+        paiva: formatDate(latest, ctx.locale),
+      }),
+      href: "/admin/kuitit/uusi",
+      entityId: latest,
+    },
+  ];
+}
+
+/**
+ * Määräaika tänään tai jo mennyt.
+ *
+ * Myöhässä oleva on kriittinen: eräpäivä on ohi eikä kukaan ole
+ * tehnyt mitään. Tänään erääntyvä on huomautus — päivä on vielä
+ * edessä.
+ *
+ * Tulevat eivät ole hälytyksiä. Tehtävä jonka eräpäivä on ensi
+ * viikolla ei vaadi tänään mitään, ja hälytys siitä opettaisi
+ * ohittamaan hälytykset.
+ */
+function taskDeadlines(ctx: AlertContext): Alert[] {
   const t = adminText(ctx.locale);
   const alerts: Alert[] = [];
 
-  // Poissaoloilmoitus on kriittinen: vuoro on yhä tekijällä, mutta
-  // tekijä on kertonut ettei tule. Jos tämä ei nouse esiin, asia
-  // huomataan vasta kun vuoro alkaa eikä kukaan ole paikalla.
-  //
-  // Tämä oli aiemmin sidottu vuoron declined-tilaan. Kun vuoroa ei enää
-  // kuitata, tila ei voi syntyä — mutta itse asia ei kadonnut mihinkään,
-  // joten ilmoitus luetaan nyt suoraan poissaoloista.
-  // Loppupäivä ratkaisee: kesken oleva sairausloma on yhä voimassa,
-  // vaikka se olisi alkanut viime viikolla.
-  const upcoming = ctx.absences.filter(
-    (absence) => absence.endDate >= ctx.today,
-  );
+  for (const task of ctx.tasks ?? []) {
+    const status = statusOf(task, ctx.today);
 
-  for (const absence of upcoming) {
-    const user = ctx.users.find((u) => u.id === absence.userId);
-    const shift = ctx.shifts.find(
-      (s) =>
-        s.userId === absence.userId &&
-        s.date >= absence.date &&
-        s.date <= absence.endDate,
-    );
+    if (status === "overdue") {
+      const late = daysLate(task, ctx.today);
 
-    const period =
-      absence.date === absence.endDate
-        ? formatDate(absence.date, ctx.locale)
-        : `${formatDate(absence.date, ctx.locale)}–${formatDate(absence.endDate, ctx.locale)}`;
+      alerts.push({
+        id: `task-overdue-${task.id}`,
+        kind: "task_overdue",
+        severity: "critical",
+        title: task.title,
+        detail:
+          late === 0
+            ? fill(t.havainto.dueTodayAt, { aika: task.dueTime ?? "" })
+            : fill(late === 1 ? t.havainto.lateByOne : t.havainto.lateByMany, {
+                maara: String(late),
+              }),
+        href: "/admin/tehtavat?suodatin=myohassa",
+        entityId: task.id,
+      });
+      continue;
+    }
 
-    alerts.push({
-      id: `absence-${absence.id}`,
-      kind: "absence_reported",
-      severity: "critical",
-      title: fill(t.havainto.cannotAttend, {
-        nimi: user?.name ?? t.havainto.employeeFallback,
-      }),
-      detail: shift
-        ? fill(t.tyontekija.shiftStillTheirsPeriod, {
-            jakso: period,
-            alku: shift.startTime,
-            loppu: shift.endTime,
-          })
-        : `${period} — ei vuoroa jaksolle`,
-      href: "/admin/tyovuorot",
-      entityId: absence.id,
-    });
+    if (status === "due_today") {
+      alerts.push({
+        id: `task-due-${task.id}`,
+        kind: "task_due",
+        severity: task.priority === "critical" ? "critical" : "warning",
+        title: task.title,
+        detail: task.dueTime
+          ? fill(t.havainto.dueTodayAtTime, { aika: task.dueTime })
+          : t.havainto.dueToday,
+        href: "/admin/tehtavat?suodatin=tanaan",
+        entityId: task.id,
+      });
+    }
   }
 
   return alerts;

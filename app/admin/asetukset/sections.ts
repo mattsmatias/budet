@@ -31,10 +31,8 @@ export interface SettingsSection {
    * Oma sivunsa asetusten sisällä.
    *
    * Useimmat osastot ovat saman sivun näkymiä ja valinta on
-   * ?osio-parametrissa. Pöytävaraukset on niin laaja — sali,
-   * aukiolot, kestot, yhdistelmät ja upotuskoodi — että osastona se
-   * olisi asetussivun sisällä oleva toinen asetussivu. Se on siis
-   * oma reittinsä, mutta löytyy samasta valikosta kuin muutkin.
+   * ?osio-parametrissa. Laaja osasto voi olla oma reittinsä ja
+   * löytyä silti samasta valikosta kuin muutkin.
    */
   href?: string;
 }
@@ -60,11 +58,17 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     icon: "staff",
     ownerOnly: false,
   },
+  /*
+   * Käyttäjät: kuka pääsee Kateen.
+   *
+   * Pääsynhallintaa eikä henkilöstöhallintoa — ks. users.tsx. Omistajan
+   * osasto, koska kannan kutsu- ja roolifunktiot vaativat omistajan.
+   */
   {
-    id: "vuorot",
-    label: t.asetus.secTime,
-    summary: t.asetus.secTimeHint,
-    icon: "clock",
+    id: "kayttajat",
+    label: t.asetus.secUsers,
+    summary: t.asetus.secUsersHint,
+    icon: "staff",
     ownerOnly: true,
   },
   {
@@ -87,22 +91,6 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     summary: t.asetus.secCategoriesHint,
     icon: "expenses",
     ownerOnly: true,
-  },
-  {
-    id: "some",
-    label: t.some.title,
-    summary: t.some.secSomeHint,
-    icon: "share",
-    ownerOnly: true,
-    href: "/admin/asetukset/some",
-  },
-  {
-    id: "varaukset",
-    label: t.nav.reservations,
-    summary: t.asetus.secReservationsHint,
-    icon: "tables",
-    ownerOnly: false,
-    href: "/admin/varaukset/asetukset",
   },
   /*
    * Toimintaloki on asetuksissa muttei asetus.
