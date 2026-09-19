@@ -380,3 +380,26 @@ export async function setFlagFor(
   revalidatePath("/kehittaja", "layout");
   return { notice: "Poikkeus päivitettiin." };
 }
+
+/** Yhteydenotto hoidetuksi tai takaisin avoimeksi. */
+export async function setContactHandled(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const id = String(data.get("id") ?? "");
+  if (id === "") return { error: "Yhteydenottoa ei tunnistettu." };
+
+  const handled = data.get("handled") === "true";
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("sa_set_contact_handled", {
+    p_id: id,
+    p_handled: handled,
+  });
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  return { notice: handled ? "Merkitty hoidetuksi." : "Palautettu avoimeksi." };
+}

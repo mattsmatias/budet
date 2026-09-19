@@ -74,7 +74,7 @@ function Team({ t }: { t: Dictionary }) {
   };
 
   return (
-    <section className="relative overflow-hidden px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-16">
+    <section className="relative overflow-clip px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-16">
       <div className="bd-hero-glow" aria-hidden="true" />
 
       <div className="relative mx-auto max-w-5xl">
@@ -193,7 +193,7 @@ function Why({ t }: { t: Dictionary }) {
 
   return (
     <section
-      className="overflow-hidden px-4 py-20 sm:px-6 sm:py-28"
+      className="overflow-clip px-4 py-20 sm:px-6 sm:py-28"
       style={{
         background: "var(--bd-bg-2)",
         borderBlock: "1px solid var(--bd-line)",

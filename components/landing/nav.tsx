@@ -154,12 +154,12 @@ export function LandingNav({
                 >
                   {t.nav.login}
                 </Link>
-                <Link
-                  href="/rekisteroidy"
+                <a
+                  href={anchor("yhteys")}
                   className="bd-btn bd-btn-primary !py-[11px] !text-[14px]"
                 >
                   {t.nav.start}
-                </Link>
+                </a>
               </>
             )}
           </div>
@@ -215,12 +215,13 @@ export function LandingNav({
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/rekisteroidy"
+                  <a
+                    href={anchor("yhteys")}
+                    onClick={() => setOpen(false)}
                     className="bd-btn bd-btn-primary w-full"
                   >
                     {t.nav.start}
-                  </Link>
+                  </a>
                   <Link href="/kirjaudu" className="bd-btn bd-btn-ghost w-full">
                     {t.nav.login}
                   </Link>

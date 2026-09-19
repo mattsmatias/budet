@@ -1361,3 +1361,167 @@ a:focus-visible > .bd-logo-mark {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Otsikoiden liukuväri ja yhteydenotto
+   ---------------------------------------------------------------------------
+   Liukuväri vain otsikon jälkimmäisessä puolikkaassa: se on lupaus
+   ("paljonko jää käteen"), ja väri nostaa juuri sen. Väri liikkuu
+   hitaasti kerran sisään tultaessa, ei jatkuvasti.
+*/
+
+@keyframes bd-gradient-in {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0% 50%;
+  }
+}
+
+.bd-gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--bd-accent) 0%,
+    #e0612c 40%,
+    #7b76e8 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bd-gradient-in 2400ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+}
+
+.bd-contact-glow {
+  position: absolute;
+  inset: 10% -10% auto;
+  height: 70%;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 20% 40%, rgba(209, 56, 49, 0.1), transparent 70%),
+    radial-gradient(40% 50% at 80% 60%, rgba(123, 118, 232, 0.12), transparent 70%);
+  filter: blur(20px);
+}
+
+.bd-point-check {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: -1px;
+  border-radius: 50%;
+  background: var(--bd-green-bg);
+}
+
+.bd-contact-card {
+  position: relative;
+  padding: 28px;
+  border-radius: 24px;
+  background: var(--bd-card);
+  border: 1px solid var(--bd-line);
+  box-shadow:
+    0 30px 60px -30px rgba(15, 23, 41, 0.35),
+    0 0 0 1px rgba(15, 23, 41, 0.02);
+}
+
+@media (max-width: 480px) {
+  .bd-contact-card {
+    padding: 20px;
+  }
+}
+
+.bd-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bd-text);
+}
+
+.bd-input {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 16px;
+  color: var(--bd-text);
+  background: var(--bd-bg);
+  border: 1px solid var(--bd-line-2);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.bd-input::placeholder {
+  color: var(--bd-text-3);
+}
+
+.bd-input:focus {
+  outline: none;
+  background: var(--bd-card);
+  border-color: var(--bd-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bd-accent) 16%, transparent);
+}
+
+.bd-btn:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* Piilokenttä boteille: pois näkyvistä, ei pois DOMista. */
+.bd-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes bd-sent-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bd-contact-sent {
+  text-align: center;
+  padding-block: 56px;
+  animation: bd-sent-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.bd-contact-sent-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  color: var(--bd-green);
+  background: var(--bd-green-bg);
+}
+
+.bd-contact-sent-icon path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: bd-draw 500ms cubic-bezier(0.65, 0, 0.35, 1) 250ms forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-gradient-text,
+  .bd-contact-sent {
+    animation: none;
+  }
+
+  .bd-contact-sent-icon path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

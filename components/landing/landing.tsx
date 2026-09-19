@@ -11,6 +11,7 @@ import {
   TodoPreview,
 } from "./preview";
 import { ParallaxStage } from "./effects";
+import { ContactForm } from "./contact-form";
 
 /**
  * Katen etusivu.
@@ -46,7 +47,7 @@ export function Landing({ appHref, locale, t }: Props) {
         <Todo t={t} />
         <Features t={t} />
         <Pricing appHref={appHref} t={t} />
-        <FinalCta appHref={appHref} t={t} />
+        <Contact appHref={appHref} locale={locale} t={t} />
       </main>
 
       <Footer locale={locale} t={t} />
@@ -81,7 +82,7 @@ function Hero({ appHref, t }: { appHref: string | null; t: Dictionary }) {
         >
           {t.hero.titleA}
           <br className="hidden sm:block" />{" "}
-          <span style={{ color: "var(--bd-text-2)" }}>{t.hero.titleB}</span>
+          <span className="bd-gradient-text">{t.hero.titleB}</span>
         </h1>
 
         <p
@@ -92,19 +93,19 @@ function Hero({ appHref, t }: { appHref: string | null; t: Dictionary }) {
         </p>
 
         <div className="bd-rise bd-d3 mt-8 flex flex-col items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">
-          <Link
-            href={appHref ?? "/rekisteroidy"}
-            className="bd-btn bd-btn-primary"
-          >
-            {appHref !== null ? t.nav.openApp : t.nav.start}
-            <span className="bd-arrow" aria-hidden="true">
-              →
-            </span>
-          </Link>
+          <PrimaryCta appHref={appHref} t={t} />
           <a href="#tuote" className="bd-btn bd-btn-ghost">
             {t.hero.secondary}
           </a>
         </div>
+
+        <p
+          className="bd-rise bd-d4 mx-auto mt-5 flex max-w-sm items-start justify-center gap-2 text-left text-[13.5px] sm:max-w-none sm:items-center"
+          style={{ color: "var(--bd-text-2)" }}
+        >
+          <Check />
+          {t.hero.note}
+        </p>
       </div>
 
       {/*
@@ -528,15 +529,18 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
                 {t.pricing.yearly}
               </p>
 
-              <Link
-                href={appHref ?? "/rekisteroidy"}
-                className="bd-btn bd-btn-primary mt-6 w-full"
+              <PrimaryCta
+                appHref={appHref}
+                t={t}
+                className="mt-6 w-full"
+              />
+
+              <p
+                className="mt-3 text-[12.5px]"
+                style={{ color: "var(--bd-text-3)" }}
               >
-                {appHref !== null ? t.nav.openApp : t.nav.start}
-                <span className="bd-arrow" aria-hidden="true">
-                  →
-                </span>
-              </Link>
+                {t.pricing.note}
+              </p>
             </div>
 
             <ul
@@ -584,46 +588,113 @@ function Check() {
 
 // ---------------------------------------------------------------------------
 
-function FinalCta({ appHref, t }: { appHref: string | null; t: Dictionary }) {
+/**
+ * Yhteydenotto.
+ *
+ * Kate ei tarjoa itserekisteröitymistä: tunnukset luodaan puolesta, joten
+ * sivun kaikki painikkeet johtavat tänne. Vasemmalla mitä tapahtuu kun
+ * otat yhteyttä, oikealla lomake. Pyynnöt näkyvät Developer Consolessa.
+ */
+function Contact({
+  appHref,
+  locale,
+  t,
+}: {
+  appHref: string | null;
+  locale: Locale;
+  t: Dictionary;
+}) {
+  const points = [t.contact.point1, t.contact.point2, t.contact.point3];
+
   return (
-    <section className="px-4 py-24 sm:px-6 sm:py-32">
-      <Reveal>
-        <div className="mx-auto max-w-2xl text-center">
+    <section
+      id="yhteys"
+      className="relative overflow-clip px-4 py-24 sm:px-6 sm:py-32"
+    >
+      <div className="bd-contact-glow" aria-hidden="true" />
+
+      <div className="relative mx-auto grid max-w-5xl items-start gap-12 lg:grid-cols-[1fr_minmax(0,480px)] lg:gap-16">
+        <Reveal>
+          <p
+            className="text-[12.5px] font-semibold uppercase tracking-[0.09em]"
+            style={{ color: "var(--bd-accent)" }}
+          >
+            {t.contact.label}
+          </p>
+
           <h2
-            className="text-[clamp(1.7rem,4.4vw,2.6rem)] font-extrabold leading-[1.1] tracking-[-0.035em]"
+            className="mt-4 text-[clamp(1.9rem,4.8vw,2.9rem)] font-extrabold leading-[1.06] tracking-[-0.035em]"
             style={{ textWrap: "balance" }}
           >
-            {t.finalCta.titleA}
+            {t.contact.titleA}
             <br />
-            <span style={{ color: "var(--bd-text-2)" }}>
-              {t.finalCta.titleB}
-            </span>
+            <span className="bd-gradient-text">{t.contact.titleB}</span>
           </h2>
 
           <p
-            className="mx-auto mt-4 max-w-md text-[15.5px] leading-relaxed"
+            className="mt-5 max-w-md text-[16px] leading-relaxed"
             style={{ color: "var(--bd-text-2)" }}
           >
-            {t.finalCta.body}
+            {t.contact.body}
           </p>
 
-          <div className="mt-8 flex flex-col items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">
-            <Link
-              href={appHref ?? "/rekisteroidy"}
-              className="bd-btn bd-btn-primary"
-            >
-              {appHref !== null ? t.nav.openApp : t.nav.start}
+          <ul className="mt-7 space-y-3">
+            {points.map((point) => (
+              <li
+                key={point}
+                className="flex items-start gap-3 text-[15px] font-medium"
+              >
+                <span className="bd-point-check" aria-hidden="true">
+                  <Check />
+                </span>
+                {point}
+              </li>
+            ))}
+          </ul>
+
+          {appHref !== null ? (
+            <Link href={appHref} className="bd-btn bd-btn-ghost mt-8">
+              {t.nav.openApp}
               <span className="bd-arrow" aria-hidden="true">
                 →
               </span>
             </Link>
-            <a href="#tuote" className="bd-btn bd-btn-ghost">
-              {t.finalCta.secondary}
-            </a>
-          </div>
-        </div>
-      </Reveal>
+          ) : null}
+        </Reveal>
+
+        <Reveal delay={120}>
+          <ContactForm t={t.contact} locale={locale} />
+        </Reveal>
+      </div>
     </section>
+  );
+}
+
+/**
+ * Pääpainike.
+ *
+ * Kirjautuneelle "Avaa Kate", muille yhteydenotto. Rekisteröitymissivua
+ * ei tarjota: tunnukset luodaan puolesta.
+ */
+function PrimaryCta({
+  appHref,
+  t,
+  className = "",
+}: {
+  appHref: string | null;
+  t: Dictionary;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={appHref ?? "#yhteys"}
+      className={`bd-btn bd-btn-primary ${className}`}
+    >
+      {appHref !== null ? t.nav.openApp : t.nav.start}
+      <span className="bd-arrow" aria-hidden="true">
+        →
+      </span>
+    </Link>
   );
 }
 

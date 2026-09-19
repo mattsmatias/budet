@@ -26,8 +26,12 @@ export default async function SignInPage({
       </h1>
       <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
         {t.kirjaudu.noAccount}{" "}
+        {/*
+          Tunnukset luodaan puolesta, joten uusi asiakas ohjataan
+          etusivun yhteydenottoon eikä rekisteröitymään itse.
+        */}
         <Link
-          href="/rekisteroidy"
+          href="/#yhteys"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >

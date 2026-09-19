@@ -190,3 +190,25 @@ export const fetchAudit = cache(async (limit = 100): Promise<AuditRow[]> => {
 export const fetchFlags = cache(async (): Promise<Flag[]> =>
   rpc<Flag[]>("sa_flags", {}, []),
 );
+
+// ---------------------------------------------------------------------------
+// Yhteydenotot etusivulta
+// ---------------------------------------------------------------------------
+
+export interface ContactRequest {
+  id: string;
+  name: string;
+  restaurant: string;
+  email: string;
+  phone: string | null;
+  message: string | null;
+  locale: string;
+  createdAt: string;
+  handledAt: string | null;
+}
+
+/** Käsittelemättömät ensin, uusin ylimpänä. */
+export const fetchContactRequests = cache(
+  async (): Promise<ContactRequest[]> =>
+    rpc<ContactRequest[]>("sa_contact_requests", {}, []),
+);
