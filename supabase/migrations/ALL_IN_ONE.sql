@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 100 migraatiota:
+-- Sisältää 101 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -112,6 +112,7 @@
 --   0094_reservation_stats_trend.sql
 --   0095_reservation_import.sql
 --   0096_kate_rajaus.sql
+--   0097_tyhjat_sailiot.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -25043,12 +25044,34 @@ drop policy if exists floorplans_storage_write on storage.objects;
 drop policy if exists floorplans_storage_update on storage.objects;
 drop policy if exists floorplans_storage_delete on storage.objects;
 
--- Tyhjät säiliöt social ja floorplans poistetaan Supabasen hallinnasta:
--- storage estää suoran poiston SQL:llä. Ilman politiikkoja niihin ei
+-- Tyhjät säiliöt social ja floorplans poistetaan migraatiossa 0097:
+-- storage estää oletuksena suoran poiston. Ilman politiikkoja niihin ei
 -- pääse kukaan käsiksi.
 
 delete from feature_flag_restaurants
 where flag_key in ('lunch_module', 'payroll', 'shift_planning');
 delete from feature_flags
 where key in ('lunch_module', 'payroll', 'shift_planning');
+
+
+-- ===========================================================================
+-- 0097_tyhjat_sailiot.sql
+-- ===========================================================================
+
+-- Poistuneiden ominaisuuksien tyhjät tallennussäiliöt pois.
+--
+-- social (lounaslistan some-kuvat) ja floorplans (pöytäkartan
+-- pohjakuvat) jäivät 0096:ssa, koska storage estää suoran poiston.
+-- Esto on olemassa orpojen tiedostojen takia; säiliöt ovat tyhjiä,
+-- ja se tarkistetaan ennen poistoa. Lupa on voimassa vain tämän
+-- transaktion ajan.
+
+do $$
+begin
+  if exists (select 1 from storage.objects where bucket_id in ('social', 'floorplans')) then
+    raise exception 'Säiliöissä on tiedostoja, ei poisteta';
+  end if;
+  perform set_config('storage.allow_delete_query', 'true', true);
+  delete from storage.buckets where id in ('social', 'floorplans');
+end $$;
 

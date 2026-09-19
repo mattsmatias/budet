@@ -741,8 +741,8 @@ drop policy if exists floorplans_storage_write on storage.objects;
 drop policy if exists floorplans_storage_update on storage.objects;
 drop policy if exists floorplans_storage_delete on storage.objects;
 
--- Tyhjät säiliöt social ja floorplans poistetaan Supabasen hallinnasta:
--- storage estää suoran poiston SQL:llä. Ilman politiikkoja niihin ei
+-- Tyhjät säiliöt social ja floorplans poistetaan migraatiossa 0097:
+-- storage estää oletuksena suoran poiston. Ilman politiikkoja niihin ei
 -- pääse kukaan käsiksi.
 
 delete from feature_flag_restaurants
