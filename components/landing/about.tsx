@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
-import { TEAM, TEAM_PHOTO, TEAM_PLACEHOLDERS } from "@/lib/team";
+import { FOUNDER } from "@/lib/team";
 import { HtmlLang } from "./html-lang";
 import { LandingNav, Reveal } from "./nav";
+import { Spotlight, Tilt } from "./effects";
 import { Logo } from "@/components/brand/logo";
 
 /**
@@ -14,14 +15,7 @@ import { Logo } from "@/components/brand/logo";
  *
  * Sivun tehtävä on vastata kysymykseen "kuka tämän takana on".
  * Pitkä yrityskertomus ei vastaa siihen; kuva ja nimi vastaavat.
- * Siksi kuvat ovat suurina ja tekstiä on vähän.
- *
- * TYHJÄ ON REHELLINEN.
- *
- * Tiimin tiedot tulevat lib/team.ts:stä, ja se on tyhjä. Sivu kertoo
- * sen ääneen ja näyttää paikat, joten asettelu ei muutu kun tiedot
- * lisätään. Keksitty perustaja olisi tuhonnut juuri sen luottamuksen
- * jota sivu rakentaa.
+ * Siksi sivu alkaa perustajasta ja tekstiä on vähän.
  */
 export function About({
   appHref,
@@ -38,9 +32,7 @@ export function About({
       <LandingNav appHref={appHref} locale={locale} page="about" t={t} />
 
       <main>
-        <Hero t={t} />
-        <TeamPhoto t={t} />
-        <People t={t} />
+        <Founder t={t} />
         <Why t={t} />
         <Beliefs t={t} />
         <Cta appHref={appHref} locale={locale} t={t} />
@@ -53,171 +45,78 @@ export function About({
 
 // ---------------------------------------------------------------------------
 
-function Hero({ t }: { t: Dictionary }) {
+/**
+ * Perustaja.
+ *
+ * Sivun avaus: kasvot ja nimi ensin, sillä ne vastaavat kysymykseen
+ * "kuka tämän takana on" nopeammin kuin mikään kertomus.
+ *
+ * Liike kertoo järjestyksen: kuva paljastuu verhon takaa ja asettuu,
+ * sen takana syttyy tunnusvärien hehku, K-merkki ponnahtaa kuvan
+ * kulmaan ja nimi nousee viimeisenä. Osoittimella kuva kallistuu ja
+ * sen pinnalla liikkuu heijastus.
+ */
+function Founder({ t }: { t: Dictionary }) {
   return (
-    <section className="relative px-4 pb-2 pt-12 sm:px-6 sm:pt-20">
+    <section className="relative overflow-hidden px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-16">
       <div className="bd-hero-glow" aria-hidden="true" />
 
-      <div className="relative mx-auto max-w-3xl">
-        <p
-          className="bd-rise text-[12.5px] font-semibold uppercase tracking-[0.09em]"
-          style={{ color: "var(--bd-text-3)" }}
-        >
-          {t.about.label}
-        </p>
+      <div className="relative mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16">
+        <div className="bd-portrait-stage mx-auto w-full max-w-[380px] lg:max-w-none">
+          <div className="bd-aurora" aria-hidden="true" />
 
-        <h1
-          className="bd-rise bd-d1 mt-4 text-[clamp(2rem,5.4vw,3.2rem)] font-extrabold leading-[1.08] tracking-[-0.035em]"
-          style={{ textWrap: "balance" }}
-        >
-          {t.about.heading}
-        </h1>
-
-        <p
-          className="bd-rise bd-d2 mt-5 max-w-2xl text-[16px] leading-relaxed sm:text-[17px]"
-          style={{ color: "var(--bd-text-2)" }}
-        >
-          {t.about.body}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-
-/**
- * Yhteiskuva.
- *
- * Sivun tärkein elementti, joten se on leveä ja saa oman hengitystilan.
- * Kuvan päällä ei ole tekstiä: teksti kuvan päällä tarkoittaa että
- * kuvan pitää olla tietyn näköinen, ja silloin oikea valokuva ei enää
- * kelpaa sellaisenaan.
- */
-function TeamPhoto({ t }: { t: Dictionary }) {
-  return (
-    <section className="px-4 pb-4 pt-8 sm:px-6 sm:pt-12">
-      <div className="mx-auto max-w-5xl">
-        <div className="bd-rise bd-d3">
-          <div className="bd-photo bd-photo-wide">
-            {TEAM_PHOTO ? (
+          <Tilt className="bd-portrait-tilt">
+            <div className="bd-portrait">
               <Image
-                src={TEAM_PHOTO}
-                alt={t.about.photoAlt}
+                src={FOUNDER.image}
+                alt={FOUNDER.name}
                 fill
                 priority
-                sizes="(max-width: 1024px) 100vw, 1024px"
-                style={{ objectFit: "cover" }}
+                sizes="(max-width: 1024px) 380px, 420px"
+                className="bd-portrait-img"
               />
-            ) : (
-              <div className="bd-photo-empty h-full w-full">
-                <p
-                  className="px-6 text-center text-[13px]"
-                  style={{ color: "var(--bd-text-3)" }}
+              <span className="bd-portrait-glare" aria-hidden="true" />
+            </div>
+
+            <div className="bd-badge">
+              <Logo size={30} />
+              <span>
+                <span className="block text-[13px] font-bold leading-tight">
+                  Kate
+                </span>
+                <span
+                  className="block text-[11.5px] leading-tight"
+                  style={{ color: "var(--bd-text-2)" }}
                 >
-                  {t.about.photoPending}
-                </p>
-              </div>
-            )}
-          </div>
+                  {t.about.founderLabel}
+                </span>
+              </span>
+            </div>
+          </Tilt>
         </div>
 
-        <Reveal delay={60}>
-          <div className="mx-auto mt-7 max-w-xl text-center">
-            <p className="text-[19px] font-bold tracking-[-0.02em] sm:text-[21px]">
-              {t.about.captionA}
-            </p>
-            <p
-              className="mt-2 text-[15px] leading-relaxed"
-              style={{ color: "var(--bd-text-2)" }}
-            >
-              {t.about.captionB}
-            </p>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-
-function People({ t }: { t: Dictionary }) {
-  const empty = TEAM.length === 0;
-
-  return (
-    <section className="px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-5xl">
-        <Reveal>
-          <h2 className="text-[clamp(1.5rem,3.6vw,2.1rem)] font-extrabold tracking-[-0.03em]">
+        <div>
+          <p
+            className="bd-rise bd-d2 text-[12.5px] font-semibold uppercase tracking-[0.09em]"
+            style={{ color: "var(--bd-text-3)" }}
+          >
             {t.about.teamHeading}
-          </h2>
+          </p>
 
-          {empty ? (
-            <p
-              className="mt-3 max-w-xl text-[15px] leading-relaxed"
-              style={{ color: "var(--bd-text-2)" }}
-            >
-              {t.about.teamPending}
-            </p>
-          ) : null}
-        </Reveal>
+          <h1 className="bd-rise bd-d3 mt-4 text-[clamp(2.4rem,6.4vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.04em]">
+            <span className="bd-shine">{FOUNDER.name}</span>
+          </h1>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {empty
-            ? Array.from({ length: TEAM_PLACEHOLDERS }, (_, i) => (
-                <Reveal key={i} delay={i * 70}>
-                  <div>
-                    <div
-                      className="bd-photo bd-photo-person bd-photo-empty"
-                      aria-hidden="true"
-                    />
-                    <div className="mt-4 space-y-2" aria-hidden="true">
-                      <div
-                        className="h-[14px] w-28 rounded-full"
-                        style={{ background: "var(--bd-bg-2)" }}
-                      />
-                      <div
-                        className="h-[12px] w-20 rounded-full"
-                        style={{ background: "var(--bd-bg-2)" }}
-                      />
-                    </div>
-                  </div>
-                </Reveal>
-              ))
-            : TEAM.map((person, i) => (
-                <Reveal key={person.name} delay={i * 70}>
-                  <figure>
-                    <div className="bd-photo bd-photo-person">
-                      <Image
-                        src={person.image}
-                        alt={person.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
+          <p className="bd-rise bd-d4 mt-5">
+            <span className="bd-role">{t.about.founderRole}</span>
+          </p>
 
-                    <figcaption className="mt-4">
-                      <p className="text-[16px] font-bold tracking-[-0.01em]">
-                        {person.name}
-                      </p>
-                      <p
-                        className="mt-0.5 text-[13.5px]"
-                        style={{ color: "var(--bd-text-3)" }}
-                      >
-                        {person.role}
-                      </p>
-                      <p
-                        className="mt-2 text-[14px] leading-relaxed"
-                        style={{ color: "var(--bd-text-2)" }}
-                      >
-                        {person.bio}
-                      </p>
-                    </figcaption>
-                  </figure>
-                </Reveal>
-              ))}
+          <p
+            className="bd-rise bd-d5 mt-6 max-w-lg text-[17px] leading-relaxed sm:text-[18px]"
+            style={{ color: "var(--bd-text-2)", textWrap: "pretty" }}
+          >
+            {t.about.founderBio}
+          </p>
         </div>
       </div>
     </section>
@@ -288,10 +187,10 @@ function Beliefs({ t }: { t: Dictionary }) {
           </p>
         </Reveal>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <Spotlight className="mt-8 grid gap-4 sm:grid-cols-3">
           {items.map((item, i) => (
             <Reveal key={item.title} delay={i * 70}>
-              <div className="bd-card bd-card-hover h-full p-6">
+              <div className="bd-card bd-card-hover bd-spot h-full p-6">
                 <p
                   className="text-[11.5px] font-semibold uppercase tracking-[0.07em]"
                   style={{ color: "var(--bd-text-3)" }}
@@ -304,7 +203,7 @@ function Beliefs({ t }: { t: Dictionary }) {
               </div>
             </Reveal>
           ))}
-        </div>
+        </Spotlight>
       </div>
     </section>
   );

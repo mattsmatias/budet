@@ -14,6 +14,7 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { MattiPanel } from "./matti/panel";
 import type { Briefing } from "@/lib/matti/briefing";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import { Logo } from "@/components/brand/logo";
 
 /**
  * Hallintanavigaatio.
@@ -117,15 +118,20 @@ function DesktopSidebar({
         heti kun ravintoloita on enemmän kuin yksi.
       */}
       <div className="px-[18px] pb-3 pt-[14px]">
-        <Link href="/" className="block">
-          <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
-            Kate
+        <Link href="/" className="rf-brand flex items-center gap-2.5">
+          <span className="rf-brand-mark shrink-0">
+            <Logo size={30} />
           </span>
-          <span
-            className="mt-0.5 block truncate text-[10.5px] font-bold uppercase"
-            style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
-          >
-            {restaurantName}
+          <span className="min-w-0">
+            <span className="block text-[16px] font-extrabold leading-tight tracking-[-0.02em]">
+              Kate
+            </span>
+            <span
+              className="mt-0.5 block truncate text-[10.5px] font-bold uppercase"
+              style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
+            >
+              {restaurantName}
+            </span>
           </span>
         </Link>
       </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RfIcon } from "@/components/restoflow/icons";
 import { DEV_NAV, isDevPath } from "./nav-items";
+import { Logo } from "@/components/brand/logo";
 
 /**
  * Konsolin navigaatio.
@@ -26,15 +27,20 @@ export function DevNav() {
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-[18px] pb-3 pt-[14px]">
-        <Link href="/kehittaja" className="block">
-          <span className="block text-[16px] font-extrabold tracking-[-0.02em]">
-            Kate
+        <Link href="/kehittaja" className="rf-brand flex items-center gap-2.5">
+          <span className="rf-brand-mark shrink-0">
+            <Logo size={30} />
           </span>
-          <span
-            className="mt-0.5 block text-[10.5px] font-bold uppercase"
-            style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
-          >
-            Developer Console
+          <span className="min-w-0">
+            <span className="block text-[16px] font-extrabold leading-tight tracking-[-0.02em]">
+              Kate
+            </span>
+            <span
+              className="mt-0.5 block text-[10.5px] font-bold uppercase"
+              style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
+            >
+              Developer Console
+            </span>
           </span>
         </Link>
       </div>

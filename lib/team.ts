@@ -1,61 +1,25 @@
 /**
  * Katen tiimi.
  *
- * TYHJÄ, KOSKA EN TIEDÄ KEITÄ TE OLETTE.
+ * Nimi ja kuva ovat tässä, rooli ja esittely sanakirjassa
+ * (lib/i18n/dictionary.ts, about.founderRole ja about.founderBio),
+ * koska ne käännetään kuudelle kielelle. Nimeä ei käännetä.
  *
- * Tähän ei ole keksitty nimiä, rooleja, esittelyjä eikä kuvia.
- * Keksitty perustaja on pahempi kuin puuttuva: sivun tarkoitus on
- * rakentaa luottamusta, ja väärä nimi tuhoaa sen kertaheitolla siinä
- * vaiheessa kun joku kysyy.
+ * KUVA
  *
- * Sivu osaa olla tyhjä. Se kertoo että esittelyt julkaistaan kun kuvat
- * ovat valmiina, ja näyttää paikat jo nyt — asettelu ei siis muutu kun
- * tiedot lisätään.
- *
- * LISÄÄMINEN
- *
- * 1. Kopioi kuvat kansioon /public/team/ nimillä joita käytät alla.
- * 2. Lisää rivit tähän taulukkoon.
- *
- * Kuvien pitää olla samassa kuvasuhteessa (4:5, esimerkiksi
- * 800 × 1000) jotta rivi pysyy suorana. Sivu rajaa ne joka tapauksessa
- * object-fitillä, mutta samasta suhteesta lähtevä rajaus näyttää
- * siltä kuin sama kuvaaja olisi ottanut kaikki.
+ * Kansioon /public/team/, kuvasuhde 4:5 (esimerkiksi 720 × 900).
+ * Sivu rajaa kuvan object-fitillä, mutta samasta suhteesta lähtevä
+ * rajaus ei leikkaa kasvoja.
  */
 
 export interface TeamMember {
   /** Nimi sellaisena kuin se halutaan näkyvän. */
   name: string;
-  /** Rooli. Lyhyt: "Founder & Product", ei kolmea riviä. */
-  role: string;
-  /** Yksi tai kaksi lausetta. */
-  bio: string;
-  /** Polku /public-kansiosta, esim. "/team/founder.jpg". */
+  /** Polku /public-kansiosta. */
   image: string;
 }
 
-export const TEAM: TeamMember[] = [
-  // {
-  //   name: "Nimi Tähän",
-  //   role: "Founder & Product",
-  //   bio: "Lyhyt esittely yhdellä tai kahdella lauseella.",
-  //   image: "/team/founder.jpg",
-  // },
-];
-
-/**
- * Yhteiskuva.
- *
- * null kunnes kuva on olemassa. Sivu piirtää silloin saman muotoisen
- * paikan, joten hero ja kuvateksti ovat oikeilla korkeuksillaan jo
- * ennen kuvaa.
- */
-export const TEAM_PHOTO: string | null = null;
-
-/**
- * Montako paikkaa näytetään kun tiimiä ei ole vielä lisätty.
- *
- * Kolme, koska työpöydän ruudukko on kolme saraketta: tyhjä rivi
- * näyttää siltä miltä täysikin.
- */
-export const TEAM_PLACEHOLDERS = 3;
+export const FOUNDER: TeamMember = {
+  name: "Oktay Hun",
+  image: "/team/oktay-hun.jpg",
+};

@@ -205,7 +205,7 @@ const fi = {
 
   kuori: {
     addReceipt: "Lisää kuitti",
-    searchPlaceholder: "Etsi kuitteja, toimittajia, työntekijöitä…",
+    searchPlaceholder: "Etsi sivuja ja toimittajia…",
     searchHint: "Kirjoita nimi tai sivun nimi.",
     noUrgent: "Ei kiireellisiä",
     noObservations:
@@ -655,8 +655,6 @@ const fi = {
     vatHint:
       "Myynnin ALV verokannoittain: verollinen, vero ja veroton. Kanta on se joka oli voimassa kun päivä kirjattiin.",
     staffCosts: "Henkilöstökulut",
-    staffCostsHint:
-      "Työtuntien ja tuntipalkkojen perusteella laskettu henkilöstökulu työntekijöittäin.",
     accountantAlready: "Kirjanpitäjä on jo mukana.",
     accountantsAlready: "{maara} kirjanpitäjää on jo mukana.",
     printHint:
@@ -1880,7 +1878,7 @@ const en: AdminText = {
   },
   kuori: {
     addReceipt: "Add a receipt",
-    searchPlaceholder: "Search receipts, suppliers, employees…",
+    searchPlaceholder: "Search pages and suppliers…",
     searchHint: "Type a name or the name of a page.",
     noUrgent: "Nothing urgent",
     noObservations:
@@ -2332,8 +2330,6 @@ const en: AdminText = {
     vatHint:
       "Sales VAT by rate: with tax, the tax and without tax. The rate is the one in force when the day was recorded.",
     staffCosts: "Staff costs",
-    staffCostsHint:
-      "The staff cost per employee, calculated from hours worked and hourly rates.",
     accountantAlready: "The accountant is already on board.",
     accountantsAlready: "{maara} accountants are already on board.",
     printHint: "Print or save as PDF. Menus and buttons are left out.",
@@ -3550,7 +3546,7 @@ const sv: AdminText = {
   },
   kuori: {
     addReceipt: "Lägg till kvitto",
-    searchPlaceholder: "Sök kvitton, leverantörer, anställda…",
+    searchPlaceholder: "Sök sidor och leverantörer…",
     searchHint: "Skriv ett namn eller namnet på en sida.",
     noUrgent: "Inget brådskande",
     noObservations:
@@ -3997,8 +3993,6 @@ const sv: AdminText = {
     vatHint:
       "Försäljningens moms per sats: med moms, moms och utan moms. Satsen är den som gällde när dagen registrerades.",
     staffCosts: "Personalkostnader",
-    staffCostsHint:
-      "Personalkostnaden per anställd, beräknad från arbetstimmar och timlöner.",
     accountantAlready: "Bokföraren är redan med.",
     accountantsAlready: "{maara} bokförare är redan med.",
     printHint:
@@ -5220,7 +5214,7 @@ const da: AdminText = {
   },
   kuori: {
     addReceipt: "Tilføj kvittering",
-    searchPlaceholder: "Søg kvitteringer, leverandører, medarbejdere…",
+    searchPlaceholder: "Søg sider og leverandører…",
     searchHint: "Skriv et navn eller navnet på en side.",
     noUrgent: "Intet hastende",
     noObservations:
@@ -5669,8 +5663,6 @@ const da: AdminText = {
     vatHint:
       "Salgets moms pr. sats: med moms, moms og uden moms. Satsen er den, der gjaldt, da dagen blev registreret.",
     staffCosts: "Personaleomkostninger",
-    staffCostsHint:
-      "Personaleomkostningen pr. medarbejder, beregnet ud fra arbejdstimer og timelønninger.",
     accountantAlready: "Bogholderen er allerede med.",
     accountantsAlready: "{maara} bogholdere er allerede med.",
     printHint: "Print eller gem som PDF. Menuer og knapper kommer ikke med.",
@@ -6891,7 +6883,7 @@ const tr: AdminText = {
   },
   kuori: {
     addReceipt: "Fiş ekle",
-    searchPlaceholder: "Fiş, tedarikçi, çalışan ara…",
+    searchPlaceholder: "Sayfa ve tedarikçi ara…",
     searchHint: "Bir ad ya da sayfa adı yaz.",
     noUrgent: "Acil bir şey yok",
     noObservations:
@@ -7343,8 +7335,6 @@ const tr: AdminText = {
     vatHint:
       "Satışın KDV'si orana göre: vergili, vergi ve vergisiz. Oran, gün kaydedildiğinde geçerli olandır.",
     staffCosts: "Personel maliyetleri",
-    staffCostsHint:
-      "Çalışma saatleri ve saat ücretlerinden hesaplanan, çalışan başına personel maliyeti.",
     accountantAlready: "Muhasebeci zaten dahil.",
     accountantsAlready: "{maara} muhasebeci zaten dahil.",
     printHint:
@@ -8554,7 +8544,7 @@ const et: AdminText = {
   },
   kuori: {
     addReceipt: "Lisa tšekk",
-    searchPlaceholder: "Otsi tšekke, tarnijaid, töötajaid…",
+    searchPlaceholder: "Otsi lehti ja tarnijaid…",
     searchHint: "Kirjuta nimi või lehe nimi.",
     noUrgent: "Kiireloomulist pole",
     noObservations:
@@ -9002,8 +8992,6 @@ const et: AdminText = {
     vatHint:
       "Müügi käibemaks määrade kaupa: käibemaksuga, maks ja käibemaksuta. Määr on see, mis kehtis päeva salvestamisel.",
     staffCosts: "Personalikulud",
-    staffCostsHint:
-      "Töötundide ja tunnitasude põhjal arvutatud personalikulu töötaja kohta.",
     accountantAlready: "Raamatupidaja on juba kaasas.",
     accountantsAlready: "{maara} raamatupidajat on juba kaasas.",
     printHint: "Prindi või salvesta PDF-ina. Menüüd ja nupud ei tule kaasa.",

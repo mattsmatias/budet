@@ -469,3 +469,285 @@
     var(--bd-line) 10px 20px
   );
 }
+
+/* ---------------------------------------------------------------------------
+   Meistä: perustaja
+   ---------------------------------------------------------------------------
+   Sivun ainoa näyttävä hetki, ja se on tarkoituksella yksi. Kuva
+   paljastuu verhon takaa ja asettuu, takana syttyy tunnusvärien hehku,
+   K-merkki ponnahtaa kulmaan ja nimen yli kulkee kerran valo. Hehku
+   liikkuu hitaasti, jotta sivu tuntuu elävältä muttei vaadi huomiota.
+*/
+
+.bd-d5 { animation-delay: 420ms; }
+
+.bd-portrait-stage {
+  position: relative;
+  perspective: 1200px;
+}
+
+/* Hehku: kolme tunnusväriä pehmeänä valona kuvan takana. */
+@keyframes bd-aurora-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bd-aurora-drift {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bd-aurora {
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  animation: bd-aurora-in 1400ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+
+.bd-aurora::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(209, 56, 49, 0.55),
+    rgba(194, 65, 12, 0.45),
+    rgba(123, 118, 232, 0.5),
+    rgba(209, 56, 49, 0.55)
+  );
+  filter: blur(56px);
+  opacity: 0.55;
+  animation: bd-aurora-drift 26s linear infinite;
+}
+
+/* Kallistus: arvot tulevat osoittimesta (effects.tsx). */
+.bd-tilt {
+  position: relative;
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.bd-tilt[data-active="true"] {
+  transition: transform 120ms ease-out;
+}
+
+/* Kuva: verho nousee alhaalta ylös ja kuva asettuu lähempää. */
+@keyframes bd-curtain {
+  from {
+    clip-path: inset(100% 0 0 0 round 28px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 28px);
+  }
+}
+
+@keyframes bd-settle {
+  from {
+    transform: scale(1.18);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.bd-portrait {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--bd-bg-2);
+  box-shadow:
+    0 30px 60px -20px rgba(15, 23, 41, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  animation: bd-curtain 1100ms cubic-bezier(0.77, 0, 0.18, 1) both;
+}
+
+.bd-portrait-img {
+  object-fit: cover;
+  animation: bd-settle 1800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.bd-portrait-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 0%),
+    rgba(255, 255, 255, 0.28),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.bd-tilt[data-active="true"] .bd-portrait-glare {
+  opacity: 1;
+}
+
+/* K-merkki kuvan kulmassa: lasimainen laatta, ponnahtaa kerran. */
+@keyframes bd-pop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 16px, 40px) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translate3d(0, -4px, 40px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 40px) scale(1);
+  }
+}
+
+.bd-badge {
+  position: absolute;
+  left: -14px;
+  bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 18px 40px -16px rgba(15, 23, 41, 0.45);
+  color: var(--bd-text);
+  animation: bd-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 1150ms both;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bd-badge {
+    background: rgba(24, 28, 38, 0.78);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+:root[data-theme="dark"] .bd-badge {
+  background: rgba(24, 28, 38, 0.78);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Nimi: valo kulkee kerran tekstin yli. */
+@keyframes bd-shine {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -20% 0;
+  }
+}
+
+.bd-shine {
+  background: linear-gradient(
+      100deg,
+      var(--bd-text) 0%,
+      var(--bd-text) 40%,
+      var(--bd-accent) 50%,
+      var(--bd-text) 60%,
+      var(--bd-text) 100%
+    )
+    0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bd-shine 1600ms cubic-bezier(0.45, 0, 0.2, 1) 900ms both;
+}
+
+.bd-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bd-accent-strong);
+  background: var(--bd-accent-bg);
+}
+
+.bd-role::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bd-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--bd-accent) 22%, transparent);
+}
+
+/* Kortit joissa valo seuraa osoitinta (Spotlight, effects.tsx). */
+.bd-spot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.bd-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    320px circle at var(--spot-x, -400px) var(--spot-y, -400px),
+    color-mix(in srgb, var(--bd-accent) 12%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.bd-spot:hover::before {
+  opacity: 1;
+}
+
+/* Tunnus navigaatiossa: pieni kallistus osoitettaessa. */
+.bd-logo-mark {
+  display: inline-flex;
+  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+a:hover > .bd-logo-mark,
+a:focus-visible > .bd-logo-mark {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+@media (max-width: 1023px) {
+  .bd-badge {
+    left: 12px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bd-aurora,
+  .bd-aurora::before,
+  .bd-portrait,
+  .bd-portrait-img,
+  .bd-badge,
+  .bd-shine {
+    animation: none;
+  }
+
+  .bd-tilt,
+  .bd-logo-mark {
+    transform: none !important;
+    transition: none;
+  }
+
+  .bd-shine {
+    background-position: -20% 0;
+  }
+}

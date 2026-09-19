@@ -197,21 +197,7 @@ const fi = {
     metaDescription:
       "Kate rakennetaan ihmisille, jotka pyörittävät ravintoloita joka " +
       "päivä. Yksi paikka ravintolan tärkeimmille asioille.",
-    label: "Meistä",
-    heading: "Rakennamme ravintoloille paremman tavan pyörittää arkea.",
-    body:
-      "Kate syntyi ajatuksesta, että ravintolan tärkeiden asioiden ei " +
-      "pitäisi olla hajallaan eri järjestelmissä. Yksi paikka. Vähemmän " +
-      "säätöä. Enemmän aikaa itse tekemiseen.",
-    photoAlt: "Katen tiimi",
-    photoPending: "Tiimikuva lisätään tähän.",
-    captionA: "Pieni tiimi. Iso tavoite.",
-    captionB:
-      "Rakennamme Katea ihmisille, jotka pyörittävät ravintoloita joka päivä.",
     teamHeading: "Ihmiset Katen takana.",
-    teamPending:
-      "Tiimin esittelyt julkaistaan kun kuvat ovat valmiina. Paikat ovat " +
-      "sivulla jo nyt, joten asettelu ei muutu kun tiedot lisätään.",
     whyLabel: "Miksi Kate?",
     whyHeading:
       "Ravintolan pyörittäminen ei saisi tuntua kymmenen eri järjestelmän " +
@@ -235,6 +221,9 @@ const fi = {
     ctaBody:
       "Tutustu Kateen ja katso, mitä kaikkea voit hallita yhdessä paikassa.",
     cta: "Tutustu Kateen",
+    founderRole: "Perustaja ja toimitusjohtaja",
+    founderBio: "Rakentaa Katea, jotta ravintoloitsija näkee yhdellä silmäyksellä, paljonko rahaa tulee ja mihin se menee.",
+    founderLabel: "Perustaja",
   },
 } as const;
 
@@ -406,21 +395,7 @@ const en: Dictionary = {
     metaDescription:
       "Kate is built for the people who run restaurants every day. One place " +
       "for what matters most.",
-    label: "About",
-    heading: "We are building a better way to run a restaurant day to day.",
-    body:
-      "Kate started from a simple idea: the important parts of running a " +
-      "restaurant should not be scattered across separate systems. One place. " +
-      "Less fiddling. More time for the work itself.",
-    photoAlt: "The Kate team",
-    photoPending: "The team photo goes here.",
-    captionA: "A small team. A large goal.",
-    captionB:
-      "We build Kate for the people who run restaurants every single day.",
     teamHeading: "The people behind Kate.",
-    teamPending:
-      "Team profiles go live once the photographs are ready. The places are " +
-      "already on the page, so nothing shifts when the details arrive.",
     whyLabel: "Why Kate?",
     whyHeading:
       "Running a restaurant should not feel like managing ten different " +
@@ -443,6 +418,9 @@ const en: Dictionary = {
     ctaHeading: "Let's make restaurant work a little easier.",
     ctaBody: "Take a look at Kate and see what you can run from one place.",
     cta: "Explore Kate",
+    founderRole: "Founder & CEO",
+    founderBio: "Building Kate so restaurant owners can see at a glance how much money comes in and where it goes.",
+    founderLabel: "Founder",
   },
 };
 
@@ -609,20 +587,7 @@ const sv: Dictionary = {
     metaDescription:
       "Kate byggs för dem som driver restauranger varje dag. Ett ställe för " +
       "det som är viktigast.",
-    label: "Om oss",
-    heading: "Vi bygger ett bättre sätt att sköta restaurangvardagen.",
-    body:
-      "Kate växte fram ur tanken att det viktigaste i en restaurang inte " +
-      "borde ligga utspritt i olika system. Ett ställe. Mindre pillande. Mer " +
-      "tid för själva jobbet.",
-    photoAlt: "Kates team",
-    photoPending: "Teambilden kommer här.",
-    captionA: "Litet team. Stort mål.",
-    captionB: "Vi bygger Kate för dem som driver restauranger varje dag.",
     teamHeading: "Människorna bakom Kate.",
-    teamPending:
-      "Teamet presenteras när bilderna är klara. Platserna finns redan på " +
-      "sidan, så ingenting flyttar sig när uppgifterna kommer.",
     whyLabel: "Varför Kate?",
     whyHeading:
       "Att driva en restaurang borde inte kännas som att sköta tio olika " +
@@ -643,6 +608,9 @@ const sv: Dictionary = {
     ctaHeading: "Låt oss göra restaurangvardagen lite enklare.",
     ctaBody: "Titta närmare på Kate och se vad du kan sköta på ett ställe.",
     cta: "Utforska Kate",
+    founderRole: "Grundare och vd",
+    founderBio: "Bygger Kate så att krögaren med en blick ser hur mycket pengar som kommer in och vart de tar vägen.",
+    founderLabel: "Grundare",
   },
 };
 
@@ -809,20 +777,7 @@ const da: Dictionary = {
     metaDescription:
       "Kate bygges til dem, der driver restauranter hver dag. Ét sted til det, " +
       "der betyder mest.",
-    label: "Om os",
-    heading: "Vi bygger en bedre måde at drive restaurantens hverdag på.",
-    body:
-      "Kate opstod ud fra tanken om, at det vigtigste i en restaurant ikke " +
-      "burde ligge spredt i forskellige systemer. Ét sted. Mindre bøvl. Mere " +
-      "tid til selve arbejdet.",
-    photoAlt: "Kate-teamet",
-    photoPending: "Teambilledet kommer her.",
-    captionA: "Lille team. Stort mål.",
-    captionB: "Vi bygger Kate til dem, der driver restauranter hver dag.",
     teamHeading: "Menneskene bag Kate.",
-    teamPending:
-      "Teamet præsenteres, når billederne er klar. Pladserne er allerede på " +
-      "siden, så intet flytter sig, når oplysningerne kommer.",
     whyLabel: "Hvorfor Kate?",
     whyHeading:
       "At drive en restaurant burde ikke føles som at styre ti forskellige " +
@@ -845,6 +800,9 @@ const da: Dictionary = {
     ctaHeading: "Lad os gøre restaurantens hverdag en smule lettere.",
     ctaBody: "Kig på Kate og se, hvad du kan styre ét sted.",
     cta: "Udforsk Kate",
+    founderRole: "Stifter og administrerende direktør",
+    founderBio: "Bygger Kate, så restauratøren med ét blik kan se, hvor mange penge der kommer ind, og hvor de går hen.",
+    founderLabel: "Stifter",
   },
 };
 
@@ -1011,20 +969,7 @@ const tr: Dictionary = {
     metaDescription:
       "Kate, her gün restoran işletenler için geliştiriliyor. En önemli işler " +
       "için tek bir yer.",
-    label: "Hakkımızda",
-    heading: "Restoranın günlük işleyişi için daha iyi bir yol kuruyoruz.",
-    body:
-      "Kate, bir restoranın önemli işlerinin ayrı sistemlere dağılmaması " +
-      "gerektiği düşüncesinden doğdu. Tek yer. Daha az uğraş. İşin kendisine " +
-      "daha çok zaman.",
-    photoAlt: "Kate ekibi",
-    photoPending: "Ekip fotoğrafı buraya gelecek.",
-    captionA: "Küçük ekip. Büyük hedef.",
-    captionB: "Kate'i her gün restoran işletenler için geliştiriyoruz.",
     teamHeading: "Kate'in arkasındaki insanlar.",
-    teamPending:
-      "Ekip tanıtımları fotoğraflar hazır olduğunda yayınlanacak. Yerler " +
-      "sayfada şimdiden hazır, bilgiler eklendiğinde düzen değişmeyecek.",
     whyLabel: "Neden Kate?",
     whyHeading:
       "Bir restoranı işletmek, on ayrı sistemi yönetmek gibi hissettirmemeli.",
@@ -1044,6 +989,9 @@ const tr: Dictionary = {
     ctaHeading: "Restoranın gününü biraz kolaylaştıralım.",
     ctaBody: "Kate'e göz atın ve tek yerden neleri yönetebileceğinizi görün.",
     cta: "Kate'i keşfet",
+    founderRole: "Kurucu ve CEO",
+    founderBio: "Kate'i, restoran sahipleri ne kadar para girdiğini ve nereye gittiğini bir bakışta görebilsin diye geliştiriyor.",
+    founderLabel: "Kurucu",
   },
 };
 
@@ -1209,19 +1157,7 @@ const et: Dictionary = {
     metaDescription:
       "Kate on tehtud neile, kes peavad restorani iga päev. Üks koht kõige " +
       "olulisema jaoks.",
-    label: "Meist",
-    heading: "Ehitame restoranile paremat viisi igapäevatööks.",
-    body:
-      "Kate sündis mõttest, et restorani olulised asjad ei peaks olema laiali " +
-      "eri süsteemides. Üks koht. Vähem nokitsemist. Rohkem aega tööle endale.",
-    photoAlt: "Kate tiim",
-    photoPending: "Tiimipilt tuleb siia.",
-    captionA: "Väike tiim. Suur eesmärk.",
-    captionB: "Ehitame Katet neile, kes peavad restorani iga päev.",
     teamHeading: "Inimesed Kate taga.",
-    teamPending:
-      "Tiimi tutvustused avaldatakse, kui pildid on valmis. Kohad on lehel juba " +
-      "olemas, nii et paigutus ei muutu, kui andmed lisanduvad.",
     whyLabel: "Miks Kate?",
     whyHeading:
       "Restorani pidamine ei peaks tunduma kümne eri süsteemi haldamisena.",
@@ -1242,6 +1178,9 @@ const et: Dictionary = {
     ctaHeading: "Teeme restorani päeva veidi lihtsamaks.",
     ctaBody: "Vaata Katet ja näe, mida saad ühest kohast juhtida.",
     cta: "Tutvu Katega",
+    founderRole: "Asutaja ja tegevjuht",
+    founderBio: "Ehitab Kate'i, et restoranipidaja näeks ühe pilguga, kui palju raha tuleb sisse ja kuhu see läheb.",
+    founderLabel: "Asutaja",
   },
 };
 

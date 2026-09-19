@@ -2,32 +2,18 @@
 
 Tähän kansioon tulevat Meistä-sivun valokuvat.
 
-## Yhteiskuva
+## Perustajan kuva
 
-Tiedosto: mikä tahansa nimi, esim. `team.jpg`
+Tiedosto: `oktay-hun.jpg` (720 × 900)
 
-- Kuvasuhde **16:9** (esim. 2400 × 1350)
-- Vaakakuva, luonnollinen tilanne
-- Sivu rajaa kuvan `object-fit: cover` -säännöllä, joten reunoilta
-  voi jäädä hieman pois. Älä siis sijoita ketään aivan reunaan.
+- Kuvasuhde **4:5**
+- Sivu rajaa kuvan `object-fit: cover` -säännöllä, joten kasvot
+  kannattaa pitää kuvan keskellä.
 
-Ota kuva käyttöön asettamalla `lib/team.ts`:
-
-```ts
-export const TEAM_PHOTO: string | null = "/team/team.jpg";
-```
-
-## Henkilökuvat
-
-Tiedostot: esim. `founder.jpg`, `member-2.jpg`
-
-- Kuvasuhde **4:5** (esim. 800 × 1000) — sama kaikille
-- Sama valaistus ja sama rajaus, jotta rivi näyttää yhtenäiseltä
-- Ei voimakasta filtteriä
-
-Lisää henkilöt `lib/team.ts`:n `TEAM`-taulukkoon. Kun taulukko on
-tyhjä, sivu näyttää kuvapaikat ja kertoo että esittelyt julkaistaan
-myöhemmin — asettelu ei siis muutu kun tiedot lisätään.
+Kuvan polku ja nimi ovat tiedostossa `lib/team.ts`. Rooli ja
+esittely ovat sanakirjassa `lib/i18n/dictionary.ts`
+(`about.founderRole`, `about.founderBio`), koska ne käännetään
+kuudelle kielelle.
 
 ## Miksi kuvasuhde on tärkeä
 
