@@ -152,7 +152,7 @@ export function totalSalesCents(sales: DailySales[]): number {
 /**
  * Päivät joilta myynti puuttuu.
  *
- * Vain menneet päivät ja vain ne joilta on leimauksia: ravintola on
+ * Vain menneet päivät ja vain kutsujan antamat päivät: ravintola on
  * voinut olla kiinni, eikä kiinni ollut päivä ole puuttuva merkintä.
  */
 export function missingSalesDays(
