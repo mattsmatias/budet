@@ -18,6 +18,7 @@ import {
   type MattiActionState,
 } from "../matti-actions";
 import { RfIcon } from "@/components/restoflow/icons";
+import { MattiMark } from "@/components/restoflow/matti-mark";
 import { Button } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 import type { Briefing } from "@/lib/matti/briefing";
@@ -132,13 +133,8 @@ export function MattiPanel({
           aria-label={t.matti.ariaLabel}
           title={t.matti.shortcut}
           className="rf-press flex h-10 w-10 items-center justify-center"
-          style={{
-            background: "var(--rf-inset)",
-            color: "var(--rf-accent)",
-            borderRadius: "50%",
-          }}
         >
-          <RfIcon name="sparkle" size={17} />
+          <MattiMark size={30} />
         </button>
 
         {open ? (
@@ -171,9 +167,7 @@ export function MattiPanel({
         className="rf-rail-link rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-start text-[13.5px]"
         style={{ color: "var(--rf-text-2)" }}
       >
-        <span style={{ color: "var(--rf-accent)" }}>
-          <RfIcon name="sparkle" size={17} />
-        </span>
+        <MattiMark size={20} />
 
         {/*
           Yksi rivi, ei kahta.
@@ -391,9 +385,7 @@ function Conversation({
         style={{ borderColor: "var(--rf-line)" }}
       >
         <div className="flex items-center gap-2.5">
-          <span style={{ color: "var(--rf-accent)" }}>
-            <RfIcon name="sparkle" size={18} />
-          </span>
+          <MattiMark size={28} />
           <p className="text-[15px] font-semibold">{t.matti.name}</p>
         </div>
 
@@ -468,9 +460,7 @@ function Working({ t }: { t: AdminText }) {
       className="mt-5 flex items-center gap-2 text-[13px]"
       style={{ color: "var(--rf-text-3)" }}
     >
-      <span className="rf-thinking" style={{ color: "var(--rf-accent)" }}>
-        <RfIcon name="sparkle" size={14} />
-      </span>
+      <MattiMark size={18} thinking />
       {t.matti.thinking}
     </p>
   );
@@ -652,7 +642,7 @@ function Welcome({
             className="flex items-center gap-1.5 text-[12px] font-bold uppercase"
             style={{ color: "var(--rf-accent)", letterSpacing: "0.06em" }}
           >
-            <RfIcon name="sparkle" size={13} />
+            <MattiMark size={15} />
             {t.matti.noticed}
           </p>
 
