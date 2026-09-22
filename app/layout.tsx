@@ -58,13 +58,29 @@ export const metadata: Metadata = {
     siteName: "Kate",
   },
   robots: { index: true, follow: true },
+  /*
+   * Kotinäytön sovellus iPhonella: aukeaa koko näytölle, yläpalkin väri
+   * tulee sivulta ja nimi on lyhyt. Android lukee saman manifestista.
+   */
+  appleWebApp: {
+    capable: true,
+    title: "Kate",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
+  // Vanhemmat iPhonet lukevat tämän; uudemmat manifestin display-kentän.
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f5f5f7",
+  /* Selaimen ja tilarivin väri seuraa teemaa. */
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1117" },
+  ],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

@@ -124,13 +124,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
           <header
-            className="rf-no-print rf-z-chrome sticky top-0 flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden"
-            style={{
-              borderColor: "var(--rf-line)",
-              background: "rgba(255,255,255,0.86)",
-              backdropFilter: "saturate(180%) blur(20px)",
-              WebkitBackdropFilter: "saturate(180%) blur(20px)",
-            }}
+            className="rf-no-print rf-z-chrome rf-mobile-header sticky top-0 flex items-center justify-between gap-3 border-b md:hidden"
+            style={{ borderColor: "var(--rf-line)" }}
           >
             <Link href="/admin" className="min-w-0">
               <p className="truncate text-[15px] font-semibold">
@@ -188,7 +183,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             t={t}
           />
 
-          <main className="w-full flex-1 px-4 py-5 pb-24 md:px-6 md:pb-10 md:pt-5">
+          <main className="rf-main w-full flex-1 px-4 py-5 md:px-6 md:pb-10 md:pt-5">
             {children}
           </main>
         </div>

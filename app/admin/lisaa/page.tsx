@@ -8,6 +8,7 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { Avatar, Card, SectionLabel } from "@/components/restoflow/ui";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
+import { InstallCard } from "./install";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -54,6 +55,9 @@ export default async function AdminMorePage() {
           </div>
         </div>
       </Card>
+
+      {/* Asennusohje näkyy vain selaimessa, ei jo asennetussa sovelluksessa. */}
+      <InstallCard t={t} />
 
       {overflow.length > 0 ? (
         <section>

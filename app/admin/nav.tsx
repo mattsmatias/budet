@@ -281,14 +281,8 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
   return (
     <nav
       aria-label={t.kuori2.adminNav}
-      className="fixed bottom-0 left-0 right-0 z-30 border-t md:hidden"
-      style={{
-        borderColor: "var(--rf-line)",
-        background: "rgba(255,255,255,0.86)",
-        backdropFilter: "saturate(180%) blur(20px)",
-        WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
+      className="rf-mobile-bar fixed bottom-0 left-0 right-0 z-30 border-t md:hidden"
+      style={{ borderColor: "var(--rf-line)" }}
     >
       <ul className="mx-auto flex max-w-md">
         {primary.map((item) => {

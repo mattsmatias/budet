@@ -1575,6 +1575,7 @@ details[open] .rf-summary-chevron {
 }
 
 .rf-auth-float-b {
+  white-space: nowrap;
   left: 190px;
   top: 96px;
   display: flex;
@@ -1769,4 +1770,77 @@ details[open] .rf-summary-chevron {
     animation: none;
     stroke-dashoffset: 0;
   }
+}
+
+/* --------------------------------------------------------------------- */
+/* Puhelimen ylä- ja alapalkki                                            */
+/*                                                                        */
+/* Lasimainen pinta teeman värissä, ja näytön lovi ja kotipalkki          */
+/* huomioidaan: kotinäytöltä avattuna sisältö ulottuu reunasta reunaan    */
+/* (viewport-fit: cover), joten palkit tuovat oman turvavälinsä.          */
+/* --------------------------------------------------------------------- */
+
+.rf-mobile-header,
+.rf-mobile-bar {
+  background: color-mix(in srgb, var(--rf-card) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.rf-mobile-header {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: 0.75rem;
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+.rf-mobile-bar {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Sisältö ei jää alapalkin eikä kotipalkin alle. */
+.rf-main {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .rf-main {
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* Kotinäyttöön lisäämisen kortti Lisää-sivulla. */
+.rf-install {
+  padding: 16px;
+  border-radius: var(--rf-r-card);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--rf-accent) 8%, transparent), transparent 60%),
+    var(--rf-card);
+  border: 1px solid color-mix(in srgb, var(--rf-accent) 22%, var(--rf-line));
+  box-shadow: var(--rf-shadow-sm);
+  animation: rf-fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.rf-install-button {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rf-on-accent);
+  background: var(--rf-accent);
+}
+
+.rf-install-step {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--rf-accent-strong, var(--rf-accent));
+  background: var(--rf-accent-bg, var(--rf-inset));
 }

@@ -207,3 +207,45 @@ input[type="month"] {
     break-inside: avoid;
   }
 }
+
+/* --------------------------------------------------------------------- */
+/* Sovellusmainen kosketus                                                */
+/*                                                                        */
+/* Puhelimella ja tabletilla Kate käyttäytyy kuin asennettu sovellus:    */
+/* ei harmaata napautusvälähdystä, ei tuplanapautuszoomin viivettä, eikä  */
+/* painikkeiden tekstiä valita vahingossa pitkällä painalluksella.        */
+/* --------------------------------------------------------------------- */
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+label,
+summary,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button,
+nav a,
+.rf-press {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/*
+ * Kotinäytöltä avattuna sivu ei jousta reunoiltaan eikä vedä
+ * päivitystä ylälaidasta: sovellus pysyy paikallaan kuten natiivi.
+ */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+}
