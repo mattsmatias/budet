@@ -737,8 +737,20 @@ export default async function AdminDashboard({
           }
           tone="muted"
           icon={<RfIcon name="staff" size={17} />}
-          href={`/admin/kulut?kuukausi=${viewMonth}`}
-          linkLabel={t.sanat.expenses}
+          /*
+           * Linkki vie sinne missä luvulle voi tehdä jotain.
+           *
+           * Kortti neuvoo kirjaamaan palkat, mutta vei kuluerittelyyn
+           * jossa mitään ei voi kirjata. Kun palkkoja ei vielä ole,
+           * linkki avaa kulun lisäyksen Henkilöstö-luokka valmiina;
+           * kun niitä on, se näyttää ne kuluissa.
+           */
+          href={
+            staffCents === 0
+              ? "/admin/kuitit/uusi?luokka=staff"
+              : `/admin/kulut?kuukausi=${viewMonth}`
+          }
+          linkLabel={staffCents === 0 ? t.kuori.addReceipt : t.sanat.expenses}
         />
       </Spotlight>
       </section>

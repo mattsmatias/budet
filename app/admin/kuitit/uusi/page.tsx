@@ -13,6 +13,9 @@ import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { isRealExtractor } from "@/lib/restoflow/receipt-ai";
 import { RfIcon } from "@/components/restoflow/icons";
 import { CaptureFlow } from "./capture";
+import { CATEGORY_ORDER } from "@/lib/restoflow/types";
+import { todayIn } from "@/lib/restoflow/local-time";
+import type { ExpenseCategory } from "@/lib/restoflow/types";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -26,11 +29,27 @@ export async function generateMetadata() {
  * kirjanpitoaineistoa, ja kulukirjauksen synnyttäminen kuuluu sille joka
  * myös vastaa sen oikeellisuudesta.
  */
-export default async function NewReceiptPage() {
+export default async function NewReceiptPage({
+  searchParams,
+}: PageProps<"/admin/kuitit/uusi">) {
   const locale = await resolveLocale();
   const t = adminText(locale);
   const { restaurant, role } = await requireContext("/admin/kuitit/uusi");
+  const params = await searchParams;
   const nimet = withBusiness(labels(locale), restaurant.businessType);
+
+  /*
+   * Luokka osoitteesta.
+   *
+   * Yleiskuvan palkkakortti neuvoo kirjaamaan palkat Henkilöstö-luokkaan,
+   * joten sen linkki avaa lomakkeen luokka valmiiksi valittuna.
+   * Tuntematon arvo jätetään huomiotta eikä se päädy lomakkeelle.
+   */
+  const luokka: ExpenseCategory | "" =
+    typeof params.luokka === "string" &&
+    (CATEGORY_ORDER as string[]).includes(params.luokka)
+      ? (params.luokka as ExpenseCategory)
+      : "";
 
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
 
@@ -61,6 +80,15 @@ export default async function NewReceiptPage() {
         suppliers={suppliers}
         categories={categories}
         extractionEnabled={isRealExtractor()}
+        /*
+         * Luokka osoitteesta.
+         *
+         * Yleiskuvan palkkakortti neuvoo kirjaamaan palkat Henkilöstö-
+         * luokkaan, joten linkki vie lomakkeeseen jossa luokka on jo
+         * valittuna. Tuntematon arvo jätetään huomiotta.
+         */
+        defaultCategory={luokka}
+        today={todayIn(restaurant.timezone)}
       />
     </div>
   );

@@ -1308,6 +1308,10 @@ const fi = {
     orSep: " tai ",
     pageOfPages: "Sivu {sivu} / {kaikki}",
     matchesRate: "Vastaa {kanta} kantaa",
+    byHand: "Kirjaa ilman kuvaa",
+    byHandHint: "Palkat, vuokra ja laskut joista ei ole kuittia.",
+    noImage: "Ei kuvaa",
+    byHandNote: "Kirjaat kulun itse. Täytä toimittaja, summa ja kategoria.",
   },
 
   matti: {
@@ -3018,6 +3022,10 @@ const en: AdminText = {
     orSep: " or ",
     pageOfPages: "Page {sivu} / {kaikki}",
     matchesRate: "Matches the {kanta} rate",
+    byHand: "Record without a picture",
+    byHandHint: "Wages, rent and bills with no receipt.",
+    noImage: "No picture",
+    byHandNote: "You are recording this yourself. Fill in the supplier, amount and category.",
   },
 
   matti: {
@@ -4722,6 +4730,10 @@ const sv: AdminText = {
     orSep: " eller ",
     pageOfPages: "Sida {sivu} / {kaikki}",
     matchesRate: "Motsvarar {kanta} skattesats",
+    byHand: "Bokför utan bild",
+    byHandHint: "Löner, hyra och fakturor utan kvitto.",
+    noImage: "Ingen bild",
+    byHandNote: "Du bokför själv. Fyll i leverantör, belopp och kategori.",
   },
 
   matti: {
@@ -6424,6 +6436,10 @@ const da: AdminText = {
     orSep: " eller ",
     pageOfPages: "Side {sivu} / {kaikki}",
     matchesRate: "Svarer til {kanta} sats",
+    byHand: "Bogfør uden billede",
+    byHandHint: "Løn, husleje og regninger uden kvittering.",
+    noImage: "Intet billede",
+    byHandNote: "Du bogfører selv. Udfyld leverandør, beløb og kategori.",
   },
 
   matti: {
@@ -8123,6 +8139,10 @@ const tr: AdminText = {
     orSep: " ya da ",
     pageOfPages: "Sayfa {sivu} / {kaikki}",
     matchesRate: "{kanta} oranına denk geliyor",
+    byHand: "Görselsiz kaydet",
+    byHandHint: "Maaş, kira ve fişi olmayan faturalar.",
+    noImage: "Görsel yok",
+    byHandNote: "Bu kaydı kendiniz giriyorsunuz. Tedarikçi, tutar ve kategoriyi doldurun.",
   },
 
   matti: {
@@ -9819,6 +9839,10 @@ const et: AdminText = {
     orSep: " või ",
     pageOfPages: "Lehekülg {sivu} / {kaikki}",
     matchesRate: "Vastab {kanta} määrale",
+    byHand: "Kirjenda ilma pildita",
+    byHandHint: "Palgad, üür ja arved, millest pole tšekki.",
+    noImage: "Pilti pole",
+    byHandNote: "Kirjendad ise. Täida tarnija, summa ja kategooria.",
   },
 
   matti: {
@@ -11525,6 +11549,10 @@ const ar: AdminText = {
     orSep: " أو ",
     pageOfPages: "الصفحة {sivu} / {kaikki}",
     matchesRate: "يطابق معدل {kanta}",
+    byHand: "تسجيل بدون صورة",
+    byHandHint: "الرواتب والإيجار والفواتير التي لا إيصال لها.",
+    noImage: "لا توجد صورة",
+    byHandNote: "أنت تسجّل هذا بنفسك. املأ المورّد والمبلغ والفئة.",
   },
 
   matti: {

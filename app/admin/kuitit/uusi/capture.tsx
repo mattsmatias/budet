@@ -55,6 +55,8 @@ export function CaptureFlow({
   suppliers,
   categories,
   extractionEnabled,
+  defaultCategory = "",
+  today,
 }: {
   nimet: Labels;
   t: AdminText;
@@ -63,6 +65,16 @@ export function CaptureFlow({
   categories: CustomCategory[];
   /** Onko oikea poimintapalvelu kytketty? Ratkaisee koko kulun sävyn. */
   extractionEnabled: boolean;
+  /** Valmiiksi valittu luokka, esim. yleiskuvan palkkakortin linkistä. */
+  defaultCategory?: ExpenseCategory | "";
+  /**
+   * Tämä päivä yrityksen aikavyöhykkeellä.
+   *
+   * Selaimen oma päivä on UTC:ssä: puoli yhden jälkeen yöllä kirjattu
+   * kulu sai eilisen päivän, ja kirjanpidossa se näkyi väärässä
+   * kuukaudessa kuun vaihteessa.
+   */
+  today: string;
 }) {
   const [phase, setPhase] = useState<Phase>("choose");
   const [result, setResult] = useState<ExtractionResult | null>(null);
@@ -101,7 +113,20 @@ export function CaptureFlow({
   const [date, setDate] = useState("");
   const [totalEuros, setTotalEuros] = useState("");
   const [vatEuros, setVatEuros] = useState("");
-  const [category, setCategory] = useState<ExpenseCategory | "">("");
+  /*
+   * Kirjaus ilman kuvaa.
+   *
+   * Palkoista, vuokrasta ja suoraveloituksista ei ole kuittia. Kanta on
+   * sallinut kuvattoman kuitin alusta asti — vain lomake vaati kuvan,
+   * ja siksi kulun saattoi kirjata vain kuvaamalla jotain.
+   *
+   * Lippu erottaa käsin kirjatun poimitusta: poiminnan varmuushuomiot
+   * eivät koske riviä jota mikään ei lukenut.
+   */
+  const [manual, setManual] = useState(false);
+  const [category, setCategory] = useState<ExpenseCategory | "">(
+    defaultCategory,
+  );
   const [payment, setPayment] = useState<PaymentMethod>("unknown");
   const [note, setNote] = useState("");
 
@@ -166,7 +191,7 @@ export function CaptureFlow({
       void uploadPages;
 
       setResult(emptyResult());
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(today);
       setPhase("review");
       return;
     }
@@ -196,7 +221,7 @@ export function CaptureFlow({
         error instanceof Error ? error.message : t.kuva.readFailed,
       );
       setResult(emptyResult());
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(today);
       setPhase("review");
       return;
     }
@@ -205,7 +230,7 @@ export function CaptureFlow({
 
     setResult(extraction);
     setSupplier(extraction.supplier.value ?? "");
-    setDate(extraction.date.value ?? new Date().toISOString().slice(0, 10));
+    setDate(extraction.date.value ?? today);
     setTotalEuros(toEuros(extraction.totalCents.value));
     setVatEuros(toEuros(extraction.vatCents.value));
     setCategory(extraction.category.value ?? "");
@@ -321,6 +346,18 @@ export function CaptureFlow({
           label={t.kuva.uploadFile}
           onClick={() => fileRef.current?.click()}
         />
+        {/* Kuvaton kirjaus on tasavertainen tapa eikä hätävara: osasta
+            kuluja ei yksinkertaisesti ole kuittia. */}
+        <ChooseButton
+          icon="plus"
+          label={t.kuva.byHand}
+          onClick={() => {
+            setManual(true);
+            setResult(emptyResult());
+            setDate(today);
+            setPhase("review");
+          }}
+        />
 
         <p
           className="px-1 pt-2 text-[12px] leading-relaxed"
@@ -335,6 +372,13 @@ export function CaptureFlow({
         >
           {t.kuva.multiPage}
         </p>
+
+        <p
+          className="px-1 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.kuva.byHandHint}
+        </p>
       </div>
     );
   }
@@ -347,10 +391,18 @@ export function CaptureFlow({
   // Kun poimintaa ei ole, mikään kenttä ei ole "epävarma" — se on vain
   // täyttämättä. Punainen korostus tyhjässä lomakkeessa on hälytys
   // asiasta joka ei ole vielä tapahtunut.
-  const uncertain =
-    extractionEnabled && extractionError === null
-      ? new Set(uncertainFields(result))
-      : new Set<string>();
+  /*
+   * Luettiinko tämä kuitti koneella?
+   *
+   * Käsin kirjattua ei ole luettu mistään, joten poiminnan varmuutta
+   * koskevat huomiot eivät koske sitä: 'tarkista kentät' tyhjässä
+   * lomakkeessa varoittaa asiasta jota ei ole tapahtunut.
+   */
+  const luettu = extractionEnabled && extractionError === null && !manual;
+
+  const uncertain = luettu
+    ? new Set(uncertainFields(result))
+    : new Set<string>();
 
   // Opittu korjaus: kun sama kategoriamuutos on tehty samalle
   // toimittajalle toistuvasti, ehdotetaan sitä. Ehdotus näytetään, ei
@@ -363,10 +415,7 @@ export function CaptureFlow({
     matchedSupplier && category !== ""
       ? suggestedCategory(matchedSupplier, category)
       : null;
-  const reasons =
-    extractionEnabled && extractionError === null
-      ? reviewReasonsFor(result)
-      : [];
+  const reasons = luettu ? reviewReasonsFor(result) : [];
   const ready =
     supplier.trim() !== "" && totalEuros.trim() !== "" && category !== "";
 
@@ -400,12 +449,12 @@ export function CaptureFlow({
       <div
         className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
         style={{
-          background: !extractionEnabled
+          background: !luettu
             ? "var(--rf-blue-bg)"
             : reasons.length > 0
               ? "var(--rf-amber-bg)"
               : "var(--rf-green-bg)",
-          color: !extractionEnabled
+          color: !luettu
             ? "var(--rf-blue-text)"
             : reasons.length > 0
               ? "var(--rf-amber-text)"
@@ -415,24 +464,20 @@ export function CaptureFlow({
       >
         <span aria-hidden="true" className="mt-0.5 shrink-0">
           <RfIcon
-            name={
-              !extractionEnabled
-                ? "info"
-                : reasons.length > 0
-                  ? "alert"
-                  : "check"
-            }
+            name={!luettu ? "info" : reasons.length > 0 ? "alert" : "check"}
             size={16}
           />
         </span>
         <p>
           {extractionError
             ? t.kuva.fillYourself
-            : !extractionEnabled
-              ? t.kuva.noExtractorShort
-              : reasons.length > 0
-                ? t.kuva.someUncertain
-                : t.kuva.allRecognised}
+            : manual
+              ? t.kuva.byHandNote
+              : !extractionEnabled
+                ? t.kuva.noExtractorShort
+                : reasons.length > 0
+                  ? t.kuva.someUncertain
+                  : t.kuva.allRecognised}
         </p>
       </div>
 
@@ -565,9 +610,11 @@ export function CaptureFlow({
       <Card>
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-[15px] font-medium">
-            {previews.length <= 1
-              ? t.kuva.receiptImage
-              : fill(t.kuva.pagesCount, { n: String(previews.length) })}
+            {previews.length === 0
+              ? t.kuva.noImage
+              : previews.length === 1
+                ? t.kuva.receiptImage
+                : fill(t.kuva.pagesCount, { n: String(previews.length) })}
           </p>
 
           {adding ? (
@@ -972,7 +1019,7 @@ function ChooseButton({
   label,
   onClick,
 }: {
-  icon: "image" | "file";
+  icon: "image" | "file" | "plus";
   label: string;
   onClick: () => void;
 }) {
