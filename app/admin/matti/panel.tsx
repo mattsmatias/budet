@@ -77,8 +77,15 @@ export function MattiPanel({
   briefing,
   greeting,
   t,
+  shortcut = true,
 }: {
   enabled: boolean;
+  /**
+   * Ctrl/Cmd + J. Vain yhdellä paneelilla sivulla: puhelimen
+   * yläpalkin Matti on piilossa työpöydällä mutta yhä mukana, ja kaksi
+   * kuuntelijaa avaisi kaksi paneelia päällekkäin.
+   */
+  shortcut?: boolean;
   /** Hallinnan tekstit. */
   t: AdminText;
   /** Tilannekatsaus palvelimelta — samasta lähteestä kuin hälytykset. */
@@ -100,6 +107,8 @@ export function MattiPanel({
    * sen kaappaaminen olisi käyttäjän totutun toiminnon vientiä.
    */
   useEffect(() => {
+    if (!shortcut) return;
+
     function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
         event.preventDefault();
@@ -109,7 +118,7 @@ export function MattiPanel({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [shortcut]);
 
   if (!enabled) return null;
 

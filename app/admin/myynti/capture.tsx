@@ -407,6 +407,7 @@ function ReviewForm({
             {t.myynti.rateFromGroup}
           </p>
 
+          <div className="rf-table-scroll">
           <table className="rf-table mt-2.5 w-full">
             <caption className="sr-only">{t.myynti.salesByGroup}</caption>
             <thead>
@@ -458,6 +459,7 @@ function ReviewForm({
               ))}
             </tbody>
           </table>
+          </div>
 
           {mapped.unmapped.length > 0 ? (
             <Banner tone="warn">

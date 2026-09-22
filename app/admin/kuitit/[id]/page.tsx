@@ -404,6 +404,7 @@ export default async function AdminReceiptDetailPage({
                   {t.kuitti2.vatByRate}
                 </h3>
 
+                <div className="rf-table-scroll">
                 <table className="rf-table mt-2.5 w-full">
                   <caption className="sr-only">{t.kuitti2.vatByRate}</caption>
                   <thead>
@@ -446,6 +447,7 @@ export default async function AdminReceiptDetailPage({
                     ))}
                   </tbody>
                 </table>
+                </div>
 
                 {rateBreakdown.some((r) => r.rate === null) ? (
                   <p

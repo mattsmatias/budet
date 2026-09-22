@@ -151,6 +151,7 @@ export function ReconciliationPanel({
         Pelkkä "täsmää" pyytää uskomaan. Luvut vierekkäin antavat
         lukijan tarkistaa itse, ja juuri se on täsmäytyksen tarkoitus.
       */}
+      <div className="rf-table-scroll">
       <table className="rf-table mt-3 w-full">
         <caption className="sr-only">{t.myynti.registerVsKate}</caption>
         <thead>
@@ -175,6 +176,7 @@ export function ReconciliationPanel({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

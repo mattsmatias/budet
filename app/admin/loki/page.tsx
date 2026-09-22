@@ -384,6 +384,7 @@ function Tapahtuma({
 
       {changes.length > 0 ? (
         <div className="mt-3 pl-5">
+          <div className="rf-table-scroll">
           <table className="rf-table w-full" style={{ maxWidth: "34rem" }}>
             <caption className="sr-only">{t.kirja.changedFields}</caption>
             <thead>
@@ -408,6 +409,7 @@ function Tapahtuma({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       ) : (
         <p

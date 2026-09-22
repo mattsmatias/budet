@@ -65,7 +65,11 @@ export function AdminNav({
         briefing={briefing}
         greeting={greeting}
       />
-      <MobileBar items={primary} t={t} />
+      <MobileBar
+        items={primary}
+        t={t}
+        canAddReceipt={can(role, "receipts.add")}
+      />
     </>
   );
 }
@@ -272,13 +276,42 @@ function NavLink({
  * Viisi tärkeintä kohtaa; loput löytyvät "Lisää"-välilehdeltä. Kuusi
  * kohtaa alapalkissa tekee kosketuskohteista liian kapeita.
  */
-function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
+function MobileBar({
+  items,
+  t,
+  canAddReceipt,
+}: {
+  items: NavItems;
+  t: AdminText;
+  canAddReceipt: boolean;
+}) {
   const isActive = useActive();
+  const pathname = usePathname();
+  /* Kamerapainike ei näy kuitin lisäyksessä itsessään. */
+  const showCapture =
+    canAddReceipt && !pathname.startsWith("/admin/kuitit/uusi");
   const primary = items;
   // Lisää on aina mukana: sen takana ovat asetukset ja uloskirjautuminen.
   const hasMore = true;
 
   return (
+    <>
+    {/*
+      Kuitin lisäys yhdellä napautuksella.
+
+      Puhelimella kuitti kuvataan heti kun se on kädessä. Pyöreä painike
+      alapalkin yläpuolella on aina saman peukalon ulottuvilla, mistä
+      sivusta tahansa, ja avaa kameran suoraan.
+    */}
+    {showCapture ? (
+      <Link
+        href="/admin/kuitit/uusi"
+        aria-label={t.kuori.addReceipt}
+        className="rf-press rf-fab md:hidden"
+      >
+        <RfIcon name="camera" size={24} />
+      </Link>
+    ) : null}
     <nav
       aria-label={t.kuori2.adminNav}
       className="rf-mobile-bar fixed bottom-0 left-0 right-0 z-30 border-t md:hidden"
@@ -329,5 +362,6 @@ function MobileBar({ items, t }: { items: NavItems; t: AdminText }) {
         ) : null}
       </ul>
     </nav>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
+import { MattiPanel } from "./matti/panel";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
@@ -138,6 +139,18 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
                 {userName}
               </p>
             </Link>
+            <div className="flex shrink-0 items-center gap-1">
+            {/* Matti puhelimessa: työpöydällä se on sivupalkissa. */}
+            {can(role, "matti.use") ? (
+              <MattiPanel
+                enabled
+                compact
+                shortcut={false}
+                t={t}
+                briefing={briefing}
+                greeting={greeting(new Date(now), restaurant.timezone, t)}
+              />
+            ) : null}
             <HeaderMenus
               nimet={nimet}
               t={t}
@@ -147,6 +160,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               role={role}
               canOpenSettings={can(role, "settings.view")}
             />
+            </div>
           </header>
 
           {/*

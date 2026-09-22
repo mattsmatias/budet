@@ -226,6 +226,7 @@ export default async function ExpensesPage({
             title={t.loput.expenseTrend}
             subtitle={t.kulut.fourMonths}
           />
+          <div className="rf-table-scroll">
           <table className="rf-table w-full text-[14px]">
             <caption className="sr-only">{t.sanat.monthlyExpenses}</caption>
             <tbody>
@@ -257,6 +258,7 @@ export default async function ExpensesPage({
               })}
             </tbody>
           </table>
+          </div>
           <p className="mt-4 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
             {t.kulut.notSalesChart}
           </p>
