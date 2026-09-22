@@ -60,11 +60,18 @@ function parseEuros(value: FormDataEntryValue | null): number | null {
 /*
  * Roolit joihin voi kutsua.
  *
- * Työntekijärooli ei ole mukana: Kate näyttää ravintolan rahan
- * omistajalle, esihenkilölle ja kirjanpitäjälle. Palkat maksetaan
- * palkkapalvelussa, eikä työntekijällä ole Katessa mitään tehtävää.
+ * Työntekijä palasi listalle työajan leimauksen myötä: ilman tunnusta
+ * ei voi leimata, ja tunnus syntyy kutsusta. Rooli ei anna mitään
+ * muuta oikeutta kuin oman työajan — yrityksen rahat ovat omistajan
+ * ja kirjanpitäjän asia.
+ *
+ * Esihenkilöä ei ole: se erosi omistajasta vain käyttäjähallinnassa,
+ * ja pienyrityksessä sama ihminen on molemmat.
+ *
+ * Lista on sama kuin käyttöliittymän valikossa. Jos ne eroaisivat,
+ * valikko tarjoaisi roolin jonka tallennus torjuu.
  */
-const ROLES = ["owner", "accountant"] as const;
+const ROLES = ["owner", "accountant", "employee"] as const;
 
 const inviteSchema = z.object({
   role: z.enum(ROLES),
