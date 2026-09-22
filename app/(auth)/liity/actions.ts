@@ -92,7 +92,13 @@ export async function checkInvite(
   });
 
   const user = await getUser();
-  redirect(user ? "/aloitus" : "/rekisteroidy?tila=liity");
+  if (!user) redirect("/rekisteroidy?tila=liity");
+
+  /* Kirjautunut liitetään heti: aloitussivu ei saa muuttaa evästettä. */
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_invitation", { p_code: code });
+  await clearInvite();
+  redirect(error ? "/aloitus?tila=liity" : "/admin");
 }
 
 /** Poistaa koodin, kun se on käytetty tai käyttäjä perääntyy. */

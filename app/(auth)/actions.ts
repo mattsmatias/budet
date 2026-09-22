@@ -16,7 +16,7 @@ import { createClient } from "@/utils/supabase/server";
 import { ACTIVE_RESTAURANT_COOKIE } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText, fill, type AuthText } from "@/lib/i18n/auth-text";
-import { readInvite } from "./liity/actions";
+import { clearInvite, readInvite } from "./liity/actions";
 
 export interface FormState {
   error?: string;
@@ -114,8 +114,22 @@ export async function signUp(
     return { notice: t.virheet.confirmSent };
   }
 
+  /*
+   * Liittyminen tässä, ei aloitussivulla.
+   *
+   * Aloitussivu lunasti koodin ja yritti poistaa evästeen kesken
+   * piirron. Next ei salli evästeen muuttamista sivun piirrossa, joten
+   * sivu kaatui heti onnistuneen liittymisen jälkeen: käyttäjä näki
+   * virhesivun ja pääsi sisään vasta uudella latauksella. Palvelin-
+   * toiminnossa eväste saa muuttua, ja istunto on juuri syntynyt.
+   */
+  const { error: joinError } = await supabase.rpc("accept_invitation", {
+    p_code: invite.code,
+  });
+  await clearInvite();
+
   revalidatePath("/", "layout");
-  redirect(next);
+  redirect(joinError ? next : "/admin");
 }
 
 export async function signOut(): Promise<void> {

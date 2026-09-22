@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
-import { clearInvite, readInvite } from "@/app/(auth)/liity/actions";
+import { readInvite } from "@/app/(auth)/liity/actions";
 import { createClient } from "@/utils/supabase/server";
 import { getActiveRestaurant, requireUser } from "@/lib/restoflow/session";
 import { Card } from "@/components/restoflow/ui";
@@ -43,7 +43,11 @@ export default async function SetupPage({
       p_code: invite.code,
     });
 
-    await clearInvite();
+    /*
+     * Evästettä ei poisteta tässä: sivun piirto ei saa muuttaa evästeitä,
+     * ja yritys kaatoi sivun. Käytetty koodi ei enää kelpaa
+     * (readInvite palauttaa nullin), ja eväste vanhenee itsestään.
+     */
     if (!error) redirect("/admin");
   }
 
