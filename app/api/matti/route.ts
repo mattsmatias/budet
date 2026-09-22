@@ -204,11 +204,21 @@ export async function POST(request: Request) {
     text = "En osannut vastata tähän. Kokeile muotoilla kysymys toisin.";
   }
 
+  /*
+   * Kortit tallennetaan viestin mukana, jotta keskustelu näyttää
+   * samalta kun paneeli avataan huomenna uudelleen. Työkalujen nimet
+   * ja tiivistelmät jäävät kantaan jäljitettävyyttä varten, mutta niitä
+   * ei lähetetä selaimeen: "get_daily_briefing" ei kerro yrittäjälle
+   * mitään.
+   */
+  const shownCards = cards.slice(-2);
+
   await supabase.rpc("ai_add_message", {
     p_conversation: conversationId,
     p_role: "assistant",
     p_content: text,
     p_tool_calls: steps,
+    p_cards: shownCards,
   });
 
   console.info("matti: vastaus", {
@@ -221,7 +231,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     conversationId,
     text,
-    steps,
     actions,
     /*
      * Enintään kaksi korttia.
@@ -231,8 +240,111 @@ export async function POST(request: Request) {
      * kaksi ovat ne joita malli haki tarkentaakseen — yleensä siis
      * ne jotka vastaavat kysymykseen.
      */
-    cards: cards.slice(-2),
+    cards: shownCards,
   });
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Käyttäjä ja yritys palvelimen istunnosta, ei pyynnöstä.
+ *
+ * Yritys tulee aktiivisesta jäsenyydestä ja keskustelut rajataan
+ * RLS:llä käyttäjän omiin. Pyynnön mukana ei tule yritystunnusta
+ * lainkaan, joten sitä ei voi vaihtaa toiseen.
+ */
+async function memberFor() {
+  const user = await getUser();
+  const restaurant = await getActiveRestaurant();
+  if (!user || !restaurant) {
+    return { error: NextResponse.json({ error: "Kirjaudu sisään." }, { status: 401 }) };
+  }
+  if (!can(restaurant.role, "matti.use")) {
+    return {
+      error: NextResponse.json({ error: "Ei oikeutta Mattiin." }, { status: 403 }),
+    };
+  }
+  return { restaurant };
+}
+
+/** Montako viestiä paneeliin ladataan. Vanhemmat jäävät kantaan. */
+const RESTORED_MESSAGES = 40;
+
+/**
+ * Edellinen keskustelu.
+ *
+ * Paneeli kutsuu tätä avautuessaan. Viimeisin keskustelu tässä
+ * yrityksessä, uusimmat viestit. Keskustelu säilyy kunnes käyttäjä
+ * tyhjentää sen.
+ */
+export async function GET() {
+  const member = await memberFor();
+  if (member.error) return member.error;
+
+  const supabase = await createClient();
+
+  const { data: conversation } = await supabase
+    .from("ai_conversations")
+    .select("id")
+    .eq("restaurant_id", member.restaurant.id)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!conversation) {
+    return NextResponse.json({ conversationId: null, turns: [] });
+  }
+
+  const { data: rows } = await supabase
+    .from("ai_messages")
+    .select("role, content, cards")
+    .eq("conversation_id", conversation.id)
+    .order("created_at", { ascending: false })
+    .limit(RESTORED_MESSAGES);
+
+  const turns = (rows ?? [])
+    .reverse()
+    .filter((row) => (row.content as string).trim() !== "")
+    .map((row) => ({
+      role: row.role === "user" ? ("user" as const) : ("matti" as const),
+      text: row.content as string,
+      cards: Array.isArray(row.cards) ? (row.cards as ToolCard[]) : [],
+    }));
+
+  return NextResponse.json({ conversationId: conversation.id, turns });
+}
+
+const clearSchema = z.object({ conversationId: z.string().uuid() });
+
+/**
+ * Tyhjennä keskustelu.
+ *
+ * Poistaa keskustelun viesteineen pysyvästi. Kantafunktio tarkistaa
+ * että keskustelu on kutsujan oma; toisen keskustelua ei voi poistaa
+ * vaikka tunnuksen arvaisi.
+ */
+export async function DELETE(request: Request) {
+  const member = await memberFor();
+  if (member.error) return member.error;
+
+  const parsed = clearSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Keskustelua ei löytynyt." }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("ai_clear_conversation", {
+    p_conversation: parsed.data.conversationId,
+  });
+
+  if (error) {
+    return NextResponse.json(
+      { error: "Keskustelua ei saatu tyhjennettyä." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
 }
 
 // ---------------------------------------------------------------------------

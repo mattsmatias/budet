@@ -1299,7 +1299,6 @@ const fi = {
     whyLink: "Selvitä miksi →",
     whatToDo: "Mitä haluat tehdä?",
     changesShown: "Muutokset näytän sinulle ennen kuin mitään tapahtuu.",
-    howSolved: "Katso miten Matti selvitti tämän",
     cancel: "Peruuta",
     placeholder: "Mitä haluat hoitaa? Kysy Matilta tai pyydä tekemään jotain.",
     ariaLabel: "Matti, Katen AI-työkaveri",
@@ -1313,6 +1312,10 @@ const fi = {
     whyIsThat: "{asia} Mistä se johtuu?",
     working: "Tehdään…",
     approve: "Hyväksy",
+    clear: "Tyhjennä keskustelu",
+    clearConfirm: "Poistetaanko keskustelu pysyvästi?",
+    clearYes: "Tyhjennä",
+    clearFailed: "Keskustelua ei saatu tyhjennettyä. Yritä uudelleen.",
   },
 
   mattiKysy: {
@@ -1342,15 +1345,6 @@ const fi = {
     customersShort: "Montako asiakasta tarvitsen päivässä?",
     quietDayShort: "Mikä viikonpäivä on hiljaisin?",
     breakEvenShort: "Paljonko pitää myydä päivässä?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Haki kuukauden yhteenvedon",
-    byCategory: "Haki kulut kategorioittain",
-    topSuppliers: "Haki suurimmat toimittajat",
-    receipts: "Haki kuitit",
-    budgets: "Tarkisti budjetit",
-    staffCosts: "Haki henkilöstökulut",
   },
 
   toiminnot: {
@@ -2992,7 +2986,6 @@ const en: AdminText = {
     whyLink: "Find out why →",
     whatToDo: "What would you like to do?",
     changesShown: "I will show you the changes before anything happens.",
-    howSolved: "See how Matti worked this out",
     cancel: "Cancel",
     placeholder: "What needs doing? Ask Matti or ask it to do something.",
     ariaLabel: "Matti, Kate's AI colleague",
@@ -3006,6 +2999,10 @@ const en: AdminText = {
     whyIsThat: "{asia} What is causing it?",
     working: "Working…",
     approve: "Approve",
+    clear: "Clear conversation",
+    clearConfirm: "Delete the conversation permanently?",
+    clearYes: "Clear",
+    clearFailed: "The conversation could not be cleared. Try again.",
   },
 
   mattiKysy: {
@@ -3036,15 +3033,6 @@ const en: AdminText = {
     customersShort: "How many customers do I need per day?",
     quietDayShort: "Which weekday is the quietest?",
     breakEvenShort: "How much do we need to sell per day?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Fetched the month's summary",
-    byCategory: "Fetched expenses by category",
-    topSuppliers: "Fetched the largest suppliers",
-    receipts: "Fetched the receipts",
-    budgets: "Checked the budgets",
-    staffCosts: "Fetched staff costs",
   },
 
   toiminnot: {
@@ -4679,7 +4667,6 @@ const sv: AdminText = {
     whyLink: "Ta reda på varför →",
     whatToDo: "Vad vill du göra?",
     changesShown: "Jag visar dig ändringarna innan något händer.",
-    howSolved: "Se hur Matti kom fram till detta",
     cancel: "Avbryt",
     placeholder: "Vad behöver göras? Fråga Matti eller be den göra något.",
     ariaLabel: "Matti, Kates AI-kollega",
@@ -4693,6 +4680,10 @@ const sv: AdminText = {
     whyIsThat: "{asia} Vad beror det på?",
     working: "Gör…",
     approve: "Godkänn",
+    clear: "Töm konversationen",
+    clearConfirm: "Radera konversationen permanent?",
+    clearYes: "Töm",
+    clearFailed: "Konversationen kunde inte tömmas. Försök igen.",
   },
 
   mattiKysy: {
@@ -4722,15 +4713,6 @@ const sv: AdminText = {
     customersShort: "Hur många kunder behöver jag per dag?",
     quietDayShort: "Vilken veckodag är lugnast?",
     breakEvenShort: "Hur mycket måste vi sälja per dag?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Hämtade månadens sammanfattning",
-    byCategory: "Hämtade kostnader per kategori",
-    topSuppliers: "Hämtade de största leverantörerna",
-    receipts: "Hämtade kvittona",
-    budgets: "Kontrollerade budgetarna",
-    staffCosts: "Hämtade personalkostnaderna",
   },
 
   toiminnot: {
@@ -6365,8 +6347,7 @@ const da: AdminText = {
     whyLink: "Find ud af hvorfor →",
     whatToDo: "Hvad vil du gøre?",
     changesShown: "Jeg viser dig ændringerne, før der sker noget.",
-    howSolved: "Se hvordan Matti nåede frem til dette",
-    cancel: "Annullér",
+    cancel: "Annuller",
     placeholder: "Hvad skal der ordnes? Spørg Matti, eller bed den gøre noget.",
     ariaLabel: "Matti, Kates AI-kollega",
     shortcut: "Matti (Ctrl J)",
@@ -6379,6 +6360,10 @@ const da: AdminText = {
     whyIsThat: "{asia} Hvad skyldes det?",
     working: "Arbejder…",
     approve: "Godkend",
+    clear: "Ryd samtalen",
+    clearConfirm: "Slet samtalen permanent?",
+    clearYes: "Ryd",
+    clearFailed: "Samtalen kunne ikke ryddes. Prøv igen.",
   },
 
   mattiKysy: {
@@ -6409,15 +6394,6 @@ const da: AdminText = {
     customersShort: "Hvor mange kunder skal jeg bruge om dagen?",
     quietDayShort: "Hvilken ugedag er den roligste?",
     breakEvenShort: "Hvor meget skal vi sælge om dagen?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Hentede månedens opsummering",
-    byCategory: "Hentede udgifter pr. kategori",
-    topSuppliers: "Hentede de største leverandører",
-    receipts: "Hentede kvitteringerne",
-    budgets: "Tjekkede budgetterne",
-    staffCosts: "Hentede personaleomkostningerne",
   },
 
   toiminnot: {
@@ -8047,8 +8023,7 @@ const tr: AdminText = {
     whyLink: "Nedenini öğren →",
     whatToDo: "Ne yapmak istersin?",
     changesShown: "Bir şey olmadan önce değişiklikleri sana gösteririm.",
-    howSolved: "Matti'nin bunu nasıl bulduğunu gör",
-    cancel: "Vazgeç",
+    cancel: "İptal",
     placeholder: "Ne yapılmalı? Matti'ye sor ya da bir şey yapmasını iste.",
     ariaLabel: "Matti, Kate'in yapay zekâ arkadaşı",
     shortcut: "Matti (Ctrl J)",
@@ -8061,6 +8036,10 @@ const tr: AdminText = {
     whyIsThat: "{asia} Bunun nedeni ne?",
     working: "Yapılıyor…",
     approve: "Onayla",
+    clear: "Sohbeti temizle",
+    clearConfirm: "Sohbet kalıcı olarak silinsin mi?",
+    clearYes: "Temizle",
+    clearFailed: "Sohbet temizlenemedi. Tekrar deneyin.",
   },
 
   mattiKysy: {
@@ -8090,15 +8069,6 @@ const tr: AdminText = {
     customersShort: "Günde kaç müşteriye ihtiyacım var?",
     quietDayShort: "Hangi gün en sakin?",
     breakEvenShort: "Günde ne kadar satmamız gerekiyor?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Ayın özetini getirdi",
-    byCategory: "Giderleri kategorilere göre getirdi",
-    topSuppliers: "En büyük tedarikçileri getirdi",
-    receipts: "Fişleri getirdi",
-    budgets: "Bütçeleri kontrol etti",
-    staffCosts: "Personel giderlerini getirdi",
   },
 
   toiminnot: {
@@ -9726,8 +9696,7 @@ const et: AdminText = {
     whyLink: "Uuri, miks →",
     whatToDo: "Mida soovid teha?",
     changesShown: "Näitan sulle muudatused enne, kui midagi juhtub.",
-    howSolved: "Vaata, kuidas Matti selle välja selgitas",
-    cancel: "Loobu",
+    cancel: "Tühista",
     placeholder: "Mida on vaja teha? Küsi Matilt või palu tal midagi teha.",
     ariaLabel: "Matti, Kate AI-kolleeg",
     shortcut: "Matti (Ctrl J)",
@@ -9740,6 +9709,10 @@ const et: AdminText = {
     whyIsThat: "{asia} Millest see tuleb?",
     working: "Teen…",
     approve: "Kinnita",
+    clear: "Tühjenda vestlus",
+    clearConfirm: "Kas kustutada vestlus jäädavalt?",
+    clearYes: "Tühjenda",
+    clearFailed: "Vestlust ei õnnestunud tühjendada. Proovi uuesti.",
   },
 
   mattiKysy: {
@@ -9769,15 +9742,6 @@ const et: AdminText = {
     customersShort: "Mitu klienti ma päevas vajan?",
     quietDayShort: "Milline nädalapäev on kõige vaiksem?",
     breakEvenShort: "Kui palju peame päevas müüma?",
-  },
-
-  mattiTyo: {
-    monthSummary: "Tõi kuu kokkuvõtte",
-    byCategory: "Tõi kulud kategooriate kaupa",
-    topSuppliers: "Tõi suurimad tarnijad",
-    receipts: "Tõi tšekid",
-    budgets: "Kontrollis eelarveid",
-    staffCosts: "Tõi personalikulud",
   },
 
   toiminnot: {
@@ -11415,7 +11379,6 @@ const ar: AdminText = {
     whyLink: "معرفة السبب ←",
     whatToDo: "ماذا تريد أن تفعل؟",
     changesShown: "سأعرض عليك التغييرات قبل حدوث أي شيء.",
-    howSolved: "معرفة كيف توصل Matti إلى هذا",
     cancel: "إلغاء",
     placeholder: "ما الذي يجب فعله؟ اسأل Matti أو اطلب منه القيام بشيء.",
     ariaLabel: "Matti، زميل Kate الذكي",
@@ -11429,6 +11392,10 @@ const ar: AdminText = {
     whyIsThat: "{asia} ما سبب ذلك؟",
     working: "جارٍ العمل…",
     approve: "موافقة",
+    clear: "مسح المحادثة",
+    clearConfirm: "هل تريد حذف المحادثة نهائيًا؟",
+    clearYes: "مسح",
+    clearFailed: "تعذّر مسح المحادثة. حاول مرة أخرى.",
   },
 
   mattiKysy: {
@@ -11459,15 +11426,6 @@ const ar: AdminText = {
     customersShort: "كم عميلًا أحتاج يوميًا؟",
     quietDayShort: "ما أهدأ يوم في الأسبوع؟",
     breakEvenShort: "كم يجب أن نبيع يوميًا؟",
-  },
-
-  mattiTyo: {
-    monthSummary: "تم جلب ملخص الشهر",
-    byCategory: "تم جلب المصروفات حسب الفئة",
-    topSuppliers: "تم جلب أكبر الموردين",
-    receipts: "تم جلب الإيصالات",
-    budgets: "تم التحقق من الميزانيات",
-    staffCosts: "تم جلب تكاليف الموظفين",
   },
 
   toiminnot: {

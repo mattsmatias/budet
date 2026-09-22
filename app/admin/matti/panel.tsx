@@ -38,11 +38,6 @@ import { fill } from "@/lib/i18n/auth-text";
  * väittää olevansa.
  */
 
-interface Step {
-  tool: string;
-  summary: string;
-}
-
 interface ActionPreview {
   title: string;
   changes: { label: string; from?: string; to: string }[];
@@ -68,7 +63,6 @@ interface ToolCard {
 interface Turn {
   role: "user" | "matti";
   text: string;
-  steps?: Step[];
   actions?: PendingAction[];
   cards?: ToolCard[];
 }
@@ -301,6 +295,15 @@ function Conversation({
     retryable: boolean;
   } | null>(null);
   const [lastAsked, setLastAsked] = useState<string | null>(null);
+  /*
+   * Edellinen keskustelu haetaan kun paneeli avautuu.
+   *
+   * Siihen asti ei näytetä tervetulonäkymää: se välähtäisi ja vaihtuisi
+   * heti vanhoihin viesteihin.
+   */
+  const [restoring, setRestoring] = useState(true);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const scroller = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
@@ -328,6 +331,57 @@ function Conversation({
   useEffect(() => {
     input.current?.focus();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/matti")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload) return;
+        if (payload.conversationId) setConversationId(payload.conversationId);
+        if (Array.isArray(payload.turns)) setTurns(payload.turns);
+      })
+      .catch(() => {
+        // Historia on mukavuus. Ilman sitä Matti toimii kuten ennenkin.
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setRestoring(false);
+        // Uusin viesti näkyviin heti, ei animaatiolla ylhäältä alas.
+        requestAnimationFrame(() =>
+          bottom.current?.scrollIntoView({ block: "end" }),
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function clearConversation() {
+    if (!conversationId) {
+      setTurns([]);
+      setConfirmClear(false);
+      return;
+    }
+    setClearing(true);
+    try {
+      const response = await fetch("/api/matti", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId }),
+      });
+      if (!response.ok) throw new Error("clear");
+      setTurns([]);
+      setConversationId(null);
+      setError(null);
+      setLastAsked(null);
+    } catch {
+      setError({ text: t.matti.clearFailed, retryable: false });
+    } finally {
+      setClearing(false);
+      setConfirmClear(false);
+    }
+  }
 
   const send = useCallback(
     async (message: string) => {
@@ -364,7 +418,6 @@ function Conversation({
           {
             role: "matti",
             text: payload.text,
-            steps: payload.steps,
             actions: payload.actions,
             cards: payload.cards,
           },
@@ -390,6 +443,20 @@ function Conversation({
           <p className="text-[15px] font-semibold">{t.matti.name}</p>
         </div>
 
+        <div className="flex items-center gap-1">
+        {turns.length > 0 && !busy ? (
+          <button
+            type="button"
+            onClick={() => setConfirmClear(true)}
+            aria-label={t.matti.clear}
+            title={t.matti.clear}
+            className="rf-press rf-icon-btn flex h-9 w-9 items-center justify-center rounded-[9px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            <RfIcon name="trash" size={17} />
+          </button>
+        ) : null}
+
         <button
           type="button"
           onClick={onClose}
@@ -399,10 +466,51 @@ function Conversation({
         >
           <RfIcon name="back" size={18} />
         </button>
+        </div>
       </header>
 
+      {/*
+        Vahvistus ennen poistoa.
+
+        Tyhjennys poistaa keskustelun pysyvästi, joten yksi napautus ei
+        riitä. Rivi on paneelin sisällä eikä selaimen ikkuna: se näyttää
+        samalta kaikilla laitteilla ja pysyy Matin kielellä.
+      */}
+      {confirmClear ? (
+        <div
+          role="alertdialog"
+          aria-labelledby="rf-matti-clear"
+          className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-3"
+          style={{ borderColor: "var(--rf-line)", background: "var(--rf-inset)" }}
+        >
+          <p id="rf-matti-clear" className="text-[13.5px] font-medium">
+            {t.matti.clearConfirm}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              tone="ghost"
+              size="sm"
+              onClick={() => setConfirmClear(false)}
+              disabled={clearing}
+            >
+              {t.matti.cancel}
+            </Button>
+            <Button
+              type="button"
+              tone="danger"
+              size="sm"
+              onClick={() => void clearConversation()}
+              disabled={clearing}
+            >
+              {t.matti.clearYes}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
-        {turns.length === 0 ? (
+        {restoring ? null : turns.length === 0 ? (
           <Welcome
             t={t}
             currentPage={currentPage}
@@ -836,56 +944,9 @@ function TurnView({ turn, t }: { turn: Turn; t: AdminText }) {
         <ActionCard key={action.id} action={action} t={t} />
       ))}
 
-      {turn.steps && turn.steps.length > 0 ? (
-        <Steps steps={turn.steps} t={t} />
-      ) : null}
     </div>
   );
 }
-
-/**
- * Työvaiheet piiloon, mutta ei pois.
- *
- * Luku on tarkistettavissa vain jos sen lähteen voi nähdä. Avaaminen
- * on kuitenkin harvinaista, joten se on yhden rivin takana eikä
- * vastauksen päällä.
- */
-function Steps({ steps, t }: { steps: Step[]; t: AdminText }) {
-  return (
-    <details className="mt-3">
-      <summary
-        className="cursor-pointer list-none text-[12px]"
-        style={{ color: "var(--rf-text-3)" }}
-      >
-        {t.matti.howSolved}
-      </summary>
-
-      <ul className="mt-2 space-y-1">
-        {steps.map((step, index) => (
-          <li
-            key={index}
-            className="flex items-start gap-1.5 text-[12px]"
-            style={{ color: "var(--rf-text-3)" }}
-          >
-            <span className="mt-0.5 shrink-0">
-              <RfIcon name="check" size={11} />
-            </span>
-            {tyokalut(t)[step.tool] ?? step.tool}
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
-
-const tyokalut = (t: AdminText): Record<string, string> => ({
-  get_dashboard_summary: t.mattiTyo.monthSummary,
-  get_expenses_by_category: t.mattiTyo.byCategory,
-  get_top_suppliers: t.mattiTyo.topSuppliers,
-  search_receipts: t.mattiTyo.receipts,
-  get_budget_status: t.mattiTyo.budgets,
-  get_staff_costs: t.mattiTyo.staffCosts,
-});
 
 // ---------------------------------------------------------------------------
 
