@@ -373,16 +373,8 @@ function MoreSheet({
           <section>
             <p className="rf-sheet-label">{t.kuori.account}</p>
             <div className="rf-sheet-card p-0">
-              <Link
-                href="/admin/ilmoitukset"
-                onClick={close}
-                className="rf-press rf-sheet-row"
-              >
-                <RfIcon name="bell" size={19} />
-                <span className="flex-1">{t.loput.notes}</span>
-                <RfIcon name="chevron" size={15} />
-              </Link>
-
+              {/* Huomiot ovat ylapalkin kellossa: sama asia kahdessa
+                  paikassa tarkoittaa kahta paikkaa joita pitaa etsia. */}
               {canOpenSettings ? (
                 <Link
                   href="/admin/asetukset"
