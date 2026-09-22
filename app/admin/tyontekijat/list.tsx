@@ -31,31 +31,11 @@ export function EmployeeList({
   rows: EmployeeSummary[];
   locale: string;
 }) {
-  /* Avoinna oleva lomake: "uusi", työntekijän tunniste, tai null. */
+  /* Avoinna oleva muokkauslomake, tai null. */
   const [open, setOpen] = useState<string | null>(null);
 
   return (
     <div className="space-y-3">
-      {open === "uusi" ? (
-        <Card>
-          <EmployeeForm t={t} onClose={() => setOpen(null)} />
-        </Card>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOpen("uusi")}
-          className="rf-press flex w-full items-center justify-center gap-2 px-4 py-3 text-[14px] font-bold"
-          style={{
-            background: "var(--rf-accent)",
-            color: "var(--rf-on-accent)",
-            borderRadius: "var(--rf-r-control)",
-          }}
-        >
-          <RfIcon name="plus" size={17} />
-          {t.tyo.add}
-        </button>
-      )}
-
       {rows.map((row) => (
         <Card key={row.employee.id}>
           {open === row.employee.id ? (

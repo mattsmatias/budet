@@ -3,13 +3,16 @@
 /**
  * Käyttäjät: kuka pääsee Kateen.
  *
- * Tämä on pääsynhallintaa, ei henkilöstöhallintoa. Kate näyttää
- * ravintolan rahan omistajalle, esihenkilölle ja kirjanpitäjälle;
- * palkat maksetaan palkkapalvelussa. Siksi tässä ei ole tehtävänimikettä
- * eikä tuntipalkkaa — vain rooli, joka ratkaisee mitä käyttäjä näkee.
+ * KAIKKI KÄYTTÄJÄT SYNTYVÄT TÄÄLLÄ.
  *
- * Kirjanpitäjän kutsuminen on tämän osion tärkein syy olla olemassa:
- * ilman sitä raportit pitäisi lähettää käsin joka kuukausi.
+ * Rooli ratkaisee mitä lomakkeella kysytään. Omistajalta ja
+ * kirjanpitäjältä riittää nimilappu; työntekijältä kysytään myös
+ * sähköposti, tehtävä ja tuntipalkka, koska hänelle syntyy samalla
+ * työntekijärivi jota leimaus ja palkka-arvio käyttävät.
+ *
+ * Aiemmin nämä olivat kahdella sivulla, ja sama sähköposti
+ * kirjoitettiin kahdesti. Yhden kirjaimen ero riitti siihen ettei
+ * tunnus löytänyt työntekijäriviään eikä leimaus toiminut.
  */
 
 import { useActionState, useState } from "react";
@@ -110,11 +113,49 @@ export function InviteForm({ t, nimet }: { t: AdminText; nimet: Labels }) {
           {roolienSelitteet(t)[role]}
         </p>
 
-        <Input
-          label={t.tiimi.nameTag}
-          name="label"
-          hint={t.tiimi.nameTagHint}
-        />
+        {/*
+          Työntekijällä on enemmän kuin nimilappu.
+
+          Tuntipalkka ja sähköposti kuuluvat samaan lomakkeeseen kuin
+          kutsu: kutsu antaa tunnuksen, työntekijätiedot antavat
+          leimauksen ja arvion. Kahdessa paikassa täytettynä sama
+          sähköposti meni eri tavalla, eikä leimaus toiminut.
+        */}
+        {role === "employee" ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label={t.tyo.firstName} name="firstName" />
+              <Input label={t.tyo.lastName} name="lastName" />
+            </div>
+
+            <Input
+              label={t.tyo.email}
+              name="email"
+              hint={t.tyo.emailHint}
+              type="email"
+            />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label={t.tyo.jobTitle}
+                name="jobTitle"
+                hint={t.tyo.jobTitleHint}
+              />
+              <Input
+                label={t.tyo.hourly}
+                name="hourly"
+                hint={t.tyo.hourlyHint}
+                placeholder="14,50"
+              />
+            </div>
+          </>
+        ) : (
+          <Input
+            label={t.tiimi.nameTag}
+            name="label"
+            hint={t.tiimi.nameTagHint}
+          />
+        )}
 
         {state.error ? <ErrorText>{state.error}</ErrorText> : null}
 
@@ -470,10 +511,14 @@ function Input({
   label,
   name,
   hint,
+  type,
+  placeholder,
 }: {
   label: string;
   name: string;
   hint?: string;
+  type?: string;
+  placeholder?: string;
 }) {
   const id = `f-${name}`;
 
@@ -485,7 +530,9 @@ function Input({
       <input
         id={id}
         name={name}
-        maxLength={80}
+        type={type}
+        placeholder={placeholder}
+        maxLength={160}
         className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
         style={{
           background: "var(--rf-inset)",

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
@@ -65,11 +66,34 @@ export default async function EmployeesPage({
           {t.tyo.lead} · {formatMonth(month, locale)}
         </p>
 
-        {summa.working > 0 ? (
-          <Pill tone="ok" dot>
-            {fill(t.tyo.workingNow, { maara: String(summa.working) })}
-          </Pill>
-        ) : null}
+        <div className="flex items-center gap-3">
+          {summa.working > 0 ? (
+            <Pill tone="ok" dot>
+              {fill(t.tyo.workingNow, { maara: String(summa.working) })}
+            </Pill>
+          ) : null}
+
+          {/*
+            Lisäys on käyttäjissä, ei täällä.
+
+            Työntekijä on käyttäjä: hän tarvitsee tunnuksen voidakseen
+            leimata. Kun lisäys oli kahdessa paikassa, sama sähköposti
+            kirjoitettiin kahdesti ja meni eri tavalla.
+          */}
+          <Link
+            href="/admin/asetukset?osio=kayttajat"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+            style={{
+              background: "var(--rf-accent)",
+              color: "var(--rf-on-accent)",
+              borderRadius: "var(--rf-r-control)",
+              minHeight: 36,
+            }}
+          >
+            <RfIcon name="plus" size={16} />
+            {t.tyo.add}
+          </Link>
+        </div>
       </div>
 
       <section
@@ -102,11 +126,8 @@ export default async function EmployeesPage({
         {t.tyo.estimateNote}
       </p>
 
-      {rows.length === 0 && employees.length === 0 ? (
-        <>
-          <EmptyState title={t.tyo.none} description={t.tyo.noneHint} />
-          <EmployeeList t={t} rows={[]} locale={tag} />
-        </>
+      {rows.length === 0 ? (
+        <EmptyState title={t.tyo.none} description={t.tyo.noneHint} />
       ) : (
         <EmployeeList t={t} rows={rows} locale={tag} />
       )}

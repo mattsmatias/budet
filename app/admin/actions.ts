@@ -16,6 +16,7 @@ import { lineVatCents } from "@/lib/restoflow/vat";
 import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
 import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
+import { parseHourly } from "@/lib/restoflow/employees";
 import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
@@ -78,6 +79,32 @@ const inviteSchema = z.object({
   label: z.string().trim().max(80).nullable(),
 });
 
+/*
+ * Tyontekijan tiedot samalla lomakkeella.
+ *
+ * Aiemmin tyontekija lisattiin Tyontekijat-sivulla ja kutsuttiin
+ * asetuksissa. Sama sahkoposti kirjoitettiin kahteen kertaan, ja yhden
+ * kirjaimen ero riitti siihen ettei tunnus loytanyt tyontekijariviaan.
+ * Nyt molemmat syntyvat yhdesta lomakkeesta, joten osoitteita on yksi.
+ */
+const employeeInviteSchema = (t: AdminText) =>
+  z.object({
+    firstName: z.string().trim().min(1, t.tyo.firstNameMissing).max(80),
+    lastName: z.string().trim().min(1, t.tyo.lastNameMissing).max(80),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .refine((v) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v), {
+        message: t.tyo.emailInvalid,
+      }),
+    jobTitle: z
+      .string()
+      .trim()
+      .max(80)
+      .transform((v) => (v === "" ? null : v)),
+  });
+
 export async function createInvitation(
   _prev: AdminState,
   formData: FormData,
@@ -93,15 +120,54 @@ export async function createInvitation(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const supabase = await createClient();
+
+  /*
+   * Tyontekija saa myos oman rivinsa.
+   *
+   * Kutsu antaa tunnuksen, tyontekijarivi antaa tuntipalkan ja
+   * leimauksen. Ilman kumpaakin kutsuttu paasee sisaan muttei voi
+   * leimata — ja juuri siita syntyi aiempi sekaannus.
+   */
+  let label = parsed.data.label;
+
+  if (parsed.data.role === "employee") {
+    const tiedot = employeeInviteSchema(t).safeParse({
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      email: formData.get("email"),
+      jobTitle: formData.get("jobTitle") ?? "",
+    });
+
+    if (!tiedot.success) return { error: tiedot.error.issues[0].message };
+
+    const hourly = parseHourly(String(formData.get("hourly") ?? ""));
+    if (hourly === null) return { error: t.tyo.hourlyInvalid };
+
+    label = `${tiedot.data.firstName} ${tiedot.data.lastName}`;
+
+    const { error: employeeError } = await supabase.from("employees").insert({
+      restaurant_id: restaurant.id,
+      first_name: tiedot.data.firstName,
+      last_name: tiedot.data.lastName,
+      email: tiedot.data.email,
+      job_title: tiedot.data.jobTitle,
+      hourly_cents: hourly,
+      active: true,
+    });
+
+    if (employeeError) return { error: t.tyo.saveFailed };
+  }
+
   const { data, error } = await supabase.rpc("create_invitation", {
     p_restaurant: restaurant.id,
     p_role: parsed.data.role,
-    p_label: parsed.data.label,
+    p_label: label,
   });
 
   if (error) return { error: explain(error, t.toiminnot.inviteFailed, t) };
 
   revalidatePath("/admin/asetukset");
+  revalidatePath("/admin/tyontekijat");
   return { code: data as string, notice: t.toiminnot.inviteCreated };
 }
 
