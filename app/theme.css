@@ -1281,22 +1281,9 @@ details[open] .rf-summary-chevron {
   appearance: none;
 }
 
-/* Tunnus sivupalkissa: sama pieni kallistus kuin etusivulla. */
+/* Tunnus sivupalkissa: pysyy paikallaan, ei osoitusefektiä. */
 .rf-brand-mark {
   display: inline-flex;
-  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.rf-brand:hover .rf-brand-mark,
-.rf-brand:focus-visible .rf-brand-mark {
-  transform: rotate(-8deg) scale(1.08);
-}
-@media (prefers-reduced-motion: reduce) {
-  .rf-brand-mark {
-    transition: none;
-  }
-  .rf-brand:hover .rf-brand-mark {
-    transform: none;
-  }
 }
 
 /* --------------------------------------------------------------------- */

@@ -775,15 +775,9 @@
   opacity: 1;
 }
 
-/* Tunnus navigaatiossa: pieni kallistus osoitettaessa. */
+/* Tunnus navigaatiossa: pysyy paikallaan, ei osoitusefektiä. */
 .bd-logo-mark {
   display: inline-flex;
-  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-a:hover > .bd-logo-mark,
-a:focus-visible > .bd-logo-mark {
-  transform: rotate(-8deg) scale(1.08);
 }
 
 @media (max-width: 1023px) {
@@ -803,8 +797,7 @@ a:focus-visible > .bd-logo-mark {
     animation: none;
   }
 
-  .bd-tilt,
-  .bd-logo-mark {
+  .bd-tilt {
     transform: none !important;
     transition: none;
   }
