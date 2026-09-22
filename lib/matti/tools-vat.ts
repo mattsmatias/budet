@@ -24,7 +24,7 @@ import { defineTool, dateSchema, type ToolDefinition } from "./tool-kit";
 const getVatSettings = defineTool({
   name: "get_vat_settings",
   description:
-    "Ravintolan myyntiryhmät ja niiden ALV-kannat sekä kassajärjestelmän " +
+    "Yrityksen myyntiryhmät ja niiden ALV-kannat sekä kassajärjestelmän " +
     "ryhmien kohdistukset. Käytä AINA kun tarvitset verokantaa — älä koskaan " +
     "oleta tai laske veroprosenttia itse.",
   level: "read",

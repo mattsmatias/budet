@@ -31,7 +31,7 @@ import { defineTool, type ToolDefinition } from "./tool-kit";
 const getTasks = defineTool({
   name: "get_tasks",
   description:
-    "Ravintolan tehtävät ja määräajat: mikä on myöhässä, mikä erääntyy " +
+    "Yrityksen tehtävät ja määräajat: mikä on myöhässä, mikä erääntyy " +
     "tänään ja mitä on tulossa. Käytä kun kysytään mitä pitäisi tehdä, " +
     "onko jotain hoitamatta, tai kysytään jostain määräajasta. " +
     "ÄLÄ luo tehtäviä äläkä merkitse mitään tehdyksi — ohjaa " +
