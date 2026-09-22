@@ -30,6 +30,7 @@ export type IconName =
   | "calendar"
   | "staff"
   | "report"
+  | "ledger"
   | "bell"
   | "settings"
   | "clock"
@@ -100,6 +101,9 @@ const PATHS: Record<IconName, string> = {
     "M14.5 20.5v-1.6a3.9 3.9 0 0 0-3.9-3.9H7.4a3.9 3.9 0 0 0-3.9 3.9v1.6M9 12.4a3.9 3.9 0 1 0 0-7.8 3.9 3.9 0 0 0 0 7.8ZM20.5 20.5v-1.6a3.9 3.9 0 0 0-2.9-3.8M15.6 4.8a3.9 3.9 0 0 1 0 7.6",
 
   report: "M6 3h8l4 4v14H6zM14 3v4h4M9.5 12.5h5M9.5 16.5h3",
+  // Kirjanpito: avattu tilikirja, kaksi saraketta keskisauman molemmin puolin.
+  ledger:
+    "M12 6.5C10.3 5.2 7.8 4.6 4 4.8v13.7c3.8-.2 6.3.4 8 1.7 1.7-1.3 4.2-1.9 8-1.7V4.8c-3.8-.2-6.3.4-8 1.7zM12 6.5v13.7M6.8 9h2.7M6.8 12.5h2.7M14.5 9h2.7M14.5 12.5h2.7",
 
   bell: "M17.5 9.5a5.5 5.5 0 1 0-11 0c0 5.5-2 6.8-2 6.8h15s-2-1.3-2-6.8M13.7 19.5a2 2 0 0 1-3.4 0",
 

@@ -15,6 +15,8 @@ import { MattiPanel } from "./matti/panel";
 import type { Briefing } from "@/lib/matti/briefing";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { Logo } from "@/components/brand/logo";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import { MobileNav } from "./mobile-nav";
 
 /**
  * Hallintanavigaatio.
@@ -32,9 +34,16 @@ export function AdminNav({
   briefing,
   greeting,
   restaurantName,
+  userName,
+  roleLabel,
+  locale,
   t,
 }: {
   role: Role;
+  userName: string;
+  /** Roolin nimi käyttäjän kielellä, Lisää-paneelin tilikorttiin. */
+  roleLabel: string;
+  locale: AppLocale;
   /** Kuoren tekstit; navigaation otsikot tulevat näistä. */
   t: AdminText;
   /** Näkyy kiskon tunnuslohkon alarivillä, kuten konsolissa. */
@@ -65,10 +74,16 @@ export function AdminNav({
         briefing={briefing}
         greeting={greeting}
       />
-      <MobileBar
+      <MobileNav
         items={primary}
+        role={role}
+        counts={counts}
         t={t}
         canAddReceipt={can(role, "receipts.add")}
+        userName={userName}
+        roleLabel={roleLabel}
+        restaurantName={restaurantName}
+        locale={locale}
       />
     </>
   );
@@ -268,100 +283,3 @@ function NavLink({
   );
 }
 
-// ---------------------------------------------------------------------------
-
-/**
- * Alapalkki puhelimeen.
- *
- * Viisi tärkeintä kohtaa; loput löytyvät "Lisää"-välilehdeltä. Kuusi
- * kohtaa alapalkissa tekee kosketuskohteista liian kapeita.
- */
-function MobileBar({
-  items,
-  t,
-  canAddReceipt,
-}: {
-  items: NavItems;
-  t: AdminText;
-  canAddReceipt: boolean;
-}) {
-  const isActive = useActive();
-  const pathname = usePathname();
-  /* Kamerapainike ei näy kuitin lisäyksessä itsessään. */
-  const showCapture =
-    canAddReceipt && !pathname.startsWith("/admin/kuitit/uusi");
-  const primary = items;
-  // Lisää on aina mukana: sen takana ovat asetukset ja uloskirjautuminen.
-  const hasMore = true;
-
-  return (
-    <>
-    {/*
-      Kuitin lisäys yhdellä napautuksella.
-
-      Puhelimella kuitti kuvataan heti kun se on kädessä. Pyöreä painike
-      alapalkin yläpuolella on aina saman peukalon ulottuvilla, mistä
-      sivusta tahansa, ja avaa kameran suoraan.
-    */}
-    {showCapture ? (
-      <Link
-        href="/admin/kuitit/uusi"
-        aria-label={t.kuori.addReceipt}
-        className="rf-press rf-fab md:hidden"
-      >
-        <RfIcon name="camera" size={24} />
-      </Link>
-    ) : null}
-    <nav
-      aria-label={t.kuori2.adminNav}
-      className="rf-mobile-bar fixed bottom-0 start-0 end-0 z-30 border-t md:hidden"
-      style={{ borderColor: "var(--rf-line)" }}
-    >
-      <ul className="mx-auto flex max-w-md">
-        {primary.map((item) => {
-          const active = isActive(item.href);
-
-          return (
-            <li key={item.href} className="flex-1">
-              <Link
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className="rf-press relative flex flex-col items-center gap-1 py-2"
-                /* Valittu välilehti on korostusvärillä kuten kiskossakin:
-                   sininen oli tässä ainoa paikka jossa "valittu" oli
-                   sininen, ja puhelin näytti eri sovellukselta. */
-                style={{
-                  color: active ? "var(--rf-accent)" : "var(--rf-text-3)",
-                }}
-              >
-                <RfIcon name={item.icon} size={22} />
-                <span className="text-[10px] font-medium">
-                  {t.nav[item.key]}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-
-        {hasMore ? (
-          <li className="flex-1">
-            <Link
-              href="/admin/lisaa"
-              aria-current={isActive("/admin/lisaa") ? "page" : undefined}
-              className="rf-press flex flex-col items-center gap-1 py-2"
-              style={{
-                color: isActive("/admin/lisaa")
-                  ? "var(--rf-accent)"
-                  : "var(--rf-text-3)",
-              }}
-            >
-              <RfIcon name="more" size={22} />
-              <span className="text-[10px] font-medium">{t.nav.more}</span>
-            </Link>
-          </li>
-        ) : null}
-      </ul>
-    </nav>
-    </>
-  );
-}

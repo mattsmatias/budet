@@ -1921,3 +1921,307 @@ details[open] .rf-summary-chevron {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Puhelimen välilehtipalkki.
+ *
+ * Valittu välilehti saa pillerin ikonin taakse kuten puhelinten omissa
+ * sovelluksissa: vilkaisulla näkee missä on, eikä pelkkä värisävy jää
+ * sen varaan. Kosketusalue on koko sarake, vähintään 56 px korkea.
+ * ------------------------------------------------------------------------- */
+.rf-tab {
+  display: flex;
+  min-height: 58px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 2px 5px;
+  color: var(--rf-text-3);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rf-tab-pill {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  transition:
+    background 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 220ms ease,
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rf-tab-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.rf-tab[data-active] {
+  color: var(--rf-text);
+}
+
+.rf-tab[data-active] .rf-tab-pill {
+  color: var(--rf-accent);
+  background: var(--rf-accent-bg);
+}
+
+.rf-tab:active .rf-tab-pill {
+  transform: scale(0.9);
+}
+
+.rf-tab-badge {
+  position: absolute;
+  top: -3px;
+  inset-inline-end: 4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: var(--rf-accent);
+  box-shadow: 0 0 0 2px var(--rf-card);
+}
+
+/* ---------------------------------------------------------------------------
+ * Lisää-paneeli alhaalta.
+ * ------------------------------------------------------------------------- */
+@keyframes rf-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes rf-sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.rf-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.rf-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  background: rgba(8, 12, 20, 0.42);
+  animation: rf-sheet-fade 220ms ease both;
+}
+
+.rf-sheet {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  max-height: calc(100dvh - max(2.5rem, env(safe-area-inset-top)));
+  flex-direction: column;
+  outline: none;
+  background: var(--rf-inset);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -20px 50px -20px rgba(0, 0, 0, 0.35);
+  animation: rf-sheet-up 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  transition: transform 220ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+.rf-sheet-root[data-closing] .rf-sheet {
+  transform: translateY(100%);
+}
+
+.rf-sheet-root[data-closing] .rf-sheet-backdrop {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.rf-sheet-grip {
+  touch-action: none;
+  cursor: grab;
+  padding-top: 8px;
+}
+
+.rf-sheet-handle {
+  display: block;
+  width: 38px;
+  height: 5px;
+  margin: 0 auto 8px;
+  border-radius: 999px;
+  background: var(--rf-line-strong, var(--rf-line));
+}
+
+.rf-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 16px calc(20px + env(safe-area-inset-bottom));
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+}
+
+.rf-sheet-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--rf-card);
+  border: 1px solid var(--rf-line);
+}
+
+.rf-sheet-card.p-0 {
+  padding: 0;
+  overflow: hidden;
+}
+
+.rf-sheet-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--rf-accent);
+  background: var(--rf-accent-bg);
+}
+
+.rf-sheet-label {
+  margin-bottom: 8px;
+  padding-inline: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--rf-text-3);
+}
+
+.rf-sheet-tile {
+  display: flex;
+  height: 100%;
+  min-height: 88px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px 6px;
+  text-align: center;
+  border-radius: 16px;
+  background: var(--rf-card);
+  border: 1px solid var(--rf-line);
+}
+
+.rf-sheet-tile[data-active] {
+  border-color: color-mix(in srgb, var(--rf-accent) 45%, var(--rf-line));
+  background: color-mix(in srgb, var(--rf-accent-bg) 55%, var(--rf-card));
+}
+
+.rf-sheet-tile-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--rf-text);
+  background: var(--rf-inset);
+}
+
+.rf-sheet-tile[data-active] .rf-sheet-tile-icon {
+  color: var(--rf-accent);
+  background: var(--rf-accent-bg);
+}
+
+.rf-sheet-tile .rf-tab-badge {
+  top: -5px;
+  inset-inline-end: -7px;
+}
+
+.rf-sheet-tile-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.rf-sheet-row {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--rf-text);
+}
+
+.rf-sheet-row + .rf-sheet-row {
+  border-top: 1px solid var(--rf-line);
+}
+
+.rf-sheet-row > svg:first-child,
+.rf-sheet-row > span:first-child {
+  color: var(--rf-text-2);
+}
+
+.rf-sheet-row > svg:last-child {
+  color: var(--rf-text-3);
+}
+
+.rf-sheet-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.rf-sheet-lang {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rf-text-2);
+  background: var(--rf-inset);
+  border: 1px solid transparent;
+}
+
+.rf-sheet-lang[aria-checked="true"] {
+  color: var(--rf-accent);
+  background: var(--rf-accent-bg);
+  border-color: color-mix(in srgb, var(--rf-accent) 35%, transparent);
+}
+
+.rf-sheet-lang:disabled {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-sheet,
+  .rf-sheet-backdrop {
+    animation: none;
+    transition: none;
+  }
+
+  .rf-tab-pill {
+    transition: none;
+  }
+}

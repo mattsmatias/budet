@@ -6,7 +6,6 @@ import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
 import { MattiPanel } from "./matti/panel";
-import { LanguagePicker } from "@/components/i18n/language-picker";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
@@ -118,6 +117,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           role={role}
           counts={counts}
           restaurantName={restaurant.name}
+          userName={userName}
+          roleLabel={nimet.roles[role]}
+          locale={locale}
           t={t}
           briefing={briefing}
           greeting={greeting(new Date(now), restaurant.timezone, t)}
@@ -152,8 +154,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
                 greeting={greeting(new Date(now), restaurant.timezone, t)}
               />
             ) : null}
-            {/* Kieli puhelimessa: työpöydällä se on yläpalkissa. */}
-            <LanguagePicker current={locale} />
             <HeaderMenus
               nimet={nimet}
               t={t}
@@ -162,6 +162,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               restaurantName={restaurant.name}
               role={role}
               canOpenSettings={can(role, "settings.view")}
+              showUser={false}
             />
             </div>
           </header>

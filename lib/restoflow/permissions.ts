@@ -379,7 +379,7 @@ export const ADMIN_NAV: NavEntry[] = [
   {
     href: "/admin/kirjanpito",
     key: "accounting",
-    icon: "report",
+    icon: "ledger",
     requires: "accounting.view",
     section: "finance",
   },
