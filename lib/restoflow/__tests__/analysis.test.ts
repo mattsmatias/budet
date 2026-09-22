@@ -1037,8 +1037,49 @@ describe("poikkeamat", () => {
         today,
       });
 
+      // Puuttuvista päivistä tulee oma muistutuksensa; tässä
+      // arvioidaan vain vertailukohdasta jäämistä.
+      const shortfall = alerts.filter((a) => a.kind === "sales_shortfall");
+      expect(shortfall).toHaveLength(1);
+      expect(shortfall[0].detail).toContain("viikonpäivän");
+    });
+
+    /*
+     * Unohtunut päivä on se jota kukaan ei etsi: ilman muistutusta se
+     * löytyy vasta kun kuukauden tulos on jo laskettu vajaana.
+     */
+    it("muistuttaa puuttuvasta myyntipäivästä", () => {
+      const alerts = alertsOf({
+        sales: [sale("2026-08-20", 100_000)],
+        month: "2026-08",
+        today,
+      }).filter((a) => a.kind === "sales_missing");
+
       expect(alerts).toHaveLength(1);
-      expect(alerts[0].detail).toContain("viikonpäivän");
+      // 21.–23.8. puuttuvat, tämä päivä (24.8.) ei ole myöhässä.
+      expect(alerts[0].title).toContain("3");
+      expect(alerts[0].href).toBe("/admin/myynti");
+    });
+
+    it("ei muistuta päivistä ennen ensimmäistä kirjausta", () => {
+      const alerts = alertsOf({
+        sales: [sale(yesterday, 100_000)],
+        month: "2026-08",
+        today,
+      }).filter((a) => a.kind === "sales_missing");
+
+      expect(alerts).toEqual([]);
+    });
+
+    it("ei muistuta kun kaikki päivät on kirjattu", () => {
+      const days = ["2026-08-18", "2026-08-19", "2026-08-20", "2026-08-21", "2026-08-22", yesterday];
+      const alerts = alertsOf({
+        sales: days.map((d) => sale(d, 100_000)),
+        month: "2026-08",
+        today,
+      }).filter((a) => a.kind === "sales_missing");
+
+      expect(alerts).toEqual([]);
     });
 
     it("ei arvioi kesken olevaa päivää", () => {

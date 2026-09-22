@@ -338,6 +338,7 @@ export type AlertKind =
   | "missing_payment_method"
   | "vat_mismatch"
   | "sales_shortfall"
+  | "sales_missing"
   | "receipt_gap"
   // Määräaika: tehtävä joka erääntyy tänään tai on jo myöhässä.
   | "task_due"

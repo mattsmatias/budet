@@ -23,7 +23,11 @@ import { checkVat } from "./vat";
 import { daysLate, statusOf, type Task } from "./tasks";
 import type { Alert, Budget, Receipt } from "./types";
 import { addDays, daysBetween } from "./dates";
-import { compareSales, type DailySales } from "./sales";
+import {
+  compareSales,
+  missingSalesDays,
+  type DailySales,
+} from "./sales";
 
 /** Toimittajan kulunousu joka ylittää tämän nostaa hälytyksen. */
 const SUPPLIER_SPIKE_THRESHOLD = 0.25;
@@ -36,6 +40,9 @@ const RECEIPT_GAP_DAYS = 14;
 
 /** Myynti tämän verran alle vertailukohdan nostaa huomautuksen. */
 const SALES_SHORTFALL = 0.1;
+
+/** Montako päivää taaksepäin puuttuvasta myynnistä muistutetaan. */
+const SALES_MISSING_WINDOW = 7;
 
 export interface AlertContext {
   receipts: Receipt[];
@@ -74,6 +81,7 @@ export function buildAlerts(ctx: AlertContext): Alert[] {
     ...vatMismatchAlerts(ctx),
     ...receiptReviewAlerts(ctx),
     ...salesShortfall(ctx),
+    ...salesMissing(ctx),
     ...receiptGap(ctx),
     ...taskDeadlines(ctx),
   ].sort((a, b) => severityRank(a) - severityRank(b));
@@ -228,6 +236,57 @@ function receiptReviewAlerts(ctx: AlertContext): Alert[] {
         entityId: receipt.id,
       };
     });
+}
+
+/**
+ * Päivän myynti on kirjaamatta.
+ *
+ * Kassaraportti kuvataan illan päätteeksi, ja unohtuminen huomataan
+ * vasta kun jotain lasketaan sen varassa. Ilman päivää viikon vertailut,
+ * keskiostos ja kuukauden tulos jäävät vajaiksi — eikä puuttuva päivä
+ * näy missään ennen kuin joku etsii sitä.
+ *
+ * Ikkuna on viikko: vanhemmat päivät ovat historiaa, ja niitä
+ * täydennetään myyntisivun listalta. Ennen ensimmäistä kirjattua päivää
+ * ei muistuteta — silloin yritys ei vielä käyttänyt Katea.
+ *
+ * Tämä päivä ei ole myöhässä: se kirjataan illalla.
+ */
+function salesMissing(ctx: AlertContext): Alert[] {
+  const t = adminText(ctx.locale);
+  const sales = ctx.sales ?? [];
+  if (sales.length === 0) return [];
+
+  const first = sales.reduce((min, s) => (s.date < min ? s.date : min), sales[0].date);
+
+  const days: string[] = [];
+  for (let i = 1; i <= SALES_MISSING_WINDOW; i++) {
+    const day = addDays(ctx.today, -i);
+    if (day >= first) days.push(day);
+  }
+
+  const missing = missingSalesDays(days, sales, ctx.today);
+  if (missing.length === 0) return [];
+
+  // Uusin puuttuva ensin: se on se joka juuri unohtui.
+  const latest = missing.reduce((max, d) => (d > max ? d : max), missing[0]);
+
+  return [
+    {
+      id: `sales-missing-${latest}`,
+      kind: "sales_missing",
+      severity: "warning",
+      title:
+        missing.length === 1
+          ? fill(t.havainto.salesMissingOne, {
+              paiva: formatDate(latest, ctx.locale),
+            })
+          : fill(t.havainto.salesMissingMany, { maara: String(missing.length) }),
+      detail: t.havainto.salesMissingBody,
+      href: "/admin/myynti",
+      entityId: latest,
+    },
+  ];
 }
 
 /**

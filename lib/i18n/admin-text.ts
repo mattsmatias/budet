@@ -438,6 +438,9 @@ const fi = {
     vatMismatchNamed: "ALV-tieto ei täsmää · {nimi}",
     awaitsReview: "{nimi} odottaa tarkistusta",
     unknownPerson: "Tuntematon",
+    salesMissingOne: "Myynti puuttuu päivältä {paiva}",
+    salesMissingMany: "Myynti puuttuu {maara} päivältä",
+    salesMissingBody: "Kuvaa päivän kassaraportti tai kirjaa luku käsin. Ilman sitä viikon vertailut, keskiostos ja kuukauden tulos jäävät vajaiksi.",
   },
   tila: {
     oneCritical: "1 kriittinen asia vaatii huomiota",
@@ -2130,6 +2133,9 @@ const en: AdminText = {
     vatMismatchNamed: "The VAT does not match · {nimi}",
     awaitsReview: "{nimi} is awaiting review",
     unknownPerson: "Unknown",
+    salesMissingOne: "Sales missing for {paiva}",
+    salesMissingMany: "Sales missing for {maara} days",
+    salesMissingBody: "Photograph the day's register report or enter the figure by hand. Without it the week's comparisons, the average purchase and the month's result stay incomplete.",
   },
   tila: {
     oneCritical: "1 critical matter needs attention",
@@ -3815,6 +3821,9 @@ const sv: AdminText = {
     vatMismatchNamed: "Momsuppgiften stämmer inte · {nimi}",
     awaitsReview: "{nimi} väntar på kontroll",
     unknownPerson: "Okänd",
+    salesMissingOne: "Försäljning saknas för {paiva}",
+    salesMissingMany: "Försäljning saknas för {maara} dagar",
+    salesMissingBody: "Fotografera dagens kassarapport eller fyll i summan för hand. Utan den blir veckans jämförelser, snittköpet och månadens resultat ofullständiga.",
   },
   tila: {
     oneCritical: "1 kritisk sak kräver uppmärksamhet",
@@ -5502,6 +5511,9 @@ const da: AdminText = {
     vatMismatchNamed: "Momsoplysningen stemmer ikke · {nimi}",
     awaitsReview: "{nimi} afventer kontrol",
     unknownPerson: "Ukendt",
+    salesMissingOne: "Salg mangler for {paiva}",
+    salesMissingMany: "Salg mangler for {maara} dage",
+    salesMissingBody: "Fotografér dagens kasserapport, eller indtast beløbet manuelt. Uden den bliver ugens sammenligninger, gennemsnitskøbet og månedens resultat ufuldstændige.",
   },
   tila: {
     oneCritical: "1 kritisk sag kræver opmærksomhed",
@@ -7191,6 +7203,9 @@ const tr: AdminText = {
     vatMismatchNamed: "KDV bilgisi uyuşmuyor · {nimi}",
     awaitsReview: "{nimi} kontrol bekliyor",
     unknownPerson: "Bilinmiyor",
+    salesMissingOne: "{paiva} günü için satış eksik",
+    salesMissingMany: "{maara} gün için satış eksik",
+    salesMissingBody: "Günün kasa raporunu çekin veya tutarı elle girin. Bu olmadan haftanın karşılaştırmaları, ortalama sepet ve ayın sonucu eksik kalır.",
   },
   tila: {
     oneCritical: "1 kritik konu dikkat gerektiriyor",
@@ -8871,6 +8886,9 @@ const et: AdminText = {
     vatMismatchNamed: "Käibemaksu andmed ei klapi · {nimi}",
     awaitsReview: "{nimi} ootab kontrollimist",
     unknownPerson: "Tundmatu",
+    salesMissingOne: "Müük puudub päevalt {paiva}",
+    salesMissingMany: "Müük puudub {maara} päevalt",
+    salesMissingBody: "Pildista päeva kassaaruanne või sisesta summa käsitsi. Ilma selleta jäävad nädala võrdlused, keskmine ost ja kuu tulem poolikuks.",
   },
   tila: {
     oneCritical: "1 kriitiline asi vajab tähelepanu",
@@ -10550,6 +10568,9 @@ const ar: AdminText = {
     vatMismatchNamed: "ضريبة القيمة المضافة غير متطابقة · {nimi}",
     awaitsReview: "{nimi} بانتظار المراجعة",
     unknownPerson: "غير معروف",
+    salesMissingOne: "المبيعات ناقصة ليوم {paiva}",
+    salesMissingMany: "المبيعات ناقصة لـ {maara} أيام",
+    salesMissingBody: "صوّر تقرير الصندوق لذلك اليوم أو أدخل المبلغ يدويًا. بدونه تبقى مقارنات الأسبوع ومتوسط الشراء ونتيجة الشهر ناقصة.",
   },
   tila: {
     oneCritical: "مسألة حرجة واحدة تحتاج إلى اهتمام",

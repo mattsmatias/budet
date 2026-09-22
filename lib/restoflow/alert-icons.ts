@@ -29,6 +29,7 @@ const ICONS: Record<AlertKind, IconName> = {
 
   supplier_spike: "trend",
   sales_shortfall: "trend",
+  sales_missing: "sales",
 
   // Tehtävä on rasti ruutuun, myöhässä oleva huutomerkki: sama
   // asia kahdessa tilassa, ja tila on se mitä listasta luetaan.
