@@ -18,6 +18,7 @@ import {
 import { supplierTotalsInMonth } from "@/lib/restoflow/suppliers";
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import { formatMoney } from "@/lib/money";
+import { RestaurantAvatar } from "@/components/restoflow/restaurant-avatar";
 import {} from "@/lib/restoflow/types";
 import { PrintButton } from "./print-button";
 
@@ -71,10 +72,26 @@ export default async function PrintableReportPage({
         <PrintButton t={t} />
       </div>
 
+      {/*
+        Yrityksen tunnus raportin otsikkoon.
+
+        Tuloste päätyy kirjanpitäjälle ja mappiin, ja silloin paperista
+        pitää nähdä kenen raportti se on ennen kuin tekstiä lukee.
+      */}
       <header
-        className="border-b pb-4"
+        className="flex items-start gap-4 border-b pb-4"
         style={{ borderColor: "var(--rf-line-strong)" }}
       >
+        <RestaurantAvatar
+          name={restaurant.name}
+          logoUrl={
+            restaurant.logoPath
+              ? `/api/yritys/kuva?v=${restaurant.logoPath.slice(-12)}`
+              : null
+          }
+          size={56}
+        />
+        <div className="min-w-0 flex-1">
         <h1 className="text-[24px] font-semibold tracking-tight">
           Kuukausiraportti · {formatMonth(viewMonth, locale)}
         </h1>
@@ -88,6 +105,7 @@ export default async function PrintableReportPage({
         >
           {t.raportti.scopeNote}
         </p>
+        </div>
       </header>
 
       <Section title={t.raportti.summary}>

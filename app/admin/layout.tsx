@@ -69,6 +69,17 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const userName = user.fullName ?? user.email ?? t.kuori.user;
 
   /*
+   * Yrityksen kuva osoitteena eikä tiedostona.
+   *
+   * Kuva on yksityisessä säiliössä, joten se kulkee oman reittinsä
+   * kautta. Osoitteessa on versiotunniste, jotta vaihdettu kuva näkyy
+   * heti eikä selain tarjoile vanhaa välimuistista.
+   */
+  const logoUrl = restaurant.logoPath
+    ? `/api/yritys/kuva?v=${restaurant.logoPath.slice(-12)}`
+    : null;
+
+  /*
    * Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
    *
    * Lista on kuoressa eikä sivulla, koska valitsin on nyt palkissa ja
@@ -138,6 +149,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
               restaurantName={restaurant.name}
               userName={userName}
               backLabel={t.loput.back}
+              logoUrl={logoUrl}
             />
             <div className="flex shrink-0 items-center gap-1">
             {/* Matti puhelimessa: työpöydällä se on sivupalkissa. */}

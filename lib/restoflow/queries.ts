@@ -948,3 +948,36 @@ export async function fetchAuditLog(
     })),
   };
 }
+
+/**
+ * Yrityksen profiilikuva.
+ *
+ * Kannassa on polku eikä osoite, joten osoite haetaan allekirjoitettuna
+ * jokaista sivunpiirtoa varten. Säiliö on yksityinen: ilman
+ * allekirjoitusta kuvaa ei saa, ja allekirjoitus vanhenee tunnissa.
+ *
+ * Kuva ei ole kriittinen tieto, joten virhe ei kaada sivua: silloin
+ * palautetaan null ja tilalle piirtyy yrityksen alkukirjain.
+ */
+export async function fetchRestaurantLogoUrl(
+  restaurantId: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+
+  const { data: row, error } = await supabase
+    .from("restaurants")
+    .select("logo_path")
+    .eq("id", restaurantId)
+    .maybeSingle();
+
+  const path = (row?.logo_path as string | null) ?? null;
+  if (error || !path) return null;
+
+  const { data, error: signError } = await supabase.storage
+    .from("logos")
+    .createSignedUrl(path, 3600);
+
+  if (signError || !data?.signedUrl) return null;
+
+  return data.signedUrl;
+}

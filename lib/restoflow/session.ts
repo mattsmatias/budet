@@ -49,6 +49,13 @@ export interface RestaurantMembership {
   role: Role;
   /** Toimiala: ratkaisee kulukategoriat ja sanaston. */
   businessType: BusinessType;
+  /**
+   * Yrityksen profiilikuvan polku, tai null.
+   *
+   * Polku eikä kuva: tiedosto haetaan erikseen ja vain kun se on
+   * olemassa, joten tyhjä tunnus ei maksa yhtään kyselyä.
+   */
+  logoPath: string | null;
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -88,7 +95,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, timezone, currency, role, business_type",
+          "id, name, slug, timezone, currency, role, business_type, logo_path",
         )
         .order("name");
 
@@ -104,6 +111,7 @@ export const getMemberships = cache(
         businessType: isBusinessType(row.business_type)
           ? row.business_type
           : "restaurant",
+        logoPath: (row.logo_path as string | null) ?? null,
       }));
     } catch {
       return [];

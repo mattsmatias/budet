@@ -13,11 +13,13 @@ import { RfIcon } from "@/components/restoflow/icons";
 import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
 import { RestaurantForm } from "./forms";
+import { LogoForm } from "./logo-form";
 import { NameForm, PasswordForm } from "./profile-forms";
 import { SalesGroups, PosMappings } from "./vat-settings";
 import {
   fetchInvitations,
   fetchPosMappings,
+  fetchRestaurantLogoUrl,
   fetchSalesGroups,
 } from "@/lib/restoflow/queries";
 import { revokeInvitation } from "../actions";
@@ -69,6 +71,12 @@ export default async function SettingsPage({
         }
       : null;
 
+  /* Kuvan osoite vain Yritys-osastolle, samasta syystä. */
+  const logoUrl =
+    section.id === "ravintola" && canEdit
+      ? await fetchRestaurantLogoUrl(restaurant.id)
+      : null;
+
   /* Avoimet kutsut vain Käyttäjät-osastolle, samasta syystä. */
   const invitations =
     section.id === "kayttajat" && canEdit
@@ -101,6 +109,10 @@ export default async function SettingsPage({
                   name={restaurant.name}
                   timezone={restaurant.timezone}
                 />
+
+                <Divider />
+
+                <LogoForm t={t} name={restaurant.name} logoUrl={logoUrl} />
 
                 <Divider />
 

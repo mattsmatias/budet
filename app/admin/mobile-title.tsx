@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
+import { RestaurantAvatar } from "@/components/restoflow/restaurant-avatar";
 import { RfIcon } from "@/components/restoflow/icons";
 
 /**
@@ -42,23 +43,34 @@ export function MobileTitle({
   restaurantName,
   userName,
   backLabel,
+  logoUrl,
 }: {
   restaurantName: string;
   userName: string;
   backLabel: string;
+  /** Yrityksen kuvan osoite, tai null kun kuvaa ei ole. */
+  logoUrl: string | null;
 }) {
   const pathname = usePathname();
   const title = useSyncExternalStore(subscribe, pageTitle, noTitle);
 
   if (pathname === "/admin") {
     return (
-      <Link href="/admin" className="min-w-0">
-        <p className="truncate text-[16px] font-bold tracking-[-0.015em]">
-          {restaurantName}
-        </p>
-        <p className="truncate text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          {userName}
-        </p>
+      <Link href="/admin" className="flex min-w-0 items-center gap-2.5">
+        {/* Yrityksen tunnus etusivulla: tässä lukee yrityksen nimi,
+            joten kuva kuuluu sen viereen eikä alasivujen otsikkoon. */}
+        <RestaurantAvatar name={restaurantName} logoUrl={logoUrl} size={34} />
+        <span className="min-w-0">
+          <span className="block truncate text-[16px] font-bold tracking-[-0.015em]">
+            {restaurantName}
+          </span>
+          <span
+            className="block truncate text-[12px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {userName}
+          </span>
+        </span>
       </Link>
     );
   }
