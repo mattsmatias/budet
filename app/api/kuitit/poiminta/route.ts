@@ -33,6 +33,9 @@ import {
   isRealExtractor,
   quantityOf,
   vatRateOf,
+  vatSharesOf,
+  linesMatchShares,
+  type VatShare,
   type ExtractedItem,
   type ExtractionResult,
 } from "@/lib/restoflow/receipt-ai";
@@ -101,6 +104,13 @@ function extractionSchema(categoryKeys: [string, ...string[]]) {
       category: z.enum(categoryKeys),
       vatRate: z.number().nullable(),
       productGroup: z.string().nullable(),
+    }),
+  ),
+  vatBreakdown: z.array(
+    z.object({
+      rate: z.number(),
+      vatCents: z.number().int(),
+      grossCents: z.number().int(),
     }),
   ),
   imageQuality: z.enum(["good", "poor"]),
@@ -267,7 +277,20 @@ Säännöt, joista ei poiketa:
   koska väärää lukua ei kukaan tarkista.
 - Älä laske ALV:tä itse jos sitä ei ole kuitissa. Palauta null.
 - Rivin vatRate on MURTOLUKU, ei prosenttiluku: 14 % on 0.14 ja
-  25,5 % on 0.255. Jos kantaa ei näy rivillä, palauta null.
+  25,5 % on 0.255.
+- ALV-ERITTELY. Kuitin alalaidassa on lähes aina taulukko, esimerkiksi
+  "Alv% Vero + Netto = Brutto / A 25,5% 6,71 26,29 33,00 / B 13,5%
+  15,21 112,66 127,87". Palauta jokainen rivi vatBreakdown-listaan.
+  Se on kuitin oma tieto verokannoistaan — älä laske sitä itse.
+- KANTAKIRJAIMET. Kun rivin perässä on kirjain (A, B, C…), se viittaa
+  ALV-erittelyn riviin. Aseta rivin vatRate sen kirjaimen kannasta:
+  esimerkin "Lambi talouspaperi valko 12,45 B" saa vatRate 0.135.
+  Ilman kirjainta ja ilman erittelyä palauta null.
+- ALENNUKSET JA PANTIT. "Alennus 20% -0,82", "Lidl Plus -säästösi
+  -2,00" ja pantit ovat omia rivejään ja niiden totalCents on
+  NEGATIIVINEN. Ota ne mukaan — ilman niitä rivit eivät summaudu
+  loppusummaan. Alennusrivin vatRate on sama kuin sen rivin, jota se
+  alentaa (yleensä juuri edellinen rivi).
 - Päivämäärä on ostopäivä muodossa VVVV-KK-PP, ei tulostuspäivä.
 - businessId on myyjän Y-tunnus muodossa 1234567-8. Se löytyy yleensä
   kuitin alalaidasta. Älä sekoita sitä ALV-numeroon (FI12345678) tai
@@ -278,6 +301,10 @@ Säännöt, joista ei poiketa:
   saadaksesi summan täsmäämään.
 - Rivien summan pitäisi täsmätä loppusummaan. Jos ei täsmää, jätä rivit
   pois ennemmin kuin muokkaa niitä.
+- TARKISTA LOPUKSI: laske rivien bruttosummat kannoittain ja vertaa
+  niitä ALV-erittelyn Brutto-sarakkeeseen. Jos ne eivät täsmää, jonkin
+  rivin kanta on väärin — korjaa se ennen vastaamista. Alennusrivi
+  kuuluu sen tuotteen kantaan jota se alentaa.
 
 Kategoriat (valitse vain näistä):
 ${categoryKeys
@@ -308,34 +335,63 @@ function sanitize(parsed: Parsed): ExtractionResult {
     };
   };
 
+  /*
+   * ALV-erittely ensin: sitä tarvitaan sekä kokonais-ALV:n varmistukseen
+   * että rivien kannan täydentämiseen.
+   */
+  const breakdown = vatSharesOf(parsed.vatBreakdown);
+  const vatFromBreakdown = breakdown.reduce((sum, r) => sum + r.vatCents, 0);
+
+  const rivit: ExtractedItem[] = parsed.items
+    .slice(0, 100)
+    .map((item): ExtractedItem | null => {
+      const totalCents = lineCents(item.totalCents);
+      if (totalCents === null) return null;
+
+      return {
+        description: text(item.description) ?? "",
+        quantity: quantityOf(item.quantity),
+        unit: text(item.unit ?? ""),
+        totalCents,
+        category: item.category as ExpenseCategory,
+        vatRate: vatRateOf(item.vatRate) ?? ainoaKanta(breakdown),
+        productGroup: text(item.productGroup ?? ""),
+      };
+    })
+    .filter((item): item is ExtractedItem => item !== null);
+
   return {
     supplier: field(parsed.supplier, text),
     date: field(parsed.date, date),
     totalCents: field(parsed.totalCents, cents),
-    vatCents: field(parsed.vatCents, cents),
+    /*
+     * Kuitin oma erittely on parempi lähde kuin yksittäinen luku.
+     *
+     * Jos erittelyä ei ole, käytetään poimittua ALV:tä kuten ennen.
+     */
+    vatCents:
+      breakdown.length > 0
+        ? {
+            value: vatFromBreakdown,
+            /*
+             * Erittely on varma vain jos rivit ovat samaa mieltä sen
+             * kanssa. Jos kannoittaiset bruttosummat eivät täsmää,
+             * jonkin rivin kanta on luettu väärin — silloin luku
+             * merkitään tarkistettavaksi eikä varmaksi.
+             */
+            confidence: linesMatchShares(rivit, breakdown)
+              ? ("high" as const)
+              : ("medium" as const),
+          }
+        : field(parsed.vatCents, cents),
     category: narrow<ExpenseCategory>(parsed.category),
     paymentMethod: narrow<PaymentMethod>(parsed.paymentMethod),
     receiptNumber: field(parsed.receiptNumber, text),
     // Tarkiste lasketaan tässä: väärin luettu Y-tunnus on pahempi kuin
     // puuttuva, koska tunnistus luottaa siihen kaiken muun ohi.
     businessId: field(parsed.businessId, (raw) => parseBusinessId(raw)),
-    items: parsed.items
-      .slice(0, 100)
-      .map((item): ExtractedItem | null => {
-        const totalCents = cents(item.totalCents);
-        if (totalCents === null) return null;
-
-        return {
-          description: text(item.description) ?? "",
-          quantity: quantityOf(item.quantity),
-          unit: text(item.unit ?? ""),
-          totalCents,
-          category: item.category as ExpenseCategory,
-          vatRate: vatRateOf(item.vatRate),
-          productGroup: text(item.productGroup ?? ""),
-        };
-      })
-      .filter((item): item is ExtractedItem => item !== null),
+    items: rivit,
+    vatBreakdown: breakdown,
     imageQuality: parsed.imageQuality,
     elapsedMs: 0,
   };
@@ -367,6 +423,27 @@ function date(value: string): string | null {
   const trimmed = value.trim();
   if (!ISO_DATE.test(trimmed)) return null;
   return Number.isNaN(Date.parse(`${trimmed}T12:00:00Z`)) ? null : trimmed;
+}
+
+/**
+ * Rivin summa. Alennus, pantti ja hyvitys ovat negatiivisia.
+ *
+ * Ennen jokainen negatiivinen rivi hylättiin, jolloin rivit eivät
+ * summautuneet loppusummaan. Silloin ALV-tarkistus ei voinut käyttää
+ * rivejä todisteena ja päätteli kannan koko kuitin summista: Lidlin
+ * kuitilla 21,92 / 138,95 = 15,8 %, joka ei ole mikään verokanta.
+ * Kuitti merkittiin tarkistettavaksi, vaikka siinä luki 25,5 % ja 13,5 %.
+ */
+function lineCents(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value);
+  if (Math.abs(rounded) > 100_000_000) return null;
+  return rounded;
+}
+
+/** Kanta riville jolla sitä ei näy: vain jos kuitissa on yksi kanta. */
+function ainoaKanta(breakdown: VatShare[]): number | null {
+  return breakdown.length === 1 ? breakdown[0].rate : null;
 }
 
 function cents(value: number): number | null {

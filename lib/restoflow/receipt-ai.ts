@@ -29,6 +29,20 @@ export interface ExtractedItem {
   productGroup: string | null;
 }
 
+/**
+ * Kuitin oma ALV-erittely.
+ *
+ * Lähes jokaisen suomalaisen kuitin alalaidassa on taulukko "Alv%
+ * Vero Netto Brutto". Se on kuitin oma todiste verokannoistaan:
+ * pääteltyä kantaa ei tarvitse arvata, kun myyjä on sen kirjoittanut.
+ */
+export interface VatShare {
+  /** Murtolukuna: 13,5 % on 0.135. */
+  rate: number;
+  vatCents: number;
+  grossCents: number;
+}
+
 export interface ExtractionResult {
   supplier: Extracted<string>;
   /** Myyjän Y-tunnus, tarkisteen läpäissyt. Vahvin kaupan tunniste. */
@@ -40,6 +54,8 @@ export interface ExtractionResult {
   paymentMethod: Extracted<PaymentMethod>;
   receiptNumber: Extracted<string>;
   items: ExtractedItem[];
+  /** Kuitin ALV-erittely kannoittain, jos kuitissa on sellainen. */
+  vatBreakdown?: VatShare[];
   /** Kuvan laatuarvio. Huono kuva nostaa tarkistustarpeen. */
   imageQuality: "good" | "poor";
   elapsedMs: number;
@@ -566,6 +582,79 @@ export function reviewReasonsForSave(input: {
  * vain yhtä asiaa. Kaikki muu mahdoton pudotetaan tyhjäksi — tyhjä
  * kenttä on parempi kuin keksitty.
  */
+/**
+ * Kuitin ALV-erittely kelvollisiksi riveiksi.
+ *
+ * Erittely on kuitin oma todiste kannoistaan, joten se ohittaa
+ * päättelyn — mutta vain jos se on itsessään ristiriidaton. Rivi
+ * kelpaa kun vero vastaa kantaa brutosta kahden sentin tarkkuudella;
+ * väärin luettu rivi olisi pahempi kuin puuttuva, koska se menisi
+ * kaiken muun edelle.
+ *
+ * Sama kanta kahdesti on lukuvirhe: jälkimmäinen jätetään pois.
+ */
+export function vatSharesOf(
+  rows: { rate: number | null; vatCents: number; grossCents: number }[],
+): VatShare[] {
+  const seen = new Set<number>();
+
+  return rows
+    .map((row) => {
+      const rate = vatRateOf(row.rate);
+      if (rate === null) return null;
+      if (!Number.isFinite(row.vatCents) || !Number.isFinite(row.grossCents)) {
+        return null;
+      }
+
+      const vatCents = Math.round(row.vatCents);
+      const grossCents = Math.round(row.grossCents);
+      if (grossCents <= 0 || vatCents < 0) return null;
+
+      const odotettu = Math.round((grossCents * rate) / (1 + rate));
+      if (Math.abs(odotettu - vatCents) > 2) return null;
+
+      if (seen.has(rate)) return null;
+      seen.add(rate);
+
+      return { rate, vatCents, grossCents };
+    })
+    .filter((row): row is VatShare => row !== null)
+    .sort((a, b) => b.rate - a.rate);
+}
+
+/**
+ * Täsmäävätkö rivit kuitin ALV-erittelyyn.
+ *
+ * Erittelyn Brutto-sarake kertoo paljonko kullakin kannalla ostettiin.
+ * Jos rivien summa kannoittain on eri, jonkin rivin kanta on luettu
+ * väärin — silloin kuitti kuuluu ihmisen tarkistettavaksi, vaikka
+ * loppusumma täsmäisi.
+ */
+export function linesMatchShares(
+  lines: { totalCents: number; vatRate: number | null }[],
+  shares: VatShare[],
+): boolean {
+  if (shares.length === 0 || lines.length === 0) return true;
+  if (lines.some((line) => line.vatRate === null)) return false;
+
+  const perRate = new Map<number, number>();
+  for (const line of lines) {
+    const rate = line.vatRate!;
+    perRate.set(rate, (perRate.get(rate) ?? 0) + line.totalCents);
+  }
+
+  if (perRate.size !== shares.length) return false;
+
+  // Senttien pyöristys kertyy riveittäin, joten heitto skaalautuu
+  // rivimäärän mukana kuten muuallakin ALV-tarkistuksessa.
+  const tolerance = 2 + lines.length;
+
+  return shares.every((share) => {
+    const sum = perRate.get(share.rate);
+    return sum !== undefined && Math.abs(sum - share.grossCents) <= tolerance;
+  });
+}
+
 export function vatRateOf(value: number | null): number | null {
   if (value === null || !Number.isFinite(value)) return null;
 
