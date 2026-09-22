@@ -15,6 +15,21 @@ export async function createClient() {
     requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
     requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
+      /*
+       * TÄMÄ CLIENT EI UUSI ISTUNTOA.
+       *
+       * Kirjasto uusisi vanhentuneen pääsytokenin myös sivun piirrossa,
+       * mutta piirto ei saa kirjoittaa evästeitä: uusi virkistystoken
+       * katosi alla olevaan catch-lohkoon, vaikka vanha oli jo käytetty.
+       * Seuraava pyyntö lähetti kuolleen tokenin, Supabase vastasi
+       * "Refresh Token Not Found", ja käyttäjä lensi ulos kesken työn.
+       *
+       * Istunnon uusii proxy.ts (utils/supabase/middleware.ts), joka
+       * ajetaan ennen jokaista sivua ja server actionia ja joka saa
+       * kirjoittaa evästeet. Piirto lukee sen tuoreet arvot samasta
+       * pyynnöstä, joten se ei tarvitse omaa uusintaa.
+       */
+      auth: { autoRefreshToken: false },
       cookies: {
         getAll() {
           return cookieStore.getAll();
