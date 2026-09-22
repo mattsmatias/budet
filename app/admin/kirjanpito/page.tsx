@@ -157,8 +157,8 @@ export default async function AccountingPage({
                   ? "ok"
                   : "info"
             }
-            dot
           >
+            {/* Ei pistettä: lukkoemoji kertoo tilan jo itse. */}
             {nimet.monthStatus[state.status]}
           </Pill>
         </div>
