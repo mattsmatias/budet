@@ -297,7 +297,7 @@ export async function GET() {
 
   const { data: rows } = await supabase
     .from("ai_messages")
-    .select("role, content, cards")
+    .select("role, content, cards, created_at")
     .eq("conversation_id", conversation.id)
     .order("created_at", { ascending: false })
     .limit(RESTORED_MESSAGES);
@@ -309,32 +309,27 @@ export async function GET() {
       role: row.role === "user" ? ("user" as const) : ("matti" as const),
       text: row.content as string,
       cards: Array.isArray(row.cards) ? (row.cards as ToolCard[]) : [],
+      createdAt: row.created_at as string,
     }));
 
   return NextResponse.json({ conversationId: conversation.id, turns });
 }
 
-const clearSchema = z.object({ conversationId: z.string().uuid() });
-
 /**
  * Tyhjennä keskustelu.
  *
- * Poistaa keskustelun viesteineen pysyvästi. Kantafunktio tarkistaa
- * että keskustelu on kutsujan oma; toisen keskustelua ei voi poistaa
- * vaikka tunnuksen arvaisi.
+ * Poistaa käyttäjän kaikki Matti-keskustelut tässä yrityksessä. Pelkän
+ * avoimen keskustelun poisto nosti seuraavalla avauksella esiin
+ * edellisen, viikkoja vanhan keskustelun (ks. 0103). Yritys tulee
+ * istunnosta, ja kantafunktio poistaa vain kutsujan omat.
  */
-export async function DELETE(request: Request) {
+export async function DELETE() {
   const member = await memberFor();
   if (member.error) return member.error;
 
-  const parsed = clearSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Keskustelua ei löytynyt." }, { status: 400 });
-  }
-
   const supabase = await createClient();
-  const { error } = await supabase.rpc("ai_clear_conversation", {
-    p_conversation: parsed.data.conversationId,
+  const { error } = await supabase.rpc("ai_clear_history", {
+    p_restaurant: member.restaurant.id,
   });
 
   if (error) {

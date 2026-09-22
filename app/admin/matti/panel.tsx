@@ -66,6 +66,34 @@ interface Turn {
   text: string;
   actions?: PendingAction[];
   cards?: ToolCard[];
+  /** Tallennetun viestin aika. Uusissa viesteissä puuttuu: ne ovat tältä päivältä. */
+  createdAt?: string;
+}
+
+/**
+ * Päivä muistetun keskustelun väliin.
+ *
+ * Muistettu viesti näytti ennen tältä päivältä, vaikka se oli viikkojen
+ * takaa: "leimaus on yhä auki" oli syyskuun alun tilanne, ei tämän
+ * päivän. Päivä erottaa vanhan vastauksen nykyisestä.
+ */
+function dayOf(iso: string | undefined): string {
+  // Paikallinen päivä: UTC siirtäisi illan viestit seuraavalle päivälle.
+  // sv-SE antaa muodon VVVV-KK-PP.
+  return (iso ? new Date(iso) : new Date()).toLocaleDateString("sv-SE");
+}
+
+function DayDivider({ iso }: { iso: string | undefined }) {
+  const [y, m, d] = dayOf(iso).split("-");
+  return (
+    <div className="flex items-center gap-3" role="separator">
+      <span className="h-px flex-1" style={{ background: "var(--rf-line)" }} />
+      <span className="rf-tabular text-[11.5px] font-semibold" style={{ color: "var(--rf-text-3)" }}>
+        {`${Number(d)}.${Number(m)}.${y}`}
+      </span>
+      <span className="h-px flex-1" style={{ background: "var(--rf-line)" }} />
+    </div>
+  );
 }
 
 /*
@@ -446,11 +474,7 @@ function Conversation({
     }
     setClearing(true);
     try {
-      const response = await fetch("/api/matti", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId }),
-      });
+      const response = await fetch("/api/matti", { method: "DELETE" });
       if (!response.ok) throw new Error("clear");
       setTurns([]);
       setShowStart(false);
@@ -645,9 +669,20 @@ function Conversation({
           </>
         ) : (
           <div className="space-y-6">
-            {turns.map((turn, index) => (
-              <TurnView t={t} key={index} turn={turn} />
-            ))}
+            {turns.map((turn, index) => {
+              const day = dayOf(turn.createdAt);
+              const previous = index > 0 ? dayOf(turns[index - 1].createdAt) : null;
+              const today = dayOf(undefined);
+              // Päivä näytetään kun se vaihtuu, ja ensimmäisen viestin
+              // yllä vain jos keskustelu ei ole tältä päivältä.
+              const showDay = previous === null ? day !== today : day !== previous;
+              return (
+                <div key={index} className="space-y-6">
+                  {showDay ? <DayDivider iso={turn.createdAt} /> : null}
+                  <TurnView t={t} turn={turn} />
+                </div>
+              );
+            })}
           </div>
         )}
 
