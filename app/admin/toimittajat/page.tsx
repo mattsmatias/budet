@@ -103,7 +103,7 @@ export default async function SuppliersPage({
           value={<CountUp to={grandTotal} format="money" />}
           tone="muted"
           conclusion={receiptCountLabel(inMonth.length, locale)}
-          href="/admin/kulut"
+          href={`/admin/kulut?kuukausi=${month}`}
           linkLabel={t.loput.expensesWord}
         />
 
@@ -168,7 +168,7 @@ export default async function SuppliersPage({
               return (
                 <li key={s.supplierId}>
                   <Link
-                    href={`/admin/toimittajat/${s.supplierId}`}
+                    href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
                     className="rf-press flex items-start gap-3 py-1"
                   >
                     <span className="min-w-0 flex-1">
@@ -294,7 +294,7 @@ export default async function SuppliersPage({
                     <tr key={s.supplierId}>
                       <td>
                         <Link
-                          href={`/admin/toimittajat/${s.supplierId}`}
+                          href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
                           className="font-medium underline-offset-4 hover:underline"
                         >
                           {s.name}
@@ -348,7 +348,7 @@ export default async function SuppliersPage({
                       <td className="num">{formatMoney(s.totalCents)}</td>
                       <td className="num">
                         <Link
-                          href={`/admin/toimittajat/${s.supplierId}`}
+                          href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
                           aria-label={fill(t.toimittajat.openSupplier, {
                             nimi: s.name,
                           })}

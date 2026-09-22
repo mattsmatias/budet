@@ -264,7 +264,15 @@ export default async function AdminReceiptsPage({
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {suodattimet(t, nimet, categoriesFor(restaurant.businessType)).map((f) => {
             const active = filter === f.key;
+            /*
+             * Kuukausi kulkee suodattimen mukana.
+             *
+             * Ilman tätä elokuuta katsova hyppäsi kuluvaan kuukauteen
+             * heti kun hän rajasi luokkaan — ja näki tyhjän listan,
+             * vaikka kuitit olivat siinä kuussa jota hän katsoi.
+             */
             const search = new URLSearchParams();
+            search.set("kuukausi", month);
             if (f.key !== "all") search.set("suodatin", f.key);
             if (query) search.set("haku", query);
             const qs = search.toString();

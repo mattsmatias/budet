@@ -538,7 +538,7 @@ export default async function AdminDashboard({
               <Sparkline values={trend} width={64} height={20} />
             ) : undefined
           }
-          href="/admin/kulut"
+          href={`/admin/kulut?kuukausi=${viewMonth}`}
         />
 
         {pulse ? (
@@ -636,7 +636,7 @@ export default async function AdminDashboard({
             }
             tone={receipts_.pending > 0 ? "warn" : "neutral"}
             icon={<RfIcon name="receipt" size={17} />}
-            href="/admin/kuitit"
+            href={`/admin/kuitit?kuukausi=${viewMonth}`}
             linkLabel={t.sanat.receipts}
           />
         )}
@@ -693,7 +693,7 @@ export default async function AdminDashboard({
                   : "neutral"
           }
           icon={<RfIcon name="budget" size={17} />}
-          href="/admin/budjetit"
+          href={`/admin/budjetit?kuukausi=${viewMonth}`}
           linkLabel={t.loput.budgetsTitle}
         />
 
@@ -728,7 +728,7 @@ export default async function AdminDashboard({
           }
           tone="muted"
           icon={<RfIcon name="staff" size={17} />}
-          href="/admin/kulut"
+          href={`/admin/kulut?kuukausi=${viewMonth}`}
           linkLabel={t.sanat.expenses}
         />
       </Spotlight>
@@ -754,7 +754,7 @@ export default async function AdminDashboard({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <Panel
           title={t.sanat.expenseBreakdown}
-          href="/admin/kulut"
+          href={`/admin/kulut?kuukausi=${viewMonth}`}
           linkLabel={t.sanat.expenses}
         >
           {categories.length === 0 ? (
@@ -956,7 +956,7 @@ export default async function AdminDashboard({
       <Panel
         title={t.yleiskatsaus.latestReceipts}
         subtitle={formatMonth(viewMonth, locale)}
-        href="/admin/kuitit"
+        href={`/admin/kuitit?kuukausi=${viewMonth}`}
         linkLabel={t.yleiskatsaus.showAllReceipts}
       >
         {recent.length === 0 ? (

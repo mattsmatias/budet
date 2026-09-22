@@ -319,7 +319,10 @@ export default async function BudgetsPage({
         >
           Sekakuitti jakautuu rivikohtaisesti useaan budjettiin. Kuitti jolla on
           ruokaa ja pesuainetta ei kirjaudu kokonaan ruokabudjettiin.{" "}
-          <Link href="/admin/kuitit" className="underline underline-offset-4">
+          <Link
+            href={`/admin/kuitit?kuukausi=${month}`}
+            className="underline underline-offset-4"
+          >
             {t.budjetit.seeReceipts}
           </Link>
         </p>

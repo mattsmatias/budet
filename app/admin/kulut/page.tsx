@@ -150,7 +150,7 @@ export default async function ExpensesPage({
                   kuukausi: monthWord(previousMonth(viewMonth), locale),
                 })
           }
-          href="/admin/kuitit"
+          href={`/admin/kuitit?kuukausi=${viewMonth}`}
           linkLabel={t.loput.receiptsWord}
         />
 
