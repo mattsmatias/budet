@@ -69,6 +69,7 @@ const fi = {
     haveAccount: "Onko sinulla jo tunnus?",
     signIn: "Kirjaudu",
     ownRestaurant: "Onko sinulla oma yritys?",
+    back: "Takaisin kirjautumiseen",
   },
 
   rekisteroidy: {
@@ -186,6 +187,7 @@ const en: AuthText = {
     haveAccount: "Already have an account?",
     signIn: "Sign in",
     ownRestaurant: "Do you have your own business?",
+    back: "Back to sign in",
   },
   rekisteroidy: {
     metaTitle: "Create an account",
@@ -290,6 +292,7 @@ const sv: AuthText = {
     haveAccount: "Har du redan ett konto?",
     signIn: "Logga in",
     ownRestaurant: "Har du ett eget företag?",
+    back: "Tillbaka till inloggningen",
   },
   rekisteroidy: {
     metaTitle: "Skapa konto",
@@ -394,6 +397,7 @@ const da: AuthText = {
     haveAccount: "Har du allerede en konto?",
     signIn: "Log ind",
     ownRestaurant: "Har du din egen virksomhed?",
+    back: "Tilbage til log ind",
   },
   rekisteroidy: {
     metaTitle: "Opret konto",
@@ -497,6 +501,7 @@ const tr: AuthText = {
     haveAccount: "Zaten hesabın var mı?",
     signIn: "Giriş yap",
     ownRestaurant: "Kendi işletmen mi var?",
+    back: "Girişe dön",
   },
   rekisteroidy: {
     metaTitle: "Hesap oluştur",
@@ -601,6 +606,7 @@ const et: AuthText = {
     haveAccount: "Kas sul on juba konto?",
     signIn: "Logi sisse",
     ownRestaurant: "Kas sul on oma ettevõte?",
+    back: "Tagasi sisselogimisse",
   },
   rekisteroidy: {
     metaTitle: "Loo konto",

@@ -24,6 +24,14 @@ export default async function JoinPage() {
 
   return (
     <div className="rf-enter">
+      <Link
+        href="/kirjaudu"
+        className="rf-press -ml-1 mb-4 inline-flex items-center gap-1.5 rounded-[9px] px-1 py-1 text-[13px] font-semibold"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        <span aria-hidden="true">←</span>
+        {t.liity.back}
+      </Link>
       <h1 className="text-[26px] font-semibold tracking-tight">
         {t.liity.title}
       </h1>

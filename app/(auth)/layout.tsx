@@ -29,7 +29,6 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
     <div className="restoflow rf-auth min-h-screen lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
       <aside className="rf-auth-brand hidden lg:flex" aria-hidden="true">
         <div className="rf-auth-aurora" />
-        <div className="rf-auth-grid" />
 
         <Link href="/" className="relative inline-flex items-center gap-3">
           <Logo size={34} />
