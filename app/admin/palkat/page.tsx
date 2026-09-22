@@ -22,7 +22,7 @@ import {
   fetchTimeEntries,
 } from "@/lib/restoflow/queries";
 import { formatHours, fullName, summarise, totals } from "@/lib/restoflow/employees";
-import { costFor, sumCosts } from "@/lib/restoflow/payroll";
+import { costFor, costPerHourCents, sumCosts } from "@/lib/restoflow/payroll";
 import { fill } from "@/lib/i18n/auth-text";
 import { formatMoney } from "@/lib/money";
 import { formatDayIn } from "@/lib/i18n/labels";
@@ -218,10 +218,16 @@ export default async function WagesPage({
               icon={<RfIcon name="staff" size={17} />}
               tileTone="brand"
               tone="muted"
+              /*
+               * Kustannus tunnilta on yrittajalle hyodyllisempi luku
+               * kuin kuukauden summa: sita voi verrata tuntipalkkaan.
+               */
               conclusion={
-                cost.totalCents > cost.baseCents
-                  ? t.palkkaAs.costHint
-                  : t.palkkaAs.setUp
+                costPerHourCents(cost) === null
+                  ? t.palkkaAs.setUp
+                  : `${t.palkkaAs.perHour}: ${formatMoney(
+                      costPerHourCents(cost)!,
+                    )}/h`
               }
               href="/admin/asetukset?osio=palkat"
               linkLabel={t.palkkaAs.section}
@@ -311,6 +317,9 @@ export default async function WagesPage({
                     style={{ color: "var(--rf-text-3)" }}
                   >
                     {formatMoney(costs[index]?.totalCents ?? 0)}
+                    {costs[index] && costPerHourCents(costs[index]) !== null
+                      ? ` · ${formatMoney(costPerHourCents(costs[index])!)}/h`
+                      : ""}
                   </span>
                 </span>
               </li>

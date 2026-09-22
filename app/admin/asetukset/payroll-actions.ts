@@ -3,9 +3,13 @@
 /**
  * Palkkakulujen asetukset.
  *
- * Prosentit ovat yrityksen omia: ne riippuvat työehtosopimuksesta ja
+ * Arvot ovat yrityksen omia: ne riippuvat työehtosopimuksesta ja
  * muuttuvat vuosittain. Kate ei tiedä oikeaa lukua eikä arvaa sitä —
- * tyhjä kenttä tarkoittaa nollaa, jolloin arvio on pelkkä bruttopalkka.
+ * tyhjä kenttä tarkoittaa nollaa.
+ *
+ * Jokaisella lisällä on euromäärä ja prosentti, koska ravintola-alan
+ * iltalisä on euroja tunnilta ja sunnuntaikorotus prosentti. Molemmat
+ * tallennetaan ja lasketaan yhteen.
  */
 
 import { revalidatePath } from "next/cache";
@@ -14,7 +18,7 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 import { requireContext } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
 import { can } from "@/lib/restoflow/permissions";
-import { parsePercent } from "@/lib/restoflow/payroll";
+import { parseEuroPerHour, parsePercent } from "@/lib/restoflow/payroll";
 import type { AdminState } from "../actions";
 
 /** "18:00" → 1080. Kelvoton → null. */
@@ -40,22 +44,40 @@ export async function updatePayrollSettings(
     return { error: t.toiminnot.ownerOnlyBody };
   }
 
-  const kentat = {
-    side_cost_rate: parsePercent(String(formData.get("sideCost") ?? "")),
-    holiday_rate: parsePercent(String(formData.get("holiday") ?? "")),
-    evening_rate: parsePercent(String(formData.get("evening") ?? "")),
-    saturday_rate: parsePercent(String(formData.get("saturday") ?? "")),
-    sunday_rate: parsePercent(String(formData.get("sunday") ?? "")),
+  const teksti = (nimi: string) => String(formData.get(nimi) ?? "");
+
+  const prosentit = {
+    side_cost_rate: parsePercent(teksti("sideCost")),
+    holiday_rate: parsePercent(teksti("holiday")),
+    evening_rate: parsePercent(teksti("eveningRate")),
+    night_rate: parsePercent(teksti("nightRate")),
+    saturday_rate: parsePercent(teksti("saturdayRate")),
+    sunday_rate: parsePercent(teksti("sundayRate")),
   };
 
-  for (const arvo of Object.values(kentat)) {
+  const eurot = {
+    evening_cents: parseEuroPerHour(teksti("eveningCents")),
+    night_cents: parseEuroPerHour(teksti("nightCents")),
+    saturday_cents: parseEuroPerHour(teksti("saturdayCents")),
+    sunday_cents: parseEuroPerHour(teksti("sundayCents")),
+  };
+
+  for (const arvo of Object.values(prosentit)) {
     if (arvo === null) return { error: t.palkkaAs.percentInvalid };
   }
+  for (const arvo of Object.values(eurot)) {
+    if (arvo === null) return { error: t.palkkaAs.euroInvalid };
+  }
 
-  const start = parseClock(String(formData.get("eveningStart") ?? ""));
-  const end = parseClock(String(formData.get("eveningEnd") ?? ""));
-  if (start === null || end === null) {
-    return { error: t.palkkaAs.clockInvalid };
+  const kellot = {
+    evening_start_minute: parseClock(teksti("eveningStart")),
+    evening_end_minute: parseClock(teksti("eveningEnd")),
+    night_start_minute: parseClock(teksti("nightStart")),
+    night_end_minute: parseClock(teksti("nightEnd")),
+  };
+
+  for (const arvo of Object.values(kellot)) {
+    if (arvo === null) return { error: t.palkkaAs.clockInvalid };
   }
 
   const supabase = await createClient();
@@ -63,9 +85,9 @@ export async function updatePayrollSettings(
   const { error } = await supabase.from("payroll_settings").upsert(
     {
       restaurant_id: restaurant.id,
-      ...kentat,
-      evening_start_minute: start,
-      evening_end_minute: end,
+      ...prosentit,
+      ...eurot,
+      ...kellot,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "restaurant_id" },

@@ -5,7 +5,12 @@ import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AdminState } from "../actions";
 import { updatePayrollSettings } from "./payroll-actions";
 import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
-import { formatPercent, type PayrollSettings } from "@/lib/restoflow/payroll";
+import {
+  formatEuroPerHour,
+  formatPercent,
+  type PayrollSettings,
+  type Supplement,
+} from "@/lib/restoflow/payroll";
 
 const initial: AdminState = {};
 
@@ -19,11 +24,14 @@ function kello(minuutit: number): string {
 /**
  * Palkkakulujen asetukset.
  *
- * Prosentit ovat prosentteja kentässä ja osuuksia kannassa: käyttäjä
- * kirjoittaa 23 eikä 0,23. Yksikkö on kentän vieressä, koska ilman
- * sitä sama luku tarkoittaisi kahta eri asiaa.
+ * EURO JA PROSENTTI RINNAKKAIN.
  *
- * Tyhjä kenttä on nolla eikä virhe. Yritys jolla ei ole iltalisää ei
+ * Ravintola-alan iltalisä on euroja tunnilta, sunnuntaikorotus
+ * prosentti. Kumpikin kenttä on jokaisella lisällä, ja ne lasketaan
+ * yhteen — käyttäjä täyttää sen jota hänen työehtosopimuksensa käyttää
+ * eikä joudu kääntämään euroja prosenteiksi.
+ *
+ * Tyhjä kenttä on nolla eikä virhe: yritys jolla ei ole yölisää ei
  * joudu keksimään sille arvoa.
  */
 export function PayrollForm({
@@ -36,7 +44,7 @@ export function PayrollForm({
   const [state, action] = useActionState(updatePayrollSettings, initial);
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="space-y-5">
       <p
         className="text-[13px] leading-relaxed"
         style={{ color: "var(--rf-text-2)" }}
@@ -45,68 +53,98 @@ export function PayrollForm({
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Percent
-          t={t}
+        <Field
           label={t.palkkaAs.sideCost}
+          htmlFor="rf-sideCost"
           hint={t.palkkaAs.sideCostHint}
-          name="sideCost"
-          value={settings.sideCostRate}
-        />
-        <Percent
-          t={t}
+        >
+          <Unit suffix="%">
+            <input
+              id="rf-sideCost"
+              name="sideCost"
+              defaultValue={formatPercent(settings.sideCostRate)}
+              inputMode="decimal"
+              placeholder="0"
+              className={CONTROL}
+              style={CONTROL_STYLE}
+            />
+          </Unit>
+        </Field>
+
+        <Field
           label={t.palkkaAs.holiday}
+          htmlFor="rf-holiday"
           hint={t.palkkaAs.holidayHint}
-          name="holiday"
-          value={settings.holidayRate}
-        />
+        >
+          <Unit suffix="%">
+            <input
+              id="rf-holiday"
+              name="holiday"
+              defaultValue={formatPercent(settings.holidayRate)}
+              inputMode="decimal"
+              placeholder="0"
+              className={CONTROL}
+              style={CONTROL_STYLE}
+            />
+          </Unit>
+        </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Percent
-          t={t}
-          label={t.palkkaAs.evening}
-          name="evening"
-          value={settings.eveningRate}
-        />
-        <Percent
-          t={t}
-          label={t.palkkaAs.saturday}
-          name="saturday"
-          value={settings.saturdayRate}
-        />
-        <Percent
-          t={t}
-          label={t.palkkaAs.sunday}
-          hint={t.palkkaAs.sundayHint}
-          name="sunday"
-          value={settings.sundayRate}
-        />
+      <div>
+        <h3 className="text-[13.5px] font-bold">{t.palkkaAs.supplements}</h3>
+        <p
+          className="mt-1 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.palkkaAs.supplementsHint}
+        </p>
+
+        <div className="mt-3 space-y-4">
+          <SupplementRow
+            label={t.palkkaAs.evening}
+            name="evening"
+            value={settings.evening}
+          />
+          <SupplementRow
+            label={t.palkkaAs.night}
+            name="night"
+            value={settings.night}
+          />
+          <SupplementRow
+            label={t.palkkaAs.saturday}
+            name="saturday"
+            value={settings.saturday}
+          />
+          <SupplementRow
+            label={t.palkkaAs.sunday}
+            name="sunday"
+            value={settings.sunday}
+            hint={t.palkkaAs.sundayHint}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t.palkkaAs.eveningStart} htmlFor="rf-evening-start">
-          <input
-            id="rf-evening-start"
-            name="eveningStart"
-            defaultValue={kello(settings.eveningStartMinute)}
-            inputMode="numeric"
-            placeholder="18:00"
-            className={CONTROL}
-            style={CONTROL_STYLE}
-          />
-        </Field>
-
-        <Field label={t.palkkaAs.eveningEnd} htmlFor="rf-evening-end">
-          <input
-            id="rf-evening-end"
-            name="eveningEnd"
-            defaultValue={kello(settings.eveningEndMinute)}
-            inputMode="numeric"
-            placeholder="06:00"
-            className={CONTROL}
-            style={CONTROL_STYLE}
-          />
-        </Field>
+        <Clock
+          label={t.palkkaAs.eveningStart}
+          name="eveningStart"
+          value={settings.eveningStartMinute}
+        />
+        <Clock
+          label={t.palkkaAs.eveningEnd}
+          name="eveningEnd"
+          value={settings.eveningEndMinute}
+        />
+        <Clock
+          label={t.palkkaAs.nightStart}
+          name="nightStart"
+          value={settings.nightStartMinute}
+        />
+        <Clock
+          label={t.palkkaAs.nightEnd}
+          name="nightEnd"
+          value={settings.nightEndMinute}
+        />
       </div>
 
       <SaveRow t={t} state={state} />
@@ -115,47 +153,115 @@ export function PayrollForm({
         className="space-y-2 border-t pt-4 text-[12px] leading-relaxed"
         style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-3)" }}
       >
-        <p>{t.palkkaAs.stacking}</p>
+        {/*
+          Kate ei vaita tuntevansa tyoehtosopimusta.
+
+          Aiemmin tassa luki etta lisat eivat kerry paallekkain. Se ei
+          ole yleinen saanto vaan riippuu sovellettavasta TES:sta, ja
+          vaarin esitettyna se antaisi juridisesti vaaran kuvan.
+        */}
+        <p>{t.palkkaAs.userDefined}</p>
         <p>{t.palkkaAs.notPayroll}</p>
       </div>
     </form>
   );
 }
 
-function Percent({
-  t,
+/** Yksi lisä: euroa tunnilta ja prosenttia rinnakkain. */
+function SupplementRow({
   label,
+  name,
+  value,
   hint,
+}: {
+  label: string;
+  name: string;
+  value: Supplement;
+  hint?: string;
+}) {
+  return (
+    <div>
+      <p className="text-[13px] font-semibold">{label}</p>
+
+      <div className="mt-1.5 grid grid-cols-2 gap-3">
+        <Unit suffix="€/h">
+          <input
+            name={`${name}Cents`}
+            defaultValue={formatEuroPerHour(value.cents)}
+            inputMode="decimal"
+            placeholder="0,00"
+            aria-label={`${label} €/h`}
+            className={CONTROL}
+            style={CONTROL_STYLE}
+          />
+        </Unit>
+
+        <Unit suffix="%">
+          <input
+            name={`${name}Rate`}
+            defaultValue={formatPercent(value.rate)}
+            inputMode="decimal"
+            placeholder="0"
+            aria-label={`${label} %`}
+            className={CONTROL}
+            style={CONTROL_STYLE}
+          />
+        </Unit>
+      </div>
+
+      {hint ? (
+        <p
+          className="mt-1.5 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function Clock({
+  label,
   name,
   value,
 }: {
-  t: AdminText;
   label: string;
-  hint?: string;
   name: string;
   value: number;
 }) {
-  void t;
-
   return (
-    <Field label={label} htmlFor={`rf-${name}`} hint={hint}>
-      <div className="flex items-center gap-2">
-        <input
-          id={`rf-${name}`}
-          name={name}
-          defaultValue={formatPercent(value)}
-          inputMode="decimal"
-          placeholder="0"
-          className={CONTROL}
-          style={CONTROL_STYLE}
-        />
-        <span
-          className="shrink-0 text-[14px] font-semibold"
-          style={{ color: "var(--rf-text-3)" }}
-        >
-          %
-        </span>
-      </div>
+    <Field label={label} htmlFor={`rf-${name}`}>
+      <input
+        id={`rf-${name}`}
+        name={name}
+        defaultValue={kello(value)}
+        inputMode="numeric"
+        placeholder="18:00"
+        className={CONTROL}
+        style={CONTROL_STYLE}
+      />
     </Field>
+  );
+}
+
+/** Yksikkö kentän vieressä: ilman sitä sama luku tarkoittaisi kahta asiaa. */
+function Unit({
+  suffix,
+  children,
+}: {
+  suffix: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {children}
+      <span
+        className="shrink-0 text-[13px] font-semibold"
+        style={{ color: "var(--rf-text-3)" }}
+      >
+        {suffix}
+      </span>
+    </div>
   );
 }

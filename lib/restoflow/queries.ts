@@ -1086,21 +1086,30 @@ export async function fetchPayrollSettings(
 
   const { data, error } = await supabase
     .from("payroll_settings")
-    .select(
-      "side_cost_rate, holiday_rate, evening_rate, saturday_rate, sunday_rate, evening_start_minute, evening_end_minute",
-    )
+    .select("*")
     .eq("restaurant_id", restaurantId)
     .maybeSingle();
 
   if (error || !data) return DEFAULT_PAYROLL;
 
+  const luku = (arvo: unknown) => Number(arvo ?? 0);
+
   return {
-    sideCostRate: Number(data.side_cost_rate ?? 0),
-    holidayRate: Number(data.holiday_rate ?? 0),
-    eveningRate: Number(data.evening_rate ?? 0),
-    saturdayRate: Number(data.saturday_rate ?? 0),
-    sundayRate: Number(data.sunday_rate ?? 0),
-    eveningStartMinute: Number(data.evening_start_minute ?? 1080),
-    eveningEndMinute: Number(data.evening_end_minute ?? 360),
+    sideCostRate: luku(data.side_cost_rate),
+    holidayRate: luku(data.holiday_rate),
+    evening: {
+      cents: luku(data.evening_cents),
+      rate: luku(data.evening_rate),
+    },
+    saturday: {
+      cents: luku(data.saturday_cents),
+      rate: luku(data.saturday_rate),
+    },
+    sunday: { cents: luku(data.sunday_cents), rate: luku(data.sunday_rate) },
+    night: { cents: luku(data.night_cents), rate: luku(data.night_rate) },
+    eveningStartMinute: luku(data.evening_start_minute),
+    eveningEndMinute: luku(data.evening_end_minute),
+    nightStartMinute: luku(data.night_start_minute),
+    nightEndMinute: luku(data.night_end_minute),
   };
 }

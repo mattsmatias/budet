@@ -5,63 +5,96 @@ import type { TimeEntry } from "./employees";
  *
  * MIKÄ TÄMÄ ON JA MIKÄ EI.
  *
- * Tämä arvioi mitä työ maksaa työnantajalle: bruttopalkka, sen päälle
- * ilta- ja viikonloppulisät, lomakorvaus ja työnantajan sivukulut.
- * Kaikki prosentit tulevat yrityksen omista asetuksista, koska ne
- * riippuvat työehtosopimuksesta ja vaihtuvat vuosittain.
+ * Tämä arvioi mitä työ maksaa työnantajalle: tuntipalkka, sen päälle
+ * työaikalisät, lomakustannus ja työnantajan sivukulut. Kaikki arvot
+ * tulevat yrityksen omista asetuksista.
  *
- * Tämä EI laske palkkaa. Ennakonpidätys, sairausajan palkka,
- * vuosilomalain mukaiset päivät ja TES-tulkinnat kuuluvat
- * palkkapalveluun. Verokortti ei kuulu tähän lainkaan: se määrää mitä
- * työntekijä saa käteen, ei mitä työnantaja maksaa.
+ * Tämä EI laske palkkaa. Ennakonpidätys, sairausajan palkka ja
+ * lomapäivät kuuluvat palkkapalveluun. Verokortti ei kuulu tähän
+ * lainkaan: se määrää mitä työntekijä saa käteen, ei mitä työnantaja
+ * maksaa.
  *
- * LISÄT EIVÄT KERRY PÄÄLLEKKÄIN.
+ * EUROA TUNNILTA JA PROSENTTI OVAT ERI ASIOITA.
  *
- * Sunnuntai-illan tunnista lasketaan suurin sovellettava lisä, ei
- * niiden summaa. Oikea työehtosopimus voi kertoa toisin; arvion
- * tarkoitus on kertoa suuruusluokka, ja liian suureksi arvattu kulu
- * johtaisi harhaan yhtä lailla kuin liian pieni.
+ * Ravintola-alan työehtosopimuksissa iltalisä on tyypillisesti euroja
+ * tunnilta — esimerkiksi 1,40 €/h — kun taas sunnuntaikorotus on
+ * prosentti. Pelkkä prosenttikenttä olisi väärä tietomalli euromäärälle
+ * ja pakottaisi käyttäjän laskemaan sen itse joka kerta kun tuntipalkka
+ * muuttuu. Jokaisella lisällä on siksi molemmat, ja ne lasketaan yhteen.
+ *
+ * LISIEN EHDOT OVAT KÄYTTÄJÄN MÄÄRITTÄMÄT.
+ *
+ * Kate ei tiedä mikä työehtosopimus yritystä koskee eikä milloin kaksi
+ * lisää kertyy päällekkäin. Se laskee sen minkä käyttäjä on asettanut:
+ * viikonpäivän lisä ja kellonajan lisä ovat erillisiä asetuksia ja
+ * molemmat pätevät tunnille johon ne osuvat. Ehdot tarkistetaan
+ * sovellettavasta työehtosopimuksesta.
  */
+
+/** Yksi lisä: euroa tunnilta ja/tai prosenttia tuntipalkasta. */
+export interface Supplement {
+  /** Euroa tunnilta sentteinä, esim. 140 = 1,40 €/h. */
+  cents: number;
+  /** Osuus tuntipalkasta, esim. 1 = sadan prosentin korotus. */
+  rate: number;
+}
+
+export const NO_SUPPLEMENT: Supplement = { cents: 0, rate: 0 };
 
 export interface PayrollSettings {
   /** Työnantajan sivukulut osuutena palkasta, esim. 0.23. */
   sideCostRate: number;
-  /** Lomakorvaus osuutena palkasta, esim. 0.115. */
+  /** Lomakustannus osuutena palkasta, esim. 0.115. */
   holidayRate: number;
-  /** Iltalisä osuutena tuntipalkasta, esim. 0.15. */
-  eveningRate: number;
-  /** Lauantailisä osuutena tuntipalkasta. */
-  saturdayRate: number;
-  /** Sunnuntailisä osuutena tuntipalkasta, esim. 1 = sadan prosentin korotus. */
-  sundayRate: number;
-  /** Illan alku paikallista aikaa, minuutteina vuorokauden alusta. */
+
+  evening: Supplement;
+  saturday: Supplement;
+  sunday: Supplement;
+  /** Yö- tai muu lisä omalla kellonaikavälillään. */
+  night: Supplement;
+
+  /** Illan rajat paikallista aikaa, minuutteina vuorokauden alusta. */
   eveningStartMinute: number;
-  /** Illan loppu paikallista aikaa. Pienempi kuin alku = yli keskiyön. */
   eveningEndMinute: number;
+  /** Yön rajat. Sama alku ja loppu = ei yölisää. */
+  nightStartMinute: number;
+  nightEndMinute: number;
 }
 
 export const DEFAULT_PAYROLL: PayrollSettings = {
   sideCostRate: 0,
   holidayRate: 0,
-  eveningRate: 0,
-  saturdayRate: 0,
-  sundayRate: 0,
-  /* Kello 18–06 on tavallinen iltatyön raja, mutta se on asetus. */
+  evening: NO_SUPPLEMENT,
+  saturday: NO_SUPPLEMENT,
+  sunday: NO_SUPPLEMENT,
+  night: NO_SUPPLEMENT,
+  /* Kello 18–23 ja 23–06 ovat tavallisia rajoja, mutta ne ovat asetus. */
   eveningStartMinute: 18 * 60,
-  eveningEndMinute: 6 * 60,
+  eveningEndMinute: 23 * 60,
+  nightStartMinute: 23 * 60,
+  nightEndMinute: 6 * 60,
 };
 
+/**
+ * Minuutit luokittain.
+ *
+ * Luokat menevät päällekkäin tarkoituksella: sunnuntai-illan minuutti
+ * on sekä sunnuntaita että iltaa, ja kumpikin lisä pätee siihen jos
+ * käyttäjä on molemmat asettanut. Yhteistunnit ovat total, eivät
+ * luokkien summa.
+ */
 export interface MinuteSplit {
-  /** Minuutit ilman lisää. */
-  base: number;
+  total: number;
   evening: number;
+  night: number;
   saturday: number;
   sunday: number;
 }
 
 export const EMPTY_SPLIT: MinuteSplit = {
-  base: 0,
+  total: 0,
   evening: 0,
+  night: 0,
   saturday: 0,
   sunday: 0,
 };
@@ -103,18 +136,15 @@ function localParts(
   };
 }
 
-function isEvening(minuteOfDay: number, settings: PayrollSettings): boolean {
-  const { eveningStartMinute: start, eveningEndMinute: end } = settings;
+/** Osuuko hetki väliin? Loppu ennen alkua tarkoittaa keskiyön ylitystä. */
+function inWindow(minuteOfDay: number, start: number, end: number): boolean {
   if (start === end) return false;
-
-  /* Yli keskiyön menevä jakso, esimerkiksi 18–06. */
   if (start > end) return minuteOfDay >= start || minuteOfDay < end;
-
   return minuteOfDay >= start && minuteOfDay < end;
 }
 
 /**
- * Vuoron minuutit lisäluokkiin.
+ * Vuoron minuutit luokkiin.
  *
  * Minuutti kerrallaan, koska vuoro ylittää usein sekä keskiyön että
  * illan rajan: perjantain iltavuoro jatkuu lauantain puolelle, ja
@@ -140,10 +170,31 @@ export function splitMinutes(
       timezone,
     );
 
+    split.total += 1;
+
+    if (weekday === 6) split.saturday += 1;
     if (weekday === 0) split.sunday += 1;
-    else if (weekday === 6) split.saturday += 1;
-    else if (isEvening(minuteOfDay, settings)) split.evening += 1;
-    else split.base += 1;
+
+    /*
+     * Yö voittaa illan päällekkäisellä välillä.
+     *
+     * Kaksi kellonajan lisää samasta minuutista olisi sama tunti
+     * kahdesti. Jos välit eivät mene päällekkäin — kuten 18–23 ja
+     * 23–06 — tällä ei ole vaikutusta.
+     */
+    if (
+      inWindow(minuteOfDay, settings.nightStartMinute, settings.nightEndMinute)
+    ) {
+      split.night += 1;
+    } else if (
+      inWindow(
+        minuteOfDay,
+        settings.eveningStartMinute,
+        settings.eveningEndMinute,
+      )
+    ) {
+      split.evening += 1;
+    }
   }
 
   return split;
@@ -151,8 +202,9 @@ export function splitMinutes(
 
 export function addSplits(a: MinuteSplit, b: MinuteSplit): MinuteSplit {
   return {
-    base: a.base + b.base,
+    total: a.total + b.total,
     evening: a.evening + b.evening,
+    night: a.night + b.night,
     saturday: a.saturday + b.saturday,
     sunday: a.sunday + b.sunday,
   };
@@ -163,14 +215,33 @@ export interface EmployerCost {
   minutes: number;
   /** Peruspalkka ilman lisiä. */
   baseCents: number;
-  /** Ilta-, lauantai- ja sunnuntailisät yhteensä. */
+  /** Työaikalisät yhteensä. */
   supplementCents: number;
-  /** Lomakorvaus. */
+  /** Lomakustannus. */
   holidayCents: number;
   /** Työnantajan sivukulut. */
   sideCostCents: number;
   /** Kaikki yhteensä: tämä on se mitä työ maksaa. */
   totalCents: number;
+}
+
+export const EMPTY_COST: EmployerCost = {
+  minutes: 0,
+  baseCents: 0,
+  supplementCents: 0,
+  holidayCents: 0,
+  sideCostCents: 0,
+  totalCents: 0,
+};
+
+/** Yhden lisän hinta minuuteille: euroa tunnilta ja prosentti yhteen. */
+function supplementCents(
+  minutes: number,
+  hourlyCents: number,
+  supplement: Supplement,
+): number {
+  const hours = minutes / 60;
+  return hours * supplement.cents + hours * hourlyCents * supplement.rate;
 }
 
 /**
@@ -184,36 +255,35 @@ export function employerCost(
   hourlyCents: number,
   settings: PayrollSettings,
 ): EmployerCost {
-  const minutes = split.base + split.evening + split.saturday + split.sunday;
+  if (split.total <= 0) return { ...EMPTY_COST };
 
-  if (hourlyCents <= 0 || minutes <= 0) {
-    return {
-      minutes,
-      baseCents: 0,
-      supplementCents: 0,
-      holidayCents: 0,
-      sideCostCents: 0,
-      totalCents: 0,
-    };
-  }
+  const baseCents = Math.round((split.total / 60) * hourlyCents);
 
-  const perMinute = hourlyCents / 60;
-  const baseCents = Math.round(minutes * perMinute);
-
-  const supplementCents = Math.round(
-    split.evening * perMinute * settings.eveningRate +
-      split.saturday * perMinute * settings.saturdayRate +
-      split.sunday * perMinute * settings.sundayRate,
+  /*
+   * Lisät lasketaan yhteen.
+   *
+   * Viikonpäivän lisä ja kellonajan lisä ovat eri asetuksia, ja
+   * molemmat pätevät tunnille johon ne osuvat. Kate ei tiedä minkä
+   * työehtosopimuksen mukaan ne kertyvät — se laskee sen mitä
+   * käyttäjä on asettanut.
+   */
+  const supplements = Math.round(
+    supplementCents(split.evening, hourlyCents, settings.evening) +
+      supplementCents(split.night, hourlyCents, settings.night) +
+      supplementCents(split.saturday, hourlyCents, settings.saturday) +
+      supplementCents(split.sunday, hourlyCents, settings.sunday),
   );
 
-  const wage = baseCents + supplementCents;
+  const wage = baseCents + supplements;
   const holidayCents = Math.round(wage * settings.holidayRate);
-  const sideCostCents = Math.round((wage + holidayCents) * settings.sideCostRate);
+  const sideCostCents = Math.round(
+    (wage + holidayCents) * settings.sideCostRate,
+  );
 
   return {
-    minutes,
+    minutes: split.total,
     baseCents,
-    supplementCents,
+    supplementCents: supplements,
     holidayCents,
     sideCostCents,
     totalCents: wage + holidayCents + sideCostCents,
@@ -221,11 +291,23 @@ export function employerCost(
 }
 
 /**
+ * Todellinen kustannus tunnilta.
+ *
+ * Yrittäjälle hyödyllisempi luku kuin tuntipalkka: 15 €/h maksaa
+ * lisineen ja sivukuluineen esimerkiksi 20,10 €/h. Null kun tunteja
+ * ei ole, koska nollalla ei jaeta.
+ */
+export function costPerHourCents(cost: EmployerCost): number | null {
+  if (cost.minutes <= 0) return null;
+  return Math.round(cost.totalCents / (cost.minutes / 60));
+}
+
+/**
  * Prosenttiluku tekstistä osuudeksi, tai null.
  *
  * "23" ja "23,5" ovat prosentteja; tallennettu arvo on osuus 0,23.
- * Yläraja on kaksisataa, koska sunnuntailisä voi olla sata prosenttia
- * ja sitä suurempi luku on näppäilyvirhe.
+ * Yläraja on kaksisataa, koska sunnuntaikorotus voi olla sata
+ * prosenttia ja sitä suurempi luku on näppäilyvirhe.
  */
 export function parsePercent(raw: string): number | null {
   const cleaned = raw.trim().replace(/\s/g, "").replace(",", ".");
@@ -242,6 +324,29 @@ export function parsePercent(raw: string): number | null {
 export function formatPercent(rate: number): string {
   const percent = Math.round(rate * 10000) / 100;
   return String(percent).replace(".", ",");
+}
+
+/**
+ * Euromäärä tunnilta sentteinä, tai null.
+ *
+ * Tyhjä on nolla eikä virhe: yritys jolla ei ole iltalisää ei joudu
+ * keksimään sille arvoa.
+ */
+export function parseEuroPerHour(raw: string): number | null {
+  const cleaned = raw.trim().replace(/\s/g, "").replace(",", ".");
+  if (cleaned === "") return 0;
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+
+  const cents = Math.round(Number(cleaned) * 100);
+  if (!Number.isFinite(cents) || cents < 0 || cents > 100000) return null;
+
+  return cents;
+}
+
+/** Sentit euroteksiksi kenttään: 140 → "1,40". Nolla jää tyhjäksi. */
+export function formatEuroPerHour(cents: number): string {
+  if (cents === 0) return "";
+  return (cents / 100).toFixed(2).replace(".", ",");
 }
 
 /**
@@ -275,13 +380,6 @@ export function sumCosts(costs: EmployerCost[]): EmployerCost {
       sideCostCents: sum.sideCostCents + cost.sideCostCents,
       totalCents: sum.totalCents + cost.totalCents,
     }),
-    {
-      minutes: 0,
-      baseCents: 0,
-      supplementCents: 0,
-      holidayCents: 0,
-      sideCostCents: 0,
-      totalCents: 0,
-    },
+    { ...EMPTY_COST },
   );
 }
