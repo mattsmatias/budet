@@ -121,10 +121,10 @@ const fi: Labels = {
     rejected: "Hylätty",
   },
   monthStatus: {
-    open: "Avoin",
+    open: "🔓 Avoin",
     review: "Vaatii tarkistusta",
     ready: "Valmis",
-    locked: "Lukittu",
+    locked: "🔒 Lukittu",
   },
   sourceState: {
     unprocessed: "Ei kirjanpidossa",
@@ -242,10 +242,10 @@ const en: Labels = {
     rejected: "Rejected",
   },
   monthStatus: {
-    open: "Open",
+    open: "🔓 Open",
     review: "Needs checking",
     ready: "Ready",
-    locked: "Locked",
+    locked: "🔒 Locked",
   },
   sourceState: {
     unprocessed: "Not in the ledger",
@@ -363,10 +363,10 @@ const sv: Labels = {
     rejected: "Avvisad",
   },
   monthStatus: {
-    open: "Öppen",
+    open: "🔓 Öppen",
     review: "Kräver kontroll",
     ready: "Klar",
-    locked: "Låst",
+    locked: "🔒 Låst",
   },
   sourceState: {
     unprocessed: "Inte i bokföringen",
@@ -484,10 +484,10 @@ const da: Labels = {
     rejected: "Afvist",
   },
   monthStatus: {
-    open: "Åben",
+    open: "🔓 Åben",
     review: "Kræver kontrol",
     ready: "Klar",
-    locked: "Låst",
+    locked: "🔒 Låst",
   },
   sourceState: {
     unprocessed: "Ikke i bogføringen",
@@ -605,10 +605,10 @@ const tr: Labels = {
     rejected: "Reddedildi",
   },
   monthStatus: {
-    open: "Açık",
+    open: "🔓 Açık",
     review: "Kontrol gerekiyor",
     ready: "Hazır",
-    locked: "Kilitli",
+    locked: "🔒 Kilitli",
   },
   sourceState: {
     unprocessed: "Muhasebede değil",
@@ -726,10 +726,10 @@ const et: Labels = {
     rejected: "Tagasi lükatud",
   },
   monthStatus: {
-    open: "Avatud",
+    open: "🔓 Avatud",
     review: "Vajab kontrollimist",
     ready: "Valmis",
-    locked: "Lukustatud",
+    locked: "🔒 Lukustatud",
   },
   sourceState: {
     unprocessed: "Raamatupidamises ei ole",
@@ -847,10 +847,10 @@ const ar: Labels = {
     rejected: "مرفوض",
   },
   monthStatus: {
-    open: "مفتوح",
+    open: "🔓 مفتوح",
     review: "يحتاج مراجعة",
     ready: "جاهز",
-    locked: "مقفل",
+    locked: "🔒 مقفل",
   },
   sourceState: {
     unprocessed: "ليس في دفتر الأستاذ",

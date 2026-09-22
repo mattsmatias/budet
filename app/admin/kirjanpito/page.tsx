@@ -38,7 +38,7 @@ import {
   MetricCard,
   Pill,
 } from "@/components/restoflow/ui";
-import { CloseMonthForm, SyncButton } from "./controls";
+import { CloseMonthForm, ReopenMonthForm, SyncButton } from "./controls";
 import {
   Alv,
   Paakirja,
@@ -517,11 +517,8 @@ async function Yhteenveto({
       {state.status === "locked" ? (
         <Card>
           <div className="flex items-start gap-3">
-            <span
-              className="mt-0.5 shrink-0"
-              style={{ color: "var(--rf-text-3)" }}
-            >
-              <RfIcon name="check" size={20} />
+            <span className="mt-0.5 shrink-0 text-[18px]" aria-hidden="true">
+              🔒
             </span>
             <p
               className="text-[13px] leading-relaxed"
@@ -532,6 +529,13 @@ async function Yhteenveto({
               })}
             </p>
           </div>
+
+          {/* Suljetunkin kuukauden saa auki: sulku voi olla vahinko. */}
+          {onOmistaja ? (
+            <div className="mt-4">
+              <ReopenMonthForm t={t} month={month} />
+            </div>
+          ) : null}
         </Card>
       ) : null}
     </div>

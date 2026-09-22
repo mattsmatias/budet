@@ -975,6 +975,10 @@ const fi = {
     issueOtherTitle: "Tarkistettavaa",
     monthClosedNote:
       "{kuukausi} on suljettu. Tapahtumat säilyvät sellaisinaan; korjaus tehdään uudella tositteella joka viittaa alkuperäiseen.",
+    reopenMonth: "Avaa kuukausi",
+    reopening: "Avataan…",
+    reopenConfirm: "Avataanko kuukausi uudelleen? Kuitteja voi taas lisätä ja muuttaa. Kirjatut tositteet jäävät kirjatuiksi ja korjataan korjaustositteella.",
+    monthReopened: "Kuukausi avattu.",
   },
   tiimi: {
     inviteUser: "Kutsu käyttäjä",
@@ -2667,6 +2671,10 @@ const en: AdminText = {
     issueOtherTitle: "Needs checking",
     monthClosedNote:
       "{kuukausi} is closed. The entries stay as they are; a correction is made with a new voucher that refers to the original.",
+    reopenMonth: "Reopen month",
+    reopening: "Reopening…",
+    reopenConfirm: "Reopen the month? Receipts can be added and edited again. Posted entries stay posted and are corrected with a correcting entry.",
+    monthReopened: "Month reopened.",
   },
   tiimi: {
     inviteUser: "Invite a user",
@@ -4351,6 +4359,10 @@ const sv: AdminText = {
     issueOtherTitle: "Behöver kontrolleras",
     monthClosedNote:
       "{kuukausi} är stängd. Posterna står kvar som de är; en rättelse görs med ett nytt verifikat som hänvisar till originalet.",
+    reopenMonth: "Öppna månaden",
+    reopening: "Öppnar…",
+    reopenConfirm: "Öppna månaden igen? Kvitton kan läggas till och ändras på nytt. Bokförda verifikat förblir bokförda och rättas med ett rättelseverifikat.",
+    monthReopened: "Månaden öppnad.",
   },
   tiimi: {
     inviteUser: "Bjud in en användare",
@@ -6035,6 +6047,10 @@ const da: AdminText = {
     issueOtherTitle: "Skal kontrolleres",
     monthClosedNote:
       "{kuukausi} er lukket. Posteringerne står som de er; en rettelse laves med et nyt bilag der henviser til originalen.",
+    reopenMonth: "Åbn måneden",
+    reopening: "Åbner…",
+    reopenConfirm: "Åbn måneden igen? Kvitteringer kan igen tilføjes og ændres. Bogførte bilag forbliver bogførte og rettes med et rettelsesbilag.",
+    monthReopened: "Måneden er åbnet.",
   },
   tiimi: {
     inviteUser: "Inviter en bruger",
@@ -7719,6 +7735,10 @@ const tr: AdminText = {
     issueOtherTitle: "Kontrol gerekiyor",
     monthClosedNote:
       "{kuukausi} kapatıldı. Kayıtlar olduğu gibi kalır; düzeltme, aslına atıf yapan yeni bir fişle yapılır.",
+    reopenMonth: "Ayı yeniden aç",
+    reopening: "Açılıyor…",
+    reopenConfirm: "Ay yeniden açılsın mı? Fişler yeniden eklenebilir ve değiştirilebilir. Kaydedilmiş fişler kayıtlı kalır ve düzeltme fişiyle düzeltilir.",
+    monthReopened: "Ay açıldı.",
   },
   tiimi: {
     inviteUser: "Kullanıcı davet et",
@@ -9393,6 +9413,10 @@ const et: AdminText = {
     issueOtherTitle: "Vajab kontrollimist",
     monthClosedNote:
       "{kuukausi} on suletud. Kanded jäävad muutmata; parandus tehakse uue tõendiga, mis viitab algsele.",
+    reopenMonth: "Ava kuu",
+    reopening: "Avan…",
+    reopenConfirm: "Kas avada kuu uuesti? Tšekke saab jälle lisada ja muuta. Kirjendatud dokumendid jäävad kirjendatuks ja neid parandatakse parandusdokumendiga.",
+    monthReopened: "Kuu avatud.",
   },
   tiimi: {
     inviteUser: "Kutsu kasutaja",
@@ -11078,6 +11102,10 @@ const ar: AdminText = {
     issueOtherTitle: "يحتاج إلى مراجعة",
     monthClosedNote:
       "{kuukausi} مقفل. تبقى القيود كما هي؛ يتم التصحيح بقسيمة جديدة تشير إلى الأصلية.",
+    reopenMonth: "إعادة فتح الشهر",
+    reopening: "جارٍ الفتح…",
+    reopenConfirm: "هل تريد إعادة فتح الشهر؟ يمكن إضافة الإيصالات وتعديلها مجددًا. تبقى القيود المرحّلة كما هي وتُصحَّح بقيد تصحيحي.",
+    monthReopened: "أُعيد فتح الشهر.",
   },
   tiimi: {
     inviteUser: "دعوة مستخدم",

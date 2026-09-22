@@ -10,7 +10,7 @@
  * yläreunan ilmoituspalkki olisi eri paikassa kuin teko.
  */
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { fill } from "@/lib/i18n/auth-text";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { useFormStatus } from "react-dom";
@@ -18,6 +18,7 @@ import { RfIcon, type IconName } from "@/components/restoflow/icons";
 import type { AdminState } from "../actions";
 import {
   closeMonth,
+  reopenMonth,
   correctEntry,
   postAll,
   postEntry,
@@ -197,6 +198,56 @@ export function CorrectEntryForm({ t, id }: { t: AdminText; id: string }) {
  * näkyvissä aina: sen painaminen kertoo tarkalleen mikä estää.
  * Piilotettu painike jättäisi arvailtavaksi miksi mitään ei tapahdu.
  */
+/**
+ * Kuukauden avaus lukon takaa.
+ *
+ * Kaksi napautusta: avaaminen purkaa lukon jonka takia kuukausi on
+ * kirjanpidossa valmis, joten se ei saa tapahtua vahingossa.
+ */
+export function ReopenMonthForm({ t, month }: { t: AdminText; month: string }) {
+  const [state, action] = useActionState(reopenMonth, alku);
+  const [confirming, setConfirming] = useState(false);
+
+  if (!confirming) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="rf-press px-3.5 py-2 text-[13px] font-semibold"
+          style={{
+            background: "var(--rf-inset)",
+            color: "var(--rf-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          🔓 {t.kirja.reopenMonth}
+        </button>
+        <Viesti state={state} />
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="kuukausi" value={month} />
+      <p className="w-full text-[12.5px] leading-relaxed" style={{ color: "var(--rf-text-2)" }}>
+        {t.kirja.reopenConfirm}
+      </p>
+      <Painike label={t.kirja.reopenMonth} pending={t.kirja.reopening} />
+      <button
+        type="button"
+        onClick={() => setConfirming(false)}
+        className="text-[13px]"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        {t.loput.cancel}
+      </button>
+      <Viesti state={state} />
+    </form>
+  );
+}
+
 export function CloseMonthForm({ t, month }: { t: AdminText; month: string }) {
   const [state, action] = useActionState(closeMonth, alku);
 

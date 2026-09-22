@@ -230,6 +230,43 @@ export async function correctEntry(
 }
 
 /**
+ * Avaa suljettu kuukausi uudelleen.
+ *
+ * Sulku on tarkoitettu lopulliseksi, mutta joskus kuukausi suljetaan
+ * vahingossa tai kirjanpitäjä pyytää korjauksen. Avaaminen poistaa
+ * lukon: kuukauden kuitteja voi taas lisätä ja muuttaa. Kirjatut
+ * tositteet jäävät kirjatuiksi — niitä korjataan korjaustositteella,
+ * ei poistamalla.
+ *
+ * Vain omistaja, kuten sulkeminenkin.
+ */
+export async function reopenMonth(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  const ctx = await requireContext(PATH);
+
+  if (ctx.role !== "owner") {
+    return { error: t.kirja.ownerOnlyClose };
+  }
+
+  const month = kuukausiKentasta(formData);
+  if (!month) return { error: t.kirja.monthMissing };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reopen_month", {
+    p_restaurant: ctx.restaurant.id,
+    p_month: month,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(PATH, "layout");
+  return { notice: t.kirja.monthReopened };
+}
+
+/**
  * Sulje kuukausi.
  *
  * Kanta kieltäytyy jos täsmäytys ei mene läpi tai esityksiä on
