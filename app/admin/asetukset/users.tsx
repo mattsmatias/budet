@@ -162,9 +162,8 @@ function InviteCode({
     fill(t.tiimi.inviteLine1, { rooli: nimet.roles[role].toLowerCase() }),
     "",
     fill(t.tiimi.inviteLine2, { osoite: origin }),
-    t.tiimi.inviteLine3,
-    t.tiimi.inviteLine4,
     fill(t.tiimi.inviteLine5, { koodi: code }),
+    t.tiimi.inviteLine3,
     "",
     t.tiimi.inviteLine6,
   ].join("\n");
@@ -250,15 +249,11 @@ function InviteCode({
           {[
             <>
               {fill(t.tiimi.goesToAddress, {
-                osoite: `${origin}/rekisteroidy?tila=liity`,
+                osoite: `${origin}/liity`,
               })}
             </>,
-            <>{t.tiimi.createsAccount}</>,
-            <>
-              {t.tiimi.chooses}
-              <strong>{t.tiimi.joinWithCode}</strong>
-            </>,
             <>{t.tiimi.entersCode}</>,
+            <>{t.tiimi.createsAccount}</>,
           ].map((step, index) => (
             <li
               key={index}

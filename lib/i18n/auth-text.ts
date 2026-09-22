@@ -83,6 +83,8 @@ const fi = {
       "Rekisteröitymistä ei ole otettu käyttöön tässä ympäristössä.",
     idle: "Luo tunnus",
     busy: "Luodaan…",
+    inviteRequired: "Tunnus luodaan kutsukoodilla. Saat koodin Katelta tai esihenkilöltäsi.",
+    enterCode: "Syötä kutsukoodi",
   },
 
   unohtui: {
@@ -196,6 +198,8 @@ const en: AuthText = {
     notConfigured: "Sign-up is not enabled in this environment.",
     idle: "Create account",
     busy: "Creating…",
+    inviteRequired: "Accounts are created with an invitation code. You get the code from Kate or your manager.",
+    enterCode: "Enter the invitation code",
   },
   unohtui: {
     metaTitle: "Forgot your password",
@@ -298,6 +302,8 @@ const sv: AuthText = {
     notConfigured: "Registrering är inte aktiverad i den här miljön.",
     idle: "Skapa konto",
     busy: "Skapar…",
+    inviteRequired: "Konton skapas med en inbjudningskod. Du får koden av Kate eller din chef.",
+    enterCode: "Ange inbjudningskoden",
   },
   unohtui: {
     metaTitle: "Glömt lösenordet",
@@ -400,6 +406,8 @@ const da: AuthText = {
     notConfigured: "Oprettelse er ikke slået til i dette miljø.",
     idle: "Opret konto",
     busy: "Opretter…",
+    inviteRequired: "Konti oprettes med en invitationskode. Du får koden fra Kate eller din leder.",
+    enterCode: "Indtast invitationskoden",
   },
   unohtui: {
     metaTitle: "Glemt adgangskoden",
@@ -501,6 +509,8 @@ const tr: AuthText = {
     notConfigured: "Kayıt bu ortamda etkin değil.",
     idle: "Hesap oluştur",
     busy: "Oluşturuluyor…",
+    inviteRequired: "Hesaplar davet koduyla oluşturulur. Kodu Kate'ten veya yöneticinizden alırsınız.",
+    enterCode: "Davet kodunu girin",
   },
   unohtui: {
     metaTitle: "Parolanı mı unuttun",
@@ -603,6 +613,8 @@ const et: AuthText = {
     notConfigured: "Registreerimine ei ole selles keskkonnas sisse lülitatud.",
     idle: "Loo konto",
     busy: "Loome…",
+    inviteRequired: "Konto luuakse kutsekoodiga. Koodi saad Kate'ilt või oma juhilt.",
+    enterCode: "Sisesta kutsekood",
   },
   unohtui: {
     metaTitle: "Unustasid parooli",
@@ -703,6 +715,8 @@ const ar: AuthText = {
     notConfigured: "التسجيل غير مُفعّل في هذه البيئة.",
     idle: "إنشاء حساب",
     busy: "جارٍ الإنشاء…",
+    inviteRequired: "يُنشأ الحساب برمز دعوة. تحصل على الرمز من Kate أو من مديرك.",
+    enterCode: "أدخل رمز الدعوة",
   },
   unohtui: {
     metaTitle: "نسيت كلمة المرور",

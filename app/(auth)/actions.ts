@@ -16,6 +16,7 @@ import { createClient } from "@/utils/supabase/server";
 import { ACTIVE_RESTAURANT_COOKIE } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText, fill, type AuthText } from "@/lib/i18n/auth-text";
+import { readInvite } from "./liity/actions";
 
 export interface FormState {
   error?: string;
@@ -83,6 +84,18 @@ export async function signUp(
 
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  /*
+   * Tunnus luodaan vain kutsukoodilla.
+   *
+   * Kate on kutsupohjainen: kehittäjä luo yrityksen ja antaa koodin, ja
+   * omistaja kutsuu työntekijänsä samoin. Koodi on se mikä todistaa että
+   * tunnus kuuluu tälle ihmiselle, joten ilman sähköpostivahvistustakin
+   * uusi tunnus syntyy vain voimassa olevalla koodilla. Koodi luetaan
+   * evästeestä palvelimella ja tarkistetaan kannasta, ei lomakkeelta.
+   */
+  const invite = await readInvite();
+  if (!invite) return { error: t.rekisteroidy.inviteRequired };
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -94,8 +107,7 @@ export async function signUp(
 
   // Kutsulinkistä tullut ohjataan suoraan liittymisvälilehdelle, jottei
   // hän perusta vahingossa omaa ravintolaa.
-  const next =
-    formData.get("tila") === "liity" ? "/aloitus?tila=liity" : "/aloitus";
+  const next = "/aloitus?tila=liity";
 
   // Sähköpostivahvistuksen ollessa päällä istuntoa ei synny heti.
   if (!data.session) {

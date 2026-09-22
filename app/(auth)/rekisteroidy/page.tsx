@@ -32,7 +32,7 @@ export default async function SignUpPage({
    * mihin hän on liittymässä, jotta hän tietää sen ennen kuin antaa
    * sähköpostinsa ja salasanansa.
    */
-  const invite = joining ? await readInvite() : null;
+  const invite = await readInvite();
   const t = authText(await resolveLocale());
 
   return (
@@ -71,7 +71,7 @@ export default async function SignUpPage({
             {t.rekisteroidy.joiningNote}
           </p>
         </div>
-      ) : joining ? (
+      ) : (
         <p
           className="mt-4 px-3.5 py-2.5 text-[13px] leading-relaxed"
           style={{
@@ -80,17 +80,18 @@ export default async function SignUpPage({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {t.rekisteroidy.inviteMissing}{" "}
+          {joining ? t.rekisteroidy.inviteMissing : t.rekisteroidy.inviteRequired}{" "}
           <Link
             href="/liity"
             className="font-medium underline underline-offset-4"
           >
-            {t.rekisteroidy.enterCodeAgain}
+            {joining ? t.rekisteroidy.enterCodeAgain : t.rekisteroidy.enterCode}
           </Link>
         </p>
-      ) : null}
+      )}
 
-      {isConfigured() ? (
+      {/* Lomake vain kun kutsu on voimassa: ilman sitä tunnusta ei voi luoda. */}
+      {!invite ? null : isConfigured() ? (
         <SignUpForm joining={joining} t={t} />
       ) : (
         <div
