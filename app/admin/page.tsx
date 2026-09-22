@@ -732,78 +732,83 @@ export default async function AdminDashboard({
           linkLabel={t.loput.budgetsTitle}
         />
 
+        {/*
+          Yksi henkilöstökortti, ei kahta.
+
+          Kirjattu palkkakulu ja tunneista laskettu arvio ovat sama asia
+          kahdesta kulmasta: mitä on maksettu ja mitä työ maksoi. Kaksi
+          korttia vierekkäin näytti kahdelta eri luvulta ja sai
+          epäilemään kumpaakin.
+
+          Kirjattu voittaa kun se on olemassa: se on tosiasia. Ennen
+          sitä näytetään tuntiarvio, joka on käytettävissä jo kesken
+          kuun — ja kortti kertoo kumpi luku on kyseessä.
+        */}
         <StatCard
-          label={t.yleiskatsaus.staffCosts}
+          label={t.palkat.title}
           tileTone="blue"
           value={
-            staffCents === 0 ? "—" : <CountUp to={staffCents} format="money" />
+            staffCents > 0 ? (
+              <CountUp to={staffCents} format="money" />
+            ) : staffTime.payCents > 0 ? (
+              <CountUp to={staffTime.payCents} format="money" />
+            ) : (
+              "—"
+            )
           }
           delta={
-            staffShare === null
-              ? undefined
-              : {
+            staffShare !== null
+              ? {
                   text: fill(t.yleiskatsaus.staffShareOfSales, {
                     osuus: String(Math.round(staffShare * 100)),
                   }),
                 }
-          }
-          /*
-           * Puuttuva palkkakulu ei ole nolla.
-           *
-           * Nolla euroa henkilöstökuluja tarkoittaisi ettei kukaan ole
-           * töissä. Todennäköisempää on ettei palkkoja ole vielä kirjattu,
-           * ja kortti kertoo miten se tehdään.
-           */
-          conclusion={
-            staffCents === 0
-              ? t.yleiskatsaus.staffCostsHowTo
-              : staffShare === null
-                ? t.yleiskatsaus.staffNoSales
-                : t.yleiskatsaus.staffShareNote
-          }
-          tone="muted"
-          icon={<RfIcon name="staff" size={17} />}
-          /*
-           * Linkki vie sinne missä luvulle voi tehdä jotain.
-           *
-           * Kortti neuvoo kirjaamaan palkat, mutta vei kuluerittelyyn
-           * jossa mitään ei voi kirjata. Palkoilla on nyt oma näkymänsä:
-           * siellä on kuukauden summa, osuus myynnistä, kuuden
-           * kuukauden kehitys ja painike kirjaukselle.
-           */
-          href={`/admin/palkat?kuukausi=${viewMonth}`}
-          linkLabel={t.palkat.title}
-        />
-
-        {/*
-          Toteutuneet tunnit oman korttinsa.
-
-          Edellinen kortti kertoo mitä palkkoja on kirjattu, tämä mitä
-          tehty työ maksoi. Ne eivät ole sama luku eivätkä saman
-          tarkkuisia: kirjattu on tosiasia, tuntiarvio on arvio joka on
-          käytettävissä jo kesken kuun.
-        */}
-        {can(role, "employees.manage") && staffRows.length > 0 ? (
-          <StatCard
-            label={t.tyo.title}
-            tileTone="green"
-            value={formatHours(staffTime.minutes, LOCALE_INFO[locale].tag)}
-            delta={
-              staffTime.working > 0
+              : staffTime.working > 0
                 ? {
                     text: fill(t.tyo.workingNow, {
                       maara: String(staffTime.working),
                     }),
                   }
                 : undefined
-            }
-            conclusion={`${t.tyo.totalPay}: ${formatMoney(staffTime.payCents)}`}
-            tone="muted"
-            icon={<RfIcon name="clock" size={17} />}
-            href="/admin/tyontekijat"
-            linkLabel={t.tyo.title}
-          />
-        ) : null}
+          }
+          /*
+           * Puuttuva palkkakulu ei ole nolla.
+           *
+           * Nolla euroa henkilöstökuluja tarkoittaisi ettei kukaan ole
+           * töissä. Todennäköisempää on ettei palkkoja ole vielä
+           * kirjattu, ja kortti kertoo mitä luku on.
+           */
+          conclusion={
+            staffCents > 0
+              ? staffShare === null
+                ? t.yleiskatsaus.staffNoSales
+                : t.yleiskatsaus.staffShareNote
+              : staffTime.minutes > 0
+                ? `${t.palkkaAs.cost} · ${formatHours(
+                    staffTime.minutes,
+                    LOCALE_INFO[locale].tag,
+                  )}`
+                : t.yleiskatsaus.staffCostsHowTo
+          }
+          tone="muted"
+          icon={<RfIcon name="staff" size={17} />}
+          /*
+           * Linkki seuraa näytettyä lukua.
+           *
+           * Kirjattu palkka avaa Palkat, tuntiarvio Työntekijät. Muuten
+           * kortti veisi näkymään jossa sen omaa lukua ei ole.
+           */
+          href={
+            staffCents > 0 || staffTime.minutes === 0
+              ? `/admin/palkat?kuukausi=${viewMonth}`
+              : "/admin/tyontekijat"
+          }
+          linkLabel={
+            staffCents > 0 || staffTime.minutes === 0
+              ? t.palkat.title
+              : t.tyo.title
+          }
+        />
       </Spotlight>
       </section>
 
