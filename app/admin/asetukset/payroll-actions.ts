@@ -74,7 +74,7 @@ export async function updatePayrollSettings(
   if (error) return { error: t.toiminnot.settingsSaveFailed };
 
   revalidatePath("/admin/asetukset");
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
   revalidatePath("/admin");
 
   return { notice: t.toiminnot.restaurantSaved };

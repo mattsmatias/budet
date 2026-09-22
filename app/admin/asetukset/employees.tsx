@@ -3,15 +3,19 @@
 import { useActionState, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AdminState } from "../actions";
-import { inviteEmployee, saveEmployee, setEmployeeActive } from "./actions";
+import {
+  inviteEmployee,
+  saveEmployee,
+  setEmployeeActive,
+} from "../palkat/actions";
 import { inviteMessage } from "@/lib/restoflow/invite-message";
 import { fill } from "@/lib/i18n/auth-text";
-import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "../asetukset/form-parts";
+import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
 import { Card, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
-import { formatHours, fullName } from "@/lib/restoflow/employees";
-import type { EmployeeSummary } from "@/lib/restoflow/employees";
+import { fullName } from "@/lib/restoflow/employees";
+import type { Employee } from "@/lib/restoflow/employees";
 
 const initial: AdminState = {};
 
@@ -22,23 +26,23 @@ const initial: AdminState = {};
  * Kaksi erillistä lomaketta olisi kaksi paikkaa jossa kenttä voi
  * unohtua, ja ne ajautuisivat erilleen ensimmäisellä muutoksella.
  */
-export function EmployeeList({
-  t,
-  rows,
-  locale,
-}: {
-  t: AdminText;
-  rows: EmployeeSummary[];
-  locale: string;
-}) {
+export function EmployeeList({ t, rows }: { t: AdminText; rows: Employee[] }) {
   /* Avoinna oleva muokkauslomake, tai null. */
   const [open, setOpen] = useState<string | null>(null);
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-[13px]" style={{ color: "var(--rf-text-3)" }}>
+        {t.tyo.noneHint}
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-3">
       {rows.map((row) => (
-        <Card key={row.employee.id}>
-          {open === row.employee.id ? (
+        <Card key={row.id}>
+          {open === row.id ? (
             <EmployeeForm
               t={t}
               employee={row}
@@ -49,14 +53,14 @@ export function EmployeeList({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-[15px] font-semibold">
-                    {fullName(row.employee)}
+                    {fullName(row)}
                   </p>
                   <p
                     className="truncate text-[12.5px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    {row.employee.jobTitle ?? "—"} ·{" "}
-                    {formatMoney(row.employee.hourlyCents)}/h
+                    {row.jobTitle ?? "—"} ·{" "}
+                    {formatMoney(row.hourlyCents)}/h
                   </p>
                   {/*
                     Sähköposti näkyviin ilman muokkaustilaa.
@@ -65,51 +69,27 @@ export function EmployeeList({
                     kirjoitusvirhe — test@ ja testi@ — on nähtävä
                     silmällä eikä vasta siitä että leimaus ei toimi.
                   */}
-                  {row.employee.email ? (
+                  {row.email ? (
                     <p
                       className="truncate text-[12px]"
                       style={{ color: "var(--rf-text-3)" }}
                     >
-                      {row.employee.email}
+                      {row.email}
                     </p>
                   ) : null}
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-1">
-                  {row.working ? (
-                    <Pill tone="ok" dot>
-                      {t.tyo.working}
-                    </Pill>
-                  ) : null}
-                  {!row.employee.active ? (
+                  {!row.active ? (
                     <Pill tone="neutral">{t.tyo.inactive}</Pill>
                   ) : null}
-                  {row.employee.active && !row.employee.linked ? (
+                  {row.active && !row.linked ? (
                     <Pill tone="warn">{t.tyo.notLinked}</Pill>
                   ) : null}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-                <span className="text-[13px]">
-                  <span style={{ color: "var(--rf-text-3)" }}>
-                    {t.tyo.hoursThisMonth}{" "}
-                  </span>
-                  <span className="rf-tabular font-semibold">
-                    {formatHours(row.minutes, locale)}
-                  </span>
-                </span>
-                <span className="text-[13px]">
-                  <span style={{ color: "var(--rf-text-3)" }}>
-                    {t.tyo.estimatedPay}{" "}
-                  </span>
-                  <span className="rf-tabular font-semibold">
-                    {formatMoney(row.payCents)}
-                  </span>
-                </span>
-              </div>
-
-              {row.employee.active && !row.employee.linked ? (
+              {row.active && !row.linked ? (
                 <p
                   className="text-[12px] leading-relaxed"
                   style={{ color: "var(--rf-text-3)" }}
@@ -121,7 +101,7 @@ export function EmployeeList({
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setOpen(row.employee.id)}
+                  onClick={() => setOpen(row.id)}
                   className="rf-press text-[12.5px] font-semibold underline-offset-4 hover:underline"
                 >
                   {t.tyo.editTitle}
@@ -129,7 +109,7 @@ export function EmployeeList({
                 <ActiveToggle t={t} row={row} />
               </div>
 
-              {row.employee.active && !row.employee.linked ? (
+              {row.active && !row.linked ? (
                 <InviteRow t={t} row={row} />
               ) : null}
             </div>
@@ -146,25 +126,25 @@ export function EmployeeList({
  * Poistoa ei ole: tehdyt tunnit jäävät, ja rivin tuhoaminen muuttaisi
  * jo raportoidun kuukauden palkkakulun jälkikäteen.
  */
-function ActiveToggle({ t, row }: { t: AdminText; row: EmployeeSummary }) {
+function ActiveToggle({ t, row }: { t: AdminText; row: Employee }) {
   const [state, action] = useActionState(setEmployeeActive, initial);
 
   return (
     <form action={action} className="flex items-center gap-3">
-      <input type="hidden" name="id" value={row.employee.id} />
+      <input type="hidden" name="id" value={row.id} />
       <input
         type="hidden"
         name="active"
-        value={row.employee.active ? "0" : "1"}
+        value={row.active ? "0" : "1"}
       />
       <button
         type="submit"
         className="rf-press text-[12.5px] font-semibold underline-offset-4 hover:underline"
         style={{
-          color: row.employee.active ? "var(--rf-red-text)" : undefined,
+          color: row.active ? "var(--rf-red-text)" : undefined,
         }}
       >
-        {row.employee.active ? t.tyo.deactivate : t.tyo.activate}
+        {row.active ? t.tyo.deactivate : t.tyo.activate}
       </button>
       {state.error ? (
         <span
@@ -185,11 +165,11 @@ function EmployeeForm({
   onClose,
 }: {
   t: AdminText;
-  employee?: EmployeeSummary;
+  employee?: Employee;
   onClose: () => void;
 }) {
   const [state, action] = useActionState(saveEmployee, initial);
-  const e = employee?.employee;
+  const e = employee;
 
   /* Sentit euroiksi kenttään: 1450 → "14,50". */
   const hourly = e ? (e.hourlyCents / 100).toFixed(2).replace(".", ",") : "";
@@ -303,7 +283,7 @@ function EmployeeForm({
  * on vain sen tiiviste. Siksi se on tässä isona ja kopioitavana heti,
  * eikä piilossa toisen napin takana.
  */
-function InviteRow({ t, row }: { t: AdminText; row: EmployeeSummary }) {
+function InviteRow({ t, row }: { t: AdminText; row: Employee }) {
   const [state, action] = useActionState(inviteEmployee, initial);
   const [copied, setCopied] = useState(false);
 
@@ -326,7 +306,7 @@ function InviteRow({ t, row }: { t: AdminText; row: EmployeeSummary }) {
         }}
       >
         <p className="text-[12.5px] font-semibold">
-          {fill(t.tyo.codeFor, { nimi: fullName(row.employee) })}
+          {fill(t.tyo.codeFor, { nimi: fullName(row) })}
         </p>
 
         <p className="rf-tabular select-all py-3 text-center text-[24px] font-semibold tracking-[0.14em]">
@@ -365,7 +345,7 @@ function InviteRow({ t, row }: { t: AdminText; row: EmployeeSummary }) {
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-3">
-      <input type="hidden" name="id" value={row.employee.id} />
+      <input type="hidden" name="id" value={row.id} />
       <button
         type="submit"
         className="rf-press inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-bold"

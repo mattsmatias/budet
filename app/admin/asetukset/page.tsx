@@ -15,11 +15,13 @@ import { CategoryManager } from "./categories";
 import { RestaurantForm } from "./forms";
 import { LogoForm } from "./logo-form";
 import { PayrollForm } from "./payroll-form";
+import { EmployeeList } from "./employees";
 import { NameForm, PasswordForm } from "./profile-forms";
 import { SalesGroups, PosMappings } from "./vat-settings";
 import {
   fetchInvitations,
   fetchPosMappings,
+  fetchEmployees,
   fetchPayrollSettings,
   fetchRestaurantLogoUrl,
   fetchSalesGroups,
@@ -84,6 +86,18 @@ export default async function SettingsPage({
     section.id === "palkat" && canEdit
       ? await fetchPayrollSettings(restaurant.id)
       : null;
+
+  /*
+   * Työntekijät samaan osastoon kuin käyttäjät.
+   *
+   * Työntekijä on käyttäjä: hänellä on tunnus, jolla hän leimaa.
+   * Kahdessa paikassa ylläpidettynä sama ihminen sai kaksi eri
+   * sähköpostia, eikä leimaus löytänyt häntä.
+   */
+  const employees =
+    section.id === "kayttajat" && canEdit
+      ? await fetchEmployees(restaurant.id)
+      : [];
 
   /* Avoimet kutsut vain Käyttäjät-osastolle, samasta syystä. */
   const invitations =
@@ -177,6 +191,23 @@ export default async function SettingsPage({
                 </p>
 
                 <InviteForm t={t} nimet={nimet} />
+
+                {/*
+                  Työntekijät käyttäjien kanssa.
+
+                  Tuntipalkka ja tehtävä muuttuvat täällä, koska ne ovat
+                  saman ihmisen tietoja kuin tunnus ja rooli. Tunnit ja
+                  työn kustannus ovat Palkat-sivulla — siellä katsotaan
+                  rahaa, täällä ylläpidetään ihmisiä.
+                */}
+                <div>
+                  <h3 className="text-[13.5px] font-bold">
+                    {t.tyo.listTitle}
+                  </h3>
+                  <div className="mt-3">
+                    <EmployeeList t={t} rows={employees} />
+                  </div>
+                </div>
 
                 {invitations.length > 0 ? (
                   <div>

@@ -801,7 +801,7 @@ export default async function AdminDashboard({
           href={
             staffCents > 0 || staffTime.minutes === 0
               ? `/admin/palkat?kuukausi=${viewMonth}`
-              : "/admin/tyontekijat"
+              : `/admin/palkat?kuukausi=${viewMonth}`
           }
           linkLabel={
             staffCents > 0 || staffTime.minutes === 0

@@ -238,7 +238,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/myynti", requires: "sales.view" },
   { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/palkat", requires: "expenses.view" },
-  { href: "/admin/tyontekijat", requires: "employees.manage" },
+
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/tiedostot", requires: "files.view" },
   { href: "/admin/raportit", requires: "reports.view" },
@@ -342,6 +342,19 @@ export const ADMIN_NAV: NavEntry[] = [
     requires: "expenses.view",
     section: "finance",
   },
+  /*
+   * Palkat kulujen jalkeen.
+   *
+   * Se on kuluerittelyn jatke: suurin yksittainen kuluera omalla
+   * sivullaan, koska siihen liittyvat myos tunnit ja niiden arvio.
+   */
+  {
+    href: "/admin/palkat",
+    key: "payroll",
+    icon: "staff",
+    requires: "expenses.view",
+    section: "finance",
+  },
   {
     href: "/admin/budjetit",
     key: "budgets",
@@ -409,13 +422,6 @@ export const ADMIN_NAV: NavEntry[] = [
    * ihmisia: kuka on toissa, kuka on vuorossa nyt. Talous-osastolla
    * se olisi seitsemas rivi kuuden joukossa.
    */
-  {
-    href: "/admin/tyontekijat",
-    key: "staff",
-    icon: "staff",
-    requires: "employees.manage",
-    section: "restaurant",
-  },
 
   {
     href: "/admin/tiedostot",

@@ -59,7 +59,7 @@ export async function saveEmployee(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant, role } = await requireContext("/admin/tyontekijat");
+  const { restaurant, role } = await requireContext("/admin/palkat");
 
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
@@ -102,7 +102,7 @@ export async function saveEmployee(
 
   if (error) return { error: t.tyo.saveFailed };
 
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
   revalidatePath("/admin");
 
   return { notice: parsed.data.id ? t.tyo.saved : t.tyo.added };
@@ -120,7 +120,7 @@ export async function setEmployeeActive(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant, role } = await requireContext("/admin/tyontekijat");
+  const { restaurant, role } = await requireContext("/admin/palkat");
 
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
@@ -139,7 +139,7 @@ export async function setEmployeeActive(
 
   if (error) return { error: t.tyo.saveFailed };
 
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
   revalidatePath("/admin");
 
   return { notice: active ? t.tyo.activated : t.tyo.deactivated };
@@ -178,7 +178,7 @@ export async function startShift(): Promise<AdminState> {
 
   revalidatePath("/tyoaika");
   revalidatePath("/admin");
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
 
   return { notice: t.tyo.started };
 }
@@ -204,7 +204,7 @@ export async function endShift(): Promise<AdminState> {
 
   revalidatePath("/tyoaika");
   revalidatePath("/admin");
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
 
   return { notice: t.tyo.ended };
 }
@@ -225,7 +225,7 @@ export async function inviteEmployee(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant, role } = await requireContext("/admin/tyontekijat");
+  const { restaurant, role } = await requireContext("/admin/palkat");
 
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
@@ -254,7 +254,7 @@ export async function inviteEmployee(
 
   if (error) return { error: t.toiminnot.inviteFailed };
 
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
 
   return { code: data as string, notice: t.toiminnot.inviteCreated };
 }

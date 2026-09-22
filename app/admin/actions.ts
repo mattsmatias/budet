@@ -167,7 +167,7 @@ export async function createInvitation(
   if (error) return { error: explain(error, t.toiminnot.inviteFailed, t) };
 
   revalidatePath("/admin/asetukset");
-  revalidatePath("/admin/tyontekijat");
+  revalidatePath("/admin/palkat");
   return { code: data as string, notice: t.toiminnot.inviteCreated };
 }
 

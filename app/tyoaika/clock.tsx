@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AdminState } from "@/app/admin/actions";
-import { endShift, startShift } from "@/app/admin/tyontekijat/actions";
+import { endShift, startShift } from "@/app/admin/palkat/actions";
 import { RfIcon } from "@/components/restoflow/icons";
 
 const initial: AdminState = {};

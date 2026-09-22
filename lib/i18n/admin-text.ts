@@ -849,7 +849,7 @@ const fi = {
       "Salasanan vaihto ei onnistunut. Kirjaudu ulos ja takaisin sisään, ja yritä uudelleen.",
     passwordChanged: "Salasana vaihdettu.",
     secUsers: "Käyttäjät",
-    secUsersHint: "Kuka pääsee Kateen: omistaja ja kirjanpitäjä.",
+    secUsersHint: "Kuka pääsee Kateen ja ketkä ovat töissä.",
     membersTitle: "Käyttäjät",
     you: "sinä",
     removeAccess: "Poista pääsy",
@@ -1702,6 +1702,8 @@ const fi = {
     inviteNeedsEmail: "Lisää ensin sähköposti, niin voit kutsua.",
     inviteHint: "Koodi näkyy vain kerran. Työntekijä luo tunnuksen tällä sähköpostilla, jolloin leimaus liittyy tähän korttiin.",
     codeFor: "Kutsukoodi: {nimi}",
+    manageInSettings: "Hallitse työntekijöitä asetuksissa",
+    listTitle: "Työntekijät",
   },
 
   palkkaAs: {
@@ -2668,7 +2670,7 @@ const en: AdminText = {
       "Changing the password did not work. Sign out and back in, then try again.",
     passwordChanged: "Password changed.",
     secUsers: "Users",
-    secUsersHint: "Who can use Kate: the owner and the accountant.",
+    secUsersHint: "Who can use Kate and who works here.",
     membersTitle: "Users",
     you: "you",
     removeAccess: "Remove access",
@@ -3522,6 +3524,8 @@ const en: AdminText = {
     inviteNeedsEmail: "Add an email first, then you can invite.",
     inviteHint: "The code is shown only once. The employee creates an account with this email, which links clocking to this card.",
     codeFor: "Invite code: {nimi}",
+    manageInSettings: "Manage employees in settings",
+    listTitle: "Employees",
   },
 
   palkkaAs: {
@@ -4478,7 +4482,7 @@ const sv: AdminText = {
       "Lösenordet kunde inte bytas. Logga ut och in igen, och försök på nytt.",
     passwordChanged: "Lösenordet bytt.",
     secUsers: "Användare",
-    secUsersHint: "Vem kommer in i Kate: ägaren och bokföraren.",
+    secUsersHint: "Vem kan använda Kate och vilka som jobbar här.",
     membersTitle: "Användare",
     you: "du",
     removeAccess: "Ta bort åtkomst",
@@ -5334,6 +5338,8 @@ const sv: AdminText = {
     inviteNeedsEmail: "Lägg till en e-post först, sedan kan du bjuda in.",
     inviteHint: "Koden visas bara en gång. Den anställda skapar ett konto med den här e-posten, vilket kopplar stämplingen till det här kortet.",
     codeFor: "Inbjudningskod: {nimi}",
+    manageInSettings: "Hantera anställda i inställningar",
+    listTitle: "Anställda",
   },
 
   palkkaAs: {
@@ -6292,7 +6298,7 @@ const da: AdminText = {
       "Adgangskoden kunne ikke skiftes. Log ud og ind igen, og prøv så igen.",
     passwordChanged: "Adgangskoden er skiftet.",
     secUsers: "Brugere",
-    secUsersHint: "Hvem har adgang til Kate: ejeren og bogholderen.",
+    secUsersHint: "Hvem kan bruge Kate, og hvem der arbejder her.",
     membersTitle: "Brugere",
     you: "dig",
     removeAccess: "Fjern adgang",
@@ -7146,6 +7152,8 @@ const da: AdminText = {
     inviteNeedsEmail: "Tilføj en e-mail først, så kan du invitere.",
     inviteHint: "Koden vises kun én gang. Medarbejderen opretter en konto med denne e-mail, hvilket kobler stemplingen til dette kort.",
     codeFor: "Invitationskode: {nimi}",
+    manageInSettings: "Administrer medarbejdere i indstillinger",
+    listTitle: "Medarbejdere",
   },
 
   palkkaAs: {
@@ -8106,7 +8114,7 @@ const tr: AdminText = {
       "Parola değiştirilemedi. Çıkış yapıp tekrar giriş yap, sonra yeniden dene.",
     passwordChanged: "Parola değiştirildi.",
     secUsers: "Kullanıcılar",
-    secUsersHint: "Kate'e kimler girer: sahibi ve muhasebeci.",
+    secUsersHint: "Kate'i kimler kullanabilir ve kimler çalışıyor.",
     membersTitle: "Kullanıcılar",
     you: "siz",
     removeAccess: "Erişimi kaldır",
@@ -8952,6 +8960,8 @@ const tr: AdminText = {
     inviteNeedsEmail: "Önce bir e-posta ekleyin, sonra davet edebilirsiniz.",
     inviteHint: "Kod yalnızca bir kez görünür. Çalışan bu e-postayla hesap oluşturur ve kayıt bu karta bağlanır.",
     codeFor: "Davet kodu: {nimi}",
+    manageInSettings: "Çalışanları ayarlarda yönet",
+    listTitle: "Çalışanlar",
   },
 
   palkkaAs: {
@@ -9907,7 +9917,7 @@ const et: AdminText = {
       "Parooli vahetamine ebaõnnestus. Logi välja ja uuesti sisse ning proovi siis uuesti.",
     passwordChanged: "Parool vahetatud.",
     secUsers: "Kasutajad",
-    secUsersHint: "Kes pääseb Kate'i: omanik ja raamatupidaja.",
+    secUsersHint: "Kes pääseb Kate'i ja kes siin töötavad.",
     membersTitle: "Kasutajad",
     you: "sina",
     removeAccess: "Eemalda ligipääs",
@@ -10757,6 +10767,8 @@ const et: AdminText = {
     inviteNeedsEmail: "Lisa esmalt e-post, siis saad kutsuda.",
     inviteHint: "Kood on näha ainult üks kord. Töötaja loob konto selle e-postiga, mis seob märkimise selle kaardiga.",
     codeFor: "Kutsekood: {nimi}",
+    manageInSettings: "Halda töötajaid seadetes",
+    listTitle: "Töötajad",
   },
 
   palkkaAs: {
@@ -11719,7 +11731,7 @@ const ar: AdminText = {
       "لم ينجح تغيير كلمة المرور. سجّل الخروج ثم الدخول مرة أخرى وحاول مجدداً.",
     passwordChanged: "تم تغيير كلمة المرور.",
     secUsers: "المستخدمون",
-    secUsersHint: "من يستخدم Kate: المالك والمحاسب.",
+    secUsersHint: "من يستخدم كيت ومن يعمل هنا.",
     membersTitle: "المستخدمون",
     you: "أنت",
     removeAccess: "إزالة الوصول",
@@ -12575,6 +12587,8 @@ const ar: AdminText = {
     inviteNeedsEmail: "أضف بريداً إلكترونياً أولاً لتتمكن من الدعوة.",
     inviteHint: "يظهر الرمز مرة واحدة فقط. ينشئ الموظف حساباً بهذا البريد، فيرتبط تسجيل الدوام بهذه البطاقة.",
     codeFor: "رمز الدعوة: {nimi}",
+    manageInSettings: "أدر الموظفين في الإعدادات",
+    listTitle: "الموظفون",
   },
 
   palkkaAs: {

@@ -785,6 +785,7 @@ describe("oikeudet", () => {
       "/admin/myynti",
       "/admin/kuitit",
       "/admin/kulut",
+      "/admin/palkat",
       "/admin/budjetit",
       "/admin/toimittajat",
       // Kirjanpito viimeisenä: se on se mihin kaikki edellinen päätyy.
