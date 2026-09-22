@@ -7,8 +7,7 @@
  * käyttää. Se kertoi "tekoälyä" muttei "Matti": nimetty avustaja näytti
  * geneeriseltä ominaisuudelta. Tunnus on nyt samaa perhettä kuin Katen
  * logo: tumma laatta ja valkoinen merkki. Merkki on M, jonka
- * keskikohta laskeutuu kuin käyrä, ja kulmassa korostusvärin piste —
- * se on Matin "ääni" ja sykkii kun Matti miettii.
+ * keskikohta laskeutuu kuin käyrä. Kun Matti miettii, merkki sykkii.
  *
  * Laatassa on hento reunaviiva, jotta tumma merkki erottuu myös tummalta
  * taustalta.
@@ -19,7 +18,7 @@ export function MattiMark({
   label,
 }: {
   size?: number;
-  /** Piste sykkii: vastausta haetaan. */
+  /** Merkki sykkii: vastausta haetaan. */
   thinking?: boolean;
   /** Saavutettava nimi; ilman sitä merkki on koriste. */
   label?: string;
@@ -47,13 +46,12 @@ export function MattiMark({
         strokeOpacity="0.14"
       />
       <path
-        d="M6.3 17.2V9.8l5.2 5.1 5.2-5.1v7.4"
+        d="M6.8 16.9V9.1l5.2 5.1 5.2-5.1v7.8"
         stroke="#ffffff"
         strokeWidth="2.1"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle className="rf-matti-dot" cx="18.6" cy="5.4" r="1.8" fill="#ff5a4f" />
     </svg>
   );
 }
