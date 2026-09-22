@@ -72,14 +72,14 @@ export default async function DevOverviewPage() {
               ? "Koko järjestelmä yhdellä silmäyksellä."
               : `Koko järjestelmä yhdellä silmäyksellä. Luvuista on rajattu pois ${
                   overview.restaurants.test === 1
-                    ? "1 testiravintola"
-                    : `${overview.restaurants.test} testiravintolaa`
+                    ? "1 testiyritys"
+                    : `${overview.restaurants.test} testiyritystä`
                 }.`}
           </p>
         </div>
 
         <Link
-          href="/kehittaja/ravintolat/uusi"
+          href="/kehittaja/yritykset/uusi"
           className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
           style={{
             background: "var(--rf-accent)",
@@ -88,21 +88,21 @@ export default async function DevOverviewPage() {
           }}
         >
           <RfIcon name="plus" size={15} />
-          Luo ravintola
+          Luo yritys
         </Link>
       </header>
 
       <section
         aria-label="Avainluvut"
-        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4"
       >
         <MetricCard
-          label="Ravintolat"
+          label="Yritykset"
           value={overview.restaurants.total}
           icon={<RfIcon name="suppliers" size={17} />}
           tileTone="brand"
           hint={`${overview.restaurants.active} aktiivista · ${overview.restaurants.trial} kokeilua`}
-          href="/kehittaja/ravintolat"
+          href="/kehittaja/yritykset"
           linkLabel="Kaikki"
         />
 
@@ -140,7 +140,7 @@ export default async function DevOverviewPage() {
           value={overview.today.activeUsers}
           icon={<RfIcon name="trend" size={17} />}
           tileTone="green"
-          hint={`${overview.restaurants.newToday} uutta ravintolaa · ${overview.today.newUsers} uutta käyttäjää`}
+          hint={`${overview.restaurants.newToday} uutta yritystä · ${overview.today.newUsers} uutta käyttäjää`}
         />
       </section>
 
@@ -169,7 +169,7 @@ export default async function DevOverviewPage() {
             <div className="px-5 pb-5">
               <EmptyState
                 title="Ei huomautettavaa"
-                description="Jokainen aktiivinen ravintola on kirjautunut viime aikoina eikä yhtään asiakkuutta ole keskeytetty."
+                description="Jokainen aktiivinen yritys on kirjautunut viime aikoina eikä yhtään asiakkuutta ole keskeytetty."
               />
             </div>
           ) : (
@@ -177,7 +177,7 @@ export default async function DevOverviewPage() {
               {huomio.map(({ r, health }) => (
                 <li key={r.id}>
                   <Link
-                    href={`/kehittaja/ravintolat/${r.id}`}
+                    href={`/kehittaja/yritykset/${r.id}`}
                     className="rf-press flex items-center gap-3 px-5 py-3.5"
                   >
                     <span className="min-w-0 flex-1">

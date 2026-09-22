@@ -11,7 +11,7 @@ import {
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 
-export const metadata = { title: "Ravintolat" };
+export const metadata = { title: "Yritykset" };
 
 const SUODATTIMET = [
   { key: "kaikki", label: "Kaikki" },
@@ -33,7 +33,7 @@ const SUODATTIMET = [
  */
 export default async function DevRestaurantsPage({
   searchParams,
-}: PageProps<"/kehittaja/ravintolat">) {
+}: PageProps<"/kehittaja/yritykset">) {
   const params = await searchParams;
   const all = await fetchRestaurants();
 
@@ -60,17 +60,17 @@ export default async function DevRestaurantsPage({
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-[22px] font-bold tracking-[-0.02em]">
-            Ravintolat
+            Yritykset
           </h1>
           <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
             {rows.length === all.length
-              ? `${all.length} ${all.length === 1 ? "ravintola" : "ravintolaa"}`
-              : `${rows.length} / ${all.length} ravintolaa`}
+              ? `${all.length} ${all.length === 1 ? "yritys" : "yritystä"}`
+              : `${rows.length} / ${all.length} yritystä`}
           </p>
         </div>
 
         <Link
-          href="/kehittaja/ravintolat/uusi"
+          href="/kehittaja/yritykset/uusi"
           className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
           style={{
             background: "var(--rf-accent)",
@@ -79,7 +79,7 @@ export default async function DevRestaurantsPage({
           }}
         >
           <RfIcon name="plus" size={15} />
-          Luo ravintola
+          Luo yritys
         </Link>
       </header>
 
@@ -98,7 +98,7 @@ export default async function DevRestaurantsPage({
         <input
           name="haku"
           defaultValue={typeof params.haku === "string" ? params.haku : ""}
-          placeholder="Hae ravintolaa, omistajaa tai Y-tunnusta…"
+          placeholder="Hae yritystä, omistajaa tai Y-tunnusta…"
           className="min-w-0 flex-1 px-3.5 text-[13.5px]"
           style={{
             height: 40,
@@ -136,8 +136,8 @@ export default async function DevRestaurantsPage({
               key={s.key}
               href={
                 qs === ""
-                  ? "/kehittaja/ravintolat"
-                  : `/kehittaja/ravintolat?${qs}`
+                  ? "/kehittaja/yritykset"
+                  : `/kehittaja/yritykset?${qs}`
               }
               aria-current={active ? "page" : undefined}
               className="rf-press px-3 py-1.5 text-[12.5px]"
@@ -160,7 +160,7 @@ export default async function DevRestaurantsPage({
         <Card>
           <EmptyState
             title="Ei osumia"
-            description="Yksikään ravintola ei vastaa hakua tai valittua tilaa."
+            description="Yksikään yritys ei vastaa hakua tai valittua tilaa."
           />
         </Card>
       ) : (
@@ -175,7 +175,7 @@ export default async function DevRestaurantsPage({
             <table className="rf-table w-full" style={{ minWidth: 860 }}>
               <thead>
                 <tr>
-                  <th className="px-5 py-3 text-start">Ravintola</th>
+                  <th className="px-5 py-3 text-start">Yritys</th>
                   <th className="px-4 py-3 text-start">Omistaja</th>
                   <th className="px-4 py-3 text-start">Tila</th>
                   <th className="px-4 py-3 text-start">Paketti</th>
@@ -194,7 +194,7 @@ export default async function DevRestaurantsPage({
                     <tr key={r.id}>
                       <td className="px-5 py-3">
                         <Link
-                          href={`/kehittaja/ravintolat/${r.id}`}
+                          href={`/kehittaja/yritykset/${r.id}`}
                           className="rf-press block font-semibold"
                         >
                           {r.name}

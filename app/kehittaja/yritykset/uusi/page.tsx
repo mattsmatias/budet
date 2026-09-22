@@ -2,23 +2,23 @@ import Link from "next/link";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Wizard } from "./wizard";
 
-export const metadata = { title: "Luo ravintola" };
+export const metadata = { title: "Luo yritys" };
 
 export default function DevNewRestaurantPage() {
   return (
     <div className="rf-enter mx-auto max-w-2xl space-y-4">
       <header>
         <Link
-          href="/kehittaja/ravintolat"
+          href="/kehittaja/yritykset"
           className="rf-press -ms-1.5 inline-flex items-center gap-1.5 p-1.5 text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={16} />
-          Ravintolat
+          Yritykset
         </Link>
 
         <h1 className="mt-1 text-[22px] font-bold tracking-[-0.02em]">
-          Luo ravintola
+          Luo yritys
         </h1>
       </header>
 

@@ -29,7 +29,7 @@ export const DEV_NAV: DevNavSection[] = [
     items: [
       { href: "/kehittaja", label: "Yleiskatsaus", icon: "overview" },
       { href: "/kehittaja/yhteydenotot", label: "Yhteydenotot", icon: "bell" },
-      { href: "/kehittaja/ravintolat", label: "Ravintolat", icon: "suppliers" },
+      { href: "/kehittaja/yritykset", label: "Yritykset", icon: "suppliers" },
       { href: "/kehittaja/kayttajat", label: "Käyttäjät", icon: "staff" },
       { href: "/kehittaja/tilaukset", label: "Tilaukset", icon: "budget" },
     ],

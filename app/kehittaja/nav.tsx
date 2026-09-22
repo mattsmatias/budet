@@ -93,7 +93,7 @@ export function DevNav() {
       </nav>
 
       {/*
-        Paluu omaan ravintolaan.
+        Paluu omaan yritykseen.
 
         Ylläpitäjä on myös tavallinen käyttäjä. Ilman tätä riviä
         konsolista pääsee pois vain kirjoittamalla osoitteen käsin.

@@ -10,7 +10,7 @@ export const metadata = { title: "Feature flagit" };
  *
  * KAKSI TASOA: OLETUS JA POIKKEUS.
  *
- * Globaali arvo on oletus. Ravintolakohtainen poikkeus voittaa sen ja
+ * Globaali arvo on oletus. Yrityskohtainen poikkeus voittaa sen ja
  * elää omassa taulussaan, jotta oletuksen vaihtaminen ei pyyhi
  * poikkeuksia — muuten yhden ravintolan kanssa sovittu koekäyttö
  * katoaisi seuraavalla globaalilla muutoksella.
@@ -28,7 +28,7 @@ export default async function DevFlagsPage() {
           Feature flagit
         </h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Globaali arvo on oletus. Ravintolakohtainen poikkeus voittaa sen, eikä
+          Globaali arvo on oletus. Yrityskohtainen poikkeus voittaa sen, eikä
           oletuksen vaihtaminen kumoa poikkeuksia.
         </p>
       </header>
@@ -93,7 +93,7 @@ export default async function DevFlagsPage() {
                         className="flex items-center justify-between gap-3 text-[13px]"
                       >
                         <Link
-                          href={`/kehittaja/ravintolat/${o.restaurantId}?valilehti=liput`}
+                          href={`/kehittaja/yritykset/${o.restaurantId}?valilehti=liput`}
                           className="rf-press truncate font-medium"
                         >
                           {o.restaurantName}
@@ -121,8 +121,8 @@ export default async function DevFlagsPage() {
           style={{ color: "var(--rf-text-2)" }}
         >
           Sovellus kysyy tilan funktiolta{" "}
-          <code>feature_enabled(avain, ravintola)</code>. Se palauttaa ensin
-          ravintolakohtaisen poikkeuksen, sitten globaalin oletuksen — ja
+          <code>feature_enabled(avain, yritys)</code>. Se palauttaa ensin
+          yrityskohtaisen poikkeuksen, sitten globaalin oletuksen — ja
           tuntemattomalle avaimelle aina <strong>pois</strong>, jotta
           kirjoitusvirhe nimessä ei avaa ominaisuutta vahingossa.
         </p>

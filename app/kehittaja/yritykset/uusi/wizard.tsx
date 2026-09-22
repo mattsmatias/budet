@@ -48,23 +48,23 @@ export function Wizard() {
       <div hidden={vaihe !== 1}>
         <Card>
           <CardHeader
-            title="Ravintolan tiedot"
+            title="Yrityksen tiedot"
             subtitle="Vain nimi on pakollinen — loput voi täydentää myöhemmin."
           />
 
           <div className="mt-4 space-y-3.5">
             <Kentta
-              label="Ravintolan nimi"
+              label="Yrityksen nimi"
               name="name"
               required
-              placeholder="Ravintola ABC"
+              placeholder="Yritys ABC"
             />
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Kentta
                 label="Virallinen yrityksen nimi"
                 name="legalName"
-                placeholder="Ravintola ABC Oy"
+                placeholder="Yritys ABC Oy"
               />
               <Kentta
                 label="Y-tunnus"
@@ -99,7 +99,7 @@ export function Wizard() {
                 label="Sähköposti"
                 name="email"
                 type="email"
-                placeholder="info@ravintola.fi"
+                placeholder="info@yritys.fi"
               />
             </div>
 
@@ -107,7 +107,7 @@ export function Wizard() {
               <Kentta
                 label="Verkkosivu"
                 name="website"
-                placeholder="https://ravintola.fi"
+                placeholder="https://yritys.fi"
               />
               <Valinta
                 label="Toimiala"
@@ -169,16 +169,16 @@ export function Wizard() {
             </div>
 
             {/*
-              Testiravintola on rajaus, ei asetus.
+              Testiyritys on rajaus, ei asetus.
 
-              Merkitty ravintola jätetään pois yleiskatsauksen
+              Merkitty yritys jätetään pois yleiskatsauksen
               asiakasluvuista, jotta omat kokeilut eivät näytä
               kasvulta.
             */}
             <label className="flex items-start gap-2.5 text-[13px]">
               <input type="checkbox" name="isTest" className="mt-0.5 h-4 w-4" />
               <span>
-                Testiravintola
+                Testiyritys
                 <span
                   className="mt-0.5 block text-[12px]"
                   style={{ color: "var(--rf-text-3)" }}
@@ -205,7 +205,7 @@ export function Wizard() {
           </button>
 
           <Link
-            href="/kehittaja/ravintolat"
+            href="/kehittaja/yritykset"
             className="rf-press px-3.5 py-2 text-[13px] font-medium"
             style={{ color: "var(--rf-text-2)" }}
           >
@@ -251,7 +251,7 @@ export function Wizard() {
                 <RfIcon name="info" size={16} />
               </span>
               <p className="text-[12.5px] leading-relaxed">
-                Salasanaa ei aseteta täällä. Ravintola saa kutsukoodin, jonka
+                Salasanaa ei aseteta täällä. Yritys saa kutsukoodin, jonka
                 omistaja lunastaa rekisteröityessään — salasana jää vain hänen
                 tietoonsa. Koodi näytetään kerran, koska kannassa on siitä vain
                 tiiviste.
@@ -293,7 +293,7 @@ function Askelmerkit({ vaihe }: { vaihe: 1 | 2 }) {
   return (
     <ol className="flex flex-wrap items-center gap-2 text-[12.5px]">
       {[
-        { n: 1, label: "Ravintolan tiedot" },
+        { n: 1, label: "Yrityksen tiedot" },
         { n: 2, label: "Omistaja" },
       ].map((s) => {
         const active = vaihe === s.n;
@@ -343,7 +343,7 @@ function Valmis({ state }: { state: DevState }) {
 
           <div className="min-w-0">
             <h2 className="text-[16px] font-bold tracking-[-0.01em]">
-              Ravintola luotu
+              Yritys luotu
             </h2>
             <p
               className="mt-1 text-[13px]"
@@ -388,9 +388,9 @@ function Valmis({ state }: { state: DevState }) {
               className="mt-2 text-[12.5px] leading-relaxed"
               style={{ color: "var(--rf-text-2)" }}
             >
-              Omistaja rekisteröityy osoitteessa <strong>/rekisteroidy</strong>{" "}
-              ja lunastaa koodin kohdassa <strong>/liity</strong>. Salasana jää
-              vain hänen tietoonsa.
+              Omistaja avaa osoitteen <strong>/liity</strong>, syöttää koodin ja
+              luo tunnuksen. Liittyminen yritykseen tapahtuu samalla. Salasana
+              jää vain hänen tietoonsa.
             </p>
           </div>
         ) : null}
@@ -398,7 +398,7 @@ function Valmis({ state }: { state: DevState }) {
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href={`/kehittaja/ravintolat/${state.restaurantId}`}
+          href={`/kehittaja/yritykset/${state.restaurantId}`}
           className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
           style={{
             background: "var(--rf-accent)",
@@ -406,11 +406,11 @@ function Valmis({ state }: { state: DevState }) {
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Avaa ravintola
+          Avaa yritys
         </Link>
 
         <Link
-          href="/kehittaja/ravintolat/uusi"
+          href="/kehittaja/yritykset/uusi"
           className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
           style={{
             background: "var(--rf-inset)",
@@ -418,15 +418,15 @@ function Valmis({ state }: { state: DevState }) {
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          Luo toinen ravintola
+          Luo toinen yritys
         </Link>
 
         <Link
-          href="/kehittaja/ravintolat"
+          href="/kehittaja/yritykset"
           className="rf-press px-3.5 py-2 text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
-          Kaikki ravintolat
+          Kaikki yritykset
         </Link>
       </div>
     </div>
@@ -447,7 +447,7 @@ function Luo() {
         opacity: pending ? 0.6 : 1,
       }}
     >
-      {pending ? "Luodaan…" : "Luo ravintola ja kutsu"}
+      {pending ? "Luodaan…" : "Luo yritys ja kutsu"}
     </button>
   );
 }

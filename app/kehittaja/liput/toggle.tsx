@@ -49,8 +49,8 @@ export function FlagToggle({
       {overrides > 0 ? (
         <span className="text-[12px]" style={{ color: "var(--rf-amber-text)" }}>
           {overrides === 1
-            ? "1 ravintolalla on poikkeus — se ei muutu"
-            : `${overrides} ravintolalla on poikkeus — ne eivät muutu`}
+            ? "1 yrityksellä on poikkeus — se ei muutu"
+            : `${overrides} yrityksellä on poikkeus — ne eivät muutu`}
         </span>
       ) : null}
 

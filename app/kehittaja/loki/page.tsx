@@ -20,17 +20,17 @@ export const metadata = { title: "Toimintaloki" };
  * tarvitse kirjoittaa uusiksi.
  */
 const TOIMINNOT: Record<string, string> = {
-  "restaurant.created": "Ravintola luotiin",
-  "restaurant.updated": "Ravintolan tietoja muutettiin",
+  "restaurant.created": "Yritys luotiin",
+  "restaurant.updated": "Yrityksen tietoja muutettiin",
   "restaurant.status": "Tila muuttui",
   "restaurant.plan": "Paketti muuttui",
-  "restaurant.deleted": "Ravintola poistettiin",
+  "restaurant.deleted": "Yritys poistettiin",
   "user.invited": "Kutsu luotiin",
   "user.activated": "Käyttäjä aktivoitiin",
   "user.deactivated": "Käyttäjä poistettiin käytöstä",
   "user.role": "Rooli muuttui",
   "flag.global": "Feature flag kaikille",
-  "flag.restaurant": "Feature flag ravintolalle",
+  "flag.restaurant": "Feature flag yritykselle",
 };
 
 function ikoni(action: string) {
@@ -91,7 +91,7 @@ export default async function DevAuditPage({
           hint="Oikeudet, paketit, poistot"
         />
         <MetricCard
-          label="Ravintoloita koskien"
+          label="Yrityksiä koskien"
           value={
             new Set(
               rows
@@ -134,7 +134,7 @@ export default async function DevAuditPage({
         <Card>
           <EmptyState
             title="Ei vielä merkintöjä"
-            description="Loki täyttyy kun luot ravintoloita, muutat tiloja tai hallitset käyttäjiä."
+            description="Loki täyttyy kun luot yrityksiä, muutat tiloja tai hallitset käyttäjiä."
           />
         </Card>
       ) : (
@@ -187,7 +187,7 @@ export default async function DevAuditPage({
 
                 {row.targetType === "restaurant" && row.targetId ? (
                   <Link
-                    href={`/kehittaja/ravintolat/${row.targetId}`}
+                    href={`/kehittaja/yritykset/${row.targetId}`}
                     className="rf-press shrink-0 text-[12.5px] font-bold"
                     style={{ color: "var(--rf-accent)" }}
                   >

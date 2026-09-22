@@ -203,7 +203,7 @@ export function StatusForm({
             }}
           >
             {valittu === "suspended"
-              ? "Keskeytys katkaisee ravintolan käytön. Dataa ei poisteta."
+              ? "Keskeytys katkaisee yrityksen käytön. Dataa ei poisteta."
               : "Päättynyt asiakkuus säilyttää datan, mutta merkitsee asiakkuuden loppuneeksi."}
           </p>
         ) : null}
@@ -276,7 +276,7 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
         <input type="hidden" name="id" value={r.id} />
 
         <Kentta
-          label="Ravintolan nimi"
+          label="Yrityksen nimi"
           name="name"
           defaultValue={r.name}
           required
@@ -348,7 +348,7 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
             className="mt-0.5 h-4 w-4"
           />
           <span>
-            Testiravintola
+            Testiyritys
             <span
               className="mt-0.5 block text-[12px]"
               style={{ color: "var(--rf-text-3)" }}
@@ -503,7 +503,7 @@ export function UserControls({
             <br />
             <strong>{name}</strong> · {restaurantName}
             <br />
-            Hän ei pääse kirjautumaan tähän ravintolaan. Tietoja ei poisteta.
+            Hän ei pääse kirjautumaan tähän yritykseen. Tietoja ei poisteta.
           </p>
 
           <div className="flex flex-wrap gap-2">
@@ -762,13 +762,13 @@ export function DangerZone({
             className="text-[15px] font-bold"
             style={{ color: "var(--rf-red-text)" }}
           >
-            Poista ravintola pysyvästi
+            Poista yritys pysyvästi
           </h2>
           <p
             className="mt-1 text-[13px] leading-relaxed"
             style={{ color: "var(--rf-text-2)" }}
           >
-            Tämä poistaa ravintolan ja kaiken siihen liittyvän. Toimintoa ei voi
+            Tämä poistaa yrityksen ja kaiken siihen liittyvän. Toimintoa ei voi
             perua.
           </p>
         </div>

@@ -62,7 +62,7 @@ function virhe(message: string): string {
     return "Toiminto vaatii järjestelmän ylläpitäjän oikeudet.";
   }
   if (message.includes("Vahvistus ei tasmaa")) {
-    return "Kirjoitettu nimi ei täsmää ravintolan nimeen.";
+    return "Kirjoitettu nimi ei täsmää yrityksen nimeen.";
   }
   return message;
 }
@@ -78,7 +78,7 @@ export async function createRestaurant(
   await requireSuperAdmin();
 
   const name = teksti(data, "name");
-  if (!name) return { error: "Ravintolan nimi puuttuu." };
+  if (!name) return { error: "Yrityksen nimi puuttuu." };
 
   const status = String(data.get("status") ?? "active");
   const trialDays = Number(data.get("trialDays") ?? 14);
@@ -107,7 +107,7 @@ export async function createRestaurant(
   if (error) return { error: virhe(error.message) };
 
   const id = (created as { id?: string } | null)?.id;
-  if (!id) return { error: "Ravintolan luonti ei palauttanut tunnistetta." };
+  if (!id) return { error: "Yrityksen luonti ei palauttanut tunnistetta." };
 
   /*
    * Omistajan kutsu heti luonnin yhteydessä.
@@ -131,14 +131,14 @@ export async function createRestaurant(
   if (inviteError) {
     return {
       restaurantId: id,
-      notice: `Ravintola ${name} luotiin, mutta kutsun luonti epäonnistui: ${inviteError.message}`,
+      notice: `Yritys ${name} luotiin, mutta kutsun luonti epäonnistui: ${inviteError.message}`,
     };
   }
 
   return {
     restaurantId: id,
     code: typeof code === "string" ? code : undefined,
-    notice: `Ravintola ${name} luotiin.`,
+    notice: `Yritys ${name} luotiin.`,
   };
 }
 
@@ -149,7 +149,7 @@ export async function updateRestaurant(
   await requireSuperAdmin();
 
   const id = String(data.get("id") ?? "");
-  if (id === "") return { error: "Ravintolaa ei tunnistettu." };
+  if (id === "") return { error: "Yritystä ei tunnistettu." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("sa_update_restaurant", {
@@ -237,7 +237,7 @@ export async function deleteRestaurant(
 
   const id = String(data.get("id") ?? "");
   const confirm = String(data.get("confirm") ?? "");
-  if (id === "") return { error: "Ravintolaa ei tunnistettu." };
+  if (id === "") return { error: "Yritystä ei tunnistettu." };
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("sa_delete_restaurant", {
@@ -248,7 +248,7 @@ export async function deleteRestaurant(
   if (error) return { error: virhe(error.message) };
 
   revalidatePath("/kehittaja", "layout");
-  redirect("/kehittaja/ravintolat");
+  redirect("/kehittaja/yritykset");
 }
 
 // ---------------------------------------------------------------------------
@@ -262,7 +262,7 @@ export async function inviteUser(
   await requireSuperAdmin();
 
   const id = String(data.get("id") ?? "");
-  if (id === "") return { error: "Ravintolaa ei tunnistettu." };
+  if (id === "") return { error: "Yritystä ei tunnistettu." };
 
   const supabase = await createClient();
   const { data: code, error } = await supabase.rpc("sa_invite_owner", {

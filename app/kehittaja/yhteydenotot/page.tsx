@@ -9,7 +9,7 @@ export const metadata = { title: "Yhteydenotot" };
  *
  * Kate ei tarjoa itserekisteröitymistä, joten tämä on uusien asiakkaiden
  * ovi: ravintola jättää pyynnön, ja tästä se otetaan työn alle. Kun
- * tunnukset on luotu (Ravintolat → Uusi ravintola), pyyntö merkitään
+ * tunnukset on luotu (Yritykset → Luo yritys), pyyntö merkitään
  * hoidetuksi.
  */
 export default async function DevContactsPage() {
@@ -24,7 +24,7 @@ export default async function DevContactsPage() {
         </h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
           Etusivun lomakkeelta. {open === 0 ? "Ei avoimia." : `${open} avoinna.`}{" "}
-          Luo tunnukset kohdasta Ravintolat → Uusi ravintola ja merkitse pyyntö
+          Luo tunnukset kohdasta Yritykset → Luo yritys ja merkitse pyyntö
           sitten hoidetuksi.
         </p>
       </header>

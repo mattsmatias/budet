@@ -67,7 +67,7 @@ export default async function DevUsersPage({
           {rows.length === all.length
             ? `${all.length} jäsenyyttä`
             : `${rows.length} / ${all.length} jäsenyyttä`}
-          . Yksi ihminen voi kuulua useaan ravintolaan.
+          . Yksi ihminen voi kuulua useaan yritykseen.
         </p>
       </header>
 
@@ -79,7 +79,7 @@ export default async function DevUsersPage({
         <input
           name="haku"
           defaultValue={typeof params.haku === "string" ? params.haku : ""}
-          placeholder="Hae nimellä, sähköpostilla tai ravintolalla…"
+          placeholder="Hae nimellä, sähköpostilla tai yrityksellä…"
           className="min-w-0 flex-1 px-3.5 text-[13.5px]"
           style={{
             height: 40,
@@ -152,7 +152,7 @@ export default async function DevUsersPage({
                 <tr>
                   <th className="px-5 py-3 text-start">Nimi</th>
                   <th className="px-4 py-3 text-start">Sähköposti</th>
-                  <th className="px-4 py-3 text-start">Ravintola</th>
+                  <th className="px-4 py-3 text-start">Yritys</th>
                   <th className="px-4 py-3 text-start">Rooli</th>
                   <th className="px-4 py-3 text-start">Tila</th>
                   <th className="px-5 py-3 text-start">
@@ -182,7 +182,7 @@ export default async function DevUsersPage({
 
                     <td className="px-4 py-3">
                       <Link
-                        href={`/kehittaja/ravintolat/${u.restaurantId}`}
+                        href={`/kehittaja/yritykset/${u.restaurantId}`}
                         className="rf-press text-[13px] font-medium"
                       >
                         {u.restaurantName}

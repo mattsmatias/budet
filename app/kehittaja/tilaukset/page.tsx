@@ -59,7 +59,7 @@ export default async function DevPlansPage() {
         </p>
       </header>
 
-      <section className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4">
         {paketeittain.map(({ plan, count }) => (
           <MetricCard
             key={plan}
@@ -75,7 +75,7 @@ export default async function DevPlansPage() {
                     ? "brand"
                     : "muted"
             }
-            hint={count === 1 ? "ravintola" : "ravintolaa"}
+            hint={count === 1 ? "yritys" : "yritystä"}
           />
         ))}
       </section>
@@ -96,7 +96,7 @@ export default async function DevPlansPage() {
           <div className="px-5 pb-5">
             <EmptyState
               title="Ei kokeiluja"
-              description="Kokeilun voi aloittaa ravintolan Hallinta-välilehdeltä."
+              description="Kokeilun voi aloittaa yrityksen Hallinta-välilehdeltä."
             />
           </div>
         ) : (
@@ -106,7 +106,7 @@ export default async function DevPlansPage() {
               return (
                 <li key={r.id}>
                   <Link
-                    href={`/kehittaja/ravintolat/${r.id}?valilehti=hallinta`}
+                    href={`/kehittaja/yritykset/${r.id}?valilehti=hallinta`}
                     className="rf-press flex items-center gap-3 px-5 py-3.5"
                   >
                     <span className="min-w-0 flex-1">
@@ -143,7 +143,7 @@ export default async function DevPlansPage() {
           <table className="rf-table w-full" style={{ minWidth: 640 }}>
             <thead>
               <tr>
-                <th className="px-5 py-3 text-start">Ravintola</th>
+                <th className="px-5 py-3 text-start">Yritys</th>
                 <th className="px-4 py-3 text-start">Paketti</th>
                 <th className="px-4 py-3 text-start">Tila</th>
                 <th className="px-5 py-3 text-end">Käyttäjiä</th>
@@ -157,7 +157,7 @@ export default async function DevPlansPage() {
                   <tr key={r.id}>
                     <td className="px-5 py-3">
                       <Link
-                        href={`/kehittaja/ravintolat/${r.id}?valilehti=hallinta`}
+                        href={`/kehittaja/yritykset/${r.id}?valilehti=hallinta`}
                         className="rf-press font-semibold"
                       >
                         {r.name}
