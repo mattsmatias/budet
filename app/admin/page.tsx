@@ -483,7 +483,7 @@ export default async function AdminDashboard({
       <section aria-label={t.sanat.keyFigures}>
       <Spotlight
         selector=".rf-spot"
-        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4"
       >
         <StatCard
           label={t.sanat.recordedExpenses}
@@ -825,7 +825,7 @@ export default async function AdminDashboard({
                     href={`/admin?kuukausi=${viewMonth}&kaavio=${range.months}`}
                     scroll={false}
                     aria-current={on ? "true" : undefined}
-                    className="rf-press px-3 py-[5px] text-[12px] font-semibold"
+                    className="rf-press rf-touch px-3 py-[5px] text-[12px] font-semibold"
                     style={{
                       background: on ? "var(--rf-card)" : "transparent",
                       color: on ? "var(--rf-text)" : "var(--rf-text-2)",

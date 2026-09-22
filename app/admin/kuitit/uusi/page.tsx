@@ -42,7 +42,8 @@ export default async function NewReceiptPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
-      <header className="flex items-center gap-2">
+      {/* Puhelimessa paluu on yläpalkissa. */}
+      <header className="hidden items-center gap-2 md:flex">
         <Link
           href="/admin/kuitit"
           aria-label={t.kuva.back}

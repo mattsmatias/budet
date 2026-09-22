@@ -77,7 +77,7 @@ export default async function TasksPage({
       */}
       <section
         aria-label={t.tiimi.taskSituation}
-        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-3"
+        className="rf-stat-grid grid auto-rows-fr grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5"
       >
         <Luku
           label={t.tiimi.overdue}
@@ -107,7 +107,10 @@ export default async function TasksPage({
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label={t.tiimi.filters} className="flex flex-wrap gap-1.5">
+        <nav
+          aria-label={t.tiimi.filters}
+          className="rf-chip-row -mx-4 flex w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:w-auto sm:flex-wrap sm:px-0"
+        >
           {suodattimet(t).map((item) => (
             <Suodatin
               key={item.key}
@@ -323,7 +326,7 @@ function Suodatin({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className="rf-press px-3 py-1.5 text-[12.5px] font-semibold"
+      className="rf-press shrink-0 whitespace-nowrap px-3 py-1.5 text-[12.5px] font-semibold"
       style={{
         background: active ? "var(--rf-accent-bg)" : "var(--rf-inset)",
         color: active ? "var(--rf-accent-strong)" : "var(--rf-text-2)",
@@ -348,7 +351,7 @@ function Valinta({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className="rf-press px-3 py-1.5 text-[12.5px] font-semibold"
+      className="rf-press rf-touch px-3 py-1.5 text-[12.5px] font-semibold"
       style={{
         background: active ? "var(--rf-card)" : "transparent",
         color: active ? "var(--rf-text)" : "var(--rf-text-2)",

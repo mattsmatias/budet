@@ -79,7 +79,7 @@ export default async function SalesDayPage({
     <div className="rf-enter space-y-4">
       <Link
         href="/admin/myynti"
-        className="rf-press inline-flex items-center gap-1.5 text-[13px] font-bold"
+        className="rf-press inline-flex items-center gap-1.5 text-[13px] font-bold max-md:hidden"
         style={{ color: "var(--rf-text-2)" }}
       >
         <RfIcon name="back" size={14} />

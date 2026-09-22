@@ -353,7 +353,7 @@ function Tabs({
   ];
 
   return (
-    <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+    <nav className="rf-chip-row -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
       {items.map((item) => {
         const on = item.id === view;
         return (
@@ -361,7 +361,7 @@ function Tabs({
             key={item.id}
             href={item.href}
             aria-current={on ? "page" : undefined}
-            className="rf-press px-3.5 py-1.5 text-[13px] font-semibold"
+            className="rf-press shrink-0 whitespace-nowrap px-3.5 py-1.5 text-[13px] font-semibold"
             style={{
               background: on ? "var(--rf-accent)" : "var(--rf-inset)",
               color: on ? "var(--rf-on-accent)" : "var(--rf-text-2)",

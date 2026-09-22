@@ -88,7 +88,7 @@ export default async function BudgetsPage({
       {budgeted.length > 0 ? (
         <section
           aria-label={t.sanat.keyFigures}
-          className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+          className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4"
         >
           <MetricCard
             label={t.budjetit.budgeted}

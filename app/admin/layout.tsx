@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { requireContext } from "@/lib/restoflow/session";
@@ -6,6 +5,7 @@ import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
 import { MattiPanel } from "./matti/panel";
+import { MobileTitle } from "./mobile-title";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
 import { needsReview } from "@/lib/restoflow/expenses";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
@@ -131,17 +131,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             className="rf-no-print rf-z-chrome rf-mobile-header sticky top-0 flex items-center justify-between gap-3 border-b md:hidden"
             style={{ borderColor: "var(--rf-line)" }}
           >
-            <Link href="/admin" className="min-w-0">
-              <p className="truncate text-[15px] font-semibold">
-                {restaurant.name}
-              </p>
-              <p
-                className="truncate text-[12px]"
-                style={{ color: "var(--rf-text-3)" }}
-              >
-                {userName}
-              </p>
-            </Link>
+            <MobileTitle
+              restaurantName={restaurant.name}
+              userName={userName}
+              backLabel={t.loput.back}
+            />
             <div className="flex shrink-0 items-center gap-1">
             {/* Matti puhelimessa: työpöydällä se on sivupalkissa. */}
             {can(role, "matti.use") ? (

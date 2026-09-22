@@ -160,7 +160,7 @@ export function ReportCapture({
           <button
             type="button"
             onClick={() => camera.current?.click()}
-            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold max-sm:w-full max-sm:justify-center max-sm:py-3 max-sm:text-[14px]"
             style={{
               background: "var(--rf-accent)",
               color: "var(--rf-on-accent)",
@@ -174,7 +174,7 @@ export function ReportCapture({
           <button
             type="button"
             onClick={() => picker.current?.click()}
-            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold"
+            className="rf-press inline-flex items-center gap-2 px-[15px] py-[9px] text-[13px] font-bold max-sm:w-full max-sm:justify-center max-sm:py-3 max-sm:text-[14px]"
             style={{
               background: "var(--rf-inset)",
               color: "var(--rf-text)",

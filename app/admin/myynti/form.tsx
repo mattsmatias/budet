@@ -139,7 +139,7 @@ function Submit({ t }: { t: AdminText }) {
     <button
       type="submit"
       disabled={pending}
-      className="rf-press px-4 py-2.5 text-[14px] font-semibold disabled:opacity-50"
+      className="rf-press px-4 py-2.5 text-[14px] font-semibold disabled:opacity-50 max-sm:w-full"
       style={{
         minHeight: 44,
         background: "var(--rf-accent)",

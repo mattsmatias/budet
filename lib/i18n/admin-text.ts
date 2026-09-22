@@ -1674,7 +1674,7 @@ const fi = {
     notInAccounting: "Ei kirjanpidossa",
     date: "Päivämäärä",
     total: "Yhteensä",
-    addedBy: "Lisännyt",
+    addedBy: "lisännyt {nimi}",
     addedAt: "Lisätty",
     noVatRate: "Ei kantaa",
     imageNotLoaded:
@@ -1693,6 +1693,9 @@ const fi = {
       "{osumat} muilta kuukausilta — vaihda kuukautta nähdäksesi ne.",
     multipleRates:
       "Kuitilla on {maara} verokantaa: {kannat}. Rivien verot summautuvat kuittiin merkittyyn ALV:hen.",
+    vatMissing: "puuttuu",
+    possibleDuplicate: "mahdollinen kaksoiskappale",
+    reviewed: "tarkistettu",
   },
 
   kulut: {
@@ -3359,7 +3362,7 @@ const en: AdminText = {
     notInAccounting: "Not in the books",
     date: "Date",
     total: "Total",
-    addedBy: "Added by",
+    addedBy: "added by {nimi}",
     addedAt: "Added",
     noVatRate: "No rate",
     imageNotLoaded:
@@ -3377,6 +3380,9 @@ const en: AdminText = {
     otherMonths: "{osumat} from other months — switch month to see them.",
     multipleRates:
       "The receipt has {maara} tax rates: {kannat}. The line taxes add up to the VAT written on the receipt.",
+    vatMissing: "missing",
+    possibleDuplicate: "possible duplicate",
+    reviewed: "reviewed",
   },
 
   kulut: {
@@ -5037,7 +5043,7 @@ const sv: AdminText = {
     notInAccounting: "Inte i bokföringen",
     date: "Datum",
     total: "Totalt",
-    addedBy: "Tillagt av",
+    addedBy: "tillagd av {nimi}",
     addedAt: "Tillagt",
     noVatRate: "Ingen sats",
     imageNotLoaded: "Bilden är sparad, men den kunde inte hämtas just nu.",
@@ -5054,6 +5060,9 @@ const sv: AdminText = {
     otherMonths: "{osumat} från andra månader — byt månad för att se dem.",
     multipleRates:
       "Kvittot har {maara} skattesatser: {kannat}. Radernas moms summerar till momsen på kvittot.",
+    vatMissing: "saknas",
+    possibleDuplicate: "möjlig dubblett",
+    reviewed: "granskad",
   },
 
   kulut: {
@@ -6715,7 +6724,7 @@ const da: AdminText = {
     notInAccounting: "Ikke i bogføringen",
     date: "Dato",
     total: "I alt",
-    addedBy: "Tilføjet af",
+    addedBy: "tilføjet af {nimi}",
     addedAt: "Tilføjet",
     noVatRate: "Ingen sats",
     imageNotLoaded: "Billedet er gemt, men det kunne ikke hentes lige nu.",
@@ -6732,6 +6741,9 @@ const da: AdminText = {
     otherMonths: "{osumat} fra andre måneder — skift måned for at se dem.",
     multipleRates:
       "Kvitteringen har {maara} satser: {kannat}. Linjernes moms summerer til momsen på kvitteringen.",
+    vatMissing: "mangler",
+    possibleDuplicate: "mulig dublet",
+    reviewed: "gennemgået",
   },
 
   kulut: {
@@ -8386,7 +8398,7 @@ const tr: AdminText = {
     notInAccounting: "Muhasebede değil",
     date: "Tarih",
     total: "Toplam",
-    addedBy: "Ekleyen",
+    addedBy: "ekleyen: {nimi}",
     addedAt: "Eklendi",
     noVatRate: "Oran yok",
     imageNotLoaded: "Görsel kayıtlı ama şu anda getirilemedi.",
@@ -8403,6 +8415,9 @@ const tr: AdminText = {
     otherMonths: "{osumat} başka aylardan — görmek için ayı değiştirin.",
     multipleRates:
       "Fişte {maara} vergi oranı var: {kannat}. Satır vergileri fişteki KDV'ye eşit toplanır.",
+    vatMissing: "eksik",
+    possibleDuplicate: "olası kopya",
+    reviewed: "kontrol edildi",
   },
 
   kulut: {
@@ -10055,7 +10070,7 @@ const et: AdminText = {
     notInAccounting: "Raamatupidamises pole",
     date: "Kuupäev",
     total: "Kokku",
-    addedBy: "Lisas",
+    addedBy: "lisas {nimi}",
     addedAt: "Lisatud",
     noVatRate: "Määra pole",
     imageNotLoaded:
@@ -10073,6 +10088,9 @@ const et: AdminText = {
     otherMonths: "{osumat} teistest kuudest — vaheta kuud, et neid näha.",
     multipleRates:
       "Tšekil on {maara} maksumäära: {kannat}. Ridade maksud liituvad tšekile märgitud käibemaksuks.",
+    vatMissing: "puudub",
+    possibleDuplicate: "võimalik duplikaat",
+    reviewed: "kontrollitud",
   },
 
   kulut: {
@@ -11738,7 +11756,7 @@ const ar: AdminText = {
     notInAccounting: "غير مدرج في الدفاتر",
     date: "التاريخ",
     total: "الإجمالي",
-    addedBy: "أضافه",
+    addedBy: "أضافه {nimi}",
     addedAt: "تمت الإضافة",
     noVatRate: "لا نسبة",
     imageNotLoaded:
@@ -11756,6 +11774,9 @@ const ar: AdminText = {
     otherMonths: "{osumat} من أشهر أخرى — غيّر الشهر لعرضها.",
     multipleRates:
       "يحتوي الإيصال على {maara} نسب ضريبية: {kannat}. مجموع ضرائب السطور يساوي ضريبة القيمة المضافة المكتوبة على الإيصال.",
+    vatMissing: "غير متوفرة",
+    possibleDuplicate: "نسخة مكررة محتملة",
+    reviewed: "تمت المراجعة",
   },
 
   kulut: {

@@ -594,7 +594,7 @@ export function FileBrowser(props: Props) {
             {t.tiedosto.recentlyUsed}
           </p>
 
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="rf-chip-row -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {props.recentlyOpened.map((file) => (
               <button
                 key={file.id}
@@ -1374,7 +1374,7 @@ function FolderRowItem({
            * raahaus sulkisi ulos jokaisen joka ei käytä hiirtä.
            */
           aria-label={`${t.tiedosto.move}: ${nimi}`}
-          className="rf-press flex h-8 w-6 shrink-0 cursor-grab items-center justify-center"
+          className="rf-press -ms-2 flex h-11 w-9 shrink-0 cursor-grab items-center justify-center sm:ms-0 sm:h-8 sm:w-6"
           style={{
             color: "var(--rf-text-3)",
             /* Ilman tätä selain vierittää sivua sormen mukana. */

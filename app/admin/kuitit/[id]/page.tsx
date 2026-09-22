@@ -161,7 +161,7 @@ export default async function AdminReceiptDetailPage({
         <Link
           href="/admin/kuitit"
           aria-label={t.kuitti2.backToList}
-          className="rf-press -ms-1.5 p-1.5"
+          className="rf-press -ms-1.5 p-1.5 max-md:hidden"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={22} />

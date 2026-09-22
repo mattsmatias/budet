@@ -91,7 +91,7 @@ export default async function SupplierDetailPage({
         <Link
           href="/admin/toimittajat"
           aria-label={t.loput.back}
-          className="rf-press -ms-1.5 p-1.5"
+          className="rf-press -ms-1.5 p-1.5 max-md:hidden"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={22} />
@@ -116,7 +116,7 @@ export default async function SupplierDetailPage({
       {/* Sama kokoonpano kuin yleiskuvan avainluvuissa. */}
       <section
         aria-label={t.loput.keyFigures}
-        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4"
       >
         <MetricCard
           label={t.loput.receiptCount}

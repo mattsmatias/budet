@@ -93,20 +93,32 @@ export function Rhythm({
         ))}
       </ol>
 
-      {/* Viikonpäivät janan alle, vain joka toinen jottei rivi täyty. */}
+      {/*
+        Päivämäärät janan alle.
+
+        Työpöydällä joka toinen. Puhelimessa kolmekymmentä pylvästä on
+        alle 300 px leveydellä, ja joka toinen numero oli 8,5 px kokoinen
+        ja numerot osuivat toisiinsa. Siellä näytetään vain 1, 5, 10, 15,
+        20, 25, 30 ja tämä päivä, luettavan kokoisina.
+      */}
       <ol className="mt-1.5 flex gap-[3px]">
-        {rhythm.days.map((day) => (
-          <li
-            key={day.date}
-            className="min-w-0 flex-1 text-center text-[8.5px] font-semibold"
-            style={{
-              color: day.isToday ? "var(--rf-text)" : "var(--rf-text-3)",
-              opacity: day.day % 2 === 1 || day.isToday ? 1 : 0,
-            }}
-          >
-            {day.day}
-          </li>
-        ))}
+        {rhythm.days.map((day) => {
+          const wide = day.day % 2 === 1 || day.isToday;
+          const narrow = day.day === 1 || day.day % 5 === 0 || day.isToday;
+          return (
+            <li
+              key={day.date}
+              className={`relative h-[14px] min-w-0 flex-1 text-[10px] font-semibold sm:text-[8.5px] ${
+                narrow ? "" : "max-sm:invisible"
+              } ${wide ? "" : "sm:invisible"}`}
+              style={{ color: day.isToday ? "var(--rf-text)" : "var(--rf-text-3)" }}
+            >
+              <span className="absolute start-1/2 top-0 -translate-x-1/2 whitespace-nowrap rtl:translate-x-1/2">
+                {day.day}
+              </span>
+            </li>
+          );
+        })}
       </ol>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">

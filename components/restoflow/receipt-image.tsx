@@ -96,7 +96,7 @@ export function ReceiptImage({
       )}
 
       {urls.length > 1 ? (
-        <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        <div className="rf-chip-row -mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
           {urls.map((pageUrl, i) => (
             <button
               key={pageUrl}

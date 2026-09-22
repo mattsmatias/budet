@@ -50,6 +50,15 @@ const MONTHLY = [
 ];
 
 /**
+ * Vain listasivu lukee kuukauden, ei sen alasivut.
+ *
+ * Uusi kuitti, yksittäinen kuitti ja myyntipäivä eivät vaihdu
+ * kuukauden mukana. Puhelimessa niissä näkyi silti kuukausirivi, joka
+ * ei tehnyt mitään.
+ */
+const EXACT = new Set(["/admin/kuitit", "/admin/myynti"]);
+
+/**
  * Lukeeko tämä sivu kuukauden?
  *
  * Tarkka osuma tai alipolku. Ilman alipolkua /admin/raportit/tulosta
@@ -60,7 +69,9 @@ function useMonthly(): boolean {
   const pathname = usePathname();
 
   return MONTHLY.some((route) =>
-    route === "/admin" ? pathname === "/admin" : pathname.startsWith(route),
+    route === "/admin" || EXACT.has(route)
+      ? pathname === route
+      : pathname.startsWith(route),
   );
 }
 

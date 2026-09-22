@@ -221,12 +221,20 @@ export function MetricCard({
         boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="flex flex-1 flex-col px-4 pb-4 pt-[15px]">
-        <div className="flex items-start gap-[11px]">
+      {/*
+        Puhelimessa kaksi korttia rinnakkain.
+
+        Yksi kortti rivillä vei neljällä luvulla koko ruudun, ja luvut
+        luettiin vierittämällä. Kapeassa kortissa laatta ja muutos ovat
+        ylärivillä ja luku omalla rivillään koko leveydellä, jotta
+        summa mahtuu katkeamatta.
+      */}
+      <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-3 sm:px-4 sm:pb-4 sm:pt-[15px]">
+        <div className="flex flex-wrap items-start gap-x-[11px] gap-y-2 sm:flex-nowrap">
           {icon ? (
             <span
               aria-hidden="true"
-              className="rf-metric-icon flex h-[34px] w-[34px] shrink-0 items-center justify-center"
+              className="rf-metric-icon flex h-[30px] w-[30px] shrink-0 sm:h-[34px] sm:w-[34px] items-center justify-center"
               style={{
                 background: skin.bg,
                 color: skin.fg,
@@ -237,20 +245,22 @@ export function MetricCard({
             </span>
           ) : null}
 
-          <div className="min-w-0 flex-1">
+          <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
             <p
               className="truncate text-[12px] font-medium"
               style={{ color: "var(--rf-text-2)" }}
             >
               {label}
             </p>
-            <p className="rf-tabular mt-[3px] text-[22px] font-bold leading-[1.4] tracking-[-0.03em]">
+            <p className="rf-tabular mt-[3px] truncate text-[19px] font-bold leading-[1.4] tracking-[-0.03em] sm:text-[22px]">
               {value}
             </p>
           </div>
 
           {delta ? (
-            <DeltaPill text={delta.text} tone={delta.tone ?? tone} />
+            <span className="ms-auto sm:ms-0">
+              <DeltaPill text={delta.text} tone={delta.tone ?? tone} />
+            </span>
           ) : null}
         </div>
 
@@ -264,9 +274,9 @@ export function MetricCard({
         ) : null}
 
         {hasFoot ? (
-          <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="mt-2 flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <span
-              className="min-w-0 truncate text-[11.5px]"
+              className="line-clamp-2 min-w-0 text-[11.5px] sm:truncate"
               style={{ color: footColor(tone) }}
             >
               {footText}
@@ -795,13 +805,19 @@ export function Button({
   children: ReactNode;
 } & ButtonHTMLAttributes<HTMLButtonElement>) {
   const palette = BUTTON_TONES[tone];
+  /*
+   * Lomakkeen päätoiminto puhelimessa koko leveydeltä, kuten
+   * sovelluksissa: peukalo osuu siihen katsomatta.
+   */
+  const primaryOnPhone =
+    tone === "primary" && size === "md" && rest.type === "submit";
 
   return (
     <button
       {...rest}
       className={`rf-press inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold disabled:opacity-50 ${
         size === "sm" ? "px-3.5 text-[13px]" : "px-4 text-[14px]"
-      } ${full ? "w-full" : ""} ${rest.className ?? ""}`}
+      } ${full ? "w-full" : primaryOnPhone ? "max-sm:w-full" : ""} ${rest.className ?? ""}`}
       style={{
         minHeight: size === "sm" ? 36 : 44,
         background: palette.background,

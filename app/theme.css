@@ -2225,3 +2225,62 @@ details[open] .rf-summary-chevron {
     transition: none;
   }
 }
+
+/*
+ * Avainlukuruudukko puhelimessa: kaksi saraketta. Pariton viimeinen
+ * kortti levenee koko riville, ettei ruudukkoon jää aukkoa.
+ */
+@media (max-width: 639px) {
+  .rf-stat-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * Suodatin- ja välilehtirivit puhelimessa.
+ *
+ * Rivi vierii sivuttain sormella, joten vierityspalkki on turha viiva
+ * pillerien alla. Kosketusnäytöllä pillerit ja segmenttipainikkeet
+ * ovat vähintään 40 px korkeita: 28–32 px oli helppo ohittaa peukalolla.
+ */
+.rf-chip-row {
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+
+.rf-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.rf-chip-row li,
+.rf-chip-row > a,
+.rf-chip-row > button {
+  scroll-snap-align: start;
+  scroll-margin-inline: 16px;
+}
+
+@media (pointer: coarse) {
+  .rf-chip-row :is(a, button).rf-press,
+  main nav :is(a, button).rf-press:not(.flex),
+  .rf-touch {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/*
+ * Puhelimessa kortin linkki kattaa kortin yläosan (lähin position:
+ * relative -vanhempi). Leveällä ruudulla linkki on vain nimi.
+ */
+@media (max-width: 639px) {
+  .rf-stretch {
+    position: static;
+  }
+
+  .rf-stretch::after {
+    inset: 0;
+  }
+}

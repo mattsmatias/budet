@@ -167,7 +167,7 @@ export default async function AccountingPage({
       {/* Välilehdet */}
       <nav
         aria-label={t.kirja.accountingViews}
-        className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
+        className="rf-chip-row -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
       >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {valilehdet(t).map((t) => {
@@ -290,7 +290,7 @@ async function Yhteenveto({
     <div className="space-y-5 md:space-y-6">
       <section
         aria-label={t.kirja.monthSummary}
-        className="grid auto-rows-fr grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid auto-rows-fr rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4"
       >
         <MetricCard
           label={t.kirja.salesWord}

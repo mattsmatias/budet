@@ -41,7 +41,7 @@ export function SectionNav({
       className="min-w-0 lg:sticky lg:top-[76px]"
     >
       {/* Puhelin: vaakarivi joka vierii. */}
-      <ul className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:hidden">
+      <ul className="rf-chip-row -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:hidden">
         {sections.map((section) => (
           <li key={section.id} className="shrink-0">
             <Link

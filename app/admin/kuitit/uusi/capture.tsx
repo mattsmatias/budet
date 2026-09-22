@@ -577,7 +577,7 @@ export function CaptureFlow({
           ) : null}
         </div>
 
-        <div className="-mx-1 mt-3 flex gap-2.5 overflow-x-auto px-1 pb-1">
+        <div className="rf-chip-row -mx-1 mt-3 flex gap-2.5 overflow-x-auto px-1 pb-1">
           {previews.map((url, index) => (
             <div key={`${url}-${index}`} className="relative shrink-0">
               <button

@@ -259,7 +259,7 @@ export default async function AdminReceiptsPage({
 
       <nav
         aria-label={t.sanat.filters}
-        className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
+        className="rf-chip-row -mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
       >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
           {suodattimet(t, nimet, categoriesFor(restaurant.businessType)).map((f) => {
@@ -330,7 +330,7 @@ export default async function AdminReceiptsPage({
           }
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-2.5 sm:space-y-3">
           {visible.map((receipt) => {
             const isDuplicate = duplicates.has(receipt.id);
             const isHighlighted = receipt.id === highlight;
@@ -343,7 +343,7 @@ export default async function AdminReceiptsPage({
                     ? { style: { boxShadow: "0 0 0 2px var(--rf-blue)" } }
                     : {})}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="relative flex items-start gap-3">
                     <MerchantBadge
                       merchant={merchantOf(receipt) ?? null}
                       fallbackName={receipt.supplierName}
@@ -353,7 +353,7 @@ export default async function AdminReceiptsPage({
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <Link
                           href={`/admin/kuitit/${receipt.id}`}
-                          className="rf-hit text-[15px] font-semibold underline-offset-4 hover:underline"
+                          className="rf-hit rf-stretch text-[15px] font-semibold underline-offset-4 hover:underline"
                         >
                           {/* Brändinimi kun se tunnetaan, muuten kuitin
                               oma teksti. "K-Market" on luettavampi kuin
@@ -396,21 +396,28 @@ export default async function AdminReceiptsPage({
                       >
                         ALV{" "}
                         {receipt.vatCents === null
-                          ? "puuttuu"
+                          ? t.kuitit.vatMissing
                           : formatMoney(receipt.vatCents)}
                         {receipt.items.length > 0
                           ? ` · ${fill(t.kuitit.rows, { maara: String(receipt.items.length) })}`
-                          : ""}{" "}
-                        · lisännyt{" "}
-                        {users.find((u) => u.id === receipt.addedByUserId)
-                          ?.name ?? "—"}
+                          : ""}
+                        {/* Lisääjä on puhelimessa kuitin omalla sivulla:
+                            listassa se vei rivin jokaiselta kortilta. */}
+                        <span className="hidden sm:inline">
+                          {" · "}
+                          {fill(t.kuitit.addedBy, {
+                            nimi:
+                              users.find((u) => u.id === receipt.addedByUserId)
+                                ?.name ?? "—",
+                          })}
+                        </span>
                       </p>
 
                       {receipt.status === "needs_review" || isDuplicate ? (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {isDuplicate ? (
                             <Pill tone="risk" dot>
-                              mahdollinen kaksoiskappale
+                              {t.kuitit.possibleDuplicate}
                             </Pill>
                           ) : null}
                           {receipt.reviewReasons.map((r) => (
@@ -420,9 +427,11 @@ export default async function AdminReceiptsPage({
                           ))}
                         </div>
                       ) : (
-                        <div className="mt-2">
+                        /* Kunnossa oleva ei tarvitse merkkiä puhelimessa:
+                           poikkeus näkyy, tavallinen ei vie tilaa. */
+                        <div className="mt-2 hidden sm:block">
                           <Pill tone="ok" dot>
-                            tarkistettu
+                            {t.kuitit.reviewed}
                           </Pill>
                         </div>
                       )}
@@ -485,8 +494,10 @@ export default async function AdminReceiptsPage({
                     </details>
                   ) : null}
 
+                  {/* Kuva ja Avaa -rivi vain leveällä ruudulla: puhelimessa
+                      kortin yläosan napautus avaa kuitin. */}
                   <div
-                    className="mt-3 flex items-center justify-between gap-3 border-t pt-3"
+                    className="mt-3 hidden items-center justify-between gap-3 border-t pt-3 sm:flex"
                     style={{ borderColor: "var(--rf-line)" }}
                   >
                     <span

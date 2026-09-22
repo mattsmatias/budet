@@ -106,7 +106,9 @@ export function Panel({
         boxShadow: "var(--rf-shadow-sm)",
       }}
     >
-      <div className="mb-[13px] flex items-baseline justify-between gap-3">
+      {/* Säädin rivittyy otsikon alle kun tila loppuu: kapeassa ruudussa
+          otsikko katkesi muuten kahdelle riville säätimen viereen. */}
+      <div className="mb-[13px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-2.5">
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             {title}

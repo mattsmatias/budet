@@ -41,7 +41,7 @@ export function CardsAndListSkeleton({ cards = 4 }: { cards?: number }) {
       <Otsikko />
 
       <div
-        className={`grid grid-cols-1 gap-3.5 sm:grid-cols-2 ${
+        className={`grid rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 ${
           cards === 3 ? "xl:grid-cols-3" : "xl:grid-cols-4"
         }`}
       >

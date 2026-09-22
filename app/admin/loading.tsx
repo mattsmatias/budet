@@ -30,7 +30,7 @@ export default function AdminLoading() {
         yläpalkkiin, ja luuranko jäi lupaamaan riviä jota ei enää
         tule — sisältö hyppäsi ylös joka latauksella.
       */}
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid rf-stat-grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="rf-skeleton-block h-[117px]" />
         ))}
