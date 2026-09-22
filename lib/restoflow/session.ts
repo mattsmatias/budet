@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { createClient, isConfigured } from "@/utils/supabase/server";
 import { verifiedUser } from "@/utils/supabase/claims";
 import type { Role } from "./types";
+import { landingFor } from "./permissions";
 import { isBusinessType, type BusinessType } from "./business";
 
 export const ACTIVE_RESTAURANT_COOKIE = "rf_restaurant";
@@ -200,4 +201,17 @@ export async function requireSuperAdmin(
   if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
   if (!user.isSuperAdmin) redirect("/admin");
   return user;
+}
+
+/**
+ * Mihin kirjautunut kuuluu.
+ *
+ * Roolit laskeutuvat eri paikkoihin: omistaja ja kirjanpitäjä
+ * hallintaan, työntekijä omaan työaikaansa. Ilman tätä kaikki
+ * ohjattiin hallintaan, josta työntekijä pomppasi eteenpäin — yksi
+ * turha pyyntö ja välähdys näkymästä johon hänellä ei ole asiaa.
+ */
+export async function homeForUser(): Promise<string> {
+  const restaurant = await getActiveRestaurant();
+  return restaurant ? landingFor(restaurant.role) : "/aloitus";
 }

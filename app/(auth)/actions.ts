@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/utils/supabase/server";
-import { ACTIVE_RESTAURANT_COOKIE } from "@/lib/restoflow/session";
+import { ACTIVE_RESTAURANT_COOKIE, homeForUser } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText, fill, type AuthText } from "@/lib/i18n/auth-text";
 import { clearInvite, readInvite } from "./liity/actions";
@@ -67,7 +67,7 @@ export async function signIn(
   if (error) return { error: t.virheet.badCredentials };
 
   revalidatePath("/", "layout");
-  redirect(safeNext(formData.get("next"), "/admin"));
+  redirect(safeNext(formData.get("next"), await homeForUser()));
 }
 
 export async function signUp(

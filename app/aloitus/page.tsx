@@ -2,7 +2,11 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { readInvite } from "@/app/(auth)/liity/actions";
 import { createClient } from "@/utils/supabase/server";
-import { getActiveRestaurant, requireUser } from "@/lib/restoflow/session";
+import {
+  getActiveRestaurant,
+  homeForUser,
+  requireUser,
+} from "@/lib/restoflow/session";
 import { Card } from "@/components/restoflow/ui";
 import { SetupForm } from "./form";
 import { JoinForm } from "./join";
@@ -48,10 +52,10 @@ export default async function SetupPage({
      * ja yritys kaatoi sivun. Käytetty koodi ei enää kelpaa
      * (readInvite palauttaa nullin), ja eväste vanhenee itsestään.
      */
-    if (!error) redirect("/admin");
+    if (!error) redirect(await homeForUser());
   }
 
-  if (await getActiveRestaurant()) redirect("/admin");
+  if (await getActiveRestaurant()) redirect(await homeForUser());
 
   /*
    * Poistettu tai lukittu tunnus.

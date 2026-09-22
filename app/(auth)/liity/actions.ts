@@ -11,7 +11,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getUser } from "@/lib/restoflow/session";
+import { getUser, homeForUser } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText } from "@/lib/i18n/auth-text";
 import {
@@ -98,7 +98,7 @@ export async function checkInvite(
   const supabase = await createClient();
   const { error } = await supabase.rpc("accept_invitation", { p_code: code });
   await clearInvite();
-  redirect(error ? "/aloitus?tila=liity" : "/admin");
+  redirect(error ? "/aloitus?tila=liity" : await homeForUser());
 }
 
 /** Poistaa koodin, kun se on käytetty tai käyttäjä perääntyy. */
