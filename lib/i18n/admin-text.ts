@@ -420,8 +420,7 @@ const fi = {
     yesterdayShortfall: "Eilinen myynti jäi {osuus} % vertailukohdasta",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "Kuitteja ei ole kirjattu {maara} päivään",
-    noReceiptsBody:
-      "Viimeisin kuitti on {paiva}, mutta työvuoroja on tehty sen jälkeen. Kirjaamattomat ostot puuttuvat kuluista ja budjetista.",
+    noReceiptsBody: "Viimeisin kuitti on {paiva}, mutta myyntiä on kirjattu sen jälkeen. Kirjaamattomat ostot puuttuvat kuluista ja budjetista.",
     sameDay: "sama päivä",
     consecutiveDays: "peräkkäiset päivät",
     taskWasDueAt: "{nimi} olisi pitänyt tehdä tänään klo {aika}.",
@@ -564,8 +563,7 @@ const fi = {
     notifications: "Ilmoitukset",
     nothingToNote: "Ei mitään huomautettavaa",
     allInOrder: "Kaikki kunnossa",
-    allInOrderBody:
-      "Kuitit on käsitelty, vuoroilla on tekijät eikä määräaikoja ole ohitettu. Ilmoitukset ilmestyvät tähän itsestään kun jotain vaatii huomiota.",
+    allInOrderBody: "Kuitit on käsitelty eikä määräaikoja ole ohitettu. Ilmoitukset ilmestyvät tähän itsestään kun jotain vaatii huomiota.",
     needsAttentionNow: "Vaatii huomiota nyt",
     notTomorrow: "Nämä eivät odota huomiseen",
     otherNotes: "Muut huomiot",
@@ -646,8 +644,7 @@ const fi = {
     monthlyReport: "Kuukausiraportti",
     deliveryToAccountant: "Toimitus kirjanpitäjälle",
     accountant: "Kirjanpitäjä",
-    accountantSeesItself:
-      ", niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse lähettää. Hän ei näe tuntipalkkoja eikä henkilöstön yksityiskohtia.",
+    accountantSeesItself: ", niin hän näkee kulut, ALV:t ja raportit itse eikä tiedostoja tarvitse lähettää.",
     formatsHint:
       "Excel-tiedostossa summat ovat lukuja, joten niillä voi laskea heti. CSV:ssä kaikki on tekstiä, ja se käyttää puolipistettä erottimena sekä UTF-8-tunnistetta — suomalainen Excel avaa sen suoraan oikein. Molemmat rakennetaan samasta lähteestä, joten luvut eivät voi erota toisistaan.",
     downloadWholeMonth: "Lataa koko kuukausi Excelinä",
@@ -764,8 +761,7 @@ const fi = {
     alwaysAvailable: "Aina käytettävissä eikä poistettavissa.",
     ownCategories: "Omat kategoriat",
     addOwnCategory: "Lisää oma kategoria jos vakiot eivät riitä.",
-    logHint:
-      "Toimintaloki kertoo kuka teki muutoksen, mihin se kohdistui ja mikä arvo oli ennen. Palkkamuutokset, työaikakorjaukset, verokannat ja käyttöoikeudet kirjataan aina.",
+    logHint: "Toimintaloki kertoo kuka teki muutoksen, mihin se kohdistui ja mikä arvo oli ennen. Verokannat, käyttöoikeudet ja kuukauden sulut kirjataan aina.",
     openLog: "Avaa toimintaloki",
     logImmutable:
       "Lokia ei voi muokata eikä poistaa. Merkinnät syntyvät tietokannassa, joten ne kirjautuvat myös silloin kun muutos tehdään käyttöliittymän ohi.",
@@ -778,8 +774,7 @@ const fi = {
     emailFixed: "Sähköposti on kirjautumistunnuksesi eikä sitä voi vaihtaa täältä. Roolin asettaa yrityksen omistaja.",
     restaurantName: "Yrityksen nimi",
     timezone: "Aikavyöhyke",
-    timezoneHint:
-      "Työaika, vuorojen päivät ja kuukausirajat lasketaan tässä ajassa. Palvelin käy UTC:ssä, joten väärä vyöhyke siirtäisi yövuorot väärälle päivälle.",
+    timezoneHint: "Päivien ja kuukausien rajat lasketaan tässä ajassa. Palvelin käy UTC:ssä, joten väärä vyöhyke siirtäisi illan myynnin väärälle päivälle.",
     noOwnCategories:
       "Omia kategorioita ei ole. Ilman niitä kuitit näkyvät yhdeksällä perusluokalla.",
     newCategory: "Uusi kategoria",
@@ -824,8 +819,7 @@ const fi = {
     groupUsedOnRows:
       "Ryhmää ei voi poistaa: sitä on käytetty {maara} myyntirivillä. Ota se pois käytöstä sen sijaan — vanhat rivit säilyttävät nimen ja kannan.",
     yourName: "Nimesi",
-    yourNameHint:
-      "Näkyy vuorolistassa, kuittien kirjaajana ja työyhteisössä. Sama nimi kaikkialla — ei erillistä näyttönimeä.",
+    yourNameHint: "Näkyy kuittien kirjaajana ja toimintalokissa. Sama nimi kaikkialla — ei erillistä näyttönimeä.",
     newPassword: "Uusi salasana",
     newPasswordHint:
       "Vähintään kahdeksan merkkiä. Vanhaa salasanaa ei kysytä, koska olet jo kirjautuneena — jos istunto on vanhentunut, vaihto ei onnistu.",
@@ -866,8 +860,7 @@ const fi = {
       "Kaikki kuukauden tapahtumat on kirjattu ja täsmäytys menee läpi.",
     manualRarely:
       "Tavallisesti tätä ei tarvita: kirjaus syntyy itsestään kun tallennat kuitin tai päivän myynnin. Jos tapahtuma jää tähän haun jälkeenkin, siltä puuttuu tietoja — yllä lukee mitä.",
-    canSeeNotPost:
-      "Näet kirjanpidon mutta et voi kirjata. Kirjaaminen on omistajan ja vuoropäällikön oikeus.",
+    canSeeNotPost: "Näet kirjanpidon mutta et voi kirjata. Kirjaaminen on omistajan oikeus.",
     closingLocks:
       "Sulkeminen kirjaa kuukauden tositteet ja lukitsee ne. Se ei onnistu jos täsmäytys ei mene läpi — painike kertoo silloin mikä estää.",
     accounting: "Kirjanpito",
@@ -948,7 +941,7 @@ const fi = {
     changes: "Muutoksia",
     deletions: "Poistoja",
     lastCritical: "Viimeisin kriittinen muutos",
-    criticalKinds: "Palkka, käyttöoikeus, työaikakorjaus tai verokanta",
+    criticalKinds: "Käyttöoikeus, verokanta tai kuukauden sulku",
     searchPlaceholder: "Hae käyttäjällä, toiminnolla tai kohteella…",
     searchLog: "Hae lokista",
     module: "Moduuli",
@@ -2118,8 +2111,7 @@ const en: AdminText = {
       "Yesterday's sales fell {osuus} % short of the benchmark",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "No receipts recorded for {maara} days",
-    noReceiptsBody:
-      "The latest receipt is from {paiva}, but shifts have been worked since. Unrecorded purchases are missing from expenses and budgets.",
+    noReceiptsBody: "The latest receipt is from {paiva}, but sales have been recorded since. Unrecorded purchases are missing from expenses and budgets.",
     sameDay: "the same day",
     consecutiveDays: "consecutive days",
     taskWasDueAt: "{nimi} should have been done today at {aika}.",
@@ -2263,8 +2255,7 @@ const en: AdminText = {
     notifications: "Notifications",
     nothingToNote: "Nothing to note",
     allInOrder: "Everything is in order",
-    allInOrderBody:
-      "Receipts are handled, shifts have assignees and no deadlines have passed. Notifications appear here by themselves when something needs attention.",
+    allInOrderBody: "Receipts are handled and no deadlines have been missed. Notifications appear here by themselves when something needs attention.",
     needsAttentionNow: "Needs attention now",
     notTomorrow: "These do not wait until tomorrow",
     otherNotes: "Other notes",
@@ -2346,8 +2337,7 @@ const en: AdminText = {
     monthlyReport: "Monthly report",
     deliveryToAccountant: "Delivery to the accountant",
     accountant: "Accountant",
-    accountantSeesItself:
-      ", and they see the expenses, VAT and reports themselves — no files need sending. They do not see hourly rates or staff details.",
+    accountantSeesItself: ", and they see the expenses, VAT and reports themselves — no need to send files.",
     formatsHint:
       "In the Excel file the sums are numbers, so you can calculate with them right away. In CSV everything is text, and it uses a semicolon as the separator plus a UTF-8 marker — Finnish Excel opens it correctly as is. Both are built from the same source, so the figures cannot differ.",
     downloadWholeMonth: "Download the whole month as Excel",
@@ -2463,8 +2453,7 @@ const en: AdminText = {
     ownCategories: "Own categories",
     addOwnCategory:
       "Add your own category if the standard ones are not enough.",
-    logHint:
-      "The activity log says who made a change, what it affected and what the value was before. Pay changes, time corrections, tax rates and access rights are always recorded.",
+    logHint: "The activity log shows who made a change, what it affected and the value before. VAT rates, access rights and month closings are always recorded.",
     openLog: "Open the activity log",
     logImmutable:
       "The log cannot be edited or deleted. The entries are created in the database, so they are recorded even when a change is made outside the interface.",
@@ -2477,8 +2466,7 @@ const en: AdminText = {
     emailFixed: "The email is your sign-in identifier and cannot be changed here. The role is set by the business owner.",
     restaurantName: "The business name",
     timezone: "Time zone",
-    timezoneHint:
-      "Working time, shift days and month boundaries are calculated in this zone. The server runs in UTC, so the wrong zone would move night shifts to the wrong day.",
+    timezoneHint: "Day and month boundaries are calculated in this time. The server runs in UTC, so the wrong zone would move evening sales to the wrong day.",
     noOwnCategories:
       "There are no own categories. Without them receipts show under the nine base classes.",
     newCategory: "New category",
@@ -2524,8 +2512,7 @@ const en: AdminText = {
     groupUsedOnRows:
       "The group cannot be deleted: it has been used on {maara} sales rows. Disable it instead — the old rows keep the name and the rate.",
     yourName: "Your name",
-    yourNameHint:
-      "Shows in the shift list, as the recorder of receipts and in the team. The same name everywhere — no separate display name.",
+    yourNameHint: "Shown as the person who added a receipt and in the activity log. The same name everywhere — no separate display name.",
     newPassword: "New password",
     newPasswordHint:
       "At least eight characters. The old password is not asked because you are already signed in — if the session has expired, the change does not work.",
@@ -2565,8 +2552,7 @@ const en: AdminText = {
       "Every event of the month is posted and the reconciliation passes.",
     manualRarely:
       "Normally this is not needed: the entry appears by itself when you save a receipt or a day's sales. If an event stays here even after fetching, it is missing details — what is missing is stated above.",
-    canSeeNotPost:
-      "You can see the ledger but not post to it. Posting is the right of the owner and the shift manager.",
+    canSeeNotPost: "You can see the bookkeeping but not post entries. Posting is the owner's right.",
     closingLocks:
       "Closing posts the month's vouchers and locks them. It does not work if the reconciliation fails — the button then says what is blocking it.",
     accounting: "Accounting",
@@ -2648,7 +2634,7 @@ const en: AdminText = {
     changes: "Changes",
     deletions: "Deletions",
     lastCritical: "The latest critical change",
-    criticalKinds: "Pay, access rights, a time correction or a tax rate",
+    criticalKinds: "Access right, VAT rate or month closing",
     searchPlaceholder: "Search by user, action or subject…",
     searchLog: "Search the log",
     module: "Module",
@@ -3809,8 +3795,7 @@ const sv: AdminText = {
     yesterdayShortfall: "Gårdagens försäljning låg {osuus} % under jämförelsen",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "Inga kvitton registrerade på {maara} dagar",
-    noReceiptsBody:
-      "Det senaste kvittot är från {paiva}, men pass har körts sedan dess. Oregistrerade inköp saknas i kostnader och budget.",
+    noReceiptsBody: "Det senaste kvittot är från {paiva}, men försäljning har registrerats efter det. Oregistrerade inköp saknas i kostnader och budgetar.",
     sameDay: "samma dag",
     consecutiveDays: "på varandra följande dagar",
     taskWasDueAt: "{nimi} skulle ha gjorts i dag kl. {aika}.",
@@ -3951,8 +3936,7 @@ const sv: AdminText = {
     notifications: "Aviseringar",
     nothingToNote: "Inget att anmärka",
     allInOrder: "Allt är i ordning",
-    allInOrderBody:
-      "Kvittona är hanterade, passen har utförare och inga deadlines är passerade. Aviseringar dyker upp här av sig själva när något kräver uppmärksamhet.",
+    allInOrderBody: "Kvittona är hanterade och inga tidsfrister har missats. Aviseringar dyker upp här av sig själva när något kräver uppmärksamhet.",
     needsAttentionNow: "Kräver uppmärksamhet nu",
     notTomorrow: "De här väntar inte till i morgon",
     otherNotes: "Övriga anmärkningar",
@@ -4034,8 +4018,7 @@ const sv: AdminText = {
     monthlyReport: "Månadsrapport",
     deliveryToAccountant: "Leverans till bokföraren",
     accountant: "Bokförare",
-    accountantSeesItself:
-      ", så ser hen kostnaderna, momsen och rapporterna själv och inga filer behöver skickas. Hen ser inte timlöner eller personaluppgifter.",
+    accountantSeesItself: ", så ser hen kostnaderna, momsen och rapporterna själv — inga filer behöver skickas.",
     formatsHint:
       "I Excel-filen är summorna tal, så du kan räkna med dem direkt. I CSV är allt text, och den använder semikolon som avgränsare och en UTF-8-markering — finsk Excel öppnar den rätt direkt. Båda byggs från samma källa, så siffrorna kan inte skilja sig åt.",
     downloadWholeMonth: "Ladda ner hela månaden som Excel",
@@ -4152,8 +4135,7 @@ const sv: AdminText = {
     alwaysAvailable: "Alltid tillgängliga och kan inte tas bort.",
     ownCategories: "Egna kategorier",
     addOwnCategory: "Lägg till en egen kategori om standarderna inte räcker.",
-    logHint:
-      "Aktivitetsloggen berättar vem som gjort ändringen, vad den gällde och vilket värde som fanns innan. Löneändringar, tidskorrigeringar, skattesatser och behörigheter registreras alltid.",
+    logHint: "Aktivitetsloggen visar vem som gjorde ändringen, vad den gällde och värdet innan. Momssatser, behörigheter och månadsstängningar registreras alltid.",
     openLog: "Öppna aktivitetsloggen",
     logImmutable:
       "Loggen kan inte ändras eller tas bort. Anteckningarna skapas i databasen, så de registreras även när en ändring görs utanför gränssnittet.",
@@ -4166,8 +4148,7 @@ const sv: AdminText = {
     emailFixed: "E-posten är din inloggningsidentitet och kan inte bytas här. Rollen sätts av företagets ägare.",
     restaurantName: "Företagets namn",
     timezone: "Tidszon",
-    timezoneHint:
-      "Arbetstid, passdagar och månadsgränser räknas i den här zonen. Servern går i UTC, så fel zon skulle flytta nattpassen till fel dag.",
+    timezoneHint: "Dygnets och månadens gränser beräknas i denna tid. Servern går i UTC, så fel zon skulle flytta kvällens försäljning till fel dag.",
     noOwnCategories:
       "Det finns inga egna kategorier. Utan dem visas kvittona under de nio grundklasserna.",
     newCategory: "Ny kategori",
@@ -4213,8 +4194,7 @@ const sv: AdminText = {
     groupUsedOnRows:
       "Gruppen kan inte tas bort: den har använts på {maara} försäljningsrader. Inaktivera den i stället — de gamla raderna behåller namn och sats.",
     yourName: "Ditt namn",
-    yourNameHint:
-      "Syns i passlistan, som den som registrerat kvitton och i arbetsgemenskapen. Samma namn överallt — inget separat visningsnamn.",
+    yourNameHint: "Visas som den som lade till kvittot och i aktivitetsloggen. Samma namn överallt — inget separat visningsnamn.",
     newPassword: "Nytt lösenord",
     newPasswordHint:
       "Minst åtta tecken. Det gamla lösenordet efterfrågas inte eftersom du redan är inloggad — om sessionen har gått ut fungerar bytet inte.",
@@ -4255,8 +4235,7 @@ const sv: AdminText = {
       "Alla månadens händelser är bokförda och avstämningen går igenom.",
     manualRarely:
       "Vanligtvis behövs detta inte: bokföringen uppstår av sig själv när du sparar ett kvitto eller en dags försäljning. Om en händelse blir kvar även efter hämtningen saknar den uppgifter — vad står ovanför.",
-    canSeeNotPost:
-      "Du ser bokföringen men kan inte bokföra. Bokföring är ägarens och skiftchefens rättighet.",
+    canSeeNotPost: "Du ser bokföringen men kan inte bokföra. Bokföring är ägarens rättighet.",
     closingLocks:
       "Stängningen bokför månadens verifikat och låser dem. Den går inte om avstämningen inte går igenom — knappen säger då vad som hindrar.",
     accounting: "Bokföring",
@@ -4338,7 +4317,7 @@ const sv: AdminText = {
     changes: "Ändringar",
     deletions: "Borttagningar",
     lastCritical: "Senaste kritiska ändringen",
-    criticalKinds: "Lön, behörighet, tidskorrigering eller skattesats",
+    criticalKinds: "Behörighet, momssats eller månadsstängning",
     searchPlaceholder: "Sök på användare, åtgärd eller objekt…",
     searchLog: "Sök i loggen",
     module: "Modul",
@@ -5502,8 +5481,7 @@ const da: AdminText = {
     yesterdayShortfall: "Gårsdagens salg lå {osuus} % under sammenligningen",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "Ingen kvitteringer registreret i {maara} dage",
-    noReceiptsBody:
-      "Den seneste kvittering er fra {paiva}, men der er kørt vagter siden. Uregistrerede indkøb mangler i udgifter og budget.",
+    noReceiptsBody: "Den seneste kvittering er fra {paiva}, men der er registreret salg efter den. Uregistrerede indkøb mangler i omkostninger og budgetter.",
     sameDay: "samme dag",
     consecutiveDays: "på hinanden følgende dage",
     taskWasDueAt: "{nimi} skulle have været gjort i dag kl. {aika}.",
@@ -5646,8 +5624,7 @@ const da: AdminText = {
     notifications: "Notifikationer",
     nothingToNote: "Intet at bemærke",
     allInOrder: "Alt er i orden",
-    allInOrderBody:
-      "Kvitteringerne er behandlet, vagterne har udførere, og ingen frister er overskredet. Notifikationer dukker op her af sig selv, når noget kræver opmærksomhed.",
+    allInOrderBody: "Kvitteringerne er behandlet, og ingen frister er overskredet. Notifikationer dukker op her af sig selv, når noget kræver opmærksomhed.",
     needsAttentionNow: "Kræver opmærksomhed nu",
     notTomorrow: "Disse venter ikke til i morgen",
     otherNotes: "Øvrige bemærkninger",
@@ -5729,8 +5706,7 @@ const da: AdminText = {
     monthlyReport: "Månedsrapport",
     deliveryToAccountant: "Levering til bogholderen",
     accountant: "Bogholder",
-    accountantSeesItself:
-      ", så ser de selv udgifterne, momsen og rapporterne, og der skal ikke sendes filer. De ser ikke timelønninger eller personaleoplysninger.",
+    accountantSeesItself: ", så ser vedkommende omkostninger, moms og rapporter selv — filer behøver ikke sendes.",
     formatsHint:
       "I Excel-filen er summerne tal, så du kan regne med dem med det samme. I CSV er alt tekst, og den bruger semikolon som separator samt en UTF-8-markering — finsk Excel åbner den korrekt med det samme. Begge bygges fra samme kilde, så tallene kan ikke afvige.",
     downloadWholeMonth: "Download hele måneden som Excel",
@@ -5846,8 +5822,7 @@ const da: AdminText = {
     alwaysAvailable: "Altid tilgængelige og kan ikke slettes.",
     ownCategories: "Egne kategorier",
     addOwnCategory: "Tilføj din egen kategori, hvis standarderne ikke rækker.",
-    logHint:
-      "Aktivitetsloggen fortæller, hvem der lavede ændringen, hvad den vedrørte, og hvilken værdi der var før. Lønændringer, tidsrettelser, skattesatser og adgange registreres altid.",
+    logHint: "Aktivitetsloggen viser hvem der lavede ændringen, hvad den vedrørte, og værdien før. Momssatser, rettigheder og månedslukninger registreres altid.",
     openLog: "Åbn aktivitetsloggen",
     logImmutable:
       "Loggen kan ikke ændres eller slettes. Posterne oprettes i databasen, så de registreres også, når en ændring laves uden om brugerfladen.",
@@ -5860,8 +5835,7 @@ const da: AdminText = {
     emailFixed: "E-mailen er dit login-id og kan ikke ændres her. Rollen sættes af virksomhedens ejer.",
     restaurantName: "Virksomhedens navn",
     timezone: "Tidszone",
-    timezoneHint:
-      "Arbejdstid, vagtdage og månedsgrænser beregnes i denne zone. Serveren kører i UTC, så en forkert zone ville flytte nattevagter til den forkerte dag.",
+    timezoneHint: "Døgnets og månedens grænser beregnes i denne tid. Serveren kører i UTC, så en forkert zone ville flytte aftenens salg til den forkerte dag.",
     noOwnCategories:
       "Der er ingen egne kategorier. Uden dem vises kvitteringerne under de ni grundklasser.",
     newCategory: "Ny kategori",
@@ -5907,8 +5881,7 @@ const da: AdminText = {
     groupUsedOnRows:
       "Gruppen kan ikke slettes: den er brugt på {maara} salgsrækker. Deaktivér den i stedet — de gamle rækker beholder navn og sats.",
     yourName: "Dit navn",
-    yourNameHint:
-      "Vises i vagtlisten, som den, der har registreret kvitteringer, og i arbejdsfællesskabet. Samme navn overalt — intet separat visningsnavn.",
+    yourNameHint: "Vises som den, der tilføjede kvitteringen, og i aktivitetsloggen. Samme navn overalt — intet separat visningsnavn.",
     newPassword: "Ny adgangskode",
     newPasswordHint:
       "Mindst otte tegn. Den gamle adgangskode spørges der ikke om, fordi du allerede er logget ind — hvis sessionen er udløbet, virker skiftet ikke.",
@@ -5949,8 +5922,7 @@ const da: AdminText = {
       "Alle månedens hændelser er bogført, og afstemningen går igennem.",
     manualRarely:
       "Normalt er dette ikke nødvendigt: bogføringen opstår af sig selv, når du gemmer en kvittering eller en dags salg. Hvis en hændelse bliver liggende efter hentningen, mangler den oplysninger — hvad står ovenfor.",
-    canSeeNotPost:
-      "Du kan se bogføringen, men ikke bogføre. Bogføring er ejerens og vagtlederens ret.",
+    canSeeNotPost: "Du kan se bogføringen, men ikke bogføre. Bogføring er ejerens ret.",
     closingLocks:
       "Lukningen bogfører månedens bilag og låser dem. Det går ikke, hvis afstemningen ikke går igennem — knappen fortæller så, hvad der forhindrer det.",
     accounting: "Bogføring",
@@ -6032,7 +6004,7 @@ const da: AdminText = {
     changes: "Ændringer",
     deletions: "Sletninger",
     lastCritical: "Seneste kritiske ændring",
-    criticalKinds: "Løn, adgang, tidsrettelse eller skattesats",
+    criticalKinds: "Rettighed, momssats eller månedslukning",
     searchPlaceholder: "Søg på bruger, handling eller emne…",
     searchLog: "Søg i loggen",
     module: "Modul",
@@ -7197,8 +7169,7 @@ const tr: AdminText = {
     yesterdayShortfall: "Dünkü satış karşılaştırmanın %{osuus} altında kaldı",
     yesterdayShortfallBody: "{summa} — %{osuus} {vertailu}.",
     noReceiptsForDays: "{maara} gündür fiş kaydedilmedi",
-    noReceiptsBody:
-      "Son fiş {paiva} tarihli, ancak o zamandan beri vardiya çalışıldı. Kaydedilmemiş alımlar giderlerde ve bütçede eksik.",
+    noReceiptsBody: "Son fiş {paiva} tarihli, ancak sonrasında satış kaydedilmiş. Kaydedilmemiş alışlar giderlerden ve bütçelerden eksik kalır.",
     sameDay: "aynı gün",
     consecutiveDays: "ardışık günler",
     taskWasDueAt: "{nimi} bugün saat {aika} itibarıyla yapılmalıydı.",
@@ -7342,8 +7313,7 @@ const tr: AdminText = {
     notifications: "Bildirimler",
     nothingToNote: "Belirtilecek bir şey yok",
     allInOrder: "Her şey yolunda",
-    allInOrderBody:
-      "Fişler işlendi, vardiyaların sorumluları var ve hiçbir süre aşılmadı. Bir şey dikkat gerektirdiğinde bildirimler burada kendiliğinden görünür.",
+    allInOrderBody: "Fişler işlendi ve hiçbir son tarih kaçmadı. Bir şey dikkat gerektirdiğinde bildirimler burada kendiliğinden görünür.",
     needsAttentionNow: "Şimdi dikkat gerekiyor",
     notTomorrow: "Bunlar yarına kalmaz",
     otherNotes: "Diğer notlar",
@@ -7425,8 +7395,7 @@ const tr: AdminText = {
     monthlyReport: "Aylık rapor",
     deliveryToAccountant: "Muhasebeciye teslim",
     accountant: "Muhasebeci",
-    accountantSeesItself:
-      ", böylece giderleri, KDV'yi ve raporları kendisi görür ve dosya göndermeye gerek kalmaz. Saat ücretlerini ve personel ayrıntılarını görmez.",
+    accountantSeesItself: ", böylece giderleri, KDV'yi ve raporları kendisi görür — dosya göndermeye gerek kalmaz.",
     formatsHint:
       "Excel dosyasında tutarlar sayıdır, bu yüzden hemen hesap yapabilirsin. CSV'de her şey metindir; ayırıcı olarak noktalı virgül ve UTF-8 işareti kullanır — Fin Excel'i doğrudan doğru açar. İkisi de aynı kaynaktan oluşturulur, bu yüzden rakamlar farklı olamaz.",
     downloadWholeMonth: "Tüm ayı Excel olarak indir",
@@ -7542,8 +7511,7 @@ const tr: AdminText = {
     alwaysAvailable: "Her zaman kullanılabilir ve silinemez.",
     ownCategories: "Kendi kategorilerin",
     addOwnCategory: "Standartlar yetmiyorsa kendi kategorini ekle.",
-    logHint:
-      "Etkinlik günlüğü, değişikliği kimin yaptığını, neyi etkilediğini ve önceki değeri söyler. Ücret değişiklikleri, zaman düzeltmeleri, vergi oranları ve erişim yetkileri her zaman kaydedilir.",
+    logHint: "İşlem günlüğü değişikliği kimin yaptığını, neyi etkilediğini ve önceki değeri gösterir. KDV oranları, erişim hakları ve ay kapanışları her zaman kaydedilir.",
     openLog: "Etkinlik günlüğünü aç",
     logImmutable:
       "Günlük düzenlenemez ve silinemez. Kayıtlar veritabanında oluşur, bu yüzden değişiklik arayüz dışından yapıldığında da kaydedilir.",
@@ -7556,8 +7524,7 @@ const tr: AdminText = {
     emailFixed: "E-posta giriş kimliğindir ve buradan değiştirilemez. Rolü işletmenin sahibi belirler.",
     restaurantName: "İşletmenin adı",
     timezone: "Saat dilimi",
-    timezoneHint:
-      "Çalışma süresi, vardiya günleri ve ay sınırları bu dilimde hesaplanır. Sunucu UTC'de çalışır, bu yüzden yanlış dilim gece vardiyalarını yanlış güne kaydırır.",
+    timezoneHint: "Gün ve ay sınırları bu saate göre hesaplanır. Sunucu UTC ile çalışır, yanlış dilim akşam satışını yanlış güne taşır.",
     noOwnCategories:
       "Kendi kategorin yok. Onlar olmadan fişler dokuz ana sınıfta görünür.",
     newCategory: "Yeni kategori",
@@ -7602,8 +7569,7 @@ const tr: AdminText = {
     groupUsedOnRows:
       "Grup silinemez: {maara} satış satırında kullanılmış. Bunun yerine devre dışı bırak — eski satırlar adı ve oranı korur.",
     yourName: "Adın",
-    yourNameHint:
-      "Vardiya listesinde, fişleri kaydeden kişi olarak ve ekipte görünür. Her yerde aynı ad — ayrı bir görünen ad yok.",
+    yourNameHint: "Fişi ekleyen kişi olarak ve işlem günlüğünde görünür. Her yerde aynı ad — ayrı bir görünen ad yok.",
     newPassword: "Yeni parola",
     newPasswordHint:
       "En az sekiz karakter. Zaten oturum açtığın için eski parola sorulmaz — oturum sona erdiyse değişiklik çalışmaz.",
@@ -7642,8 +7608,7 @@ const tr: AdminText = {
     allPosted: "Ayın tüm hareketleri kaydedildi ve mutabakat geçiyor.",
     manualRarely:
       "Normalde buna gerek yoktur: bir fiş ya da günün satışını kaydettiğinde kayıt kendiliğinden oluşur. Bir hareket getirmeden sonra da burada kalıyorsa, bilgileri eksiktir — eksik olan yukarıda yazar.",
-    canSeeNotPost:
-      "Muhasebeyi görebilir ama kayıt yapamazsın. Kayıt, sahip ve vardiya amirinin yetkisidir.",
+    canSeeNotPost: "Muhasebeyi görebilirsiniz ama kayıt yapamazsınız. Kayıt yapmak şirket sahibinin hakkıdır.",
     closingLocks:
       "Kapatma, ayın belgelerini kaydeder ve kilitler. Mutabakat geçmezse çalışmaz — düğme o zaman neyin engellediğini söyler.",
     accounting: "Muhasebe",
@@ -7724,7 +7689,7 @@ const tr: AdminText = {
     changes: "Değişiklikler",
     deletions: "Silmeler",
     lastCritical: "Son kritik değişiklik",
-    criticalKinds: "Ücret, erişim yetkisi, zaman düzeltmesi ya da vergi oranı",
+    criticalKinds: "Erişim hakkı, KDV oranı veya ay kapanışı",
     searchPlaceholder: "Kullanıcı, işlem ya da nesneye göre ara…",
     searchLog: "Günlükte ara",
     module: "Modül",
@@ -8883,8 +8848,7 @@ const et: AdminText = {
     yesterdayShortfall: "Eilne müük jäi võrdlusest {osuus} % alla",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "{maara} päeva ei ole tšekke salvestatud",
-    noReceiptsBody:
-      "Viimane tšekk on {paiva}, kuid vahetusi on pärast tehtud. Salvestamata ostud puuduvad kuludest ja eelarvest.",
+    noReceiptsBody: "Viimane tšekk on {paiva}, kuid pärast seda on müüki kirjendatud. Kirjendamata ostud puuduvad kuludest ja eelarvetest.",
     sameDay: "sama päev",
     consecutiveDays: "järjestikused päevad",
     taskWasDueAt: "{nimi} oleks pidanud tehtama täna kell {aika}.",
@@ -9025,8 +8989,7 @@ const et: AdminText = {
     notifications: "Teated",
     nothingToNote: "Märkida ei ole midagi",
     allInOrder: "Kõik on korras",
-    allInOrderBody:
-      "Tšekid on käsitletud, vahetustel on tegijad ja ühtegi tähtaega ei ole ületatud. Teated ilmuvad siia ise, kui midagi vajab tähelepanu.",
+    allInOrderBody: "Tšekid on käsitletud ja tähtaegu pole ületatud. Teated ilmuvad siia ise, kui midagi vajab tähelepanu.",
     needsAttentionNow: "Vajab tähelepanu kohe",
     notTomorrow: "Need ei oota homseni",
     otherNotes: "Muud märkused",
@@ -9107,8 +9070,7 @@ const et: AdminText = {
     monthlyReport: "Kuuaruanne",
     deliveryToAccountant: "Edastamine raamatupidajale",
     accountant: "Raamatupidaja",
-    accountantSeesItself:
-      ", siis näeb ta kulusid, käibemaksu ja aruandeid ise ning faile pole vaja saata. Ta ei näe tunnitasusid ega personali üksikasju.",
+    accountantSeesItself: ", siis näeb ta kulusid, käibemaksu ja aruandeid ise — faile pole vaja saata.",
     formatsHint:
       "Exceli failis on summad arvud, seega saab nendega kohe arvutada. CSV-s on kõik tekst ning see kasutab eraldajana semikoolonit ja UTF-8 märgist — soome Excel avab selle otse õigesti. Mõlemad ehitatakse samast allikast, seega numbrid ei saa erineda.",
     downloadWholeMonth: "Laadi kogu kuu Excelina alla",
@@ -9223,8 +9185,7 @@ const et: AdminText = {
     alwaysAvailable: "Alati saadaval ja neid ei saa kustutada.",
     ownCategories: "Oma kategooriad",
     addOwnCategory: "Lisa oma kategooria, kui standardsetest ei piisa.",
-    logHint:
-      "Tegevuslogi ütleb, kes muudatuse tegi, mida see puudutas ja mis oli väärtus enne. Palgamuudatused, tööaja parandused, maksumäärad ja kasutusõigused salvestatakse alati.",
+    logHint: "Tegevuslogi näitab, kes muudatuse tegi, mida see puudutas ja milline oli varasem väärtus. Käibemaksumäärad, õigused ja kuu sulgemised salvestatakse alati.",
     openLog: "Ava tegevuslogi",
     logImmutable:
       "Logi ei saa muuta ega kustutada. Kanded tekivad andmebaasis, seega salvestatakse need ka siis, kui muudatus tehakse liidesest mööda.",
@@ -9237,8 +9198,7 @@ const et: AdminText = {
     emailFixed: "E-post on sinu sisselogimistunnus ja seda siit muuta ei saa. Rolli määrab ettevõtte omanik.",
     restaurantName: "Ettevõtte nimi",
     timezone: "Ajavöönd",
-    timezoneHint:
-      "Tööaeg, vahetuste päevad ja kuupiirid arvutatakse selles tsoonis. Server töötab UTC-s, seega vale tsoon nihutaks öövahetused valele päevale.",
+    timezoneHint: "Päeva ja kuu piirid arvutatakse selles ajas. Server töötab UTC-s, seega vale ajavöönd nihutaks õhtuse müügi valele päevale.",
     noOwnCategories:
       "Oma kategooriaid ei ole. Ilma nendeta kuvatakse tšekid üheksa põhiklassi all.",
     newCategory: "Uus kategooria",
@@ -9283,8 +9243,7 @@ const et: AdminText = {
     groupUsedOnRows:
       "Gruppi ei saa kustutada: seda on kasutatud {maara} müügireal. Lülita see hoopis välja — vanad read säilitavad nime ja määra.",
     yourName: "Sinu nimi",
-    yourNameHint:
-      "Kuvatakse vahetuste loendis, tšekkide sisestajana ja töökollektiivis. Sama nimi kõikjal — eraldi kuvanime ei ole.",
+    yourNameHint: "Kuvatakse tšeki lisajana ja tegevuslogis. Sama nimi kõikjal — eraldi kuvatavat nime pole.",
     newPassword: "Uus parool",
     newPasswordHint:
       "Vähemalt kaheksa märki. Vana parooli ei küsita, sest oled juba sisse logitud — kui seanss on aegunud, vahetus ei õnnestu.",
@@ -9323,8 +9282,7 @@ const et: AdminText = {
     allPosted: "Kõik kuu sündmused on kantud ja vastavusse viimine läheb läbi.",
     manualRarely:
       "Tavaliselt pole seda vaja: kanne tekib ise, kui salvestad tšeki või päeva müügi. Kui sündmus jääb siia ka pärast pärimist, on tal andmeid puudu — mis puudub, on kirjas ülal.",
-    canSeeNotPost:
-      "Näed raamatupidamist, kuid ei saa kanda. Kandmine on omaniku ja vahetuse juhi õigus.",
+    canSeeNotPost: "Näed raamatupidamist, kuid ei saa kirjendada. Kirjendamine on omaniku õigus.",
     closingLocks:
       "Sulgemine kannab kuu tositted ja lukustab need. See ei õnnestu, kui vastavusse viimine ei lähe läbi — nupp ütleb siis, mis takistab.",
     accounting: "Raamatupidamine",
@@ -9405,7 +9363,7 @@ const et: AdminText = {
     changes: "Muudatusi",
     deletions: "Kustutamisi",
     lastCritical: "Viimane kriitiline muudatus",
-    criticalKinds: "Palk, kasutusõigus, tööaja parandus või maksumäär",
+    criticalKinds: "Õigus, käibemaksumäär või kuu sulgemine",
     searchPlaceholder: "Otsi kasutaja, tegevuse või objekti järgi…",
     searchLog: "Otsi logist",
     module: "Moodul",
@@ -10568,8 +10526,7 @@ const ar: AdminText = {
       "مبيعات الأمس أقل من المعيار بنسبة {osuus} %",
     yesterdayShortfallBody: "{summa} — {osuus} % {vertailu}.",
     noReceiptsForDays: "لا إيصالات مسجّلة منذ {maara} أيام",
-    noReceiptsBody:
-      "أحدث إيصال بتاريخ {paiva}، لكن هناك ورديات عمل منذ ذلك الحين. المشتريات غير المسجّلة غائبة عن المصاريف والميزانيات.",
+    noReceiptsBody: "آخر إيصال بتاريخ {paiva}، لكن جرى تسجيل مبيعات بعده. المشتريات غير المسجّلة تنقص من المصاريف والميزانيات.",
     sameDay: "نفس اليوم",
     consecutiveDays: "أيام متتالية",
     taskWasDueAt: "كان يجب إنجاز {nimi} اليوم الساعة {aika}.",
@@ -10713,8 +10670,7 @@ const ar: AdminText = {
     notifications: "الإشعارات",
     nothingToNote: "لا شيء يستدعي الملاحظة",
     allInOrder: "كل شيء على ما يرام",
-    allInOrderBody:
-      "تمت معالجة الإيصالات، وللورديات مكلّفون، ولم يفت أي موعد نهائي. تظهر الإشعارات هنا تلقائيًا عند الحاجة إلى الاهتمام بشيء ما.",
+    allInOrderBody: "عولجت الإيصالات ولم تفُت أي مواعيد. تظهر التنبيهات هنا تلقائيًا عندما يحتاج شيء إلى انتباه.",
     needsAttentionNow: "يحتاج إلى اهتمام الآن",
     notTomorrow: "هذه لا تنتظر حتى الغد",
     otherNotes: "ملاحظات أخرى",
@@ -10796,8 +10752,7 @@ const ar: AdminText = {
     monthlyReport: "التقرير الشهري",
     deliveryToAccountant: "الإرسال إلى المحاسب",
     accountant: "المحاسب",
-    accountantSeesItself:
-      "، ويرى المصاريف وضريبة القيمة المضافة والتقارير بنفسه — دون الحاجة لإرسال ملفات. ولا يرى أجور الساعات أو تفاصيل الموظفين.",
+    accountantSeesItself: "، فيرى المصاريف وضريبة القيمة المضافة والتقارير بنفسه دون إرسال ملفات.",
     formatsHint:
       "في ملف Excel تكون المجاميع أرقامًا، لذا يمكنك الحساب بها مباشرة. في CSV كل شيء نص، ويُستخدم الفاصلة المنقوطة كفاصل مع علامة UTF-8 — يفتحه Excel الفنلندي بشكل صحيح كما هو. كلاهما مبني من نفس المصدر، لذا لا يمكن أن تختلف الأرقام.",
     downloadWholeMonth: "تنزيل الشهر كاملًا كملف Excel",
@@ -10914,8 +10869,7 @@ const ar: AdminText = {
     ownCategories: "الفئات الخاصة",
     addOwnCategory:
       "أضف فئتك الخاصة إذا لم تكن الفئات القياسية كافية.",
-    logHint:
-      "يوضح سجل النشاط من قام بالتغيير وما الذي تأثر به وما كانت القيمة قبله. تُسجَّل دائماً تغييرات الأجور وتصحيحات الوقت ونسب الضريبة وحقوق الوصول.",
+    logHint: "يُظهر سجل النشاط من أجرى التغيير وما شمله والقيمة السابقة. تُسجَّل دائمًا نسب الضريبة والصلاحيات وإغلاق الأشهر.",
     openLog: "فتح سجل النشاط",
     logImmutable:
       "لا يمكن تعديل السجل أو حذفه. تُنشأ الإدخالات في قاعدة البيانات، لذا تُسجَّل حتى عند إجراء تغيير خارج الواجهة.",
@@ -10928,8 +10882,7 @@ const ar: AdminText = {
     emailFixed: "البريد الإلكتروني هو معرّف تسجيل دخولك ولا يمكن تغييره هنا. يحدد مالك المنشأة الدور.",
     restaurantName: "اسم المنشأة",
     timezone: "المنطقة الزمنية",
-    timezoneHint:
-      "تُحسب ساعات العمل وأيام النوبات وحدود الشهر بهذه المنطقة. يعمل الخادم بتوقيت UTC، لذا قد تنقل المنطقة الخاطئة نوبات الليل إلى اليوم الخطأ.",
+    timezoneHint: "تُحسب حدود اليوم والشهر بهذا التوقيت. يعمل الخادم بتوقيت UTC، لذا فإن منطقة خاطئة تنقل مبيعات المساء إلى يوم خاطئ.",
     noOwnCategories:
       "لا توجد فئات خاصة. بدونها تظهر الإيصالات ضمن الفئات الأساسية التسع.",
     newCategory: "فئة جديدة",
@@ -10975,8 +10928,7 @@ const ar: AdminText = {
     groupUsedOnRows:
       "لا يمكن حذف المجموعة: استُخدمت في {maara} صفوف مبيعات. عطّلها بدلاً من ذلك — تحتفظ الصفوف القديمة بالاسم والنسبة.",
     yourName: "اسمك",
-    yourNameHint:
-      "يظهر في قائمة النوبات، كمسجّل للإيصالات وفي الفريق. الاسم نفسه في كل مكان — لا يوجد اسم عرض منفصل.",
+    yourNameHint: "يظهر كمن أضاف الإيصال وفي سجل النشاط. الاسم نفسه في كل مكان — لا اسم عرض منفصل.",
     newPassword: "كلمة المرور الجديدة",
     newPasswordHint:
       "ثمانية أحرف على الأقل. لا تُطلب كلمة المرور القديمة لأنك مسجل الدخول بالفعل — إذا انتهت صلاحية الجلسة، لن يعمل التغيير.",
@@ -11016,8 +10968,7 @@ const ar: AdminText = {
       "كل أحداث الشهر مُرحّلة والتسوية ناجحة.",
     manualRarely:
       "عادةً لا حاجة لهذا: يظهر القيد تلقائياً عند حفظ إيصال أو مبيعات يوم. إذا بقي حدث هنا حتى بعد الجلب، فهذا يعني أن تفاصيل ناقصة — ما هو الناقص مذكور أعلاه.",
-    canSeeNotPost:
-      "يمكنك رؤية دفتر الأستاذ لكن لا يمكنك الترحيل إليه. الترحيل حق للمالك ومدير النوبة.",
+    canSeeNotPost: "ترى المحاسبة لكن لا يمكنك الترحيل. الترحيل من حق المالك.",
     closingLocks:
       "الإقفال يرحّل قسائم الشهر ويقفلها. لا يعمل إذا فشلت التسوية — عندها يوضح الزر ما الذي يعيقه.",
     accounting: "المحاسبة",
@@ -11099,7 +11050,7 @@ const ar: AdminText = {
     changes: "التغييرات",
     deletions: "الحذوفات",
     lastCritical: "آخر تغيير حرج",
-    criticalKinds: "الأجور، حقوق الوصول، تصحيح وقت أو نسبة ضريبة",
+    criticalKinds: "صلاحية أو نسبة ضريبة أو إغلاق شهر",
     searchPlaceholder: "ابحث بالمستخدم أو الإجراء أو الموضوع…",
     searchLog: "البحث في السجل",
     module: "الوحدة",
