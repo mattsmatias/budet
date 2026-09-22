@@ -55,6 +55,7 @@ export const MERCHANTS = [
 
   { id: "k-supermarket", name: "K-Supermarket", category: "grocery",
     color: "#E85D04", background: "#FFF7ED",
+    logo: "/kaupat/k-supermarket.png",
     aliases: ["K-Supermarket", "K Supermarket", "KSupermarket"] },
 
   { id: "k-citymarket", name: "K-Citymarket", category: "grocery",
@@ -88,31 +89,43 @@ export const MERCHANTS = [
 
   { id: "minimani", name: "Minimani", category: "grocery",
     color: "#C8102E", background: "#FFF1F2",
+    logo: "/kaupat/minimani.png",
     aliases: ["Minimani"] },
+
+  { id: "sokos", name: "Sokos", category: "retail",
+    color: "#1B2A4A", background: "#EEF2F7",
+    logo: "/kaupat/sokos.png",
+    aliases: ["Sokos"] },
 
   // --- Elektroniikka -----------------------------------------------------
   { id: "gigantti", name: "Gigantti", category: "electronics",
     color: "#005EB8", background: "#EFF6FF",
+    logo: "/kaupat/gigantti.png",
     aliases: ["Gigantti"] },
 
   { id: "power", name: "POWER", category: "electronics",
     color: "#0F172A", background: "#F1F5F9",
+    logo: "/kaupat/power.png",
     aliases: ["Power"] },
 
   { id: "verkkokauppa-com", name: "Verkkokauppa.com", category: "electronics",
     color: "#E4002B", background: "#FFF1F2",
+    logo: "/kaupat/verkkokauppa-com.png",
     aliases: ["Verkkokauppa.com", "Verkkokauppa com", "Verkkokauppa"] },
 
   { id: "elisa", name: "Elisa", category: "electronics",
     color: "#0019AF", background: "#EFF6FF",
+    logo: "/kaupat/elisa.png",
     aliases: ["Elisa"] },
 
   { id: "dna", name: "DNA", category: "electronics",
     color: "#6E2585", background: "#FAF5FF",
+    logo: "/kaupat/dna.png",
     aliases: ["DNA"] },
 
   { id: "telia", name: "Telia", category: "electronics",
     color: "#990AE3", background: "#FAF5FF",
+    logo: "/kaupat/telia.png",
     aliases: ["Telia", "Telia Finland"] },
 
   // --- Rautakaupat -------------------------------------------------------
@@ -128,11 +141,23 @@ export const MERCHANTS = [
 
   { id: "stark", name: "STARK", category: "hardware",
     color: "#1D4ED8", background: "#EFF6FF",
+    logo: "/kaupat/stark.png",
     aliases: ["Stark", "Stark Suomi"] },
 
   { id: "puuilo", name: "Puuilo", category: "hardware",
     color: "#F59E0B", background: "#FFFBEB",
+    logo: "/kaupat/puuilo.png",
     aliases: ["Puuilo"] },
+
+  { id: "byggmax", name: "Byggmax", category: "hardware",
+    color: "#E4002B", background: "#FFF1F2",
+    logo: "/kaupat/byggmax.png",
+    aliases: ["Byggmax"] },
+
+  { id: "biltema", name: "Biltema", category: "hardware",
+    color: "#0072CE", background: "#EFF6FF",
+    logo: "/kaupat/biltema.png",
+    aliases: ["Biltema"] },
 
   // --- Autoilu -----------------------------------------------------------
   //
@@ -140,6 +165,7 @@ export const MERCHANTS = [
   // pykälässä 1 se on annettu nimenomaisesti tälle yritykselle.
   { id: "motonet", name: "Motonet", category: "automotive",
     color: "#0F52BA", background: "#EFF6FF",
+    logo: "/kaupat/motonet.png",
     aliases: ["Motonet"] },
 
   // Huoltoasema on ravintolan tavallinen kuitti: polttoaine, pesu ja
@@ -150,22 +176,68 @@ export const MERCHANTS = [
     logo: "/kaupat/neste.png",
     aliases: ["Neste", "Neste K", "Neste Express", "Neste Oil"] },
 
+  // Huoltoasemat. Kuitilla on polttoaineen lisaksi usein kahvia ja
+  // pesuja, joten ne eivat ole pelkkaa polttoainetta.
+  { id: "abc", name: "ABC", category: "automotive",
+    color: "#B07B00", background: "#FFFBEB",
+    logo: "/kaupat/abc.png",
+    aliases: ["ABC", "ABC-asema", "ABC asema", "ABC-liikennemyymälä"] },
+
+  { id: "st1", name: "St1", category: "automotive",
+    color: "#E30613", background: "#FFF1F2",
+    logo: "/kaupat/st1.png",
+    aliases: ["St1", "St 1"] },
+
+  { id: "teboil", name: "Teboil", category: "automotive",
+    color: "#E1001A", background: "#FFF1F2",
+    logo: "/kaupat/teboil.png",
+    aliases: ["Teboil"] },
+
   // --- Vähittäiskauppa ---------------------------------------------------
   { id: "tokmanni", name: "Tokmanni", category: "retail",
     color: "#E4002B", background: "#FFF1F2",
+    logo: "/kaupat/tokmanni.png",
     aliases: ["Tokmanni"] },
 
   { id: "clas-ohlson", name: "Clas Ohlson", category: "retail",
     color: "#00447C", background: "#EFF6FF",
+    logo: "/kaupat/clas-ohlson.png",
     aliases: ["Clas Ohlson"] },
 
   { id: "ikea", name: "IKEA", category: "retail",
     color: "#0058A3", background: "#EFF6FF",
+    logo: "/kaupat/ikea.png",
     aliases: ["Ikea"] },
+
+  { id: "jysk", name: "JYSK", category: "retail",
+    color: "#1A3B7C", background: "#EFF6FF",
+    logo: "/kaupat/jysk.png",
+    aliases: ["Jysk"] },
+
+  { id: "sinsay", name: "Sinsay", category: "retail",
+    color: "#111111", background: "#F4F4F5",
+    logo: "/kaupat/sinsay.png",
+    aliases: ["Sinsay"] },
+
+  { id: "xxl", name: "XXL", category: "retail",
+    color: "#6D9A00", background: "#F7FEE7",
+    logo: "/kaupat/xxl.png",
+    aliases: ["XXL", "XXL Sport", "XXL Sports"] },
+
+  { id: "intersport", name: "Intersport", category: "retail",
+    color: "#00539F", background: "#EFF6FF",
+    logo: "/kaupat/intersport.png",
+    aliases: ["Intersport"] },
+
+  { id: "r-kioski", name: "R-kioski", category: "retail",
+    color: "#0072CE", background: "#EFF6FF",
+    logo: "/kaupat/r-kioski.png",
+    aliases: ["R-kioski", "R kioski", "Rkioski"] },
 
   // --- Apteekit ----------------------------------------------------------
   { id: "yliopiston-apteekki", name: "Yliopiston Apteekki", category: "pharmacy",
     color: "#00843D", background: "#F0FDF4",
+    logo: "/kaupat/yliopiston-apteekki.png",
     aliases: ["Yliopiston Apteekki", "YA Apteekki"] },
 
   // --- Alkoholi ----------------------------------------------------------
@@ -177,35 +249,48 @@ export const MERCHANTS = [
   // --- Ravintolat --------------------------------------------------------
   { id: "mcdonalds", name: "McDonald's", category: "restaurant",
     color: "#DA291C", background: "#FFF1F2",
+    logo: "/kaupat/mcdonalds.png",
     aliases: ["McDonalds", "McDonald's", "Mc Donalds"] },
 
   { id: "hesburger", name: "Hesburger", category: "restaurant",
     color: "#004B93", background: "#EFF6FF",
+    logo: "/kaupat/hesburger.png",
     aliases: ["Hesburger"] },
 
   { id: "burger-king", name: "Burger King", category: "restaurant",
     color: "#D62300", background: "#FFF7ED",
+    logo: "/kaupat/burger-king.png",
     aliases: ["Burger King"] },
 
   { id: "subway", name: "Subway", category: "restaurant",
     color: "#008C15", background: "#F0FDF4",
+    logo: "/kaupat/subway.png",
     aliases: ["Subway"] },
 
   { id: "wolt", name: "Wolt", category: "restaurant",
     color: "#00C2E8", background: "#ECFEFF",
+    logo: "/kaupat/wolt.png",
     aliases: ["Wolt", "Wolt Enterprises"] },
 
   { id: "foodora", name: "Foodora", category: "restaurant",
     color: "#D70F64", background: "#FDF2F8",
+    logo: "/kaupat/foodora.png",
     aliases: ["Foodora"] },
+
+  { id: "kotipizza", name: "Kotipizza", category: "restaurant",
+    color: "#00693E", background: "#F0FDF4",
+    logo: "/kaupat/kotipizza.png",
+    aliases: ["Kotipizza"] },
 
   // --- Liikenne ----------------------------------------------------------
   { id: "hsl", name: "HSL", category: "transport",
     color: "#007AC9", background: "#EFF6FF",
+    logo: "/kaupat/hsl.png",
     aliases: ["HSL", "Helsingin seudun liikenne"] },
 
   { id: "vr", name: "VR", category: "transport",
     color: "#007A3D", background: "#F0FDF4",
+    logo: "/kaupat/vr.png",
     aliases: ["VR", "VR Group"] },
 
   { id: "finnair", name: "Finnair", category: "transport",
@@ -223,11 +308,34 @@ export const MERCHANTS = [
 
   { id: "metro-tukku", name: "Metro-tukku", category: "grocery",
     color: "#00519E", background: "#EFF6FF",
-    aliases: ["Metro-tukku", "Metro tukku", "Meira Nova"] },
+    logo: "/kaupat/metro-tukku.png",
+    aliases: ["Metro-tukku", "Metro tukku"] },
 
   { id: "valio", name: "Valio", category: "grocery",
     color: "#0057B8", background: "#EFF6FF",
+    logo: "/kaupat/valio.png",
     aliases: ["Valio"] },
+
+  { id: "meira-nova", name: "Meira Nova", category: "grocery",
+    color: "#00843D", background: "#F0FDF4",
+    logo: "/kaupat/meira-nova.png",
+    aliases: ["Meira Nova", "Meiranova"] },
+
+  { id: "atria", name: "Atria", category: "grocery",
+    color: "#C8102E", background: "#FFF1F2",
+    logo: "/kaupat/atria.png",
+    aliases: ["Atria"] },
+
+  { id: "hartwall", name: "Hartwall", category: "grocery",
+    color: "#1B2A6B", background: "#EEF2FF",
+    logo: "/kaupat/hartwall.png",
+    aliases: ["Hartwall"] },
+
+  // --- Palvelut ----------------------------------------------------------
+  { id: "posti", name: "Posti", category: "services",
+    color: "#E85D04", background: "#FFF7ED",
+    logo: "/kaupat/posti.png",
+    aliases: ["Posti", "Posti Group"] },
 
   { id: "heinon-tukku", name: "Heinon Tukku", category: "grocery",
     color: "#C8102E", background: "#FFF1F2",
