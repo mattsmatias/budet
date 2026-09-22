@@ -22,6 +22,7 @@ import { MattiMark } from "@/components/restoflow/matti-mark";
 import { Button } from "@/components/restoflow/ui";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 import type { Briefing } from "@/lib/matti/briefing";
+import type { BusinessType } from "@/lib/restoflow/business";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 
@@ -484,10 +485,27 @@ function Working({ t }: { t: AdminText }) {
 function quickActions(
   currentPage: string,
   t: AdminText,
+  businessType: BusinessType,
 ): { label: string; prompt: string }[] {
+  const q = (text: string) => ({ label: text, prompt: text });
+
+  /*
+   * Alan oma kysymys toisena.
+   *
+   * Ravintoloitsija kysyy raaka-aineprosenttia, kahvila keskiostosta,
+   * parturi montako asiakasta päivässä tarvitaan. Sama kolmen
+   * kysymyksen lista kaikille teki Matista yleistyökalun.
+   */
+  const ala =
+    businessType === "barber"
+      ? [q(t.mattiKysy.customersShort), q(t.mattiKysy.quietDayShort)]
+      : businessType === "cafe"
+        ? [q(t.mattiKysy.ticketShort), q(t.mattiKysy.pricesShort)]
+        : [q(t.mattiKysy.goodsShort), q(t.mattiKysy.pricesShort)];
+
   const yleiset = [
     { label: t.mattiKysy.todayShort, prompt: t.mattiKysy.todayShort },
-    { label: t.mattiKysy.weekWrongShort, prompt: t.mattiKysy.weekWrongShort },
+    ...ala,
     { label: t.mattiKysy.profitShort, prompt: t.mattiKysy.profitFull },
   ];
 
@@ -508,6 +526,7 @@ function quickActions(
     ],
     "/admin/kulut": [
       { label: t.mattiKysy.grewMostShort, prompt: t.mattiKysy.grewMostFull },
+      q(t.mattiKysy.pricesShort),
       { label: t.mattiKysy.expensesShort, prompt: t.mattiKysy.expensesFull },
     ],
     "/admin/myynti": [
@@ -519,6 +538,12 @@ function quickActions(
         label: t.mattiKysy.salesTargetShort,
         prompt: t.mattiKysy.salesTargetFull,
       },
+      q(
+        businessType === "barber"
+          ? t.mattiKysy.customersShort
+          : t.mattiKysy.quietDayShort,
+      ),
+      q(t.mattiKysy.breakEvenShort),
     ],
     "/admin/tehtavat": [
       { label: t.mattiKysy.lateTasksShort, prompt: t.mattiKysy.lateTasksShort },
@@ -531,7 +556,9 @@ function quickActions(
   const osuma = Object.keys(sivukohtaiset).find((polku) =>
     currentPage.startsWith(polku),
   );
-  return osuma ? [...sivukohtaiset[osuma], ...yleiset.slice(0, 1)] : yleiset;
+  return osuma
+    ? [...sivukohtaiset[osuma], ...yleiset.slice(0, 1)].slice(0, 4)
+    : yleiset;
 }
 
 /**
@@ -672,7 +699,7 @@ function Welcome({
         </p>
 
         <div className="mt-2 space-y-1.5">
-          {quickActions(currentPage, t).map((action) => (
+          {quickActions(currentPage, t, briefing.businessType ?? "restaurant").map((action) => (
             <button
               key={action.prompt}
               type="button"
@@ -798,7 +825,7 @@ function TurnView({ turn, t }: { turn: Turn; t: AdminText }) {
     <div>
       {/* Ei kuplaa. Matin vastaus on sisältöä, ei viesti. */}
       <p className="whitespace-pre-wrap text-[14px] leading-relaxed">
-        {turn.text}
+        <Emphasis text={turn.text} />
       </p>
 
       {turn.cards?.map((card, index) => (
@@ -1172,5 +1199,23 @@ function Composer({
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Lihavointi Matin vastauksessa.
+ *
+ * Malli kirjoittaa välillä **näin** vaikka kehote pyytää pelkkää
+ * tekstiä, ja tähdet näkyivät ruudulla sellaisenaan. Vain lihavointi
+ * tunnistetaan, eikä HTML:ää tulkita koskaan: teksti pysyy tekstinä.
+ */
+function Emphasis({ text }: { text: string }) {
+  const parts = text.split(/\*\*([^*\n]+)\*\*/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
+      )}
+    </>
   );
 }

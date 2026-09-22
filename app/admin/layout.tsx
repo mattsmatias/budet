@@ -55,13 +55,16 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
    * Havainnot lasketaan tässä eikä selaimessa: koko aineisto on jo
    * palvelimella, eikä sitä kannata lähettää mukana.
    */
-  const briefing = buildBriefing({
-    alerts,
-    receipts: data.receipts,
-    sales: data.sales,
-    today,
-    t,
-  });
+  const briefing = {
+    ...buildBriefing({
+      alerts,
+      receipts: data.receipts,
+      sales: data.sales,
+      today,
+      t,
+    }),
+    businessType: restaurant.businessType,
+  };
 
   const userName = user.fullName ?? user.email ?? t.kuori.user;
 

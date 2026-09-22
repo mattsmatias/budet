@@ -14,6 +14,7 @@
  * puuttuva, koska sen perusteella tehdään päätöksiä.
  */
 
+import type { BusinessType } from "@/lib/restoflow/business";
 import type { Alert, Receipt } from "@/lib/restoflow/types";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -37,6 +38,11 @@ export interface Briefing {
   warnings: Alert[];
   /** Havainnot datasta — poikkeamat, eivät hälytykset. */
   observations: Observation[];
+  /**
+   * Toimiala, jotta ehdotukset ovat alan kysymyksiä: parturille
+   * "montako asiakasta tarvitsen", ravintolalle raaka-aineprosentti.
+   */
+  businessType?: BusinessType;
 }
 
 /** Summa aikavälillä [alku, loppu). */

@@ -19,6 +19,7 @@ import { labels } from "@/lib/i18n/labels";
 import { DAILY_TOOLS } from "./tools-daily";
 import { VAT_TOOLS } from "./tools-vat";
 import { TASK_TOOLS } from "./tools-tasks";
+import { INDUSTRY_TOOLS } from "./tools-industry";
 import { defineTool, monthSchema, type ToolDefinition } from "./tool-kit";
 
 /**
@@ -367,6 +368,7 @@ export const TOOLS: ToolDefinition[] = [
   ...DAILY_TOOLS,
   ...VAT_TOOLS,
   ...TASK_TOOLS,
+  ...INDUSTRY_TOOLS,
   getDashboard,
   getExpensesByCategory,
   getSuppliers,

@@ -37,6 +37,27 @@ describe("Matin kehote toimialan mukaan", () => {
     expect(systemPrompt(ctx("cafe"))).toContain("Tämä yritys on kahvila");
   });
 
+  it("ohjaa parturin asiakasmäärään eikä raaka-aineisiin", () => {
+    const prompt = systemPrompt(ctx("barber"));
+    expect(prompt).toContain("# Parturi-kampaamon luvut");
+    expect(prompt).toContain("get_break_even");
+    expect(prompt).toContain("get_weekday_pattern");
+    expect(prompt).not.toContain("# Ravintolan luvut");
+  });
+
+  it("ohjaa kahvilan keskiostokseen ja tuotekatteeseen", () => {
+    const prompt = systemPrompt(ctx("cafe"));
+    expect(prompt).toContain("# Kahvilan luvut");
+    expect(prompt).toContain("Keskiostos");
+  });
+
+  it("antaa ravintolalle raaka-aineprosentin ja prime costin", () => {
+    const prompt = systemPrompt(ctx("restaurant"));
+    expect(prompt).toContain("# Ravintolan luvut");
+    expect(prompt).toContain("prime cost");
+    expect(prompt).toContain("get_price_changes");
+  });
+
   it("pitää ravintolan ravintolana", () => {
     expect(systemPrompt(ctx("restaurant"))).toContain(
       "Tämä yritys on ravintola",

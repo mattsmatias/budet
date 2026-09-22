@@ -1336,6 +1336,12 @@ const fi = {
     lateTasksShort: "Mitkä tehtävät ovat myöhässä?",
     summariseShort: "Tiivistä tämän kuukauden talous",
     summariseFull: "Tiivistä tämän kuukauden talous.",
+    goodsShort: "Mikä on raaka-aineprosenttimme?",
+    pricesShort: "Mitkä ostohinnat ovat nousseet?",
+    ticketShort: "Mikä on keskiostoksemme ja paras päivä?",
+    customersShort: "Montako asiakasta tarvitsen päivässä?",
+    quietDayShort: "Mikä viikonpäivä on hiljaisin?",
+    breakEvenShort: "Paljonko pitää myydä päivässä?",
   },
 
   mattiTyo: {
@@ -3024,6 +3030,12 @@ const en: AdminText = {
     lateTasksShort: "Which tasks are overdue?",
     summariseShort: "Summarise this month's finances",
     summariseFull: "Summarise this month's finances.",
+    goodsShort: "What is our food cost percentage?",
+    pricesShort: "Which purchase prices have gone up?",
+    ticketShort: "What is our average purchase and best day?",
+    customersShort: "How many customers do I need per day?",
+    quietDayShort: "Which weekday is the quietest?",
+    breakEvenShort: "How much do we need to sell per day?",
   },
 
   mattiTyo: {
@@ -4704,6 +4716,12 @@ const sv: AdminText = {
     lateTasksShort: "Vilka uppgifter är försenade?",
     summariseShort: "Sammanfatta månadens ekonomi",
     summariseFull: "Sammanfatta månadens ekonomi.",
+    goodsShort: "Vad är vår råvaruprocent?",
+    pricesShort: "Vilka inköpspriser har stigit?",
+    ticketShort: "Vad är vårt snittköp och bästa dag?",
+    customersShort: "Hur många kunder behöver jag per dag?",
+    quietDayShort: "Vilken veckodag är lugnast?",
+    breakEvenShort: "Hur mycket måste vi sälja per dag?",
   },
 
   mattiTyo: {
@@ -6385,6 +6403,12 @@ const da: AdminText = {
     lateTasksShort: "Hvilke opgaver er forsinkede?",
     summariseShort: "Opsummér månedens økonomi",
     summariseFull: "Opsummér månedens økonomi.",
+    goodsShort: "Hvad er vores råvareprocent?",
+    pricesShort: "Hvilke indkøbspriser er steget?",
+    ticketShort: "Hvad er vores gennemsnitskøb og bedste dag?",
+    customersShort: "Hvor mange kunder skal jeg bruge om dagen?",
+    quietDayShort: "Hvilken ugedag er den roligste?",
+    breakEvenShort: "Hvor meget skal vi sælge om dagen?",
   },
 
   mattiTyo: {
@@ -8060,6 +8084,12 @@ const tr: AdminText = {
     lateTasksShort: "Hangi görevler gecikti?",
     summariseShort: "Bu ayın mali durumunu özetle",
     summariseFull: "Bu ayın mali durumunu özetle.",
+    goodsShort: "Hammadde yüzdemiz nedir?",
+    pricesShort: "Hangi alış fiyatları arttı?",
+    ticketShort: "Ortalama sepetimiz ve en iyi günümüz nedir?",
+    customersShort: "Günde kaç müşteriye ihtiyacım var?",
+    quietDayShort: "Hangi gün en sakin?",
+    breakEvenShort: "Günde ne kadar satmamız gerekiyor?",
   },
 
   mattiTyo: {
@@ -9733,6 +9763,12 @@ const et: AdminText = {
     lateTasksShort: "Millised ülesanded on hilinenud?",
     summariseShort: "Võta selle kuu rahaasjad kokku",
     summariseFull: "Võta selle kuu rahaasjad kokku.",
+    goodsShort: "Milline on meie tooraineprotsent?",
+    pricesShort: "Millised ostuhinnad on tõusnud?",
+    ticketShort: "Milline on meie keskmine ost ja parim päev?",
+    customersShort: "Mitu klienti ma päevas vajan?",
+    quietDayShort: "Milline nädalapäev on kõige vaiksem?",
+    breakEvenShort: "Kui palju peame päevas müüma?",
   },
 
   mattiTyo: {
@@ -11417,6 +11453,12 @@ const ar: AdminText = {
     lateTasksShort: "ما المهام المتأخرة؟",
     summariseShort: "تلخيص الوضع المالي لهذا الشهر",
     summariseFull: "تلخيص الوضع المالي لهذا الشهر.",
+    goodsShort: "ما نسبة تكلفة المواد الخام لدينا؟",
+    pricesShort: "ما أسعار الشراء التي ارتفعت؟",
+    ticketShort: "ما متوسط الشراء وأفضل يوم لدينا؟",
+    customersShort: "كم عميلًا أحتاج يوميًا؟",
+    quietDayShort: "ما أهدأ يوم في الأسبوع؟",
+    breakEvenShort: "كم يجب أن نبيع يوميًا؟",
   },
 
   mattiTyo: {
