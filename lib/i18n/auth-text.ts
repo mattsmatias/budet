@@ -62,7 +62,7 @@ const fi = {
   liity: {
     metaTitle: "Liity yritykseen",
     title: "Liity yritykseen",
-    body: "Sait kutsukoodin esihenkilöltäsi. Syötä se tähän, niin näet mihin olet liittymässä.",
+    body: "Sait kutsukoodin yrityksesi omistajalta. Syötä se tähän, niin näet mihin olet liittymässä.",
     codeLabel: "Kutsukoodi",
     idle: "Jatka",
     busy: "Tarkistetaan…",
@@ -84,7 +84,7 @@ const fi = {
       "Rekisteröitymistä ei ole otettu käyttöön tässä ympäristössä.",
     idle: "Luo tunnus",
     busy: "Luodaan…",
-    inviteRequired: "Tunnus luodaan kutsukoodilla. Saat koodin Katelta tai esihenkilöltäsi.",
+    inviteRequired: "Tunnus luodaan kutsukoodilla. Saat koodin Katelta tai yrityksesi omistajalta.",
     enterCode: "Syötä kutsukoodi",
   },
 
@@ -131,8 +131,7 @@ const fi = {
     samePassword: "Uusi salasana ei voi olla sama kuin vanha.",
     changeFailed: "Salasanan vaihto ei onnistunut. Yritä uudelleen.",
     enterCode: "Syötä kutsukoodi.",
-    badCode:
-      "Koodi ei kelpaa. Tarkista se esihenkilöltäsi — koodi voi olla myös jo käytetty tai vanhentunut.",
+    badCode: "Koodi ei kelpaa. Tarkista se yrityksesi omistajalta — koodi voi olla myös jo käytetty tai vanhentunut.",
   },
 };
 
@@ -180,7 +179,7 @@ const en: AuthText = {
   liity: {
     metaTitle: "Join a business",
     title: "Join a business",
-    body: "Your manager gave you an invite code. Enter it here to see what you are joining.",
+    body: "You got an invitation code from your company's owner. Enter it here to see what you are joining.",
     codeLabel: "Invite code",
     idle: "Continue",
     busy: "Checking…",
@@ -200,7 +199,7 @@ const en: AuthText = {
     notConfigured: "Sign-up is not enabled in this environment.",
     idle: "Create account",
     busy: "Creating…",
-    inviteRequired: "Accounts are created with an invitation code. You get the code from Kate or your manager.",
+    inviteRequired: "Accounts are created with an invitation code. You get the code from Kate or your company's owner.",
     enterCode: "Enter the invitation code",
   },
   unohtui: {
@@ -245,8 +244,7 @@ const en: AuthText = {
     samePassword: "The new password cannot be the same as the old one.",
     changeFailed: "Changing the password did not work. Try again.",
     enterCode: "Enter the invite code.",
-    badCode:
-      "That code is not valid. Check it with your manager — it may also have been used already or expired.",
+    badCode: "The code doesn't work. Check it with your company's owner — it may also be used or expired.",
   },
 };
 
@@ -285,7 +283,7 @@ const sv: AuthText = {
   liity: {
     metaTitle: "Gå med i ett företag",
     title: "Gå med i ett företag",
-    body: "Din chef gav dig en inbjudningskod. Ange den här så ser du vad du går med i.",
+    body: "Du fick en inbjudningskod av företagets ägare. Ange den här så ser du vad du går med i.",
     codeLabel: "Inbjudningskod",
     idle: "Fortsätt",
     busy: "Kontrollerar…",
@@ -305,7 +303,7 @@ const sv: AuthText = {
     notConfigured: "Registrering är inte aktiverad i den här miljön.",
     idle: "Skapa konto",
     busy: "Skapar…",
-    inviteRequired: "Konton skapas med en inbjudningskod. Du får koden av Kate eller din chef.",
+    inviteRequired: "Konton skapas med en inbjudningskod. Du får koden av Kate eller företagets ägare.",
     enterCode: "Ange inbjudningskoden",
   },
   unohtui: {
@@ -350,8 +348,7 @@ const sv: AuthText = {
     samePassword: "Det nya lösenordet kan inte vara samma som det gamla.",
     changeFailed: "Lösenordet kunde inte bytas. Försök igen.",
     enterCode: "Ange inbjudningskoden.",
-    badCode:
-      "Koden gäller inte. Kontrollera den med din chef — den kan också redan vara använd eller ha gått ut.",
+    badCode: "Koden fungerar inte. Kontrollera den med företagets ägare — den kan också vara använd eller utgången.",
   },
 };
 
@@ -390,7 +387,7 @@ const da: AuthText = {
   liity: {
     metaTitle: "Tilslut dig en virksomhed",
     title: "Tilslut dig en virksomhed",
-    body: "Din leder har givet dig en invitationskode. Indtast den her, så ser du hvad du tilslutter dig.",
+    body: "Du har fået en invitationskode af virksomhedens ejer. Indtast den her, så ser du hvad du tilslutter dig.",
     codeLabel: "Invitationskode",
     idle: "Fortsæt",
     busy: "Kontrollerer…",
@@ -410,7 +407,7 @@ const da: AuthText = {
     notConfigured: "Oprettelse er ikke slået til i dette miljø.",
     idle: "Opret konto",
     busy: "Opretter…",
-    inviteRequired: "Konti oprettes med en invitationskode. Du får koden fra Kate eller din leder.",
+    inviteRequired: "Konti oprettes med en invitationskode. Du får koden fra Kate eller virksomhedens ejer.",
     enterCode: "Indtast invitationskoden",
   },
   unohtui: {
@@ -454,8 +451,7 @@ const da: AuthText = {
     samePassword: "Den nye adgangskode må ikke være den samme som den gamle.",
     changeFailed: "Adgangskoden kunne ikke skiftes. Prøv igen.",
     enterCode: "Indtast invitationskoden.",
-    badCode:
-      "Koden gælder ikke. Tjek den med din leder — den kan også allerede være brugt eller udløbet.",
+    badCode: "Koden virker ikke. Tjek den med virksomhedens ejer — den kan også være brugt eller udløbet.",
   },
 };
 
@@ -494,7 +490,7 @@ const tr: AuthText = {
   liity: {
     metaTitle: "Bir işletmeye katıl",
     title: "Bir işletmeye katıl",
-    body: "Yöneticin sana bir davet kodu verdi. Kodu buraya gir, neye katıldığını gör.",
+    body: "Davet kodunu şirket sahibinden aldınız. Neye katıldığınızı görmek için buraya girin.",
     codeLabel: "Davet kodu",
     idle: "Devam",
     busy: "Kontrol ediliyor…",
@@ -514,7 +510,7 @@ const tr: AuthText = {
     notConfigured: "Kayıt bu ortamda etkin değil.",
     idle: "Hesap oluştur",
     busy: "Oluşturuluyor…",
-    inviteRequired: "Hesaplar davet koduyla oluşturulur. Kodu Kate'ten veya yöneticinizden alırsınız.",
+    inviteRequired: "Hesaplar davet koduyla oluşturulur. Kodu Kate'ten veya şirket sahibinden alırsınız.",
     enterCode: "Davet kodunu girin",
   },
   unohtui: {
@@ -559,8 +555,7 @@ const tr: AuthText = {
     samePassword: "Yeni parola eskisiyle aynı olamaz.",
     changeFailed: "Parola değiştirilemedi. Tekrar dene.",
     enterCode: "Davet kodunu gir.",
-    badCode:
-      "Kod geçerli değil. Yöneticinle kontrol et — kod kullanılmış ya da süresi dolmuş da olabilir.",
+    badCode: "Kod geçerli değil. Şirket sahibinden kontrol edin — kod kullanılmış veya süresi dolmuş da olabilir.",
   },
 };
 
@@ -599,7 +594,7 @@ const et: AuthText = {
   liity: {
     metaTitle: "Liitu ettevõttega",
     title: "Liitu ettevõttega",
-    body: "Juhataja andis sulle kutsekoodi. Sisesta see siia, siis näed, millega liitud.",
+    body: "Said kutsekoodi oma ettevõtte omanikult. Sisesta see siia, siis näed, millega liitud.",
     codeLabel: "Kutsekood",
     idle: "Edasi",
     busy: "Kontrollime…",
@@ -619,7 +614,7 @@ const et: AuthText = {
     notConfigured: "Registreerimine ei ole selles keskkonnas sisse lülitatud.",
     idle: "Loo konto",
     busy: "Loome…",
-    inviteRequired: "Konto luuakse kutsekoodiga. Koodi saad Kate'ilt või oma juhilt.",
+    inviteRequired: "Konto luuakse kutsekoodiga. Koodi saad Kate'ilt või ettevõtte omanikult.",
     enterCode: "Sisesta kutsekood",
   },
   unohtui: {
@@ -662,8 +657,7 @@ const et: AuthText = {
     samePassword: "Uus parool ei tohi olla sama mis vana.",
     changeFailed: "Parooli vahetamine ebaõnnestus. Proovi uuesti.",
     enterCode: "Sisesta kutsekood.",
-    badCode:
-      "Kood ei kehti. Kontrolli seda juhatajalt — kood võib olla ka juba kasutatud või aegunud.",
+    badCode: "Kood ei kehti. Kontrolli seda ettevõtte omanikult — kood võib olla ka kasutatud või aegunud.",
   },
 };
 
@@ -702,7 +696,7 @@ const ar: AuthText = {
   liity: {
     metaTitle: "انضم إلى نشاط تجاري",
     title: "انضم إلى نشاط تجاري",
-    body: "أعطاك مديرك رمز دعوة. أدخله هنا لترى ما الذي تنضم إليه.",
+    body: "حصلت على رمز دعوة من مالك شركتك. أدخله هنا لترى إلى أي شركة تنضم.",
     codeLabel: "رمز الدعوة",
     idle: "متابعة",
     busy: "جارٍ التحقق…",
@@ -722,7 +716,7 @@ const ar: AuthText = {
     notConfigured: "التسجيل غير مُفعّل في هذه البيئة.",
     idle: "إنشاء حساب",
     busy: "جارٍ الإنشاء…",
-    inviteRequired: "يُنشأ الحساب برمز دعوة. تحصل على الرمز من Kate أو من مديرك.",
+    inviteRequired: "يُنشأ الحساب برمز دعوة. تحصل على الرمز من Kate أو من مالك شركتك.",
     enterCode: "أدخل رمز الدعوة",
   },
   unohtui: {
@@ -767,8 +761,7 @@ const ar: AuthText = {
     samePassword: "لا يمكن أن تكون كلمة المرور الجديدة نفس القديمة.",
     changeFailed: "لم ينجح تغيير كلمة المرور. حاول مرة أخرى.",
     enterCode: "أدخل رمز الدعوة.",
-    badCode:
-      "هذا الرمز غير صالح. تحقق منه مع مديرك — فقد يكون قد استُخدم بالفعل أو انتهت صلاحيته.",
+    badCode: "الرمز غير صالح. تحقق منه مع مالك شركتك — وقد يكون مستخدَمًا أو منتهي الصلاحية.",
   },
 };
 
