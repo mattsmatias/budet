@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -67,6 +68,57 @@ interface Turn {
   cards?: ToolCard[];
 }
 
+/*
+ * Uutta Matilla -merkki.
+ *
+ * Punainen piste Matin painikkeessa kun tilannekatsauksessa on jotain
+ * mitä käyttäjä ei ole vielä nähnyt: kiireellinen asia, huomautus tai
+ * havainto. Piste katoaa kun Matti avataan, ja palaa vasta kun
+ * katsaukseen tulee uusi asia — sama asia ei herätä kahdesti.
+ *
+ * Nähty tila on selaimen muistissa. Se on käyttäjän oma mukavuus eikä
+ * tietoturva-asia: jos muisti tyhjenee, piste näkyy kerran turhaan.
+ */
+const SEEN_KEY = "kate-matti-seen";
+const seenListeners = new Set<() => void>();
+
+function subscribeSeen(onChange: () => void) {
+  seenListeners.add(onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    seenListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readSeen(): string {
+  try {
+    return window.localStorage.getItem(SEEN_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function markSeen(key: string) {
+  try {
+    window.localStorage.setItem(SEEN_KEY, key);
+  } catch {
+    // Yksityinen ikkuna tai estetty muisti: piste vain näkyy uudelleen.
+  }
+  seenListeners.forEach((listener) => listener());
+}
+
+function briefingKey(briefing: Briefing): string {
+  return [...briefing.critical, ...briefing.warnings, ...briefing.observations]
+    .map((item) => item.id)
+    .sort()
+    .join("|");
+}
+
+function NewsDot() {
+  return <span className="rf-news-dot" aria-hidden="true" />;
+}
+
 export function MattiPanel({
   enabled,
   compact,
@@ -95,6 +147,19 @@ export function MattiPanel({
 
   const close = useCallback(() => setOpen(false), []);
   const container = useDismiss<HTMLDivElement>(open, close);
+
+  const newsKey = briefingKey(briefing);
+  /* Palvelimella oletetaan nähdyksi: piste ei saa välähtää latauksessa. */
+  const seen = useSyncExternalStore(subscribeSeen, readSeen, () => newsKey);
+  const hasNews = newsKey !== "" && seen !== newsKey;
+
+  useEffect(() => {
+    if (open && newsKey !== "") markSeen(newsKey);
+  }, [open, newsKey]);
+
+  const buttonLabel = hasNews
+    ? `${t.matti.ariaLabel} – ${t.matti.hasNews}`
+    : t.matti.ariaLabel;
 
   /*
    * Näppäinoikotie. Ctrl/Cmd + J.
@@ -125,11 +190,14 @@ export function MattiPanel({
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={open}
-          aria-label={t.matti.ariaLabel}
+          aria-label={buttonLabel}
           title={t.matti.shortcut}
           className="rf-press flex h-10 w-10 items-center justify-center"
         >
-          <MattiMark size={30} />
+          <span className="relative inline-flex">
+            <MattiMark size={30} />
+            {hasNews ? <NewsDot /> : null}
+          </span>
         </button>
 
         {open ? (
@@ -161,8 +229,12 @@ export function MattiPanel({
          */
         className="rf-rail-link rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-start text-[13.5px]"
         style={{ color: "var(--rf-text-2)" }}
+        aria-label={buttonLabel}
       >
-        <MattiMark size={20} />
+        <span className="relative inline-flex">
+          <MattiMark size={20} />
+          {hasNews ? <NewsDot /> : null}
+        </span>
 
         {/*
           Yksi rivi, ei kahta.

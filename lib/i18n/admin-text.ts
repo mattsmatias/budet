@@ -1318,6 +1318,7 @@ const fi = {
     clearFailed: "Keskustelua ei saatu tyhjennettyä. Yritä uudelleen.",
     start: "Alkuun",
     continueChat: "Jatka keskustelua",
+    hasNews: "uutta huomioitavaa",
   },
 
   mattiKysy: {
@@ -3007,6 +3008,7 @@ const en: AdminText = {
     clearFailed: "The conversation could not be cleared. Try again.",
     start: "Start",
     continueChat: "Continue the conversation",
+    hasNews: "something new to review",
   },
 
   mattiKysy: {
@@ -4690,6 +4692,7 @@ const sv: AdminText = {
     clearFailed: "Konversationen kunde inte tömmas. Försök igen.",
     start: "Till början",
     continueChat: "Fortsätt konversationen",
+    hasNews: "något nytt att se",
   },
 
   mattiKysy: {
@@ -6372,6 +6375,7 @@ const da: AdminText = {
     clearFailed: "Samtalen kunne ikke ryddes. Prøv igen.",
     start: "Til start",
     continueChat: "Fortsæt samtalen",
+    hasNews: "noget nyt at se",
   },
 
   mattiKysy: {
@@ -8050,6 +8054,7 @@ const tr: AdminText = {
     clearFailed: "Sohbet temizlenemedi. Tekrar deneyin.",
     start: "Başa dön",
     continueChat: "Sohbete devam et",
+    hasNews: "yeni bir şey var",
   },
 
   mattiKysy: {
@@ -9725,6 +9730,7 @@ const et: AdminText = {
     clearFailed: "Vestlust ei õnnestunud tühjendada. Proovi uuesti.",
     start: "Algusesse",
     continueChat: "Jätka vestlust",
+    hasNews: "midagi uut vaadata",
   },
 
   mattiKysy: {
@@ -11410,6 +11416,7 @@ const ar: AdminText = {
     clearFailed: "تعذّر مسح المحادثة. حاول مرة أخرى.",
     start: "البداية",
     continueChat: "متابعة المحادثة",
+    hasNews: "يوجد جديد للمراجعة",
   },
 
   mattiKysy: {
