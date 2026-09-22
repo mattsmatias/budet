@@ -56,6 +56,7 @@ const fi = {
     brandResult: "Tulos tänään",
     brandReceipt: "Kuitti luettu",
     brandReceiptBody: "Tukkutoimitus · 184,20 €",
+    accountRemoved: "Tunnuksesi on poistettu käytöstä. Jos tämä on virhe, ota yhteyttä yrityksesi omistajaan.",
   },
 
   liity: {
@@ -174,6 +175,7 @@ const en: AuthText = {
     brandResult: "Result today",
     brandReceipt: "Receipt read",
     brandReceiptBody: "Wholesale delivery · €184.20",
+    accountRemoved: "Your account has been removed. If this is a mistake, contact your company's owner.",
   },
   liity: {
     metaTitle: "Join a business",
@@ -278,6 +280,7 @@ const sv: AuthText = {
     brandResult: "Resultat i dag",
     brandReceipt: "Kvitto läst",
     brandReceiptBody: "Grossistleverans · 184,20 €",
+    accountRemoved: "Ditt konto har tagits bort. Om detta är ett misstag, kontakta företagets ägare.",
   },
   liity: {
     metaTitle: "Gå med i ett företag",
@@ -382,6 +385,7 @@ const da: AuthText = {
     brandResult: "Resultat i dag",
     brandReceipt: "Kvittering læst",
     brandReceiptBody: "Engroslevering · 184,20 €",
+    accountRemoved: "Din konto er fjernet. Hvis det er en fejl, så kontakt virksomhedens ejer.",
   },
   liity: {
     metaTitle: "Tilslut dig en virksomhed",
@@ -485,6 +489,7 @@ const tr: AuthText = {
     brandResult: "Bugünkü sonuç",
     brandReceipt: "Fiş okundu",
     brandReceiptBody: "Toptan teslimat · 184,20 €",
+    accountRemoved: "Hesabınız kaldırıldı. Bir hata olduğunu düşünüyorsanız şirket sahibinize başvurun.",
   },
   liity: {
     metaTitle: "Bir işletmeye katıl",
@@ -589,6 +594,7 @@ const et: AuthText = {
     brandResult: "Tänane tulemus",
     brandReceipt: "Kviitung loetud",
     brandReceiptBody: "Hulgitarne · 184,20 €",
+    accountRemoved: "Sinu konto on eemaldatud. Kui see on viga, võta ühendust ettevõtte omanikuga.",
   },
   liity: {
     metaTitle: "Liitu ettevõttega",
@@ -691,6 +697,7 @@ const ar: AuthText = {
     brandResult: "نتيجة اليوم",
     brandReceipt: "تمت قراءة الإيصال",
     brandReceiptBody: "توصيل جملة · €184.20",
+    accountRemoved: "تمت إزالة حسابك. إذا كان ذلك خطأً فتواصل مع مالك شركتك.",
   },
   liity: {
     metaTitle: "انضم إلى نشاط تجاري",

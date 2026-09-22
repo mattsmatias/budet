@@ -53,6 +53,19 @@ export default async function SetupPage({
 
   if (await getActiveRestaurant()) redirect("/admin");
 
+  /*
+   * Poistettu tai lukittu tunnus.
+   *
+   * Omistajan poistama käyttäjä päätyi tänne vielä voimassa olevalla
+   * pääsytokenilla. Tunnus tarkistetaan kannasta, ja jos sitä ei enää
+   * ole käytössä, käyttäjä kirjataan ulos reitinkäsittelijässä.
+   */
+  {
+    const supabase = await createClient();
+    const { data: active } = await supabase.rpc("my_account_active");
+    if (active === false) redirect("/auth/uloskirjaus");
+  }
+
   const mode = params.tila === "liity" ? "join" : "create";
   const firstName = user.fullName?.split(" ")[0];
 

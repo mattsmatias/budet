@@ -23,6 +23,7 @@ import { Card } from "@/components/restoflow/ui";
 import {
   createInvitation,
   updateMembership,
+  removeMember,
   type AdminState,
 } from "../actions";
 
@@ -328,7 +329,10 @@ export function MemberForm({
   self: boolean;
 }) {
   const [state, action] = useActionState(updateMembership, initial);
+  const [removeState, removeAction] = useActionState(removeMember, initial);
   const [open, setOpen] = useState(false);
+  /* Poisto on pysyvä: tunnus poistetaan, joten yksi napautus ei riitä. */
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const vaihtoehdot = ROLES.includes(role) ? ROLES : [role, ...ROLES];
 
@@ -389,24 +393,65 @@ export function MemberForm({
         </div>
       </form>
 
-      {self ? null : (
-        <form action={action}>
+      {self ? null : confirmRemove ? (
+        <form
+          action={removeAction}
+          className="space-y-2.5 px-3.5 py-3"
+          style={{
+            background: "var(--rf-red-bg)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
           <input type="hidden" name="userId" value={userId} />
-          <input type="hidden" name="role" value={role} />
-          <input type="hidden" name="active" value="false" />
-          <button
-            type="submit"
-            className="rf-press px-3 py-1.5 text-[13px] font-medium"
-            style={{
-              background: "var(--rf-red-bg)",
-              color: "var(--rf-red-text)",
-              borderRadius: "var(--rf-r-control)",
-            }}
-          >
-            {t.asetus.removeAccess}
-          </button>
+          <p className="text-[13px] leading-relaxed" style={{ color: "var(--rf-red-text)" }}>
+            {t.asetus.removeConfirm}
+          </p>
+          {removeState.error ? <ErrorText>{removeState.error}</ErrorText> : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              className="rf-press px-3.5 py-2 text-[13px] font-semibold"
+              style={{
+                background: "var(--rf-red)",
+                color: "#fff",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              {t.asetus.removeConfirmYes}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmRemove(false)}
+              className="rf-press px-3.5 py-2 text-[13px] font-medium"
+              style={{
+                background: "var(--rf-card)",
+                color: "var(--rf-text-2)",
+                borderRadius: "var(--rf-r-control)",
+              }}
+            >
+              {t.tiimi.close}
+            </button>
+          </div>
         </form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirmRemove(true)}
+          className="rf-press px-3 py-1.5 text-[13px] font-medium"
+          style={{
+            background: "var(--rf-red-bg)",
+            color: "var(--rf-red-text)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {t.asetus.removeAccess}
+        </button>
       )}
+      {removeState.notice ? (
+        <p className="text-[13px]" style={{ color: "var(--rf-green-text)" }}>
+          {removeState.notice}
+        </p>
+      ) : null}
     </div>
   );
 }

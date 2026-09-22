@@ -856,6 +856,10 @@ const fi = {
     removeAccess: "Poista pääsy",
     roleHint:
       "Kutsu kirjanpitäjä, niin hän näkee kulut, raportit ja kirjanpidon suoraan Katesta.",
+    removeConfirm: "Poistetaanko käyttäjä? Jos hän ei kuulu muihin yrityksiin, hänen tunnuksensa poistetaan eikä hän voi enää kirjautua.",
+    removeConfirmYes: "Poista käyttäjä",
+    memberDeleted: "Käyttäjä poistettu. Hän ei voi enää kirjautua.",
+    memberRemoved: "Käyttäjän pääsy tähän yritykseen poistettu.",
   },
   kirja: {
     allPosted:
@@ -2543,6 +2547,10 @@ const en: AdminText = {
     removeAccess: "Remove access",
     roleHint:
       "Invite your accountant so they can see expenses, reports and the books directly in Kate.",
+    removeConfirm: "Remove this user? If they don't belong to other companies, their account is deleted and they can no longer sign in.",
+    removeConfirmYes: "Remove user",
+    memberDeleted: "User removed. They can no longer sign in.",
+    memberRemoved: "The user's access to this company was removed.",
   },
   kirja: {
     allPosted:
@@ -4221,6 +4229,10 @@ const sv: AdminText = {
     removeAccess: "Ta bort åtkomst",
     roleHint:
       "Bjud in bokföraren, så ser hen kostnader, rapporter och bokföringen direkt i Kate.",
+    removeConfirm: "Ta bort användaren? Om hen inte hör till andra företag raderas kontot och hen kan inte längre logga in.",
+    removeConfirmYes: "Ta bort användaren",
+    memberDeleted: "Användaren borttagen. Hen kan inte längre logga in.",
+    memberRemoved: "Användarens åtkomst till företaget togs bort.",
   },
   kirja: {
     allPosted:
@@ -5904,6 +5916,10 @@ const da: AdminText = {
     removeAccess: "Fjern adgang",
     roleHint:
       "Inviter bogholderen, så kan vedkommende se udgifter, rapporter og bogføringen direkte i Kate.",
+    removeConfirm: "Fjern brugeren? Hvis vedkommende ikke hører til andre virksomheder, slettes kontoen, og vedkommende kan ikke længere logge ind.",
+    removeConfirmYes: "Fjern bruger",
+    memberDeleted: "Brugeren er fjernet. Vedkommende kan ikke længere logge ind.",
+    memberRemoved: "Brugerens adgang til virksomheden er fjernet.",
   },
   kirja: {
     allPosted:
@@ -7586,6 +7602,10 @@ const tr: AdminText = {
     removeAccess: "Erişimi kaldır",
     roleHint:
       "Muhasebecinizi davet edin; giderleri, raporları ve defterleri doğrudan Kate'te görsün.",
+    removeConfirm: "Kullanıcı kaldırılsın mı? Başka şirketlere bağlı değilse hesabı silinir ve artık giriş yapamaz.",
+    removeConfirmYes: "Kullanıcıyı kaldır",
+    memberDeleted: "Kullanıcı kaldırıldı. Artık giriş yapamaz.",
+    memberRemoved: "Kullanıcının bu şirkete erişimi kaldırıldı.",
   },
   kirja: {
     allPosted: "Ayın tüm hareketleri kaydedildi ve mutabakat geçiyor.",
@@ -9255,6 +9275,10 @@ const et: AdminText = {
     removeAccess: "Eemalda ligipääs",
     roleHint:
       "Kutsu raamatupidaja, siis näeb ta kulusid, aruandeid ja raamatupidamist otse Kate'is.",
+    removeConfirm: "Kas eemaldada kasutaja? Kui ta ei kuulu teistesse ettevõtetesse, tema konto kustutatakse ja ta ei saa enam sisse logida.",
+    removeConfirmYes: "Eemalda kasutaja",
+    memberDeleted: "Kasutaja eemaldatud. Ta ei saa enam sisse logida.",
+    memberRemoved: "Kasutaja juurdepääs sellele ettevõttele eemaldati.",
   },
   kirja: {
     allPosted: "Kõik kuu sündmused on kantud ja vastavusse viimine läheb läbi.",
@@ -10935,6 +10959,10 @@ const ar: AdminText = {
     removeAccess: "إزالة الوصول",
     roleHint:
       "ادعُ محاسبك ليتمكن من رؤية المصروفات والتقارير والدفاتر مباشرة في Kate.",
+    removeConfirm: "هل تريد إزالة المستخدم؟ إذا لم يكن تابعًا لشركات أخرى فسيُحذف حسابه ولن يتمكن من تسجيل الدخول.",
+    removeConfirmYes: "إزالة المستخدم",
+    memberDeleted: "تمت إزالة المستخدم. لم يعد بإمكانه تسجيل الدخول.",
+    memberRemoved: "أُزيل وصول المستخدم إلى هذه الشركة.",
   },
   kirja: {
     allPosted:

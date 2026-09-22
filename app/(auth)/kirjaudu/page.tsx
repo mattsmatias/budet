@@ -23,7 +23,13 @@ export default async function SignInPage({
   const params = await searchParams;
   const raw = typeof params.seuraava === "string" ? params.seuraava : "/admin";
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/admin";
-  const linkError = typeof params.virhe === "string" ? params.virhe : null;
+  const t0 = authText(await resolveLocale());
+  const linkError =
+    typeof params.virhe === "string"
+      ? params.virhe
+      : params.poistettu
+        ? t0.kirjaudu.accountRemoved
+        : null;
 
   const t = authText(await resolveLocale());
 

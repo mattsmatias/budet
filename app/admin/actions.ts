@@ -184,6 +184,43 @@ export async function updateMembership(
   return { notice: t.toiminnot.saved };
 }
 
+/**
+ * Käyttäjän poisto yrityksestä.
+ *
+ * Poistaa jäsenyyden. Jos käyttäjä ei kuulu muihin yrityksiin, kanta
+ * poistaa tunnuksen kokonaan tai lukitsee sen, jos tunnuksella on
+ * historiaa (ks. 0106). Kummassakin tapauksessa kirjautuminen loppuu.
+ * Yritys tulee istunnosta, ja kanta tarkistaa että kutsuja on omistaja.
+ */
+export async function removeMember(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant } = await requireContext("/admin/asetukset");
+
+  const userId = z.string().uuid().safeParse(formData.get("userId"));
+  if (!userId.success) return { error: t.toiminnot.checkInput };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("remove_member", {
+    p_restaurant: restaurant.id,
+    p_user: userId.data,
+  });
+
+  if (error) {
+    if (error.message?.includes(t.toiminnot.needOwner)) {
+      return { error: t.toiminnot.needOwnerBody };
+    }
+    return { error: explain(error, t.toiminnot.saveFailed, t) };
+  }
+
+  revalidatePath("/admin", "layout");
+  return {
+    notice: data === "removed" ? t.asetus.memberRemoved : t.asetus.memberDeleted,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Budjetit
 // ---------------------------------------------------------------------------
