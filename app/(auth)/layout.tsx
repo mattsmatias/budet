@@ -92,9 +92,8 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
           </div>
         </div>
 
-        <p className="relative text-[12px] text-white/40">
-          {t.kirjaudu.brandNote}
-        </p>
+        {/* Tyhjä alarivi pitää otsikon ja korttien paikan keskellä. */}
+        <span />
       </aside>
 
       <div className="rf-auth-side flex min-h-screen flex-col">

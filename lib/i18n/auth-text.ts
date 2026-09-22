@@ -56,7 +56,6 @@ const fi = {
     brandResult: "Tulos tänään",
     brandReceipt: "Kuitti luettu",
     brandReceiptBody: "Tukkutoimitus · 184,20 €",
-    brandNote: "Luvut ovat esimerkkejä.",
   },
 
   liity: {
@@ -175,7 +174,6 @@ const en: AuthText = {
     brandResult: "Result today",
     brandReceipt: "Receipt read",
     brandReceiptBody: "Wholesale delivery · €184.20",
-    brandNote: "Figures are examples.",
   },
   liity: {
     metaTitle: "Join a business",
@@ -280,7 +278,6 @@ const sv: AuthText = {
     brandResult: "Resultat i dag",
     brandReceipt: "Kvitto läst",
     brandReceiptBody: "Grossistleverans · 184,20 €",
-    brandNote: "Siffrorna är exempel.",
   },
   liity: {
     metaTitle: "Gå med i ett företag",
@@ -385,7 +382,6 @@ const da: AuthText = {
     brandResult: "Resultat i dag",
     brandReceipt: "Kvittering læst",
     brandReceiptBody: "Engroslevering · 184,20 €",
-    brandNote: "Tallene er eksempler.",
   },
   liity: {
     metaTitle: "Tilslut dig en virksomhed",
@@ -489,7 +485,6 @@ const tr: AuthText = {
     brandResult: "Bugünkü sonuç",
     brandReceipt: "Fiş okundu",
     brandReceiptBody: "Toptan teslimat · 184,20 €",
-    brandNote: "Rakamlar örnektir.",
   },
   liity: {
     metaTitle: "Bir işletmeye katıl",
@@ -594,7 +589,6 @@ const et: AuthText = {
     brandResult: "Tänane tulemus",
     brandReceipt: "Kviitung loetud",
     brandReceiptBody: "Hulgitarne · 184,20 €",
-    brandNote: "Numbrid on näited.",
   },
   liity: {
     metaTitle: "Liitu ettevõttega",
