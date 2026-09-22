@@ -49,7 +49,7 @@ const fi = {
     notConfiguredTitle: "Kirjautumista ei ole otettu käyttöön",
     notConfiguredBody:
       "Ympäristömuuttujat NEXT_PUBLIC_SUPABASE_URL ja NEXT_PUBLIC_SUPABASE_ANON_KEY puuttuvat tästä ympäristöstä.",
-    subtitle: "Tervetuloa takaisin. Kirjaudu nähdäksesi yrityksesi luvut.",
+    subtitle: "Kirjaudu nähdäksesi yrityksesi luvut.",
     brandA: "Näe mihin raha menee.",
     brandB: "Ja paljonko jää käteen.",
     brandBody: "Myynti, kuitit, kulut ja kirjanpito yhdessä näkymässä.",
@@ -167,7 +167,7 @@ const en: AuthText = {
     notConfiguredTitle: "Sign-in is not enabled",
     notConfiguredBody:
       "The environment variables NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are missing from this environment.",
-    subtitle: "Welcome back. Sign in to see your business's numbers.",
+    subtitle: "Sign in to see your business's numbers.",
     brandA: "See where the money goes.",
     brandB: "And how much you keep.",
     brandBody: "Sales, receipts, expenses and the books in one view.",
@@ -271,7 +271,7 @@ const sv: AuthText = {
     notConfiguredTitle: "Inloggning är inte aktiverad",
     notConfiguredBody:
       "Miljövariablerna NEXT_PUBLIC_SUPABASE_URL och NEXT_PUBLIC_SUPABASE_ANON_KEY saknas i den här miljön.",
-    subtitle: "Välkommen tillbaka. Logga in för att se ditt företags siffror.",
+    subtitle: "Logga in för att se ditt företags siffror.",
     brandA: "Se vart pengarna går.",
     brandB: "Och hur mycket som blir kvar.",
     brandBody: "Försäljning, kvitton, kostnader och bokföring i en vy.",
@@ -375,7 +375,7 @@ const da: AuthText = {
     notConfiguredTitle: "Login er ikke slået til",
     notConfiguredBody:
       "Miljøvariablerne NEXT_PUBLIC_SUPABASE_URL og NEXT_PUBLIC_SUPABASE_ANON_KEY mangler i dette miljø.",
-    subtitle: "Velkommen tilbage. Log ind for at se din virksomheds tal.",
+    subtitle: "Log ind for at se din virksomheds tal.",
     brandA: "Se hvor pengene går hen.",
     brandB: "Og hvor meget der er tilbage.",
     brandBody: "Salg, kvitteringer, udgifter og bogføring i én visning.",
@@ -478,7 +478,7 @@ const tr: AuthText = {
     notConfiguredTitle: "Giriş etkin değil",
     notConfiguredBody:
       "NEXT_PUBLIC_SUPABASE_URL ve NEXT_PUBLIC_SUPABASE_ANON_KEY ortam değişkenleri bu ortamda eksik.",
-    subtitle: "Tekrar hoş geldiniz. İşletmenizin rakamlarını görmek için giriş yapın.",
+    subtitle: "İşletmenizin rakamlarını görmek için giriş yapın.",
     brandA: "Paranın nereye gittiğini görün.",
     brandB: "Ve elinizde ne kaldığını.",
     brandBody: "Satış, fiş, gider ve muhasebe tek görünümde.",
@@ -582,7 +582,7 @@ const et: AuthText = {
     notConfiguredTitle: "Sisselogimine ei ole sisse lülitatud",
     notConfiguredBody:
       "Keskkonnamuutujad NEXT_PUBLIC_SUPABASE_URL ja NEXT_PUBLIC_SUPABASE_ANON_KEY puuduvad selles keskkonnas.",
-    subtitle: "Tere tulemast tagasi. Logi sisse, et näha oma ettevõtte numbreid.",
+    subtitle: "Logi sisse, et näha oma ettevõtte numbreid.",
     brandA: "Näe, kuhu raha läheb.",
     brandB: "Ja kui palju kätte jääb.",
     brandBody: "Müük, kviitungid, kulud ja raamatupidamine ühes vaates.",
