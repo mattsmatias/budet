@@ -23,6 +23,7 @@ import type { DailySales } from "./sales";
 import type { Task } from "./tasks";
 import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
+import type { Employee, TimeEntry } from "./employees";
 import { createClient } from "@/utils/supabase/server";
 import type {
   MerchantCategory,
@@ -980,4 +981,91 @@ export async function fetchRestaurantLogoUrl(
   if (signError || !data?.signedUrl) return null;
 
   return data.signedUrl;
+}
+
+/**
+ * Työntekijät.
+ *
+ * RLS ratkaisee näkyvyyden: omistaja saa yrityksensä kaikki, työntekijä
+ * vain oman rivinsä. Sama kysely palvelee siis molempia näkymiä, eikä
+ * kutsupaikan tarvitse tietää kumpi on kyseessä.
+ */
+export async function fetchEmployees(
+  restaurantId: string,
+): Promise<Employee[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("employees")
+    .select(
+      "id, first_name, last_name, email, job_title, hourly_cents, active, user_id",
+    )
+    .eq("restaurant_id", restaurantId)
+    .order("first_name");
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    firstName: row.first_name as string,
+    lastName: row.last_name as string,
+    email: (row.email as string | null) ?? null,
+    jobTitle: (row.job_title as string | null) ?? null,
+    hourlyCents: Number(row.hourly_cents ?? 0),
+    active: Boolean(row.active),
+    linked: row.user_id !== null,
+  }));
+}
+
+/**
+ * Leimaukset päivästä eteenpäin.
+ *
+ * Rajaus on päivässä eikä rivimäärässä: kuukausinäkymä tarvitsee koko
+ * kuukauden, ja katkaistu lista antaisi liian pienet tunnit ilman että
+ * mikään kertoo siitä.
+ */
+export async function fetchTimeEntries(
+  restaurantId: string,
+  fromDate: string,
+): Promise<TimeEntry[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("time_entries")
+    .select("id, employee_id, work_date, clock_in, clock_out, minutes")
+    .eq("restaurant_id", restaurantId)
+    .gte("work_date", fromDate)
+    .order("clock_in", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((row) => ({
+    id: row.id as string,
+    employeeId: row.employee_id as string,
+    date: row.work_date as string,
+    clockIn: row.clock_in as string,
+    clockOut: (row.clock_out as string | null) ?? null,
+    minutes: row.minutes === null ? null : Number(row.minutes),
+  }));
+}
+
+/**
+ * Oma työntekijätunniste tässä yrityksessä, tai null.
+ *
+ * Kysely on kannan funktio eikä hakuehto: rivi luodaan ennen kuin
+ * tunnus on olemassa, joten liitos tehdään ensimmäisellä kerralla
+ * sähköpostilla. Funktio tekee sen ja palauttaa tunnisteen — sovellus
+ * ei näe eikä päätä kumpi tapa osui.
+ */
+export async function fetchMyEmployeeId(
+  restaurantId: string,
+): Promise<string | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("employee_for_me", {
+    p_restaurant: restaurantId,
+  });
+
+  if (error) return null;
+  return (data as string | null) ?? null;
 }

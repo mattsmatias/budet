@@ -29,8 +29,14 @@ import {
 
 const initial: AdminState = {};
 
-/** Roolit joihin voi kutsua. Muita ei ole. */
-const ROLES: Role[] = ["owner", "accountant"];
+/**
+ * Roolit joihin voi kutsua. Muita ei ole.
+ *
+ * Työntekijä palasi listalle työajan leimauksen myötä: ilman tunnusta
+ * hän ei voi leimata, ja tunnus syntyy tästä kutsusta. Hän ei näe
+ * yrityksen taloutta — vain oman työaikansa.
+ */
+const ROLES: Role[] = ["owner", "accountant", "employee"];
 
 const roolienSelitteet = (t: AdminText): Record<Role, string> => ({
   owner: t.tiimi.roleOwner,

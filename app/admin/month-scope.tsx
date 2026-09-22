@@ -25,6 +25,8 @@ const MONTHLY = [
   "/admin/kulut",
   /* Palkat on kuukausiluku: kuukausi vaihtaa sekä summan että osuuden. */
   "/admin/palkat",
+  /* Tyontekijat: kuukausi vaihtaa tunnit ja arvion. */
+  "/admin/tyontekijat",
   "/admin/raportit",
   /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
   "/admin/kirjanpito",

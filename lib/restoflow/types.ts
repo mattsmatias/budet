@@ -46,10 +46,16 @@ export interface Restaurant {
  * arvon poisto vaatisi tyypin uudelleenluonnin. Sovellus ei tarjoa niitä
  * eikä anna niille oikeuksia.
  */
-export type Role = "owner" | "accountant" | LegacyRole;
+export type Role = "owner" | "accountant" | "employee" | LegacyRole;
 
-/** Vanhat roolit. Ei tarjolla, ei oikeuksia — vain vanhaa dataa varten. */
-export type LegacyRole = "manager" | "employee";
+/**
+ * Vanha rooli. Ei tarjolla, ei oikeuksia — vain vanhaa dataa varten.
+ *
+ * Työntekijä palasi omaksi roolikseen, kun työajan leimaus tuli
+ * takaisin. Esihenkilö ei palannut: se erosi omistajasta vain
+ * käyttäjähallinnassa, ja pienyrityksessä sama ihminen on molemmat.
+ */
+export type LegacyRole = "manager";
 
 export interface User {
   id: string;

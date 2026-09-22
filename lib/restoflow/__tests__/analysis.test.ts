@@ -686,8 +686,18 @@ describe("oikeudet", () => {
     expect(capabilityForPath("/kirjaudu")).toBeNull();
   });
 
+  /*
+   * Työntekijän koti on työaika.
+   *
+   * Hänellä ei ole hallintanäkymää, joten valikosta ei löydy
+   * ensimmäistä riviä. Ilman omaa laskeutumista hän päätyisi
+   * perustussivulle jossa pyydetään perustamaan yritys.
+   */
+  it("ohjaa työntekijän työaikaan", () => {
+    expect(landingFor("employee")).toBe("/tyoaika");
+  });
+
   it("ohjaa poistetun roolin aloitussivulle", () => {
-    expect(landingFor("employee")).toBe("/aloitus");
     expect(landingFor("manager")).toBe("/aloitus");
   });
 
@@ -730,8 +740,8 @@ describe("oikeudet", () => {
    * miten se jakautui. Kymmenen kohtaa kattaa sen, ja jokainen uusi
    * kohta on päätös siitä kuuluuko se siihen kysymykseen.
    */
-  it("pitää päävalikon kymmenessä kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(10);
+  it("pitää päävalikon yhdessätoista kohdassa", () => {
+    expect(adminNavFor("owner")).toHaveLength(11);
     expect(primaryNavFor("owner")).toHaveLength(4);
   });
 

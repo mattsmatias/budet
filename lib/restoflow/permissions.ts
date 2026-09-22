@@ -65,7 +65,17 @@ export type Capability =
   | "files.manage"
   | "audit.view"
   | "settings.view"
-  | "settings.edit";
+  | "settings.edit"
+  /*
+   * Työaika kahtena oikeutena.
+   *
+   * Leimaus on työntekijän oma toiminto: hän aloittaa ja lopettaa oman
+   * vuoronsa eikä näe kenenkään muun tunteja. Työntekijäluettelo ja
+   * tuntipalkat ovat omistajan, koska palkka on henkilötieto eikä
+   * työvuorolista.
+   */
+  | "timeclock.use"
+  | "employees.manage";
 
 const OWNER: Capability[] = [
   "files.view",
@@ -97,6 +107,14 @@ const OWNER: Capability[] = [
   "alerts.view",
   "settings.view",
   "settings.edit",
+  "employees.manage",
+  /*
+   * Omistaja saa myös leimata.
+   *
+   * Yhden hengen yrityksessä omistaja on se joka tekee työn, ja
+   * pienessä ravintolassa hän on vuorossa muiden mukana.
+   */
+  "timeclock.use",
 ];
 
 /**
@@ -141,11 +159,21 @@ const ACCOUNTANT: Capability[] = [
   "alerts.view",
 ];
 
+/**
+ * Työntekijä: oma työaika, ei mitään muuta.
+ *
+ * Ei kuitteja, ei kuluja, ei myyntiä. Työntekijä näkee omat vuoronsa ja
+ * oman arvionsa palkasta; yrityksen talous ei kuulu hänelle. Kanta
+ * rajaa saman: leimaus kulkee funktioiden kautta jotka päättelevät
+ * tekijän istunnosta, eivätkä luota mihinkään clientilta tulevaan.
+ */
+const EMPLOYEE: Capability[] = ["timeclock.use"];
+
 const BY_ROLE: Record<Role, Capability[]> = {
   owner: OWNER,
   accountant: ACCOUNTANT,
+  employee: EMPLOYEE,
   manager: LEGACY,
-  employee: LEGACY,
 };
 
 export function can(role: Role, capability: Capability): boolean {
@@ -210,6 +238,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/myynti", requires: "sales.view" },
   { href: "/admin/kirjanpito", requires: "accounting.view" },
   { href: "/admin/palkat", requires: "expenses.view" },
+  { href: "/admin/tyontekijat", requires: "employees.manage" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/tiedostot", requires: "files.view" },
   { href: "/admin/raportit", requires: "reports.view" },
@@ -373,6 +402,21 @@ export const ADMIN_NAV: NavEntry[] = [
     section: "main",
   },
 
+  /*
+   * Tyontekijat on 'kaikki mika ei ole rahaa' -osastossa.
+   *
+   * Tunnit ovat kylla rahaa arviona, mutta nakymassa hallitaan
+   * ihmisia: kuka on toissa, kuka on vuorossa nyt. Talous-osastolla
+   * se olisi seitsemas rivi kuuden joukossa.
+   */
+  {
+    href: "/admin/tyontekijat",
+    key: "staff",
+    icon: "staff",
+    requires: "employees.manage",
+    section: "restaurant",
+  },
+
   {
     href: "/admin/tiedostot",
     key: "files",
@@ -503,5 +547,13 @@ export function capabilityForPath(path: string): Capability | null {
  * aloitussivu: sieltä voi liittyä ravintolaan tai kirjautua ulos.
  */
 export function landingFor(role: Role): string {
+  /*
+   * Työntekijän koti on työaika, ei hallinta.
+   *
+   * adminNavFor palauttaa hänelle tyhjän listan, ja ilman tätä hän
+   * päätyisi perustussivulle jossa pyydetään perustamaan yritys.
+   */
+  if (role === "employee") return "/tyoaika";
+
   return adminNavFor(role)[0]?.href ?? "/aloitus";
 }

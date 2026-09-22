@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import Link from "next/link";
-import { ISO_MONTH } from "@/lib/restoflow/dates";
+import { ISO_MONTH, monthRange } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   budgetLines,
@@ -52,7 +53,17 @@ import {
 import { AreaChart } from "@/components/restoflow/area-chart";
 import { Spotlight } from "@/components/landing/effects";
 import { ResultHero } from "./home/result-hero";
-import { fetchPosVatRates, fetchSalesLines } from "@/lib/restoflow/queries";
+import {
+  fetchEmployees,
+  fetchPosVatRates,
+  fetchSalesLines,
+  fetchTimeEntries,
+} from "@/lib/restoflow/queries";
+import {
+  formatHours,
+  summarise,
+  totals as staffTotals,
+} from "@/lib/restoflow/employees";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import {
   labourShareOfSales,
@@ -168,6 +179,21 @@ export default async function AdminDashboard({
     0,
     5,
   );
+
+  /*
+   * Toteutuneet tyotunnit.
+   *
+   * Haetaan vain jos rooli hallitsee tyontekijoita: kirjanpitaja ei nae
+   * korttia, joten han ei myoskaan maksa sen kyselyista.
+   */
+  const staffRows = can(role, "employees.manage")
+    ? summarise(
+        await fetchEmployees(restaurant.id),
+        await fetchTimeEntries(restaurant.id, monthRange(viewMonth).from),
+        viewMonth,
+      )
+    : [];
+  const staffTime = staffTotals(staffRows);
 
   /* Ketjun tunnus riville, sama kartta kuin kuittilistassa. */
   const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
@@ -748,6 +774,36 @@ export default async function AdminDashboard({
           href={`/admin/palkat?kuukausi=${viewMonth}`}
           linkLabel={t.palkat.title}
         />
+
+        {/*
+          Toteutuneet tunnit oman korttinsa.
+
+          Edellinen kortti kertoo mitä palkkoja on kirjattu, tämä mitä
+          tehty työ maksoi. Ne eivät ole sama luku eivätkä saman
+          tarkkuisia: kirjattu on tosiasia, tuntiarvio on arvio joka on
+          käytettävissä jo kesken kuun.
+        */}
+        {can(role, "employees.manage") && staffRows.length > 0 ? (
+          <StatCard
+            label={t.tyo.title}
+            tileTone="green"
+            value={formatHours(staffTime.minutes, LOCALE_INFO[locale].tag)}
+            delta={
+              staffTime.working > 0
+                ? {
+                    text: fill(t.tyo.workingNow, {
+                      maara: String(staffTime.working),
+                    }),
+                  }
+                : undefined
+            }
+            conclusion={`${t.tyo.totalPay}: ${formatMoney(staffTime.payCents)}`}
+            tone="muted"
+            icon={<RfIcon name="clock" size={17} />}
+            href="/admin/tyontekijat"
+            linkLabel={t.tyo.title}
+          />
+        ) : null}
       </Spotlight>
       </section>
 
