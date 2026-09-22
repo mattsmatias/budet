@@ -25,6 +25,7 @@ import { Card, Pill } from "@/components/restoflow/ui";
 import { Panel, PanelEmpty } from "@/components/restoflow/dashboard-ui";
 import { SalesForm } from "./form";
 import { ReportCapture } from "./capture";
+import { MissingDays } from "./missing";
 import { averageCheckCents } from "@/lib/restoflow/sales-report";
 import { DeleteDay } from "./delete-day";
 import { ReconciliationPanel } from "./reconciliation";
@@ -245,37 +246,15 @@ export default async function SalesPage({
                 )}
               </p>
 
-              <ul className="mt-3 space-y-1.5">
-                {missing.map((day) => (
-                  <li key={day}>
-                    <details
-                      className="px-3.5 py-2.5"
-                      style={{
-                        background: "var(--rf-inset)",
-                        borderRadius: "var(--rf-r-control)",
-                      }}
-                    >
-                      <summary className="rf-press flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-medium [&::-webkit-details-marker]:hidden">
-                        <span>{formatDay(day, locale)}</span>
-                        <span
-                          className="text-[13px] font-semibold"
-                          style={{ color: "var(--rf-accent)" }}
-                        >
-                          {t.myynti.recordDay}
-                        </span>
-                      </summary>
-
-                      <SalesForm
-                        t={t}
-                        defaultDate={day}
-                        defaultNet=""
-                        defaultTarget=""
-                        compact
-                      />
-                    </details>
-                  </li>
-                ))}
-              </ul>
+              <MissingDays
+                t={t}
+                days={missing.map((day) => ({
+                  date: day,
+                  label: formatDay(day, locale),
+                }))}
+                groups={groups}
+                mappings={mappings}
+              />
             </div>
           </div>
         </Card>

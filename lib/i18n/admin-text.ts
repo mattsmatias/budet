@@ -1219,6 +1219,7 @@ const fi = {
     missingDaysOne: "Yhdeltä päivältä ei ole kirjattu myyntiä. Täydennä se käsin tai kuvaa päiväraportti — päivämäärä luetaan raportista.",
     missingDaysMany: "{maara} päivältä ei ole kirjattu myyntiä. Täydennä ne käsin tai kuvaa päiväraportit — päivämäärä luetaan raportista.",
     recordDay: "Kirjaa",
+    orByHand: "tai kirjaa käsin",
   },
   kuva: {
     multiPage:
@@ -2910,6 +2911,7 @@ const en: AdminText = {
     missingDaysOne: "One day has no sales recorded. Enter it by hand or photograph the daily report — the date is read from the report.",
     missingDaysMany: "{maara} days have no sales recorded. Enter them by hand or photograph the daily reports — the date is read from the report.",
     recordDay: "Record",
+    orByHand: "or enter by hand",
   },
   kuva: {
     multiPage:
@@ -4596,6 +4598,7 @@ const sv: AdminText = {
     missingDaysOne: "En dag saknar försäljning. Fyll i den för hand eller fotografera dagsrapporten — datumet läses från rapporten.",
     missingDaysMany: "{maara} dagar saknar försäljning. Fyll i dem för hand eller fotografera dagsrapporterna — datumet läses från rapporten.",
     recordDay: "Registrera",
+    orByHand: "eller fyll i för hand",
   },
   kuva: {
     multiPage:
@@ -6280,6 +6283,7 @@ const da: AdminText = {
     missingDaysOne: "Én dag mangler salg. Udfyld den manuelt eller fotografér dagsrapporten — datoen læses fra rapporten.",
     missingDaysMany: "{maara} dage mangler salg. Udfyld dem manuelt eller fotografér dagsrapporterne — datoen læses fra rapporten.",
     recordDay: "Registrér",
+    orByHand: "eller udfyld manuelt",
   },
   kuva: {
     multiPage:
@@ -7961,6 +7965,7 @@ const tr: AdminText = {
     missingDaysOne: "Bir gün için satış kaydı yok. Elle girin veya gün sonu raporunu çekin — tarih rapordan okunur.",
     missingDaysMany: "{maara} gün için satış kaydı yok. Elle girin veya gün sonu raporlarını çekin — tarih rapordan okunur.",
     recordDay: "Kaydet",
+    orByHand: "veya elle girin",
   },
   kuva: {
     multiPage:
@@ -9639,6 +9644,7 @@ const et: AdminText = {
     missingDaysOne: "Ühel päeval pole müüki kirjas. Täida see käsitsi või pildista päevaaruanne — kuupäev loetakse aruandest.",
     missingDaysMany: "{maara} päeval pole müüki kirjas. Täida need käsitsi või pildista päevaaruanded — kuupäev loetakse aruandest.",
     recordDay: "Kirjuta",
+    orByHand: "või sisesta käsitsi",
   },
   kuva: {
     multiPage:
@@ -11327,6 +11333,7 @@ const ar: AdminText = {
     missingDaysOne: "يوم واحد بلا مبيعات مسجّلة. أدخلها يدويًا أو صوّر تقرير اليوم — يُقرأ التاريخ من التقرير.",
     missingDaysMany: "{maara} أيام بلا مبيعات مسجّلة. أدخلها يدويًا أو صوّر تقارير الأيام — يُقرأ التاريخ من التقرير.",
     recordDay: "تسجيل",
+    orByHand: "أو أدخلها يدويًا",
   },
   kuva: {
     multiPage:
