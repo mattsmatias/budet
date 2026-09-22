@@ -49,6 +49,11 @@ const raportit = (t: AdminText) =>
       title: "ALV-raportti",
       description: t.raportti.vatHint,
     },
+    {
+      kind: "tunnit",
+      title: t.raportti.hoursReport,
+      description: t.raportti.hoursHint,
+    },
   ] as const;
 
 export default async function ReportsPage({

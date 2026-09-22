@@ -18,7 +18,10 @@ import {
   fetchDailySales,
   fetchReceipts,
   fetchSalesGroups,
+  fetchEmployees,
+  fetchPayrollSettings,
   fetchSalesLinesBetween,
+  fetchTimeEntries,
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import {
@@ -28,6 +31,9 @@ import {
 } from "@/lib/restoflow/expenses";
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
+import { monthRange } from "@/lib/restoflow/dates";
+import { formatClock, fullName } from "@/lib/restoflow/employees";
+import { costFor } from "@/lib/restoflow/payroll";
 
 export type ReportKind =
   | "kulut"
@@ -36,6 +42,14 @@ export type ReportKind =
   | "toimittajat"
   | "budjetit"
   | "alv"
+  /*
+   * Tyotunnit.
+   *
+   * Tama on se paperi joka lahtee palkanlaskentaan: kuka teki, milloin
+   * ja kuinka kauan. Arvio euroista on mukana omana sarakkeenaan,
+   * muttei kirjanpitoaineistona — palkka tulee palkkapalvelusta.
+   */
+  | "tunnit"
   /*
    * Kirjanpidon raportit samaan koneistoon.
    *
@@ -56,6 +70,7 @@ export const REPORT_KINDS: ReportKind[] = [
   "toimittajat",
   "budjetit",
   "alv",
+  "tunnit",
   "paivakirja",
   "paakirja",
   "tuloslaskelma",
@@ -93,6 +108,16 @@ export async function buildReportRows(
 
   if (ACCOUNTING_KINDS.includes(kind)) {
     return accountingReportRows(kind, restaurantId, month, t);
+  }
+
+  /*
+   * Tyotunnit tulevat leimauksista eivatka kuiteista.
+   *
+   * Oma haaransa kuten ALV: kuukauden kuittien lataaminen
+   * tuntiraporttia varten olisi turhaa tyota.
+   */
+  if (kind === "tunnit") {
+    return hoursReportRows(restaurantId, month, timezone, t);
   }
 
   const receipts = await fetchReceipts(restaurantId);
@@ -483,4 +508,102 @@ async function accountingReportRows(
     [t.vienti.liabilitiesTotal, "", "", money(balance.balancesTotalCents)],
     [t.vienti.balances, "", "", balance.balanced ? "kyllä" : "ei"],
   ];
+}
+
+/**
+ * Työtuntiraportti.
+ *
+ * TÄMÄ ON SE PAPERI JOKA LÄHTEE PALKANLASKENTAAN.
+ *
+ * Palkkapalvelu tarvitsee tiedon siitä kuka teki, milloin ja kuinka
+ * kauan. Ilman raporttia luvut luettiin ruudulta ja kirjoitettiin
+ * käsin, mikä on juuri se kohta jossa tunti katoaa tai kahdentuu.
+ *
+ * Eurot ovat mukana arviona eivätkä kirjanpitoaineistona: palkka
+ * tulee palkkapalvelusta, ja tämä kertoo mitä työ maksoi työnantajalle.
+ *
+ * Kesken oleva vuoro näkyy rivillä ilman kestoa. Se on tieto sekin —
+ * unohtunut uloskirjaus löytyy tästä eikä vasta palkkalaskelmasta.
+ */
+async function hoursReportRows(
+  restaurantId: string,
+  month: string,
+  timezone: string,
+  t: AdminText,
+): Promise<string[][]> {
+  const { from } = monthRange(month);
+
+  const [employees, entries, settings] = await Promise.all([
+    fetchEmployees(restaurantId),
+    fetchTimeEntries(restaurantId, from),
+    fetchPayrollSettings(restaurantId),
+  ]);
+
+  const byId = new Map(employees.map((e) => [e.id, e]));
+
+  const inMonth = entries
+    .filter((entry) => entry.date.startsWith(month))
+    .sort((a, b) => a.clockIn.localeCompare(b.clockIn));
+
+  const rows: string[][] = [
+    [
+      t.vienti.day,
+      t.tyo.title,
+      t.tyo.jobTitle,
+      t.palkkaAs.eveningStart,
+      t.palkkaAs.eveningEnd,
+      t.tyo.hoursThisMonth,
+      t.tyo.hourly,
+      t.palkkaAs.cost,
+    ],
+  ];
+
+  for (const entry of inMonth) {
+    const employee = byId.get(entry.employeeId);
+    if (!employee) continue;
+
+    const cost = costFor([entry], employee.hourlyCents, timezone, settings);
+
+    rows.push([
+      entry.date,
+      fullName(employee),
+      employee.jobTitle ?? "",
+      formatClock(entry.clockIn, timezone),
+      entry.clockOut === null ? "" : formatClock(entry.clockOut, timezone),
+      entry.minutes === null ? "" : (entry.minutes / 60).toFixed(2),
+      money(employee.hourlyCents),
+      entry.clockOut === null ? "" : money(cost.totalCents),
+    ]);
+  }
+
+  /*
+   * Yhteenveto työntekijöittäin raportin loppuun.
+   *
+   * Palkanlaskentaan menee kuukauden tuntimäärä henkilöä kohti, ei
+   * yksittäisiä vuoroja — mutta vuorot ovat tarkistusta varten
+   * samassa paperissa.
+   */
+  rows.push([]);
+  rows.push([
+    t.tyo.title,
+    t.tyo.jobTitle,
+    t.tyo.totalHours,
+    t.palkkaAs.cost,
+  ]);
+
+  for (const employee of employees) {
+    const mine = inMonth.filter((e) => e.employeeId === employee.id);
+    if (mine.length === 0) continue;
+
+    const cost = costFor(mine, employee.hourlyCents, timezone, settings);
+
+    rows.push([
+      fullName(employee),
+      employee.jobTitle ?? "",
+      (cost.minutes / 60).toFixed(2),
+      money(cost.totalCents),
+    ]);
+  }
+
+  return rows;
 }

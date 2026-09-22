@@ -721,6 +721,8 @@ const fi = {
     mailIntro: "ohessa {ravintola}n kulut kuukaudelta {kuukausi}.",
     mailReceipts: "Kuitteja: {maara}",
     mailTotal: "Kirjatut kulut yhteensä: {summa}",
+    hoursReport: "Työtunnit",
+    hoursHint: "Vuorot päivittäin ja yhteenveto työntekijöittäin. Tämä lähtee palkanlaskentaan.",
   },
   asetus: {
     noGroupsYet: "Yhtään myyntiryhmää ei ole vielä määritetty. Voit aloittaa toimialasi vakiopohjasta ja muokata sitä.",
@@ -2537,6 +2539,8 @@ const en: AdminText = {
     mailIntro: "here are {ravintola}'s expenses for {kuukausi}.",
     mailReceipts: "Receipts: {maara}",
     mailTotal: "Recorded expenses in total: {summa}",
+    hoursReport: "Working hours",
+    hoursHint: "Shifts by day and a summary per employee. This is what goes to payroll.",
   },
   asetus: {
     noGroupsYet: "No sales group has been defined yet. You can start from your industry's standard base and edit it.",
@@ -4345,6 +4349,8 @@ const sv: AdminText = {
     mailIntro: "här är {ravintola}s kostnader för {kuukausi}.",
     mailReceipts: "Kvitton: {maara}",
     mailTotal: "Registrerade kostnader totalt: {summa}",
+    hoursReport: "Arbetstimmar",
+    hoursHint: "Pass per dag och en sammanfattning per anställd. Detta går till löneräkningen.",
   },
   asetus: {
     noGroupsYet: "Ingen försäljningsgrupp har definierats än. Du kan börja från din branschs standardgrund och ändra den.",
@@ -6157,6 +6163,8 @@ const da: AdminText = {
     mailIntro: "her er {ravintola}s udgifter for {kuukausi}.",
     mailReceipts: "Kvitteringer: {maara}",
     mailTotal: "Registrerede udgifter i alt: {summa}",
+    hoursReport: "Arbejdstimer",
+    hoursHint: "Vagter per dag og en oversigt per medarbejder. Dette går til lønberegningen.",
   },
   asetus: {
     noGroupsYet: "Der er endnu ikke defineret nogen salgsgruppe. Du kan starte fra din branches standardgrundlag og rette det.",
@@ -7971,6 +7979,8 @@ const tr: AdminText = {
     mailIntro: "{ravintola} için {kuukausi} giderleri ekte.",
     mailReceipts: "Fişler: {maara}",
     mailTotal: "Kaydedilen giderler toplamı: {summa}",
+    hoursReport: "Çalışma saatleri",
+    hoursHint: "Günlük vardiyalar ve çalışan başına özet. Bordroya giden budur.",
   },
   asetus: {
     noGroupsYet: "Henüz bir satış grubu tanımlanmadı. Sektörünün standart tabanından başlayıp düzenleyebilirsin.",
@@ -9770,6 +9780,8 @@ const et: AdminText = {
     mailIntro: "siin on {ravintola} kulud kuu {kuukausi} kohta.",
     mailReceipts: "Tšekke: {maara}",
     mailTotal: "Salvestatud kulud kokku: {summa}",
+    hoursReport: "Töötunnid",
+    hoursHint: "Vahetused päevade kaupa ja kokkuvõte töötajate kaupa. See läheb palgaarvestusse.",
   },
   asetus: {
     noGroupsYet: "Ühtegi müügigruppi pole veel määratud. Võid alustada oma tegevusala standardpõhjast ja seda muuta.",
@@ -11577,6 +11589,8 @@ const ar: AdminText = {
     mailIntro: "إليك مصاريف {ravintola} لشهر {kuukausi}.",
     mailReceipts: "الإيصالات: {maara}",
     mailTotal: "إجمالي المصاريف المسجّلة: {summa}",
+    hoursReport: "ساعات العمل",
+    hoursHint: "الورديات يومياً وملخص لكل موظف. هذا ما يذهب إلى حساب الرواتب.",
   },
 
   asetus: {
