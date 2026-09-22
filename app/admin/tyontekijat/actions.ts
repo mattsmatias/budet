@@ -208,3 +208,53 @@ export async function endShift(): Promise<AdminState> {
 
   return { notice: t.tyo.ended };
 }
+
+/**
+ * Kutsu leimaamaan.
+ *
+ * SÄHKÖPOSTIA EI KIRJOITETA KAHDESTI.
+ *
+ * Kutsu luotiin aiemmin asetuksissa ja työntekijä lisättiin täällä.
+ * Sama osoite kirjoitettiin siis kahteen kertaan, ja yhden kirjaimen
+ * ero — test@ ja testi@ — riitti siihen, että tunnus ei löytänyt
+ * työntekijärivistään eikä leimaus onnistunut. Kutsu lähtee nyt
+ * kortilta, jolloin osoite on se joka kortilla lukee.
+ */
+export async function inviteEmployee(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant, role } = await requireContext("/admin/tyontekijat");
+
+  if (!can(role, "employees.manage")) {
+    return { error: t.toiminnot.ownerOnlyBody };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (id === "") return { error: t.tyo.saveFailed };
+
+  const supabase = await createClient();
+
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("first_name, last_name, email")
+    .eq("id", id)
+    .eq("restaurant_id", restaurant.id)
+    .maybeSingle();
+
+  const email = (employee?.email as string | null) ?? null;
+  if (!employee || !email) return { error: t.tyo.inviteNeedsEmail };
+
+  const { data, error } = await supabase.rpc("create_invitation", {
+    p_restaurant: restaurant.id,
+    p_role: "employee",
+    p_label: `${employee.first_name} ${employee.last_name}`.trim(),
+  });
+
+  if (error) return { error: t.toiminnot.inviteFailed };
+
+  revalidatePath("/admin/tyontekijat");
+
+  return { code: data as string, notice: t.toiminnot.inviteCreated };
+}

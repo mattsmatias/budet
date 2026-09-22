@@ -3,7 +3,9 @@
 import { useActionState, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { AdminState } from "../actions";
-import { saveEmployee, setEmployeeActive } from "./actions";
+import { inviteEmployee, saveEmployee, setEmployeeActive } from "./actions";
+import { inviteMessage } from "@/lib/restoflow/invite-message";
+import { fill } from "@/lib/i18n/auth-text";
 import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "../asetukset/form-parts";
 import { Card, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -76,6 +78,21 @@ export function EmployeeList({
                     {row.employee.jobTitle ?? "—"} ·{" "}
                     {formatMoney(row.employee.hourlyCents)}/h
                   </p>
+                  {/*
+                    Sähköposti näkyviin ilman muokkaustilaa.
+
+                    Juuri se ratkaisee liitoksen tunnukseen, ja
+                    kirjoitusvirhe — test@ ja testi@ — on nähtävä
+                    silmällä eikä vasta siitä että leimaus ei toimi.
+                  */}
+                  {row.employee.email ? (
+                    <p
+                      className="truncate text-[12px]"
+                      style={{ color: "var(--rf-text-3)" }}
+                    >
+                      {row.employee.email}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-1">
@@ -131,6 +148,10 @@ export function EmployeeList({
                 </button>
                 <ActiveToggle t={t} row={row} />
               </div>
+
+              {row.employee.active && !row.employee.linked ? (
+                <InviteRow t={t} row={row} />
+              ) : null}
             </div>
           )}
         </Card>
@@ -291,6 +312,101 @@ function EmployeeForm({
           {t.loput.cancel}
         </button>
       </div>
+    </form>
+  );
+}
+
+/**
+ * Kutsu leimaamaan, kortilta.
+ *
+ * Koodi näkyy kerran ja katoaa kun sivu ladataan uudelleen — kannassa
+ * on vain sen tiiviste. Siksi se on tässä isona ja kopioitavana heti,
+ * eikä piilossa toisen napin takana.
+ */
+function InviteRow({ t, row }: { t: AdminText; row: EmployeeSummary }) {
+  const [state, action] = useActionState(inviteEmployee, initial);
+  const [copied, setCopied] = useState(false);
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
+  if (state.code) {
+    const message = inviteMessage({
+      t,
+      origin,
+      code: state.code,
+      roleName: t.tyo.title,
+    });
+
+    return (
+      <div
+        className="mt-1 p-3.5"
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
+      >
+        <p className="text-[12.5px] font-semibold">
+          {fill(t.tyo.codeFor, { nimi: fullName(row.employee) })}
+        </p>
+
+        <p className="rf-tabular select-all py-3 text-center text-[24px] font-semibold tracking-[0.14em]">
+          {state.code}
+        </p>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(message);
+              setCopied(true);
+            } catch {
+              setCopied(false);
+            }
+          }}
+          className="rf-press w-full py-2.5 text-[13.5px] font-semibold"
+          style={{
+            background: "var(--rf-accent)",
+            color: "var(--rf-on-accent)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          {copied ? t.tiimi.copied : t.tiimi.copyInstructions}
+        </button>
+
+        <p
+          className="mt-2.5 text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {t.tyo.inviteHint}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="id" value={row.employee.id} />
+      <button
+        type="submit"
+        className="rf-press inline-flex items-center gap-1.5 px-3 py-2 text-[12.5px] font-bold"
+        style={{
+          background: "var(--rf-inset)",
+          borderRadius: "var(--rf-r-control)",
+        }}
+      >
+        <RfIcon name="plus" size={14} />
+        {t.tyo.invite}
+      </button>
+
+      {state.error ? (
+        <span
+          role="alert"
+          className="text-[12px] font-semibold"
+          style={{ color: "var(--rf-red-text)" }}
+        >
+          {state.error}
+        </span>
+      ) : null}
     </form>
   );
 }

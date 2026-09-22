@@ -1696,6 +1696,10 @@ const fi = {
     noShiftsHint: "Paina Aloita työvuoro kun aloitat työt.",
     notEmployee: "Sinua ei ole lisätty työntekijäksi",
     notEmployeeHint: "Pyydä yrityksen omistajaa lisäämään sinut työntekijäksi samalla sähköpostilla jolla kirjaudut.",
+    invite: "Kutsu leimaamaan",
+    inviteNeedsEmail: "Lisää ensin sähköposti, niin voit kutsua.",
+    inviteHint: "Koodi näkyy vain kerran. Työntekijä luo tunnuksen tällä sähköpostilla, jolloin leimaus liittyy tähän korttiin.",
+    codeFor: "Kutsukoodi: {nimi}",
   },
 
   luokat: {
@@ -3483,6 +3487,10 @@ const en: AdminText = {
     noShiftsHint: "Press Start shift when you begin work.",
     notEmployee: "You have not been added as an employee",
     notEmployeeHint: "Ask the owner to add you as an employee with the same email you sign in with.",
+    invite: "Invite to clock in",
+    inviteNeedsEmail: "Add an email first, then you can invite.",
+    inviteHint: "The code is shown only once. The employee creates an account with this email, which links clocking to this card.",
+    codeFor: "Invite code: {nimi}",
   },
 
   luokat: {
@@ -5262,6 +5270,10 @@ const sv: AdminText = {
     noShiftsHint: "Tryck på Starta pass när du börjar arbeta.",
     notEmployee: "Du har inte lagts till som anställd",
     notEmployeeHint: "Be ägaren lägga till dig som anställd med samma e-post som du loggar in med.",
+    invite: "Bjud in att stämpla",
+    inviteNeedsEmail: "Lägg till en e-post först, sedan kan du bjuda in.",
+    inviteHint: "Koden visas bara en gång. Den anställda skapar ett konto med den här e-posten, vilket kopplar stämplingen till det här kortet.",
+    codeFor: "Inbjudningskod: {nimi}",
   },
 
   luokat: {
@@ -7041,6 +7053,10 @@ const da: AdminText = {
     noShiftsHint: "Tryk på Start vagt, når du begynder at arbejde.",
     notEmployee: "Du er ikke tilføjet som medarbejder",
     notEmployeeHint: "Bed ejeren om at tilføje dig som medarbejder med den samme e-mail, du logger ind med.",
+    invite: "Inviter til at stemple",
+    inviteNeedsEmail: "Tilføj en e-mail først, så kan du invitere.",
+    inviteHint: "Koden vises kun én gang. Medarbejderen opretter en konto med denne e-mail, hvilket kobler stemplingen til dette kort.",
+    codeFor: "Invitationskode: {nimi}",
   },
 
   luokat: {
@@ -8814,6 +8830,10 @@ const tr: AdminText = {
     noShiftsHint: "İşe başladığınızda Vardiyayı başlat'a basın.",
     notEmployee: "Çalışan olarak eklenmediniz",
     notEmployeeHint: "İşletme sahibinden sizi giriş yaptığınız e-posta ile çalışan olarak eklemesini isteyin.",
+    invite: "Vardiya kaydına davet et",
+    inviteNeedsEmail: "Önce bir e-posta ekleyin, sonra davet edebilirsiniz.",
+    inviteHint: "Kod yalnızca bir kez görünür. Çalışan bu e-postayla hesap oluşturur ve kayıt bu karta bağlanır.",
+    codeFor: "Davet kodu: {nimi}",
   },
 
   luokat: {
@@ -10586,6 +10606,10 @@ const et: AdminText = {
     noShiftsHint: "Vajuta Alusta vahetust, kui tööd alustad.",
     notEmployee: "Sind pole töötajaks lisatud",
     notEmployeeHint: "Palu omanikul lisada sind töötajaks sama e-postiga, millega sisse logid.",
+    invite: "Kutsu märkima",
+    inviteNeedsEmail: "Lisa esmalt e-post, siis saad kutsuda.",
+    inviteHint: "Kood on näha ainult üks kord. Töötaja loob konto selle e-postiga, mis seob märkimise selle kaardiga.",
+    codeFor: "Kutsekood: {nimi}",
   },
 
   luokat: {
@@ -12371,6 +12395,10 @@ const ar: AdminText = {
     noShiftsHint: "اضغط ابدأ الوردية عند بدء العمل.",
     notEmployee: "لم تتم إضافتك كموظف",
     notEmployeeHint: "اطلب من المالك إضافتك كموظف بالبريد نفسه الذي تسجّل الدخول به.",
+    invite: "ادعُه لتسجيل الدوام",
+    inviteNeedsEmail: "أضف بريداً إلكترونياً أولاً لتتمكن من الدعوة.",
+    inviteHint: "يظهر الرمز مرة واحدة فقط. ينشئ الموظف حساباً بهذا البريد، فيرتبط تسجيل الدوام بهذه البطاقة.",
+    codeFor: "رمز الدعوة: {nimi}",
   },
 
   luokat: {
