@@ -1626,6 +1626,23 @@ const fi = {
   },
 
 
+  palkat: {
+    title: "Palkat",
+    lead: "Kuukauden henkilöstökulut ja niiden osuus myynnistä.",
+    record: "Kirjaa palkat",
+    monthTotal: "Kuukauden palkat",
+    share: "Osuus myynnistä",
+    shareNote: "Palkat jaettuna kuukauden myynnillä.",
+    noSales: "Myyntiä ei ole kirjattu, joten osuutta ei voi laskea.",
+    entries: "Kirjaukset",
+    entriesHint: "Tämän kuukauden henkilöstökulut.",
+    none: "Ei palkkakirjauksia tässä kuussa",
+    noneHint: "Kirjaa kuukauden bruttopalkat sivukuluineen yhtenä kuluna. Kate ei laske palkkoja — se seuraa mitä ne maksavat.",
+    history: "Viimeiset kuusi kuukautta",
+    typicalNote: "Ravintolassa ja kahvilassa palkat ovat tyypillisesti 25–35 % myynnistä.",
+    ownHistoryNote: "Vertailukohta on oma historia: alan yleinen väli ei sovi palkkio- ja tuolivuokramalleihin.",
+  },
+
   luokat: {
     needsReview: "Tarkistettavat",
     food: "Ruoka",
@@ -3341,6 +3358,23 @@ const en: AdminText = {
   },
 
 
+  palkat: {
+    title: "Wages",
+    lead: "Staff costs for the month and their share of sales.",
+    record: "Record wages",
+    monthTotal: "Wages this month",
+    share: "Share of sales",
+    shareNote: "Wages divided by the month's sales.",
+    noSales: "No sales recorded, so the share cannot be calculated.",
+    entries: "Entries",
+    entriesHint: "Staff costs for this month.",
+    none: "No wage entries this month",
+    noneHint: "Record the month's gross wages including side costs as a single expense. Kate does not calculate wages — it tracks what they cost.",
+    history: "Last six months",
+    typicalNote: "In restaurants and cafés wages are typically 25–35 % of sales.",
+    ownHistoryNote: "The benchmark is your own history: a general range does not fit commission and chair-rental models.",
+  },
+
   luokat: {
     needsReview: "Needs checking",
     food: "Food",
@@ -5047,6 +5081,23 @@ const sv: AdminText = {
     user: "Användare",
   },
 
+
+  palkat: {
+    title: "Löner",
+    lead: "Månadens personalkostnader och deras andel av försäljningen.",
+    record: "Bokför löner",
+    monthTotal: "Månadens löner",
+    share: "Andel av försäljningen",
+    shareNote: "Löner delat med månadens försäljning.",
+    noSales: "Ingen försäljning bokförd, så andelen kan inte beräknas.",
+    entries: "Bokföringar",
+    entriesHint: "Personalkostnader för den här månaden.",
+    none: "Inga löneposter den här månaden",
+    noneHint: "Bokför månadens bruttolöner med bikostnader som en enda kostnad. Kate räknar inte löner — den följer vad de kostar.",
+    history: "Senaste sex månaderna",
+    typicalNote: "På restauranger och kaféer är lönerna vanligtvis 25–35 % av försäljningen.",
+    ownHistoryNote: "Jämförelsen är din egen historik: ett allmänt intervall passar inte provisions- och stolhyresmodeller.",
+  },
 
   luokat: {
     needsReview: "Att kontrollera",
@@ -6755,6 +6806,23 @@ const da: AdminText = {
   },
 
 
+  palkat: {
+    title: "Løn",
+    lead: "Månedens personaleomkostninger og deres andel af salget.",
+    record: "Bogfør løn",
+    monthTotal: "Månedens løn",
+    share: "Andel af salget",
+    shareNote: "Løn divideret med månedens salg.",
+    noSales: "Intet salg bogført, så andelen kan ikke beregnes.",
+    entries: "Posteringer",
+    entriesHint: "Personaleomkostninger for denne måned.",
+    none: "Ingen lønposteringer denne måned",
+    noneHint: "Bogfør månedens bruttoløn inklusive bidrag som én omkostning. Kate beregner ikke løn — den følger hvad den koster.",
+    history: "Seneste seks måneder",
+    typicalNote: "På restauranter og caféer udgør lønnen typisk 25–35 % af salget.",
+    ownHistoryNote: "Sammenligningen er din egen historik: et generelt interval passer ikke til provisions- og stoleleje-modeller.",
+  },
+
   luokat: {
     needsReview: "Skal tjekkes",
     food: "Mad",
@@ -8456,6 +8524,23 @@ const tr: AdminText = {
   },
 
 
+  palkat: {
+    title: "Maaşlar",
+    lead: "Ayın personel giderleri ve satışa oranı.",
+    record: "Maaşları kaydet",
+    monthTotal: "Bu ayın maaşları",
+    share: "Satıştaki payı",
+    shareNote: "Maaşlar bölü ayın satışı.",
+    noSales: "Satış kaydı yok, bu yüzden oran hesaplanamaz.",
+    entries: "Kayıtlar",
+    entriesHint: "Bu ayın personel giderleri.",
+    none: "Bu ay maaş kaydı yok",
+    noneHint: "Ayın brüt maaşlarını yan giderleriyle birlikte tek bir gider olarak kaydedin. Kate maaş hesaplamaz — ne kadara mal olduğunu izler.",
+    history: "Son altı ay",
+    typicalNote: "Restoran ve kafelerde maaşlar genellikle satışın %25–35'idir.",
+    ownHistoryNote: "Karşılaştırma kendi geçmişiniz: genel bir aralık prim ve koltuk kirası modellerine uymaz.",
+  },
+
   luokat: {
     needsReview: "Kontrol edilecek",
     food: "Yiyecek",
@@ -10155,6 +10240,23 @@ const et: AdminText = {
     user: "Kasutaja",
   },
 
+
+  palkat: {
+    title: "Palgad",
+    lead: "Kuu tööjõukulud ja nende osakaal müügist.",
+    record: "Kirjenda palgad",
+    monthTotal: "Selle kuu palgad",
+    share: "Osakaal müügist",
+    shareNote: "Palgad jagatud kuu müügiga.",
+    noSales: "Müüki pole kirjendatud, seega osakaalu ei saa arvutada.",
+    entries: "Kirjed",
+    entriesHint: "Selle kuu tööjõukulud.",
+    none: "Sel kuul palgakirjeid pole",
+    noneHint: "Kirjenda kuu brutopalgad koos kõrvalkuludega ühe kuluna. Kate ei arvuta palku — ta jälgib, mis need maksavad.",
+    history: "Viimased kuus kuud",
+    typicalNote: "Restoranides ja kohvikutes on palgad tavaliselt 25–35 % müügist.",
+    ownHistoryNote: "Võrdlusaluseks on oma ajalugu: üldine vahemik ei sobi komisjoni- ja toolirendimudelitega.",
+  },
 
   luokat: {
     needsReview: "Kontrollida",
@@ -11868,6 +11970,23 @@ const ar: AdminText = {
     user: "المستخدم",
   },
 
+
+  palkat: {
+    title: "الرواتب",
+    lead: "تكاليف الموظفين لهذا الشهر ونسبتها من المبيعات.",
+    record: "سجّل الرواتب",
+    monthTotal: "رواتب هذا الشهر",
+    share: "النسبة من المبيعات",
+    shareNote: "الرواتب مقسومة على مبيعات الشهر.",
+    noSales: "لا توجد مبيعات مسجّلة، لذا لا يمكن حساب النسبة.",
+    entries: "القيود",
+    entriesHint: "تكاليف الموظفين لهذا الشهر.",
+    none: "لا توجد قيود رواتب هذا الشهر",
+    noneHint: "سجّل رواتب الشهر الإجمالية مع التكاليف الجانبية كمصروف واحد. كيت لا تحسب الرواتب — بل تتابع كم تكلّف.",
+    history: "الأشهر الستة الأخيرة",
+    typicalNote: "في المطاعم والمقاهي تشكّل الرواتب عادةً 25–35 % من المبيعات.",
+    ownHistoryNote: "المرجع هو تاريخك الخاص: النطاق العام لا يناسب نماذج العمولة وإيجار الكرسي.",
+  },
 
   luokat: {
     needsReview: "يحتاج مراجعة",

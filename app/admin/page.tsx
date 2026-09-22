@@ -741,16 +741,12 @@ export default async function AdminDashboard({
            * Linkki vie sinne missä luvulle voi tehdä jotain.
            *
            * Kortti neuvoo kirjaamaan palkat, mutta vei kuluerittelyyn
-           * jossa mitään ei voi kirjata. Kun palkkoja ei vielä ole,
-           * linkki avaa kulun lisäyksen Henkilöstö-luokka valmiina;
-           * kun niitä on, se näyttää ne kuluissa.
+           * jossa mitään ei voi kirjata. Palkoilla on nyt oma näkymänsä:
+           * siellä on kuukauden summa, osuus myynnistä, kuuden
+           * kuukauden kehitys ja painike kirjaukselle.
            */
-          href={
-            staffCents === 0
-              ? "/admin/kuitit/uusi?luokka=staff"
-              : `/admin/kulut?kuukausi=${viewMonth}`
-          }
-          linkLabel={staffCents === 0 ? t.kuori.addReceipt : t.sanat.expenses}
+          href={`/admin/palkat?kuukausi=${viewMonth}`}
+          linkLabel={t.palkat.title}
         />
       </Spotlight>
       </section>

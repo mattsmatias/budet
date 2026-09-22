@@ -209,6 +209,7 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/loki", requires: "audit.view" },
   { href: "/admin/myynti", requires: "sales.view" },
   { href: "/admin/kirjanpito", requires: "accounting.view" },
+  { href: "/admin/palkat", requires: "expenses.view" },
   { href: "/admin/havainnot", requires: "expenses.view" },
   { href: "/admin/tiedostot", requires: "files.view" },
   { href: "/admin/raportit", requires: "reports.view" },

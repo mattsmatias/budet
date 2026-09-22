@@ -23,6 +23,8 @@ import { MonthPicker } from "./month-picker";
 const MONTHLY = [
   "/admin",
   "/admin/kulut",
+  /* Palkat on kuukausiluku: kuukausi vaihtaa sekä summan että osuuden. */
+  "/admin/palkat",
   "/admin/raportit",
   /* Kirjanpidon kuukausi on koko sivun aihe, ei yhden välilehden. */
   "/admin/kirjanpito",
