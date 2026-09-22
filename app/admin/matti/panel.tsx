@@ -303,6 +303,14 @@ function Conversation({
    */
   const [restoring, setRestoring] = useState(true);
   const [confirmClear, setConfirmClear] = useState(false);
+  /*
+   * Alkunäkymä keskustelun päällä.
+   *
+   * Muistettu keskustelu ei saa viedä pääsyä alkuun: tilanne ja
+   * ehdotetut kysymykset ovat yhä hyödyllisiä. Alkuun siirtyminen ei
+   * poista mitään — kysymys alkunäkymästä jatkaa samaa keskustelua.
+   */
+  const [showStart, setShowStart] = useState(false);
   const [clearing, setClearing] = useState(false);
 
   const scroller = useRef<HTMLDivElement>(null);
@@ -360,6 +368,7 @@ function Conversation({
   async function clearConversation() {
     if (!conversationId) {
       setTurns([]);
+      setShowStart(false);
       setConfirmClear(false);
       return;
     }
@@ -372,6 +381,7 @@ function Conversation({
       });
       if (!response.ok) throw new Error("clear");
       setTurns([]);
+      setShowStart(false);
       setConversationId(null);
       setError(null);
       setLastAsked(null);
@@ -444,6 +454,22 @@ function Conversation({
         </div>
 
         <div className="flex items-center gap-1">
+        {turns.length > 0 && !showStart ? (
+          <button
+            type="button"
+            onClick={() => {
+              setShowStart(true);
+              scroller.current?.scrollTo({ top: 0 });
+            }}
+            aria-label={t.matti.start}
+            title={t.matti.start}
+            className="rf-press rf-icon-btn flex h-9 w-9 items-center justify-center rounded-[9px]"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            <RfIcon name="overview" size={17} />
+          </button>
+        ) : null}
+
         {turns.length > 0 && !busy ? (
           <button
             type="button"
@@ -510,14 +536,39 @@ function Conversation({
       ) : null}
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
-        {restoring ? null : turns.length === 0 ? (
-          <Welcome
-            t={t}
-            currentPage={currentPage}
-            onPick={send}
-            briefing={briefing}
-            greeting={greeting}
-          />
+        {restoring ? null : turns.length === 0 || showStart ? (
+          <>
+            {showStart && turns.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStart(false);
+                  requestAnimationFrame(() =>
+                    bottom.current?.scrollIntoView({ block: "end" }),
+                  );
+                }}
+                className="rf-press mb-5 flex w-full items-center justify-between gap-3 px-3.5 py-3 text-start text-[13.5px] font-semibold"
+                style={{
+                  background: "var(--rf-inset)",
+                  border: "1px solid var(--rf-line)",
+                  borderRadius: "var(--rf-r-control)",
+                }}
+              >
+                <span>{t.matti.continueChat}</span>
+                <RfIcon name="chevron" size={15} />
+              </button>
+            ) : null}
+            <Welcome
+              t={t}
+              currentPage={currentPage}
+              onPick={(message) => {
+                setShowStart(false);
+                void send(message);
+              }}
+              briefing={briefing}
+              greeting={greeting}
+            />
+          </>
         ) : (
           <div className="space-y-6">
             {turns.map((turn, index) => (
@@ -526,7 +577,7 @@ function Conversation({
           </div>
         )}
 
-        {busy ? <Working t={t} /> : null}
+        {busy && !showStart ? <Working t={t} /> : null}
 
         {error ? (
           <div className="mt-5">
@@ -551,7 +602,15 @@ function Conversation({
         <div ref={bottom} />
       </div>
 
-      <Composer onSend={send} busy={busy} inputRef={input} t={t} />
+      <Composer
+        onSend={(message) => {
+          setShowStart(false);
+          void send(message);
+        }}
+        busy={busy}
+        inputRef={input}
+        t={t}
+      />
     </>
   );
 }

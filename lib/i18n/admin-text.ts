@@ -1316,6 +1316,8 @@ const fi = {
     clearConfirm: "Poistetaanko keskustelu pysyvästi?",
     clearYes: "Tyhjennä",
     clearFailed: "Keskustelua ei saatu tyhjennettyä. Yritä uudelleen.",
+    start: "Alkuun",
+    continueChat: "Jatka keskustelua",
   },
 
   mattiKysy: {
@@ -3003,6 +3005,8 @@ const en: AdminText = {
     clearConfirm: "Delete the conversation permanently?",
     clearYes: "Clear",
     clearFailed: "The conversation could not be cleared. Try again.",
+    start: "Start",
+    continueChat: "Continue the conversation",
   },
 
   mattiKysy: {
@@ -4684,6 +4688,8 @@ const sv: AdminText = {
     clearConfirm: "Radera konversationen permanent?",
     clearYes: "Töm",
     clearFailed: "Konversationen kunde inte tömmas. Försök igen.",
+    start: "Till början",
+    continueChat: "Fortsätt konversationen",
   },
 
   mattiKysy: {
@@ -6364,6 +6370,8 @@ const da: AdminText = {
     clearConfirm: "Slet samtalen permanent?",
     clearYes: "Ryd",
     clearFailed: "Samtalen kunne ikke ryddes. Prøv igen.",
+    start: "Til start",
+    continueChat: "Fortsæt samtalen",
   },
 
   mattiKysy: {
@@ -8040,6 +8048,8 @@ const tr: AdminText = {
     clearConfirm: "Sohbet kalıcı olarak silinsin mi?",
     clearYes: "Temizle",
     clearFailed: "Sohbet temizlenemedi. Tekrar deneyin.",
+    start: "Başa dön",
+    continueChat: "Sohbete devam et",
   },
 
   mattiKysy: {
@@ -9713,6 +9723,8 @@ const et: AdminText = {
     clearConfirm: "Kas kustutada vestlus jäädavalt?",
     clearYes: "Tühjenda",
     clearFailed: "Vestlust ei õnnestunud tühjendada. Proovi uuesti.",
+    start: "Algusesse",
+    continueChat: "Jätka vestlust",
   },
 
   mattiKysy: {
@@ -11396,6 +11408,8 @@ const ar: AdminText = {
     clearConfirm: "هل تريد حذف المحادثة نهائيًا؟",
     clearYes: "مسح",
     clearFailed: "تعذّر مسح المحادثة. حاول مرة أخرى.",
+    start: "البداية",
+    continueChat: "متابعة المحادثة",
   },
 
   mattiKysy: {
