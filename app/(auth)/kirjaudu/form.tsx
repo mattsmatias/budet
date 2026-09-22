@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { signIn, type FormState } from "../actions";
 import { Field, Message, Submit } from "../fields";
@@ -13,6 +14,9 @@ const initial: FormState = {};
  * Lomake on selainkomponentti; kielen ratkaisu lukee evästeen ja
  * profiilin ja kuuluu palvelimelle. Sivu hakee tekstit kerran ja antaa
  * ne tänne — sama kuvio kuin julkisilla sivuilla.
+ *
+ * "Unohtuiko salasana?" on salasanakentän vieressä: sitä tarvitaan
+ * juuri siinä kohdassa, ei lomakkeen alla.
  */
 export function SignInForm({ next, t }: { next: string; t: AuthText }) {
   const [state, action] = useActionState(signIn, initial);
@@ -26,6 +30,7 @@ export function SignInForm({ next, t }: { next: string; t: AuthText }) {
         type="email"
         autoComplete="email"
         required
+        icon="mail"
       />
       <Field
         label={t.kentat.password}
@@ -33,6 +38,17 @@ export function SignInForm({ next, t }: { next: string; t: AuthText }) {
         type="password"
         autoComplete="current-password"
         required
+        icon="lock"
+        reveal={{ show: t.kentat.showPassword, hide: t.kentat.hidePassword }}
+        aside={
+          <Link
+            href="/unohtui"
+            className="text-[12.5px] font-semibold"
+            style={{ color: "var(--rf-accent)" }}
+          >
+            {t.kirjaudu.forgot}
+          </Link>
+        }
       />
       <Message state={state} />
       <Submit idle={t.kirjaudu.idle} busy={t.kirjaudu.busy} />

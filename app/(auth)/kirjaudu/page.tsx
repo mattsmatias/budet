@@ -9,6 +9,14 @@ export async function generateMetadata() {
   return { title: t.kirjaudu.metaTitle };
 }
 
+/**
+ * Kirjautuminen.
+ *
+ * Tunnukset luodaan puolesta, joten sivulla ei ole rekisteröitymistä
+ * eikä yhteydenottolinkkiä: tänne tullaan kirjautumaan. Kutsukoodilla
+ * liittyvälle on oma polku lomakkeen alla, koska hän ei ole luomassa
+ * yritystä vaan liittymässä olemassa olevaan.
+ */
 export default async function SignInPage({
   searchParams,
 }: PageProps<"/kirjaudu">) {
@@ -20,39 +28,15 @@ export default async function SignInPage({
   const t = authText(await resolveLocale());
 
   return (
-    <div className="rf-enter">
-      <h1 className="text-[26px] font-semibold tracking-tight">
+    <div>
+      <h1 className="text-[28px] font-extrabold tracking-[-0.03em]">
         {t.kirjaudu.title}
       </h1>
-      <p className="mt-2 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-        {t.kirjaudu.noAccount}{" "}
-        {/*
-          Tunnukset luodaan puolesta, joten uusi asiakas ohjataan
-          etusivun yhteydenottoon eikä rekisteröitymään itse.
-        */}
-        <Link
-          href="/#yhteys"
-          className="font-medium underline underline-offset-4"
-          style={{ color: "var(--rf-blue)" }}
-        >
-          {t.kirjaudu.createAccount}
-        </Link>
-      </p>
-
-      {/*
-        Kutsuttu ei ole luomassa tunnusta vaan liittymässä. Ilman omaa
-        riviä hän valitsisi "Luo tunnus" ja päätyisi perustamaan
-        ravintolan johon ei ole tulossa.
-      */}
-      <p className="mt-1 text-[14px]" style={{ color: "var(--rf-text-2)" }}>
-        {t.kirjaudu.gotCode}{" "}
-        <Link
-          href="/liity"
-          className="font-medium underline underline-offset-4"
-          style={{ color: "var(--rf-blue)" }}
-        >
-          {t.kirjaudu.joinRestaurant}
-        </Link>
+      <p
+        className="mt-2 text-[14.5px] leading-relaxed"
+        style={{ color: "var(--rf-text-2)" }}
+      >
+        {t.kirjaudu.subtitle}
       </p>
 
       {linkError ? (
@@ -85,17 +69,18 @@ export default async function SignInPage({
         </div>
       )}
 
-      {isConfigured() ? (
-        <p className="mt-5 text-center text-[13px]">
-          <Link
-            href="/unohtui"
-            className="font-medium underline underline-offset-4"
-            style={{ color: "var(--rf-text-2)" }}
-          >
-            {t.kirjaudu.forgot}
-          </Link>
-        </p>
-      ) : null}
+      {/* Kutsukoodilla liittyvä: oma, rauhallinen rivi lomakkeen alla. */}
+      <div className="rf-auth-divider" />
+      <p className="text-center text-[13.5px]" style={{ color: "var(--rf-text-2)" }}>
+        {t.kirjaudu.gotCode}{" "}
+        <Link
+          href="/liity"
+          className="font-semibold"
+          style={{ color: "var(--rf-accent)" }}
+        >
+          {t.kirjaudu.joinRestaurant} →
+        </Link>
+      </p>
     </div>
   );
 }
