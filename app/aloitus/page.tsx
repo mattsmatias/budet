@@ -88,8 +88,8 @@ export default async function SetupPage({
                 className="mt-5 text-[12px] leading-relaxed"
                 style={{ color: "var(--rf-text-3)" }}
               >
-                Sinusta tulee ravintolan omistaja. Voit kutsua managereita,
-                työntekijöitä ja kirjanpitäjän heti perustamisen jälkeen.
+                Sinusta tulee yrityksen omistaja. Voit kutsua esihenkilöitä ja
+                kirjanpitäjän heti perustamisen jälkeen.
               </p>
             </>
           ) : (

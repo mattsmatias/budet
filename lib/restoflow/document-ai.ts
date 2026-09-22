@@ -81,7 +81,7 @@ export const documentSchema = z.object({
 
 export type DocumentExtraction = z.infer<typeof documentSchema>;
 
-export const DOCUMENT_PROMPT = `Katsot ravintolan asiakirjaa, jotta se osataan nimetä ja arkistoida oikeaan kansioon.
+export const DOCUMENT_PROMPT = `Katsot yrityksen asiakirjaa, jotta se osataan nimetä ja arkistoida oikeaan kansioon.
 
 Säännöt, joista ei poiketa:
 
@@ -106,7 +106,7 @@ Säännöt, joista ei poiketa:
    "Anniskelulupa", "Vuokrasopimus", "Palkkalaskelma". Enintään kolme
    sanaa. Älä toista lähettäjän nimeä siinä.
 
-4. issuer on lähettäjä, myöntäjä tai vastapuoli — ei ravintola itse.
+4. issuer on lähettäjä, myöntäjä tai vastapuoli — ei yritys itse.
    Sopimuksessa on kaksi nimeä; issuer on se toinen. Viranomaisluvassa
    se on myöntävä viranomainen.
 

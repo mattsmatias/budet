@@ -62,7 +62,7 @@ export function JoinForm() {
           }}
         />
         <p className="mt-1.5 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-          Saat koodin ravintolan omistajalta. Kahdeksan merkkiä.
+          Saat koodin yrityksen omistajalta. Kahdeksan merkkiä.
         </p>
       </div>
 
@@ -99,7 +99,7 @@ function Submit({ disabled }: { disabled: boolean }) {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Liitytään…" : "Liity ravintolaan"}
+      {pending ? "Liitytään…" : "Liity yritykseen"}
     </button>
   );
 }

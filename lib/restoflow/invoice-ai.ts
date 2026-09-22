@@ -49,7 +49,7 @@ export const invoiceSchema = z.object({
  * viite on saajan viite eikä laskun numero. Ne ovat ne kohdat joissa
  * lasku eroaa kuitista ja joissa väärä luku maksaa eniten.
  */
-export const INVOICE_PROMPT = `Luet ravintolan saapuneita laskuja, jotta niiden maksamisesta voi tehdä muistutuksen.
+export const INVOICE_PROMPT = `Luet yrityksen saapuneita laskuja, jotta niiden maksamisesta voi tehdä muistutuksen.
 
 Säännöt, joista ei poiketa:
 
@@ -78,7 +78,7 @@ Säännöt, joista ei poiketa:
 7. iban on tilinumero IBAN-muodossa. Suomalainen alkaa FI. Älä täydennä
    puuttuvia merkkejä.
 
-8. supplier on maksun saaja eli laskuttaja, ei ravintola joka maksaa.
+8. supplier on maksun saaja eli laskuttaja, ei yritys joka maksaa.
    Laskussa on kaksi nimeä; saaja on se jonka tilille raha menee.
 
 9. confidence "high" vain kun luku on selvästi luettavissa. Epäselvä

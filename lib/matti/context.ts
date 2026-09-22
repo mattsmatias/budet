@@ -1,3 +1,4 @@
+import type { BusinessType } from "@/lib/restoflow/business";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
@@ -21,6 +22,8 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 export interface MattiContext {
   restaurantId: string;
   restaurantName: string;
+  /** Toimiala kehotteeseen: parturille ei puhuta ruokakuluista. */
+  businessType: BusinessType;
   role: Role;
   userName: string;
   /** Kuluva kuukausi "2026-08" ravintolan aikavyöhykkeellä. */
@@ -53,6 +56,7 @@ export async function mattiContext(
   return {
     restaurantId: ctx.restaurant.id,
     restaurantName: ctx.restaurant.name,
+    businessType: ctx.restaurant.businessType,
     role: ctx.role,
     userName: ctx.user.fullName ?? ctx.user.email ?? "Käyttäjä",
     month: monthIn(ctx.restaurant.timezone),

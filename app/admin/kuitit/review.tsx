@@ -1,5 +1,6 @@
 "use client";
 
+import { categoryOptions } from "@/lib/restoflow/business";
 import { useActionState, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
@@ -102,7 +103,7 @@ export function ReviewPanel({
         label={t.loput.category}
         name="category"
         defaultValue={receipt.category}
-        options={Object.entries(nimet.categories)}
+        options={categoryOptions(nimet, receipt.category)}
       />
       <SelectField
         label={t.loput.paymentMethod}

@@ -1,5 +1,6 @@
 "use client";
 
+import { BUSINESS_TYPE_NAMES_FI } from "@/lib/restoflow/business";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
@@ -313,7 +314,28 @@ export function DetailsForm({ r }: { r: RestaurantDetail["restaurant"] }) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Kentta label="Verkkosivu" name="website" defaultValue={r.website} />
-          <Kentta label="Toimiala" name="industry" defaultValue={r.industry} />
+          <label className="block">
+            <span className="block text-[12.5px] font-semibold">Toimiala</span>
+            <select
+              name="businessType"
+              defaultValue={r.businessType}
+              className={`${CONTROL} mt-1.5`}
+              style={CONTROL_STYLE}
+            >
+              {Object.entries(BUSINESS_TYPE_NAMES_FI).map(([value, text]) => (
+                <option key={value} value={value}>
+                  {text}
+                </option>
+              ))}
+            </select>
+            <span
+              className="mt-1 block text-[11.5px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              Vaihtaa tarjottavat kulukategoriat. Myyntiryhmät ja kirjatut
+              tiedot pysyvät ennallaan.
+            </span>
+          </label>
         </div>
 
         <Kentta label="Aikavyöhyke" name="timezone" defaultValue={r.timezone} />

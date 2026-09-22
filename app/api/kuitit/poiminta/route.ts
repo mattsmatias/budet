@@ -37,11 +37,15 @@ import {
   type ExtractionResult,
 } from "@/lib/restoflow/receipt-ai";
 import {
-  CATEGORY_ORDER,
   PAYMENT_ORDER,
   type ExpenseCategory,
   type PaymentMethod,
 } from "@/lib/restoflow/types";
+import {
+  businessDescription,
+  categoriesFor,
+  type BusinessType,
+} from "@/lib/restoflow/business";
 
 /** Poiminta voi kestää: iso kuva ja tarkka luku vievät aikaa. */
 export const maxDuration = 60;
@@ -64,7 +68,6 @@ export const maxDuration = 60;
  * Malli palauttaa avaimen, ei nakyvaa nimea, joten kieli ei saa
  * vaikuttaa siihen mita se saa palauttaa.
  */
-const CATEGORY_KEYS = CATEGORY_ORDER as unknown as [string, ...string[]];
 const PAYMENT_KEYS = PAYMENT_ORDER as unknown as [string, ...string[]];
 
 const confidence = z.enum(["high", "medium", "low"]);
@@ -76,12 +79,13 @@ const confidence = z.enum(["high", "medium", "low"]);
  * tarvitse muistaa palauttaa JSONia, eikä meidän tarvitse siivota
  * koodiaitoja tai varautua jäsennysvirheeseen.
  */
-const extraction = z.object({
+function extractionSchema(categoryKeys: [string, ...string[]]) {
+  return z.object({
   supplier: z.object({ value: z.string().nullable(), confidence }),
   date: z.object({ value: z.string().nullable(), confidence }),
   totalCents: z.object({ value: z.number().int().nullable(), confidence }),
   vatCents: z.object({ value: z.number().int().nullable(), confidence }),
-  category: z.object({ value: z.enum(CATEGORY_KEYS).nullable(), confidence }),
+  category: z.object({ value: z.enum(categoryKeys).nullable(), confidence }),
   paymentMethod: z.object({
     value: z.enum(PAYMENT_KEYS).nullable(),
     confidence,
@@ -94,18 +98,28 @@ const extraction = z.object({
       quantity: z.number().nullable(),
       unit: z.string().nullable(),
       totalCents: z.number().int(),
-      category: z.enum(CATEGORY_KEYS),
+      category: z.enum(categoryKeys),
       vatRate: z.number().nullable(),
       productGroup: z.string().nullable(),
     }),
   ),
   imageQuality: z.enum(["good", "poor"]),
-});
+  });
+}
 
 export async function POST(request: Request) {
   // Poiminta maksaa jokaisesta kutsusta, joten reitti ei ole auki
   // kenellekään kirjautuneelle vaan niille jotka saavat lisätä kuitteja.
-  const { role } = await requireContext("/admin/kuitit/uusi");
+  const { role, restaurant } = await requireContext("/admin/kuitit/uusi");
+
+  /*
+   * Kategoriat yrityksen toimialan mukaan: parturin kuitille ei tarjota
+   * ruokaa eikä alkoholia, jolloin malli ei voi valita niitä.
+   */
+  const categoryKeys = categoriesFor(restaurant.businessType) as unknown as [
+    string,
+    ...string[],
+  ];
   if (!canAddReceipts(role)) {
     return NextResponse.json({ error: "Ei oikeutta." }, { status: 403 });
   }
@@ -159,7 +173,7 @@ export async function POST(request: Request) {
     const response = await client.messages.parse({
       model: process.env.RECEIPT_MODEL ?? DEFAULT_MODEL,
       max_tokens: 16000,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt(restaurant.businessType, categoryKeys),
       messages: [
         {
           role: "user",
@@ -178,7 +192,7 @@ export async function POST(request: Request) {
           ],
         },
       ],
-      output_config: { format: zodOutputFormat(extraction) },
+      output_config: { format: zodOutputFormat(extractionSchema(categoryKeys)) },
     });
 
     // Turvaluokittelija voi kieltäytyä. Se ei ole poikkeus vaan
@@ -222,7 +236,29 @@ export async function POST(request: Request) {
 
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT = `Luet ravintolan ostokuitteja kulunseurantaa varten.
+/**
+ * Ohjeet mallille toimialan mukaan.
+ *
+ * Kategorioiden selitykset kertovat mitä kukin tarkoittaa: pelkkä avain
+ * "equipment" ei kerro, kuuluuko trimmeri siihen vai muihin kuluihin.
+ */
+const CATEGORY_HINTS: Record<ExpenseCategory, string> = {
+  food: "ruoka ja elintarvikkeet, myös leivonnaiset ja raaka-aineet",
+  alcohol: "alkoholijuomat",
+  soft_drinks: "alkoholittomat juomat, kahvi ja tee",
+  kitchen_supplies: "keittiön pientarvikkeet ja kertakäyttöastiat",
+  packaging: "pakkaukset, take away -astiat ja kassit",
+  cleaning: "siivous- ja hygieniatarvikkeet",
+  products: "hoito- ja hiustuotteet sekä myytävät tuotteet",
+  equipment: "laitteet, työvälineet ja kalusteet",
+  rent: "toimitilan vuokra ja vastikkeet",
+  transport: "kuljetukset ja polttoaine",
+  staff: "henkilöstökulut",
+  other: "kaikki muu",
+};
+
+function systemPrompt(type: BusinessType, categoryKeys: string[]): string {
+  return `Luet yrityksen ostokuitteja kulunseurantaa varten. Yritys on ${businessDescription(type)}.
 
 Säännöt, joista ei poiketa:
 - Rahasummat ovat SENTTEJÄ kokonaislukuina. 186,90 € on 18690.
@@ -243,10 +279,14 @@ Säännöt, joista ei poiketa:
 - Rivien summan pitäisi täsmätä loppusummaan. Jos ei täsmää, jätä rivit
   pois ennemmin kuin muokkaa niitä.
 
-Kategoriat: ${CATEGORY_KEYS.join(", ")}.
+Kategoriat (valitse vain näistä):
+${categoryKeys
+  .map((key) => `- ${key}: ${CATEGORY_HINTS[key as ExpenseCategory]}`)
+  .join("\n")}
 Maksutavat: ${PAYMENT_KEYS.join(", ")}.`;
+}
 
-type Parsed = z.infer<typeof extraction>;
+type Parsed = z.infer<ReturnType<typeof extractionSchema>>;
 type Confidence = "high" | "medium" | "low";
 
 /**

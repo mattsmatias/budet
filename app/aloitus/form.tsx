@@ -21,7 +21,7 @@ export function SetupForm() {
     <form action={action} className="mt-7 space-y-4">
       <div>
         <label htmlFor="name" className="block text-[13px] font-medium">
-          Ravintolan nimi
+          Yrityksen nimi
         </label>
         <input
           id="name"
@@ -94,7 +94,7 @@ function Submit() {
         borderRadius: "var(--rf-r-control)",
       }}
     >
-      {pending ? "Luodaan…" : "Luo ravintola"}
+      {pending ? "Luodaan…" : "Luo yritys"}
     </button>
   );
 }

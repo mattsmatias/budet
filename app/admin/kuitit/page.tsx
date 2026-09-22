@@ -1,3 +1,6 @@
+import { categoriesFor, withBusiness } from "@/lib/restoflow/business";
+import type { Labels } from "@/lib/i18n/labels";
+import type { ExpenseCategory } from "@/lib/restoflow/types";
 import Link from "next/link";
 import { hitCountIn, labels, receiptCountIn } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -37,17 +40,14 @@ export async function generateMetadata() {
  * sitä voi lukita moduulin latausaikaan, jolloin kieltä ei vielä
  * tiedetä.
  */
-const suodattimet = (t: AdminText): { key: ReceiptFilter; label: string }[] => [
+const suodattimet = (
+  t: AdminText,
+  nimet: Labels,
+  categories: ExpenseCategory[],
+): { key: ReceiptFilter; label: string }[] => [
   { key: "all", label: t.kuitit.all },
   { key: "needs_review", label: t.luokat.needsReview },
-  { key: "food", label: t.luokat.food },
-  { key: "alcohol", label: t.luokat.alcohol },
-  { key: "soft_drinks", label: t.luokat.softDrinks },
-  { key: "kitchen_supplies", label: t.luokat.kitchenSupplies },
-  { key: "packaging", label: t.luokat.packaging },
-  { key: "cleaning", label: t.luokat.cleaning },
-  { key: "transport", label: t.luokat.transport },
-  { key: "other", label: t.luokat.other },
+  ...categories.map((key) => ({ key, label: nimet.categories[key] })),
 ];
 
 export default async function AdminReceiptsPage({
@@ -58,6 +58,7 @@ export default async function AdminReceiptsPage({
     receipts,
     users,
     role,
+    restaurant,
     suppliers,
     merchants,
     merchantCategories,
@@ -65,7 +66,7 @@ export default async function AdminReceiptsPage({
   } = await adminContext("/admin/kuitit");
   const locale = await resolveLocale();
   const t = adminText(locale);
-  const nimet = labels(locale);
+  const nimet = withBusiness(labels(locale), restaurant.businessType);
 
   const month = monthFromParams(params, nykyinen);
 
@@ -261,7 +262,7 @@ export default async function AdminReceiptsPage({
         className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0"
       >
         <ul className="flex gap-2 pb-1 md:flex-wrap">
-          {suodattimet(t).map((f) => {
+          {suodattimet(t, nimet, categoriesFor(restaurant.businessType)).map((f) => {
             const active = filter === f.key;
             const search = new URLSearchParams();
             if (f.key !== "all") search.set("suodatin", f.key);

@@ -1,3 +1,4 @@
+import { withBusiness } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { SaveToFiles } from "@/components/restoflow/save-to-files";
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
@@ -59,7 +60,7 @@ export default async function AdminReceiptDetailPage({
   const { restaurant, role } = await requireContext("/admin/kuitit");
   const locale = await resolveLocale();
   const t = adminText(locale);
-  const nimet = labels(locale);
+  const nimet = withBusiness(labels(locale), restaurant.businessType);
 
   if (!can(role, "receipts.view")) redirect("/admin");
 

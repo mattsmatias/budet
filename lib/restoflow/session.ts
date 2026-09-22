@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { createClient, isConfigured } from "@/utils/supabase/server";
 import { verifiedUser } from "@/utils/supabase/claims";
 import type { Role } from "./types";
+import { isBusinessType, type BusinessType } from "./business";
 
 export const ACTIVE_RESTAURANT_COOKIE = "rf_restaurant";
 
@@ -46,6 +47,8 @@ export interface RestaurantMembership {
   timezone: string;
   currency: string;
   role: Role;
+  /** Toimiala: ratkaisee kulukategoriat ja sanaston. */
+  businessType: BusinessType;
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -85,7 +88,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, timezone, currency, role",
+          "id, name, slug, timezone, currency, role, business_type",
         )
         .order("name");
 
@@ -98,6 +101,9 @@ export const getMemberships = cache(
         timezone: row.timezone as string,
         currency: row.currency as string,
         role: row.role as Role,
+        businessType: isBusinessType(row.business_type)
+          ? row.business_type
+          : "restaurant",
       }));
     } catch {
       return [];

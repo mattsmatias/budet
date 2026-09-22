@@ -1,3 +1,4 @@
+import { BUSINESS_TYPE_NAMES_FI } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchRestaurant } from "@/lib/kehittaja/queries";
@@ -245,6 +246,10 @@ export default async function DevRestaurantPage({
               <CardHeader title="Yhteystiedot" subtitle="Tukea varten" />
 
               <dl className="mt-2 space-y-1.5 text-[13px]">
+                <Rivi
+                  label="Toimiala"
+                  value={BUSINESS_TYPE_NAMES_FI[r.businessType]}
+                />
                 <Rivi label="Virallinen nimi" value={r.legalName} />
                 <Rivi label="Y-tunnus" value={r.businessId} />
                 <Rivi

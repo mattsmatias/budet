@@ -1,14 +1,12 @@
 "use client";
 
+import { categoryOptions } from "@/lib/restoflow/business";
 import { useActionState, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { deleteCategory, saveCategory, type AdminState } from "../actions";
-import {
-  type CustomCategory,
-  type ExpenseCategory,
-} from "@/lib/restoflow/types";
+import { type CustomCategory } from "@/lib/restoflow/types";
 import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { Pill } from "@/components/restoflow/ui";
 
@@ -281,9 +279,7 @@ function CategoryForm({
             borderRadius: "var(--rf-r-control)",
           }}
         >
-          {(
-            Object.entries(nimet.categories) as [ExpenseCategory, string][]
-          ).map(([value, label]) => (
+          {categoryOptions(nimet, category?.baseCategory).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>

@@ -1,3 +1,4 @@
+import type { BusinessType } from "@/lib/restoflow/business";
 /**
  * Developer Consolen tyypit.
  *
@@ -81,6 +82,7 @@ export interface RestaurantRow {
   slug: string;
   status: RestaurantStatus;
   plan: RestaurantPlan;
+  businessType: BusinessType;
   businessId: string | null;
   city: string | null;
   timezone: string;
@@ -109,7 +111,7 @@ export interface RestaurantDetail {
     phone: string | null;
     email: string | null;
     website: string | null;
-    industry: string | null;
+    businessType: BusinessType;
     timezone: string;
     currency: string;
     isTestAccount: boolean;

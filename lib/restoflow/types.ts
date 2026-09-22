@@ -62,6 +62,9 @@ export type ExpenseCategory =
   | "packaging"
   | "staff"
   | "transport"
+  | "products"
+  | "equipment"
+  | "rent"
   | "other";
 
 /** Kategoriat esitysjärjestyksessä. */
@@ -72,6 +75,9 @@ export const CATEGORY_ORDER: ExpenseCategory[] = [
   "kitchen_supplies",
   "packaging",
   "cleaning",
+  "products",
+  "equipment",
+  "rent",
   "transport",
   "staff",
   "other",
@@ -111,6 +117,11 @@ export const EXPECTED_VAT_RATES: Record<ExpenseCategory, number[]> = {
   packaging: [0.255],
   staff: [0.255],
   transport: [0.255],
+  products: [0.255],
+  equipment: [0.255],
+  // Toimitilan vuokra on usein veroton; vuokranantaja voi hakeutua
+  // verovelvolliseksi, jolloin kanta on yleinen.
+  rent: [0, 0.255],
   other: [0.135, 0.14, 0.255],
 };
 

@@ -78,7 +78,7 @@ const extraction = z.object({
   imageQuality: z.enum(["good", "poor"]),
 });
 
-const SYSTEM_PROMPT = `Luet ravintolan kassajärjestelmän päiväraporttia (Z-raportti, päivän myyntiraportti) ja poimit siitä päivän luvut.
+const SYSTEM_PROMPT = `Luet yrityksen kassajärjestelmän päiväraporttia (Z-raportti, päivän myyntiraportti) ja poimit siitä päivän luvut.
 
 Palauta jokaiselle kentälle arvo JA luottamus. Jos et näe arvoa selvästi, palauta null ja luottamus "low". Älä koskaan arvaa lukua.
 

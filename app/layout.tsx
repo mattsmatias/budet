@@ -45,7 +45,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kate — ravintolan myynti, kulut ja tulos",
+    default: "Kate — yrityksen myynti, kulut ja tulos",
     template: "%s · Kate",
   },
   description:

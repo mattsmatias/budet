@@ -11,7 +11,7 @@ import {
   TodoPreview,
 } from "./preview";
 import { CountIn, ParallaxStage, Spotlight } from "./effects";
-import { RfIcon } from "@/components/restoflow/icons";
+import { CategoryIcon, RfIcon } from "@/components/restoflow/icons";
 import { ContactForm } from "./contact-form";
 
 /**
@@ -43,6 +43,7 @@ export function Landing({ appHref, locale, t }: Props) {
       <main>
         <Hero appHref={appHref} t={t} />
         <Benefits t={t} />
+        <Industries t={t} />
         <Flow t={t} />
         <MonthView t={t} />
         <Todo t={t} />
@@ -285,6 +286,97 @@ function LedgerRows() {
         </div>
       ))}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Toimialat.
+ *
+ * Kate on yhä sama ohjelma, mutta näkymä mukautuu: parturi ei näe
+ * ruoka- ja alkoholikategorioita, eikä kahvila alkoholimyyntiä. Kortit
+ * kertovat mitä kukin saa valmiina, konkreettisesti ALV-kantoja myöten,
+ * koska juuri se on se mitä yrittäjä ei halua itse selvittää.
+ */
+function Industries({ t }: { t: Dictionary }) {
+  const items = [
+    {
+      title: t.industries.restaurant,
+      body: t.industries.restaurantBody,
+      icon: "food" as const,
+    },
+    {
+      title: t.industries.cafe,
+      body: t.industries.cafeBody,
+      icon: "soft_drinks" as const,
+    },
+    {
+      title: t.industries.barber,
+      body: t.industries.barberBody,
+      icon: "products" as const,
+    },
+  ];
+
+  return (
+    <section id="toimialat" className="px-4 pb-20 sm:px-6 sm:pb-28">
+      <div className="mx-auto max-w-5xl">
+        <Reveal>
+          <p
+            className="text-[12.5px] font-semibold uppercase tracking-[0.09em]"
+            style={{ color: "var(--bd-accent)" }}
+          >
+            {t.industries.label}
+          </p>
+          <h2
+            className="mt-3 max-w-2xl text-[clamp(1.5rem,3.6vw,2.1rem)] font-extrabold leading-[1.15] tracking-[-0.03em]"
+            style={{ textWrap: "balance" }}
+          >
+            {t.industries.heading}
+          </h2>
+          <p
+            className="mt-4 max-w-2xl text-[15.5px] leading-relaxed"
+            style={{ color: "var(--bd-text-2)" }}
+          >
+            {t.industries.body}
+          </p>
+        </Reveal>
+
+        <Spotlight className="mt-10 grid gap-4 sm:grid-cols-3">
+          {items.map((item, i) => (
+            <Reveal key={item.title} delay={i * 90}>
+              <div className="bd-card bd-card-hover bd-spot bd-industry h-full p-6">
+                <span className="bd-industry-icon" aria-hidden="true">
+                  <CategoryIcon category={item.icon} size={24} />
+                </span>
+                <h3 className="mt-5 text-[17px] font-bold tracking-[-0.01em]">
+                  {item.title}
+                </h3>
+                <p
+                  className="mt-2 text-[14px] leading-relaxed"
+                  style={{ color: "var(--bd-text-2)" }}
+                >
+                  {item.body}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </Spotlight>
+
+        <Reveal delay={120}>
+          <p className="mt-6 text-[14px]" style={{ color: "var(--bd-text-2)" }}>
+            {t.industries.more}{" "}
+            <a
+              href="#yhteys"
+              className="font-semibold underline underline-offset-4"
+              style={{ color: "var(--bd-accent)" }}
+            >
+              {t.nav.start}
+            </a>
+          </p>
+        </Reveal>
+      </div>
+    </section>
   );
 }
 

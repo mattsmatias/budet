@@ -1,5 +1,6 @@
 "use client";
 
+import { categoryOptions } from "@/lib/restoflow/business";
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { Labels } from "@/lib/i18n/labels";
 import type { AdminText } from "@/lib/i18n/admin-text";
@@ -752,7 +753,10 @@ export function CaptureFlow({
             onChange={(v) => setCategory(v as ExpenseCategory)}
             uncertain={uncertain.has("category")}
             hint={result.category.hint}
-            options={[["", "Valitse…"], ...Object.entries(nimet.categories)]}
+            options={[
+              ["", "Valitse…"],
+              ...categoryOptions(nimet, category === "" ? null : category),
+            ]}
           />
 
           {categories.length > 0 ? (

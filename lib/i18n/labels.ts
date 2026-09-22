@@ -41,6 +41,11 @@ export interface Labels {
     accountant: string;
   };
   categories: Record<ExpenseCategory, string>;
+  /**
+   * Yrityksen toimialan kategoriat valikoihin, esitysjärjestyksessä.
+   * Asetetaan withBusiness-apurilla; ilman sitä valikko näyttää kaikki.
+   */
+  categoryChoices?: ExpenseCategory[];
   payments: Record<PaymentMethod, string>;
   reviewReasons: Record<ReviewReason, string>;
   accountType: Record<LedgerAccountType, string>;
@@ -73,6 +78,9 @@ const fi: Labels = {
     packaging: "Pakkausmateriaalit",
     staff: "Henkilöstö",
     transport: "Kuljetus",
+    products: "Hoitotuotteet",
+    equipment: "Laitteet ja välineet",
+    rent: "Toimitilat",
     other: "Muut",
   },
   payments: {
@@ -191,6 +199,9 @@ const en: Labels = {
     packaging: "Packaging",
     staff: "Staff",
     transport: "Transport",
+    products: "Care products",
+    equipment: "Equipment",
+    rent: "Premises & rent",
     other: "Other",
   },
   payments: {
@@ -309,6 +320,9 @@ const sv: Labels = {
     packaging: "Förpackningsmaterial",
     staff: "Personal",
     transport: "Transport",
+    products: "Vårdprodukter",
+    equipment: "Utrustning",
+    rent: "Lokaler",
     other: "Övrigt",
   },
   payments: {
@@ -427,6 +441,9 @@ const da: Labels = {
     packaging: "Emballage",
     staff: "Personale",
     transport: "Transport",
+    products: "Plejeprodukter",
+    equipment: "Udstyr",
+    rent: "Lokaler",
     other: "Andet",
   },
   payments: {
@@ -545,6 +562,9 @@ const tr: Labels = {
     packaging: "Ambalaj",
     staff: "Personel",
     transport: "Nakliye",
+    products: "Bakım ürünleri",
+    equipment: "Ekipman",
+    rent: "Kira ve işyeri",
     other: "Diğer",
   },
   payments: {
@@ -663,6 +683,9 @@ const et: Labels = {
     packaging: "Pakkematerjalid",
     staff: "Personal",
     transport: "Transport",
+    products: "Hooldustooted",
+    equipment: "Seadmed",
+    rent: "Ruumid ja üür",
     other: "Muu",
   },
   payments: {

@@ -1,5 +1,6 @@
 "use client";
 
+import { BUSINESS_TYPE_NAMES_FI } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -108,10 +109,11 @@ export function Wizard() {
                 name="website"
                 placeholder="https://ravintola.fi"
               />
-              <Kentta
+              <Valinta
                 label="Toimiala"
-                name="industry"
-                placeholder="Ravintola"
+                name="businessType"
+                defaultValue="restaurant"
+                options={BUSINESS_TYPE_NAMES_FI}
               />
             </div>
 

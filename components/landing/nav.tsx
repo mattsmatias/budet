@@ -81,6 +81,7 @@ export function LandingNav({
 
   const links = [
     { href: anchor("tuote"), label: t.nav.product },
+    { href: anchor("toimialat"), label: t.industries.label },
     { href: anchor("ominaisuudet"), label: t.nav.features },
     { href: anchor("hinta"), label: t.nav.pricing },
     { href: pathFor(locale, "about"), label: t.nav.about },

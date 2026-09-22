@@ -1,3 +1,4 @@
+import { categoriesFor } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { labels } from "@/lib/i18n/labels";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/restoflow/budgets";
 import { formatMonth, receiptsInMonth } from "@/lib/restoflow/expenses";
 import { can } from "@/lib/restoflow/permissions";
-import { CATEGORY_ORDER, type ExpenseCategory } from "@/lib/restoflow/types";
+import { type ExpenseCategory } from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { CategoryIcon } from "@/components/restoflow/icons";
 import {
@@ -51,6 +52,7 @@ export default async function BudgetsPage({
     budgets,
     month: nykyinen,
     role,
+    restaurant,
   } = await adminContext("/admin/budjetit");
   const locale = await resolveLocale();
   const t = adminText(locale);
@@ -69,7 +71,7 @@ export default async function BudgetsPage({
   const spend: Record<string, number> = {};
   for (const [category, cents] of spendMap) spend[category] = cents;
 
-  const available = CATEGORY_ORDER.filter(
+  const available = categoriesFor(restaurant.businessType).filter(
     (c) => !budgeted.some((p) => p.category === c),
   );
 

@@ -20,6 +20,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { requireSuperAdmin } from "@/lib/restoflow/session";
+import { isBusinessType, type BusinessType } from "@/lib/restoflow/business";
 
 export interface DevState {
   error?: string;
@@ -44,6 +45,12 @@ function teksti(data: FormData, name: string): string | null {
  * näytetään sellaisenaan, koska väärä arvaus olisi pahempi kuin
  * tekninen teksti.
  */
+/** Toimiala lomakkeelta; tuntematon arvo ei pääse kantaan asti. */
+function toimiala(data: FormData): BusinessType {
+  const arvo = data.get("businessType");
+  return isBusinessType(arvo) ? arvo : "restaurant";
+}
+
 function virhe(message: string): string {
   if (message.includes("restaurants_business_id_muoto")) {
     return "Y-tunnuksen muoto on 1234567-8.";
@@ -89,7 +96,7 @@ export async function createRestaurant(
     p_phone: teksti(data, "phone"),
     p_email: teksti(data, "email"),
     p_website: teksti(data, "website"),
-    p_industry: teksti(data, "industry"),
+    p_business_type: toimiala(data),
     p_plan: String(data.get("plan") ?? "free"),
     p_status: status,
     p_trial_days:
@@ -156,7 +163,7 @@ export async function updateRestaurant(
     p_phone: teksti(data, "phone"),
     p_email: teksti(data, "email"),
     p_website: teksti(data, "website"),
-    p_industry: teksti(data, "industry"),
+    p_business_type: toimiala(data),
     p_timezone: teksti(data, "timezone"),
     p_is_test: data.get("isTest") === "on",
   });

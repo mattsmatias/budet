@@ -1,3 +1,4 @@
+import { BUSINESS_TYPE_NAMES_FI } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { fetchRestaurants } from "@/lib/kehittaja/queries";
 import {
@@ -203,14 +204,14 @@ export default async function DevRestaurantsPage({
                             </span>
                           ) : null}
                         </Link>
-                        {r.city ? (
-                          <span
-                            className="text-[12px]"
-                            style={{ color: "var(--rf-text-3)" }}
-                          >
-                            {r.city}
-                          </span>
-                        ) : null}
+                        <span
+                          className="text-[12px]"
+                          style={{ color: "var(--rf-text-3)" }}
+                        >
+                          {[BUSINESS_TYPE_NAMES_FI[r.businessType], r.city]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </td>
 
                       <td className="px-4 py-3">

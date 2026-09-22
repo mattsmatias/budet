@@ -49,12 +49,13 @@ export default async function JoinPage() {
 
       <p className="mt-2 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
         {t.liity.ownRestaurant}{" "}
+        {/* Tunnukset luodaan puolesta: uusi yritys ottaa yhteyttä. */}
         <Link
-          href="/rekisteroidy"
+          href="/#yhteys"
           className="font-medium underline underline-offset-4"
           style={{ color: "var(--rf-blue)" }}
         >
-          {t.rekisteroidy.title}
+          {t.kirjaudu.createAccount}
         </Link>
       </p>
     </div>

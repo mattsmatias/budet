@@ -1,3 +1,5 @@
+import { withBusiness } from "@/lib/restoflow/business";
+import { categoryOptions } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -44,10 +46,11 @@ export default async function SettingsPage({
 }) {
   const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
-  const nimet = labels(locale);
+  const nimetKaikki = labels(locale);
   const params = await searchParams;
   const { restaurant, role, user, users, closedMonths, categories, month } =
     await adminContext("/admin/asetukset");
+  const nimet = withBusiness(nimetKaikki, restaurant.businessType);
 
   const canEdit = can(role, "settings.edit");
   const section = sectionFor(params.osio, t);
@@ -322,7 +325,7 @@ export default async function SettingsPage({
                   {t.asetus.alwaysAvailable}
                 </p>
                 <ul className="mt-2.5 flex flex-wrap gap-2">
-                  {Object.values(nimet.categories).map((label) => (
+                  {categoryOptions(nimet).map(([, label]) => (
                     <li key={label}>
                       <Pill>{label}</Pill>
                     </li>

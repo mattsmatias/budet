@@ -43,6 +43,7 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
   return {
     restaurantId: "rest-1",
     restaurantName: "Cafe Testi",
+    businessType: "restaurant",
     role: "owner",
     userName: "Oktay",
     month: "2026-08",

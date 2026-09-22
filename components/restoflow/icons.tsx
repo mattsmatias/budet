@@ -333,6 +333,17 @@ const CATEGORY_PATHS: Record<ExpenseCategory, string> = {
   transport:
     "M2.5 7.5h11v9h-11zM13.5 10.5h3.4l3.1 3.1v2.9h-6.5zM6.8 19.4a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8ZM16.9 19.4a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8Z",
 
+  // Pumppupullo — hoitotuote, ei juoma.
+  products:
+    "M9.5 3.5h5v2.6h-5zM12 6.1v2.2M8 8.3h8v10.6a1.6 1.6 0 0 1-1.6 1.6H9.6A1.6 1.6 0 0 1 8 18.9zM10.5 12.5h3",
+
+  // Jakoavain — laitteet ja välineet, toimialasta riippumatta.
+  equipment:
+    "M14.8 5.2a4.2 4.2 0 0 0-5.6 5.3L3.5 16.2l3.3 3.3 5.7-5.7a4.2 4.2 0 0 0 5.3-5.6l-2.7 2.7-2.4-.6-.6-2.4z",
+
+  // Rakennus — toimitila ja sen vuokra.
+  rent: "M3.5 10.5 12 4l8.5 6.5M5.5 9v11.5h13V9M10 20.5v-5.5h4v5.5",
+
   // Hintalappu — luokittelematon erä.
   other:
     "M11.4 3.5H20.5v9.1l-8.4 8.4a1.5 1.5 0 0 1-2.1 0l-7-7a1.5 1.5 0 0 1 0-2.1zM16.6 8.4h.01",

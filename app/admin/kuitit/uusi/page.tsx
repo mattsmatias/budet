@@ -1,3 +1,4 @@
+import { withBusiness } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -28,8 +29,8 @@ export async function generateMetadata() {
 export default async function NewReceiptPage() {
   const locale = await resolveLocale();
   const t = adminText(locale);
-  const nimet = labels(locale);
   const { restaurant, role } = await requireContext("/admin/kuitit/uusi");
+  const nimet = withBusiness(labels(locale), restaurant.businessType);
 
   if (!canAddReceipts(role)) redirect("/admin/kuitit");
 

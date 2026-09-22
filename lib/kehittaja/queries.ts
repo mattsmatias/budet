@@ -1,3 +1,4 @@
+import { isBusinessType } from "@/lib/restoflow/business";
 /**
  * Developer Consolen kyselyt.
  *
@@ -83,6 +84,7 @@ export const fetchRestaurants = cache(async (): Promise<RestaurantRow[]> => {
     slug: r.slug as string,
     status: r.status as RestaurantRow["status"],
     plan: r.plan as RestaurantRow["plan"],
+    businessType: isBusinessType(r.business_type) ? r.business_type : "restaurant",
     businessId: (r.business_id as string | null) ?? null,
     city: (r.city as string | null) ?? null,
     timezone: r.timezone as string,
@@ -126,7 +128,9 @@ export const fetchRestaurant = cache(
         phone: (r.phone as string | null) ?? null,
         email: (r.email as string | null) ?? null,
         website: (r.website as string | null) ?? null,
-        industry: (r.industry as string | null) ?? null,
+        businessType: isBusinessType(r.business_type)
+          ? r.business_type
+          : "restaurant",
         timezone: r.timezone as string,
         currency: r.currency as string,
         isTestAccount: r.is_test_account === true,

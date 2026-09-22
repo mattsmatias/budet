@@ -16,6 +16,23 @@ kirjanpito ja raportit. Lisäksi tehtävät, tiedostot, matkakulut ja
 Matti-avustaja. Käyttöliittymä on `/admin`, ja se toimii työpöydällä ja
 puhelimessa.
 
+### Toimialat
+
+Kate palvelee ravintoloita, kahviloita ja parturi-kampaamoja
+(`restaurants.business_type`: `restaurant`, `cafe`, `barber`). Toimialan
+valitsee ylläpitäjä Developer Consolessa yritystä luodessa, ja sen voi
+vaihtaa vain siellä. Toimiala ratkaisee:
+
+- mitkä kulukategoriat tarjotaan (`lib/restoflow/business.ts`): parturilla
+  hoitotuotteet, laitteet ja toimitilat, ei ruokaa eikä alkoholia;
+  kahvilalla ei alkoholia
+- millä myyntiryhmillä ja ALV-kannoilla yritys aloittaa ja miten
+  tilikartan myyntitilit nimetään (migraatio `0099_toimialat.sql`)
+- miten kuitinluvun tekoäly ja Matti puhuvat yrityksestä
+
+Toimiala rajaa valintoja, ei dataa: vaihdon jälkeen vanhat kuitit
+pysyvät kategorioissaan ja näkyvät raporteissa.
+
 ### Rajaus, joka on tarkoituksellinen
 
 Sovellus **ei**:
