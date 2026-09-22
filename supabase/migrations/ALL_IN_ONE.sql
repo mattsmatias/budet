@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 104 migraatiota:
+-- Sisältää 106 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -116,6 +116,8 @@
 --   0098_yhteydenotot.sql
 --   0099_toimialat.sql
 --   0100_matti_muisti.sql
+--   0101_yrityksen_poisto.sql
+--   0102_yrityksen_poisto_viitteet.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -26102,4 +26104,275 @@ $$;
 
 revoke all on function ai_clear_conversation(uuid) from public;
 grant execute on function ai_clear_conversation(uuid) to authenticated;
+
+
+-- ===========================================================================
+-- 0101_yrityksen_poisto.sql
+-- ===========================================================================
+
+-- 0101 — Yrityksen poisto kaatui lokiin
+--
+-- VIRHE.
+--
+-- Kehittäjäkonsolin "Poista yritys pysyvästi" kaatui:
+--   insert or update on table "audit_log" violates foreign key
+--   constraint "audit_log_restaurant_id_fkey"
+--
+-- sa_delete_restaurant poistaa restaurants-rivin, ja kanta poistaa
+-- kaskadina sen myyntiryhmät, jäsenyydet, kuitit, budjetit ja tehtävät.
+-- Jokaisella niistä on audit-laukaisin, joka kirjoittaa poistosta rivin
+-- audit_log-tauluun — viittaamalla yritykseen joka on juuri poistettu.
+-- Viiteavain hylkää rivin ja koko poisto peruuntuu. Tyhjäkin yritys
+-- kaatui, koska sillä on aina oletusmyyntiryhmät.
+--
+-- KORJAUS.
+--
+-- Kun yritysriviä ei enää ole, poisto on osa yrityksen poistoa. Silloin:
+--
+-- 1. write_audit ei kirjoita yrityksen omaan lokiin. Loki poistuisi
+--    joka tapauksessa yrityksen mukana; poisto itse on kirjattu
+--    järjestelmälokiin (sa_log) ennen poistoa.
+--
+-- 2. Suljetun kuukauden suoja ja kirjatun tositteen lukko päästävät
+--    rivin poistumaan. Ne suojaavat yksittäistä kuittia ja tositetta
+--    muutoksilta yrityksen eläessä. Yrityksen poiston voi tehdä vain
+--    järjestelmän ylläpitäjä nimen vahvistuksella (sa_delete_restaurant),
+--    eikä kukaan muu pysty poistamaan restaurants-riviä, joten tästä ei
+--    aukea tietä ohittaa suojaa yksittäiseltä riviltä.
+
+-- Onko yritys yhä olemassa. Security definer, jotta rivitason suojaus ei
+-- voi piilottaa riviä ja saada lukkoa luulemaan yritystä poistetuksi.
+create or replace function public.restaurant_exists(p_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $function$
+  select exists (select 1 from restaurants where id = p_id);
+$function$;
+
+revoke all on function public.restaurant_exists(uuid) from public;
+grant execute on function public.restaurant_exists(uuid) to authenticated;
+
+create or replace function public.write_audit(
+  p_restaurant uuid,
+  p_action text,
+  p_entity_type text,
+  p_entity_id uuid,
+  p_entity_name text,
+  p_summary text,
+  p_before jsonb default null::jsonb,
+  p_after jsonb default null::jsonb,
+  p_critical boolean default false
+)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_actor uuid := auth.uid();
+  v_name text;
+  v_role text;
+begin
+  if p_restaurant is null then return; end if;
+
+  -- Yritys poistetaan: sen oma loki lähtee samalla.
+  if not restaurant_exists(p_restaurant) then
+    return;
+  end if;
+
+  select coalesce(nullif(trim(p.full_name), ''), 'Tuntematon')
+  into v_name
+  from profiles p
+  where p.id = v_actor;
+
+  select m.role::text into v_role
+  from memberships m
+  where m.restaurant_id = p_restaurant and m.user_id = v_actor;
+
+  insert into audit_log (
+    restaurant_id, actor_id, actor_name, actor_role,
+    action, entity_type, entity_id, entity_name, summary,
+    before_data, after_data, critical
+  )
+  values (
+    p_restaurant, v_actor, coalesce(v_name, 'Järjestelmä'), v_role,
+    p_action, p_entity_type, p_entity_id, p_entity_name, p_summary,
+    p_before, p_after, p_critical
+  );
+end;
+$function$;
+
+create or replace function public.guard_closed_month()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+begin
+  if tg_op = 'DELETE' then
+    -- Yritys poistetaan kokonaan: kuitit lähtevät sen mukana.
+    if not restaurant_exists(old.restaurant_id) then
+      return old;
+    end if;
+    if is_month_closed(old.restaurant_id, old.receipt_date) then
+      raise exception 'Kuukausi on suljettu';
+    end if;
+    return old;
+  end if;
+
+  if is_month_closed(new.restaurant_id, new.receipt_date) then
+    raise exception 'Kuukausi on suljettu';
+  end if;
+
+  if tg_op = 'UPDATE' and is_month_closed(old.restaurant_id, old.receipt_date) then
+    raise exception 'Kuukausi on suljettu';
+  end if;
+
+  return new;
+end;
+$function$;
+
+create or replace function public.ledger_entry_lukko()
+returns trigger
+language plpgsql
+set search_path to 'public'
+as $function$
+begin
+  if tg_op = 'DELETE' then
+    -- Yritys poistetaan kokonaan: tositteet lähtevät sen mukana.
+    if not restaurant_exists(old.restaurant_id) then
+      return old;
+    end if;
+    if old.status = 'posted' then
+      raise exception 'Kirjattua tositetta ei poisteta. Tee korjaustosite.';
+    end if;
+    return old;
+  end if;
+
+  if old.status = 'posted' then
+    if new.entry_date <> old.entry_date
+       or new.fiscal_year_id <> old.fiscal_year_id
+       or new.entry_number <> old.entry_number
+       or new.source_type <> old.source_type
+       or new.status <> old.status then
+      raise exception 'Kirjattua tositetta ei muuteta. Tee korjaustosite.';
+    end if;
+  end if;
+
+  return new;
+end;
+$function$;
+
+
+-- ===========================================================================
+-- 0102_yrityksen_poisto_viitteet.sql
+-- ===========================================================================
+
+-- 0102 — Yrityksen poisto kirjanpitoineen
+--
+-- VIRHE.
+--
+-- Kun 0101 korjasi lokin, yritys jolla on kirjanpitoa kaatui seuraavaan:
+--   update or delete on table "ledger_accounts" violates foreign key
+--   constraint "ledger_lines_account_id_fkey"
+--
+-- Yrityksen poisto poistaa kaskadina sekä tilikartan että tositteet
+-- riveineen, mutta järjestystä ei voi valita: tili ehtii poistua ennen
+-- sitä riviä joka siihen viittaa. ON DELETE RESTRICT tarkistetaan heti,
+-- eikä sitä voi lykätä.
+--
+-- KORJAUS.
+--
+-- Nämä viiteavaimet muutetaan RESTRICT → NO ACTION DEFERRABLE INITIALLY
+-- IMMEDIATE. Tavallisessa käytössä ne suojaavat täsmälleen samoin: tiliä,
+-- tilikautta, myyntiryhmää tai tositetta johon viitataan ei voi poistaa,
+-- ja tarkistus tehdään saman lauseen lopussa. Vain sa_delete_restaurant
+-- lykkää ne transaktion loppuun, jolloin kaikki yrityksen rivit ovat jo
+-- poistuneet ja tarkistus menee läpi. Suojia ei ohiteta — viittaus
+-- tarkistetaan edelleen, vain myöhemmin.
+
+alter table ledger_lines drop constraint ledger_lines_account_id_fkey;
+alter table ledger_lines add constraint ledger_lines_account_id_fkey
+  foreign key (account_id) references ledger_accounts (id)
+  deferrable initially immediate;
+
+alter table ledger_entries drop constraint ledger_entries_fiscal_year_id_fkey;
+alter table ledger_entries add constraint ledger_entries_fiscal_year_id_fkey
+  foreign key (fiscal_year_id) references fiscal_years (id)
+  deferrable initially immediate;
+
+alter table ledger_entries drop constraint ledger_entries_corrects_id_fkey;
+alter table ledger_entries add constraint ledger_entries_corrects_id_fkey
+  foreign key (corrects_id) references ledger_entries (id)
+  deferrable initially immediate;
+
+alter table daily_sales_lines drop constraint daily_sales_lines_sales_group_id_fkey;
+alter table daily_sales_lines add constraint daily_sales_lines_sales_group_id_fkey
+  foreign key (sales_group_id) references sales_groups (id)
+  deferrable initially immediate;
+
+alter table export_items drop constraint export_items_document_id_fkey;
+alter table export_items add constraint export_items_document_id_fkey
+  foreign key (document_id) references documents (id)
+  deferrable initially immediate;
+
+alter table export_items drop constraint export_items_tax_decision_id_fkey;
+alter table export_items add constraint export_items_tax_decision_id_fkey
+  foreign key (tax_decision_id) references tax_decisions (id)
+  deferrable initially immediate;
+
+create or replace function public.sa_delete_restaurant(p_id uuid, p_confirm text)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_name text;
+  v_snapshot jsonb;
+begin
+  if not current_user_is_super_admin() then
+    raise exception 'Vain järjestelmän ylläpitäjä';
+  end if;
+
+  select name into v_name from restaurants where id = p_id;
+  if v_name is null then
+    raise exception 'Yritystä ei löydy';
+  end if;
+
+  if trim(coalesce(p_confirm, '')) <> v_name then
+    raise exception 'Vahvistus ei täsmää yrityksen nimeen';
+  end if;
+
+  select jsonb_build_object(
+    'name', v_name,
+    'users',    (select count(*) from memberships where restaurant_id = p_id),
+    'receipts', (select count(*) from receipts where restaurant_id = p_id),
+    'tasks',    (select count(*) from tasks where restaurant_id = p_id)
+  ) into v_snapshot;
+
+  -- Loki ensin: rivi ei saa kadota poiston mukana.
+  perform sa_log(
+    'restaurant.deleted',
+    'Yritys poistettiin pysyvästi: ' || v_name,
+    'restaurant', p_id, v_name, v_snapshot, null, true
+  );
+
+  -- Kaskadin järjestystä ei voi valita: viittaukset tarkistetaan vasta
+  -- kun kaikki yrityksen rivit ovat poistuneet (ks. 0102).
+  set constraints
+    ledger_lines_account_id_fkey,
+    ledger_entries_fiscal_year_id_fkey,
+    ledger_entries_corrects_id_fkey,
+    daily_sales_lines_sales_group_id_fkey,
+    export_items_document_id_fkey,
+    export_items_tax_decision_id_fkey
+  deferred;
+
+  delete from restaurants where id = p_id;
+end;
+$function$;
 
