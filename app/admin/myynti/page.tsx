@@ -9,12 +9,16 @@ import {
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
-import { monthFromParams } from "@/lib/restoflow/dates";
+import { addDays, monthFromParams, monthRange } from "@/lib/restoflow/dates";
 import { formatMonth } from "@/lib/restoflow/expenses";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { can } from "@/lib/restoflow/permissions";
 import { fetchDailySales } from "@/lib/restoflow/queries";
-import { compareSales, type DailySales } from "@/lib/restoflow/sales";
+import {
+  compareSales,
+  missingSalesDays,
+  type DailySales,
+} from "@/lib/restoflow/sales";
 import { formatMoney } from "@/lib/money";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, Pill } from "@/components/restoflow/ui";
@@ -88,8 +92,30 @@ export default async function SalesPage({
   const canManage = can(role, "sales.manage");
 
   const todayRow = sales.find((s) => s.date === today);
-  const yesterday = addDays(today, -1);
-  const missingYesterday = !sales.some((s) => s.date === yesterday);
+
+  /*
+   * Puuttuvat päivät katsotusta kuukaudesta.
+   *
+   * Ennen tässä oli vain eilinen: se unohtuu useimmin, mutta jos
+   * kirjaus jää viikoksi, yhden päivän lomake ei auta. Lista alkaa
+   * ensimmäisestä kirjatusta päivästä — sitä ennen yritys ei vielä
+   * käyttänyt Katea, eivätkä ne päivät ole unohduksia.
+   *
+   * Tämä päivä ei ole puuttuva: se kirjataan illalla.
+   */
+  const firstEver = sales.reduce<string | null>(
+    (min, row) => (min === null || row.date < min ? row.date : min),
+    null,
+  );
+  const { from: monthStart, to: monthEnd } = monthRange(month);
+  const days: string[] = [];
+  if (firstEver !== null) {
+    const alku = monthStart > firstEver ? monthStart : firstEver;
+    for (let d = alku; d <= monthEnd && d < today; d = addDays(d, 1)) {
+      days.push(d);
+    }
+  }
+  const missing = missingSalesDays(days, sales, today);
 
   // Lista rajataan kuukauteen; vertailut lukevat yha koko historiaa.
   const inMonth = sales.filter((row) => row.date.startsWith(month));
@@ -112,7 +138,9 @@ export default async function SalesPage({
         raporttia ole tai poiminta ei osu — se on nopein tie yhteen
         lukuun, muttei enää ainoa tie.
       */}
-      {canManage && kuluva ? (
+      {/* Kuvaaminen ei koske vain kuluvaa kuukautta: paivamaara luetaan
+          raportista, joten vanhankin paivan raportin voi kuvata tassa. */}
+      {canManage ? (
         <Card>
           <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
             {t.myynti.shootDailyReport}
@@ -184,11 +212,15 @@ export default async function SalesPage({
         </Card>
       ) : null}
 
-      {/*
-        Eilinen puuttuu useammin kuin tämä päivä: myynti kirjataan illan
-        päätteeksi, ja unohtuminen huomataan vasta seuraavana aamuna.
+{/*
+        Jokainen puuttuva päivä täydennettävissä samasta paikasta.
+
+        Myynti kirjataan illan päätteeksi, ja unohtuminen huomataan
+        vasta seuraavana aamuna — tai viikon kuluttua. Päivä avataan
+        riviltä, ja saman raportin voi myös kuvata: päivämäärä luetaan
+        raportista, joten kuvaaminen ei koske vain tätä päivää.
       */}
-      {canManage && missingYesterday ? (
+      {canManage && missing.length > 0 ? (
         <Card>
           <div className="flex items-start gap-3">
             <span
@@ -197,26 +229,53 @@ export default async function SalesPage({
             >
               <RfIcon name="alert" size={18} />
             </span>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-[15px] font-medium">
-                {t.myynti.yesterdayMissing}
+                {t.myynti.missingDaysTitle}
               </p>
               <p
                 className="mt-1 text-[13px] leading-relaxed"
                 style={{ color: "var(--rf-text-2)" }}
               >
-                {formatDay(yesterday, locale)} on kirjaamatta. Ilman sitä viikon
-                vertailut ja työvoiman osuus jäävät vajaiksi.
+                {fill(
+                  missing.length === 1
+                    ? t.myynti.missingDaysOne
+                    : t.myynti.missingDaysMany,
+                  { maara: String(missing.length) },
+                )}
               </p>
-              <div className="mt-3">
-                <SalesForm
-                  t={t}
-                  defaultDate={yesterday}
-                  defaultNet=""
-                  defaultTarget=""
-                  compact
-                />
-              </div>
+
+              <ul className="mt-3 space-y-1.5">
+                {missing.map((day) => (
+                  <li key={day}>
+                    <details
+                      className="px-3.5 py-2.5"
+                      style={{
+                        background: "var(--rf-inset)",
+                        borderRadius: "var(--rf-r-control)",
+                      }}
+                    >
+                      <summary className="rf-press flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-medium [&::-webkit-details-marker]:hidden">
+                        <span>{formatDay(day, locale)}</span>
+                        <span
+                          className="text-[13px] font-semibold"
+                          style={{ color: "var(--rf-accent)" }}
+                        >
+                          {t.myynti.recordDay}
+                        </span>
+                      </summary>
+
+                      <SalesForm
+                        t={t}
+                        defaultDate={day}
+                        defaultNet=""
+                        defaultTarget=""
+                        compact
+                      />
+                    </details>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </Card>
@@ -437,12 +496,6 @@ function percent(ratio: number): string {
 
 function formatDay(isoDate: string, locale: AppLocale): string {
   return `${weekdayShortIn(isoDate, locale)} ${formatDayShortIn(isoDate, locale)}`;
-}
-
-function addDays(isoDate: string, days: number): string {
-  const d = new Date(`${isoDate}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 /** Sentit lomakkeen tekstikenttään suomalaisittain. */

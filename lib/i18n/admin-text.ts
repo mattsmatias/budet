@@ -1222,6 +1222,10 @@ const fi = {
     vatSaveFailed: "ALV-erittelyn tallennus epäonnistui: {viesti}",
     reportSum: "Kassan päiväraportin summa ilman ALV:tä",
     saveSales: "Tallenna myynti",
+    missingDaysTitle: "Puuttuvat myyntipäivät",
+    missingDaysOne: "Yhdeltä päivältä ei ole kirjattu myyntiä. Täydennä se käsin tai kuvaa päiväraportti — päivämäärä luetaan raportista.",
+    missingDaysMany: "{maara} päivältä ei ole kirjattu myyntiä. Täydennä ne käsin tai kuvaa päiväraportit — päivämäärä luetaan raportista.",
+    recordDay: "Kirjaa",
   },
   kuva: {
     multiPage:
@@ -2916,6 +2920,10 @@ const en: AdminText = {
     vatSaveFailed: "Saving the VAT breakdown failed: {viesti}",
     reportSum: "The register daily report's sum without VAT",
     saveSales: "Save the sales",
+    missingDaysTitle: "Missing sales days",
+    missingDaysOne: "One day has no sales recorded. Enter it by hand or photograph the daily report — the date is read from the report.",
+    missingDaysMany: "{maara} days have no sales recorded. Enter them by hand or photograph the daily reports — the date is read from the report.",
+    recordDay: "Record",
   },
   kuva: {
     multiPage:
@@ -4605,6 +4613,10 @@ const sv: AdminText = {
     vatSaveFailed: "Momsspecifikationen kunde inte sparas: {viesti}",
     reportSum: "Kassans dagrapportsumma utan moms",
     saveSales: "Spara försäljningen",
+    missingDaysTitle: "Saknade försäljningsdagar",
+    missingDaysOne: "En dag saknar försäljning. Fyll i den för hand eller fotografera dagsrapporten — datumet läses från rapporten.",
+    missingDaysMany: "{maara} dagar saknar försäljning. Fyll i dem för hand eller fotografera dagsrapporterna — datumet läses från rapporten.",
+    recordDay: "Registrera",
   },
   kuva: {
     multiPage:
@@ -6292,6 +6304,10 @@ const da: AdminText = {
     vatSaveFailed: "Momsspecifikationen kunne ikke gemmes: {viesti}",
     reportSum: "Kassens dagsrapportsum uden moms",
     saveSales: "Gem salget",
+    missingDaysTitle: "Manglende salgsdage",
+    missingDaysOne: "Én dag mangler salg. Udfyld den manuelt eller fotografér dagsrapporten — datoen læses fra rapporten.",
+    missingDaysMany: "{maara} dage mangler salg. Udfyld dem manuelt eller fotografér dagsrapporterne — datoen læses fra rapporten.",
+    recordDay: "Registrér",
   },
   kuva: {
     multiPage:
@@ -7976,6 +7992,10 @@ const tr: AdminText = {
     vatSaveFailed: "KDV dökümü kaydedilemedi: {viesti}",
     reportSum: "Kasanın gün raporu toplamı, KDV hariç",
     saveSales: "Satışı kaydet",
+    missingDaysTitle: "Eksik satış günleri",
+    missingDaysOne: "Bir gün için satış kaydı yok. Elle girin veya gün sonu raporunu çekin — tarih rapordan okunur.",
+    missingDaysMany: "{maara} gün için satış kaydı yok. Elle girin veya gün sonu raporlarını çekin — tarih rapordan okunur.",
+    recordDay: "Kaydet",
   },
   kuva: {
     multiPage:
@@ -9657,6 +9677,10 @@ const et: AdminText = {
     vatSaveFailed: "Käibemaksu jaotuse salvestamine ebaõnnestus: {viesti}",
     reportSum: "Kassa päevaaruande summa ilma käibemaksuta",
     saveSales: "Salvesta müük",
+    missingDaysTitle: "Puuduvad müügipäevad",
+    missingDaysOne: "Ühel päeval pole müüki kirjas. Täida see käsitsi või pildista päevaaruanne — kuupäev loetakse aruandest.",
+    missingDaysMany: "{maara} päeval pole müüki kirjas. Täida need käsitsi või pildista päevaaruanded — kuupäev loetakse aruandest.",
+    recordDay: "Kirjuta",
   },
   kuva: {
     multiPage:
@@ -11348,6 +11372,10 @@ const ar: AdminText = {
     vatSaveFailed: "فشل حفظ تفصيل ضريبة القيمة المضافة: {viesti}",
     reportSum: "مجموع التقرير اليومي للصندوق دون ضريبة القيمة المضافة",
     saveSales: "حفظ المبيعات",
+    missingDaysTitle: "أيام مبيعات ناقصة",
+    missingDaysOne: "يوم واحد بلا مبيعات مسجّلة. أدخلها يدويًا أو صوّر تقرير اليوم — يُقرأ التاريخ من التقرير.",
+    missingDaysMany: "{maara} أيام بلا مبيعات مسجّلة. أدخلها يدويًا أو صوّر تقارير الأيام — يُقرأ التاريخ من التقرير.",
+    recordDay: "تسجيل",
   },
   kuva: {
     multiPage:
