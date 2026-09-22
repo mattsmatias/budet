@@ -277,6 +277,13 @@ export const MERCHANTS = [
     logo: "/kaupat/foodora.png",
     aliases: ["Foodora"] },
 
+  // Huoltoaseman ravintola. Kuitilla lukee usein seka ketju etta
+  // aseman nimi, esimerkiksi "Helmisimpukka St1 Vantaa".
+  { id: "helmi-simpukka", name: "Helmi Simpukka", category: "restaurant",
+    color: "#00463C", background: "#ECFDF5",
+    logo: "/kaupat/helmi-simpukka.png",
+    aliases: ["Helmi Simpukka", "Helmisimpukka", "Helmi-Simpukka"] },
+
   { id: "kotipizza", name: "Kotipizza", category: "restaurant",
     color: "#00693E", background: "#F0FDF4",
     logo: "/kaupat/kotipizza.png",
