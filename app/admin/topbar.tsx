@@ -74,11 +74,11 @@ export function TopBar({
       {/*
         Otsikko ei kutistu nollaan.
 
-        Se oli mr-auto + min-w-0, ja oikean reunan säätimet söivät sen
+        Se oli me-auto + min-w-0, ja oikean reunan säätimet söivät sen
         kokonaan kapealla työpöydällä: palkki alkoi hakukentästä eikä
         sivun nimestä.
       */}
-      <div className="mr-auto min-w-[128px] flex-1">
+      <div className="me-auto min-w-[128px] flex-1">
         <p
           className="truncate text-[11.5px]"
           style={{ color: "var(--rf-text-3)" }}

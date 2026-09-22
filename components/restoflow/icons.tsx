@@ -285,6 +285,7 @@ export function RfIcon({
       aria-hidden={label ? undefined : true}
       aria-label={label}
       role={label ? "img" : undefined}
+      className={name === "chevron" ? "rf-dir" : undefined}
     >
       {SHAPES[name] ?? <path d={PATHS[name]} />}
     </svg>

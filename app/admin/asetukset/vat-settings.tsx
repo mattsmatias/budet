@@ -309,7 +309,7 @@ function GroupForm({
           />
           <span className="text-[12.5px]">
             {t.asetus.inUse}
-            <span className="ml-1.5" style={{ color: "var(--rf-text-3)" }}>
+            <span className="ms-1.5" style={{ color: "var(--rf-text-3)" }}>
               {t.asetus.disabledKeepsRows}
             </span>
           </span>

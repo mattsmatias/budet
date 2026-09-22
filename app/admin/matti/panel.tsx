@@ -168,7 +168,7 @@ export function MattiPanel({
          * siitä irrallisen: rivi oli leveämpi ja teksti isompi kuin
          * yhdelläkään sen yläpuolella.
          */
-        className="rf-rail-link rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-left text-[13.5px]"
+        className="rf-rail-link rf-press flex w-full items-center gap-[11px] rounded-[10px] px-[11px] py-[9px] text-start text-[13.5px]"
         style={{ color: "var(--rf-text-2)" }}
       >
         <span style={{ color: "var(--rf-accent)" }}>
@@ -255,7 +255,7 @@ function Overlay({
         ref={container}
         role="dialog"
         aria-label={t.matti.ariaLabel}
-        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
+        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:start-auto sm:end-0 sm:w-[420px] sm:border-s"
         style={{
           background: "var(--rf-card)",
           borderColor: "var(--rf-line)",
@@ -687,7 +687,7 @@ function Welcome({
               key={action.prompt}
               type="button"
               onClick={() => onPick(action.prompt)}
-              className="rf-press flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left text-[13px] font-medium"
+              className="rf-press flex w-full items-center justify-between gap-3 px-3.5 py-3 text-start text-[13px] font-medium"
               style={{
                 background: "var(--rf-card)",
                 border: "1px solid var(--rf-line)",

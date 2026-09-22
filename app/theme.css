@@ -312,7 +312,7 @@
   background: var(--rf-bg);
   color: var(--rf-text);
   font-family:
-    var(--font-app), -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    var(--font-app), var(--font-ar), -apple-system, BlinkMacSystemFont, "Helvetica Neue",
     system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -344,7 +344,7 @@
  * -0,03em kutistui -0,01em:ksi ilman että mikään kertoi siitä.
  */
 .rf-tabular {
-  font-family: var(--font-num), ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--font-num), var(--font-ar), ui-monospace, "SF Mono", Menlo, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
@@ -557,26 +557,26 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
   padding: 11px 16px;
   border-bottom: 1px solid var(--rf-line);
-  border-right: 1px solid var(--rf-line);
+  border-inline-end: 1px solid var(--rf-line);
 }
 
 .rf-table thead th:last-child {
-  border-right: 0;
+  border-inline-end: 0;
 }
 
 .rf-table tbody td {
   padding: 12px 16px;
   font-size: 13px;
   border-bottom: 1px solid var(--rf-line);
-  border-right: 1px solid var(--rf-line);
+  border-inline-end: 1px solid var(--rf-line);
 }
 
 .rf-table tbody td:last-child {
-  border-right: 0;
+  border-inline-end: 0;
 }
 
 .rf-table tbody tr:last-child td {
@@ -593,7 +593,7 @@
 
 /* Oikealle tasattu sarake on lähes aina luku. */
 .rf-table .num {
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
@@ -614,7 +614,7 @@
  */
 .rf-table tfoot td {
   border-top: 1px solid var(--rf-line-strong);
-  border-right: 1px solid var(--rf-line);
+  border-inline-end: 1px solid var(--rf-line);
   background: var(--rf-inset);
   padding: 12px 16px;
   font-size: 13px;
@@ -622,7 +622,7 @@
 }
 
 .rf-table tfoot td:last-child {
-  border-right: 0;
+  border-inline-end: 0;
 }
 
 /* .num on kahden luokan verran tarkempi, joten paino toistetaan. */
@@ -1120,10 +1120,10 @@ details[open] .rf-summary-chevron {
  */
 .rf-roster-name {
   position: sticky;
-  left: 0;
+  inset-inline-start: 0;
   z-index: 1;
   background: var(--rf-card);
-  text-align: left;
+  text-align: start;
   padding: 6px 10px;
   min-width: 8.5rem;
   max-width: 8.5rem;
@@ -1643,7 +1643,7 @@ details[open] .rf-summary-chevron {
 
 .rf-auth-field-icon {
   position: absolute;
-  left: 14px;
+  inset-inline-start: 14px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--rf-text-3);
@@ -1680,7 +1680,7 @@ details[open] .rf-summary-chevron {
 
 .rf-auth-reveal {
   position: absolute;
-  right: 6px;
+  inset-inline-end: 6px;
   top: 50%;
   display: grid;
   place-items: center;
@@ -1896,7 +1896,7 @@ details[open] .rf-summary-chevron {
 
 .rf-fab {
   position: fixed;
-  right: max(16px, env(safe-area-inset-right));
+  inset-inline-end: max(16px, env(safe-area-inset-right));
   bottom: calc(72px + env(safe-area-inset-bottom));
   z-index: 31;
   display: grid;

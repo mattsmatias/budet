@@ -62,13 +62,12 @@ export interface LocaleInfo {
 /**
  * Oikealta vasemmalle kirjoitettavat kielet.
  *
- * Tyhjä juuri nyt: kaikki kuusi kirjoitetaan vasemmalta oikealle.
- * Joukko on silti olemassa, koska kirjoitussuunta on kielen
+ * Arabia kirjoitetaan oikealta vasemmalle. Suunta on kielen
  * ominaisuus eikä sitä pidä päätellä uudelleen jokaisessa
- * kutsupaikassa — ja koska arabian tai heprean lisääminen listaan ei
- * saa vaatia muuta kuin yhden rivin tänne.
+ * kutsupaikassa: html dir -attribuutti ja kielivalitsin lukevat sen
+ * täältä, ja CSS kääntyy loogisten ominaisuuksien (start/end) kautta.
  */
-const RTL: ReadonlySet<string> = new Set<string>();
+const RTL: ReadonlySet<string> = new Set<string>(["ar"]);
 
 export const LOCALE_INFO: Record<AppLocale, LocaleInfo> = Object.fromEntries(
   LOCALES.map((code) => [

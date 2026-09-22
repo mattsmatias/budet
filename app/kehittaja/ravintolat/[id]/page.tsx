@@ -79,7 +79,7 @@ export default async function DevRestaurantPage({
       <header>
         <Link
           href="/kehittaja/ravintolat"
-          className="rf-press -ml-1.5 inline-flex items-center gap-1.5 p-1.5 text-[13px] font-medium"
+          className="rf-press -ms-1.5 inline-flex items-center gap-1.5 p-1.5 text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={16} />
@@ -326,7 +326,7 @@ export default async function DevRestaurantPage({
                     <span className="min-w-0 flex-1 text-[13px]">
                       {inv.label ?? "Nimetön kutsu"}
                       <span
-                        className="ml-2"
+                        className="ms-2"
                         style={{ color: "var(--rf-text-3)" }}
                       >
                         loppuu …{inv.hint}
@@ -453,7 +453,7 @@ function Rivi({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt style={{ color: "var(--rf-text-2)" }}>{label}</dt>
-      <dd className="text-right font-medium">{value ?? "—"}</dd>
+      <dd className="text-end font-medium">{value ?? "—"}</dd>
     </div>
   );
 }

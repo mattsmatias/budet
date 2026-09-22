@@ -91,7 +91,7 @@ export default async function SupplierDetailPage({
         <Link
           href="/admin/toimittajat"
           aria-label={t.loput.back}
-          className="rf-press -ml-1.5 p-1.5"
+          className="rf-press -ms-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={22} />
@@ -281,10 +281,10 @@ export default async function SupplierDetailPage({
                 <th scope="col">{t.loput.dayWord}</th>
                 <th scope="col">{t.loput.receiptNumber}</th>
                 <th scope="col">{t.loput.paymentMethod}</th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.loput.rows}
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.loput.total}
                 </th>
               </tr>
@@ -306,7 +306,7 @@ export default async function SupplierDetailPage({
                     {nimet.payments[r.paymentMethod]}
                   </td>
                   <td
-                    className="rf-tabular px-5 py-3 text-right"
+                    className="rf-tabular px-5 py-3 text-end"
                     style={{ color: "var(--rf-text-2)" }}
                   >
                     {r.items.length || "—"}

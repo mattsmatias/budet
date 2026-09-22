@@ -337,7 +337,7 @@ function LanguagePicker({
       {open ? (
         <ul
           role="menu"
-          className="bd-menu absolute right-0 top-[calc(100%+8px)] z-50 w-44 p-1.5"
+          className="bd-menu absolute end-0 top-[calc(100%+8px)] z-50 w-44 p-1.5"
           style={{
             background: "var(--bd-card)",
             border: "1px solid var(--bd-line)",

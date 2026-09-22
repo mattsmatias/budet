@@ -143,13 +143,13 @@ export function Paivakirja({
                 <th scope="col">{t.kirjanpito.voucher}</th>
                 <th scope="col">{t.kirjanpito.description}</th>
                 <th scope="col">{t.kirjanpito.account}</th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.kirjanpito.debit}
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.kirjanpito.credit}
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.kuitti2.vat}
                 </th>
                 <th scope="col">{t.kirjanpito.source}</th>
@@ -551,13 +551,13 @@ export function Alv({
               <thead>
                 <tr>
                   <th scope="col">{t.kirjanpito.taxRate}</th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.kirjanpito.taxable}
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.kirjanpito.tax}
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.kirjanpito.exclTax}
                   </th>
                 </tr>

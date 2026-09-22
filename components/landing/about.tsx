@@ -1,3 +1,4 @@
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import Image from "next/image";
 import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
@@ -27,7 +28,7 @@ export function About({
   t: Dictionary;
 }) {
   return (
-    <div className="bd">
+    <div className="bd" lang={LOCALE_INFO[locale].tag} dir={LOCALE_INFO[locale].dir}>
       <HtmlLang locale={locale} />
       <LandingNav appHref={appHref} locale={locale} page="about" t={t} />
 

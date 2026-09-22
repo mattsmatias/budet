@@ -104,7 +104,7 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-r md:flex"
+      className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-e md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       {/*
@@ -314,7 +314,7 @@ function MobileBar({
     ) : null}
     <nav
       aria-label={t.kuori2.adminNav}
-      className="rf-mobile-bar fixed bottom-0 left-0 right-0 z-30 border-t md:hidden"
+      className="rf-mobile-bar fixed bottom-0 start-0 end-0 z-30 border-t md:hidden"
       style={{ borderColor: "var(--rf-line)" }}
     >
       <ul className="mx-auto flex max-w-md">

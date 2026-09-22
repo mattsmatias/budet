@@ -47,14 +47,15 @@ describe("kielirekisteri", () => {
   });
 
   /*
-   * Kaikki kuusi kirjoitetaan vasemmalta oikealle. Testi on silti
-   * olemassa: jos joku lisää arabian eikä merkitse sitä RTL-joukkoon,
-   * tämä ei huomaa sitä — mutta jos joku rikkoo isRtl-funktion, huomaa.
+   * Arabia on ainoa oikealta vasemmalle kirjoitettava kieli. Jos
+   * joku lisää heprean eikä merkitse sitä RTL-joukkoon, tämä ei huomaa
+   * sitä — mutta arabian unohtuminen joukosta huomataan.
    */
-  it("ei merkitse yhtäkään nykyistä kieltä oikealta vasemmalle", () => {
+  it("merkitsee vain arabian oikealta vasemmalle", () => {
     for (const code of APP_LOCALES) {
-      expect(isRtl(code), code).toBe(false);
+      expect(isRtl(code), code).toBe(code === "ar");
     }
+    expect(LOCALE_INFO.ar.dir).toBe("rtl");
   });
 
   it("tunnistaa kelvollisen ja hylkää kelvottoman", () => {

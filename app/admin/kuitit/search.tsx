@@ -71,7 +71,7 @@ export function ReceiptSearch({
   return (
     <div className="relative w-full md:w-auto">
       <span
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2"
         style={{ color: "var(--rf-text-3)" }}
       >
         <RfIcon name="search" size={17} />
@@ -88,7 +88,7 @@ export function ReceiptSearch({
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder={t.viimeiset.searchReceiptsHint}
-        className="w-full py-2.5 pl-10 pr-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
+        className="w-full py-2.5 ps-10 pe-3 text-[16px] outline-none md:w-72 md:py-2 md:text-[14px]"
         style={{
           background: "var(--rf-card)",
           borderRadius: "var(--rf-r-control)",

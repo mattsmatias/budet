@@ -249,3 +249,28 @@ nav a,
     overscroll-behavior-y: none;
   }
 }
+
+/*
+ * Suuntanuolet oikealta vasemmalle.
+ *
+ * "→" ja nuolikuvakkeet eivät peilaudu itsestään: arabiaksi "eteenpäin"
+ * osoittaa vasemmalle. Luokka rf-dir kääntää merkin vaakasuunnassa vain
+ * kun sivu on dir="rtl"; hover-liike kääntyy samalla mukana.
+ */
+[dir="rtl"] .rf-dir,
+[dir="rtl"] .bd-arrow,
+[dir="rtl"] .rf-auth-arrow {
+  display: inline-block;
+  scale: -1 1;
+}
+
+/*
+ * Arabiassa ei harvenneta kirjaimia.
+ *
+ * Arabian kirjaimet liittyvät toisiinsa; letter-spacing (tracking-*,
+ * isojen kirjainten harvennus) katkoo sanat irrallisiksi paloiksi.
+ */
+:lang(ar),
+:lang(ar) * {
+  letter-spacing: normal !important;
+}

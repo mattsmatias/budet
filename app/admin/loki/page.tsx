@@ -383,7 +383,7 @@ function Tapahtuma({
       </summary>
 
       {changes.length > 0 ? (
-        <div className="mt-3 pl-5">
+        <div className="mt-3 ps-5">
           <div className="rf-table-scroll">
           <table className="rf-table w-full" style={{ maxWidth: "34rem" }}>
             <caption className="sr-only">{t.kirja.changedFields}</caption>
@@ -413,7 +413,7 @@ function Tapahtuma({
         </div>
       ) : (
         <p
-          className="mt-2 pl-5 text-[12.5px]"
+          className="mt-2 ps-5 text-[12.5px]"
           style={{ color: "var(--rf-text-3)" }}
         >
           {t.kirja.noFieldValues}

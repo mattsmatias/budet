@@ -79,7 +79,7 @@ function Dropdown({
         {badge ? (
           <span
             aria-hidden="true"
-            className="rf-tabular absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center px-1 text-[10.5px] font-bold leading-none"
+            className="rf-tabular absolute -end-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center px-1 text-[10.5px] font-bold leading-none"
             style={{
               background: "var(--rf-red)",
               color: "#fff",
@@ -96,7 +96,7 @@ function Dropdown({
         <div
           role="menu"
           aria-label={label}
-          className="rf-enter absolute right-0 z-40 mt-2 overflow-hidden"
+          className="rf-enter absolute end-0 z-40 mt-2 overflow-hidden"
           style={{
             width,
             maxWidth: "calc(100vw - 2rem)",
@@ -228,7 +228,7 @@ function NotificationMenu({
                     href={alert.href}
                     role="menuitem"
                     onClick={close}
-                    className="rf-press rf-alert-row flex items-start gap-[11px] py-[11px] pl-[11px] pr-[13px]"
+                    className="rf-press rf-alert-row flex items-start gap-[11px] py-[11px] ps-[11px] pe-[13px]"
                     style={{
                       background: "var(--rf-inset)",
                       borderRadius: "var(--rf-r-control)",
@@ -288,7 +288,7 @@ function NotificationMenu({
               {alerts.length > shown.length
                 ? fill(t.kuori2.showAllAlerts, { maara: String(alerts.length) })
                 : t.viimeiset.openNotes}{" "}
-              <span aria-hidden="true">→</span>
+              <span className="rf-dir" aria-hidden="true">→</span>
             </Link>
           ) : null}
         </>
@@ -375,7 +375,7 @@ function UserMenu({
               <button
                 type="submit"
                 role="menuitem"
-                className="rf-press flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-left text-[14px]"
+                className="rf-press flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2.5 text-start text-[14px]"
                 style={{ color: "var(--rf-red-text)" }}
               >
                 <RfIcon name="logout" size={17} />

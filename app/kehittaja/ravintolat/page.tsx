@@ -175,13 +175,13 @@ export default async function DevRestaurantsPage({
             <table className="rf-table w-full" style={{ minWidth: 860 }}>
               <thead>
                 <tr>
-                  <th className="px-5 py-3 text-left">Ravintola</th>
-                  <th className="px-4 py-3 text-left">Omistaja</th>
-                  <th className="px-4 py-3 text-left">Tila</th>
-                  <th className="px-4 py-3 text-left">Paketti</th>
-                  <th className="px-4 py-3 text-right">Käyttäjiä</th>
-                  <th className="px-4 py-3 text-left">Viimeksi</th>
-                  <th className="px-5 py-3 text-left">Luotu</th>
+                  <th className="px-5 py-3 text-start">Ravintola</th>
+                  <th className="px-4 py-3 text-start">Omistaja</th>
+                  <th className="px-4 py-3 text-start">Tila</th>
+                  <th className="px-4 py-3 text-start">Paketti</th>
+                  <th className="px-4 py-3 text-end">Käyttäjiä</th>
+                  <th className="px-4 py-3 text-start">Viimeksi</th>
+                  <th className="px-5 py-3 text-start">Luotu</th>
                 </tr>
               </thead>
 
@@ -199,7 +199,7 @@ export default async function DevRestaurantsPage({
                         >
                           {r.name}
                           {r.isTestAccount ? (
-                            <span className="ml-2 align-middle">
+                            <span className="ms-2 align-middle">
                               <Pill tone="info">Testi</Pill>
                             </span>
                           ) : null}
@@ -244,7 +244,7 @@ export default async function DevRestaurantsPage({
                         {PLAN_LABELS[r.plan]}
                       </td>
 
-                      <td className="rf-tabular px-4 py-3 text-right">
+                      <td className="rf-tabular px-4 py-3 text-end">
                         {r.userCount}
                       </td>
 

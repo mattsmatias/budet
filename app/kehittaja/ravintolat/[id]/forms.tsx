@@ -177,7 +177,7 @@ export function StatusForm({
           <span className="block text-[12.5px] font-semibold">
             Syy
             <span
-              className="ml-1 font-normal"
+              className="ms-1 font-normal"
               style={{ color: "var(--rf-text-3)" }}
             >
               valinnainen
@@ -380,7 +380,7 @@ export function UserRow({
         <span className="block truncate text-[14px] font-semibold">
           {user.name ?? "Nimetön"}
           {user.active ? null : (
-            <span className="ml-2 align-middle">
+            <span className="ms-2 align-middle">
               <Pill tone="warn">Ei käytössä</Pill>
             </span>
           )}
@@ -570,7 +570,7 @@ export function InviteForm({ id }: { id: string }) {
           <span className="block text-[12.5px] font-semibold">
             Nimi
             <span
-              className="ml-1 font-normal"
+              className="ms-1 font-normal"
               style={{ color: "var(--rf-text-3)" }}
             >
               valinnainen

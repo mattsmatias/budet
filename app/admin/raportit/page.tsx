@@ -198,7 +198,7 @@ export default async function ReportsPage({
               {accountants.map((accountant) => (
                 <span
                   key={accountant.id}
-                  className="inline-flex items-center gap-2 py-1.5 pl-1.5 pr-3 text-[13px]"
+                  className="inline-flex items-center gap-2 py-1.5 ps-1.5 pe-3 text-[13px]"
                   style={{ background: "var(--rf-inset)", borderRadius: 999 }}
                 >
                   <Avatar initials={accountant.initials} size={24} />

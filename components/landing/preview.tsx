@@ -24,7 +24,7 @@ function Euro({ value }: { value: React.ReactNode }) {
     <span className="bd-num">
       {value}
       <span
-        className="ml-[3px] font-medium"
+        className="ms-[3px] font-medium"
         style={{ color: "var(--bd-text-3)" }}
       >
         €
@@ -152,7 +152,7 @@ function Rail({ t }: { t: Dictionary }) {
   return (
     <nav
       aria-hidden="true"
-      className="hidden w-[132px] shrink-0 flex-col gap-0.5 border-r p-2.5 sm:flex"
+      className="hidden w-[132px] shrink-0 flex-col gap-0.5 border-e p-2.5 sm:flex"
       style={{ background: "#fff", borderColor: "var(--bd-line)" }}
     >
       <RailBrand />

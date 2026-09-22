@@ -143,10 +143,10 @@ export default async function DevPlansPage() {
           <table className="rf-table w-full" style={{ minWidth: 640 }}>
             <thead>
               <tr>
-                <th className="px-5 py-3 text-left">Ravintola</th>
-                <th className="px-4 py-3 text-left">Paketti</th>
-                <th className="px-4 py-3 text-left">Tila</th>
-                <th className="px-5 py-3 text-right">Käyttäjiä</th>
+                <th className="px-5 py-3 text-start">Ravintola</th>
+                <th className="px-4 py-3 text-start">Paketti</th>
+                <th className="px-4 py-3 text-start">Tila</th>
+                <th className="px-5 py-3 text-end">Käyttäjiä</th>
               </tr>
             </thead>
 
@@ -171,7 +171,7 @@ export default async function DevPlansPage() {
                         {STATUS_LABELS[r.status]}
                       </Pill>
                     </td>
-                    <td className="rf-tabular px-5 py-3 text-right">
+                    <td className="rf-tabular px-5 py-3 text-end">
                       {r.userCount}
                     </td>
                   </tr>

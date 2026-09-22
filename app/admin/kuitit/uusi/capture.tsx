@@ -610,7 +610,7 @@ export function CaptureFlow({
               </button>
 
               <span
-                className="rf-tabular pointer-events-none absolute bottom-1 left-1 px-1.5 py-0.5 text-[11px] font-medium"
+                className="rf-tabular pointer-events-none absolute bottom-1 start-1 px-1.5 py-0.5 text-[11px] font-medium"
                 style={{
                   background: "rgba(0,0,0,0.62)",
                   color: "#fff",
@@ -623,7 +623,7 @@ export function CaptureFlow({
               <button
                 type="button"
                 onClick={() => removePage(index)}
-                className="rf-press absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center"
+                className="rf-press absolute -end-1 -top-1 flex h-6 w-6 items-center justify-center"
                 style={{
                   background: "var(--rf-surface)",
                   color: "var(--rf-text-2)",

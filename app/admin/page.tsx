@@ -751,7 +751,7 @@ export default async function AdminDashboard({
         suuntaan". Ne ovat eri kysymyksiä samasta rahasta, ja
         vierekkäin ne luetaan yhtenä silmäyksenä.
       */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <Panel
           title={t.sanat.expenseBreakdown}
           href="/admin/kulut"
@@ -912,11 +912,11 @@ export default async function AdminDashboard({
                   </span>
                 </li>
                 {isDaily ? (
-                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
+                  <li className="ms-auto" style={{ color: "var(--rf-text-3)" }}>
                     {t.yleiskatsaus.chartDailyHint}
                   </li>
                 ) : flow.salesMissing ? (
-                  <li className="ml-auto" style={{ color: "var(--rf-text-3)" }}>
+                  <li className="ms-auto" style={{ color: "var(--rf-text-3)" }}>
                     {t.yleiskatsaus.salesGapNote}
                   </li>
                 ) : null}
@@ -933,7 +933,7 @@ export default async function AdminDashboard({
         kuukauden muodon. Molemmat luetaan harvoin mutta kumpikaan ei
         ansaitse koko rivin leveyttä.
       */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
         <StatusHeader
           t={t}
           status={status}
@@ -1099,7 +1099,7 @@ export default async function AdminDashboard({
                       </span>
                     </span>
 
-                    <span className="shrink-0 text-right">
+                    <span className="shrink-0 text-end">
                       <span className="rf-tabular block text-[14px] font-semibold">
                         {formatMoney(receipt.totalCents)}
                       </span>

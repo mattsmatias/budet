@@ -1,3 +1,4 @@
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/dictionary";
@@ -36,7 +37,7 @@ import { ContactForm } from "./contact-form";
  */
 export function Landing({ appHref, locale, t }: Props) {
   return (
-    <div className="bd">
+    <div className="bd" lang={LOCALE_INFO[locale].tag} dir={LOCALE_INFO[locale].dir}>
       <HtmlLang locale={locale} />
       <LandingNav appHref={appHref} locale={locale} page="home" t={t} />
 
@@ -102,7 +103,7 @@ function Hero({ appHref, t }: { appHref: string | null; t: Dictionary }) {
         </div>
 
         <p
-          className="bd-rise bd-d4 mx-auto mt-5 flex max-w-sm items-start justify-center gap-2 text-left text-[13.5px] sm:max-w-none sm:items-center"
+          className="bd-rise bd-d4 mx-auto mt-5 flex max-w-sm items-start justify-center gap-2 text-start text-[13.5px] sm:max-w-none sm:items-center"
           style={{ color: "var(--bd-text-2)" }}
         >
           <Check />
@@ -673,7 +674,7 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
                     <CountIn to={79} duration={900} />
                   </span>
                   <span
-                    className="ml-1 text-[16px] font-semibold"
+                    className="ms-1 text-[16px] font-semibold"
                     style={{ color: "var(--bd-text-2)" }}
                   >
                     {t.pricing.perMonth}

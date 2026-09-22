@@ -279,7 +279,7 @@ export function MetricCard({
                 className="shrink-0 text-[11.5px] font-bold"
                 style={{ color: "var(--rf-accent)" }}
               >
-                {linkLabel} <span aria-hidden="true">→</span>
+                {linkLabel} <span className="rf-dir" aria-hidden="true">→</span>
               </span>
             ) : null}
           </div>

@@ -269,16 +269,16 @@ export default async function SuppliersPage({
                 <tr>
                   <th scope="col">{t.sanat.supplier}</th>
                   <th scope="col">{t.toimittajat.categories}</th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.sanat.receiptCount}
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.toimittajat.average}
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.toimittajat.change}
                   </th>
-                  <th scope="col" className="text-right">
+                  <th scope="col" className="text-end">
                     {t.kuitit.total}
                   </th>
                   <th scope="col" />
@@ -325,7 +325,7 @@ export default async function SuppliersPage({
                       </td>
                       <td className="num">{s.receiptCount}</td>
                       <td
-                        className="rf-tabular px-5 py-3 text-right"
+                        className="rf-tabular px-5 py-3 text-end"
                         style={{ color: "var(--rf-text-2)" }}
                       >
                         {formatMoney(s.averageCents)}

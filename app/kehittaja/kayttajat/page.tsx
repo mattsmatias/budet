@@ -150,12 +150,12 @@ export default async function DevUsersPage({
             <table className="rf-table w-full" style={{ minWidth: 820 }}>
               <thead>
                 <tr>
-                  <th className="px-5 py-3 text-left">Nimi</th>
-                  <th className="px-4 py-3 text-left">Sähköposti</th>
-                  <th className="px-4 py-3 text-left">Ravintola</th>
-                  <th className="px-4 py-3 text-left">Rooli</th>
-                  <th className="px-4 py-3 text-left">Tila</th>
-                  <th className="px-5 py-3 text-left">
+                  <th className="px-5 py-3 text-start">Nimi</th>
+                  <th className="px-4 py-3 text-start">Sähköposti</th>
+                  <th className="px-4 py-3 text-start">Ravintola</th>
+                  <th className="px-4 py-3 text-start">Rooli</th>
+                  <th className="px-4 py-3 text-start">Tila</th>
+                  <th className="px-5 py-3 text-start">
                     Viimeisin kirjautuminen
                   </th>
                 </tr>
@@ -167,7 +167,7 @@ export default async function DevUsersPage({
                     <td className="px-5 py-3 font-semibold">
                       {u.name ?? "Nimetön"}
                       {u.isSuperAdmin ? (
-                        <span className="ml-2 align-middle">
+                        <span className="ms-2 align-middle">
                           <Pill tone="risk">Super admin</Pill>
                         </span>
                       ) : null}
@@ -188,7 +188,7 @@ export default async function DevUsersPage({
                         {u.restaurantName}
                       </Link>
                       {u.isTestAccount ? (
-                        <span className="ml-1.5 align-middle">
+                        <span className="ms-1.5 align-middle">
                           <Pill tone="info">Testi</Pill>
                         </span>
                       ) : null}

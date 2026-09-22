@@ -98,7 +98,7 @@ export function StatusHeader({
             <li key={focus.id}>
               <Link
                 href={focus.href}
-                className="rf-press flex items-start gap-[11px] py-[11px] pr-[13px] pl-[11px]"
+                className="rf-press flex items-start gap-[11px] py-[11px] pe-[13px] ps-[11px]"
                 style={{
                   background: "var(--rf-inset)",
                   borderRadius: "var(--rf-r-control)",

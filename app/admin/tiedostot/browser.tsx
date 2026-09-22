@@ -481,7 +481,7 @@ export function FileBrowser(props: Props) {
           </p>
 
           {files.length > 0 || props.trashFolders.length > 0 ? (
-            <div className="ml-auto">
+            <div className="ms-auto">
               <Button
                 tone="danger"
                 size="sm"
@@ -518,7 +518,7 @@ export function FileBrowser(props: Props) {
             {fill(t.tiedosto.selected, { maara: String(valitut.length) })}
           </span>
 
-          <div className="ml-auto flex flex-wrap gap-1.5">
+          <div className="ms-auto flex flex-wrap gap-1.5">
             <Button
               tone="ghost"
               size="sm"
@@ -600,7 +600,7 @@ export function FileBrowser(props: Props) {
                 key={file.id}
                 type="button"
                 onClick={() => setDetails(file)}
-                className="rf-press flex w-44 shrink-0 items-center gap-2 px-3 py-2 text-left"
+                className="rf-press flex w-44 shrink-0 items-center gap-2 px-3 py-2 text-start"
                 style={{
                   background: "var(--rf-inset)",
                   borderRadius: "var(--rf-r-card)",
@@ -1090,7 +1090,7 @@ function SortMenu({
   ];
 
   return (
-    <div ref={box} className="relative ml-auto">
+    <div ref={box} className="relative ms-auto">
       <Button
         tone="ghost"
         size="sm"
@@ -1104,7 +1104,7 @@ function SortMenu({
       {open ? (
         <div
           role="menu"
-          className="rf-enter absolute right-0 z-40 mt-2 w-56 overflow-hidden py-1"
+          className="rf-enter absolute end-0 z-40 mt-2 w-56 overflow-hidden py-1"
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
@@ -1248,7 +1248,7 @@ function RowMenu({
       {open ? (
         <div
           role="menu"
-          className={`rf-enter absolute right-0 z-40 w-52 overflow-hidden py-1 ${
+          className={`rf-enter absolute end-0 z-40 w-52 overflow-hidden py-1 ${
             upward ? "bottom-full mb-1" : "mt-1"
           }`}
           style={{
@@ -1267,7 +1267,7 @@ function RowMenu({
                 setOpen(false);
                 item.onClick();
               }}
-              className="block w-full px-3 py-2 text-left text-[13.5px]"
+              className="block w-full px-3 py-2 text-start text-[13.5px]"
               style={{
                 color: item.danger ? "var(--rf-red-text)" : "var(--rf-text)",
               }}
@@ -1530,7 +1530,7 @@ function FileRowItem({
       <button
         type="button"
         onClick={() => open(false)}
-        className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-3 py-3 text-start"
       >
         <span style={{ color: "var(--rf-text-3)" }}>
           <RfIcon name={KIND_ICONS[kind] ?? "file"} size={20} />
@@ -1923,7 +1923,7 @@ function MoveDialog({
           <button
             type="button"
             onClick={() => onPick(null)}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13.5px] font-semibold"
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-start text-[13.5px] font-semibold"
           >
             <RfIcon name="folder" size={16} />
             {t.tiedosto.root}
@@ -1935,7 +1935,7 @@ function MoveDialog({
             <button
               type="button"
               onClick={() => onPick(folder.id)}
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13.5px]"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-start text-[13.5px]"
             >
               <RfIcon name="folder" size={16} />
               <span className="truncate">
@@ -2190,7 +2190,7 @@ function LinkDialog({
           <button
             type="button"
             onClick={() => onPick(null)}
-            className="w-full px-3 py-2.5 text-left text-[13.5px] font-semibold"
+            className="w-full px-3 py-2.5 text-start text-[13.5px] font-semibold"
             style={{
               color: file.supplierId ? "var(--rf-text)" : "var(--rf-accent)",
             }}
@@ -2204,7 +2204,7 @@ function LinkDialog({
             <button
               type="button"
               onClick={() => onPick(choice.id)}
-              className="flex w-full items-center justify-between px-3 py-2.5 text-left text-[13.5px]"
+              className="flex w-full items-center justify-between px-3 py-2.5 text-start text-[13.5px]"
               style={{
                 color:
                   choice.id === file.supplierId
@@ -2935,7 +2935,7 @@ function DetailsPanel({
       />
 
       <aside
-        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[420px] sm:border-l"
+        className="rf-z-panel rf-enter fixed inset-0 flex flex-col sm:inset-y-0 sm:start-auto sm:end-0 sm:w-[420px] sm:border-s"
         style={{
           background: "var(--rf-card)",
           borderColor: "var(--rf-line)",

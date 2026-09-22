@@ -414,16 +414,16 @@ function ReviewForm({
               <tr>
                 <th scope="col">{t.myynti.group}</th>
                 <th scope="col">{t.myynti.registerName}</th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   ALV %
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.myynti.withTax}
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   ALV
                 </th>
-                <th scope="col" className="text-right">
+                <th scope="col" className="text-end">
                   {t.myynti.withoutTax}
                 </th>
               </tr>
@@ -437,20 +437,20 @@ function ReviewForm({
                   <td style={{ color: "var(--rf-text-2)" }}>
                     {l.posName ?? "—"}
                   </td>
-                  <td className="rf-tabular text-right">
+                  <td className="rf-tabular text-end">
                     {formatRate(l.vatRate)}
                   </td>
-                  <td className="rf-tabular text-right font-semibold">
+                  <td className="rf-tabular text-end font-semibold">
                     {formatMoney(l.grossCents)}
                   </td>
                   <td
-                    className="rf-tabular text-right"
+                    className="rf-tabular text-end"
                     style={{ color: "var(--rf-text-2)" }}
                   >
                     {formatMoney(l.vatCents)}
                   </td>
                   <td
-                    className="rf-tabular text-right"
+                    className="rf-tabular text-end"
                     style={{ color: "var(--rf-text-2)" }}
                   >
                     {formatMoney(l.netCents)}

@@ -137,7 +137,7 @@ export function Panel({
             className="rf-press -my-3 shrink-0 self-center py-3 text-[13px] font-medium whitespace-nowrap"
             style={{ color: "var(--rf-blue)" }}
           >
-            {linkLabel} →
+            {linkLabel} <span className="rf-dir" aria-hidden="true">→</span>
           </Link>
         ) : null}
       </div>

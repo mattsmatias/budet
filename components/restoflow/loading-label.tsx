@@ -24,6 +24,7 @@ const TEKSTIT: Record<string, string> = {
   da: "Indlæser…",
   tr: "Yükleniyor…",
   et: "Laadin…",
+  ar: "جارٍ التحميل…",
 };
 
 /** Kieli ei vaihdu kesken sivun: tilaus on tyhjä eikä sitä pureta. */

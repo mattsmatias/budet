@@ -157,13 +157,13 @@ export function ReconciliationPanel({
         <thead>
           <tr>
             <th scope="col">{t.myynti.subject}</th>
-            <th scope="col" className="text-right">
+            <th scope="col" className="text-end">
               {t.myynti.register}
             </th>
-            <th scope="col" className="text-right">
+            <th scope="col" className="text-end">
               {t.myynti.kate}
             </th>
-            <th scope="col" className="text-right">
+            <th scope="col" className="text-end">
               {t.myynti.difference}
             </th>
           </tr>
@@ -199,18 +199,18 @@ function Row({
       </td>
 
       <td
-        className="rf-tabular text-right"
+        className="rf-tabular text-end"
         style={{ color: "var(--rf-text-2)" }}
       >
         {posCents === null ? "—" : formatMoney(posCents)}
       </td>
 
-      <td className="rf-tabular text-right font-semibold">
+      <td className="rf-tabular text-end font-semibold">
         {formatMoney(budetCents)}
       </td>
 
       <td
-        className="rf-tabular text-right"
+        className="rf-tabular text-end"
         style={{
           color:
             status === "mismatch"

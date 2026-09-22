@@ -475,7 +475,7 @@ function Facts({
             <dt className="text-[13px]" style={{ color: "var(--rf-text-2)" }}>
               {row.label}
             </dt>
-            <dd className="min-w-0 text-right text-[13px] font-semibold">
+            <dd className="min-w-0 text-end text-[13px] font-semibold">
               {row.href ? (
                 <Link
                   href={row.href}

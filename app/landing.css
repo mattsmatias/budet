@@ -130,7 +130,7 @@
 .bd {
   background: var(--bd-bg);
   color: var(--bd-text);
-  font-family: var(--font-app), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-app), var(--font-ar), ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 
   /*
@@ -161,7 +161,7 @@
 
 /* Numerot samalla kirjasimella kuin sovelluksessa. */
 .bd-num {
-  font-family: var(--font-num), ui-monospace, monospace;
+  font-family: var(--font-num), var(--font-ar), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
@@ -1729,7 +1729,7 @@
 }
 
 .bd-ledger-row b {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 11px;
   color: var(--bd-text-3);
 }

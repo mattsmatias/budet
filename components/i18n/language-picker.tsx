@@ -118,7 +118,7 @@ export function LanguagePicker({
         <div
           className="absolute z-50 mt-2 w-60 overflow-hidden"
           style={{
-            [align === "right" ? "right" : "left"]: 0,
+            [align === "right" ? "insetInlineEnd" : "insetInlineStart"]: 0,
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
             borderRadius: "var(--rf-r-control)",
@@ -157,7 +157,7 @@ export function LanguagePicker({
                    * rikkinäiseltä.
                    */
                   dir={LOCALE_INFO[l.code].dir}
-                  className="flex w-full items-center justify-between gap-2 rounded-[8px] px-3 py-2 text-left text-[14px]"
+                  className="flex w-full items-center justify-between gap-2 rounded-[8px] px-3 py-2 text-start text-[14px]"
                   style={
                     l.code === current
                       ? {

@@ -79,7 +79,7 @@ export function Field({
           autoComplete={autoComplete}
           required={required}
           aria-describedby={hint ? `${id}-hint` : undefined}
-          className={`rf-auth-input ${icon ? "pl-11" : "pl-3.5"} ${reveal ? "pr-12" : "pr-3.5"}`}
+          className={`rf-auth-input ${icon ? "ps-11" : "ps-3.5"} ${reveal ? "pe-12" : "pe-3.5"}`}
         />
         {reveal ? (
           <button

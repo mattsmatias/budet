@@ -257,10 +257,10 @@ export default async function SalesPage({
               <thead>
                 <tr>
                   <th>{t.myynti.dayWord}</th>
-                  <th className="text-right">{t.myynti.withoutTax}</th>
-                  <th className="text-right">{t.myynti.receiptsWord}</th>
-                  <th className="text-right">{t.myynti.averageWord}</th>
-                  <th className="text-right">{t.myynti.target}</th>
+                  <th className="text-end">{t.myynti.withoutTax}</th>
+                  <th className="text-end">{t.myynti.receiptsWord}</th>
+                  <th className="text-end">{t.myynti.averageWord}</th>
+                  <th className="text-end">{t.myynti.target}</th>
                   <th>{t.myynti.comparison}</th>
                   <th />
                 </tr>
@@ -367,7 +367,7 @@ function Row({
         {average === null ? "—" : formatMoney(average)}
       </td>
       <td
-        className="rf-tabular px-5 py-3 text-right"
+        className="rf-tabular px-5 py-3 text-end"
         style={{ color: "var(--rf-text-3)" }}
       >
         {row.targetCents ? formatMoney(row.targetCents) : "—"}
@@ -395,7 +395,7 @@ function Row({
         )}
       </td>
 
-      <td className="text-right">
+      <td className="text-end">
         <span className="flex items-center justify-end gap-1">
           {/*
             Rivi vie päivän omaan näkymään.

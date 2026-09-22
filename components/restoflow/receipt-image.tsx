@@ -132,7 +132,7 @@ export function ReceiptImage({
               )}
 
               <span
-                className="rf-tabular pointer-events-none absolute bottom-0.5 left-0.5 px-1 text-[10px] font-medium"
+                className="rf-tabular pointer-events-none absolute bottom-0.5 start-0.5 px-1 text-[10px] font-medium"
                 style={{
                   background: "rgba(0,0,0,0.62)",
                   color: "#fff",
@@ -174,7 +174,7 @@ export function ReceiptImage({
                   step(-1);
                 }}
                 aria-label={t.kuvake.previousPage}
-                className="absolute left-4 flex h-11 w-11 items-center justify-center"
+                className="absolute start-4 flex h-11 w-11 items-center justify-center"
                 style={{
                   background: "rgba(255,255,255,0.16)",
                   color: "#fff",
@@ -191,7 +191,7 @@ export function ReceiptImage({
                   step(1);
                 }}
                 aria-label={t.kuvake.nextPage}
-                className="absolute right-4 flex h-11 w-11 items-center justify-center"
+                className="absolute end-4 flex h-11 w-11 items-center justify-center"
                 style={{
                   background: "rgba(255,255,255,0.16)",
                   color: "#fff",
@@ -211,7 +211,7 @@ export function ReceiptImage({
             type="button"
             onClick={() => setOpen(false)}
             aria-label={t.kuvake.close}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center"
+            className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center"
             style={{
               background: "rgba(255,255,255,0.16)",
               color: "var(--rf-on-accent)",

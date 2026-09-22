@@ -245,12 +245,12 @@ export default async function ExpensesPage({
                       {formatMonth(point.month, locale)}
                     </td>
                     <td
-                      className="rf-tabular py-3 text-right"
+                      className="rf-tabular py-3 text-end"
                       style={{ color: "var(--rf-text-3)" }}
                     >
                       {receiptCountLabel(point.receiptCount, locale)}
                     </td>
-                    <td className="rf-tabular py-3 text-right font-semibold">
+                    <td className="rf-tabular py-3 text-end font-semibold">
                       {formatMoney(point.totalCents)}
                     </td>
                   </tr>

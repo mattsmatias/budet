@@ -173,7 +173,7 @@ function Rivi({
           <button
             type="button"
             onClick={() => setOpen(!open)}
-            className="rf-press block w-full text-left"
+            className="rf-press block w-full text-start"
           >
             <span
               className="block text-[14px] font-semibold"
@@ -223,7 +223,7 @@ function Rivi({
       </div>
 
       {open ? (
-        <div className="mt-2.5 pl-[34px]">
+        <div className="mt-2.5 ps-[34px]">
           {task.description ? (
             <p
               className="text-[13px] leading-relaxed"

@@ -23,7 +23,7 @@ export function DevNav() {
 
   return (
     <aside
-      className="rf-no-print sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r md:flex"
+      className="rf-no-print sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-e md:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       <div className="px-[18px] pb-3 pt-[14px]">

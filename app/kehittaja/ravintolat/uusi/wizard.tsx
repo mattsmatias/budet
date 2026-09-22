@@ -473,7 +473,7 @@ function Kentta({
         {label}
         {required ? null : (
           <span
-            className="ml-1 font-normal"
+            className="ms-1 font-normal"
             style={{ color: "var(--rf-text-3)" }}
           >
             valinnainen

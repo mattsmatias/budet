@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import {
+  IBM_Plex_Mono,
+  IBM_Plex_Sans_Arabic,
+  Plus_Jakarta_Sans,
+} from "next/font/google";
 import { localeInfo } from "@/lib/i18n/app-locales";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import "./globals.css";
@@ -41,6 +45,23 @@ const mono = IBM_Plex_Mono({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "600", "700"],
   display: "swap",
+});
+
+/**
+ * IBM Plex Sans Arabic arabiankielisille merkeille.
+ *
+ * Plus Jakarta Sansissa ei ole arabialaisia kirjaimia, ja selaimen
+ * oma varakirjasin vaihtelee laitteittain. Tämä on fonttipinossa heti
+ * pääkirjasimen jälkeen, joten latinalaiset merkit tulevat edelleen
+ * Jakartasta. Ei esilatausta: tiedosto haetaan vain sivulle jolla on
+ * arabiaa, muut kielet eivät maksa siitä mitään.
+ */
+const arabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-ar",
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -101,7 +122,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang={tag}
       dir={dir}
-      className={`${jakarta.variable} ${mono.variable} h-full`}
+      className={`${jakarta.variable} ${mono.variable} ${arabic.variable} h-full`}
     >
       <body className="restoflow min-h-full" suppressHydrationWarning>
         {/*

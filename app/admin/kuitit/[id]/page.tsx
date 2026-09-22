@@ -161,7 +161,7 @@ export default async function AdminReceiptDetailPage({
         <Link
           href="/admin/kuitit"
           aria-label={t.kuitti2.backToList}
-          className="rf-press -ml-1.5 p-1.5"
+          className="rf-press -ms-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={22} />
@@ -178,7 +178,7 @@ export default async function AdminReceiptDetailPage({
           kuvaa on, ja vain sille joka saa kaappiin kirjoittaa.
         */}
         {pagePaths.length > 0 && can(role, "files.manage") ? (
-          <div className="ml-auto shrink-0">
+          <div className="ms-auto shrink-0">
             <SaveToFiles
               t={t}
               label={t.tiedosto.saveToFiles}
@@ -410,13 +410,13 @@ export default async function AdminReceiptDetailPage({
                   <thead>
                     <tr>
                       <th scope="col">{t.kuitti2.rate}</th>
-                      <th scope="col" className="text-right">
+                      <th scope="col" className="text-end">
                         {t.kuitti2.withVat}
                       </th>
-                      <th scope="col" className="text-right">
+                      <th scope="col" className="text-end">
                         {t.kuitti2.vat}
                       </th>
-                      <th scope="col" className="text-right">
+                      <th scope="col" className="text-end">
                         {t.kuitti2.withoutVat}
                       </th>
                     </tr>
@@ -429,16 +429,16 @@ export default async function AdminReceiptDetailPage({
                             ? t.kuitit.noVatRate
                             : formatRate(rate.rate)}
                         </td>
-                        <td className="rf-tabular text-right">
+                        <td className="rf-tabular text-end">
                           {formatMoney(rate.grossCents)}
                         </td>
-                        <td className="rf-tabular text-right">
+                        <td className="rf-tabular text-end">
                           {rate.rate === null
                             ? "—"
                             : formatMoney(rate.vatCents)}
                         </td>
                         <td
-                          className="rf-tabular text-right"
+                          className="rf-tabular text-end"
                           style={{ color: "var(--rf-text-2)" }}
                         >
                           {formatMoney(rate.netCents)}
@@ -597,7 +597,7 @@ function Row({
         {label}
       </dt>
       <dd
-        className="rf-tabular text-right text-[14px] font-medium"
+        className="rf-tabular text-end text-[14px] font-medium"
         style={{ color: warn ? "var(--rf-amber-text)" : "var(--rf-text)" }}
       >
         {value}

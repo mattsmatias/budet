@@ -46,7 +46,7 @@ export default async function NewReceiptPage() {
         <Link
           href="/admin/kuitit"
           aria-label={t.kuva.back}
-          className="rf-press -ml-1.5 p-1.5"
+          className="rf-press -ms-1.5 p-1.5"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={22} />

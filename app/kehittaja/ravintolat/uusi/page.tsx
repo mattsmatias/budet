@@ -10,7 +10,7 @@ export default function DevNewRestaurantPage() {
       <header>
         <Link
           href="/kehittaja/ravintolat"
-          className="rf-press -ml-1.5 inline-flex items-center gap-1.5 p-1.5 text-[13px] font-medium"
+          className="rf-press -ms-1.5 inline-flex items-center gap-1.5 p-1.5 text-[13px] font-medium"
           style={{ color: "var(--rf-text-2)" }}
         >
           <RfIcon name="back" size={16} />

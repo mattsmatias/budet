@@ -150,7 +150,7 @@ export function TaskForm({
             <span className="block text-[12.5px] font-semibold">
               {t.tiimi.clock}
               <span
-                className="ml-1 font-normal"
+                className="ms-1 font-normal"
                 style={{ color: "var(--rf-text-3)" }}
               >
                 {t.tiimi.optional}
@@ -172,7 +172,7 @@ export function TaskForm({
               <span className="block text-[12.5px] font-semibold">
                 {t.tiimi.description}
                 <span
-                  className="ml-1 font-normal"
+                  className="ms-1 font-normal"
                   style={{ color: "var(--rf-text-3)" }}
                 >
                   {t.tiimi.optional}

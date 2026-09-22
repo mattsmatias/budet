@@ -76,7 +76,7 @@ export function ResultHero({
                   className="rf-press mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold"
                   style={{ color: "var(--rf-accent)" }}
                 >
-                  {y.resultAddSales} →
+                  {y.resultAddSales} <span className="rf-dir" aria-hidden="true">→</span>
                 </Link>
               ) : null}
             </>

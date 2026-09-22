@@ -299,7 +299,7 @@ function Table({
               <th
                 key={cell}
                 scope="col"
-                className={`py-1.5 font-medium ${i === 0 ? "text-left" : "text-right"}`}
+                className={`py-1.5 font-medium ${i === 0 ? "text-start" : "text-end"}`}
                 style={{ color: "var(--rf-text-3)" }}
               >
                 {cell}
@@ -317,7 +317,7 @@ function Table({
               {row.map((cell, i) => (
                 <td
                   key={i}
-                  className={`py-1.5 ${i === 0 ? "text-left" : "rf-tabular text-right"}`}
+                  className={`py-1.5 ${i === 0 ? "text-start" : "rf-tabular text-end"}`}
                 >
                   {cell}
                 </td>
@@ -331,7 +331,7 @@ function Table({
               {total.map((cell, i) => (
                 <td
                   key={i}
-                  className={`py-2 ${i === 0 ? "text-left" : "rf-tabular text-right"}`}
+                  className={`py-2 ${i === 0 ? "text-start" : "rf-tabular text-end"}`}
                 >
                   {cell}
                 </td>

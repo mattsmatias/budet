@@ -788,7 +788,129 @@ const et: Labels = {
     none: "Eelarvet ei ole",
   },
 };
-const KAIKKI: Record<AppLocale, Labels> = { fi, en, sv, da, tr, et };
+const ar: Labels = {
+  roles: {
+    owner: "المالك",
+    manager: "المدير",
+    employee: "الموظف",
+    accountant: "المحاسب",
+  },
+  categories: {
+    food: "طعام",
+    alcohol: "كحول",
+    soft_drinks: "مشروبات غازية",
+    cleaning: "تنظيف",
+    kitchen_supplies: "مستلزمات المطبخ",
+    packaging: "تغليف",
+    staff: "الموظفون",
+    transport: "نقل",
+    products: "منتجات العناية",
+    equipment: "معدات",
+    rent: "المبنى والإيجار",
+    other: "أخرى",
+  },
+  payments: {
+    card: "بطاقة",
+    cash: "نقدًا",
+    invoice: "فاتورة",
+    unknown: "غير معروف",
+  },
+  reviewReasons: {
+    vat_missing: "ضريبة القيمة المضافة مفقودة",
+    vat_uncertain: "ضريبة القيمة المضافة غير مؤكدة",
+    vat_mismatch: "ضريبة القيمة المضافة لا تطابق نسبة الفئة",
+    category_missing: "الفئة مفقودة",
+    total_uncertain: "الإجمالي المكتشف غير مؤكد",
+    supplier_uncertain: "المورّد غير مؤكد",
+    date_uncertain: "التاريخ غير مؤكد",
+    payment_missing: "طريقة الدفع مفقودة",
+    duplicate_suspected: "احتمال تكرار",
+    poor_image: "صورة الإيصال غير واضحة",
+    items_dont_sum: "مجموع البنود لا يساوي الإجمالي",
+  },
+  accountType: {
+    revenue: "الإيرادات",
+    expense: "المصروفات",
+    asset: "الأصول",
+    liability: "الخصوم",
+    equity: "حقوق الملكية",
+  },
+  ledgerSource: {
+    receipt: "إيصال",
+    daily_sales: "تقرير الصندوق",
+    manual: "يدويًا",
+    correction: "تصحيح",
+  },
+  ledgerStatus: {
+    proposed: "قيد مقترح",
+    posted: "مُرحّل",
+    rejected: "مرفوض",
+  },
+  monthStatus: {
+    open: "مفتوح",
+    review: "يحتاج مراجعة",
+    ready: "جاهز",
+    locked: "مقفل",
+  },
+  sourceState: {
+    unprocessed: "ليس في دفتر الأستاذ",
+    proposed: "بانتظار المراجعة",
+    posted: "مُرحّل إلى دفتر الأستاذ",
+    rejected: "غير مُرحّل",
+  },
+  auditAction: {
+    created: "أُضيف",
+    updated: "تم التغيير",
+    deleted: "حُذف",
+    published: "نُشر",
+    cancelled: "أُلغي",
+    completed: "تم وضع علامة كمكتمل",
+  },
+  auditEntity: {
+    member: "الموظفون",
+    shift: "المناوبات",
+    receipt: "الإيصالات",
+    task: "المهام",
+    budget: "الميزانيات",
+    sales_group: "الضرائب",
+    time_correction: "تتبع الوقت",
+    folder: "المجلدات",
+    file: "الملفات",
+  },
+  taskPriority: {
+    normal: "عادية",
+    important: "مهمة",
+    critical: "حرجة",
+  },
+  taskVisibility: {
+    owner_only: "المالك فقط",
+    managers: "المديرون",
+    assigned_user: "المكلّف فقط",
+    all_staff: "جميع الموظفين",
+  },
+  taskRecurrence: {
+    none: "لا يتكرر",
+    daily: "يوميًا",
+    weekly: "أسبوعيًا",
+    monthly: "شهريًا",
+    yearly: "سنويًا",
+  },
+  taskStatus: {
+    upcoming: "قادمة",
+    due_today: "مستحقة اليوم",
+    overdue: "متأخرة",
+    completed: "مكتملة",
+    cancelled: "ملغاة",
+  },
+  budgetStatus: {
+    ok: "جيد",
+    warning: "يقترب من الحد",
+    exceeded: "تجاوز الحد",
+    none: "لا توجد ميزانية",
+  },
+};
+
+const KAIKKI: Record<AppLocale, Labels> = { fi, en, sv, da, tr, et, ar };
 
 export function labels(locale: AppLocale): Labels {
   return KAIKKI[locale] ?? fi;
@@ -856,6 +978,13 @@ const MAARAT: Record<
     myyntipaiva: ["1 müügipäev", "{n} müügipäeva"],
     esitys: ["1 ettepanek", "{n} ettepanekut"],
     paiva: ["1 päev", "{n} päeva"],
+  },
+  ar: {
+    kuitti: ["1 إيصال", "{n} إيصالات"],
+    osuma: ["1 مطابقة", "{n} مطابقات"],
+    myyntipaiva: ["1 يوم مبيعات", "{n} أيام مبيعات"],
+    esitys: ["1 اقتراح", "{n} اقتراحات"],
+    paiva: ["1 يوم", "{n} أيام"],
   },
 };
 

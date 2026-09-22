@@ -78,7 +78,7 @@ export default async function SignInPage({
           className="font-semibold"
           style={{ color: "var(--rf-accent)" }}
         >
-          {t.kirjaudu.joinRestaurant} →
+          {t.kirjaudu.joinRestaurant} <span className="rf-dir" aria-hidden="true">→</span>
         </Link>
       </p>
     </div>

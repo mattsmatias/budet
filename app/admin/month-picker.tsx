@@ -153,7 +153,7 @@ export function MonthPicker({
         // Kiinteä korkeus eikä pehmuste: askelnapit ovat 40 px, ja
         // pehmusteesta laskettu korkeus jäi kolme pikseliä suuremmaksi.
         // Ero näkyi rivissä epätasaisuutena.
-        className="rf-press flex h-10 items-center gap-2 pl-3 pr-2.5 text-[14px] font-medium"
+        className="rf-press flex h-10 items-center gap-2 ps-3 pe-2.5 text-[14px] font-medium"
         style={{
           background: "var(--rf-card)",
           color: "var(--rf-text)",
@@ -193,7 +193,7 @@ export function MonthPicker({
         <ul
           role="listbox"
           aria-label={t.loput.monthWord}
-          className="rf-enter absolute right-0 top-[calc(100%+8px)] z-40 max-h-[19rem] w-52 overflow-y-auto p-1.5"
+          className="rf-enter absolute end-0 top-[calc(100%+8px)] z-40 max-h-[19rem] w-52 overflow-y-auto p-1.5"
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
@@ -212,7 +212,7 @@ export function MonthPicker({
                   role="option"
                   aria-selected={selected}
                   onClick={() => select(month)}
-                  className="rf-press flex w-full items-center justify-between gap-3 rounded-[9px] px-3 py-2.5 text-left text-[14px]"
+                  className="rf-press flex w-full items-center justify-between gap-3 rounded-[9px] px-3 py-2.5 text-start text-[14px]"
                   onMouseEnter={() => setActive(index)}
                   style={{
                     background: selected

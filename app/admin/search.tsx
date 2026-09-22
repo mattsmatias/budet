@@ -111,7 +111,7 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
         onClick={() => setOpen(true)}
         aria-label={t.loput.searchWord}
         title={mac ? t.loput.searchCmdK : t.loput.searchCtrlK}
-        className="rf-press hidden w-[340px] shrink items-center gap-[9px] px-[13px] py-2 text-left text-[14px] xl:flex"
+        className="rf-press hidden w-[340px] shrink items-center gap-[9px] px-[13px] py-2 text-start text-[14px] xl:flex"
         style={{
           background: "var(--rf-inset)",
           border: "1px solid var(--rf-line)",
@@ -163,7 +163,7 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
 
       {open ? (
         <div
-          className="rf-z-menu absolute right-0 top-[calc(100%+10px)] w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden"
+          className="rf-z-menu absolute end-0 top-[calc(100%+10px)] w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden"
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",
