@@ -459,6 +459,7 @@ function Conversation({
             type="button"
             onClick={() => {
               setShowStart(true);
+              setConfirmClear(false);
               scroller.current?.scrollTo({ top: 0 });
             }}
             aria-label={t.matti.start}
@@ -470,7 +471,8 @@ function Conversation({
           </button>
         ) : null}
 
-        {turns.length > 0 && !busy ? (
+        {/* Tyhjennys kuuluu keskusteluun, ei alkunäkymään. */}
+        {turns.length > 0 && !busy && !showStart ? (
           <button
             type="button"
             onClick={() => setConfirmClear(true)}
@@ -502,7 +504,7 @@ function Conversation({
         riitä. Rivi on paneelin sisällä eikä selaimen ikkuna: se näyttää
         samalta kaikilla laitteilla ja pysyy Matin kielellä.
       */}
-      {confirmClear ? (
+      {confirmClear && !showStart ? (
         <div
           role="alertdialog"
           aria-labelledby="rf-matti-clear"
