@@ -37,6 +37,11 @@ export function normalize(raw) {
  * valittu niin että ketjut erottuvat toisistaan listassa; tarkat arvot
  * voi korjata migraatiolla koskematta koodiin.
  *
+ * Logo on tiedosto public/kaupat-kansiossa. Kentän puuttuminen ei ole
+ * puute: ilman logoa piirretään brändivärinen alkukirjain, ja se on
+ * parempi kuin väärän ketjun logo. Logot ovat omistajiensa tavaramerkkejä
+ * ja niitä käytetään vain kaupan tunnistamiseen kuittilistassa.
+ *
  * Y-tunnukset on jätetty tyhjiksi tarkoituksella. Väärä Y-tunnus olisi
  * pahempi kuin puuttuva, koska tunnistus luottaa siihen kaiken muun
  * ohi. Ne lisätään sitä mukaa kun ne varmistetaan lähteestä.
@@ -45,6 +50,7 @@ export const MERCHANTS = [
   // --- Ruokakaupat -------------------------------------------------------
   { id: "k-market", name: "K-Market", category: "grocery",
     color: "#F28C28", background: "#FFF7ED",
+    logo: "/kaupat/k-market.png",
     aliases: ["K-Market", "K Market", "KMarket"] },
 
   { id: "k-supermarket", name: "K-Supermarket", category: "grocery",
@@ -53,14 +59,17 @@ export const MERCHANTS = [
 
   { id: "k-citymarket", name: "K-Citymarket", category: "grocery",
     color: "#D64500", background: "#FFF7ED",
+    logo: "/kaupat/k-citymarket.png",
     aliases: ["K-Citymarket", "K Citymarket", "K-Citymarket", "Citymarket"] },
 
   { id: "s-market", name: "S-market", category: "grocery",
     color: "#00AA46", background: "#F0FDF4",
+    logo: "/kaupat/s-market.png",
     aliases: ["S-market", "S market", "Smarket"] },
 
   { id: "alepa", name: "Alepa", category: "grocery",
     color: "#E30613", background: "#FFF1F2",
+    logo: "/kaupat/alepa.png",
     aliases: ["Alepa"] },
 
   { id: "sale", name: "Sale", category: "grocery",
@@ -69,10 +78,12 @@ export const MERCHANTS = [
 
   { id: "prisma", name: "Prisma", category: "grocery",
     color: "#00693E", background: "#F0FDF4",
+    logo: "/kaupat/prisma.png",
     aliases: ["Prisma"] },
 
   { id: "lidl", name: "Lidl", category: "grocery",
     color: "#0050AA", background: "#EFF6FF",
+    logo: "/kaupat/lidl.png",
     aliases: ["Lidl"] },
 
   { id: "minimani", name: "Minimani", category: "grocery",
@@ -107,10 +118,12 @@ export const MERCHANTS = [
   // --- Rautakaupat -------------------------------------------------------
   { id: "k-rauta", name: "K-Rauta", category: "hardware",
     color: "#E85D04", background: "#FFF7ED",
+    logo: "/kaupat/k-rauta.png",
     aliases: ["K-Rauta", "K Rauta", "KRauta"] },
 
   { id: "bauhaus", name: "BAUHAUS", category: "hardware",
     color: "#C8102E", background: "#FFF1F2",
+    logo: "/kaupat/bauhaus.png",
     aliases: ["Bauhaus"] },
 
   { id: "stark", name: "STARK", category: "hardware",
@@ -128,6 +141,14 @@ export const MERCHANTS = [
   { id: "motonet", name: "Motonet", category: "automotive",
     color: "#0F52BA", background: "#EFF6FF",
     aliases: ["Motonet"] },
+
+  // Huoltoasema on ravintolan tavallinen kuitti: polttoaine, pesu ja
+  // kahvi samalta paperilta. Aliakset kattavat asemamuodot, koska
+  // kuitissa lukee "Neste K Malmi" eikä "Neste".
+  { id: "neste", name: "Neste", category: "automotive",
+    color: "#003F87", background: "#EFF6FF",
+    logo: "/kaupat/neste.png",
+    aliases: ["Neste", "Neste K", "Neste Express", "Neste Oil"] },
 
   // --- Vähittäiskauppa ---------------------------------------------------
   { id: "tokmanni", name: "Tokmanni", category: "retail",
@@ -150,6 +171,7 @@ export const MERCHANTS = [
   // --- Alkoholi ----------------------------------------------------------
   { id: "alko", name: "Alko", category: "alcohol",
     color: "#003DA5", background: "#EFF6FF",
+    logo: "/kaupat/alko.png",
     aliases: ["Alko"] },
 
   // --- Ravintolat --------------------------------------------------------
@@ -196,6 +218,7 @@ export const MERCHANTS = [
   // mutta ovat juuri se aineisto jota tämä sovellus käsittelee.
   { id: "kespro", name: "Kespro", category: "grocery",
     color: "#E85D04", background: "#FFF7ED",
+    logo: "/kaupat/kespro.png",
     aliases: ["Kespro"] },
 
   { id: "metro-tukku", name: "Metro-tukku", category: "grocery",
@@ -241,18 +264,21 @@ export function buildSeedSql() {
   lines.push("-- Käyttöliittymään ei kosketa.");
   lines.push("");
 
-  lines.push("insert into merchants (id, name, category, brand_color, brand_background) values");
+  lines.push(
+    "insert into merchants (id, name, category, brand_color, brand_background, logo_url) values",
+  );
   lines.push(
     MERCHANTS.map(
       (m) =>
         `  (${sql(m.id)}, ${sql(m.name)}, ${sql(m.category)}, ` +
-        `${sql(m.color)}, ${sql(m.background)})`,
+        `${sql(m.color)}, ${sql(m.background)}, ${sql(m.logo ?? null)})`,
     ).join(",\n") + "\non conflict (id) do update set",
   );
   lines.push("  name = excluded.name,");
   lines.push("  category = excluded.category,");
   lines.push("  brand_color = excluded.brand_color,");
   lines.push("  brand_background = excluded.brand_background,");
+  lines.push("  logo_url = excluded.logo_url,");
   lines.push("  updated_at = now();");
   lines.push("");
 

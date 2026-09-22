@@ -229,6 +229,53 @@ export const UNKNOWN_MERCHANT = {
   brandBackground: "#f3f4f6",
 } as const;
 
+/**
+ * Toimipiste → brändi.
+ *
+ * Kuitti osoittaa toimipisteeseen ja toimipiste brändiin, joten haku on
+ * kaksivaiheinen. Se tehdään kerran sivua kohti eikä joka rivillä:
+ * kymmenen kuittia tekisi muuten kaksikymmentä hakua listaa
+ * piirrettäessä.
+ *
+ * Kantaan tallennettu linkki voittaa aina. Se on joko ihmisen vahvistama
+ * tai kuittia tallennettaessa tehty, eikä näyttö saa olla eri mieltä
+ * kuin se mitä käyttäjä on korjannut.
+ *
+ * Linkitön toimipiste tunnistetaan tässä nimestä samalla funktiolla ja
+ * samalla varmuusrajalla kuin tallennushetkellä. Ilman tätä ketjut jotka
+ * on lisätty luetteloon vasta myöhemmin jäisivät ikuisesti tunnistamatta
+ * vanhoilta kuiteilta — kuten Neste, joka puuttui luettelosta silloin
+ * kun ensimmäiset huoltoasemakuitit tallennettiin. Tunnistus on
+ * näyttötieto eikä muuta kantaa; kuitin summat, kategoria ja ALV eivät
+ * lue tätä.
+ *
+ * Tunnistamaton toimipiste jää pois kartasta. Puuttuva avain on sama
+ * asia kuin null, ja kutsupaikka piirtää silloin alkukirjaimen.
+ */
+export function merchantsBySupplier(
+  suppliers: { id: string; name: string; merchantId: string | null }[],
+  merchants: Merchant[],
+): Map<string, Merchant> {
+  const byId = new Map(merchants.map((m) => [m.id, m]));
+  const map = new Map<string, Merchant>();
+
+  for (const supplier of suppliers) {
+    if (supplier.merchantId !== null) {
+      const merchant = byId.get(supplier.merchantId);
+      if (merchant) map.set(supplier.id, merchant);
+      continue;
+    }
+
+    const match = matchMerchant(supplier.name, null, merchants);
+    if (!isAutoMatch(match)) continue;
+
+    const merchant = byId.get(match!.merchantId);
+    if (merchant) map.set(supplier.id, merchant);
+  }
+
+  return map;
+}
+
 /** Logon kirjain kun kuvaa ei ole. */
 export function merchantInitial(name: string): string {
   const first = name.trim().charAt(0);

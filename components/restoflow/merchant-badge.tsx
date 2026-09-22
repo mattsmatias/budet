@@ -12,9 +12,14 @@ import type { Merchant } from "@/lib/restoflow/merchants";
  * Tunnistamaton kauppa saa neutraalin harmaan eikä arvottua väriä. Väri
  * väittäisi tunnistuksesta jota ei ole tehty.
  *
- * Logotiedostoa ei ole vielä yhdelläkään brändillä. Kun logo_url
- * täytetään kannassa, se tulee käyttöön ilman koodimuutosta — kirjain on
- * varamalli eikä väliaikaisratkaisu.
+ * Logo tulee kannan logo_url-kentästä. Tiedostot ovat valmiiksi neliöitä
+ * ja sisältävät oman taustansa, joten ne täyttävät laatan reunasta
+ * reunaan — sama kuva toimii silloin sekä vaalealla että tummalla
+ * teemalla, eikä valkoinen logo katoa tummaan korttiin.
+ *
+ * Kirjain on varamalli eikä väliaikaisratkaisu: ilman logoa piirretään
+ * brändivärinen alkukirjain, koska väärän ketjun logo olisi pahempi kuin
+ * ei logoa lainkaan.
  */
 export function MerchantBadge({
   merchant,
@@ -28,8 +33,12 @@ export function MerchantBadge({
   size?: number;
 }) {
   const color = merchant?.brandColor ?? UNKNOWN_MERCHANT.brandColor;
-  const background =
-    merchant?.brandBackground ?? UNKNOWN_MERCHANT.brandBackground;
+  const logo = merchant?.logoUrl ?? null;
+  // Logon oma tausta on kuvassa. Brändin vaalea tausta jäisi näkyviin
+  // vain hiuksenohuena reunana pyöristetyssä kulmassa.
+  const background = logo
+    ? "transparent"
+    : (merchant?.brandBackground ?? UNKNOWN_MERCHANT.brandBackground);
   const initial = merchantInitial(merchant?.name ?? fallbackName);
 
   return (
@@ -45,14 +54,16 @@ export function MerchantBadge({
         borderRadius: Math.round(size * 0.3),
       }}
     >
-      {merchant?.logoUrl ? (
+      {logo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={merchant.logoUrl}
+          src={logo}
           alt=""
           width={size}
           height={size}
-          style={{ objectFit: "contain" }}
+          // Kuva on neliö ja laatta on neliö, joten cover ei rajaa
+          // mitään — se vain estää raon jos mitat eivät täsmää.
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
         <span

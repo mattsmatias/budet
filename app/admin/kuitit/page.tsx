@@ -23,7 +23,10 @@ import {} from "@/lib/restoflow/types";
 import { formatMoney } from "@/lib/money";
 import { ProductIcon, RfIcon } from "@/components/restoflow/icons";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
-import { normalizeMerchantName } from "@/lib/restoflow/merchants";
+import {
+  merchantsBySupplier,
+  normalizeMerchantName,
+} from "@/lib/restoflow/merchants";
 import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 import { DeleteReceipt, ReviewPanel } from "./review";
 import { ReceiptSearch } from "./search";
@@ -70,20 +73,8 @@ export default async function AdminReceiptsPage({
 
   const month = monthFromParams(params, nykyinen);
 
-  /*
-   * Kaupan tiedot kuitille.
-   *
-   * Kuitti osoittaa toimipisteeseen ja toimipiste brändiin, joten haku
-   * on kaksivaiheinen. Se tehdään kerran tässä eikä joka kortissa:
-   * kymmenen kuittia tekisi kaksikymmentä hakua listan piirtämisen
-   * aikana.
-   */
-  const merchantById = new Map(merchants.map((m) => [m.id, m]));
-  const merchantBySupplier = new Map(
-    suppliers
-      .filter((supplier) => supplier.merchantId !== null)
-      .map((supplier) => [supplier.id, merchantById.get(supplier.merchantId!)]),
-  );
+  /* Kaupan tiedot kuitille: kerran tässä, ei joka kortissa. */
+  const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
   const categoryLabels = new Map(
     merchantCategories.map((c) => [c.id, c.label]),
   );

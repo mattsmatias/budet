@@ -25,6 +25,8 @@ import {
   supplierTrends,
 } from "@/lib/restoflow/suppliers";
 import { CategoryIcon } from "@/components/restoflow/icons";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { merchantsBySupplier } from "@/lib/restoflow/merchants";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
@@ -51,6 +53,7 @@ export default async function SupplierDetailPage({
     role,
     receipts,
     suppliers,
+    merchants,
     month: nykyinen,
   } = await adminContext("/admin/toimittajat");
 
@@ -58,6 +61,7 @@ export default async function SupplierDetailPage({
 
   const supplier = suppliers.find((s) => s.id === id);
   if (!supplier) notFound();
+  const merchant = merchantsBySupplier(suppliers, merchants).get(id) ?? null;
   const all = receiptsForSupplier(receipts, id);
   const inMonth = receiptsInMonth(all, month);
 
@@ -87,7 +91,9 @@ export default async function SupplierDetailPage({
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
-      <div className="flex items-center gap-2">
+      {/* Yläreunaan eikä keskelle: pitkä nimi kietoutuu kahdelle
+          riville, ja tunnus kuuluu silloin ensimmäisen rivin viereen. */}
+      <div className="flex items-start gap-2">
         <Link
           href="/admin/toimittajat"
           aria-label={t.loput.back}
@@ -96,6 +102,13 @@ export default async function SupplierDetailPage({
         >
           <RfIcon name="back" size={22} />
         </Link>
+        {/* Sama tunnus kuin listassa: sivu on tunnistettavasti se
+            jolta tultiin. */}
+        <MerchantBadge
+          merchant={merchant}
+          fallbackName={supplier.name}
+          size={42}
+        />
         <div>
           <h2 className="text-[20px] font-bold tracking-[-0.02em]">
             {supplier.name}

@@ -17,6 +17,8 @@ import {
   supplierTrends,
 } from "@/lib/restoflow/suppliers";
 import { CategoryIcon } from "@/components/restoflow/icons";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { merchantsBySupplier } from "@/lib/restoflow/merchants";
 import { formatMoney } from "@/lib/money";
 import {
   Card,
@@ -41,8 +43,12 @@ export async function generateMetadata() {
 export default async function SuppliersPage({
   searchParams,
 }: PageProps<"/admin/toimittajat">) {
-  const { receipts, month: nykyinen } =
-    await adminContext("/admin/toimittajat");
+  const {
+    receipts,
+    suppliers,
+    merchants,
+    month: nykyinen,
+  } = await adminContext("/admin/toimittajat");
   const locale = await resolveLocale();
   const t = adminText(locale);
   const nimet = labels(locale);
@@ -53,6 +59,15 @@ export default async function SuppliersPage({
   const trends = new Map(
     supplierTrends(receipts, month).map((t) => [t.supplierId, t]),
   );
+
+  /*
+   * Ketjun tunnus nimen viereen.
+   *
+   * Lista on samannäköisiä rivejä, ja tuttu logo löytyy siitä ennen kuin
+   * nimeä ehtii lukea. Tunnistamaton toimittaja saa alkukirjaimen, jotta
+   * rivit pysyvät samalla viivalla.
+   */
+  const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
 
   const grandTotal = totals.reduce((s, t) => s + t.totalCents, 0);
   const inMonth = receiptsInMonth(receipts, month);
@@ -171,6 +186,12 @@ export default async function SuppliersPage({
                     href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
                     className="rf-press flex items-start gap-3 py-1"
                   >
+                    <MerchantBadge
+                      merchant={merchantBySupplier.get(s.supplierId) ?? null}
+                      fallbackName={s.name}
+                      size={38}
+                    />
+
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-3">
                         <span className="truncate text-[15px] font-semibold">
@@ -293,18 +314,29 @@ export default async function SuppliersPage({
                   return (
                     <tr key={s.supplierId}>
                       <td>
-                        <Link
-                          href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
-                          className="font-medium underline-offset-4 hover:underline"
-                        >
-                          {s.name}
-                        </Link>
-                        <p
-                          className="rf-tabular text-[12px]"
-                          style={{ color: "var(--rf-text-3)" }}
-                        >
-                          {Math.round(s.share * 100)} % kaikista kuluista
-                        </p>
+                        <div className="flex items-center gap-2.5">
+                          <MerchantBadge
+                            merchant={
+                              merchantBySupplier.get(s.supplierId) ?? null
+                            }
+                            fallbackName={s.name}
+                            size={30}
+                          />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/admin/toimittajat/${s.supplierId}?kuukausi=${month}`}
+                              className="font-medium underline-offset-4 hover:underline"
+                            >
+                              {s.name}
+                            </Link>
+                            <p
+                              className="rf-tabular text-[12px]"
+                              style={{ color: "var(--rf-text-3)" }}
+                            >
+                              {Math.round(s.share * 100)} % kaikista kuluista
+                            </p>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         <span className="flex flex-wrap gap-1.5">

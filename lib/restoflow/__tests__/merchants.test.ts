@@ -5,6 +5,7 @@ import {
   isSuggestion,
   matchMerchant,
   merchantInitial,
+  merchantsBySupplier,
   normalizeMerchantName,
   parseBusinessId,
   type Merchant,
@@ -191,6 +192,61 @@ describe("logon kirjain", () => {
   it("antaa kysymysmerkin tyhjälle", () => {
     expect(merchantInitial("")).toBe("?");
     expect(merchantInitial("   ")).toBe("?");
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe("toimipisteiden brändikartta", () => {
+  const suppliers = [
+    { id: "a", name: "K-Market Malmi", merchantId: "k-market" },
+    { id: "b", name: "Lidl Pihlajamäki", merchantId: null },
+    { id: "c", name: "Ravintolatukku Virtanen", merchantId: null },
+    { id: "d", name: "Alepa Pihlajisto", merchantId: null },
+  ];
+
+  it("käyttää tallennettua linkkiä", () => {
+    expect(merchantsBySupplier(suppliers, catalogue).get("a")?.id).toBe(
+      "k-market",
+    );
+  });
+
+  /*
+   * Kuitti on voitu tallentaa ennen kuin ketju oli luettelossa. Silloin
+   * linkkiä ei ole, mutta nimi kertoo saman asian.
+   */
+  it("tunnistaa linkittömän nimestä", () => {
+    expect(merchantsBySupplier(suppliers, catalogue).get("d")?.id).toBe(
+      "alepa",
+    );
+  });
+
+  it("jättää tuntemattoman pois", () => {
+    const map = merchantsBySupplier(suppliers, catalogue);
+    expect(map.has("c")).toBe(false);
+    // Lidl ei ole tämän testin luettelossa, joten sitäkään ei arvata.
+    expect(map.has("b")).toBe(false);
+  });
+
+  /* Kannassa oleva tunnus jota luettelosta ei löydy ei ole brändi. */
+  it("ei keksi brändiä tuntemattomasta tunnuksesta", () => {
+    const map = merchantsBySupplier(
+      [{ id: "x", name: "Jokin Kauppa", merchantId: "poistettu" }],
+      catalogue,
+    );
+    expect(map.has("x")).toBe(false);
+  });
+
+  /*
+   * Ihmisen korjaama linkki voittaa nimen. Jos nimestä päättely
+   * ohittaisi sen, korjaus näyttäisi peruuntuvan itsestään.
+   */
+  it("ei ohita tallennettua linkkiä nimellä", () => {
+    const map = merchantsBySupplier(
+      [{ id: "y", name: "Alepa Pihlajisto", merchantId: "s-market" }],
+      catalogue,
+    );
+    expect(map.get("y")?.id).toBe("s-market");
   });
 });
 
