@@ -29,8 +29,8 @@ import {
 
 const initial: AdminState = {};
 
-/** Roolit joihin voi kutsua. Työntekijärooli ei ole enää mukana. */
-const ROLES: Role[] = ["owner", "manager", "accountant"];
+/** Roolit joihin voi kutsua. Muita ei ole. */
+const ROLES: Role[] = ["owner", "accountant"];
 
 const roolienSelitteet = (t: AdminText): Record<Role, string> => ({
   owner: t.tiimi.roleOwner,

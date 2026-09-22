@@ -99,45 +99,15 @@ const OWNER: Capability[] = [
   "settings.edit",
 ];
 
-const MANAGER: Capability[] = [
-  "files.view",
-  "files.manage",
-  "receipts.view",
-  "receipts.add",
-  "receipts.edit",
-  "expenses.view",
-  "suppliers.view",
-  "budgets.view",
-  "sales.view",
-  "sales.manage",
-  "reports.view",
-  "reports.export",
-  "matti.use",
-  "tasks.view",
-  "tasks.manage",
-  "accounting.view",
-  "accounting.manage",
-  "alerts.view",
-  "settings.view",
-];
-
 /**
- * Työntekijä: vain omat tehtävät.
+ * Vanhat roolit: ei oikeuksia.
  *
- * Kate näyttää ravintolan rahan omistajalle, esihenkilölle ja
- * kirjanpitäjälle; palkat maksetaan palkkapalvelussa eikä
- * työntekijällä ole Katessa omaa näkymää. Rooli on silti olemassa,
- * koska tehtävän voi osoittaa henkilölle — ja silloin hän näkee sen.
- *
- * Ei `receipts.add`. Kuitti on ravintolan kirjanpitoaineistoa, ei
- * työntekijän ilmoitus: kuka tahansa ei saa synnyttää kulukirjausta
- * jota kukaan ei ole hyväksynyt.
+ * Esihenkilö ja työntekijä poistettiin. Arvot voivat esiintyä vanhassa
+ * datassa, ja tyhjä lista on turvallinen tulkinta: poistettu rooli ei
+ * avaa mitään. Omistaja kutsuu tarvittaessa uudelleen omistajaksi tai
+ * kirjanpitäjäksi.
  */
-const EMPLOYEE: Capability[] = [
-  // Omat tehtävät ja niiden kuittaus. Rivikäytäntö rajaa mitkä
-  // tehtävät hän näkee — oikeus ei avaa talous- eikä hallintotehtäviä.
-  "tasks.view",
-];
+const LEGACY: Capability[] = [];
 
 /**
  * Kirjanpitäjä: talous kyllä, muokkaus ei.
@@ -173,9 +143,9 @@ const ACCOUNTANT: Capability[] = [
 
 const BY_ROLE: Record<Role, Capability[]> = {
   owner: OWNER,
-  manager: MANAGER,
-  employee: EMPLOYEE,
   accountant: ACCOUNTANT,
+  manager: LEGACY,
+  employee: LEGACY,
 };
 
 export function can(role: Role, capability: Capability): boolean {

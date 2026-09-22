@@ -64,7 +64,7 @@ function parseEuros(value: FormDataEntryValue | null): number | null {
  * omistajalle, esihenkilölle ja kirjanpitäjälle. Palkat maksetaan
  * palkkapalvelussa, eikä työntekijällä ole Katessa mitään tehtävää.
  */
-const ROLES = ["owner", "manager", "accountant"] as const;
+const ROLES = ["owner", "accountant"] as const;
 
 const inviteSchema = z.object({
   role: z.enum(ROLES),

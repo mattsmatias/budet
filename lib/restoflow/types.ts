@@ -33,12 +33,23 @@ export interface Restaurant {
 /**
  * Roolit.
  *
- * Owner ja manager eroavat vain siinä että owner voi hallita käyttäjiä ja
- * budjetteja. Accountant on lukuoikeus talouteen. Employee näkee vain
- * hänelle osoitetut tehtävät — kutsuissa tätä roolia ei enää tarjota,
- * mutta arvo on kannan enum-tyypissä ja voi esiintyä vanhassa datassa.
+ * KAKSI ROOLIA, EI NELJÄÄ.
+ *
+ * Omistaja hoitaa yrityksen ja kirjanpitäjä lukee talouden. Esihenkilö
+ * ja työntekijä olivat ravintolaketjun rakenne: esihenkilö erosi
+ * omistajasta vain käyttäjähallinnassa ja budjeteissa, ja työntekijän
+ * ainoa näkymä oli oma tehtävä. Pienyrityksessä sama ihminen on
+ * molemmat, ja rooli jota kukaan ei valitse on valinta jota jokainen
+ * joutuu miettimään.
+ *
+ * Arvot ovat yhä kannan enum-tyypissä eikä niitä poisteta sieltä: enumin
+ * arvon poisto vaatisi tyypin uudelleenluonnin. Sovellus ei tarjoa niitä
+ * eikä anna niille oikeuksia.
  */
-export type Role = "owner" | "manager" | "employee" | "accountant";
+export type Role = "owner" | "accountant" | LegacyRole;
+
+/** Vanhat roolit. Ei tarjolla, ei oikeuksia — vain vanhaa dataa varten. */
+export type LegacyRole = "manager" | "employee";
 
 export interface User {
   id: string;

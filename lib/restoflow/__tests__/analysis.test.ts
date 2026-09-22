@@ -606,32 +606,28 @@ describe("oikeudet", () => {
     expect(can("owner", "settings.edit")).toBe(true);
   });
 
-  it("estää manageria muokkaamasta budjetteja", () => {
-    expect(can("manager", "budgets.view")).toBe(true);
-    expect(can("manager", "budgets.edit")).toBe(false);
-  });
-
-  /*
-   * Työntekijällä ei ole Katessa omaa näkymää: palkat maksetaan
-   * palkkapalvelussa. Hänelle osoitetut tehtävät hän silti näkee.
+/*
+   * Esihenkilö ja työntekijä poistettiin. Arvot voivat esiintyä vanhassa
+   * datassa, eikä poistettu rooli saa avata mitään.
    */
-  it("rajaa työntekijän omiin tehtäviinsä", () => {
-    expect(can("employee", "receipts.view")).toBe(false);
-    expect(can("employee", "expenses.view")).toBe(false);
-    expect(can("employee", "sales.view")).toBe(false);
-    expect(can("employee", "tasks.view")).toBe(true);
-    expect(can("employee", "tasks.manage")).toBe(false);
+  it("ei anna poistetuille rooleille mitään oikeuksia", () => {
+    for (const rooli of ["manager", "employee"] as const) {
+      expect(can(rooli, "receipts.view")).toBe(false);
+      expect(can(rooli, "expenses.view")).toBe(false);
+      expect(can(rooli, "budgets.view")).toBe(false);
+      expect(can(rooli, "tasks.view")).toBe(false);
+      expect(can(rooli, "settings.view")).toBe(false);
+      expect(canAddReceipts(rooli)).toBe(false);
+    }
   });
 
   /**
-   * Kuitti on ravintolan kirjanpitoaineistoa, ei työntekijän ilmoitus:
-   * kulukirjauksen saa synnyttää vain se joka vastaa sen oikeellisuudesta.
-   * Kirjanpitäjä lukee kuitit muttei luo niitä.
+   * Kuitti on yrityksen kirjanpitoaineistoa: kulukirjauksen saa
+   * synnyttää vain se joka vastaa sen oikeellisuudesta. Kirjanpitäjä
+   * lukee kuitit muttei luo niitä.
    */
-  it("antaa kuitin lisäyksen vain ravintolan esihenkilölle", () => {
+  it("antaa kuitin lisäyksen vain omistajalle", () => {
     expect(canAddReceipts("owner")).toBe(true);
-    expect(canAddReceipts("manager")).toBe(true);
-    expect(canAddReceipts("employee")).toBe(false);
     expect(canAddReceipts("accountant")).toBe(false);
     expect(can("accountant", "receipts.view")).toBe(true);
   });
@@ -690,9 +686,9 @@ describe("oikeudet", () => {
     expect(capabilityForPath("/kirjaudu")).toBeNull();
   });
 
-  it("ohjaa työntekijän omiin tehtäviinsä", () => {
-    expect(landingFor("employee")).toBe("/admin/tehtavat");
-    expect(can("employee", capabilityForPath("/admin")!)).toBe(false);
+  it("ohjaa poistetun roolin aloitussivulle", () => {
+    expect(landingFor("employee")).toBe("/aloitus");
+    expect(landingFor("manager")).toBe("/aloitus");
   });
 
   it("ohjaa kirjanpitäjän ensimmäiseen näkymään johon oikeus riittää", () => {

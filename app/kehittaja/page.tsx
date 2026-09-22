@@ -111,7 +111,7 @@ export default async function DevOverviewPage() {
           value={overview.users.total}
           icon={<RfIcon name="staff" size={17} />}
           tileTone="blue"
-          hint={`${overview.users.owners} omistajaa · ${overview.users.managers} esihenkilöä · ${overview.users.employees} työntekijää`}
+          hint={`${overview.users.owners} omistajaa · ${overview.users.accountants} kirjanpitäjää`}
           href="/kehittaja/kayttajat"
           linkLabel="Kaikki"
         />

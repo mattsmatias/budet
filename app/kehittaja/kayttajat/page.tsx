@@ -4,18 +4,18 @@ import { Card, EmptyState, Pill } from "@/components/restoflow/ui";
 
 export const metadata = { title: "Käyttäjät" };
 
+/* Esihenkilö ja työntekijä ovat poistettuja rooleja: nimi näkyy vain
+   jos vanhaa dataa on jäljellä. */
 const ROOLIT: Record<string, string> = {
   owner: "Omistaja",
-  manager: "Esihenkilö",
-  employee: "Työntekijä",
   accountant: "Kirjanpitäjä",
+  manager: "Esihenkilö (poistettu)",
+  employee: "Työntekijä (poistettu)",
 };
 
 const SUODATTIMET = [
   { key: "kaikki", label: "Kaikki" },
   { key: "owner", label: "Omistajat" },
-  { key: "manager", label: "Esihenkilöt" },
-  { key: "employee", label: "Työntekijät" },
   { key: "accountant", label: "Kirjanpitäjät" },
   { key: "ei-kaytossa", label: "Ei käytössä" },
 ] as const;

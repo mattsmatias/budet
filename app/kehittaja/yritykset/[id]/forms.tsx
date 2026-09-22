@@ -25,10 +25,9 @@ import { CONTROL, CONTROL_STYLE } from "@/app/admin/asetukset/form-parts";
 
 const initial: DevState = {};
 
+/** Kutsuttavat roolit. Esihenkilö ja työntekijä on poistettu. */
 const ROOLIT: Record<string, string> = {
   owner: "Omistaja",
-  manager: "Esihenkilö",
-  employee: "Työntekijä",
   accountant: "Kirjanpitäjä",
 };
 
@@ -554,7 +553,7 @@ export function InviteForm({ id }: { id: string }) {
           <span className="block text-[12.5px] font-semibold">Uusi kutsu</span>
           <select
             name="role"
-            defaultValue="employee"
+            defaultValue="accountant"
             className="mt-1.5 px-2.5 text-[13px]"
             style={{ ...CONTROL_STYLE, height: 36 }}
           >
