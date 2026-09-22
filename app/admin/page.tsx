@@ -27,6 +27,8 @@ import {
 import { can } from "@/lib/restoflow/permissions";
 import { formatMoney } from "@/lib/money";
 import { initials } from "@/lib/restoflow/initials";
+import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { merchantsBySupplier } from "@/lib/restoflow/merchants";
 import { CountUp } from "@/components/restoflow/count-up";
 import { CategoryBubble, Pill } from "@/components/restoflow/ui";
 import {
@@ -97,6 +99,8 @@ export default async function AdminDashboard({
     today,
     restaurant,
     role,
+    suppliers,
+    merchants,
     categories: customCategories,
   } = await adminContext("/admin");
   const locale = await resolveLocale();
@@ -164,6 +168,11 @@ export default async function AdminDashboard({
     0,
     5,
   );
+
+  /* Ketjun tunnus riville, sama kartta kuin kuittilistassa. */
+  const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
+  const merchantOf = (receipt: (typeof receipts)[number]) =>
+    merchantBySupplier.get(receipt.supplierId ?? "") ?? null;
 
   /**
    * Viimeisin kuitti tarkasteltavan kuukauden ulkopuolelta.
@@ -1010,26 +1019,35 @@ export default async function AdminDashboard({
                           className="flex items-center gap-[9px] underline-offset-4 hover:underline"
                         >
                           {/*
-                            Nimikirjaimet eivät ole koriste.
+                            Ketjun logo kun se tunnetaan.
 
-                            Toimittajanimet ovat lyhyitä ja
+                            Muuten nimikirjaimet, eivätkä ne ole
+                            koriste: toimittajanimet ovat lyhyitä ja
                             samankaltaisia — Kespro, Kesko, Metro —
                             ja pelkkä tekstisarake luetaan kirjain
-                            kerrallaan. Sama toimittaja saa joka
-                            rivillä saman muodon, ja rivi tunnistuu
-                            ennen lukemista.
+                            kerrallaan. Kaksi kirjainta erottaa ne
+                            toisistaan, yksi ei, joten tunnistamaton
+                            toimittaja pitää oman merkintänsä.
                           */}
-                          <span
-                            aria-hidden="true"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center text-[10px] font-bold tracking-[-0.0075em]"
-                            style={{
-                              background: "var(--rf-inset)",
-                              color: "var(--rf-text-2)",
-                              borderRadius: 7,
-                            }}
-                          >
-                            {initials(receipt.supplierName)}
-                          </span>
+                          {merchantOf(receipt) ? (
+                            <MerchantBadge
+                              merchant={merchantOf(receipt)}
+                              fallbackName={receipt.supplierName}
+                              size={36}
+                            />
+                          ) : (
+                            <span
+                              aria-hidden="true"
+                              className="flex h-9 w-9 shrink-0 items-center justify-center text-[10px] font-bold tracking-[-0.0075em]"
+                              style={{
+                                background: "var(--rf-inset)",
+                                color: "var(--rf-text-2)",
+                                borderRadius: 7,
+                              }}
+                            >
+                              {initials(receipt.supplierName)}
+                            </span>
+                          )}
                           <span className="min-w-0 truncate">
                             {receipt.supplierName}
                           </span>
@@ -1084,7 +1102,16 @@ export default async function AdminDashboard({
                     className="rf-press flex items-center gap-3 border-t py-3 first:border-0 first:pt-0"
                     style={{ borderColor: "var(--rf-line)" }}
                   >
-                    <CategoryBubble category={receipt.category} size={34} />
+                    {/* Logo kertoo kaupan, kategoria lukee rivillä. */}
+                    {merchantOf(receipt) ? (
+                      <MerchantBadge
+                        merchant={merchantOf(receipt)}
+                        fallbackName={receipt.supplierName}
+                        size={34}
+                      />
+                    ) : (
+                      <CategoryBubble category={receipt.category} size={34} />
+                    )}
 
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[14px] font-medium">
