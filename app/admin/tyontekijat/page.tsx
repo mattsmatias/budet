@@ -5,7 +5,13 @@ import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminContext } from "@/lib/restoflow/page-context";
 import { monthFromParams, monthRange } from "@/lib/restoflow/dates";
 import { formatMonth } from "@/lib/restoflow/expenses";
-import { fetchEmployees, fetchTimeEntries } from "@/lib/restoflow/queries";
+import {
+  fetchEmployees,
+  fetchPayrollSettings,
+  fetchTimeEntries,
+} from "@/lib/restoflow/queries";
+import { costFor, sumCosts } from "@/lib/restoflow/payroll";
+import { formatMoney } from "@/lib/money";
 import { formatHours, summarise, totals } from "@/lib/restoflow/employees";
 import { fill } from "@/lib/i18n/auth-text";
 import { CountUp } from "@/components/restoflow/count-up";
@@ -51,13 +57,32 @@ export default async function EmployeesPage({
    * kuukauden alusta eikä tästä päivästä — muuten yövuoro katoaisi
    * listalta kesken vuoron.
    */
-  const [employees, entries] = await Promise.all([
+  const [employees, entries, payroll] = await Promise.all([
     fetchEmployees(restaurant.id),
     fetchTimeEntries(restaurant.id, from),
+    fetchPayrollSettings(restaurant.id),
   ]);
 
   const rows = summarise(employees, entries, month);
   const summa = totals(rows);
+
+  /*
+   * Mita tyo maksaa, ei mita siita jaa kateen.
+   *
+   * Lisat, lomakorvaus ja sivukulut tulevat yrityksen asetuksista.
+   * Ilman niita kustannus on sama kuin bruttopalkka — liian pieni,
+   * mutta rehellisesti eika keksityilla prosenteilla.
+   */
+  const inMonth = entries.filter((e) => e.date.startsWith(month));
+  const costs = rows.map((row) =>
+    costFor(
+      inMonth.filter((e) => e.employeeId === row.employee.id),
+      row.employee.hourlyCents,
+      restaurant.timezone,
+      payroll,
+    ),
+  );
+  const cost = sumCosts(costs);
 
   return (
     <div className="rf-enter space-y-5 md:space-y-6">
@@ -110,12 +135,18 @@ export default async function EmployeesPage({
         />
 
         <MetricCard
-          label={t.tyo.totalPay}
-          value={<CountUp to={summa.payCents} format="money" />}
+          label={t.palkkaAs.cost}
+          value={<CountUp to={cost.totalCents} format="money" />}
           icon={<RfIcon name="staff" size={17} />}
           tileTone="violet"
           tone="muted"
-          conclusion={t.tyo.estimatedPay}
+          conclusion={
+            cost.totalCents > summa.payCents
+              ? t.palkkaAs.costHint
+              : t.palkkaAs.setUp
+          }
+          href="/admin/asetukset?osio=palkat"
+          linkLabel={t.palkkaAs.section}
         />
       </section>
 
@@ -125,6 +156,33 @@ export default async function EmployeesPage({
       >
         {t.tyo.estimateNote}
       </p>
+
+      {/* Erittely: mista kustannus koostuu. */}
+      {cost.totalCents > 0 ? (
+        <div
+          className="flex flex-wrap gap-x-5 gap-y-1 px-1 text-[12.5px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          <span>
+            {t.palkkaAs.wage} {formatMoney(cost.baseCents)}
+          </span>
+          {cost.supplementCents > 0 ? (
+            <span>
+              {t.palkkaAs.supplements} {formatMoney(cost.supplementCents)}
+            </span>
+          ) : null}
+          {cost.holidayCents > 0 ? (
+            <span>
+              {t.palkkaAs.holiday} {formatMoney(cost.holidayCents)}
+            </span>
+          ) : null}
+          {cost.sideCostCents > 0 ? (
+            <span>
+              {t.palkkaAs.sideCosts} {formatMoney(cost.sideCostCents)}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {rows.length === 0 ? (
         <EmptyState title={t.tyo.none} description={t.tyo.noneHint} />

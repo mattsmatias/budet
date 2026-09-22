@@ -24,6 +24,7 @@ import type { Task } from "./tasks";
 import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
 import type { Employee, TimeEntry } from "./employees";
+import { DEFAULT_PAYROLL, type PayrollSettings } from "./payroll";
 import { createClient } from "@/utils/supabase/server";
 import type {
   MerchantCategory,
@@ -1068,4 +1069,38 @@ export async function fetchMyEmployeeId(
 
   if (error) return null;
   return (data as string | null) ?? null;
+}
+
+/**
+ * Palkkakulujen asetukset.
+ *
+ * Puuttuva rivi ei ole virhe vaan alkutila: prosentit ovat nollia,
+ * jolloin arvio on pelkkä bruttopalkka. Se on rehellisesti liian pieni
+ * eikä keksitty — keksitty sivukuluprosentti näyttäisi tarkalta ja
+ * olisi väärä.
+ */
+export async function fetchPayrollSettings(
+  restaurantId: string,
+): Promise<PayrollSettings> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("payroll_settings")
+    .select(
+      "side_cost_rate, holiday_rate, evening_rate, saturday_rate, sunday_rate, evening_start_minute, evening_end_minute",
+    )
+    .eq("restaurant_id", restaurantId)
+    .maybeSingle();
+
+  if (error || !data) return DEFAULT_PAYROLL;
+
+  return {
+    sideCostRate: Number(data.side_cost_rate ?? 0),
+    holidayRate: Number(data.holiday_rate ?? 0),
+    eveningRate: Number(data.evening_rate ?? 0),
+    saturdayRate: Number(data.saturday_rate ?? 0),
+    sundayRate: Number(data.sunday_rate ?? 0),
+    eveningStartMinute: Number(data.evening_start_minute ?? 1080),
+    eveningEndMinute: Number(data.evening_end_minute ?? 360),
+  };
 }

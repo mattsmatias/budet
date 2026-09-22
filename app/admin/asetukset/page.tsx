@@ -14,11 +14,13 @@ import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
 import { RestaurantForm } from "./forms";
 import { LogoForm } from "./logo-form";
+import { PayrollForm } from "./payroll-form";
 import { NameForm, PasswordForm } from "./profile-forms";
 import { SalesGroups, PosMappings } from "./vat-settings";
 import {
   fetchInvitations,
   fetchPosMappings,
+  fetchPayrollSettings,
   fetchRestaurantLogoUrl,
   fetchSalesGroups,
 } from "@/lib/restoflow/queries";
@@ -77,6 +79,12 @@ export default async function SettingsPage({
       ? await fetchRestaurantLogoUrl(restaurant.id)
       : null;
 
+  /* Palkkakulut vain omalle osastolleen, samasta syystä. */
+  const payroll =
+    section.id === "palkat" && canEdit
+      ? await fetchPayrollSettings(restaurant.id)
+      : null;
+
   /* Avoimet kutsut vain Käyttäjät-osastolle, samasta syystä. */
   const invitations =
     section.id === "kayttajat" && canEdit
@@ -130,6 +138,10 @@ export default async function SettingsPage({
                   note={t.asetus.fixedSettingsHint}
                 />
               </>
+            ) : null}
+
+            {shown.id === "palkat" && payroll ? (
+              <PayrollForm t={t} settings={payroll} />
             ) : null}
 
             {shown.id === "profiili" ? (

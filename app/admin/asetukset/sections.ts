@@ -71,6 +71,19 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     icon: "staff",
     ownerOnly: true,
   },
+  /*
+   * Palkkakulut: mita tyo maksaa tyonantajalle.
+   *
+   * Omana osastonaan eika ravintolan tietojen jatkona: prosentteja on
+   * viisi ja ne muuttuvat vuosittain, joten niita etsitaan nimella.
+   */
+  {
+    id: "palkat",
+    label: t.palkkaAs.section,
+    summary: t.palkkaAs.sectionHint,
+    icon: "staff",
+    ownerOnly: true,
+  },
   {
     id: "verotus",
     label: t.asetus.secTax,
