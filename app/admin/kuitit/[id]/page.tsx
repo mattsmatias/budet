@@ -24,6 +24,7 @@ import {
 } from "@/lib/restoflow/queries";
 import { fetchSourceLink } from "@/lib/restoflow/accounting-queries";
 import { MerchantBadge } from "@/components/restoflow/merchant-badge";
+import { merchantsBySupplier } from "@/lib/restoflow/merchants";
 import {
   checkVat,
   formatRate,
@@ -101,10 +102,15 @@ export default async function AdminReceiptDetailPage({
     fetchSourceLink(restaurant.id, "receipt", id),
   ]);
 
-  const supplier =
-    suppliers.find((row) => row.id === receipt.supplierId) ?? null;
-  const merchant =
-    merchants.find((row) => row.id === supplier?.merchantId) ?? null;
+  /*
+   * Sama kartta kuin listassa.
+   *
+   * Aiemmin tässä luettiin pelkkä tallennettu linkki, jolloin kuitin
+   * oma sivu väitti kauppaa tunnistamattomaksi vaikka lista näytti sen
+   * logon. Kaksi eri tunnistusta on kaksi eri totuutta.
+   */
+  const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
+  const merchant = merchantBySupplier.get(receipt.supplierId ?? "") ?? null;
   const tradeLabel =
     merchantCategories.find((c) => c.id === merchant?.category)?.label ?? null;
 
@@ -119,7 +125,7 @@ export default async function AdminReceiptDetailPage({
   const sameMerchantSupplierIds = new Set(
     merchant
       ? suppliers
-          .filter((row) => row.merchantId === merchant.id)
+          .filter((row) => merchantBySupplier.get(row.id)?.id === merchant.id)
           .map((r) => r.id)
       : [receipt.supplierId],
   );
