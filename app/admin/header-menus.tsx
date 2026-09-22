@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import type { Labels } from "@/lib/i18n/labels";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { useSeenIds } from "@/components/restoflow/seen-store";
 import { signOut } from "@/app/(auth)/actions";
 import { type Alert, type Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
@@ -122,10 +124,18 @@ function Dropdown({
  * pudotusvalikko jota pitää vierittää on huonompi kuin sivu joka on
  * tehty listaa varten.
  *
- * Ilmoituksia ei merkitä luetuiksi eikä voidakaan: ne johdetaan
- * aineiston tilasta joka latauksella eikä niitä tallenneta. Hoidettu
- * asia katoaa listalta itsestään — lukukuittaus antaisi vaikutelman
- * että jokin on tehty, vaikka kuitti olisi yhä tarkistamatta.
+ * NÄHTY EI OLE HOIDETTU.
+ *
+ * Ilmoitukset johdetaan aineiston tilasta joka latauksella, ja hoidettu
+ * asia katoaa listalta itsestään. Lista ei siis tyhjene lukemalla —
+ * lukukuittaus antaisi vaikutelman että jokin on tehty, vaikka kuitti
+ * olisi yhä tarkistamatta.
+ *
+ * Kellon luku sen sijaan kertoo vain uudet: se laskee ilmoitukset joita
+ * käyttäjä ei ole vielä nähnyt. Kun valikko tai Ilmoitukset-sivu
+ * avataan, luku katoaa, ja se palaa vasta kun tulee uusi ilmoitus.
+ * Ilman tätä sama tuttu luku roikkui kellossa päiväkausia, ja luku jota
+ * ei voi kuitata opettaa ohittamaan sen.
  */
 function NotificationMenu({
   t,
@@ -143,6 +153,15 @@ function NotificationMenu({
   const shown = alerts.slice(0, 5);
   const critical = alerts.filter((a) => a.severity === "critical").length;
 
+  const pathname = usePathname();
+  const { isSeen, markSeen } = useSeenIds("kate-alerts-seen");
+  const unseen = alerts.filter((a) => !isSeen(a.id)).length;
+  const onAlertsPage = pathname.startsWith("/admin/ilmoitukset");
+
+  useEffect(() => {
+    if (open || onAlertsPage) markSeen(alerts.map((a) => a.id));
+  }, [open, onAlertsPage, alerts, markSeen]);
+
   return (
     <Dropdown
       label={
@@ -150,7 +169,7 @@ function NotificationMenu({
           ? fill(t.kuori2.alertsLabel, { maara: String(alerts.length) })
           : t.viimeiset.notesWord
       }
-      badge={alerts.length}
+      badge={unseen}
       width={380}
       open={open}
       onToggle={onToggle}
