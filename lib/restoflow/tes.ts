@@ -4,6 +4,7 @@ import type { BusinessType } from "./business";
 import {
   DEFAULT_PAYROLL,
   NO_SUPPLEMENT,
+  WHOLE_DAY_END,
   type PayrollSettings,
   type Supplement,
 } from "./payroll";
@@ -74,7 +75,16 @@ export function versionFor(
   return osuvat[0] ?? null;
 }
 
-/** "18:00" → 1080. Kelvoton tai puuttuva → null. */
+/**
+ * "18:00" → 1080. Kelvoton tai puuttuva → null.
+ *
+ * VUOROKAUDEN LOPPU ON 24:00.
+ *
+ * Työehtosopimus kirjoittaa iltalisän välin muodossa "klo 18–24", ja
+ * juuri niin se myös syötetään. Aiemmin 24:00 hylättiin kelvottomana,
+ * jolloin väli putosi hiljaa oletusarvoon ja tunti 23–24 jäi ilman
+ * lisää. Hiljainen oletus on pahempi kuin virheilmoitus.
+ */
 export function minuteOfDay(time: string | null): number | null {
   if (!time) return null;
   const match = time.match(/^(\d{1,2}):(\d{2})/);
@@ -82,7 +92,8 @@ export function minuteOfDay(time: string | null): number | null {
 
   const hours = Number(match[1]);
   const minutes = Number(match[2]);
-  if (hours > 23 || minutes > 59) return null;
+  if (minutes > 59) return null;
+  if (hours > 24 || (hours === 24 && minutes > 0)) return null;
 
   return hours * 60 + minutes;
 }
@@ -116,6 +127,14 @@ export function settingsFromTes(
 
   const evening = rule("evening");
   const night = rule("night");
+  const saturday = rule("saturday");
+  const sunday = rule("sunday");
+
+  /* Ilman kellonaikaa lisä koskee koko päivää. */
+  const alku = (r: TesRule | undefined, oletus: number) =>
+    minuteOfDay(r?.startTime ?? null) ?? oletus;
+  const loppu = (r: TesRule | undefined, oletus: number) =>
+    minuteOfDay(r?.endTime ?? null) ?? oletus;
 
   return {
     /* Yrityksen omat: nämä eivät ole sopimuksen asia. */
@@ -124,18 +143,19 @@ export function settingsFromTes(
 
     evening: supplementOf(evening),
     night: supplementOf(night),
-    saturday: supplementOf(rule("saturday")),
-    sunday: supplementOf(rule("sunday")),
+    saturday: supplementOf(saturday),
+    sunday: supplementOf(sunday),
 
-    eveningStartMinute:
-      minuteOfDay(evening?.startTime ?? null) ??
-      DEFAULT_PAYROLL.eveningStartMinute,
-    eveningEndMinute:
-      minuteOfDay(evening?.endTime ?? null) ?? DEFAULT_PAYROLL.eveningEndMinute,
-    nightStartMinute:
-      minuteOfDay(night?.startTime ?? null) ?? DEFAULT_PAYROLL.nightStartMinute,
-    nightEndMinute:
-      minuteOfDay(night?.endTime ?? null) ?? DEFAULT_PAYROLL.nightEndMinute,
+    eveningStartMinute: alku(evening, DEFAULT_PAYROLL.eveningStartMinute),
+    eveningEndMinute: loppu(evening, DEFAULT_PAYROLL.eveningEndMinute),
+    nightStartMinute: alku(night, DEFAULT_PAYROLL.nightStartMinute),
+    nightEndMinute: loppu(night, DEFAULT_PAYROLL.nightEndMinute),
+
+    /* Viikonpäivälisän väli sopimuksesta, muuten koko päivä. */
+    saturdayStartMinute: alku(saturday, 0),
+    saturdayEndMinute: loppu(saturday, WHOLE_DAY_END),
+    sundayStartMinute: alku(sunday, 0),
+    sundayEndMinute: loppu(sunday, WHOLE_DAY_END),
   };
 }
 

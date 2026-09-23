@@ -1112,6 +1112,11 @@ export async function fetchPayrollSettings(
     eveningEndMinute: luku(data.evening_end_minute),
     nightStartMinute: luku(data.night_start_minute),
     nightEndMinute: luku(data.night_end_minute),
+    /* Yrityksen omat lisat koskevat koko viikonlopun paivaa. */
+    saturdayStartMinute: DEFAULT_PAYROLL.saturdayStartMinute,
+    saturdayEndMinute: DEFAULT_PAYROLL.saturdayEndMinute,
+    sundayStartMinute: DEFAULT_PAYROLL.sundayStartMinute,
+    sundayEndMinute: DEFAULT_PAYROLL.sundayEndMinute,
   };
 }
 

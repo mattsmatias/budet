@@ -36,6 +36,7 @@ import { monthRange } from "@/lib/restoflow/dates";
 import { formatClock, fullName } from "@/lib/restoflow/employees";
 import { costForDated } from "@/lib/restoflow/payroll";
 import { settingsResolver } from "@/lib/restoflow/tes";
+import { staffCost } from "@/lib/restoflow/staff-cost";
 
 export type ReportKind =
   | "kulut"
@@ -597,17 +598,22 @@ async function hoursReportRows(
     t.palkkaAs.cost,
   ]);
 
-  for (const employee of employees) {
-    const mine = inMonth.filter((e) => e.employeeId === employee.id);
-    if (mine.length === 0) continue;
-
-    const cost = costForDated(mine, employee.hourlyCents, timezone, resolve);
+  /* Sama laskenta kuin Palkat-sivulla ja yleiskatsauksessa. */
+  for (const row of staffCost(
+    employees,
+    entries,
+    month,
+    timezone,
+    settings,
+    tesVersions,
+  ).rows) {
+    if (row.minutes === 0) continue;
 
     rows.push([
-      fullName(employee),
-      employee.jobTitle ?? "",
-      (cost.minutes / 60).toFixed(2),
-      money(cost.totalCents),
+      fullName(row.employee),
+      row.employee.jobTitle ?? "",
+      (row.cost.minutes / 60).toFixed(2),
+      money(row.cost.totalCents),
     ]);
   }
 

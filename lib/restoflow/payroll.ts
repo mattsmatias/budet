@@ -59,7 +59,22 @@ export interface PayrollSettings {
   /** Yön rajat. Sama alku ja loppu = ei yölisää. */
   nightStartMinute: number;
   nightEndMinute: number;
+
+  /*
+   * Viikonpäivän lisän rajat.
+   *
+   * Osa sopimuksista maksaa lauantailisää vasta iltapäivästä alkaen,
+   * jolloin aamuvuoron minuutit eivät sitä saa. Koko vuorokausi on
+   * 0–1440, ja se on oletus: ilman rajaa lisä koskee koko päivää.
+   */
+  saturdayStartMinute: number;
+  saturdayEndMinute: number;
+  sundayStartMinute: number;
+  sundayEndMinute: number;
 }
+
+/** Koko vuorokausi minuutteina: rajaton viikonpäivälisä. */
+export const WHOLE_DAY_END = 24 * 60;
 
 export const DEFAULT_PAYROLL: PayrollSettings = {
   sideCostRate: 0,
@@ -73,6 +88,11 @@ export const DEFAULT_PAYROLL: PayrollSettings = {
   eveningEndMinute: 23 * 60,
   nightStartMinute: 23 * 60,
   nightEndMinute: 6 * 60,
+  /* Viikonpäivälisä koskee oletuksena koko päivää. */
+  saturdayStartMinute: 0,
+  saturdayEndMinute: WHOLE_DAY_END,
+  sundayStartMinute: 0,
+  sundayEndMinute: WHOLE_DAY_END,
 };
 
 /**
@@ -172,8 +192,34 @@ export function splitMinutes(
 
     split.total += 1;
 
-    if (weekday === 6) split.saturday += 1;
-    if (weekday === 0) split.sunday += 1;
+    /*
+     * Viikonpäivälisä vain sille osalle päivää jolle se kuuluu.
+     *
+     * Jos sopimus maksaa lauantailisää klo 13 alkaen, aamuvuoron
+     * minuutit eivät sitä saa. Ilman rajaa väli on koko vuorokausi,
+     * jolloin ehto täyttyy aina.
+     */
+    if (
+      weekday === 6 &&
+      inWindow(
+        minuteOfDay,
+        settings.saturdayStartMinute,
+        settings.saturdayEndMinute,
+      )
+    ) {
+      split.saturday += 1;
+    }
+
+    if (
+      weekday === 0 &&
+      inWindow(
+        minuteOfDay,
+        settings.sundayStartMinute,
+        settings.sundayEndMinute,
+      )
+    ) {
+      split.sunday += 1;
+    }
 
     /*
      * Yö voittaa illan päällekkäisellä välillä.

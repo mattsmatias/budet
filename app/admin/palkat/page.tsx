@@ -228,9 +228,7 @@ export default async function WagesPage({
               conclusion={
                 costPerHourCents(cost) === null
                   ? t.palkkaAs.setUp
-                  : `${t.palkkaAs.perHour}: ${formatMoney(
-                      costPerHourCents(cost)!,
-                    )}/h`
+                  : `${formatMoney(costPerHourCents(cost)!)}/h`
               }
               href="/admin/asetukset?osio=palkat"
               linkLabel={t.palkkaAs.section}
