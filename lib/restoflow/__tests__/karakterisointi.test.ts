@@ -6,9 +6,12 @@ import {
   ASETUKSET,
   MARA,
   PAIVAKUVAUKSET,
+  kuukaudenVuorot,
+  kuukausitapaukset,
   tapaukset,
   tyontekija,
   vuoro,
+  type Kuukausitapaus,
   type Tapaus,
   type Tulos,
 } from "./karakterisointi/tapaukset";
@@ -43,16 +46,20 @@ const FIXTURE = new URL(
 const KIRJOITA = process.env.KARAKTERISOINTI === "kirjoita";
 
 /** Yhden tapauksen kustannus nykyisellä moottorilla. */
-function aja(tapaus: Tapaus): Tulos {
-  const tulos = staffCost(
-    [tyontekija(tapaus.tuntipalkka)],
-    [vuoro(tapaus)],
-    tapaus.paiva.slice(0, 7),
-    AIKAVYOHYKE,
-    ASETUKSET,
-    MARA,
+function ajaKuukausi(tapaus: Kuukausitapaus): Tulos {
+  return poimi(
+    staffCost(
+      [tyontekija(tapaus.tuntipalkka)],
+      kuukaudenVuorot(tapaus),
+      tapaus.kuukausi,
+      AIKAVYOHYKE,
+      ASETUKSET,
+      MARA,
+    ),
   );
+}
 
+function poimi(tulos: ReturnType<typeof staffCost>): Tulos {
   const { total } = tulos;
 
   return {
@@ -67,11 +74,26 @@ function aja(tapaus: Tapaus): Tulos {
   };
 }
 
+function aja(tapaus: Tapaus): Tulos {
+  return poimi(
+    staffCost(
+      [tyontekija(tapaus.tuntipalkka)],
+      [vuoro(tapaus)],
+      tapaus.paiva.slice(0, 7),
+      AIKAVYOHYKE,
+      ASETUKSET,
+      MARA,
+    ),
+  );
+}
+
 const KAIKKI = tapaukset();
+const KUUKAUDET = kuukausitapaukset();
 
 if (KIRJOITA) {
   const talteen: Record<string, Tulos> = {};
   for (const tapaus of KAIKKI) talteen[tapaus.avain] = aja(tapaus);
+  for (const kk of KUUKAUDET) talteen[kk.avain] = ajaKuukausi(kk);
 
   const rivit = Object.entries(talteen).map(
     ([avain, tulos]) => `  ${JSON.stringify(avain)}: ${JSON.stringify(tulos)}`,
@@ -95,7 +117,7 @@ describe("karakterisointi: MaRa nykyisellä moottorilla", () => {
 
   it("kattaa kaikki tapaukset eikä yhtään ylimääräistä", () => {
     expect(Object.keys(odotukset).sort()).toEqual(
-      KAIKKI.map((t) => t.avain).sort(),
+      [...KAIKKI.map((t) => t.avain), ...KUUKAUDET.map((t) => t.avain)].sort(),
     );
   });
 
@@ -210,5 +232,41 @@ describe("karakterisointi havaitsee muutoksen", () => {
 
     expect(otos.length).toBeGreaterThan(0);
     expect(erot.length).toBe(otos.length);
+  });
+});
+
+describe("karakterisointi: kuukausi useasta vuorosta", () => {
+  /*
+   * Vuorojen valinen summaus.
+   *
+   * Nykyinen moottori laskee ja pyoristaa vuoron kerrallaan ja
+   * summaa vasta sitten. Kuukausitasolla pyoristava moottori antaisi
+   * eri sentit, eika yhden vuoron tapaus huomaisi sita.
+   */
+  for (const tapaus of KUUKAUDET) {
+    it(tapaus.avain, () => {
+      expect(ajaKuukausi(tapaus)).toEqual(odotukset[tapaus.avain]);
+    });
+  }
+
+  it("kuukauden summa on vuorojen summa sentilleen", () => {
+    for (const tapaus of KUUKAUDET) {
+      const osat = tapaus.vuorot.map((v) =>
+        aja({
+          avain: "osa",
+          paiva: v.paiva,
+          kello: v.kello,
+          minuutit: v.minuutit,
+          tuntipalkka: tapaus.tuntipalkka,
+        }),
+      );
+
+      const summa = osat.reduce((a, b) => a + b.totalCents, 0);
+
+      expect({ avain: tapaus.avain, summa }).toEqual({
+        avain: tapaus.avain,
+        summa: odotukset[tapaus.avain].totalCents,
+      });
+    }
   });
 });

@@ -1054,5 +1054,21 @@
   "2027-07-01 23:00 480min 1000c": {"minutes":480,"baseCents":8000,"supplementCents":1601,"holidayCents":1104,"sideCostCents":2462,"totalCents":13167,"perHourCents":1646,"missingTes":[]},
   "2027-07-01 23:00 480min 1450c": {"minutes":480,"baseCents":11600,"supplementCents":1601,"holidayCents":1518,"sideCostCents":3385,"totalCents":18104,"perHourCents":2263,"missingTes":[]},
   "2027-07-01 23:00 480min 1990c": {"minutes":480,"baseCents":15920,"supplementCents":1601,"holidayCents":2015,"sideCostCents":4493,"totalCents":24029,"perHourCents":3004,"missingTes":[]},
-  "2027-07-01 23:00 480min 2500c": {"minutes":480,"baseCents":20000,"supplementCents":1601,"holidayCents":2484,"sideCostCents":5540,"totalCents":29625,"perHourCents":3703,"missingTes":[]}
+  "2027-07-01 23:00 480min 2500c": {"minutes":480,"baseCents":20000,"supplementCents":1601,"holidayCents":2484,"sideCostCents":5540,"totalCents":29625,"perHourCents":3703,"missingTes":[]},
+  "kuukausi arki-sunnuntai-aatto 1000c": {"minutes":1500,"baseCents":25000,"supplementCents":16248,"holidayCents":4743,"sideCostCents":10579,"totalCents":56570,"perHourCents":2263,"missingTes":[]},
+  "kuukausi arki-sunnuntai-aatto 1450c": {"minutes":1500,"baseCents":36250,"supplementCents":21873,"holidayCents":6684,"sideCostCents":14906,"totalCents":79713,"perHourCents":3189,"missingTes":[]},
+  "kuukausi arki-sunnuntai-aatto 1990c": {"minutes":1500,"baseCents":49750,"supplementCents":28623,"holidayCents":9013,"sideCostCents":20099,"totalCents":107485,"perHourCents":4299,"missingTes":[]},
+  "kuukausi arki-sunnuntai-aatto 2500c": {"minutes":1500,"baseCents":62500,"supplementCents":34998,"holidayCents":11212,"sideCostCents":25003,"totalCents":133713,"perHourCents":5349,"missingTes":[]},
+  "kuukausi viisi-vajaata-vuoroa 1000c": {"minutes":115,"baseCents":1915,"supplementCents":636,"holidayCents":294,"sideCostCents":655,"totalCents":3500,"perHourCents":1826,"missingTes":[]},
+  "kuukausi viisi-vajaata-vuoroa 1450c": {"minutes":115,"baseCents":2780,"supplementCents":808,"holidayCents":413,"sideCostCents":921,"totalCents":4922,"perHourCents":2568,"missingTes":[]},
+  "kuukausi viisi-vajaata-vuoroa 1990c": {"minutes":115,"baseCents":3815,"supplementCents":1015,"holidayCents":555,"sideCostCents":1239,"totalCents":6624,"perHourCents":3456,"missingTes":[]},
+  "kuukausi viisi-vajaata-vuoroa 2500c": {"minutes":115,"baseCents":4790,"supplementCents":1211,"holidayCents":691,"sideCostCents":1539,"totalCents":8231,"perHourCents":4294,"missingTes":[]},
+  "kuukausi kesaajan-siirtyma 1000c": {"minutes":720,"baseCents":12000,"supplementCents":15020,"holidayCents":3108,"sideCostCents":6929,"totalCents":37057,"perHourCents":3088,"missingTes":[]},
+  "kuukausi kesaajan-siirtyma 1450c": {"minutes":720,"baseCents":17400,"supplementCents":19520,"holidayCents":4246,"sideCostCents":9468,"totalCents":50634,"perHourCents":4220,"missingTes":[]},
+  "kuukausi kesaajan-siirtyma 1990c": {"minutes":720,"baseCents":23880,"supplementCents":24920,"holidayCents":5612,"sideCostCents":12514,"totalCents":66926,"perHourCents":5577,"missingTes":[]},
+  "kuukausi kesaajan-siirtyma 2500c": {"minutes":720,"baseCents":30000,"supplementCents":30020,"holidayCents":6903,"sideCostCents":15393,"totalCents":82316,"perHourCents":6860,"missingTes":[]},
+  "kuukausi sopimusversion-vaihtuminen 1000c": {"minutes":720,"baseCents":12000,"supplementCents":1698,"holidayCents":1576,"sideCostCents":3513,"totalCents":18787,"perHourCents":1566,"missingTes":[]},
+  "kuukausi sopimusversion-vaihtuminen 1450c": {"minutes":720,"baseCents":17400,"supplementCents":1698,"holidayCents":2196,"sideCostCents":4898,"totalCents":26192,"perHourCents":2183,"missingTes":[]},
+  "kuukausi sopimusversion-vaihtuminen 1990c": {"minutes":720,"baseCents":23880,"supplementCents":1698,"holidayCents":2942,"sideCostCents":6560,"totalCents":35080,"perHourCents":2923,"missingTes":[]},
+  "kuukausi sopimusversion-vaihtuminen 2500c": {"minutes":720,"baseCents":30000,"supplementCents":1698,"holidayCents":3646,"sideCostCents":8129,"totalCents":43473,"perHourCents":3623,"missingTes":[]}
 }

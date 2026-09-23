@@ -241,3 +241,95 @@ export interface Tulos {
   perHourCents: number | null;
   missingTes: string[];
 }
+
+/**
+ * Kuukausitapaukset: useita vuoroja samassa kuussa.
+ *
+ * Yhden vuoron tapaukset eivät lukitse sitä, että kustannukset
+ * lasketaan ja pyöristetään vuoro kerrallaan ja summataan vasta
+ * sitten. Kuukausitasolla pyöristävä moottori antaisi eri sentit
+ * eikä yksikään yhden vuoron tapaus huomaisi sitä.
+ */
+export interface Kuukausitapaus {
+  avain: string;
+  kuukausi: string;
+  tuntipalkka: number;
+  vuorot: { paiva: string; kello: string; minuutit: number }[];
+}
+
+export function kuukausitapaukset(): Kuukausitapaus[] {
+  const mallit: {
+    nimi: string;
+    kuukausi: string;
+    vuorot: { paiva: string; kello: string; minuutit: number }[];
+  }[] = [
+    {
+      nimi: "arki-sunnuntai-aatto",
+      kuukausi: "2026-12",
+      vuorot: [
+        { paiva: "2026-12-01", kello: "09:00", minuutit: 480 },
+        { paiva: "2026-12-06", kello: "18:00", minuutit: 300 },
+        { paiva: "2026-12-24", kello: "14:00", minuutit: 480 },
+        { paiva: "2026-12-25", kello: "22:00", minuutit: 240 },
+      ],
+    },
+    {
+      nimi: "viisi-vajaata-vuoroa",
+      kuukausi: "2026-09",
+      vuorot: [
+        { paiva: "2026-09-01", kello: "17:50", minuutit: 23 },
+        { paiva: "2026-09-02", kello: "23:50", minuutit: 23 },
+        { paiva: "2026-09-03", kello: "05:50", minuutit: 23 },
+        { paiva: "2026-09-05", kello: "13:00", minuutit: 23 },
+        { paiva: "2026-09-06", kello: "18:00", minuutit: 23 },
+      ],
+    },
+    {
+      nimi: "kesaajan-siirtyma",
+      kuukausi: "2026-10",
+      vuorot: [
+        { paiva: "2026-10-24", kello: "22:00", minuutit: 300 },
+        { paiva: "2026-10-25", kello: "00:00", minuutit: 420 },
+      ],
+    },
+    {
+      nimi: "sopimusversion-vaihtuminen",
+      kuukausi: "2027",
+      vuorot: [
+        { paiva: "2027-06-30", kello: "18:00", minuutit: 360 },
+        { paiva: "2027-07-01", kello: "18:00", minuutit: 360 },
+      ],
+    },
+  ];
+
+  const kaikki: Kuukausitapaus[] = [];
+
+  for (const malli of mallit) {
+    for (const tuntipalkka of PALKAT) {
+      kaikki.push({
+        avain: `kuukausi ${malli.nimi} ${tuntipalkka}c`,
+        kuukausi: malli.kuukausi,
+        tuntipalkka,
+        vuorot: malli.vuorot,
+      });
+    }
+  }
+
+  return kaikki;
+}
+
+/** Kuukausitapauksen vuorot leimauksiksi. */
+export function kuukaudenVuorot(tapaus: Kuukausitapaus): TimeEntry[] {
+  return tapaus.vuorot.map((v, i) => {
+    const alku = paikallinen(v.paiva, v.kello);
+
+    return {
+      id: `${tapaus.avain}-${i}`,
+      employeeId: "karakterisointi",
+      date: v.paiva,
+      clockIn: alku.toISOString(),
+      clockOut: new Date(alku.getTime() + v.minuutit * 60_000).toISOString(),
+      minutes: v.minuutit,
+    };
+  });
+}
