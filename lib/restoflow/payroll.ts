@@ -510,26 +510,6 @@ export function formatEuroPerHour(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
 
-/**
- * Yhden työntekijän kustannus kuukaudessa.
- *
- * Jako lasketaan vuoro kerrallaan, koska lisät riippuvat kellonajasta
- * ja viikonpäivästä — kuukauden yhteistunneista niitä ei voi päätellä.
- */
-export function costFor(
-  entries: TimeEntry[],
-  hourlyCents: number,
-  timezone: string,
-  settings: PayrollSettings,
-): EmployerCost {
-  const split = entries.reduce(
-    (sum, entry) => addSplits(sum, splitMinutes(entry, timezone, settings)),
-    EMPTY_SPLIT,
-  );
-
-  return employerCost(split, hourlyCents, settings);
-}
-
 /** Kustannukset yhteen: yrityksen kuukauden työvoimakulu. */
 export function sumCosts(costs: EmployerCost[]): EmployerCost {
   return costs.reduce(
