@@ -54,16 +54,15 @@ import { AreaChart } from "@/components/restoflow/area-chart";
 import { Spotlight } from "@/components/landing/effects";
 import { ResultHero } from "./home/result-hero";
 import {
+  fetchCompanyTes,
   fetchEmployees,
+  fetchPayrollSettings,
   fetchPosVatRates,
   fetchSalesLines,
   fetchTimeEntries,
 } from "@/lib/restoflow/queries";
-import {
-  formatHours,
-  summarise,
-  totals as staffTotals,
-} from "@/lib/restoflow/employees";
+import { formatHours } from "@/lib/restoflow/employees";
+import { staffCost } from "@/lib/restoflow/staff-cost";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import {
   labourShareOfSales,
@@ -186,14 +185,27 @@ export default async function AdminDashboard({
    * Haetaan vain jos rooli hallitsee tyontekijoita: kirjanpitaja ei nae
    * korttia, joten han ei myoskaan maksa sen kyselyista.
    */
-  const staffRows = can(role, "employees.manage")
-    ? summarise(
-        await fetchEmployees(restaurant.id),
-        await fetchTimeEntries(restaurant.id, monthRange(viewMonth).from),
-        viewMonth,
-      )
-    : [];
-  const staffTime = staffTotals(staffRows);
+  const [staffEmployees, staffEntries, staffPayroll, staffTes] = can(
+    role,
+    "employees.manage",
+  )
+    ? await Promise.all([
+        fetchEmployees(restaurant.id),
+        fetchTimeEntries(restaurant.id, monthRange(viewMonth).from),
+        fetchPayrollSettings(restaurant.id),
+        fetchCompanyTes(restaurant.id),
+      ])
+    : [[], [], null, []];
+
+  /* Sama laskenta kuin Palkat-sivulla ja kuukausiraportissa. */
+  const staffTime = staffCost(
+    staffEmployees,
+    staffEntries,
+    viewMonth,
+    restaurant.timezone,
+    staffPayroll,
+    staffTes,
+  );
 
   /* Ketjun tunnus riville, sama kartta kuin kuittilistassa. */
   const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
@@ -750,8 +762,8 @@ export default async function AdminDashboard({
           value={
             staffCents > 0 ? (
               <CountUp to={staffCents} format="money" />
-            ) : staffTime.payCents > 0 ? (
-              <CountUp to={staffTime.payCents} format="money" />
+            ) : staffTime.total.totalCents > 0 ? (
+              <CountUp to={staffTime.total.totalCents} format="money" />
             ) : (
               "—"
             )

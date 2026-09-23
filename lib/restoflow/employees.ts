@@ -81,13 +81,26 @@ export function estimatedPayCents(
   return Math.round((minutes / 60) * hourlyCents);
 }
 
-/** Tunnit yhdellä desimaalilla: 450 minuuttia on 7,5 h. */
+/**
+ * Tunnit ja minuutit: 450 minuuttia on "7 h 30 min".
+ *
+ * PYÖRISTETTY TUNTI EI TÄSMÄÄ KUSTANNUKSEN KANSSA.
+ *
+ * Aiemmin tässä näytettiin yksi desimaali. 23 minuutin vuoro näkyi
+ * silloin muodossa "0,4 h", ja sen vieressä luki kustannus 7,63 € ja
+ * 19,90 €/h — kertolasku ei täsmännyt, koska näytetty tuntimäärä oli
+ * pyöristetty ja kustannus laskettu oikeista minuuteista. Tarkka
+ * kesto poistaa ristiriidan ilman että laskentaa muutetaan.
+ */
 export function formatHours(minutes: number, locale: string): string {
-  const hours = minutes / 60;
-  return `${hours.toLocaleString(locale, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })} h`;
+  const total = Math.max(0, Math.round(minutes));
+  const hours = Math.floor(total / 60);
+  const rest = total % 60;
+
+  if (hours === 0) return `${rest.toLocaleString(locale)} min`;
+  if (rest === 0) return `${hours.toLocaleString(locale)} h`;
+
+  return `${hours.toLocaleString(locale)} h ${rest.toLocaleString(locale)} min`;
 }
 
 /** Kellonaika hh:mm yrityksen ajassa. */

@@ -18,6 +18,7 @@ import {
   fetchDailySales,
   fetchReceipts,
   fetchSalesGroups,
+  fetchCompanyTes,
   fetchEmployees,
   fetchPayrollSettings,
   fetchSalesLinesBetween,
@@ -33,7 +34,8 @@ import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
 import { monthRange } from "@/lib/restoflow/dates";
 import { formatClock, fullName } from "@/lib/restoflow/employees";
-import { costFor } from "@/lib/restoflow/payroll";
+import { costForDated } from "@/lib/restoflow/payroll";
+import { settingsResolver } from "@/lib/restoflow/tes";
 
 export type ReportKind =
   | "kulut"
@@ -533,11 +535,15 @@ async function hoursReportRows(
 ): Promise<string[][]> {
   const { from } = monthRange(month);
 
-  const [employees, entries, settings] = await Promise.all([
+  const [employees, entries, settings, tesVersions] = await Promise.all([
     fetchEmployees(restaurantId),
     fetchTimeEntries(restaurantId, from),
     fetchPayrollSettings(restaurantId),
+    fetchCompanyTes(restaurantId),
   ]);
+
+  /* Sama lisien lahde kuin Palkat-sivulla: sopimus vuoron paivalta. */
+  const resolve = settingsResolver(tesVersions, settings);
 
   const byId = new Map(employees.map((e) => [e.id, e]));
 
@@ -562,7 +568,7 @@ async function hoursReportRows(
     const employee = byId.get(entry.employeeId);
     if (!employee) continue;
 
-    const cost = costFor([entry], employee.hourlyCents, timezone, settings);
+    const cost = costForDated([entry], employee.hourlyCents, timezone, resolve);
 
     rows.push([
       entry.date,
@@ -595,7 +601,7 @@ async function hoursReportRows(
     const mine = inMonth.filter((e) => e.employeeId === employee.id);
     if (mine.length === 0) continue;
 
-    const cost = costFor(mine, employee.hourlyCents, timezone, settings);
+    const cost = costForDated(mine, employee.hourlyCents, timezone, resolve);
 
     rows.push([
       fullName(employee),

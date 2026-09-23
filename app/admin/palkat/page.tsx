@@ -22,17 +22,10 @@ import {
   fetchPayrollSettings,
   fetchTimeEntries,
 } from "@/lib/restoflow/queries";
-import { formatHours, fullName, summarise, totals } from "@/lib/restoflow/employees";
-import {
-  costForDated,
-  costPerHourCents,
-  sumCosts,
-} from "@/lib/restoflow/payroll";
-import {
-  formatTesValidity,
-  settingsResolver,
-  versionFor,
-} from "@/lib/restoflow/tes";
+import { formatHours, fullName } from "@/lib/restoflow/employees";
+import { staffCost } from "@/lib/restoflow/staff-cost";
+import { costPerHourCents } from "@/lib/restoflow/payroll";
+import { formatTesValidity, versionFor } from "@/lib/restoflow/tes";
 import { fill } from "@/lib/i18n/auth-text";
 import { formatMoney } from "@/lib/money";
 import { formatDayIn } from "@/lib/i18n/labels";
@@ -126,34 +119,20 @@ export default async function WagesPage({
       ])
     : [[], [], null, []];
 
-  const rows = summarise(employees, timeEntries, month);
-  const time = totals(rows);
-
-  const inMonth = timeEntries.filter((e) => e.date.startsWith(month));
-  /*
-   * Lisat sopimuksesta, sivukulut yritykselta.
-   *
-   * Versio ratkaistaan vuoron paivalla: kuukausi voi ylittaa
-   * sopimuskauden vaihtumisen, ja vanha vuoro lasketaan silloin
-   * voimassa olleilla lisilla. Ilman sopimusta kaytetaan yrityksen
-   * omia asetuksia kuten ennenkin.
-   */
-  const resolve = payroll ? settingsResolver(tesVersions, payroll) : null;
-
-  const costs = resolve
-    ? rows.map((row) =>
-        costForDated(
-          inMonth.filter((e) => e.employeeId === row.employee.id),
-          row.employee.hourlyCents,
-          restaurant.timezone,
-          resolve,
-        ),
-      )
-    : [];
+  /* Sama laskenta kuin yleiskatsauksessa ja kuukausiraportissa. */
+  const time = staffCost(
+    employees,
+    timeEntries,
+    month,
+    restaurant.timezone,
+    payroll,
+    tesVersions,
+  );
+  const rows = time.rows;
 
   /* Voimassa oleva versio nayttoa varten. */
   const tes = versionFor(tesVersions, to);
-  const cost = sumCosts(costs);
+  const cost = time.total;
 
   /*
    * Ohjearvo vain sille jolle se sopii.
@@ -314,7 +293,7 @@ export default async function WagesPage({
           </div>
 
           <ul className="space-y-3.5 px-5 pb-5">
-            {rows.map((row, index) => (
+            {rows.map((row) => (
               <li
                 key={row.employee.id}
                 className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
@@ -347,9 +326,9 @@ export default async function WagesPage({
                     className="block text-[12.5px]"
                     style={{ color: "var(--rf-text-3)" }}
                   >
-                    {formatMoney(costs[index]?.totalCents ?? 0)}
-                    {costs[index] && costPerHourCents(costs[index]) !== null
-                      ? ` · ${formatMoney(costPerHourCents(costs[index])!)}/h`
+                    {formatMoney(row.cost.totalCents)}
+                    {costPerHourCents(row.cost) !== null
+                      ? ` · ${formatMoney(costPerHourCents(row.cost)!)}/h`
                       : ""}
                   </span>
                 </span>

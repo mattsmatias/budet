@@ -78,10 +78,16 @@ describe("tunnit", () => {
     expect(openEntry([entry("a", "2026-09-01", 450)])).toBeNull();
   });
 
-  it("näyttää tunnit yhdellä desimaalilla", () => {
-    expect(formatHours(450, "fi-FI")).toBe("7,5 h");
-    expect(formatHours(2250, "fi-FI")).toBe("37,5 h");
-    expect(formatHours(0, "fi-FI")).toBe("0,0 h");
+  it("näyttää tunnit ja minuutit tarkasti", () => {
+    expect(formatHours(450, "fi-FI")).toBe("7 h 30 min");
+    expect(formatHours(2250, "fi-FI")).toBe("37 h 30 min");
+    expect(formatHours(0, "fi-FI")).toBe("0 min");
+  });
+
+  it("ei pyöristä lyhyttä vuoroa tunneiksi", () => {
+    /* 23 minuuttia näkyi ennen muodossa "0,4 h" eikä täsmännyt hintaan. */
+    expect(formatHours(23, "fi-FI")).toBe("23 min");
+    expect(formatHours(60, "fi-FI")).toBe("1 h");
   });
 });
 
