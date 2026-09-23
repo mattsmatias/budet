@@ -120,8 +120,8 @@ describe("vuoron jako luokkiin", () => {
   it("summaa jaot", () => {
     expect(
       addSplits(
-        { total: 60, evening: 30, night: 0, saturday: 0, sunday: 10 },
-        { total: 45, evening: 0, night: 15, saturday: 45, sunday: 0 },
+        { total: 60, evening: 30, night: 0, saturday: 0, sunday: 10, sundayEvening: 0, sundayNight: 0 },
+        { total: 45, evening: 0, night: 15, saturday: 45, sunday: 0, sundayEvening: 0, sundayNight: 0 },
       ),
     ).toEqual({
       total: 105,
@@ -129,6 +129,8 @@ describe("vuoron jako luokkiin", () => {
       night: 15,
       saturday: 45,
       sunday: 10,
+      sundayEvening: 0,
+      sundayNight: 0,
     });
   });
 });
@@ -142,7 +144,7 @@ describe("työnantajan kustannus", () => {
    */
   it("laskee palkan, lomakustannuksen ja sivukulut", () => {
     const cost = employerCost(
-      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0 },
+      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0, sundayEvening: 0, sundayNight: 0 },
       1500,
       SETTINGS,
     );
@@ -157,7 +159,7 @@ describe("työnantajan kustannus", () => {
   /* Iltatunti 15 €/h + 1,40 €/h = 16,40 € — käyttäjän oma esimerkki. */
   it("lisää euromääräisen iltalisän", () => {
     const cost = employerCost(
-      { total: 60, evening: 60, night: 0, saturday: 0, sunday: 0 },
+      { total: 60, evening: 60, night: 0, saturday: 0, sunday: 0, sundayEvening: 0, sundayNight: 0 },
       1500,
       { ...DEFAULT_PAYROLL, evening: { cents: 140, rate: 0 } },
     );
@@ -170,7 +172,7 @@ describe("työnantajan kustannus", () => {
   /* Sunnuntaitunti sadan prosentin korotuksella: 15 € + 15 € = 30 €. */
   it("lisää prosenttimääräisen sunnuntaikorotuksen", () => {
     const cost = employerCost(
-      { total: 60, evening: 0, night: 0, saturday: 0, sunday: 60 },
+      { total: 60, evening: 0, night: 0, saturday: 0, sunday: 60, sundayEvening: 0, sundayNight: 0 },
       1500,
       { ...DEFAULT_PAYROLL, sunday: { cents: 0, rate: 1 } },
     );
@@ -185,9 +187,21 @@ describe("työnantajan kustannus", () => {
    * oikeasti, riippuu työehtosopimuksesta — Kate laskee sen minkä
    * käyttäjä on asettanut.
    */
-  it("laskee viikonpäivän ja kellonajan lisät yhteen", () => {
+  it("korottaa sunnuntaina myös iltalisän", () => {
+    /*
+     * Sopimus korottaa peruspalkan ja iltalisän: 15,00 e + 1,40 e ja
+     * molemmat sata prosenttia korkeampina = 32,80 e.
+     */
     const cost = employerCost(
-      { total: 60, evening: 60, night: 0, saturday: 0, sunday: 60 },
+      {
+        total: 60,
+        evening: 60,
+        night: 0,
+        saturday: 0,
+        sunday: 60,
+        sundayEvening: 60,
+        sundayNight: 0,
+      },
       1500,
       {
         ...DEFAULT_PAYROLL,
@@ -196,13 +210,13 @@ describe("työnantajan kustannus", () => {
       },
     );
 
-    expect(cost.totalCents).toBe(3140);
+    expect(cost.totalCents).toBe(3280);
   });
 
   it("on nolla ilman tunteja", () => {
     expect(
       employerCost(
-        { total: 0, evening: 0, night: 0, saturday: 0, sunday: 0 },
+        { total: 0, evening: 0, night: 0, saturday: 0, sunday: 0, sundayEvening: 0, sundayNight: 0 },
         1500,
         SETTINGS,
       ).totalCents,
@@ -212,7 +226,7 @@ describe("työnantajan kustannus", () => {
   /* Tyhjillä asetuksilla arvio on pelkkä tuntipalkka kuten ennen. */
   it("palautuu pelkkään palkkaan ilman asetuksia", () => {
     const cost = employerCost(
-      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0 },
+      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0, sundayEvening: 0, sundayNight: 0 },
       1500,
       DEFAULT_PAYROLL,
     );
@@ -225,7 +239,7 @@ describe("työnantajan kustannus", () => {
    */
   it("kertoo kustannuksen tunnilta", () => {
     const cost = employerCost(
-      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0 },
+      { total: 480, evening: 0, night: 0, saturday: 0, sunday: 0, sundayEvening: 0, sundayNight: 0 },
       1500,
       SETTINGS,
     );

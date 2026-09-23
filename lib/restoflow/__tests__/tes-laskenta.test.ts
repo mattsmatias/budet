@@ -200,8 +200,12 @@ describe("viikonpaiva", () => {
 
     expect(split.sunday).toBe(180);
     expect(split.evening).toBe(180);
-    /* 3 h x 14,50 e + 3 h x 1,40 e = 43,50 e + 4,20 e. */
-    expect(cost.supplementCents).toBe(4350 + 420);
+    expect(split.sundayEvening).toBe(180);
+    /*
+     * Sopimus korottaa peruspalkan ja iltalisan: 43,50 e peruspalkan
+     * korotusta, 4,20 e iltalisaa ja 4,20 e sen korotusta.
+     */
+    expect(cost.supplementCents).toBe(4350 + 420 + 420);
   });
 
   it("lauantailisan kellonaikavali rajaa lisan", () => {

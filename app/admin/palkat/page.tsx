@@ -243,6 +243,23 @@ export default async function WagesPage({
       >
         <p>{typical}</p>
 
+        {/*
+          Puuttuva sopimusversio sanotaan aaneen.
+
+          Nama paivat on laskettu yrityksen omilla asetuksilla, ei
+          sopimuksella. Ilman huomautusta luku nayttaisi yhta
+          sopimuksenmukaiselta kuin muutkin.
+        */}
+        {time.missingTes.length > 0 ? (
+          <p style={{ color: "var(--rf-warn-text, var(--rf-text-2))" }}>
+            {fill(t.palkkaAs.tesMissing, {
+              paivat: time.missingTes
+                .map((paiva) => formatDayIn(paiva, locale))
+                .join(", "),
+            })}
+          </p>
+        ) : null}
+
         {/* Sovellettava sopimus nakyy mutta ei aukea muokattavaksi. */}
         {tes ? (
           <p>

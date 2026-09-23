@@ -1,3 +1,4 @@
+import { isSundayOrHoliday } from "./holidays";
 import type { TimeEntry } from "./employees";
 
 /**
@@ -108,7 +109,17 @@ export interface MinuteSplit {
   evening: number;
   night: number;
   saturday: number;
+  /** Sunnuntain ja pyhäpäivän minuutit. */
   sunday: number;
+  /*
+   * Sunnuntaiminuutit joilla myös kellonajan lisä.
+   *
+   * Sunnuntaikorotus koskee sopimuksen mukaan peruspalkan lisäksi
+   * ilta- ja yölisää, joten korotettavat minuutit on tiedettävä
+   * erikseen — kuukauden yhteistunneista niitä ei voi päätellä.
+   */
+  sundayEvening: number;
+  sundayNight: number;
 }
 
 export const EMPTY_SPLIT: MinuteSplit = {
@@ -117,6 +128,8 @@ export const EMPTY_SPLIT: MinuteSplit = {
   night: 0,
   saturday: 0,
   sunday: 0,
+  sundayEvening: 0,
+  sundayNight: 0,
 };
 
 /**
@@ -128,10 +141,13 @@ export const EMPTY_SPLIT: MinuteSplit = {
 function localParts(
   date: Date,
   timezone: string,
-): { weekday: number; minuteOfDay: number } {
+): { weekday: number; minuteOfDay: number; day: string } {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
     weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -153,6 +169,8 @@ function localParts(
   return {
     weekday: days[get("weekday")] ?? 0,
     minuteOfDay: Number(get("hour")) * 60 + Number(get("minute")),
+    /* Pyhäpäivä katsotaan paikallisesta päivästä, ei UTC:n päivästä. */
+    day: `${get("year")}-${get("month")}-${get("day")}`,
   };
 }
 
@@ -185,7 +203,7 @@ export function splitMinutes(
   const split: MinuteSplit = { ...EMPTY_SPLIT };
 
   for (let i = 0; i < entry.minutes; i += 1) {
-    const { weekday, minuteOfDay } = localParts(
+    const { weekday, minuteOfDay, day } = localParts(
       new Date(start + i * 60_000),
       timezone,
     );
@@ -210,16 +228,22 @@ export function splitMinutes(
       split.saturday += 1;
     }
 
-    if (
-      weekday === 0 &&
+    /*
+     * Sunnuntaikorotus koskee myös pyhäpäiviä.
+     *
+     * Sopimus puhuu sunnuntaista, kirkollisista juhlapäivistä,
+     * vapusta ja itsenäisyyspäivästä. Päivälista on omassa
+     * tiedostossaan, jotta sitä voi lukea ja testata erikseen.
+     */
+    const pyha =
+      isSundayOrHoliday(day, weekday) &&
       inWindow(
         minuteOfDay,
         settings.sundayStartMinute,
         settings.sundayEndMinute,
-      )
-    ) {
-      split.sunday += 1;
-    }
+      );
+
+    if (pyha) split.sunday += 1;
 
     /*
      * Yö voittaa illan päällekkäisellä välillä.
@@ -232,6 +256,7 @@ export function splitMinutes(
       inWindow(minuteOfDay, settings.nightStartMinute, settings.nightEndMinute)
     ) {
       split.night += 1;
+      if (pyha) split.sundayNight += 1;
     } else if (
       inWindow(
         minuteOfDay,
@@ -240,6 +265,7 @@ export function splitMinutes(
       )
     ) {
       split.evening += 1;
+      if (pyha) split.sundayEvening += 1;
     }
   }
 
@@ -253,6 +279,8 @@ export function addSplits(a: MinuteSplit, b: MinuteSplit): MinuteSplit {
     night: a.night + b.night,
     saturday: a.saturday + b.saturday,
     sunday: a.sunday + b.sunday,
+    sundayEvening: a.sundayEvening + b.sundayEvening,
+    sundayNight: a.sundayNight + b.sundayNight,
   };
 }
 
@@ -280,14 +308,48 @@ export const EMPTY_COST: EmployerCost = {
   totalCents: 0,
 };
 
+/** Lisän arvo euroa tunnilta: euromäärä ja prosentti yhteen. */
+function perHourCents(hourlyCents: number, supplement: Supplement): number {
+  return supplement.cents + hourlyCents * supplement.rate;
+}
+
 /** Yhden lisän hinta minuuteille: euroa tunnilta ja prosentti yhteen. */
 function supplementCents(
   minutes: number,
   hourlyCents: number,
   supplement: Supplement,
 ): number {
-  const hours = minutes / 60;
-  return hours * supplement.cents + hours * hourlyCents * supplement.rate;
+  return (minutes / 60) * perHourCents(hourlyCents, supplement);
+}
+
+/**
+ * Sunnuntai- ja pyhätyön korotus.
+ *
+ * KOROTUS KOHDISTUU PALKKAERIIN, EI LOPPUSUMMAAN.
+ *
+ * Sopimus korottaa peruspalkan sekä ilta- ja yölisän, ei koko
+ * työnantajakustannusta: lomakustannus ja sivukulut lasketaan vasta
+ * korotetusta palkasta, eikä niitä koroteta uudestaan. Loppusumman
+ * kertominen kahdella antaisi eri tuloksen ja väärän erittelyn.
+ *
+ * Prosenttiosuus lasketaan niistä minuuteista jotka ovat sekä pyhää
+ * että lisäaikaa — koko vuoron lisistä laskettuna sunnuntain korotus
+ * ulottuisi myös arkiminuuteille.
+ */
+function sundayCents(
+  split: MinuteSplit,
+  hourlyCents: number,
+  settings: PayrollSettings,
+): number {
+  const hours = split.sunday / 60;
+  if (hours <= 0) return 0;
+
+  const korotettava =
+    hours * hourlyCents +
+    (split.sundayEvening / 60) * perHourCents(hourlyCents, settings.evening) +
+    (split.sundayNight / 60) * perHourCents(hourlyCents, settings.night);
+
+  return hours * settings.sunday.cents + settings.sunday.rate * korotettava;
 }
 
 /**
@@ -317,7 +379,7 @@ export function employerCost(
     supplementCents(split.evening, hourlyCents, settings.evening) +
       supplementCents(split.night, hourlyCents, settings.night) +
       supplementCents(split.saturday, hourlyCents, settings.saturday) +
-      supplementCents(split.sunday, hourlyCents, settings.sunday),
+      sundayCents(split, hourlyCents, settings),
   );
 
   const wage = baseCents + supplements;

@@ -182,6 +182,32 @@ export function settingsResolver(
 }
 
 /**
+ * Päivät joille sopimuksesta ei löydy versiota.
+ *
+ * HILJAINEN OLETUS ON PAHIN VAIHTOEHTO.
+ *
+ * Jos yritykselle on määritetty sopimus mutta vuoron päivälle ei ole
+ * versiota, laskenta putoaa yrityksen omiin asetuksiin. Se on
+ * kelvollinen arvio muttei sopimuksen mukainen luku, eikä käyttäjä
+ * saa luulla sitä sellaiseksi. Nämä päivät palautetaan, jotta
+ * käyttöliittymä voi sanoa sen ääneen.
+ *
+ * Ilman sopimusta lista on tyhjä: silloin mitään ei ole luvattu.
+ */
+export function datesWithoutTes(
+  versions: TesAgreement[],
+  dates: string[],
+): string[] {
+  if (versions.length === 0) return [];
+
+  const puuttuvat = new Set(
+    dates.filter((date) => versionFor(versions, date) === null),
+  );
+
+  return [...puuttuvat].sort();
+}
+
+/**
  * "1.4.2025 – 31.3.2028" kayttajan kielella.
  *
  * ISO-paiva on oikea muoto kannassa mutta vaara muoto ihmiselle:

@@ -8,7 +8,11 @@ import {
   type EmployerCost,
   type PayrollSettings,
 } from "./payroll";
-import { settingsResolver, type TesAgreement } from "./tes";
+import {
+  datesWithoutTes,
+  settingsResolver,
+  type TesAgreement,
+} from "./tes";
 
 /**
  * Kuukauden työtunnit ja niiden kustannus — yksi lähde kaikkialle.
@@ -44,6 +48,14 @@ export interface StaffCost {
   total: EmployerCost;
   minutes: number;
   working: number;
+  /**
+   * Kuukauden päivät joille sopimuksesta ei löytynyt versiota.
+   *
+   * Nämä päivät on laskettu yrityksen omilla asetuksilla, ei
+   * sopimuksella. Käyttöliittymä kertoo sen; hiljaa se olisi väärä
+   * lupaus.
+   */
+  missingTes: string[];
 }
 
 /**
@@ -85,6 +97,10 @@ export function staffCost(
     total: sumCosts(withCost.map((row) => row.cost)),
     minutes: withCost.reduce((sum, row) => sum + row.minutes, 0),
     working: withCost.filter((row) => row.working).length,
+    missingTes: datesWithoutTes(
+      tesVersions,
+      inMonth.filter((entry) => entry.clockOut !== null).map((e) => e.date),
+    ),
   };
 }
 

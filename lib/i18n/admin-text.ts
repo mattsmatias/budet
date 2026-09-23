@@ -1744,6 +1744,7 @@ const fi = {
     tesNone: "Yritykselle ei ole määritetty TES:iä. Työaikalisät luetaan alla olevista asetuksista.",
     industry: "Toimiala",
     untilFurther: "toistaiseksi",
+    tesMissing: "TES-tietoa ei ole saatavilla näille päiville: {paivat}. Ne on arvioitu yrityksen omilla palkkakuluasetuksilla.",
   },
 
   luokat: {
@@ -3579,6 +3580,7 @@ const en: AdminText = {
     tesNone: "No collective agreement has been set for this company. Working time supplements come from the settings below.",
     industry: "Industry",
     untilFurther: "until further notice",
+    tesMissing: "No collective agreement data is available for these days: {paivat}. They are estimated using your company's own payroll cost settings.",
   },
 
   luokat: {
@@ -5406,6 +5408,7 @@ const sv: AdminText = {
     tesNone: "Inget kollektivavtal har angetts för företaget. Arbetstidstilläggen kommer från inställningarna nedan.",
     industry: "Bransch",
     untilFurther: "tills vidare",
+    tesMissing: "Kollektivavtalsuppgifter saknas för dessa dagar: {paivat}. De uppskattas med företagets egna lönekostnadsinställningar.",
   },
 
   luokat: {
@@ -7233,6 +7236,7 @@ const da: AdminText = {
     tesNone: "Der er ikke angivet en overenskomst for virksomheden. Arbejdstidstillæggene kommer fra indstillingerne nedenfor.",
     industry: "Branche",
     untilFurther: "indtil videre",
+    tesMissing: "Der findes ingen overenskomstdata for disse dage: {paivat}. De er anslået ud fra virksomhedens egne lønomkostningsindstillinger.",
   },
 
   luokat: {
@@ -9054,6 +9058,7 @@ const tr: AdminText = {
     tesNone: "Şirket için toplu sözleşme tanımlanmamış. Çalışma zamanı ek ödemeleri aşağıdaki ayarlardan gelir.",
     industry: "Sektör",
     untilFurther: "süresiz",
+    tesMissing: "Şu günler için toplu sözleşme bilgisi yok: {paivat}. Bunlar şirketin kendi ücret maliyeti ayarlarıyla tahmin edildi.",
   },
 
   luokat: {
@@ -10874,6 +10879,7 @@ const et: AdminText = {
     tesNone: "Ettevõttele pole kollektiivlepingut määratud. Tööaja lisatasud tulevad allolevatest seadetest.",
     industry: "Tegevusala",
     untilFurther: "kuni edasise teadaandeni",
+    tesMissing: "Nende päevade kohta kollektiivlepingu andmed puuduvad: {paivat}. Need on hinnatud ettevõtte enda palgakulu seadetega.",
   },
 
   luokat: {
@@ -12707,6 +12713,7 @@ const ar: AdminText = {
     tesNone: "لم تُحدَّد اتفاقية جماعية للشركة. تأتي بدلات وقت العمل من الإعدادات أدناه.",
     industry: "القطاع",
     untilFurther: "حتى إشعار آخر",
+    tesMissing: "لا تتوفر بيانات الاتفاقية الجماعية لهذه الأيام: {paivat}. جرى تقديرها بإعدادات تكاليف الأجور الخاصة بالشركة.",
   },
 
   luokat: {
