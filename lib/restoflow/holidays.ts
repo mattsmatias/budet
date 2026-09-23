@@ -132,3 +132,51 @@ export function isPublicHoliday(isoDate: string): boolean {
 export function isSundayOrHoliday(isoDate: string, weekday: number): boolean {
   return weekday === 0 || isPublicHoliday(isoDate);
 }
+
+/** Aatot joilta sopimus maksaa korotuksen iltapäivästä alkaen. */
+const AATOT = new Set([
+  "12-31", // uudenvuodenaatto
+  "04-30", // vapunaatto
+  "12-24", // jouluaatto
+]);
+
+/** Vuoden aatot: kiinteät sekä pääsiäislauantai ja juhannusaatto. */
+function vuodenAatot(year: number): Set<string> {
+  return new Set([
+    ...[...AATOT].map((md) => `${year}-${md}`),
+    siirra(easterSunday(year), -1), // pääsiäislauantai
+    siirra(lauantaiValilla(year, "06-20"), -1), // juhannusaatto
+  ]);
+}
+
+const aattoMuisti = new Map<number, Set<string>>();
+
+/** Onko päivä sopimuksen tuntema aatto? */
+export function isEve(isoDate: string): boolean {
+  const year = Number(isoDate.slice(0, 4));
+  if (!Number.isFinite(year)) return false;
+
+  let aatot = aattoMuisti.get(year);
+  if (!aatot) {
+    aatot = vuodenAatot(year);
+    aattoMuisti.set(year, aatot);
+  }
+
+  return aatot.has(isoDate);
+}
+
+/**
+ * Kuuluuko päivälle aattokorotus?
+ *
+ * PYHÄPÄIVÄLLE SIJOITTUVA AATTO EI SAA AATTOLISÄÄ.
+ *
+ * Sopimus sanoo tämän suoraan. Käytännössä kyse on aatosta joka osuu
+ * sunnuntaille: silloin päivä saa sunnuntaikorotuksen eikä aaton
+ * korotusta, eivätkä ne kerry päällekkäin.
+ */
+export function isEveWithSupplement(
+  isoDate: string,
+  weekday: number,
+): boolean {
+  return isEve(isoDate) && !isSundayOrHoliday(isoDate, weekday);
+}

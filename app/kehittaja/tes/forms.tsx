@@ -38,6 +38,8 @@ const LAJIT: {
     yksikko: "eur_per_hour",
   },
   { id: "sunday", label: "Sunnuntaikorotus", aika: false, yksikko: "percent" },
+  /* Aatto alkaa kesken paivan, joten kellonaika kuuluu saantoon. */
+  { id: "eve", label: "Aattokorotus", aika: true, yksikko: "percent" },
 ];
 
 const KENTTA =

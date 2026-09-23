@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 120 migraatiota:
+-- Sisältää 121 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -132,6 +132,7 @@
 --   0116_palkka_asetukset.sql
 --   0117_lisat_euroina.sql
 --   0118_tes_hallinta.sql
+--   0119_tes_aattolisa.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -27980,4 +27981,34 @@ $function$;
 
 revoke all on function sa_set_restaurant_tes from public;
 grant execute on function sa_set_restaurant_tes to authenticated;
+
+
+-- ===========================================================================
+-- 0119_tes_aattolisa.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0119 — Aattotyon korotus TES-saantoihin
+-- ---------------------------------------------------------------------------
+--
+-- Tyoehtosopimus maksaa aattoina korotusta iltapaivasta alkaen, ja
+-- korotus koskee peruspalkkaa seka iltalisaa. Kyseessa on saanto muiden
+-- joukossa eika uusi rakenne: arvo, yksikko ja kellonaikavali tulevat
+-- samoista sarakkeista kuin ilta- ja yolisalla.
+--
+-- MITKA PAIVAT OVAT AATTOJA, EI OLE KANNAN ASIA.
+--
+-- Uudenvuodenaatto, paasiaislauantai, vapunaatto, juhannusaatto ja
+-- jouluaatto lasketaan kalenterista koodissa. Paivalista kannassa
+-- vanhenisi joka vuosi, ja vanhentunut lista laskisi vaarin hiljaa.
+
+alter table tes_rules
+  drop constraint if exists tes_rules_rule_type_check;
+
+alter table tes_rules
+  add constraint tes_rules_rule_type_check
+  check (rule_type in ('evening', 'night', 'saturday', 'sunday', 'eve'));
+
+comment on column tes_rules.rule_type is
+  'Mihin lisa kohdistuu. eve = aattotyon korotus, jonka paivat tulevat kalenterista.';
 

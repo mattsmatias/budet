@@ -1,4 +1,4 @@
-import { isSundayOrHoliday } from "./holidays";
+import { isEveWithSupplement, isSundayOrHoliday } from "./holidays";
 import type { TimeEntry } from "./employees";
 
 /**
@@ -51,6 +51,8 @@ export interface PayrollSettings {
   evening: Supplement;
   saturday: Supplement;
   sunday: Supplement;
+  /** Aattotyön korotus: sopimuksen tuntemat aatot iltapäivästä alkaen. */
+  eve: Supplement;
   /** Yö- tai muu lisä omalla kellonaikavälillään. */
   night: Supplement;
 
@@ -72,6 +74,9 @@ export interface PayrollSettings {
   saturdayEndMinute: number;
   sundayStartMinute: number;
   sundayEndMinute: number;
+  /** Aattokorotuksen raja, sopimuksessa klo 15. */
+  eveStartMinute: number;
+  eveEndMinute: number;
 }
 
 /** Koko vuorokausi minuutteina: rajaton viikonpäivälisä. */
@@ -84,6 +89,7 @@ export const DEFAULT_PAYROLL: PayrollSettings = {
   saturday: NO_SUPPLEMENT,
   sunday: NO_SUPPLEMENT,
   night: NO_SUPPLEMENT,
+  eve: NO_SUPPLEMENT,
   /* Kello 18–23 ja 23–06 ovat tavallisia rajoja, mutta ne ovat asetus. */
   eveningStartMinute: 18 * 60,
   eveningEndMinute: 23 * 60,
@@ -94,6 +100,8 @@ export const DEFAULT_PAYROLL: PayrollSettings = {
   saturdayEndMinute: WHOLE_DAY_END,
   sundayStartMinute: 0,
   sundayEndMinute: WHOLE_DAY_END,
+  eveStartMinute: 0,
+  eveEndMinute: WHOLE_DAY_END,
 };
 
 /**
@@ -120,6 +128,9 @@ export interface MinuteSplit {
    */
   sundayEvening: number;
   sundayNight: number;
+  /** Aaton minuutit ja niistä ne joilla myös iltalisä. */
+  eve: number;
+  eveEvening: number;
 }
 
 export const EMPTY_SPLIT: MinuteSplit = {
@@ -130,6 +141,8 @@ export const EMPTY_SPLIT: MinuteSplit = {
   sunday: 0,
   sundayEvening: 0,
   sundayNight: 0,
+  eve: 0,
+  eveEvening: 0,
 };
 
 /**
@@ -246,6 +259,18 @@ export function splitMinutes(
     if (pyha) split.sunday += 1;
 
     /*
+     * Aattokorotus alkaa kesken päivän.
+     *
+     * Sopimus maksaa sen vasta klo 15 jälkeen tehdystä työstä, joten
+     * aamuvuoro jää ilman. Raja tulee sopimuksesta eikä koodista.
+     */
+    const aatto =
+      isEveWithSupplement(day, weekday) &&
+      inWindow(minuteOfDay, settings.eveStartMinute, settings.eveEndMinute);
+
+    if (aatto) split.eve += 1;
+
+    /*
      * Yö voittaa illan päällekkäisellä välillä.
      *
      * Kaksi kellonajan lisää samasta minuutista olisi sama tunti
@@ -266,6 +291,7 @@ export function splitMinutes(
     ) {
       split.evening += 1;
       if (pyha) split.sundayEvening += 1;
+      if (aatto) split.eveEvening += 1;
     }
   }
 
@@ -281,6 +307,8 @@ export function addSplits(a: MinuteSplit, b: MinuteSplit): MinuteSplit {
     sunday: a.sunday + b.sunday,
     sundayEvening: a.sundayEvening + b.sundayEvening,
     sundayNight: a.sundayNight + b.sundayNight,
+    eve: a.eve + b.eve,
+    eveEvening: a.eveEvening + b.eveEvening,
   };
 }
 
@@ -353,6 +381,30 @@ function sundayCents(
 }
 
 /**
+ * Aattotyön korotus.
+ *
+ * Sama muoto kuin sunnuntaissa: korotus kohdistuu peruspalkkaan ja
+ * iltalisään, ei loppusummaan. Yölisää sopimus ei aatolta korota, eikä
+ * sitä tässä koroteta — aatto vaihtuu keskiyöllä joko juhlapäiväksi
+ * tai tavalliseksi päiväksi, ja sen minuutit lasketaan silloin sen
+ * päivän sääntöjen mukaan.
+ */
+function eveCents(
+  split: MinuteSplit,
+  hourlyCents: number,
+  settings: PayrollSettings,
+): number {
+  const hours = split.eve / 60;
+  if (hours <= 0) return 0;
+
+  const korotettava =
+    hours * hourlyCents +
+    (split.eveEvening / 60) * perHourCents(hourlyCents, settings.evening);
+
+  return hours * settings.eve.cents + settings.eve.rate * korotettava;
+}
+
+/**
  * Mitä tunnit maksavat työnantajalle.
  *
  * Pyöristys tehdään vasta jokaisen erän lopussa eikä minuuteittain:
@@ -379,7 +431,8 @@ export function employerCost(
     supplementCents(split.evening, hourlyCents, settings.evening) +
       supplementCents(split.night, hourlyCents, settings.night) +
       supplementCents(split.saturday, hourlyCents, settings.saturday) +
-      sundayCents(split, hourlyCents, settings),
+      sundayCents(split, hourlyCents, settings) +
+      eveCents(split, hourlyCents, settings),
   );
 
   const wage = baseCents + supplements;

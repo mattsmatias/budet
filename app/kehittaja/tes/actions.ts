@@ -105,7 +105,7 @@ export async function saveTesRule(
   const endTime = teksti(data, "endTime");
 
   if (tesId === "") return { error: "TES:iä ei tunnistettu." };
-  if (!["evening", "night", "saturday", "sunday"].includes(ruleType)) {
+  if (!["evening", "night", "saturday", "sunday", "eve"].includes(ruleType)) {
     return { error: "Lisän lajia ei tunnistettu." };
   }
   if (!["eur_per_hour", "percent"].includes(unit)) {

@@ -1117,6 +1117,10 @@ export async function fetchPayrollSettings(
     saturdayEndMinute: DEFAULT_PAYROLL.saturdayEndMinute,
     sundayStartMinute: DEFAULT_PAYROLL.sundayStartMinute,
     sundayEndMinute: DEFAULT_PAYROLL.sundayEndMinute,
+    /* Aattolisa tulee vain sopimuksesta, ei yrityksen omista kentista. */
+    eve: DEFAULT_PAYROLL.eve,
+    eveStartMinute: DEFAULT_PAYROLL.eveStartMinute,
+    eveEndMinute: DEFAULT_PAYROLL.eveEndMinute,
   };
 }
 

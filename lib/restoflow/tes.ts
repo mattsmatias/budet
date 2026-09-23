@@ -29,7 +29,13 @@ import {
  * eivät ole täällä eikä niitä teeskennellä osattavan.
  */
 
-export type TesRuleType = "evening" | "night" | "saturday" | "sunday";
+export type TesRuleType =
+  | "evening"
+  | "night"
+  | "saturday"
+  | "sunday"
+  /** Aattotyo: sopimuksen tuntemat aatot kellonajasta alkaen. */
+  | "eve";
 export type TesUnit = "eur_per_hour" | "percent";
 
 export interface TesRule {
@@ -129,6 +135,7 @@ export function settingsFromTes(
   const night = rule("night");
   const saturday = rule("saturday");
   const sunday = rule("sunday");
+  const eve = rule("eve");
 
   /* Ilman kellonaikaa lisä koskee koko päivää. */
   const alku = (r: TesRule | undefined, oletus: number) =>
@@ -145,6 +152,7 @@ export function settingsFromTes(
     night: supplementOf(night),
     saturday: supplementOf(saturday),
     sunday: supplementOf(sunday),
+    eve: supplementOf(eve),
 
     eveningStartMinute: alku(evening, DEFAULT_PAYROLL.eveningStartMinute),
     eveningEndMinute: loppu(evening, DEFAULT_PAYROLL.eveningEndMinute),
@@ -156,6 +164,8 @@ export function settingsFromTes(
     saturdayEndMinute: loppu(saturday, WHOLE_DAY_END),
     sundayStartMinute: alku(sunday, 0),
     sundayEndMinute: loppu(sunday, WHOLE_DAY_END),
+    eveStartMinute: alku(eve, 0),
+    eveEndMinute: loppu(eve, WHOLE_DAY_END),
   };
 }
 
