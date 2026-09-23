@@ -14,7 +14,6 @@
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
-import { isBusinessType } from "@/lib/restoflow/business";
 import type { DevState } from "../actions";
 
 const ISO_PAIVA = /^\d{4}-\d{2}-\d{2}$/;
@@ -43,7 +42,7 @@ export async function saveTes(
   const id = teksti(data, "id");
   const slug = teksti(data, "slug").toLowerCase();
   const name = teksti(data, "name");
-  const industry = data.get("industry");
+  const industry = teksti(data, "industry");
   const validFrom = teksti(data, "validFrom");
   const validUntil = teksti(data, "validUntil");
 
@@ -51,7 +50,7 @@ export async function saveTes(
     return { error: "Tunnus saa sisältää vain pieniä kirjaimia ja viivoja." };
   }
   if (name === "") return { error: "Nimi puuttuu." };
-  if (!isBusinessType(industry)) return { error: "Toimiala puuttuu." };
+  if (industry === "") return { error: "Toimiala puuttuu." };
   if (!ISO_PAIVA.test(validFrom)) {
     return { error: "Voimassaolon alku puuttuu." };
   }

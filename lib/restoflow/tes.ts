@@ -1,6 +1,5 @@
 import { formatDayIn } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
-import type { BusinessType } from "./business";
 import {
   DEFAULT_PAYROLL,
   NO_SUPPLEMENT,
@@ -54,7 +53,8 @@ export interface TesAgreement {
   id: string;
   slug: string;
   name: string;
-  industry: BusinessType;
+  /** Sopimuksen ala vapaana tunnuksena. Ryhmittelya varten, ei laskentaan. */
+  industry: string;
   validFrom: string;
   validUntil: string | null;
   isActive: boolean;
