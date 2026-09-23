@@ -14,6 +14,7 @@ import {
   updateRestaurant,
   type DevState,
 } from "../../actions";
+import { setRestaurantTes } from "../../tes/actions";
 import {
   PLAN_LABELS,
   STATUS_LABELS,
@@ -869,5 +870,106 @@ function Kentta({
         style={CONTROL_STYLE}
       />
     </label>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Työehtosopimus
+// ---------------------------------------------------------------------------
+
+/**
+ * Yrityksen TES.
+ *
+ * TOIMIALA EHDOTTAA, IHMINEN PÄÄTTÄÄ.
+ *
+ * Valikko nostaa yrityksen toimialan sopimukset ensin, mutta ei valitse
+ * niistä itsestään: sama ravintola voi kuulua eri sopimuksen piiriin
+ * kuin naapurinsa, eikä väärä sopimus näy laskennassa mitenkään — se
+ * vain tuottaa vääriä lisiä kuukaudesta toiseen.
+ *
+ * Versioita ei valita tässä. Yritys osoittaa yhteen versioon, ja
+ * laskenta etsii saman sopimuksen versioista sen joka oli voimassa
+ * vuoron päivänä.
+ */
+export function TesForm({
+  id,
+  industry,
+  current,
+  agreements,
+}: {
+  id: string;
+  industry: string;
+  current: string | null;
+  agreements: {
+    id: string;
+    name: string;
+    industry: string;
+    validFrom: string;
+    validUntil: string | null;
+    isActive: boolean;
+  }[];
+}) {
+  const [state, action] = useActionState(setRestaurantTes, initial);
+
+  const omat = agreements.filter((a) => a.industry === industry && a.isActive);
+  const muut = agreements.filter((a) => a.industry !== industry && a.isActive);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Työehtosopimus"
+        subtitle="Yritysasiakas näkee sopimuksen muttei muokkaa sen sääntöjä."
+      />
+
+      <form action={action} className="mt-3 space-y-3.5">
+        <input type="hidden" name="restaurantId" value={id} />
+
+        <label className="block">
+          <span className="block text-[12.5px] font-semibold">
+            Sovellettava TES
+          </span>
+          <select
+            name="tesId"
+            defaultValue={current ?? ""}
+            className="mt-1 w-full px-3 py-2 text-[15px] outline-none"
+            style={{
+              background: "var(--rf-inset)",
+              borderRadius: "var(--rf-r-control)",
+            }}
+          >
+            <option value="">Ei sopimusta</option>
+
+            {omat.length > 0 ? (
+              <optgroup label="Toimialan sopimukset">
+                {omat.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.validFrom}–{a.validUntil ?? "…"})
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+
+            {muut.length > 0 ? (
+              <optgroup label="Muut sopimukset">
+                {muut.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.validFrom}–{a.validUntil ?? "…"})
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+          </select>
+        </label>
+
+        <p className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          Ilman sopimusta yritys käyttää omia palkkakuluasetuksiaan.
+          Sopimuksen valinta korvaa työaikalisät; sivukulut ja
+          lomakustannus pysyvät yrityksen omina.
+        </p>
+
+        <Tallenna />
+        <Viesti state={state} />
+      </form>
+    </Card>
   );
 }

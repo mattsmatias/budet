@@ -1,4 +1,5 @@
-import { withBusiness } from "@/lib/restoflow/business";
+import { BUSINESS_TYPE_NAMES_FI, withBusiness } from "@/lib/restoflow/business";
+import { formatTesValidity, versionFor } from "@/lib/restoflow/tes";
 import { categoryOptions } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { adminText } from "@/lib/i18n/admin-text";
@@ -21,6 +22,7 @@ import { SalesGroups, PosMappings } from "./vat-settings";
 import {
   fetchInvitations,
   fetchPosMappings,
+  fetchCompanyTes,
   fetchEmployees,
   fetchPayrollSettings,
   fetchRestaurantLogoUrl,
@@ -86,6 +88,13 @@ export default async function SettingsPage({
     section.id === "palkat" && canEdit
       ? await fetchPayrollSettings(restaurant.id)
       : null;
+
+  /* Voimassa oleva sopimusversio nayttoa varten. */
+  const tesVersions =
+    section.id === "palkat" && canEdit
+      ? await fetchCompanyTes(restaurant.id)
+      : [];
+  const tes = versionFor(tesVersions, month + "-01");
 
   /*
    * Työntekijät samaan osastoon kuin käyttäjät.
@@ -155,7 +164,19 @@ export default async function SettingsPage({
             ) : null}
 
             {shown.id === "palkat" && payroll ? (
-              <PayrollForm t={t} settings={payroll} />
+              <PayrollForm
+                t={t}
+                settings={payroll}
+                tes={
+                  tes
+                    ? {
+                        name: tes.name,
+                        valid: formatTesValidity(tes, locale, t.palkkaAs.untilFurther),
+                      }
+                    : null
+                }
+                industry={BUSINESS_TYPE_NAMES_FI[restaurant.businessType]}
+              />
             ) : null}
 
             {shown.id === "profiili" ? (

@@ -32,6 +32,7 @@ export const DEV_NAV: DevNavSection[] = [
       { href: "/kehittaja/yritykset", label: "Yritykset", icon: "suppliers" },
       { href: "/kehittaja/kayttajat", label: "Käyttäjät", icon: "staff" },
       { href: "/kehittaja/tilaukset", label: "Tilaukset", icon: "budget" },
+      { href: "/kehittaja/tes", label: "TES-hallinta", icon: "report" },
     ],
   },
   {

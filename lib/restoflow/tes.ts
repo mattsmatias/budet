@@ -1,0 +1,181 @@
+import { formatDayIn } from "@/lib/i18n/labels";
+import type { AppLocale } from "@/lib/i18n/app-locales";
+import type { BusinessType } from "./business";
+import {
+  DEFAULT_PAYROLL,
+  NO_SUPPLEMENT,
+  type PayrollSettings,
+  type Supplement,
+} from "./payroll";
+
+/**
+ * Työehtosopimus ja sen versiot.
+ *
+ * TES-arvot tulevat kannasta eivätkä koodista. Kovakoodattu iltalisä
+ * olisi oikein yhden sopimuskauden ja väärin kaikki muut, eikä kukaan
+ * huomaisi milloin se vaihtui.
+ *
+ * VERSIO VALITAAN VUORON PÄIVÄLLÄ.
+ *
+ * Sopimus uusitaan muutaman vuoden välein. Viime vuoden vuorot on
+ * laskettu silloin voimassa olleilla lisillä, joten uusi versio ei saa
+ * muuttaa niitä jälkikäteen. Versiot kuuluvat samaan perheeseen
+ * slugin kautta, ja laskenta etsii sen joka oli voimassa.
+ *
+ * TÄMÄ EI OLE TES-MOOTTORI.
+ *
+ * Ylityö, työaikalain tulkinta, palkkaryhmät ja sairausajan palkka
+ * eivät ole täällä eikä niitä teeskennellä osattavan.
+ */
+
+export type TesRuleType = "evening" | "night" | "saturday" | "sunday";
+export type TesUnit = "eur_per_hour" | "percent";
+
+export interface TesRule {
+  id: string;
+  ruleType: TesRuleType;
+  name: string;
+  unit: TesUnit;
+  /** Euroa tunnilta tai prosenttilukuna, sen mukaan mikä unit on. */
+  value: number;
+  /** "18:00" tai null. */
+  startTime: string | null;
+  endTime: string | null;
+}
+
+export interface TesAgreement {
+  id: string;
+  slug: string;
+  name: string;
+  industry: BusinessType;
+  validFrom: string;
+  validUntil: string | null;
+  isActive: boolean;
+  rules: TesRule[];
+}
+
+/**
+ * Voimassa ollut versio päivänä, tai null.
+ *
+ * Päällekkäiset versiot ovat syöttövirhe, mutta jos niitä on, voittaa
+ * myöhemmin alkanut: se on todennäköisemmin se uusi joka korvasi
+ * vanhan.
+ */
+export function versionFor(
+  versions: TesAgreement[],
+  date: string,
+): TesAgreement | null {
+  const osuvat = versions
+    .filter((v) => v.isActive)
+    .filter((v) => v.validFrom <= date)
+    .filter((v) => v.validUntil === null || v.validUntil >= date)
+    .sort((a, b) => b.validFrom.localeCompare(a.validFrom));
+
+  return osuvat[0] ?? null;
+}
+
+/** "18:00" → 1080. Kelvoton tai puuttuva → null. */
+export function minuteOfDay(time: string | null): number | null {
+  if (!time) return null;
+  const match = time.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+function supplementOf(rule: TesRule | undefined): Supplement {
+  if (!rule) return NO_SUPPLEMENT;
+
+  return rule.unit === "eur_per_hour"
+    ? { cents: Math.round(rule.value * 100), rate: 0 }
+    : { cents: 0, rate: rule.value / 100 };
+}
+
+/**
+ * TES-versio laskenta-asetuksiksi.
+ *
+ * Sivukulut ja lomakustannus eivät tule sopimuksesta vaan yritykseltä:
+ * työeläke- ja vakuutusmaksut riippuvat yrityksestä, eivät alasta.
+ * Ne annetaan tässä erikseen ja säilyvät ennallaan.
+ *
+ * Ilman sopimusta palautetaan yrityksen omat asetukset sellaisenaan.
+ * Näin ennen TES-hallintaa perustetut yritykset jatkavat toimintaansa
+ * eikä kenenkään arvio muutu tämän muutoksen takia.
+ */
+export function settingsFromTes(
+  tes: TesAgreement | null,
+  company: PayrollSettings,
+): PayrollSettings {
+  if (!tes) return company;
+
+  const rule = (type: TesRuleType) => tes.rules.find((r) => r.ruleType === type);
+
+  const evening = rule("evening");
+  const night = rule("night");
+
+  return {
+    /* Yrityksen omat: nämä eivät ole sopimuksen asia. */
+    sideCostRate: company.sideCostRate,
+    holidayRate: company.holidayRate,
+
+    evening: supplementOf(evening),
+    night: supplementOf(night),
+    saturday: supplementOf(rule("saturday")),
+    sunday: supplementOf(rule("sunday")),
+
+    eveningStartMinute:
+      minuteOfDay(evening?.startTime ?? null) ??
+      DEFAULT_PAYROLL.eveningStartMinute,
+    eveningEndMinute:
+      minuteOfDay(evening?.endTime ?? null) ?? DEFAULT_PAYROLL.eveningEndMinute,
+    nightStartMinute:
+      minuteOfDay(night?.startTime ?? null) ?? DEFAULT_PAYROLL.nightStartMinute,
+    nightEndMinute:
+      minuteOfDay(night?.endTime ?? null) ?? DEFAULT_PAYROLL.nightEndMinute,
+  };
+}
+
+/**
+ * Asetukset vuoron päivän mukaan.
+ *
+ * Kuukausi voi ylittää sopimuskauden vaihtumisen, joten versio
+ * ratkaistaan päivä kerrallaan eikä kerran kuukaudessa.
+ */
+export function settingsResolver(
+  versions: TesAgreement[],
+  company: PayrollSettings,
+): (date: string) => PayrollSettings {
+  const muisti = new Map<string, PayrollSettings>();
+
+  return (date: string) => {
+    const valmis = muisti.get(date);
+    if (valmis) return valmis;
+
+    const settings = settingsFromTes(versionFor(versions, date), company);
+    muisti.set(date, settings);
+    return settings;
+  };
+}
+
+/**
+ * "1.4.2025 – 31.3.2028" kayttajan kielella.
+ *
+ * ISO-paiva on oikea muoto kannassa mutta vaara muoto ihmiselle:
+ * sopimuksen voimassaolo luetaan silmailemalla, ei vertailemalla.
+ */
+export function formatTesValidity(
+  tes: { validFrom: string; validUntil: string | null },
+  locale: AppLocale,
+  untilFurther: string,
+): string {
+  const alku = formatDayIn(tes.validFrom, locale);
+  const loppu = tes.validUntil
+    ? formatDayIn(tes.validUntil, locale)
+    : untilFurther;
+
+  return `${alku} – ${loppu}`;
+}

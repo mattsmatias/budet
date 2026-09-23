@@ -37,9 +37,14 @@ function kello(minuutit: number): string {
 export function PayrollForm({
   t,
   settings,
+  tes,
+  industry,
 }: {
   t: AdminText;
   settings: PayrollSettings;
+  /** Yritykselle maaritetty sopimus, tai null. */
+  tes: { name: string; valid: string } | null;
+  industry: string;
 }) {
   const [state, action] = useActionState(updatePayrollSettings, initial);
 
@@ -90,7 +95,55 @@ export function PayrollForm({
         </Field>
       </div>
 
-      <div>
+      {/*
+        Sopimus on luettavaa, ei muokattavaa.
+
+        Yritysasiakas ei syota TES-lisia: han ei tieda oman
+        sopimuksensa iltalisaa senttina, ja vaarin syotetty luku
+        nayttaisi tarkalta koko kuukauden ajan. Lisat tulevat
+        sopimuksesta, sivukulut ja lomakustannus yritykselta.
+      */}
+      {tes ? (
+        <div
+          className="space-y-1.5 p-3.5"
+          style={{
+            background: "var(--rf-inset)",
+            borderRadius: "var(--rf-r-control)",
+          }}
+        >
+          <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
+            {t.palkkaAs.industry}
+          </p>
+          <p className="text-[14px] font-semibold">{industry}</p>
+
+          <p
+            className="pt-1.5 text-[12.5px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkkaAs.tesTitle}
+          </p>
+          <p className="text-[14px] font-semibold">{tes.name}</p>
+
+          <p
+            className="pt-1.5 text-[12.5px]"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkkaAs.tesValid}
+          </p>
+          <p className="rf-tabular text-[14px] font-semibold">
+            {tes.valid}
+          </p>
+
+          <p
+            className="pt-2 text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.palkkaAs.tesManaged}
+          </p>
+        </div>
+      ) : null}
+
+      <div hidden={Boolean(tes)}>
         <h3 className="text-[13.5px] font-bold">{t.palkkaAs.supplements}</h3>
         <p
           className="mt-1 text-[12px] leading-relaxed"
@@ -124,7 +177,7 @@ export function PayrollForm({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2" hidden={Boolean(tes)}>
         <Clock
           label={t.palkkaAs.eveningStart}
           name="eveningStart"
@@ -160,7 +213,7 @@ export function PayrollForm({
           ole yleinen saanto vaan riippuu sovellettavasta TES:sta, ja
           vaarin esitettyna se antaisi juridisesti vaaran kuvan.
         */}
-        <p>{t.palkkaAs.userDefined}</p>
+        {tes ? null : <p>{t.palkkaAs.userDefined}</p>}
         <p>{t.palkkaAs.notPayroll}</p>
       </div>
     </form>

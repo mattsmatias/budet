@@ -25,6 +25,7 @@ import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
 import type { Employee, TimeEntry } from "./employees";
 import { DEFAULT_PAYROLL, type PayrollSettings } from "./payroll";
+import type { TesAgreement } from "./tes";
 import { createClient } from "@/utils/supabase/server";
 import type {
   MerchantCategory,
@@ -1111,5 +1112,88 @@ export async function fetchPayrollSettings(
     eveningEndMinute: luku(data.evening_end_minute),
     nightStartMinute: luku(data.night_start_minute),
     nightEndMinute: luku(data.night_end_minute),
+  };
+}
+
+/** TES-pohjat sääntöineen. Luettavissa kaikille kirjautuneille. */
+export async function fetchTesAgreements(): Promise<TesAgreement[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("tes_agreements")
+    .select(
+      "id, slug, name, industry, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+    )
+    .order("slug")
+    .order("valid_from", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map(tesFromRow);
+}
+
+/**
+ * Yrityksen sopimuksen kaikki versiot.
+ *
+ * Yritys osoittaa yhteen versioon, mutta laskenta tarvitsee koko
+ * perheen: kuukausi voi ylittää sopimuskauden vaihtumisen, ja vanha
+ * vuoro lasketaan silloin voimassa olleilla lisillä.
+ */
+export async function fetchCompanyTes(
+  restaurantId: string,
+): Promise<TesAgreement[]> {
+  const supabase = await createClient();
+
+  const { data: row } = await supabase
+    .from("restaurants")
+    .select("tes_id")
+    .eq("id", restaurantId)
+    .maybeSingle();
+
+  const tesId = (row?.tes_id as string | null) ?? null;
+  if (!tesId) return [];
+
+  const { data: valittu } = await supabase
+    .from("tes_agreements")
+    .select("slug")
+    .eq("id", tesId)
+    .maybeSingle();
+
+  const slug = (valittu?.slug as string | null) ?? null;
+  if (!slug) return [];
+
+  const { data, error } = await supabase
+    .from("tes_agreements")
+    .select(
+      "id, slug, name, industry, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+    )
+    .eq("slug", slug)
+    .order("valid_from", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map(tesFromRow);
+}
+
+function tesFromRow(row: Record<string, unknown>): TesAgreement {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    name: row.name as string,
+    industry: row.industry as TesAgreement["industry"],
+    validFrom: row.valid_from as string,
+    validUntil: (row.valid_until as string | null) ?? null,
+    isActive: Boolean(row.is_active),
+    rules: (
+      (row.tes_rules as unknown as Record<string, unknown>[] | null) ?? []
+    ).map((rule) => ({
+      id: rule.id as string,
+      ruleType: rule.rule_type as TesAgreement["rules"][number]["ruleType"],
+      name: rule.name as string,
+      unit: rule.unit as TesAgreement["rules"][number]["unit"],
+      value: Number(rule.value ?? 0),
+      startTime: (rule.start_time as string | null) ?? null,
+      endTime: (rule.end_time as string | null) ?? null,
+    })),
   };
 }

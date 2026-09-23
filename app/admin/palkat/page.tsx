@@ -17,12 +17,22 @@ import {
 } from "@/lib/restoflow/sales";
 import { can } from "@/lib/restoflow/permissions";
 import {
+  fetchCompanyTes,
   fetchEmployees,
   fetchPayrollSettings,
   fetchTimeEntries,
 } from "@/lib/restoflow/queries";
 import { formatHours, fullName, summarise, totals } from "@/lib/restoflow/employees";
-import { costFor, costPerHourCents, sumCosts } from "@/lib/restoflow/payroll";
+import {
+  costForDated,
+  costPerHourCents,
+  sumCosts,
+} from "@/lib/restoflow/payroll";
+import {
+  formatTesValidity,
+  settingsResolver,
+  versionFor,
+} from "@/lib/restoflow/tes";
 import { fill } from "@/lib/i18n/auth-text";
 import { formatMoney } from "@/lib/money";
 import { formatDayIn } from "@/lib/i18n/labels";
@@ -107,28 +117,42 @@ export default async function WagesPage({
    */
   const seesHours = can(role, "employees.manage");
 
-  const [employees, timeEntries, payroll] = seesHours
+  const [employees, timeEntries, payroll, tesVersions] = seesHours
     ? await Promise.all([
         fetchEmployees(restaurant.id),
         fetchTimeEntries(restaurant.id, from),
         fetchPayrollSettings(restaurant.id),
+        fetchCompanyTes(restaurant.id),
       ])
-    : [[], [], null];
+    : [[], [], null, []];
 
   const rows = summarise(employees, timeEntries, month);
   const time = totals(rows);
 
   const inMonth = timeEntries.filter((e) => e.date.startsWith(month));
-  const costs = payroll
+  /*
+   * Lisat sopimuksesta, sivukulut yritykselta.
+   *
+   * Versio ratkaistaan vuoron paivalla: kuukausi voi ylittaa
+   * sopimuskauden vaihtumisen, ja vanha vuoro lasketaan silloin
+   * voimassa olleilla lisilla. Ilman sopimusta kaytetaan yrityksen
+   * omia asetuksia kuten ennenkin.
+   */
+  const resolve = payroll ? settingsResolver(tesVersions, payroll) : null;
+
+  const costs = resolve
     ? rows.map((row) =>
-        costFor(
+        costForDated(
           inMonth.filter((e) => e.employeeId === row.employee.id),
           row.employee.hourlyCents,
           restaurant.timezone,
-          payroll,
+          resolve,
         ),
       )
     : [];
+
+  /* Voimassa oleva versio nayttoa varten. */
+  const tes = versionFor(tesVersions, to);
   const cost = sumCosts(costs);
 
   /*
@@ -236,12 +260,19 @@ export default async function WagesPage({
         ) : null}
       </section>
 
-      <p
-        className="px-1 text-[12.5px] leading-relaxed"
+      <div
+        className="space-y-1 px-1 text-[12.5px] leading-relaxed"
         style={{ color: "var(--rf-text-3)" }}
       >
-        {typical}
-      </p>
+        <p>{typical}</p>
+
+        {/* Sovellettava sopimus nakyy mutta ei aukea muokattavaksi. */}
+        {tes ? (
+          <p>
+            {t.palkkaAs.tesTitle}: {tes.name} ({formatTesValidity(tes, locale, t.palkkaAs.untilFurther)})
+          </p>
+        ) : null}
+      </div>
 
       {/* Erittely: mistä työn kustannus koostuu. */}
       {cost.totalCents > 0 ? (

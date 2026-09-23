@@ -383,3 +383,28 @@ export function sumCosts(costs: EmployerCost[]): EmployerCost {
     { ...EMPTY_COST },
   );
 }
+
+/**
+ * Kustannus kun asetukset vaihtuvat päivän mukaan.
+ *
+ * Työehtosopimus uusitaan kesken vuotta, ja kuukausi voi ylittää
+ * vaihtumisen. Siksi asetukset ratkaistaan vuoro kerrallaan sen
+ * päivän mukaan jona vuoro tehtiin — ei kerran kuukaudessa.
+ */
+export function costForDated(
+  entries: TimeEntry[],
+  hourlyCents: number,
+  timezone: string,
+  resolve: (date: string) => PayrollSettings,
+): EmployerCost {
+  return sumCosts(
+    entries.map((entry) => {
+      const settings = resolve(entry.date);
+      return employerCost(
+        splitMinutes(entry, timezone, settings),
+        hourlyCents,
+        settings,
+      );
+    }),
+  );
+}

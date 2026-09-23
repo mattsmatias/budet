@@ -1738,6 +1738,12 @@ const fi = {
     userDefined: "Lisien laskenta perustuu yrityksen määrittämiin asetuksiin. Tarkista lisien ehdot sovellettavasta työehtosopimuksesta.",
     perHour: "Arvioitu työnantajakustannus",
     wagePerHour: "Työntekijän palkka",
+    tesTitle: "Sovellettava TES",
+    tesValid: "TES voimassa",
+    tesManaged: "TES-asetukset määritetään Katen hallinnassa. Ota yhteyttä Kateen, jos yrityksesi TES tai toimiala muuttuu.",
+    tesNone: "Yritykselle ei ole määritetty TES:iä. Työaikalisät luetaan alla olevista asetuksista.",
+    industry: "Toimiala",
+    untilFurther: "toistaiseksi",
   },
 
   luokat: {
@@ -3567,6 +3573,12 @@ const en: AdminText = {
     userDefined: "Supplements are calculated from the settings your company defines. Check the conditions in the applicable collective agreement.",
     perHour: "Estimated employer cost",
     wagePerHour: "Employee wage",
+    tesTitle: "Applicable collective agreement",
+    tesValid: "Agreement valid",
+    tesManaged: "Collective agreement settings are managed by Kate. Contact Kate if your agreement or industry changes.",
+    tesNone: "No collective agreement has been set for this company. Working time supplements come from the settings below.",
+    industry: "Industry",
+    untilFurther: "until further notice",
   },
 
   luokat: {
@@ -5388,6 +5400,12 @@ const sv: AdminText = {
     userDefined: "Tilläggen beräknas enligt de inställningar företaget anger. Kontrollera villkoren i det tillämpliga kollektivavtalet.",
     perHour: "Uppskattad arbetsgivarkostnad",
     wagePerHour: "Den anställdas lön",
+    tesTitle: "Tillämpligt kollektivavtal",
+    tesValid: "Avtalet gäller",
+    tesManaged: "Kollektivavtalets inställningar hanteras av Kate. Kontakta Kate om ditt avtal eller din bransch ändras.",
+    tesNone: "Inget kollektivavtal har angetts för företaget. Arbetstidstilläggen kommer från inställningarna nedan.",
+    industry: "Bransch",
+    untilFurther: "tills vidare",
   },
 
   luokat: {
@@ -7209,6 +7227,12 @@ const da: AdminText = {
     userDefined: "Tillæggene beregnes ud fra de indstillinger, virksomheden angiver. Kontroller betingelserne i den gældende overenskomst.",
     perHour: "Anslået arbejdsgiveromkostning",
     wagePerHour: "Medarbejderens løn",
+    tesTitle: "Gældende overenskomst",
+    tesValid: "Overenskomsten gælder",
+    tesManaged: "Overenskomstens indstillinger administreres af Kate. Kontakt Kate, hvis din overenskomst eller branche ændrer sig.",
+    tesNone: "Der er ikke angivet en overenskomst for virksomheden. Arbejdstidstillæggene kommer fra indstillingerne nedenfor.",
+    industry: "Branche",
+    untilFurther: "indtil videre",
   },
 
   luokat: {
@@ -9024,6 +9048,12 @@ const tr: AdminText = {
     userDefined: "Ek ödemeler şirketinizin belirlediği ayarlara göre hesaplanır. Koşulları geçerli toplu sözleşmeden kontrol edin.",
     perHour: "Tahmini işveren maliyeti",
     wagePerHour: "Çalışanın ücreti",
+    tesTitle: "Geçerli toplu sözleşme",
+    tesValid: "Sözleşme geçerli",
+    tesManaged: "Toplu sözleşme ayarları Kate tarafından yönetilir. Sözleşmeniz veya sektörünüz değişirse Kate ile iletişime geçin.",
+    tesNone: "Şirket için toplu sözleşme tanımlanmamış. Çalışma zamanı ek ödemeleri aşağıdaki ayarlardan gelir.",
+    industry: "Sektör",
+    untilFurther: "süresiz",
   },
 
   luokat: {
@@ -10838,6 +10868,12 @@ const et: AdminText = {
     userDefined: "Lisad arvutatakse ettevõtte määratud seadete alusel. Kontrolli tingimusi kohalduvast kollektiivlepingust.",
     perHour: "Hinnanguline tööandja kulu",
     wagePerHour: "Töötaja palk",
+    tesTitle: "Kohalduv kollektiivleping",
+    tesValid: "Leping kehtib",
+    tesManaged: "Kollektiivlepingu seaded määrab Kate. Võta Katega ühendust, kui su leping või tegevusala muutub.",
+    tesNone: "Ettevõttele pole kollektiivlepingut määratud. Tööaja lisatasud tulevad allolevatest seadetest.",
+    industry: "Tegevusala",
+    untilFurther: "kuni edasise teadaandeni",
   },
 
   luokat: {
@@ -12665,6 +12701,12 @@ const ar: AdminText = {
     userDefined: "تُحسب البدلات وفق الإعدادات التي تحددها الشركة. تحقق من الشروط في الاتفاقية الجماعية المعمول بها.",
     perHour: "تكلفة صاحب العمل المقدّرة",
     wagePerHour: "أجر الموظف",
+    tesTitle: "الاتفاقية الجماعية المعمول بها",
+    tesValid: "الاتفاقية سارية",
+    tesManaged: "تُدار إعدادات الاتفاقية الجماعية من قبل كيت. تواصل مع كيت إذا تغيّرت اتفاقيتك أو قطاعك.",
+    tesNone: "لم تُحدَّد اتفاقية جماعية للشركة. تأتي بدلات وقت العمل من الإعدادات أدناه.",
+    industry: "القطاع",
+    untilFurther: "حتى إشعار آخر",
   },
 
   luokat: {

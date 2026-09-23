@@ -2,6 +2,8 @@ import { BUSINESS_TYPE_NAMES_FI } from "@/lib/restoflow/business";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchRestaurant } from "@/lib/kehittaja/queries";
+import { fetchTesAgreements } from "@/lib/restoflow/queries";
+import { createClient } from "@/utils/supabase/server";
 import {
   PLAN_LABELS,
   STATUS_LABELS,
@@ -17,6 +19,7 @@ import {
   InviteForm,
   PlanForm,
   StatusForm,
+  TesForm,
   UserControls,
   UserRow,
 } from "./forms";
@@ -59,6 +62,23 @@ export default async function DevRestaurantPage({
   const query = await searchParams;
 
   const detail = await fetchRestaurant(id);
+
+  /*
+   * TES-pohjat ja yrityksen nykyinen valinta.
+   *
+   * Valinta luetaan suoraan taulusta: se on yksi sarake eika kuulu
+   * super admin -yhteenvedon paluutyyppiin, jota kolme migraatiota jo
+   * maarittelee.
+   */
+  const agreements = await fetchTesAgreements();
+  const supabase = await createClient();
+  const { data: tesRow } = await supabase
+    .from("restaurants")
+    .select("tes_id")
+    .eq("id", id)
+    .maybeSingle();
+  const tesId = (tesRow?.tes_id as string | null) ?? null;
+
 
   if (!detail) notFound();
 
@@ -273,7 +293,17 @@ export default async function DevRestaurantPage({
         </div>
       ) : null}
 
-      {valittu === "tiedot" ? <DetailsForm r={r} /> : null}
+      {valittu === "tiedot" ? (
+        <>
+          <DetailsForm r={r} />
+          <TesForm
+            id={id}
+            industry={r.businessType}
+            current={tesId}
+            agreements={agreements}
+          />
+        </>
+      ) : null}
 
       {valittu === "kayttajat" ? (
         <div className="space-y-4">
