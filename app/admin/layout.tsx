@@ -16,6 +16,7 @@ import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
 import { AdminNav } from "./nav";
 import { ScrollTop } from "./scroll-top";
+import { TrialBanner } from "./trial-banner";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
 import { MobileMonthBar } from "./month-scope";
@@ -215,6 +216,21 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             canOpenSettings={can(role, "settings.view")}
             months={months}
             month={month}
+            locale={locale}
+            t={t}
+          />
+
+          {/*
+            Kokeilu yhdella rivilla yläpalkin alla.
+
+            Paikka on sama kaikilla sivuilla, joten tieto loytyy
+            samasta kohdasta riippumatta siita mita asiakas oli
+            tekemassa.
+          */}
+          <TrialBanner
+            status={restaurant.status}
+            trialEndsOn={restaurant.trialEndsOn}
+            today={today}
             locale={locale}
             t={t}
           />

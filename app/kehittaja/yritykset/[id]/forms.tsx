@@ -163,7 +163,7 @@ export function StatusForm({
               <input
                 name="trialDays"
                 type="number"
-                defaultValue={14}
+                defaultValue={30}
                 className={`${CONTROL} mt-1.5`}
                 style={CONTROL_STYLE}
               />

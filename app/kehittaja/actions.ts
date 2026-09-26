@@ -1,5 +1,8 @@
 "use server";
 
+/** Kokeilun pituus. Sama luku kuin etusivun lupaus. */
+const TRIAL_DAYS = 30;
+
 /**
  * Developer Consolen toiminnot.
  *
@@ -81,7 +84,7 @@ export async function createRestaurant(
   if (!name) return { error: "Yrityksen nimi puuttuu." };
 
   const status = String(data.get("status") ?? "active");
-  const trialDays = Number(data.get("trialDays") ?? 14);
+  const trialDays = Number(data.get("trialDays") ?? TRIAL_DAYS);
 
   const supabase = await createClient();
 
@@ -100,7 +103,7 @@ export async function createRestaurant(
     p_plan: String(data.get("plan") ?? "free"),
     p_status: status,
     p_trial_days:
-      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
+      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : TRIAL_DAYS) : null,
     p_is_test: data.get("isTest") === "on",
   });
 
@@ -184,14 +187,14 @@ export async function setStatus(
   const status = String(data.get("status") ?? "");
   if (id === "" || status === "") return { error: "Tilaa ei tunnistettu." };
 
-  const trialDays = Number(data.get("trialDays") ?? 14);
+  const trialDays = Number(data.get("trialDays") ?? TRIAL_DAYS);
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("sa_set_status", {
     p_id: id,
     p_status: status,
     p_trial_days:
-      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : 14) : null,
+      status === "trial" ? (Number.isFinite(trialDays) ? trialDays : TRIAL_DAYS) : null,
     p_note: teksti(data, "note"),
   });
 

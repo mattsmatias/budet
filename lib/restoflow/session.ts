@@ -57,6 +57,15 @@ export interface RestaurantMembership {
    * olemassa, joten tyhjä tunnus ei maksa yhtään kyselyä.
    */
   logoPath: string | null;
+  /**
+   * Asiakkuuden tila ja kokeilun paattymispaiva.
+   *
+   * Yritys nakee oman kokeilunsa: montako paivaa on jaljella ja mita
+   * tapahtuu kun ne loppuvat. Ilman tata lupaus kolmestakymmenesta
+   * paivasta olisi vain etusivun teksti.
+   */
+  status: string;
+  trialEndsOn: string | null;
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -96,7 +105,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, timezone, currency, role, business_type, logo_path",
+          "id, name, slug, timezone, currency, role, business_type, logo_path, status, trial_ends_on",
         )
         .order("name");
 
@@ -113,6 +122,8 @@ export const getMemberships = cache(
           ? row.business_type
           : "restaurant",
         logoPath: (row.logo_path as string | null) ?? null,
+        status: (row.status as string | null) ?? "active",
+        trialEndsOn: (row.trial_ends_on as string | null) ?? null,
       }));
     } catch {
       return [];

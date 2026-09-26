@@ -161,7 +161,7 @@ export function Wizard() {
                   label="Kokeilun pituus (päivää)"
                   name="trialDays"
                   type="number"
-                  defaultValue="14"
+                  defaultValue="30"
                 />
               ) : (
                 <div />

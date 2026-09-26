@@ -1747,6 +1747,18 @@ const fi = {
     tesMissing: "TES-tietoa ei ole saatavilla näille päiville: {paivat}. Ne on arvioitu yrityksen omilla palkkakuluasetuksilla.",
   },
 
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Kokeilu",
+    daysLeft: "{maara} päivää jäljellä",
+    lastDay: "Viimeinen päivä tänään",
+    endsOn: "Kokeilu päättyy {paiva}",
+    ended: "Kokeilu päättyi {paiva}",
+    contact: "Ota yhteyttä",
+    keepGoing: "Ota yhteyttä, niin jatkamme ilman katkoa.",
+    nothingLost: "Tietosi säilyvät, eikä mitään katoa.",
+  },
+
   luokat: {
     needsReview: "Tarkistettavat",
     food: "Ruoka",
@@ -3585,6 +3597,18 @@ const en: AdminText = {
     tesMissing: "No collective agreement data is available for these days: {paivat}. They are estimated using your company's own payroll cost settings.",
   },
 
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Trial",
+    daysLeft: "{maara} days left",
+    lastDay: "Last day is today",
+    endsOn: "Trial ends {paiva}",
+    ended: "Trial ended {paiva}",
+    contact: "Get in touch",
+    keepGoing: "Get in touch and we'll continue without a break.",
+    nothingLost: "Your data stays, nothing is lost.",
+  },
+
   luokat: {
     needsReview: "Needs checking",
     food: "Food",
@@ -5413,6 +5437,18 @@ const sv: AdminText = {
     industry: "Bransch",
     untilFurther: "tills vidare",
     tesMissing: "Kollektivavtalsuppgifter saknas för dessa dagar: {paivat}. De uppskattas med företagets egna lönekostnadsinställningar.",
+  },
+
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Provperiod",
+    daysLeft: "{maara} dagar kvar",
+    lastDay: "Sista dagen är i dag",
+    endsOn: "Provperioden slutar {paiva}",
+    ended: "Provperioden slutade {paiva}",
+    contact: "Kontakta oss",
+    keepGoing: "Hör av dig så fortsätter vi utan avbrott.",
+    nothingLost: "Dina uppgifter finns kvar, inget försvinner.",
   },
 
   luokat: {
@@ -7245,6 +7281,18 @@ const da: AdminText = {
     tesMissing: "Der findes ingen overenskomstdata for disse dage: {paivat}. De er anslået ud fra virksomhedens egne lønomkostningsindstillinger.",
   },
 
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Prøveperiode",
+    daysLeft: "{maara} dage tilbage",
+    lastDay: "Sidste dag er i dag",
+    endsOn: "Prøveperioden slutter {paiva}",
+    ended: "Prøveperioden sluttede {paiva}",
+    contact: "Kontakt os",
+    keepGoing: "Kontakt os, så fortsætter vi uden afbrydelse.",
+    nothingLost: "Dine data bliver, intet går tabt.",
+  },
+
   luokat: {
     needsReview: "Skal tjekkes",
     food: "Mad",
@@ -9069,6 +9117,18 @@ const tr: AdminText = {
     tesMissing: "Şu günler için toplu sözleşme bilgisi yok: {paivat}. Bunlar şirketin kendi ücret maliyeti ayarlarıyla tahmin edildi.",
   },
 
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Deneme",
+    daysLeft: "{maara} gün kaldı",
+    lastDay: "Son gün bugün",
+    endsOn: "Deneme {paiva} tarihinde biter",
+    ended: "Deneme {paiva} tarihinde bitti",
+    contact: "Bize ulaşın",
+    keepGoing: "Bize ulaşın, kesintisiz devam edelim.",
+    nothingLost: "Verileriniz kalır, hiçbir şey kaybolmaz.",
+  },
+
   luokat: {
     needsReview: "Kontrol edilecek",
     food: "Yiyecek",
@@ -10890,6 +10950,18 @@ const et: AdminText = {
     industry: "Tegevusala",
     untilFurther: "kuni edasise teadaandeni",
     tesMissing: "Nende päevade kohta kollektiivlepingu andmed puuduvad: {paivat}. Need on hinnatud ettevõtte enda palgakulu seadetega.",
+  },
+
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "Prooviperiood",
+    daysLeft: "{maara} päeva jäänud",
+    lastDay: "Viimane päev on täna",
+    endsOn: "Prooviperiood lõpeb {paiva}",
+    ended: "Prooviperiood lõppes {paiva}",
+    contact: "Võta ühendust",
+    keepGoing: "Võta ühendust, siis jätkame katkestuseta.",
+    nothingLost: "Sinu andmed jäävad alles, midagi ei kao.",
   },
 
   luokat: {
@@ -12726,6 +12798,18 @@ const ar: AdminText = {
     industry: "القطاع",
     untilFurther: "حتى إشعار آخر",
     tesMissing: "لا تتوفر بيانات الاتفاقية الجماعية لهذه الأيام: {paivat}. جرى تقديرها بإعدادات تكاليف الأجور الخاصة بالشركة.",
+  },
+
+  /* Kokeilun tila asiakkaalle: paivat, paattyminen ja mita sitten. */
+  kokeilu: {
+    label: "فترة تجريبية",
+    daysLeft: "بقي {maara} يومًا",
+    lastDay: "اليوم هو آخر يوم",
+    endsOn: "تنتهي الفترة التجريبية في {paiva}",
+    ended: "انتهت الفترة التجريبية في {paiva}",
+    contact: "تواصل معنا",
+    keepGoing: "تواصل معنا لنواصل دون انقطاع.",
+    nothingLost: "بياناتك محفوظة ولا يضيع شيء.",
   },
 
   luokat: {
