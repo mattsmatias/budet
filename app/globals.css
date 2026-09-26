@@ -15,15 +15,20 @@
 }
 
 html {
-  /* Ankkurilinkit eivät jää yläreunan taakse. */
-  scroll-behavior: smooth;
+  /*
+   * PEHMEÄ VIERITYS VAIN SILLOIN KUN SITÄ PYYDETÄÄN.
+   *
+   * Tässä luki scroll-behavior: smooth koko sivustolle. Se koski myös
+   * reitittimen omaa siirtoa sivun ylälaitaan: siirrosta tuli
+   * animaatio, ja raskaalla sivulla animaatio ehti keskeytyä kun
+   * sisältö kasvoi vielä sen alla. Sivu jäi silloin auki vähän
+   * ylälaidan alapuolelta.
+   *
+   * Ne kaksi paikkaa jotka pehmeää vieritystä oikeasti haluavat —
+   * puhelimen "takaisin ylös" ja Matin keskustelu — pyytävät sitä
+   * itse behavior-valitsimella.
+   */
   -webkit-text-size-adjust: 100%;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 body {

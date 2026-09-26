@@ -15,6 +15,7 @@ import {
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
 import { AdminNav } from "./nav";
+import { ScrollTop } from "./scroll-top";
 import { HeaderMenus } from "./header-menus";
 import { TopBar } from "./topbar";
 import { MobileMonthBar } from "./month-scope";
@@ -132,6 +133,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
      * kertoi mitään.
      */
     <div className="min-h-screen">
+      <ScrollTop />
+
       <div className="flex min-h-screen">
         <AdminNav
           role={role}
