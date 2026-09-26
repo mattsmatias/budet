@@ -169,15 +169,15 @@ export default async function BudgetsPage({
                     </span>
                     <span className="flex items-center gap-2.5">
                       {p.status === "exceeded" ? (
-                        <Pill tone="risk" dot>
+                        <Pill tone="risk">
                           ylitetty
                         </Pill>
                       ) : p.status === "warning" ? (
-                        <Pill tone="warn" dot>
+                        <Pill tone="warn">
                           {t.budjetit.approaching}
                         </Pill>
                       ) : (
-                        <Pill tone="ok" dot>
+                        <Pill tone="ok">
                           ok
                         </Pill>
                       )}

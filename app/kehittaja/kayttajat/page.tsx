@@ -199,7 +199,7 @@ export default async function DevUsersPage({
                     </td>
 
                     <td className="px-4 py-3">
-                      <Pill tone={u.active ? "ok" : "warn"} dot>
+                      <Pill tone={u.active ? "ok" : "warn"}>
                         {u.active ? "Käytössä" : "Ei käytössä"}
                       </Pill>
                     </td>

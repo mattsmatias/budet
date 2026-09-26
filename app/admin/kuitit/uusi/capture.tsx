@@ -928,7 +928,7 @@ export function CaptureFlow({
       {reasons.length > 0 ? (
         <div className="flex flex-wrap gap-2 px-1">
           {reasons.map((r) => (
-            <Pill key={r} tone="warn" dot>
+            <Pill key={r} tone="warn">
               {nimet.reviewReasons[r]}
             </Pill>
           ))}

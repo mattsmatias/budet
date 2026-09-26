@@ -288,12 +288,12 @@ export default async function AdminReceiptDetailPage({
             <div className="mt-4 flex flex-wrap items-center gap-2">
               {receipt.status === "needs_review" ? (
                 receipt.reviewReasons.map((r) => (
-                  <Pill key={r} tone="warn" dot>
+                  <Pill key={r} tone="warn">
                     {nimet.reviewReasons[r]}
                   </Pill>
                 ))
               ) : (
-                <Pill tone="ok" dot>
+                <Pill tone="ok">
                   {t.sanat.checked}
                 </Pill>
               )}
@@ -315,7 +315,6 @@ export default async function AdminReceiptDetailPage({
                           ? "risk"
                           : "info"
                   }
-                  dot
                 >
                   {ledger.state === "posted"
                     ? fill(t.viimeiset.postedVoucher, {

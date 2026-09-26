@@ -114,7 +114,7 @@ export default async function TimeClockPage() {
           </p>
         </div>
 
-        <Pill tone={open ? "ok" : "neutral"} dot={Boolean(open)}>
+        <Pill tone={open ? "ok" : "neutral"}>
           {open ? t.tyo.onShift : t.tyo.offShift}
         </Pill>
       </header>

@@ -121,7 +121,7 @@ export default async function DevPlansPage() {
                       </span>
                     </span>
 
-                    <Pill tone={ohi ? "risk" : "warn"} dot>
+                    <Pill tone={ohi ? "risk" : "warn"}>
                       {ohi
                         ? `Päättyi ${r.trialEndsOn}`
                         : `Päättyy ${r.trialEndsOn}`}
@@ -167,7 +167,7 @@ export default async function DevPlansPage() {
                       {PLAN_LABELS[r.plan]}
                     </td>
                     <td className="px-4 py-3">
-                      <Pill tone={tone === "muted" ? "info" : tone} dot>
+                      <Pill tone={tone === "muted" ? "info" : tone}>
                         {STATUS_LABELS[r.status]}
                       </Pill>
                     </td>

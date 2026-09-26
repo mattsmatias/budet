@@ -50,7 +50,7 @@ export default async function DevFlagsPage() {
                     <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
                       {flag.label}
                     </h2>
-                    <Pill tone={flag.enabled ? "ok" : "warn"} dot>
+                    <Pill tone={flag.enabled ? "ok" : "warn"}>
                       {flag.enabled ? "Päällä kaikille" : "Pois kaikilta"}
                     </Pill>
                   </div>

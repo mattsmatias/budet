@@ -194,7 +194,7 @@ export default async function DevAuditPage({
                     Avaa →
                   </Link>
                 ) : row.critical ? (
-                  <Pill tone="warn" dot>
+                  <Pill tone="warn">
                     kriittinen
                   </Pill>
                 ) : null}

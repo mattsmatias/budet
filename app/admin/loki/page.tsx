@@ -376,7 +376,7 @@ function Tapahtuma({
         </span>
 
         {event.critical ? (
-          <Pill tone="risk" dot>
+          <Pill tone="risk">
             kriittinen
           </Pill>
         ) : null}

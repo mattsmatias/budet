@@ -155,7 +155,7 @@ export default async function WagesPage({
 
         <div className="flex items-center gap-3">
           {time.working > 0 ? (
-            <Pill tone="ok" dot>
+            <Pill tone="ok">
               {fill(t.tyo.workingNow, { maara: String(time.working) })}
             </Pill>
           ) : null}
@@ -319,7 +319,7 @@ export default async function WagesPage({
                   </span>
                   {row.working ? (
                     <span className="ms-2 align-middle">
-                      <Pill tone="ok" dot>
+                      <Pill tone="ok">
                         {t.tyo.working}
                       </Pill>
                     </span>

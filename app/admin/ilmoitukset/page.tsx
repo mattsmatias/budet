@@ -206,7 +206,6 @@ function Ryhma({
                         ? "warn"
                         : "info"
                   }
-                  dot
                 >
                   {alert.severity === "critical"
                     ? "kiireellinen"

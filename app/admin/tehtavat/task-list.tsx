@@ -215,7 +215,7 @@ function Rivi({
 
         <div className="flex shrink-0 items-center gap-2">
           {task.priority !== "normal" ? (
-            <Pill tone={task.priority === "critical" ? "risk" : "warn"} dot>
+            <Pill tone={task.priority === "critical" ? "risk" : "warn"}>
               {nimet.taskPriority[task.priority].toLowerCase()}
             </Pill>
           ) : null}

@@ -415,12 +415,12 @@ export default async function AdminReceiptsPage({
                       {receipt.status === "needs_review" || isDuplicate ? (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {isDuplicate ? (
-                            <Pill tone="risk" dot>
+                            <Pill tone="risk">
                               {t.kuitit.possibleDuplicate}
                             </Pill>
                           ) : null}
                           {receipt.reviewReasons.map((r) => (
-                            <Pill key={r} tone="warn" dot>
+                            <Pill key={r} tone="warn">
                               {nimet.reviewReasons[r]}
                             </Pill>
                           ))}
@@ -429,7 +429,7 @@ export default async function AdminReceiptsPage({
                         /* Kunnossa oleva ei tarvitse merkkiä puhelimessa:
                            poikkeus näkyy, tavallinen ei vie tilaa. */
                         <div className="mt-2 hidden sm:block">
-                          <Pill tone="ok" dot>
+                          <Pill tone="ok">
                             {t.kuitit.reviewed}
                           </Pill>
                         </div>

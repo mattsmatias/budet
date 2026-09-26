@@ -285,7 +285,6 @@ function TilaMerkki({ nimet, entry }: { nimet: Labels; entry: LedgerEntry }) {
             ? "risk"
             : "warn"
       }
-      dot
     >
       {nimet.ledgerStatus[entry.status]}
     </Pill>
@@ -869,7 +868,7 @@ export function Raportit({
           </ul>
 
           <div className="px-5 pb-4 pt-3">
-            <Pill tone={balance.balanced ? "ok" : "risk"} dot>
+            <Pill tone={balance.balanced ? "ok" : "risk"}>
               {balance.balanced
                 ? t.kirjanpito2.balanceOk
                 : t.kirjanpito2.balanceOff}

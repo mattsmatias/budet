@@ -1213,11 +1213,11 @@ export default async function AdminDashboard({
                       </span>
                       <span className="mt-1 block">
                         {receipt.status === "needs_review" ? (
-                          <Pill tone="warn" dot>
+                          <Pill tone="warn">
                             {t.sanat.toBeChecked}
                           </Pill>
                         ) : (
-                          <Pill tone="ok" dot>
+                          <Pill tone="ok">
                             {t.sanat.checked}
                           </Pill>
                         )}

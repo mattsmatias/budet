@@ -109,7 +109,7 @@ export default async function DevRestaurantPage({
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="text-[22px] font-bold tracking-[-0.02em]">{r.name}</h1>
 
-          <Pill tone={tone === "muted" ? "info" : tone} dot>
+          <Pill tone={tone === "muted" ? "info" : tone}>
             {STATUS_LABELS[r.status]}
           </Pill>
 
@@ -244,7 +244,7 @@ export default async function DevRestaurantPage({
                     {owner.email ?? "—"}
                   </p>
                   <p className="mt-1.5">
-                    <Pill tone="ok" dot>
+                    <Pill tone="ok">
                       {owner.lastSignInAt
                         ? `Kirjautui ${new Date(owner.lastSignInAt).toLocaleDateString("fi-FI")}`
                         : "Ei vielä kirjautunut"}

@@ -193,7 +193,7 @@ export default async function DevOverviewPage() {
                       </span>
                     </span>
 
-                    <Pill tone={health.level === "risk" ? "risk" : "warn"} dot>
+                    <Pill tone={health.level === "risk" ? "risk" : "warn"}>
                       {STATUS_LABELS[r.status]}
                     </Pill>
                   </Link>
@@ -223,7 +223,7 @@ export default async function DevOverviewPage() {
                     key={status}
                     className="flex items-center justify-between gap-4 text-[13.5px]"
                   >
-                    <Pill tone={tone === "muted" ? "info" : tone} dot>
+                    <Pill tone={tone === "muted" ? "info" : tone}>
                       {STATUS_LABELS[status]}
                     </Pill>
                     <span className="rf-tabular font-semibold">{count}</span>

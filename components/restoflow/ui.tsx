@@ -11,31 +11,26 @@ import { formatMoney } from "@/lib/money";
 
 export type Tone = "neutral" | "ok" | "info" | "warn" | "risk";
 
-const TONE_STYLES: Record<Tone, { bg: string; text: string; dot: string }> = {
+const TONE_STYLES: Record<Tone, { bg: string; text: string }> = {
   neutral: {
     bg: "var(--rf-inset)",
     text: "var(--rf-text-2)",
-    dot: "var(--rf-text-3)",
   },
   ok: {
     bg: "var(--rf-green-bg)",
     text: "var(--rf-green-text)",
-    dot: "var(--rf-green)",
   },
   info: {
     bg: "var(--rf-blue-bg)",
     text: "var(--rf-blue-text)",
-    dot: "var(--rf-blue)",
   },
   warn: {
     bg: "var(--rf-amber-bg)",
     text: "var(--rf-amber-text)",
-    dot: "var(--rf-amber)",
   },
   risk: {
     bg: "var(--rf-red-bg)",
     text: "var(--rf-red-text)",
-    dot: "var(--rf-red)",
   },
 };
 
@@ -94,14 +89,21 @@ export function CardHeader({
   );
 }
 
+/**
+ * Tilamerkki.
+ *
+ * VARI RIITTAA, PISTETTA EI TARVITA.
+ *
+ * Merkissa oli aiemmin pieni vari pallo tekstin edessa. Se toisti sen
+ * minka tausta jo kertoi, ja rivilla jossa merkkeja on useita se
+ * nayttti luettelomerkilta keskella lausetta.
+ */
 export function Pill({
   tone = "neutral",
   children,
-  dot,
 }: {
   tone?: Tone;
   children: ReactNode;
-  dot?: boolean;
 }) {
   const s = TONE_STYLES[tone];
   return (
@@ -113,13 +115,6 @@ export function Pill({
         borderRadius: "var(--rf-r-pill)",
       }}
     >
-      {dot ? (
-        <span
-          aria-hidden="true"
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: s.dot }}
-        />
-      ) : null}
       {children}
     </span>
   );

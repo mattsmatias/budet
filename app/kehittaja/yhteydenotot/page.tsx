@@ -46,7 +46,7 @@ export default async function DevContactsPage() {
                     <h2 className="text-[15px] font-bold tracking-[-0.0075em]">
                       {r.restaurant}
                     </h2>
-                    <Pill tone={r.handledAt ? "ok" : "warn"} dot>
+                    <Pill tone={r.handledAt ? "ok" : "warn"}>
                       {r.handledAt ? "Hoidettu" : "Avoin"}
                     </Pill>
                   </div>

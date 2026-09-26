@@ -227,7 +227,7 @@ export default async function DevRestaurantsPage({
                       </td>
 
                       <td className="px-4 py-3">
-                        <Pill tone={tone === "muted" ? "info" : tone} dot>
+                        <Pill tone={tone === "muted" ? "info" : tone}>
                           {STATUS_LABELS[r.status]}
                         </Pill>
                         {r.status === "trial" && r.trialEndsOn ? (

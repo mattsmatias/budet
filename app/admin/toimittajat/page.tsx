@@ -231,7 +231,7 @@ export default async function SuppliersPage({
                             uusi
                           </span>
                         ) : spike ? (
-                          <Pill tone="warn" dot>
+                          <Pill tone="warn">
                             {formatChange(trend.change)}
                           </Pill>
                         ) : (
@@ -368,7 +368,7 @@ export default async function SuppliersPage({
                             uusi
                           </span>
                         ) : spike ? (
-                          <Pill tone="warn" dot>
+                          <Pill tone="warn">
                             {formatChange(trend.change)}
                           </Pill>
                         ) : (

@@ -129,7 +129,7 @@ export default async function DevHealthPage() {
                   </span>
                 ) : null}
 
-                <Pill tone={tila.tone} dot>
+                <Pill tone={tila.tone}>
                   {tila.label}
                 </Pill>
               </li>

@@ -115,7 +115,7 @@ export function ReviewPanel({
       {receipt.reviewReasons.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {receipt.reviewReasons.map((r) => (
-            <Pill key={r} tone="warn" dot>
+            <Pill key={r} tone="warn">
               {nimet.reviewReasons[r]}
             </Pill>
           ))}
