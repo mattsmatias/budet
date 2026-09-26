@@ -46,7 +46,7 @@ const fi = {
     body: "Kate kokoaa myynnin, kuitit ja kulut yhteen näkymään. Kuvaat kuitin tai kassaraportin, ja Kate hoitaa loput: luokittelee kulut, laskee ALV:n ja pitää kirjanpidon ajan tasalla.",
     secondary: "Katso miten Kate toimii",
     previewNote: "Katen käyttöliittymä. Luvut ovat esimerkkejä.",
-    note: "Luomme tunnukset ja otamme Katen käyttöön puolestasi.",
+    note: "30 päivää ilmaiseksi. Luomme tunnukset ja otamme Katen käyttöön puolestasi.",
   },
 
   preview: {
@@ -179,6 +179,8 @@ const fi = {
     incTasks: "Tehtävät",
     incFiles: "Tiedostot",
     note: "Luomme tunnukset puolestasi — ota yhteyttä, niin aloitetaan.",
+    trialBadge: "30 päivää ilmaiseksi",
+    trialNote: "Ensimmäiset 30 päivää ovat ilmaisia. Laskutus alkaa vasta kokeilun jälkeen.",
   },
 
   contact: {
@@ -204,6 +206,7 @@ const fi = {
     errRate: "Viestisi on jo perillä. Otamme yhteyttä pian.",
     errGeneric: "Lähetys ei onnistunut. Yritä hetken päästä uudelleen.",
     privacy: "Käytämme tietoja vain sinuun yhteyden ottamiseen.",
+    point0: "Ensimmäiset 30 päivää ilmaiseksi",
   },
 
   industries: {
@@ -222,6 +225,8 @@ const fi = {
   footer: {
     tagline: "Pienyrityksen talous yhdessä paikassa.",
     sitemap: "Sivukartta",
+    instagram: "Instagram",
+    businessId: "Y-tunnus {tunnus}",
   },
 
   about: {
@@ -284,7 +289,7 @@ const en: Dictionary = {
     body: "Kate brings sales, receipts and expenses into one view. Snap a receipt or a till report and Kate does the rest: categorises expenses, calculates VAT and keeps the books up to date.",
     secondary: "See how Kate works",
     previewNote: "The Kate interface. Figures are examples.",
-    note: "We set up your accounts and get Kate running for you.",
+    note: "30 days free. We create the accounts and get Kate running for you.",
   },
   preview: {
     today: "Today at a glance",
@@ -409,7 +414,9 @@ const en: Dictionary = {
     incAssistant: "Matti assistant",
     incTasks: "Tasks",
     incFiles: "Files",
-    note: "We set up your accounts — get in touch and let's get started.",
+    note: "We set up your accounts — get in touch and we'll start.",
+    trialBadge: "30 days free",
+    trialNote: "The first 30 days are free. Billing starts only after the trial.",
   },
   contact: {
     label: "Let's get started",
@@ -434,6 +441,7 @@ const en: Dictionary = {
     errRate: "We already have your message. We'll be in touch soon.",
     errGeneric: "Sending failed. Please try again in a moment.",
     privacy: "We only use these details to contact you.",
+    point0: "The first 30 days are free",
   },
 
   industries: {
@@ -452,6 +460,8 @@ const en: Dictionary = {
   footer: {
     tagline: "Small business finances in one place.",
     sitemap: "Sitemap",
+    instagram: "Instagram",
+    businessId: "Business ID {tunnus}",
   },
   about: {
     metaTitle: "About – Kate",
@@ -506,7 +516,7 @@ const sv: Dictionary = {
     body: "Kate samlar försäljning, kvitton och kostnader i en vy. Fota ett kvitto eller en kassarapport så sköter Kate resten: kategoriserar kostnader, räknar ut momsen och håller bokföringen uppdaterad.",
     secondary: "Se hur Kate fungerar",
     previewNote: "Kates gränssnitt. Siffrorna är exempel.",
-    note: "Vi skapar kontona och tar Kate i bruk åt dig.",
+    note: "30 dagar gratis. Vi skapar kontona och tar Kate i bruk åt dig.",
   },
   preview: {
     today: "Dagens läge",
@@ -631,7 +641,9 @@ const sv: Dictionary = {
     incAssistant: "Matti-assistenten",
     incTasks: "Uppgifter",
     incFiles: "Filer",
-    note: "Vi skapar kontona åt dig — hör av dig så sätter vi i gång.",
+    note: "Vi skapar kontona åt dig — hör av dig så sätter vi igång.",
+    trialBadge: "30 dagar gratis",
+    trialNote: "De första 30 dagarna är gratis. Faktureringen börjar först efter provperioden.",
   },
   contact: {
     label: "Nu sätter vi i gång",
@@ -656,6 +668,7 @@ const sv: Dictionary = {
     errRate: "Ditt meddelande har redan kommit fram. Vi hör av oss snart.",
     errGeneric: "Det gick inte att skicka. Försök igen om en stund.",
     privacy: "Vi använder uppgifterna endast för att kontakta dig.",
+    point0: "De första 30 dagarna är gratis",
   },
 
   industries: {
@@ -674,6 +687,8 @@ const sv: Dictionary = {
   footer: {
     tagline: "Småföretagets ekonomi på ett ställe.",
     sitemap: "Webbplatskarta",
+    instagram: "Instagram",
+    businessId: "FO-nummer {tunnus}",
   },
   about: {
     metaTitle: "Om oss – Kate",
@@ -728,7 +743,7 @@ const da: Dictionary = {
     body: "Kate samler salg, kvitteringer og udgifter i én visning. Tag et billede af en kvittering eller en kasserapport, så klarer Kate resten: kategoriserer udgifter, beregner momsen og holder bogføringen opdateret.",
     secondary: "Se hvordan Kate virker",
     previewNote: "Kates brugerflade. Tallene er eksempler.",
-    note: "Vi opretter konti og tager Kate i brug for dig.",
+    note: "30 dage gratis. Vi opretter kontiene og sætter Kate i gang for dig.",
   },
   preview: {
     today: "Dagens status",
@@ -853,7 +868,9 @@ const da: Dictionary = {
     incAssistant: "Matti-assistenten",
     incTasks: "Opgaver",
     incFiles: "Filer",
-    note: "Vi opretter konti for dig — kontakt os, så går vi i gang.",
+    note: "Vi opretter kontiene for dig — kontakt os, så går vi i gang.",
+    trialBadge: "30 dage gratis",
+    trialNote: "De første 30 dage er gratis. Faktureringen starter først efter prøveperioden.",
   },
   contact: {
     label: "Lad os komme i gang",
@@ -878,6 +895,7 @@ const da: Dictionary = {
     errRate: "Vi har allerede modtaget din besked. Vi kontakter dig snart.",
     errGeneric: "Afsendelsen mislykkedes. Prøv igen om lidt.",
     privacy: "Vi bruger kun oplysningerne til at kontakte dig.",
+    point0: "De første 30 dage er gratis",
   },
 
   industries: {
@@ -896,6 +914,8 @@ const da: Dictionary = {
   footer: {
     tagline: "Småvirksomhedens økonomi samlet ét sted.",
     sitemap: "Sitemap",
+    instagram: "Instagram",
+    businessId: "CVR-nummer {tunnus}",
   },
   about: {
     metaTitle: "Om os – Kate",
@@ -951,7 +971,7 @@ const tr: Dictionary = {
     body: "Kate satışları, fişleri ve giderleri tek bir görünümde toplar. Bir fişin veya kasa raporunun fotoğrafını çekin, gerisini Kate halleder: giderleri sınıflandırır, KDV'yi hesaplar ve muhasebeyi güncel tutar.",
     secondary: "Kate nasıl çalışır",
     previewNote: "Kate arayüzü. Rakamlar örnektir.",
-    note: "Hesaplarınızı biz oluşturur, Kate'i sizin için kurarız.",
+    note: "30 gün ücretsiz. Hesapları biz oluşturur, Kate'i sizin için kurarız.",
   },
   preview: {
     today: "Bugünün durumu",
@@ -1076,7 +1096,9 @@ const tr: Dictionary = {
     incAssistant: "Matti asistanı",
     incTasks: "Görevler",
     incFiles: "Dosyalar",
-    note: "Hesaplarınızı biz oluştururuz — bize ulaşın, hemen başlayalım.",
+    note: "Hesapları sizin için oluştururuz — bize ulaşın, başlayalım.",
+    trialBadge: "30 gün ücretsiz",
+    trialNote: "İlk 30 gün ücretsizdir. Faturalandırma ancak deneme süresinden sonra başlar.",
   },
   contact: {
     label: "Hadi başlayalım",
@@ -1101,6 +1123,7 @@ const tr: Dictionary = {
     errRate: "Mesajınız zaten bize ulaştı. Yakında iletişime geçeceğiz.",
     errGeneric: "Gönderilemedi. Lütfen birazdan tekrar deneyin.",
     privacy: "Bu bilgileri yalnızca sizinle iletişime geçmek için kullanırız.",
+    point0: "İlk 30 gün ücretsiz",
   },
 
   industries: {
@@ -1119,6 +1142,8 @@ const tr: Dictionary = {
   footer: {
     tagline: "Küçük işletme finansı tek yerde.",
     sitemap: "Site haritası",
+    instagram: "Instagram",
+    businessId: "Vergi kimlik no {tunnus}",
   },
   about: {
     metaTitle: "Hakkımızda – Kate",
@@ -1173,7 +1198,7 @@ const et: Dictionary = {
     body: "Kate koondab müügi, kviitungid ja kulud ühte vaatesse. Pildista kviitung või kassaaruanne ja Kate teeb ülejäänu: liigitab kulud, arvutab käibemaksu ja hoiab raamatupidamise ajakohasena.",
     secondary: "Vaata, kuidas Kate töötab",
     previewNote: "Kate kasutajaliides. Numbrid on näited.",
-    note: "Loome kasutajad ja võtame Kate sinu eest kasutusele.",
+    note: "30 päeva tasuta. Loome kontod ja võtame Kate sinu eest kasutusele.",
   },
   preview: {
     today: "Tänane seis",
@@ -1298,7 +1323,9 @@ const et: Dictionary = {
     incAssistant: "Matti assistent",
     incTasks: "Ülesanded",
     incFiles: "Failid",
-    note: "Loome kasutajad sinu eest — võta ühendust ja alustame.",
+    note: "Loome kontod sinu eest — võta ühendust, siis alustame.",
+    trialBadge: "30 päeva tasuta",
+    trialNote: "Esimesed 30 päeva on tasuta. Arveldamine algab alles pärast prooviperioodi.",
   },
   contact: {
     label: "Alustame",
@@ -1323,6 +1350,7 @@ const et: Dictionary = {
     errRate: "Sinu sõnum on juba kohal. Võtame varsti ühendust.",
     errGeneric: "Saatmine ebaõnnestus. Proovi mõne aja pärast uuesti.",
     privacy: "Kasutame andmeid ainult sinuga ühenduse võtmiseks.",
+    point0: "Esimesed 30 päeva on tasuta",
   },
 
   industries: {
@@ -1341,6 +1369,8 @@ const et: Dictionary = {
   footer: {
     tagline: "Väikeettevõtte rahaasjad ühes kohas.",
     sitemap: "Sisukaart",
+    instagram: "Instagram",
+    businessId: "Registrikood {tunnus}",
   },
   about: {
     metaTitle: "Meist – Kate",
@@ -1396,7 +1426,7 @@ const ar: Dictionary = {
     body: "تجمع Kate المبيعات والإيصالات والمصروفات في مكان واحد. التقط صورة لإيصال أو تقرير الصندوق، وتتولى Kate الباقي: تصنّف المصروفات وتحسب ضريبة القيمة المضافة وتُحدّث الدفاتر.",
     secondary: "شاهد كيف تعمل Kate",
     previewNote: "واجهة Kate. الأرقام أمثلة فقط.",
-    note: "نُعدّ حساباتك ونُشغّل Kate من أجلك.",
+    note: "٣٠ يومًا مجانًا. ننشئ الحسابات ونجهّز Kate نيابة عنك.",
   },
   preview: {
     today: "نظرة على اليوم",
@@ -1520,7 +1550,9 @@ const ar: Dictionary = {
     incAssistant: "مساعد Matti",
     incTasks: "المهام",
     incFiles: "الملفات",
-    note: "نُعدّ حساباتك — تواصل معنا ولنبدأ.",
+    note: "ننشئ الحسابات نيابة عنك — تواصل معنا ونبدأ.",
+    trialBadge: "٣٠ يومًا مجانًا",
+    trialNote: "أول ٣٠ يومًا مجانية. تبدأ الفوترة بعد انتهاء الفترة التجريبية فقط.",
   },
   contact: {
     label: "لنبدأ",
@@ -1545,6 +1577,7 @@ const ar: Dictionary = {
     errRate: "لدينا رسالتك بالفعل. سنتواصل معك قريبًا.",
     errGeneric: "فشل الإرسال. يرجى المحاولة مرة أخرى بعد قليل.",
     privacy: "نستخدم هذه البيانات فقط للتواصل معك.",
+    point0: "أول ٣٠ يومًا مجانية",
   },
 
   industries: {
@@ -1563,6 +1596,8 @@ const ar: Dictionary = {
   footer: {
     tagline: "مالية الأعمال الصغيرة في مكان واحد.",
     sitemap: "خريطة الموقع",
+    instagram: "Instagram",
+    businessId: "الرقم التجاري {tunnus}",
   },
   about: {
     metaTitle: "من نحن – Kate",

@@ -669,6 +669,26 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
                   Kate
                 </p>
 
+                {/*
+                  Kokeilu ennen hintaa.
+
+                  Hinta on se kohta jossa selaaja pysahtyy, ja juuri
+                  siina pitaa nakya ettei ensimmaisesta kuukaudesta
+                  veloiteta. Merkki on kortin sisalla eika sivun
+                  ylareunassa, koska se vastaa hinnan herattamaan
+                  kysymykseen.
+                */}
+                <p
+                  className="mt-4 inline-block px-3 py-1 text-[12.5px] font-bold"
+                  style={{
+                    background: "var(--bd-accent-bg, rgba(209,56,49,0.1))",
+                    color: "var(--bd-accent, #d13831)",
+                    borderRadius: 999,
+                  }}
+                >
+                  {t.pricing.trialBadge}
+                </p>
+
                 <p className="mt-4">
                   <span className="bd-num text-[52px] font-bold leading-none tracking-[-0.04em]">
                     <CountIn to={79} duration={900} />
@@ -686,6 +706,13 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
                   style={{ color: "var(--bd-text-3)" }}
                 >
                   {t.pricing.yearly}
+                </p>
+
+                <p
+                  className="mt-2 text-[13px] font-semibold"
+                  style={{ color: "var(--bd-text-2)" }}
+                >
+                  {t.pricing.trialNote}
                 </p>
 
                 <PrimaryCta
@@ -765,7 +792,12 @@ function Contact({
   locale: Locale;
   t: Dictionary;
 }) {
-  const points = [t.contact.point1, t.contact.point2, t.contact.point3];
+  const points = [
+    t.contact.point0,
+    t.contact.point1,
+    t.contact.point2,
+    t.contact.point3,
+  ];
 
   return (
     <section
@@ -861,6 +893,30 @@ function PrimaryCta({
 
 // ---------------------------------------------------------------------------
 
+/*
+ * Katen omat tiedot.
+ *
+ * YKSI PAIKKA, EI KOLMEA.
+ *
+ * Osoite ja tunnus toistuisivat muuten footerissa, meista-sivulla ja
+ * sopimusteksteissa, ja ne ehtisivat erota toisistaan ennen kuin joku
+ * huomaa. Muutos tehdaan tassa.
+ *
+ * HUOM: Y-tunnus on toistaiseksi testiarvo. Vaihda oikeaan ennen kuin
+ * sivu on julkisesti asiakkaiden luettavissa — vaara tunnus
+ * yhteystiedoissa on pahempi kuin puuttuva.
+ */
+const BUSINESS_ID = "1234567-8";
+
+/*
+ * Instagram.
+ *
+ * Osoite osoittaa toistaiseksi yksittaiseen julkaisuun, koska se on
+ * se linkki joka oli tiedossa. Profiilin osoite (instagram.com/...)
+ * kestaisi paremmin: julkaisu voidaan poistaa, profiili ei katoa.
+ */
+const INSTAGRAM_URL = "https://www.instagram.com/p/DdtZarIMxVE/";
+
 function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
   return (
     <footer
@@ -906,6 +962,15 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
             <li>
               <Link href="/kirjaudu">{t.nav.login}</Link>
             </li>
+            <li>
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t.footer.instagram}
+              </a>
+            </li>
           </ul>
         </nav>
       </div>
@@ -914,7 +979,8 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
         className="mx-auto mt-8 max-w-5xl text-[12px]"
         style={{ color: "var(--bd-text-3)" }}
       >
-        © {new Date().getFullYear()} Kate
+        © {new Date().getFullYear()} Kate ·{" "}
+        {t.footer.businessId.replace("{tunnus}", BUSINESS_ID)}
       </p>
     </footer>
   );
