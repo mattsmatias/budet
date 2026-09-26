@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import { CONTACT_URL } from "@/lib/kate-contact";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { fill } from "@/lib/i18n/auth-text";
 import { formatDayIn } from "@/lib/i18n/labels";
@@ -91,13 +91,21 @@ export function TrialBanner({
       {/*
         Yhteydenotto on ainoa tie eteenpäin, joten se on rivillä eikä
         ohjeessa: asiakas ei voi itse maksaa sovelluksessa.
+
+        Linkki osoitti ensin asetuksiin, jossa ei ole mitään tapaa
+        ottaa yhteyttä. Kehotus joka vie umpikujaan on pahempi kuin
+        ei kehotusta lainkaan, joten se osoittaa nyt etusivun
+        lomakkeeseen — se kirjoittaa contact_requests-tauluun ja
+        viesti nakyy konsolissa samana päivänä.
       */}
-      <Link
-        href="/admin/asetukset"
+      <a
+        href={CONTACT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         className="rf-press ms-auto shrink-0 font-bold underline-offset-4 hover:underline"
       >
         {t.kokeilu.contact} →
-      </Link>
+      </a>
     </div>
   );
 }
