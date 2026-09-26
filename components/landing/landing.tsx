@@ -6,6 +6,7 @@ import { HtmlLang } from "./html-lang";
 import { LandingNav, Reveal } from "./nav";
 import { Logo } from "@/components/brand/logo";
 import { BUSINESS_ID } from "@/lib/kate-contact";
+import { CUSTOMERS } from "@/lib/kate-customers";
 import {
   HeroFloaters,
   HeroPreview,
@@ -44,6 +45,7 @@ export function Landing({ appHref, locale, t }: Props) {
 
       <main>
         <Hero appHref={appHref} t={t} />
+        <Customers t={t} />
         <Benefits t={t} />
         <Industries t={t} />
         <Flow t={t} />
@@ -902,6 +904,50 @@ function PrimaryCta({
  * kestaisi paremmin: julkaisu voidaan poistaa, profiili ei katoa.
  */
 const INSTAGRAM_URL = "https://www.instagram.com/p/DdtZarIMxVE/";
+
+/**
+ * Asiakkaiden logot.
+ *
+ * TYHJA LISTA EI JATA TYHJAA LAATIKKOA.
+ *
+ * Osio renderoidaan vain jos oikeita asiakkaita on. Paikanpitajalogot
+ * tai "tulossa pian" olisivat pahempia kuin puuttuva osio: ne
+ * kertovat selaajalle etta taalla ei ole ketaan, ja tekevat sen
+ * hitaammin kuin hiljaisuus.
+ *
+ * Logot ovat harmaasavyina ja vaimennettuina, koska ne ovat todiste
+ * eivatka koriste: kymmenen erivarista logoa vetaisi katseen pois
+ * siita mita sivu kertoo.
+ */
+function Customers({ t }: { t: Dictionary }) {
+  if (CUSTOMERS.length === 0) return null;
+
+  return (
+    <section className="px-4 py-12 sm:px-6">
+      <p
+        className="text-center text-[12.5px] font-bold uppercase tracking-[0.14em]"
+        style={{ color: "var(--bd-text-3)" }}
+      >
+        {t.customers.heading}
+      </p>
+
+      <ul className="mx-auto mt-7 flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-7">
+        {CUSTOMERS.map((asiakas) => (
+          <li key={asiakas.name}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={asiakas.logo}
+              alt={asiakas.name}
+              height={28}
+              className="h-7 w-auto opacity-60"
+              style={{ filter: "grayscale(1)" }}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
   return (

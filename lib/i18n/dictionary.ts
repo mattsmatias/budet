@@ -222,6 +222,10 @@ const fi = {
     more: "Onko alasi eri? Kerro siitä, niin katsotaan yhdessä.",
   },
 
+  customers: {
+    heading: "Käytössä näissä yrityksissä",
+  },
+
   footer: {
     tagline: "Pienyrityksen talous yhdessä paikassa.",
     sitemap: "Sivukartta",
@@ -459,6 +463,10 @@ const en: Dictionary = {
     more: "Different line of business? Tell us about it and we'll look at it together.",
   },
 
+  customers: {
+    heading: "Used by these businesses",
+  },
+
   footer: {
     tagline: "Small business finances in one place.",
     sitemap: "Sitemap",
@@ -688,6 +696,10 @@ const sv: Dictionary = {
     more: "Annan bransch? Berätta om den så tittar vi på det tillsammans.",
   },
 
+  customers: {
+    heading: "Används av dessa företag",
+  },
+
   footer: {
     tagline: "Småföretagets ekonomi på ett ställe.",
     sitemap: "Webbplatskarta",
@@ -915,6 +927,10 @@ const da: Dictionary = {
     barber: "Frisører",
     barberBody: "Plejeprodukter, værktøj og lokaleleje. Service- og produktsalg 25,5 %.",
     more: "Anden branche? Fortæl os om den, så ser vi på det sammen.",
+  },
+
+  customers: {
+    heading: "Bruges af disse virksomheder",
   },
 
   footer: {
@@ -1147,6 +1163,10 @@ const tr: Dictionary = {
     more: "Sektörünüz farklı mı? Bize anlatın, birlikte bakalım.",
   },
 
+  customers: {
+    heading: "Bu işletmeler kullanıyor",
+  },
+
   footer: {
     tagline: "Küçük işletme finansı tek yerde.",
     sitemap: "Site haritası",
@@ -1376,6 +1396,10 @@ const et: Dictionary = {
     more: "Teistsugune tegevusala? Räägi sellest ja vaatame koos.",
   },
 
+  customers: {
+    heading: "Kasutusel nendes ettevõtetes",
+  },
+
   footer: {
     tagline: "Väikeettevõtte rahaasjad ühes kohas.",
     sitemap: "Sisukaart",
@@ -1603,6 +1627,10 @@ const ar: Dictionary = {
     barber: "الحلاقون وصالونات التجميل",
     barberBody: "منتجات العناية والأدوات وإيجار المكان. مبيعات الخدمات والمنتجات 25.5%.",
     more: "مجال عمل مختلف؟ أخبرنا عنه وسننظر فيه معًا.",
+  },
+
+  customers: {
+    heading: "تستخدمه هذه الشركات",
   },
 
   footer: {
