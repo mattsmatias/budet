@@ -49,6 +49,7 @@ function dashboardInput(ctx: MattiContext, month: string) {
     tasks: ctx.data.tasks,
     month,
     today: ctx.today,
+    nowTime: ctx.nowTime,
     locale: ctx.locale,
   };
 }

@@ -49,6 +49,8 @@ export interface AlertContext {
   budgets: Budget[];
   month: string;
   today: string;
+  /** Kellonaika nyt ravintolan ajassa, "HH:MM". */
+  nowTime: string;
   /*
    * Myynti on valinnainen vain siksi että se lisättiin myöhemmin; se
    * kulkee samassa datapaketissa kuin muutkin, joten käytännössä se on
@@ -391,7 +393,7 @@ function taskDeadlines(ctx: AlertContext): Alert[] {
   const alerts: Alert[] = [];
 
   for (const task of ctx.tasks ?? []) {
-    const status = statusOf(task, ctx.today);
+    const status = statusOf(task, ctx.today, ctx.nowTime);
 
     if (status === "overdue") {
       const late = daysLate(task, ctx.today);

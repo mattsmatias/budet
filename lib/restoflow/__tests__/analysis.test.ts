@@ -870,6 +870,7 @@ describe("poikkeamat", () => {
     buildAlerts({
       receipts: [],
       budgets: [],
+      nowTime: "12:00",
       sales: [],
       locale: "fi" as const,
       ...input,

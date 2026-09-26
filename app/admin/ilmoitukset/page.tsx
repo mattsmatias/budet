@@ -46,6 +46,7 @@ export default async function NotificationsPage() {
     budgets: data.budgets,
     month: data.month,
     today: data.today,
+    nowTime: data.nowTime,
     locale,
     sales: data.sales,
     tasks: data.tasks,

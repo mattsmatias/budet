@@ -17,6 +17,7 @@ import {
   type ReceiptFilter,
 } from "@/lib/restoflow/expenses";
 import { monthFromParams } from "@/lib/restoflow/dates";
+import { RECEIPT_WINDOW } from "@/lib/restoflow/queries";
 import { duplicateIds, findDuplicates } from "@/lib/restoflow/duplicates";
 import { can } from "@/lib/restoflow/permissions";
 import {} from "@/lib/restoflow/types";
@@ -65,6 +66,7 @@ export default async function AdminReceiptsPage({
     suppliers,
     merchants,
     merchantCategories,
+    receiptsNeedingReview,
     month: nykyinen,
   } = await adminContext("/admin/kuitit");
   const locale = await resolveLocale();
@@ -157,10 +159,21 @@ export default async function AdminReceiptsPage({
    *
    * Linkki vie vanhimpaan, koska se on odottanut pisimpaan.
    */
-  const reviewElsewhere = needsReview(receipts).filter(
+  const reviewElsewhere = receiptsNeedingReview.filter(
     (r) => !r.date.startsWith(month),
   );
   const oldestElsewhere = reviewElsewhere.at(-1);
+
+  /*
+   * IKKUNA SANOTAAN AANEEN.
+   *
+   * Lista lataa rajatun maaran uusimpia kuitteja. Raja on kaukana,
+   * mutta kun se tulee vastaan, vanhempi kuitti katoaa listasta ilman
+   * etta mikaan kertoo miksi. Tarkistettavien luku ei sita karsi — se
+   * tulee omasta kyselystaan — mutta selaajan pitaa tietaa mita han
+   * katsoo.
+   */
+  const windowFull = receipts.length >= RECEIPT_WINDOW;
   const duplicates = duplicateIds(receipts, t);
   const duplicateGroups = findDuplicates(receipts, t);
   const canReview = can(role, "receipts.edit");
@@ -184,6 +197,17 @@ export default async function AdminReceiptsPage({
             >
               {fill(t.kuitit.otherMonths, {
                 osumat: hitCountIn(elsewhere, locale),
+              })}
+            </p>
+          ) : null}
+
+          {windowFull ? (
+            <p
+              className="mt-1 text-[12.5px]"
+              style={{ color: "var(--rf-text-3)" }}
+            >
+              {fill(t.kuitit.windowNote, {
+                maara: String(RECEIPT_WINDOW),
               })}
             </p>
           ) : null}

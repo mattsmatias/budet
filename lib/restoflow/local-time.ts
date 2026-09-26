@@ -139,6 +139,18 @@ export function timeIn(timezone: string, iso: string): string {
   return timeFormatter(timezone).format(at);
 }
 
+/**
+ * Kellonaika juuri nyt ravintolan ajassa, muodossa "HH:MM".
+ *
+ * Tehtavan eraaika on kellonaika, ja sen ohittaminen tekee tehtavasta
+ * myohassa olevan jo saman paivan aikana. Ilman tata kello oli
+ * pelkkaa koristetta: klo 10 eraantynyt nakyi viela klo 23 tekstilla
+ * "Tanaan".
+ */
+export function timeNowIn(timezone: string, now: Date = new Date()): string {
+  return timeIn(timezone, now.toISOString());
+}
+
 /** Viikonpäivä ravintolan ajassa: 1 = maanantai, 7 = sunnuntai. */
 export function weekdayIn(timezone: string, iso: string): number {
   const day = dayIn(timezone, iso);

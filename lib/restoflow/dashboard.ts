@@ -36,6 +36,8 @@ export interface DashboardInput {
   budgets: Budget[];
   month: string;
   today: string;
+  /** Kellonaika nyt ravintolan ajassa, "HH:MM". */
+  nowTime: string;
   /* Tehtävät kulkevat samassa paketissa: yksi kysymys, yksi lista. */
   tasks?: Task[];
   sales?: DailySales[];
@@ -97,6 +99,7 @@ export function attention(input: DashboardInput): Attention {
     budgets: input.budgets,
     month: input.month,
     today: input.today,
+    nowTime: input.nowTime,
     locale: input.locale,
     sales: input.sales,
     tasks: input.tasks,

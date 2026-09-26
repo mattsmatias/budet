@@ -34,7 +34,7 @@ export default async function TasksPage({
   const t = adminText(await resolveLocale());
   const locale = await resolveLocale();
   const nimet = labels(locale);
-  const { restaurant, role, users, today } =
+  const { restaurant, role, users, today, nowTime } =
     await adminContext("/admin/tehtavat");
 
   const params = await searchParams;
@@ -44,11 +44,11 @@ export default async function TasksPage({
   const search = typeof params.haku === "string" ? params.haku.trim() : "";
 
   const all = await fetchTasks(restaurant.id);
-  const counts = countTasks(all, today);
+  const counts = countTasks(all, today, nowTime);
   const canManage = can(role, "tasks.manage");
 
   const filtered = all
-    .filter((task) => matchesFilter(task, filter, today))
+    .filter((task) => matchesFilter(task, filter, today, nowTime))
     .filter((task) => matchesSearch(task, search));
 
   return (
@@ -195,7 +195,7 @@ export default async function TasksPage({
       </form>
 
       {view === "kalenteri" ? (
-        <TaskCalendar t={t} tasks={filtered} today={today} />
+        <TaskCalendar t={t} tasks={filtered} today={today} nowTime={nowTime} />
       ) : (
         <TaskList
           t={t}
@@ -204,6 +204,7 @@ export default async function TasksPage({
           tasks={filtered}
           users={users}
           today={today}
+          nowTime={nowTime}
           canManage={canManage}
         />
       )}
@@ -227,8 +228,13 @@ const suodattimet = (t: AdminText) => [
   { key: "kaikki", label: t.tiimi.allFilter },
 ];
 
-function matchesFilter(task: Task, filter: string, today: string): boolean {
-  const status = statusOf(task, today);
+function matchesFilter(
+  task: Task,
+  filter: string,
+  today: string,
+  nowTime: string,
+): boolean {
+  const status = statusOf(task, today, nowTime);
 
   switch (filter) {
     case "tanaan":

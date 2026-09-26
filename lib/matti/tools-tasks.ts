@@ -51,14 +51,14 @@ const getTasks = defineTool({
       };
     }
 
-    const counts = countTasks(tasks, ctx.today);
+    const counts = countTasks(tasks, ctx.today, ctx.nowTime);
     const open = tasks.filter(isOpen);
 
     const rows = open.map((task) => ({
       title: task.title,
       dueOn: task.dueOn,
       dueTime: task.dueTime,
-      status: statusOf(task, ctx.today),
+      status: statusOf(task, ctx.today, ctx.nowTime),
       daysLate: daysLate(task, ctx.today),
       priority: labels(ctx.locale).taskPriority[task.priority],
       assignedTo:

@@ -42,6 +42,7 @@ export function TaskList({
   tasks,
   users,
   today,
+  nowTime,
   canManage,
 }: {
   t: AdminText;
@@ -50,6 +51,8 @@ export function TaskList({
   tasks: Task[];
   users: User[];
   today: string;
+  /** Kellonaika nyt ravintolan ajassa. Palvelin paattaa, ei selain. */
+  nowTime: string;
   canManage: boolean;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
@@ -102,6 +105,7 @@ export function TaskList({
                     task={task}
                     users={users}
                     today={today}
+                    nowTime={nowTime}
                     canManage={canManage}
                     onEdit={() => setEditing(task.id)}
                   />
@@ -121,6 +125,7 @@ function Rivi({
   task,
   users,
   today,
+  nowTime,
   canManage,
   onEdit,
 }: {
@@ -129,11 +134,13 @@ function Rivi({
   task: Task;
   users: User[];
   today: string;
+  /** Kellonaika nyt ravintolan ajassa. Palvelin paattaa, ei selain. */
+  nowTime: string;
   canManage: boolean;
   onEdit: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const status = statusOf(task, today);
+  const status = statusOf(task, today, nowTime);
   const late = daysLate(task, today);
   const owner = users.find((user) => user.id === task.assignedTo);
   const done = status === "completed" || status === "cancelled";

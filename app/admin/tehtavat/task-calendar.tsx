@@ -18,10 +18,13 @@ export function TaskCalendar({
   t,
   tasks,
   today,
+  nowTime,
 }: {
   t: AdminText;
   tasks: Task[];
   today: string;
+  /** Kellonaika nyt ravintolan ajassa. */
+  nowTime: string;
 }) {
   const month = today.slice(0, 7);
   const weeks = monthCalendar(month, today);
@@ -100,7 +103,7 @@ export function TaskCalendar({
                               className="flex items-start gap-1 text-[11.5px] leading-snug"
                               title={task.title}
                             >
-                              <Piste status={statusOf(task, today)} />
+                              <Piste status={statusOf(task, today, nowTime)} />
                               <span className="min-w-0 flex-1 truncate">
                                 {task.title}
                               </span>

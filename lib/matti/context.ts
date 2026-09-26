@@ -1,7 +1,12 @@
 import type { BusinessType } from "@/lib/restoflow/business";
 import { requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
-import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
+import {
+  monthIn,
+  nowIso,
+  timeNowIn,
+  todayIn,
+} from "@/lib/restoflow/local-time";
 import type { RestaurantData } from "@/lib/restoflow/queries";
 import type { Role } from "@/lib/restoflow/types";
 import type { AppLocale } from "@/lib/i18n/app-locales";
@@ -30,6 +35,8 @@ export interface MattiContext {
   month: string;
   /** Kuluva päivä "2026-08-23". */
   today: string;
+  /** Kellonaika nyt ravintolan ajassa, "HH:MM". */
+  nowTime: string;
   /** Nykyhetki ISO-muodossa. */
   now: string;
   /** Ravintolan aikavyöhyke. Päivä luetaan aina siinä ajassa. */
@@ -61,6 +68,7 @@ export async function mattiContext(
     userName: ctx.user.fullName ?? ctx.user.email ?? "Käyttäjä",
     month: monthIn(ctx.restaurant.timezone),
     today: todayIn(ctx.restaurant.timezone),
+    nowTime: timeNowIn(ctx.restaurant.timezone),
     now: nowIso(),
     timezone: ctx.restaurant.timezone,
     currentPage,

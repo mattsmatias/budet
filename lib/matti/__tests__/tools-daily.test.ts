@@ -24,6 +24,7 @@ const TODAY = "2026-08-24";
 function emptyData(partial: Partial<RestaurantData> = {}): RestaurantData {
   return {
     receipts: [],
+    receiptsNeedingReview: [],
     users: [],
     suppliers: [],
     budgets: [],
@@ -47,7 +48,8 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
     role: "owner",
     userName: "Oktay",
     month: "2026-08",
-    today: TODAY,
+    nowTime: "12:00",
+  today: TODAY,
     now: `${TODAY}T09:00:00Z`,
     timezone: TZ,
     currentPage: null,

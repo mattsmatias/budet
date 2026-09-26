@@ -156,14 +156,26 @@ function toReceipt(row: ReceiptRow): Receipt {
 }
 
 /**
- * Kuitit ravintolalle.
+ * Montako kuittia listanakymiin ladataan kerralla.
  *
- * Raja on korkea mutta olemassa: ilman sitä yhden vuoden aineisto
- * ladattaisiin kokonaan joka sivunlatauksella.
+ * Raja on olemassa siksi, ettei yhden vuoden aineisto latautuisi
+ * kokonaan joka sivunlatauksella. Se on myos nakyva vakio eika
+ * oletusarvo funktion allekirjoituksessa: sivu voi kertoa kayttajalle
+ * kun raja tulee vastaan, eika vanha kuitti katoa listasta
+ * selittamatta.
+ */
+export const RECEIPT_WINDOW = 2000;
+
+/**
+ * Kuitit ravintolalle, uusin ensin.
+ *
+ * Tama on listojen ja yhteenvetojen ikkuna. Se joka tarvitsee tarkan
+ * luvun — kuten valikon merkki — kysyy sen erikseen eika laske tasta
+ * joukosta.
  */
 export async function fetchReceipts(
   restaurantId: string,
-  limit = 500,
+  limit = RECEIPT_WINDOW,
 ): Promise<Receipt[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -172,6 +184,31 @@ export async function fetchReceipts(
     .eq("restaurant_id", restaurantId)
     .order("receipt_date", { ascending: false })
     .limit(limit);
+
+  if (error || !data) return [];
+  return (data as unknown as ReceiptRow[]).map(toReceipt);
+}
+
+/**
+ * Tarkistusta odottavat kuitit, ilman ikkunaa.
+ *
+ * MERKKI EI SAA LASKEA IKKUNASTA.
+ *
+ * Valikon luku lasketaan tasta eika listojen ikkunasta. Ikkunan
+ * ulkopuolelle jaava tarkistettava kuitti ei nakyisi merkissa
+ * lainkaan, ja juuri se kuitti on se joka odottaa pisimpaan.
+ * Osittaisindeksi receipts_status_idx kattaa taman kyselyn.
+ */
+export async function fetchReceiptsNeedingReview(
+  restaurantId: string,
+): Promise<Receipt[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("receipts")
+    .select(RECEIPT_COLUMNS)
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "needs_review")
+    .order("receipt_date", { ascending: false });
 
   if (error || !data) return [];
   return (data as unknown as ReceiptRow[]).map(toReceipt);
@@ -456,6 +493,8 @@ export async function fetchMerchantCategories(): Promise<MerchantCategory[]> {
 
 export interface RestaurantData {
   receipts: Receipt[];
+  /** Tarkistusta odottavat ilman ikkunaa: valikon merkki lukee taman. */
+  receiptsNeedingReview: Receipt[];
   users: User[];
   suppliers: Supplier[];
   budgets: Budget[];
@@ -501,6 +540,7 @@ async function loadRestaurantData(
 ): Promise<RestaurantData> {
   const [
     receipts,
+    receiptsNeedingReview,
     users,
     suppliers,
     budgets,
@@ -514,6 +554,7 @@ async function loadRestaurantData(
     tasks,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
+    fetchReceiptsNeedingReview(restaurantId),
     fetchUsers(restaurantId),
     fetchSuppliers(restaurantId),
     fetchBudgets(restaurantId),
@@ -529,6 +570,7 @@ async function loadRestaurantData(
 
   return {
     receipts,
+    receiptsNeedingReview,
     users,
     suppliers,
     budgets,

@@ -352,3 +352,36 @@ describe("nextDue", () => {
     expect(nextDue("2026-12-31", "daily")).toBe("2027-01-01");
   });
 });
+
+describe("eraaika kellonajalla", () => {
+  /*
+   * Kellonaika oli koristetta.
+   *
+   * statusOf osasi ottaa kellonajan vastaan, mutta yksikaan
+   * tuotantokutsu ei antanut sita: klo 10 eraantynyt tehtava nakyi
+   * viela klo 23 tekstilla "Tanaan". Nyt merkki, lista, kalenteri ja
+   * Matti antavat kaikki saman ajan.
+   */
+  const tehtava = task({ dueOn: "2026-09-27", dueTime: "10:00" });
+
+  it("on tanaan ennen eraaikaa", () => {
+    expect(statusOf(tehtava, "2026-09-27", "09:59")).toBe("due_today");
+  });
+
+  it("on myohassa eraajan jalkeen", () => {
+    expect(statusOf(tehtava, "2026-09-27", "10:01")).toBe("overdue");
+  });
+
+  it("ilman kellonaikaa tehtava on tanaan koko paivan", () => {
+    const koko = task({ dueOn: "2026-09-27", dueTime: null });
+
+    expect(statusOf(koko, "2026-09-27", "23:59")).toBe("due_today");
+  });
+
+  it("myohassa oleva lasketaan huomiota vaativaksi", () => {
+    const counts = countTasks([tehtava], "2026-09-27", "10:01");
+
+    expect(counts.overdue).toBe(1);
+    expect(counts.needsAttention).toBe(1);
+  });
+});

@@ -107,6 +107,7 @@ export default async function AdminDashboard({
     sales,
     month,
     today,
+    nowTime,
     restaurant,
     role,
     suppliers,
@@ -275,6 +276,7 @@ export default async function AdminDashboard({
     sales,
     month: viewMonth,
     today,
+    nowTime,
     locale,
   };
 

@@ -66,6 +66,7 @@ function input(partial: Partial<DashboardInput> = {}): DashboardInput {
     budgets: [],
     month: "2026-08",
     today: "2026-08-15",
+    nowTime: "12:00",
     locale: "fi" as const,
     ...partial,
   };

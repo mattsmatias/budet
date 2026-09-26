@@ -1845,6 +1845,7 @@ const fi = {
     possibleDuplicate: "mahdollinen kaksoiskappale",
     reviewed: "tarkistettu",
     reviewElsewhere: "{maara} tarkistettavaa toisessa kuukaudessa — siirry kuukauteen {kuukausi}",
+    windowNote: "Lista sisältää {maara} uusinta kuittia. Vanhemmat ovat tallessa kirjanpidossa ja raporteissa, mutta eivät näy tässä listassa.",
   },
 
   kulut: {
@@ -3681,6 +3682,7 @@ const en: AdminText = {
     possibleDuplicate: "possible duplicate",
     reviewed: "reviewed",
     reviewElsewhere: "{maara} to check in another month — go to {kuukausi}",
+    windowNote: "This list holds the {maara} most recent receipts. Older ones are safe in the books and reports but do not appear here.",
   },
 
   kulut: {
@@ -5510,6 +5512,7 @@ const sv: AdminText = {
     possibleDuplicate: "möjlig dubblett",
     reviewed: "granskad",
     reviewElsewhere: "{maara} att kontrollera i en annan månad — gå till {kuukausi}",
+    windowNote: "Listan innehåller de {maara} senaste kvittona. Äldre finns kvar i bokföringen och rapporterna men visas inte här.",
   },
 
   kulut: {
@@ -7339,6 +7342,7 @@ const da: AdminText = {
     possibleDuplicate: "mulig dublet",
     reviewed: "gennemgået",
     reviewElsewhere: "{maara} til gennemsyn i en anden måned — gå til {kuukausi}",
+    windowNote: "Listen indeholder de {maara} nyeste bilag. Ældre er gemt i bogføringen og rapporterne, men vises ikke her.",
   },
 
   kulut: {
@@ -9162,6 +9166,7 @@ const tr: AdminText = {
     possibleDuplicate: "olası kopya",
     reviewed: "kontrol edildi",
     reviewElsewhere: "Başka bir ayda {maara} kontrol edilecek — {kuukausi} ayına git",
+    windowNote: "Bu liste en yeni {maara} fişi içerir. Daha eskiler muhasebede ve raporlarda durur ancak burada görünmez.",
   },
 
   kulut: {
@@ -10984,6 +10989,7 @@ const et: AdminText = {
     possibleDuplicate: "võimalik duplikaat",
     reviewed: "kontrollitud",
     reviewElsewhere: "{maara} kontrollimist teises kuus — ava {kuukausi}",
+    windowNote: "Nimekirjas on {maara} viimast kviitungit. Vanemad on raamatupidamises ja aruannetes alles, kuid siin ei kuvata.",
   },
 
   kulut: {
@@ -12819,6 +12825,7 @@ const ar: AdminText = {
     possibleDuplicate: "نسخة مكررة محتملة",
     reviewed: "تمت المراجعة",
     reviewElsewhere: "{maara} بانتظار المراجعة في شهر آخر — انتقل إلى {kuukausi}",
+    windowNote: "تعرض هذه القائمة أحدث {maara} إيصال. الإيصالات الأقدم محفوظة في الدفاتر والتقارير لكنها لا تظهر هنا.",
   },
 
   kulut: {

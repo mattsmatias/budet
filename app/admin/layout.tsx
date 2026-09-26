@@ -6,8 +6,12 @@ import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
 import { MattiPanel } from "./matti/panel";
 import { MobileTitle } from "./mobile-title";
-import { monthIn, nowIso, todayIn } from "@/lib/restoflow/local-time";
-import { needsReview } from "@/lib/restoflow/expenses";
+import {
+  monthIn,
+  nowIso,
+  timeNowIn,
+  todayIn,
+} from "@/lib/restoflow/local-time";
 import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
 import { AdminNav } from "./nav";
@@ -36,12 +40,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const month = monthIn(restaurant.timezone);
   const today = todayIn(restaurant.timezone);
   const now = nowIso();
+  const nowTime = timeNowIn(restaurant.timezone);
 
   const alerts = buildAlerts({
     receipts: data.receipts,
     budgets: data.budgets,
     month,
     today,
+    nowTime,
     locale,
     sales: data.sales,
     tasks: data.tasks,
@@ -113,8 +119,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
    * mitään opettaa ohittamaan myös ne jotka vaativat.
    */
   const counts: Record<string, number> = {
-    "/admin/kuitit": needsReview(data.receipts).length,
-    "/admin/tehtavat": countTasks(data.tasks, today).needsAttention,
+    "/admin/kuitit": data.receiptsNeedingReview.length,
+    "/admin/tehtavat": countTasks(data.tasks, today, nowTime).needsAttention,
   };
 
   return (

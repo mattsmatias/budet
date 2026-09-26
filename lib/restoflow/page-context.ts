@@ -8,7 +8,7 @@
  */
 
 import { redirect } from "next/navigation";
-import { monthIn, todayIn } from "./local-time";
+import { monthIn, timeNowIn, todayIn } from "./local-time";
 import { can, capabilityForPath, landingFor } from "./permissions";
 import { fetchRestaurantData, type RestaurantData } from "./queries";
 import { requireContext, type Context } from "./session";
@@ -18,6 +18,8 @@ export interface AdminContext extends Context, RestaurantData {
   month: string;
   /** Kuluva päivä "2026-08-20" ravintolan aikavyöhykkeellä. */
   today: string;
+  /** Kellonaika nyt ravintolan ajassa, "HH:MM". */
+  nowTime: string;
   /** Nykyhetki ISO-aikaleimana. */
   now: string;
 }
@@ -39,6 +41,7 @@ export async function adminContext(returnTo: string): Promise<AdminContext> {
     ...data,
     month: monthIn(ctx.restaurant.timezone),
     today: todayIn(ctx.restaurant.timezone),
+    nowTime: timeNowIn(ctx.restaurant.timezone),
     now: new Date().toISOString(),
   };
 }
