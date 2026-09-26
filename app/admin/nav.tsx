@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   can,
-  adminNavFor,
   adminNavSectionsFor,
   primaryNavFor,
   type NavEntry,
@@ -88,8 +87,6 @@ export function AdminNav({
     </>
   );
 }
-
-type NavItems = ReturnType<typeof adminNavFor>;
 
 function useActive() {
   const pathname = usePathname();

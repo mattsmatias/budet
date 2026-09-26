@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 122 migraatiota:
+-- Sisältää 126 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -134,6 +134,10 @@
 --   0118_tes_hallinta.sql
 --   0119_tes_aattolisa.sql
 --   0120_tes_toimiala_tekstiksi.sql
+--   0121_oikeudet_ja_search_path.sql
+--   0122_rls_auth_uid_kerran.sql
+--   0123_indeksit_lukupoluille.sql
+--   0124_revoke_public_sisaisilta.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -28043,4 +28047,434 @@ alter table tes_agreements
 
 comment on column tes_agreements.industry is
   'Sopimuksen ala vapaana tunnuksena, esimerkiksi restaurant tai retail. Ei sidottu business_type-enumiin eika kayteta laskennassa.';
+
+
+-- ===========================================================================
+-- 0121_oikeudet_ja_search_path.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0121 — Sisaisten funktioiden oikeudet ja search_path
+-- ---------------------------------------------------------------------------
+--
+-- SISAINEN APUFUNKTIO EI OLE RAJAPINTA.
+--
+-- Kanta tarjosi anon-roolille suoritusoikeuden kymmeneen SECURITY
+-- DEFINER -funktioon joilla ei ole sisaista oikeustarkistusta. Kaksi
+-- niista teki oikeasti jotain: audit_person_name palautti kenen tahansa
+-- profiilin nimen pelkalla UUID:lla, ja record_usage kirjoitti
+-- kayttorivin mille tahansa organisaatiolle. Kumpikin oli kutsuttavissa
+-- julkisella avaimella ilman kirjautumista.
+--
+-- Naita funktioita ei kutsuta sovelluskoodista lainkaan: ne ovat
+-- muiden SQL-funktioiden ja triggerien apureita. Kutsu toisesta
+-- SECURITY DEFINER -funktiosta tapahtuu maarittajan oikeuksilla, joten
+-- oikeuden peruminen anonilta ja kirjautuneelta ei riko yhtaan
+-- nykyista kutsua. Tarkistettiin myos, ettei yksikaan RLS-kaytanto
+-- kutsu naita — kaytanto suoritetaan kysyjan roolilla, ja silloin
+-- peruminen olisi katkaissut paasyn.
+--
+-- Julkisiksi jaavat vain ne kaksi joiden kuuluu olla: liittymiskoodin
+-- esikatselu ja etusivun yhteydenottolomake.
+
+revoke execute on function public.audit_person_name(uuid) from anon, authenticated;
+revoke execute on function public.record_usage(uuid, text, text, uuid, integer) from anon, authenticated;
+revoke execute on function public.restaurant_slug(text) from anon, authenticated;
+revoke execute on function public.restaurant_exists(uuid) from anon, authenticated;
+revoke execute on function public.is_month_closed(uuid, date) from anon, authenticated;
+revoke execute on function public.feature_enabled(text, uuid) from anon, authenticated;
+revoke execute on function public.ledger_year_for(uuid, date) from anon, authenticated;
+revoke execute on function public.ledger_next_number(uuid) from anon, authenticated;
+
+comment on function public.audit_person_name(uuid) is
+  'Sisainen apuri toimintalokin nimille. Ei anon- eika authenticated-oikeutta: kutsutaan vain maarittajan oikeuksilla toisesta funktiosta.';
+
+comment on function public.record_usage(uuid, text, text, uuid, integer) is
+  'Sisainen kayttokirjaus. Ei anon- eika authenticated-oikeutta: ilman tarkistusta kuka tahansa olisi voinut kirjoittaa kayttorivin mille tahansa organisaatiolle.';
+
+-- ---------------------------------------------------------------------------
+-- search_path kiinni
+-- ---------------------------------------------------------------------------
+--
+-- Ilman kiinnitettya hakupolkua funktio loytaa taulun jonka kutsuja on
+-- asettanut polkuunsa. Nama ovat triggereita ja apureita jotka ajetaan
+-- usein maarittajan oikeuksilla, joten vaara taulu olisi vaara taulu
+-- korkeilla oikeuksilla.
+
+alter function public.audit_euros(p_cents integer) set search_path = public, pg_temp;
+alter function public.business_category_accounts() set search_path = public, pg_temp;
+alter function public.business_default_pos_names(p_type business_type) set search_path = public, pg_temp;
+alter function public.business_default_sales_groups(p_type business_type) set search_path = public, pg_temp;
+alter function public.business_ledger_accounts(p_type business_type) set search_path = public, pg_temp;
+alter function public.default_pos_names() set search_path = public, pg_temp;
+alter function public.ledger_kirjattu_lukossa() set search_path = public, pg_temp;
+alter function public.ledger_tasapaino() set search_path = public, pg_temp;
+alter function public.next_task_due(p_due date, p_rule task_recurrence) set search_path = public, pg_temp;
+alter function public.reject_audit_mutation() set search_path = public, pg_temp;
+alter function public.touch_updated_at() set search_path = public, pg_temp;
+
+-- ---------------------------------------------------------------------------
+-- Kaytannottomat taulut
+-- ---------------------------------------------------------------------------
+--
+-- RLS paalla ilman yhtaan kaytantoa tarkoittaa: ei suoraa paasya
+-- kenellekaan. Molemmissa se on tarkoitus eika unohdus, mutta
+-- lintterin varoitus toistuu kunnes syy on kirjoitettu nakyviin.
+-- Kaytannon lisaaminen laajentaisi paasya — tunnustauluun juuri sita
+-- ei haluta.
+
+comment on table public.contact_requests is
+  'Etusivun yhteydenotot. Kirjoitus vain submit_contact_request-funktion kautta ja luku vain sa_-funktioilla, joten suoraa RLS-kaytantoa ei ole tarkoituksella.';
+
+comment on table public.integration_credentials is
+  'Integraatioiden tunnukset. Ei RLS-kaytantoa tarkoituksella: rivit luetaan vain palvelinpuolelta, eika yhdellekaan selainroolille anneta suoraa paasya.';
+
+
+-- ===========================================================================
+-- 0122_rls_auth_uid_kerran.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0122 — auth.uid() lasketaan kerran kyselya kohti
+-- ---------------------------------------------------------------------------
+--
+-- KAYTANTO AJETAAN JOKA RIVILLE.
+--
+-- RLS-kaytannon lauseke suoritetaan erikseen jokaiselle tarkasteltavalle
+-- riville. Kun lausekkeessa lukee auth.uid(), Postgres kutsuu sita
+-- kerran riviä kohti: tuhannen kuitin listaus tekee tuhat kutsua, jotka
+-- kaikki palauttavat saman arvon.
+--
+-- Kaarittyna muotoon (select auth.uid()) kutsu muuttuu aliyhteydeksi,
+-- jonka suunnittelija laskee kerran ja kayttaa kaikille riveille. Tama
+-- on Supabasen oma suositus ja sen lintterin nostama varoitus.
+--
+-- LOGIIKKA EI MUUTU.
+--
+-- Jokainen kaytanto luodaan uudelleen tasmalleen samalla lausekkeella;
+-- ainoa ero on kaare auth.uid()-kutsun ymparilla. Roolit, komennot ja
+-- ehdot ovat entiset. Migraatio ajetaan yhdessa transaktiossa, joten
+-- valissa ei ole hetkea jolloin taulu olisi ilman kaytantoa.
+
+-- ai_conversations ----------------------------------------------------------
+drop policy if exists ai_conversations_own on ai_conversations;
+create policy ai_conversations_own on ai_conversations
+  for select to authenticated
+  using (
+    (user_id = (select auth.uid()))
+    and (restaurant_id in (select my_restaurant_ids()))
+  );
+
+-- ai_messages ---------------------------------------------------------------
+drop policy if exists ai_messages_own on ai_messages;
+create policy ai_messages_own on ai_messages
+  for select to authenticated
+  using (
+    conversation_id in (
+      select ai_conversations.id
+        from ai_conversations
+       where ai_conversations.user_id = (select auth.uid())
+    )
+  );
+
+-- ai_pending_actions --------------------------------------------------------
+drop policy if exists ai_pending_actions_own on ai_pending_actions;
+create policy ai_pending_actions_own on ai_pending_actions
+  for select to authenticated
+  using (user_id = (select auth.uid()));
+
+-- client_assignments --------------------------------------------------------
+drop policy if exists client_assignments_select on client_assignments;
+create policy client_assignments_select on client_assignments
+  for select to authenticated
+  using (
+    (user_id = (select auth.uid()))
+    or exists (
+      select 1
+        from accounting_relationships r
+       where r.id = client_assignments.relationship_id
+         and current_user_has_role(r.firm_org_id, array['firm_admin'::member_role])
+    )
+  );
+
+-- documents -----------------------------------------------------------------
+drop policy if exists documents_select on documents;
+create policy documents_select on documents
+  for select to authenticated
+  using (
+    current_user_is_super_admin()
+    or (
+      (org_id in (select current_user_accessible_org_ids()))
+      and (
+        (not current_user_has_role(org_id, array['employee'::member_role]))
+        or (uploaded_by = (select auth.uid()))
+      )
+    )
+  );
+
+drop policy if exists documents_update on documents;
+create policy documents_update on documents
+  for update to authenticated
+  using (
+    (org_id in (select current_user_accessible_org_ids()))
+    and (
+      (not current_user_has_role(org_id, array['employee'::member_role]))
+      or (uploaded_by = (select auth.uid()))
+    )
+  )
+  with check (org_id in (select current_user_accessible_org_ids()));
+
+-- employees -----------------------------------------------------------------
+drop policy if exists employees_read on employees;
+create policy employees_read on employees
+  for select to authenticated
+  using (is_owner(restaurant_id) or (user_id = (select auth.uid())));
+
+-- feature_flag_restaurants --------------------------------------------------
+drop policy if exists flag_overrides_read on feature_flag_restaurants;
+create policy flag_overrides_read on feature_flag_restaurants
+  for select to public
+  using (
+    exists (
+      select 1
+        from memberships m
+       where m.restaurant_id = feature_flag_restaurants.restaurant_id
+         and m.user_id = (select auth.uid())
+         and m.active
+    )
+  );
+
+-- feature_flags -------------------------------------------------------------
+drop policy if exists flags_read on feature_flags;
+create policy flags_read on feature_flags
+  for select to public
+  using ((select auth.uid()) is not null);
+
+-- notifications -------------------------------------------------------------
+drop policy if exists notifications_select on notifications;
+create policy notifications_select on notifications
+  for select to authenticated
+  using (user_id = (select auth.uid()));
+
+drop policy if exists notifications_update on notifications;
+create policy notifications_update on notifications
+  for update to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+-- profiles ------------------------------------------------------------------
+drop policy if exists profiles_read on profiles;
+create policy profiles_read on profiles
+  for select to authenticated
+  using (
+    (id = (select auth.uid()))
+    or exists (
+      select 1
+        from memberships m
+       where m.user_id = profiles.id
+         and m.restaurant_id in (select my_restaurant_ids())
+    )
+  );
+
+drop policy if exists profiles_select_self on profiles;
+create policy profiles_select_self on profiles
+  for select to authenticated
+  using (
+    (id = (select auth.uid()))
+    or current_user_is_super_admin()
+    or exists (
+      select 1
+        from organization_members m
+       where m.user_id = profiles.id
+         and m.org_id in (select current_user_accessible_org_ids())
+    )
+  );
+
+drop policy if exists profiles_update_own on profiles;
+create policy profiles_update_own on profiles
+  for update to authenticated
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
+
+-- receipt_items -------------------------------------------------------------
+drop policy if exists receipt_items_write on receipt_items;
+create policy receipt_items_write on receipt_items
+  for all to authenticated
+  using (
+    receipt_id in (
+      select receipts.id
+        from receipts
+       where is_manager(receipts.restaurant_id)
+          or receipts.added_by = (select auth.uid())
+    )
+  )
+  with check (
+    receipt_id in (
+      select receipts.id
+        from receipts
+       where is_manager(receipts.restaurant_id)
+          or receipts.added_by = (select auth.uid())
+    )
+  );
+
+-- receipt_pages -------------------------------------------------------------
+drop policy if exists receipt_pages_read on receipt_pages;
+create policy receipt_pages_read on receipt_pages
+  for select to authenticated
+  using (
+    exists (
+      select 1
+        from receipts r
+       where r.id = receipt_pages.receipt_id
+         and (
+           can_read_finance(r.restaurant_id)
+           or (
+             (r.restaurant_id in (select my_restaurant_ids()))
+             and r.added_by = (select auth.uid())
+           )
+         )
+    )
+  );
+
+-- receipts ------------------------------------------------------------------
+drop policy if exists receipts_insert on receipts;
+create policy receipts_insert on receipts
+  for insert to authenticated
+  with check (is_manager(restaurant_id) and (added_by = (select auth.uid())));
+
+drop policy if exists receipts_read on receipts;
+create policy receipts_read on receipts
+  for select to authenticated
+  using (
+    can_read_finance(restaurant_id)
+    or (
+      (restaurant_id in (select my_restaurant_ids()))
+      and (added_by = (select auth.uid()))
+    )
+  );
+
+-- tasks ---------------------------------------------------------------------
+drop policy if exists tasks_read on tasks;
+create policy tasks_read on tasks
+  for select to authenticated
+  using (
+    (restaurant_id in (select my_restaurant_ids()))
+    and case visibility
+          when 'owner_only'::task_visibility then is_owner(restaurant_id)
+          when 'managers'::task_visibility then is_manager(restaurant_id)
+          when 'assigned_user'::task_visibility then
+            ((assigned_to = (select auth.uid())) or is_manager(restaurant_id))
+          else true
+        end
+  );
+
+-- tax_guides ----------------------------------------------------------------
+drop policy if exists tax_guides_read on tax_guides;
+create policy tax_guides_read on tax_guides
+  for select to public
+  using ((select auth.uid()) is not null);
+
+-- time_entries --------------------------------------------------------------
+drop policy if exists time_entries_read on time_entries;
+create policy time_entries_read on time_entries
+  for select to authenticated
+  using (
+    is_owner(restaurant_id)
+    or (
+      employee_id in (
+        select employees.id
+          from employees
+         where employees.user_id = (select auth.uid())
+      )
+    )
+  );
+
+
+-- ===========================================================================
+-- 0123_indeksit_lukupoluille.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0123 — Indeksit niille vierasavaimille joita oikeasti luetaan
+-- ---------------------------------------------------------------------------
+--
+-- INDEKSI EI OLE ILMAINEN.
+--
+-- Lintteri loysi kahdeksankymmenta indeksoimatonta vierasavainta.
+-- Niiden lisaaminen kaikkien varalta olisi vaihtanut hitaan luvun
+-- hitaaseen kirjoitukseen: jokainen indeksi pitaa paivittaa joka
+-- rivilisayksella, ja samassa kannassa on jo neljakymmenta indeksia
+-- joita ei ole kertaakaan kaytetty.
+--
+-- Tassa ovat ne joilla on osoitettava lukupolku: RLS-kaytannon
+-- alikysely, nakyman liitos tai toistuvan tehtavan ketju. Loput —
+-- created_by, posted_by, completed_by ja muut kirjausmerkinnat —
+-- jaavat indeksoimatta, koska niilla ei haeta vaan ne vain
+-- tallennetaan.
+
+-- Tyontekijan oma rivi: time_entries_read-kaytannon alikysely ja
+-- employee_for_me hakevat talla jokaisella leimauksella.
+create index if not exists employees_user_id_idx
+  on employees (user_id);
+
+-- documents_select ja documents_update tarkistavat lataajan.
+create index if not exists documents_uploaded_by_idx
+  on documents (uploaded_by);
+
+create index if not exists documents_assigned_to_idx
+  on documents (assigned_to);
+
+-- Myynti ryhmittain liittaa myyntiryhman joka riville.
+create index if not exists daily_sales_lines_sales_group_id_idx
+  on daily_sales_lines (sales_group_id);
+
+-- Toimintaloki nayttaa tekijan nimen jokaisella rivilla.
+create index if not exists audit_log_actor_id_idx
+  on audit_log (actor_id);
+
+-- Ilmoitukset haetaan organisaatiolla.
+create index if not exists notifications_org_id_idx
+  on notifications (org_id);
+
+-- Toistuvan tehtavan ketju kulkee vanhemman kautta.
+create index if not exists tasks_parent_task_id_idx
+  on tasks (parent_task_id);
+
+-- Oikaisu viittaa korjattavaan vientiin, ja ketju naytetaan kirjanpidossa.
+create index if not exists ledger_entries_corrects_id_idx
+  on ledger_entries (corrects_id);
+
+
+-- ===========================================================================
+-- 0124_revoke_public_sisaisilta.sql
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- 0124 — Sisaiset apurit myos PUBLIC-roolilta
+-- ---------------------------------------------------------------------------
+--
+-- REVOKE ANONILTA EI RIITA.
+--
+-- Postgres antaa uudelle funktiolle suoritusoikeuden PUBLIC-roolille
+-- oletuksena, ja anon perii sen sita kautta. Migraatio 0121 perui
+-- oikeuden anonilta ja kirjautuneelta, mutta nelja funktiota jai
+-- edelleen kutsuttavaksi, koska niiden oikeus ei tullut roolilta vaan
+-- PUBLICilta. Tarkistus paljasti sen: kaksi funktiota naytti yha
+-- avoimelta revoken jalkeen.
+--
+-- Tassa oikeus perutaan siita mista se oikeasti tulee. Kaikki
+-- kahdeksan ovat muiden SQL-funktioiden apureita, eika yksikaan
+-- RLS-kaytanto kutsu niita, joten kutsupolut sailyvat: SECURITY
+-- DEFINER -funktio ajaa ne omistajan oikeuksilla.
+--
+-- Julkisiksi jaavat vain preview_invitation ja submit_contact_request.
+
+revoke execute on function public.audit_person_name(uuid) from public;
+revoke execute on function public.record_usage(uuid, text, text, uuid, integer) from public;
+revoke execute on function public.feature_enabled(text, uuid) from public;
+revoke execute on function public.is_month_closed(uuid, date) from public;
+revoke execute on function public.restaurant_slug(text) from public;
+revoke execute on function public.restaurant_exists(uuid) from public;
+revoke execute on function public.ledger_year_for(uuid, date) from public;
+revoke execute on function public.ledger_next_number(uuid) from public;
 

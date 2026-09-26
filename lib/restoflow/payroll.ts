@@ -1,3 +1,4 @@
+import { dateFormat } from "@/lib/intl-cache";
 import { isEveWithSupplement, isSundayOrHoliday } from "./holidays";
 import type { TimeEntry } from "./employees";
 
@@ -155,7 +156,7 @@ function localParts(
   date: Date,
   timezone: string,
 ): { weekday: number; minuteOfDay: number; day: string } {
-  const parts = new Intl.DateTimeFormat("en-GB", {
+  const parts = dateFormat("en-GB", {
     timeZone: timezone,
     weekday: "short",
     year: "numeric",

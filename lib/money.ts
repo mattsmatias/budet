@@ -1,3 +1,5 @@
+import { numberFormat } from "./intl-cache";
+
 /**
  * Rahalaskenta kokonaislukuina (sentteinä).
  *
@@ -44,7 +46,7 @@ export function formatMoney(
   locale = "fi-FI",
 ): string {
   if (cents === null || cents === undefined) return "—";
-  return new Intl.NumberFormat(locale, {
+  return numberFormat(locale, {
     style: "currency",
     currency,
   }).format(cents / 100);
@@ -56,7 +58,7 @@ export function formatRate(
   locale = "fi-FI",
 ): string {
   if (rate === null || rate === undefined) return "—";
-  return new Intl.NumberFormat(locale, {
+  return numberFormat(locale, {
     style: "percent",
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,

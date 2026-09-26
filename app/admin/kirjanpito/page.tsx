@@ -91,6 +91,21 @@ type TabKey = ReturnType<typeof valilehdet>[number]["key"];
  * palvelimella eikä lataa kaikkien välilehtien dataa varmuuden
  * vuoksi. Linkin voi myös jakaa ja selaimen paluunappi toimii.
  */
+/**
+ * Tuloslaskelma ja tase rinnakkain.
+ *
+ * Perakkaisina awaiteina jalkimmainen kysely odotti ensimmaisen
+ * valmistumista turhaan: ne eivat riipu toisistaan.
+ */
+async function raporttiAineisto(restaurantId: string, month: string) {
+  const [income, balance] = await Promise.all([
+    fetchIncomeStatement(restaurantId, month, true),
+    fetchBalanceSheet(restaurantId, month, true),
+  ]);
+
+  return { income, balance };
+}
+
 export default async function AccountingPage({
   searchParams,
 }: PageProps<"/admin/kirjanpito">) {
@@ -245,8 +260,7 @@ export default async function AccountingPage({
         <Raportit
           locale={locale}
           t={t}
-          income={await fetchIncomeStatement(restaurant.id, month, true)}
-          balance={await fetchBalanceSheet(restaurant.id, month, true)}
+          {...await raporttiAineisto(restaurant.id, month)}
           month={month}
         />
       ) : null}

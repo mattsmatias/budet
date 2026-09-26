@@ -1,3 +1,4 @@
+import { dateFormat } from "@/lib/intl-cache";
 /**
  * Työtunnit ja arvioitu palkkakulu.
  *
@@ -105,7 +106,7 @@ export function formatHours(minutes: number, locale: string): string {
 
 /** Kellonaika hh:mm yrityksen ajassa. */
 export function formatClock(iso: string, timezone: string): string {
-  return new Intl.DateTimeFormat("fi-FI", {
+  return dateFormat("fi-FI", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: timezone,

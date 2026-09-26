@@ -1,3 +1,4 @@
+import { dateFormat } from "@/lib/intl-cache";
 import type { AppLocale } from "./app-locales";
 import type {
   ExpenseCategory,
@@ -1020,7 +1021,7 @@ export function dayCountIn(count: number, locale: AppLocale): string {
 /** "tammikuu" — kuukauden nimi pienellä, vertailulauseita varten. */
 export function monthWordIn(month: string, locale: AppLocale): string {
   const [year, m] = month.split("-").map(Number);
-  return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" })
+  return dateFormat(locale, { month: "long", timeZone: "UTC" })
     .format(new Date(Date.UTC(year, m - 1, 1)))
     .toLowerCase();
 }
@@ -1055,7 +1056,7 @@ function paivaks(isoDate: string): Date {
 
 /** "Keskiviikko" — viikonpäivä kokonaan, iso alkukirjain. */
 export function weekdayLongIn(isoDate: string, locale: AppLocale): string {
-  const sana = new Intl.DateTimeFormat(locale, {
+  const sana = dateFormat(locale, {
     weekday: "long",
     timeZone: "UTC",
   }).format(paivaks(isoDate));
@@ -1064,7 +1065,7 @@ export function weekdayLongIn(isoDate: string, locale: AppLocale): string {
 
 /** "ke" — lyhenne listan tunnisteeksi, pienellä. */
 export function weekdayShortIn(isoDate: string, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" })
+  return dateFormat(locale, { weekday: "short", timeZone: "UTC" })
     .format(paivaks(isoDate))
     .replace(/\.$/, "")
     .toLowerCase();
@@ -1090,7 +1091,7 @@ export function weekdayByNumberIn(
 
 /** "24.8.2026" kielen omalla numeromuodolla. */
 export function formatDayIn(isoDate: string, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     day: "numeric",
     month: "numeric",
     year: "numeric",
@@ -1100,7 +1101,7 @@ export function formatDayIn(isoDate: string, locale: AppLocale): string {
 
 /** "24.8." — vuosi jää pois kun se on rivin muusta sisällöstä selvä. */
 export function formatDayShortIn(isoDate: string, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(locale, {
+  return dateFormat(locale, {
     day: "numeric",
     month: "numeric",
     timeZone: "UTC",
