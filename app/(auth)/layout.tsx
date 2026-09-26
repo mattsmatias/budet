@@ -4,6 +4,7 @@ import { LanguagePicker } from "@/components/i18n/language-picker";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText } from "@/lib/i18n/auth-text";
 import { NEWS_BODY, NEWS_LABEL } from "@/lib/kate-news";
+import { RfIcon } from "@/components/restoflow/icons";
 
 /**
  * Kirjautumisen kuori.
@@ -76,15 +77,18 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
               mika muuttui eika nayttaa keksittya euromaaraa.
             */}
             <div className="rf-auth-card-float rf-auth-float-b">
+              {/*
+                Ikoni tulee Katen omasta sarjasta.
+
+                Tassa oli hetken kasin kirjoitettu tahti, ja sen
+                sakarat olivat eri mittaisia: viisisakarainen tahti on
+                geometriaa eika vapaalla kadella piirretty muoto.
+                Sarjan tahti on piirretty kerran oikein. Kipina olisi
+                ollut vaara merkki: se on Katessa Matin tunnus, eika
+                uutuusrivin pida nayttaa avustajalta.
+              */}
               <span className="rf-auth-check">
-                <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
-                  <path
-                    d="M8 2.5l1.6 3.6 3.9.4-2.9 2.6.8 3.8L8 11l-3.4 1.9.8-3.8-2.9-2.6 3.9-.4z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <RfIcon name="star" size={15} />
               </span>
               <span className="min-w-0">
                 <span className="block text-[13px] font-semibold">
