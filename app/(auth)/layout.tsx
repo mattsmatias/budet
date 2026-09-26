@@ -87,7 +87,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
                 ollut vaara merkki: se on Katessa Matin tunnus, eika
                 uutuusrivin pida nayttaa avustajalta.
               */}
-              <span className="rf-auth-check">
+              <span className="mt-[3px] shrink-0 text-white/55">
                 <RfIcon name="star" size={15} />
               </span>
               <span className="min-w-0">
