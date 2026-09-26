@@ -144,6 +144,23 @@ export default async function AdminReceiptsPage({
 
   const total = visible.reduce((s, r) => s + r.totalCents, 0);
   const reviewCount = needsReview(receiptsInMonth(receipts, month)).length;
+
+  /*
+   * TARKISTETTAVA EI SAA JAADA KUUKAUDEN TAAKSE.
+   *
+   * Valikon merkki laskee tarkistettavat kaikilta kuukausilta, mutta
+   * lista nayttaa vain valitun kuukauden. Helmikuun kuitti nakyi siis
+   * merkissa muttei yhdellakaan sivulla: luku pyysi tekemaan jotain
+   * jota ei voinut loytaa. Sama periaate kuin haussa — se mika jaa
+   * rajauksen taakse kerrotaan aaneen ja siihen paasee yhdella
+   * klikkauksella.
+   *
+   * Linkki vie vanhimpaan, koska se on odottanut pisimpaan.
+   */
+  const reviewElsewhere = needsReview(receipts).filter(
+    (r) => !r.date.startsWith(month),
+  );
+  const oldestElsewhere = reviewElsewhere.at(-1);
   const duplicates = duplicateIds(receipts, t);
   const duplicateGroups = findDuplicates(receipts, t);
   const canReview = can(role, "receipts.edit");
@@ -168,6 +185,30 @@ export default async function AdminReceiptsPage({
               {fill(t.kuitit.otherMonths, {
                 osumat: hitCountIn(elsewhere, locale),
               })}
+            </p>
+          ) : null}
+
+          {oldestElsewhere ? (
+            <p className="mt-1 text-[12.5px]">
+              <Link
+                href={{
+                  pathname: "/admin/kuitit",
+                  query: {
+                    kuukausi: oldestElsewhere.date.slice(0, 7),
+                    suodatin: "needs_review",
+                  },
+                }}
+                className="rf-press font-semibold underline-offset-4 hover:underline"
+                style={{ color: "var(--rf-accent)" }}
+              >
+                {fill(t.kuitit.reviewElsewhere, {
+                  maara: String(reviewElsewhere.length),
+                  kuukausi: formatMonth(
+                    oldestElsewhere.date.slice(0, 7),
+                    locale,
+                  ),
+                })}
+              </Link>
             </p>
           ) : null}
         </div>

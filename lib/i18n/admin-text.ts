@@ -1844,6 +1844,7 @@ const fi = {
     vatMissing: "puuttuu",
     possibleDuplicate: "mahdollinen kaksoiskappale",
     reviewed: "tarkistettu",
+    reviewElsewhere: "{maara} tarkistettavaa toisessa kuukaudessa — siirry kuukauteen {kuukausi}",
   },
 
   kulut: {
@@ -3679,6 +3680,7 @@ const en: AdminText = {
     vatMissing: "missing",
     possibleDuplicate: "possible duplicate",
     reviewed: "reviewed",
+    reviewElsewhere: "{maara} to check in another month — go to {kuukausi}",
   },
 
   kulut: {
@@ -5507,6 +5509,7 @@ const sv: AdminText = {
     vatMissing: "saknas",
     possibleDuplicate: "möjlig dubblett",
     reviewed: "granskad",
+    reviewElsewhere: "{maara} att kontrollera i en annan månad — gå till {kuukausi}",
   },
 
   kulut: {
@@ -7335,6 +7338,7 @@ const da: AdminText = {
     vatMissing: "mangler",
     possibleDuplicate: "mulig dublet",
     reviewed: "gennemgået",
+    reviewElsewhere: "{maara} til gennemsyn i en anden måned — gå til {kuukausi}",
   },
 
   kulut: {
@@ -9157,6 +9161,7 @@ const tr: AdminText = {
     vatMissing: "eksik",
     possibleDuplicate: "olası kopya",
     reviewed: "kontrol edildi",
+    reviewElsewhere: "Başka bir ayda {maara} kontrol edilecek — {kuukausi} ayına git",
   },
 
   kulut: {
@@ -10978,6 +10983,7 @@ const et: AdminText = {
     vatMissing: "puudub",
     possibleDuplicate: "võimalik duplikaat",
     reviewed: "kontrollitud",
+    reviewElsewhere: "{maara} kontrollimist teises kuus — ava {kuukausi}",
   },
 
   kulut: {
@@ -12812,6 +12818,7 @@ const ar: AdminText = {
     vatMissing: "غير متوفرة",
     possibleDuplicate: "نسخة مكررة محتملة",
     reviewed: "تمت المراجعة",
+    reviewElsewhere: "{maara} بانتظار المراجعة في شهر آخر — انتقل إلى {kuukausi}",
   },
 
   kulut: {
