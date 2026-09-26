@@ -227,6 +227,8 @@ const fi = {
     sitemap: "Sivukartta",
     instagram: "Instagram",
     businessId: "Y-tunnus {tunnus}",
+    privacy: "Tietosuoja",
+    terms: "Käyttöehdot",
   },
 
   about: {
@@ -462,6 +464,8 @@ const en: Dictionary = {
     sitemap: "Sitemap",
     instagram: "Instagram",
     businessId: "Business ID {tunnus}",
+    privacy: "Privacy",
+    terms: "Terms",
   },
   about: {
     metaTitle: "About – Kate",
@@ -689,6 +693,8 @@ const sv: Dictionary = {
     sitemap: "Webbplatskarta",
     instagram: "Instagram",
     businessId: "FO-nummer {tunnus}",
+    privacy: "Dataskydd",
+    terms: "Användarvillkor",
   },
   about: {
     metaTitle: "Om oss – Kate",
@@ -916,6 +922,8 @@ const da: Dictionary = {
     sitemap: "Sitemap",
     instagram: "Instagram",
     businessId: "CVR-nummer {tunnus}",
+    privacy: "Privatliv",
+    terms: "Vilkår",
   },
   about: {
     metaTitle: "Om os – Kate",
@@ -1144,6 +1152,8 @@ const tr: Dictionary = {
     sitemap: "Site haritası",
     instagram: "Instagram",
     businessId: "Vergi kimlik no {tunnus}",
+    privacy: "Gizlilik",
+    terms: "Koşullar",
   },
   about: {
     metaTitle: "Hakkımızda – Kate",
@@ -1371,6 +1381,8 @@ const et: Dictionary = {
     sitemap: "Sisukaart",
     instagram: "Instagram",
     businessId: "Registrikood {tunnus}",
+    privacy: "Privaatsus",
+    terms: "Tingimused",
   },
   about: {
     metaTitle: "Meist – Kate",
@@ -1598,6 +1610,8 @@ const ar: Dictionary = {
     sitemap: "خريطة الموقع",
     instagram: "Instagram",
     businessId: "الرقم التجاري {tunnus}",
+    privacy: "الخصوصية",
+    terms: "الشروط",
   },
   about: {
     metaTitle: "من نحن – Kate",

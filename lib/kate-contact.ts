@@ -23,5 +23,24 @@
 /** Yhteydenottolomake etusivulla. Toimii kirjautumatta. */
 export const CONTACT_URL = "https://kateapp.fi/#yhteys";
 
-/** Tukiosoite kun sellainen on. Null = näytetään vain lomake. */
+/**
+ * Tukiosoite kun sellainen on. Null = näytetään vain lomake.
+ *
+ * Päätetty toistaiseksi: tuki hoidetaan lomakkeella. Yksi kanava jota
+ * luetaan on parempi kuin kaksi joista toinen unohtuu.
+ */
 export const SUPPORT_EMAIL: string | null = null;
+
+/**
+ * Yrityksen viralliset tiedot.
+ *
+ * Nämä näkyvät footerissa, tietosuojaselosteessa ja käyttöehdoissa.
+ * Yhdessä paikassa siksi, että seloste ja footer eivät voi kertoa eri
+ * tunnusta samasta yrityksestä.
+ *
+ * HUOM: Y-tunnus on yhä testiarvo. Se on nyt myös tietosuojaselosteessa
+ * ja käyttöehdoissa, eli väärän tunnuksen hinta nousi: vaihda oikeaan
+ * ennen kuin sivuja jaetaan asiakkaille.
+ */
+export const COMPANY_NAME = "Kate";
+export const BUSINESS_ID = "1234567-8";

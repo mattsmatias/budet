@@ -5,6 +5,7 @@ import type { Dictionary } from "@/lib/i18n/dictionary";
 import { HtmlLang } from "./html-lang";
 import { LandingNav, Reveal } from "./nav";
 import { Logo } from "@/components/brand/logo";
+import { BUSINESS_ID } from "@/lib/kate-contact";
 import {
   HeroFloaters,
   HeroPreview,
@@ -894,21 +895,6 @@ function PrimaryCta({
 // ---------------------------------------------------------------------------
 
 /*
- * Katen omat tiedot.
- *
- * YKSI PAIKKA, EI KOLMEA.
- *
- * Osoite ja tunnus toistuisivat muuten footerissa, meista-sivulla ja
- * sopimusteksteissa, ja ne ehtisivat erota toisistaan ennen kuin joku
- * huomaa. Muutos tehdaan tassa.
- *
- * HUOM: Y-tunnus on toistaiseksi testiarvo. Vaihda oikeaan ennen kuin
- * sivu on julkisesti asiakkaiden luettavissa — vaara tunnus
- * yhteystiedoissa on pahempi kuin puuttuva.
- */
-const BUSINESS_ID = "1234567-8";
-
-/*
  * Instagram.
  *
  * Osoite osoittaa toistaiseksi yksittaiseen julkaisuun, koska se on
@@ -970,6 +956,12 @@ function Footer({ locale, t }: { locale: Locale; t: Dictionary }) {
               >
                 {t.footer.instagram}
               </a>
+            </li>
+            <li>
+              <Link href="/tietosuoja">{t.footer.privacy}</Link>
+            </li>
+            <li>
+              <Link href="/ehdot">{t.footer.terms}</Link>
             </li>
           </ul>
         </nav>
