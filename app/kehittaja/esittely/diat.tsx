@@ -851,18 +851,64 @@ export function Esittely() {
     else await kehys.current?.requestFullscreen();
   };
 
+  /*
+   * Pyyhkäisy tabletilla.
+   *
+   * SORMI ON TABLETIN NUOLINÄPPÄIN.
+   *
+   * Esittely pidetään usein tabletilta pöydän ääressä, eikä pienten
+   * nuolinappien etsiminen kesken lauseen näytä hyvältä asiakkaan
+   * silmissä. Vaakapyyhkäisy vaihtaa dian samaan suuntaan kuin
+   * kuvagalleriassa: vasemmalle eteenpäin.
+   *
+   * PYSTYSUUNTA VOITTAA.
+   *
+   * Sivua pitää voida vierittää sormella myös dian päältä, joten ele
+   * luetaan diaksi vain kun vaakaliike on selvästi pystyliikettä
+   * suurempi. Hiiri jätetään rauhaan: työpöydällä raahaus on tekstin
+   * maalaamista eikä eleohjausta.
+   */
+  const kosketus = useRef<{ x: number; y: number; id: number } | null>(null);
+
+  const eleAlkaa = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse") return;
+    kosketus.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  };
+
+  const elePaattyy = (e: React.PointerEvent) => {
+    const alku = kosketus.current;
+    kosketus.current = null;
+    if (!alku || alku.id !== e.pointerId) return;
+
+    const vaaka = e.clientX - alku.x;
+    const pysty = e.clientY - alku.y;
+
+    /* Lyhyt tönäisy on napautus, ja pysty on vieritystä. */
+    if (Math.abs(vaaka) < 55) return;
+    if (Math.abs(vaaka) < Math.abs(pysty) * 1.4) return;
+
+    siirry(vaaka < 0 ? 1 : -1);
+  };
+
   const dia = DIAT[sivu];
 
   return (
     <div className="space-y-3.5">
       <div
         ref={kehys}
+        onPointerDown={eleAlkaa}
+        onPointerUp={elePaattyy}
+        onPointerCancel={() => {
+          kosketus.current = null;
+        }}
         className="relative flex flex-col overflow-hidden"
         style={{
           background: "var(--rf-bg)",
           border: "1px solid var(--rf-line)",
           borderRadius: kokoNaytto ? 0 : "var(--rf-r-card)",
           minHeight: kokoNaytto ? "100vh" : "min(78vh, 660px)",
+          /* Pystyvieritys jää selaimelle, vaakaele meille. */
+          touchAction: "pan-y",
         }}
       >
         {/* Edistyminen: ohut viiva ylälaidassa, ei laskuria keskellä. */}
@@ -949,7 +995,7 @@ export function Esittely() {
 
         <div className="flex items-center gap-3">
           <span className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
-            Nuolinäppäimet selaavat
+            Pyyhkäise tai käytä nuolinäppäimiä
           </span>
           <Nappi onClick={koko}>
             {kokoNaytto ? "Poistu koko näytöstä" : "Koko näyttö"}
