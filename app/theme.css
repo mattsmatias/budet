@@ -1574,12 +1574,22 @@ details[open] .rf-summary-chevron {
     rf-auth-bob 5s ease-in-out 1.2s infinite alternate;
 }
 
+/*
+ * Uutiskortti rivittyy, toisin kuin lyhyt tunnusrivi ennen sitä.
+ *
+ * Kortissa luki aiemmin kaksi sanaa ja euromäärä, joten nowrap piti
+ * sen siistinä. Nyt siinä on lause siitä mitä Kateen viimeksi tuli, ja
+ * rivittymätön lause venytti kortin paneelin reunan yli. Leveys on
+ * rajattu niin että kortti pysyy kuvapaneelin sisällä myös silloin kun
+ * teksti on jollain kielellä pidempi kuin suomeksi.
+ */
 .rf-auth-float-b {
-  white-space: nowrap;
+  white-space: normal;
+  max-width: min(21rem, 78%);
   left: 190px;
   top: 96px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   animation:
     rf-auth-in 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 700ms both,

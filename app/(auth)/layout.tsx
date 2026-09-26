@@ -3,6 +3,7 @@ import { Logo } from "@/components/brand/logo";
 import { LanguagePicker } from "@/components/i18n/language-picker";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText } from "@/lib/i18n/auth-text";
+import { NEWS_BODY, NEWS_LABEL } from "@/lib/kate-news";
 
 /**
  * Kirjautumisen kuori.
@@ -68,24 +69,29 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
               </svg>
             </div>
 
+            {/*
+              Tassa oli toinen keksitty kuitti summineen. Sen tilalla
+              on nyt yksi tosi lause siita mita Kateen viimeksi tuli:
+              kirjautuva on jo asiakas, joten hanelle kannattaa kertoa
+              mika muuttui eika nayttaa keksittya euromaaraa.
+            */}
             <div className="rf-auth-card-float rf-auth-float-b">
               <span className="rf-auth-check">
                 <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
                   <path
-                    d="M3.5 8.5l3 3 6-7"
+                    d="M8 2.5l1.6 3.6 3.9.4-2.9 2.6.8 3.8L8 11l-3.4 1.9.8-3.8-2.9-2.6 3.9-.4z"
                     stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
+                    strokeWidth="1.6"
                     strokeLinejoin="round"
                   />
                 </svg>
               </span>
-              <span>
+              <span className="min-w-0">
                 <span className="block text-[13px] font-semibold">
-                  {t.kirjaudu.brandReceipt}
+                  {NEWS_LABEL[locale]}
                 </span>
-                <span className="rf-tabular block text-[12px] text-white/60">
-                  {t.kirjaudu.brandReceiptBody}
+                <span className="block text-[12px] leading-snug text-white/60">
+                  {NEWS_BODY[locale]}
                 </span>
               </span>
             </div>

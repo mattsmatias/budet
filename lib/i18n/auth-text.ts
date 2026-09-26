@@ -54,8 +54,6 @@ const fi = {
     brandB: "Ja paljonko jää käteen.",
     brandBody: "Myynti, kuitit, kulut ja kirjanpito yhdessä näkymässä.",
     brandResult: "Tulos tänään",
-    brandReceipt: "Kuitti luettu",
-    brandReceiptBody: "Tukkutoimitus · 184,20 €",
     accountRemoved: "Tunnuksesi on poistettu käytöstä. Jos tämä on virhe, ota yhteyttä yrityksesi omistajaan.",
   },
 
@@ -172,8 +170,6 @@ const en: AuthText = {
     brandB: "And how much you keep.",
     brandBody: "Sales, receipts, expenses and the books in one view.",
     brandResult: "Result today",
-    brandReceipt: "Receipt read",
-    brandReceiptBody: "Wholesale delivery · €184.20",
     accountRemoved: "Your account has been removed. If this is a mistake, contact your company's owner.",
   },
   liity: {
@@ -276,8 +272,6 @@ const sv: AuthText = {
     brandB: "Och hur mycket som blir kvar.",
     brandBody: "Försäljning, kvitton, kostnader och bokföring i en vy.",
     brandResult: "Resultat i dag",
-    brandReceipt: "Kvitto läst",
-    brandReceiptBody: "Grossistleverans · 184,20 €",
     accountRemoved: "Ditt konto har tagits bort. Om detta är ett misstag, kontakta företagets ägare.",
   },
   liity: {
@@ -380,8 +374,6 @@ const da: AuthText = {
     brandB: "Og hvor meget der er tilbage.",
     brandBody: "Salg, kvitteringer, udgifter og bogføring i én visning.",
     brandResult: "Resultat i dag",
-    brandReceipt: "Kvittering læst",
-    brandReceiptBody: "Engroslevering · 184,20 €",
     accountRemoved: "Din konto er fjernet. Hvis det er en fejl, så kontakt virksomhedens ejer.",
   },
   liity: {
@@ -483,8 +475,6 @@ const tr: AuthText = {
     brandB: "Ve elinizde ne kaldığını.",
     brandBody: "Satış, fiş, gider ve muhasebe tek görünümde.",
     brandResult: "Bugünkü sonuç",
-    brandReceipt: "Fiş okundu",
-    brandReceiptBody: "Toptan teslimat · 184,20 €",
     accountRemoved: "Hesabınız kaldırıldı. Bir hata olduğunu düşünüyorsanız şirket sahibinize başvurun.",
   },
   liity: {
@@ -587,8 +577,6 @@ const et: AuthText = {
     brandB: "Ja kui palju kätte jääb.",
     brandBody: "Müük, kviitungid, kulud ja raamatupidamine ühes vaates.",
     brandResult: "Tänane tulemus",
-    brandReceipt: "Kviitung loetud",
-    brandReceiptBody: "Hulgitarne · 184,20 €",
     accountRemoved: "Sinu konto on eemaldatud. Kui see on viga, võta ühendust ettevõtte omanikuga.",
   },
   liity: {
@@ -689,8 +677,6 @@ const ar: AuthText = {
     brandB: "وكم تحتفظ منه.",
     brandBody: "المبيعات والإيصالات والمصروفات والدفاتر في عرض واحد.",
     brandResult: "نتيجة اليوم",
-    brandReceipt: "تمت قراءة الإيصال",
-    brandReceiptBody: "توصيل جملة · €184.20",
     accountRemoved: "تمت إزالة حسابك. إذا كان ذلك خطأً فتواصل مع مالك شركتك.",
   },
   liity: {
