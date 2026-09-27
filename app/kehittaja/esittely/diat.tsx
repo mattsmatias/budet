@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { RfIcon, type IconName } from "@/components/restoflow/icons";
+import { MetricCard } from "@/components/restoflow/ui";
+import { AreaChart } from "@/components/restoflow/area-chart";
 
 /**
  * Katen tuote-esittely.
@@ -151,6 +153,58 @@ function Huomio({ children }: { children: React.ReactNode }) {
 /* ------------------------------------------------------------------ */
 /* Diat                                                                */
 /* ------------------------------------------------------------------ */
+
+
+/* ------------------------------------------------------------------ */
+/* Nayte oikeasta sovelluksesta                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Esimerkkikuukausi.
+ *
+ * LUVUT OVAT KESKENAAN JOHDONMUKAISIA.
+ *
+ * Myynti miinus kulut on tulos, kulujakauman osuudet summautuvat
+ * sataan ja kuukauden kayra paatyy samaan summaan kuin kortti. Jos
+ * luvut riitelisivat keskenaan, asiakas huomaisi sen nopeammin kuin
+ * uskoisi — ja kysyisi laskeeko Kate oikein.
+ *
+ * Mittakaava on pienen ravintolan kuukausi, ei ketjun.
+ */
+const MYYNTI = 48250;
+const KULUT = 31180;
+const TULOS = MYYNTI - KULUT;
+
+const VIIKOT = ["Vk 36", "Vk 37", "Vk 38", "Vk 39"];
+const MYYNTI_VIIKOT = [10850, 12400, 11900, 13100];
+const KULUT_VIIKOT = [7600, 7950, 7430, 8200];
+
+const JAKAUMA: { nimi: string; osuus: number; savy: string }[] = [
+  { nimi: "Ruoka", osuus: 43, savy: "var(--rf-blue)" },
+  { nimi: "Henkilosto", osuus: 28, savy: "var(--rf-accent)" },
+  { nimi: "Juomat", osuus: 17, savy: "var(--rf-violet, #7b76e8)" },
+  { nimi: "Muut", osuus: 12, savy: "var(--rf-text-3)" },
+];
+
+/** Euroa naytolle: "48 250 €". */
+function euro(arvo: number): string {
+  return arvo.toLocaleString("fi-FI") + " €";
+}
+
+function Esimerkkimerkki() {
+  return (
+    <span
+      className="px-2 py-1 text-[11px] font-bold"
+      style={{
+        background: "var(--rf-accent-bg)",
+        color: "var(--rf-accent)",
+        borderRadius: 999,
+      }}
+    >
+      Esimerkki
+    </span>
+  );
+}
 
 const OMINAISUUDET: { icon: IconName; otsikko: string; teksti: string }[] = [
   {
@@ -413,6 +467,155 @@ const DIAT: Dia[] = [
           ))}
         </div>
       </div>
+    ),
+  },
+
+  {
+    id: "nakyma",
+    otsikko: "Yleiskatsaus",
+    sisalto: (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <Silmays>Nain se nayttaa</Silmays>
+            <Otsikko>Kuukausi yhdella silmayksella.</Otsikko>
+          </div>
+          <Esimerkkimerkki />
+        </div>
+
+        {/*
+          Nama ovat sovelluksen omat kortit ja kaavio, eivat kuvat.
+          Asiakas nakee esittelyssa saman pinnan jonka han nakee
+          ensimmaisella kirjautumisella — kuvakaappaus vanhenisi
+          seuraavassa julkaisussa, tama ei.
+        */}
+        <div className="mt-5 grid auto-rows-fr grid-cols-2 gap-2.5 xl:grid-cols-4">
+          <MetricCard
+            label="Myynti"
+            value={euro(MYYNTI)}
+            icon={<RfIcon name="sales" size={17} />}
+            tileTone="blue"
+            tone="muted"
+            conclusion="Syyskuu 2026"
+          />
+          <MetricCard
+            label="Kulut"
+            value={euro(KULUT)}
+            icon={<RfIcon name="expenses" size={17} />}
+            tileTone="violet"
+            tone="muted"
+            conclusion="Kirjatut kulut"
+          />
+          <MetricCard
+            label="Tulos"
+            value={euro(TULOS)}
+            icon={<RfIcon name="trend" size={17} />}
+            tileTone="green"
+            tone="up"
+            delta={{ text: "35 % myynnista", tone: "up" }}
+            conclusion="Myynti miinus kulut"
+          />
+          <MetricCard
+            label="Kuitit"
+            value="38"
+            icon={<RfIcon name="receipt" size={17} />}
+            tileTone="brand"
+            tone="muted"
+            conclusion="Kaikki tarkistettu"
+          />
+        </div>
+
+        <div className="mt-3.5 min-h-0 flex-1">
+          <Ruutu>
+            <p className="text-[13px] font-bold">Myynti ja kulut</p>
+            <div className="mt-2">
+              <AreaChart
+                labels={VIIKOT}
+                series={[
+                  {
+                    label: "Myynti",
+                    color: "var(--rf-blue)",
+                    points: MYYNTI_VIIKOT,
+                  },
+                  {
+                    label: "Kulut",
+                    color: "var(--rf-accent)",
+                    points: KULUT_VIIKOT,
+                  },
+                ]}
+                format={euro}
+                ariaLabel="Myynti ja kulut viikoittain"
+              />
+            </div>
+          </Ruutu>
+        </div>
+      </div>
+    ),
+  },
+
+  {
+    id: "kulut",
+    otsikko: "Kulut",
+    sisalto: (
+      <Kaksipalsta
+        vasen={
+          <>
+            <Silmays>Nain se nayttaa</Silmays>
+            <Otsikko>Mihin raha meni.</Otsikko>
+            <Leipa>
+              Jokainen kuitti osuu kategoriaan, ja kategoriat kertovat
+              kuukauden kuvan ilman etta mitaan lasketaan kasin. Rivia
+              napsauttamalla naet kuitit joista se koostuu.
+            </Leipa>
+            <Huomio>
+              Kategoriat tulevat toimialasta: ravintolalla ruoka ja juomat,
+              parturilla tuotteet ja tarvikkeet. Omia voi lisata.
+            </Huomio>
+          </>
+        }
+        oikea={
+          <Ruutu>
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-bold">Kulujakauma</p>
+              <Esimerkkimerkki />
+            </div>
+
+            <div
+              className="mt-3 space-y-3 border-t pt-3"
+              style={{ borderColor: "var(--rf-line)" }}
+            >
+              {JAKAUMA.map((rivi) => (
+                <div key={rivi.nimi}>
+                  <div className="flex items-baseline justify-between text-[13px]">
+                    <span className="font-semibold">{rivi.nimi}</span>
+                    <span className="rf-tabular">
+                      {euro(Math.round((KULUT * rivi.osuus) / 100))} ·{" "}
+                      {rivi.osuus} %
+                    </span>
+                  </div>
+
+                  <div
+                    className="mt-1.5 h-2 w-full overflow-hidden"
+                    style={{
+                      background: "var(--rf-inset)",
+                      borderRadius: 999,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: rivi.osuus + "%",
+                        height: "100%",
+                        background: rivi.savy,
+                        borderRadius: 999,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Ruutu>
+        }
+      />
     ),
   },
 
