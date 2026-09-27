@@ -23,12 +23,21 @@ import { switchRestaurant } from "./actions";
  * harmaa järjestelmävalikko keskellä muuten yhtenäistä näkymää.
  * Toteutus on nyt sama listbox-kuvio kuin kuukaudella.
  *
+ * KISKOSSA, EI YLÄPALKISSA.
+ *
+ * Tämä oli ensin yläpalkissa omana sirunaan sivun otsikon yllä.
+ * Siinä se oli toinen paikka jossa luki yrityksen nimi: kiskon
+ * tunnuslohkossa luki jo sama nimi Katen alla. Kaksi paikkaa samalle
+ * tiedolle tarkoittaa että lukija joutuu päättelemään kumpi niistä
+ * on se jota voi painaa. Nyt nimi on yhdessä paikassa ja se paikka
+ * on se jota painetaan.
+ *
  * TUNNUSRIVIN KOKOINEN, EI SÄÄTIMEN.
  *
- * Yrityksen nimi on yläpalkissa kontekstia eikä päivittäin
- * käytettävä säädin, joten se pysyy saman kokoisena ja värisenä kuin
- * rivi jolla se on. Vain osoitin ja hiiren alla syttyvä tausta
- * kertovat että sitä voi painaa.
+ * Yrityksen nimi on kontekstia eikä päivittäin käytettävä säädin,
+ * joten se pysyy saman kokoisena ja värisenä kuin rivi jolla se on.
+ * Vain osoitin ja hiiren alla syttyvä tausta kertovat että sitä voi
+ * painaa.
  *
  * EVÄSTE EI ANNA PÄÄSYÄ.
  *
@@ -36,6 +45,18 @@ import { switchRestaurant } from "./actions";
  * jokainen sivu tarkistaa sen uudelleen. Tämä valikko on siis
  * mukavuus, ei portti.
  */
+/**
+ * Kiskon alarivin mitat.
+ *
+ * Sama koko, paino ja kirjainväli kuin tunnuslohkon tekstillä oli
+ * ennen kuin siitä tuli painike: lockup ei saa muuttua siitä että
+ * sen alarivi on nyt painettava.
+ */
+const RIVI =
+  "-ms-1.5 flex w-full min-w-0 items-center gap-1 rounded-[7px] px-1.5 py-[3px] text-[10.5px] font-bold uppercase";
+
+const KIRJAINVALI = { letterSpacing: "0.07em" } as const;
+
 export function CompanySwitcher({
   current,
   companies,
@@ -54,8 +75,19 @@ export function CompanySwitcher({
   const close = useCallback(() => setOpen(false), []);
   const container = useDismiss<HTMLSpanElement>(open, close);
 
+  /*
+   * Yhden yrityksen omistajalle pelkkä nimi.
+   *
+   * Sama rivi ja sama tyyli kuin painikkeessa, jotta tunnuslohko ei
+   * hyppää kun toinen yritys joskus lisätään — vain osoitin ja
+   * nuoli tulevat lisää.
+   */
   if (companies.length < 2) {
-    return <>{companies[0]?.name ?? ""}</>;
+    return (
+      <span className={RIVI} style={{ ...KIRJAINVALI, color: "var(--rf-text-3)" }}>
+        <span className="truncate">{companies[0]?.name ?? ""}</span>
+      </span>
+    );
   }
 
   const nykyinen =
@@ -96,7 +128,7 @@ export function CompanySwitcher({
   }
 
   return (
-    <span ref={container} className="relative inline-block" onKeyDown={onKeyDown}>
+    <span ref={container} className="relative block" onKeyDown={onKeyDown}>
       <button
         type="button"
         onClick={() => {
@@ -106,15 +138,17 @@ export function CompanySwitcher({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={label}
-        className="rf-press -ms-1.5 inline-flex max-w-[14rem] items-center gap-1 rounded-[7px] px-1.5 py-0.5 text-[11.5px]"
+        className={`rf-press ${RIVI}`}
         style={{
-          color: open ? "var(--rf-text)" : "inherit",
+          ...KIRJAINVALI,
+          color: open ? "var(--rf-text)" : "var(--rf-text-3)",
           background: open ? "var(--rf-inset)" : "transparent",
         }}
       >
         <span className="truncate">{nykyinen}</span>
         <span
           aria-hidden="true"
+          className="shrink-0"
           style={{
             display: "block",
             transform: open ? "rotate(-90deg)" : "rotate(90deg)",

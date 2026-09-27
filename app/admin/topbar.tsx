@@ -6,9 +6,6 @@ import { LanguagePicker } from "@/components/i18n/language-picker";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { Search, type SearchItem } from "./search";
-import { CompanySwitcher } from "./company-switcher";
-import { ButtonLink } from "@/components/restoflow/ui";
-import { RfIcon } from "@/components/restoflow/icons";
 import type { Alert, Role } from "@/lib/restoflow/types";
 
 /**
@@ -26,21 +23,21 @@ import type { Alert, Role } from "@/lib/restoflow/types";
  * Nimi tulee reitistä eikä propista: kaksi totuutta samasta nimestä
  * ajautuu ennen pitkää erilleen.
  *
- * PÄÄTOIMINTO ON PALKISSA.
+ * PÄÄTOIMINTO EI OLE PALKISSA.
  *
- * Kuitin lisääminen on se mitä ravintoloitsija tekee useimmin, ja se
- * on sama toiminto miltä tahansa sivulta. Sivukohtaiset toiminnot
- * ovat sivulla; tämä ei ole sivukohtainen.
+ * Tässä oli "Lisää kuitti" -painike. Kamerapainike oli samaan aikaan
+ * näkyvissä oikeassa alakulmassa joka kokoluokassa, joten sama
+ * toiminto oli ruudulla kahdesti — ja kahdesta napista toinen on aina
+ * se jota ei painettu. Kuitin lisäys on nyt yhdessä paikassa, ja se
+ * paikka on kamerapainike.
  */
 export function TopBar({
   restaurantName,
-  companies,
   date,
   alerts,
   userName,
   role,
   search,
-  canAddReceipt,
   canOpenSettings,
   months,
   month,
@@ -49,15 +46,12 @@ export function TopBar({
   t,
 }: {
   restaurantName: string;
-  /** Käyttäjän yritykset: vaihtaja näkyy vasta kun niitä on kaksi. */
-  companies: { id: string; name: string }[];
   /** "MA 24.08.2026" — ravintolan ajassa. */
   date: string;
   alerts: Alert[];
   userName: string;
   role: Role;
   search: SearchItem[];
-  canAddReceipt: boolean;
   /** Näkyykö Asetukset tunnusvalikossa. */
   canOpenSettings: boolean;
   /** Valittavat kuukaudet, uusin ensin. */
@@ -72,7 +66,7 @@ export function TopBar({
 }) {
   return (
     <header
-      className="rf-no-print rf-z-chrome sticky top-0 hidden items-center gap-3.5 border-b px-[22px] py-3.5 md:flex"
+      className="rf-no-print rf-z-chrome sticky top-0 hidden items-center gap-3.5 border-b px-[22px] py-3.5 lg:flex"
       style={{ background: "var(--rf-card)", borderColor: "var(--rf-line)" }}
     >
       {/*
@@ -84,26 +78,19 @@ export function TopBar({
       */}
       <div className="me-auto min-w-[128px] flex-1">
         {/*
-          Rivi eikä yksi kappale.
+          Yläpalkin ylärivillä on päiväys, ei yrityksen nimi.
 
-          Kappaleella oli truncate, ja truncate on overflow: hidden —
-          se leikkasi yrityksen vaihtajan valikon pois näkyvistä heti
-          kun se avattiin. Nyt katkaisu koskee vain tekstiä, ja
-          valikko saa laskeutua rivin ulkopuolelle.
+          Nimi oli tässä vaihtajana, ja sama nimi luki kiskon
+          tunnuslohkossa Katen alla. Kahdesta paikasta toinen on aina
+          se väärä paikka etsiä. Vaihtaja on nyt siinä missä nimikin
+          on — kiskossa — ja tähän jää päiväys, jota ei lue muualla.
         */}
-        <div
-          className="flex min-w-0 items-center gap-1 text-[11.5px]"
+        <p
+          className="truncate text-[11.5px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          <CompanySwitcher
-            current={
-              companies.find((c) => c.name === restaurantName)?.id ?? ""
-            }
-            companies={companies}
-            label={t.kuori.switchCompany}
-          />
-          <span className="truncate">· {date}</span>
-        </div>
+          {date}
+        </p>
         <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
           <PageTitle fallback={t.kuori.admin} t={t} />
         </h1>
@@ -123,17 +110,6 @@ export function TopBar({
 
       {/* Kieli tunnusvalikon vieressa: se on tilin asetus. */}
       <LanguagePicker current={locale} />
-
-      {canAddReceipt ? (
-        <ButtonLink
-          href="/admin/kuitit/uusi"
-          tone="primary"
-          size="sm"
-          icon={<RfIcon name="plus" size={15} />}
-        >
-          {t.kuori.addReceipt}
-        </ButtonLink>
-      ) : null}
 
       <HeaderMenus
         nimet={nimet}

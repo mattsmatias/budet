@@ -127,7 +127,7 @@ export function MobileMonthBar({
 
   return (
     <div
-      className="rf-no-print flex justify-center border-b px-4 py-2.5 md:hidden"
+      className="rf-no-print flex justify-center border-b px-4 py-2.5 lg:hidden"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-card)" }}
     >
       <MonthPicker t={t} value={value} months={months} locale={locale} />

@@ -319,6 +319,26 @@
   letter-spacing: -0.011em;
 }
 
+/*
+ * Vierityspalkin tila varataan aina.
+ *
+ * SIVU EI SAA VAIHTAA LEVEYTTÄ SIVUN MUKANA.
+ *
+ * Pitkä sivu sai vierityspalkin ja lyhyt ei, joten sisältö oli
+ * yleiskatsauksessa 15 pikseliä kapeampi kuin Tehtävissä. Ero näkyi
+ * jokaisessa siirtymässä: kortit, yläpalkki ja kisko nytkähtivät
+ * sivuttain kun sivu vaihtui. Kyse ei ollut sivujen omista
+ * mitoista — ne ovat samat — vaan siitä kumpi sivu sattui olemaan
+ * ruutua korkeampi.
+ *
+ * Gutter varataan juuressa, jolloin leveys on sama molemmissa
+ * tapauksissa. Selaimet jotka eivät tunne ominaisuutta jättävät sen
+ * huomiotta ja käyttäytyvät kuten ennenkin.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Otsikot hieman tiukemmalla kirjainvälillä, kuten SF Pro Display. */
 .restoflow h1,
 .restoflow h2,
@@ -1806,7 +1826,7 @@ details[open] .rf-summary-chevron {
   padding-bottom: calc(9rem + env(safe-area-inset-bottom));
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .rf-main {
     padding-bottom: 2.5rem;
   }
@@ -1914,6 +1934,20 @@ details[open] .rf-summary-chevron {
 
 .rf-fab:active {
   transform: scale(0.94);
+}
+
+/*
+ * Työpöydällä ja tabletissa ei ole alapalkkia.
+ *
+ * 72 pikselin nosto on alapalkin korkeus: puhelimessa painike istuu
+ * sen päällä. Isommassa näytössä sitä palkkia ei ole, joten sama
+ * nosto jättäisi painikkeen leijumaan keskelle tyhjää.
+ */
+@media (min-width: 1024px) {
+  .rf-fab {
+    bottom: 24px;
+    inset-inline-end: 24px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

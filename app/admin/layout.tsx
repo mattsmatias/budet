@@ -146,6 +146,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           role={role}
           counts={counts}
           restaurantName={restaurant.name}
+          companies={memberships.map((m) => ({ id: m.id, name: m.name }))}
           userName={userName}
           roleLabel={nimet.roles[role]}
           locale={locale}
@@ -157,7 +158,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Yläpalkki vain puhelimessa: työpöydällä sama tieto on sivupalkissa. */}
           <header
-            className="rf-no-print rf-z-chrome rf-mobile-header sticky top-0 flex items-center justify-between gap-3 border-b md:hidden"
+            className="rf-no-print rf-z-chrome rf-mobile-header sticky top-0 flex items-center justify-between gap-3 border-b lg:hidden"
             style={{ borderColor: "var(--rf-line)" }}
           >
             <MobileTitle
@@ -212,13 +213,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <TopBar
             nimet={nimet}
             restaurantName={restaurant.name}
-            companies={memberships.map((m) => ({ id: m.id, name: m.name }))}
             date={longDate(now, restaurant.timezone, locale)}
             alerts={alerts}
             userName={userName}
             role={role}
             search={searchItems(role, data.suppliers, t)}
-            canAddReceipt={can(role, "receipts.add")}
             canOpenSettings={can(role, "settings.view")}
             months={months}
             month={month}
@@ -241,7 +240,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             t={t}
           />
 
-          <main className="rf-main w-full flex-1 px-4 py-5 md:px-6 md:pb-10 md:pt-5">
+          <main className="rf-main w-full flex-1 px-4 py-5 lg:px-6 lg:pb-10 lg:pt-5">
             {children}
           </main>
         </div>

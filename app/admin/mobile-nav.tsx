@@ -18,6 +18,7 @@ import { localesForMenu, type AppLocale } from "@/lib/i18n/app-locales";
 import { chooseLocale } from "@/components/i18n/actions";
 import { signOut } from "@/app/(auth)/actions";
 import { InstallCard } from "./lisaa/install";
+import { switchRestaurant } from "./actions";
 
 /**
  * Puhelimen navigaatio: välilehtipalkki ja Lisää-paneeli.
@@ -43,6 +44,7 @@ export function MobileNav({
   userName,
   roleLabel,
   restaurantName,
+  companies,
   locale,
 }: {
   items: NavEntry[];
@@ -53,6 +55,8 @@ export function MobileNav({
   userName: string;
   roleLabel: string;
   restaurantName: string;
+  /** Yritykset joihin käyttäjä kuuluu — vaihto paneelista. */
+  companies: { id: string; name: string }[];
   locale: AppLocale;
 }) {
   const pathname = usePathname();
@@ -81,12 +85,21 @@ export function MobileNav({
         Puhelimella kuitti kuvataan heti kun se on kädessä. Painike
         alapalkin yläpuolella on aina saman peukalon ulottuvilla, mistä
         sivusta tahansa, ja avaa kameran suoraan.
+
+        KAIKISSA KOKOLUOKISSA, EI VAIN PUHELIMESSA.
+
+        Tässä luki md:hidden, mutta .rf-fab asettaa display: grid
+        samalla tarkkuudella ja myöhemmin, joten painike näkyi joka
+        tapauksessa myös työpöydällä — luokka oli aikomus jota selain
+        ei toteuttanut. Nyt aikomus on sama kuin lopputulos: yläpalkin
+        "Lisää kuitti" on poistettu, ja tämä on se yksi paikka josta
+        kuitti lisätään.
       */}
       {showCapture && !open ? (
         <Link
           href="/admin/kuitit/uusi"
           aria-label={t.kuori.addReceipt}
-          className="rf-press rf-fab md:hidden"
+          className="rf-press rf-fab"
         >
           <RfIcon name="camera" size={24} />
         </Link>
@@ -94,7 +107,7 @@ export function MobileNav({
 
       <nav
         aria-label={t.kuori2.adminNav}
-        className="rf-mobile-bar rf-no-print fixed bottom-0 start-0 end-0 z-30 border-t md:hidden"
+        className="rf-mobile-bar rf-no-print fixed bottom-0 start-0 end-0 z-30 border-t lg:hidden"
         style={{ borderColor: "var(--rf-line)" }}
       >
         <ul className="mx-auto flex max-w-lg px-1.5">
@@ -157,6 +170,7 @@ export function MobileNav({
           userName={userName}
           roleLabel={roleLabel}
           restaurantName={restaurantName}
+          companies={companies}
           locale={locale}
           canOpenSettings={can(role, "settings.view")}
           onClose={closeSheet}
@@ -192,6 +206,7 @@ function MoreSheet({
   userName,
   roleLabel,
   restaurantName,
+  companies,
   locale,
   canOpenSettings,
   onClose,
@@ -203,6 +218,7 @@ function MoreSheet({
   userName: string;
   roleLabel: string;
   restaurantName: string;
+  companies: { id: string; name: string }[];
   locale: AppLocale;
   canOpenSettings: boolean;
   onClose: () => void;
@@ -338,6 +354,50 @@ function MoreSheet({
               </span>
             </span>
           </div>
+
+          {/*
+            Yrityksen vaihto myös puhelimessa.
+
+            Vaihtaja oli vain työpöydän yläpalkissa, joka on md:flex —
+            puhelimessa kahden toimipisteen omistaja ei päässyt
+            toiseen lainkaan. Sama tieto kuin kiskon tunnuslohkossa,
+            samassa paikassa kuin muutkin tilin asiat.
+
+            Rivi kantaa arvon itse, joten valinta on tavallinen
+            lomakkeen lähetys myös ilman javascriptiä.
+          */}
+          {companies.length > 1 ? (
+            <section>
+              <p className="rf-sheet-label">{t.kuori.switchCompany}</p>
+              <div className="rf-sheet-card p-0">
+                {companies.map((company) => {
+                  const valittu = company.name === restaurantName;
+                  return (
+                    <form key={company.id} action={switchRestaurant}>
+                      <button
+                        type="submit"
+                        name="restaurantId"
+                        value={company.id}
+                        onClick={close}
+                        aria-current={valittu ? "true" : undefined}
+                        className="rf-press rf-sheet-row w-full text-start"
+                        style={{
+                          color: valittu
+                            ? "var(--rf-accent-strong)"
+                            : "var(--rf-text)",
+                          fontWeight: valittu ? 600 : 500,
+                        }}
+                      >
+                        <RfIcon name="suppliers" size={19} />
+                        <span className="flex-1 truncate">{company.name}</span>
+                        {valittu ? <RfIcon name="check" size={17} /> : null}
+                      </button>
+                    </form>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
           {items.length > 0 ? (
             <section>

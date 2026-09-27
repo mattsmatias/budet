@@ -16,6 +16,7 @@ import type { AdminText } from "@/lib/i18n/admin-text";
 import { Logo } from "@/components/brand/logo";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { MobileNav } from "./mobile-nav";
+import { CompanySwitcher } from "./company-switcher";
 
 /**
  * Hallintanavigaatio.
@@ -33,6 +34,7 @@ export function AdminNav({
   briefing,
   greeting,
   restaurantName,
+  companies,
   userName,
   roleLabel,
   locale,
@@ -47,6 +49,8 @@ export function AdminNav({
   t: AdminText;
   /** Näkyy kiskon tunnuslohkon alarivillä, kuten konsolissa. */
   restaurantName: string;
+  /** Yritykset joihin käyttäjä kuuluu — tunnuslohkon vaihtaja. */
+  companies: { id: string; name: string }[];
   /** Matin tilannekatsaus — johdettu samasta aineistosta kuin hälytykset. */
   briefing: Briefing;
   greeting: string;
@@ -68,6 +72,7 @@ export function AdminNav({
         sections={sections}
         counts={counts}
         restaurantName={restaurantName}
+        companies={companies}
         t={t}
         matti={can(role, "matti.use")}
         briefing={briefing}
@@ -82,6 +87,7 @@ export function AdminNav({
         userName={userName}
         roleLabel={roleLabel}
         restaurantName={restaurantName}
+        companies={companies}
         locale={locale}
       />
     </>
@@ -103,11 +109,13 @@ function DesktopSidebar({
   briefing,
   greeting,
   restaurantName,
+  companies,
   t,
 }: {
   briefing: Briefing;
   greeting: string;
   restaurantName: string;
+  companies: { id: string; name: string }[];
   t: AdminText;
   sections: ReturnType<typeof adminNavSectionsFor>;
   counts: Record<string, number>;
@@ -116,7 +124,7 @@ function DesktopSidebar({
 }) {
   return (
     <aside
-      className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-e md:flex"
+      className="sticky top-0 hidden h-screen rf-no-print w-[232px] shrink-0 flex-col border-e lg:flex"
       style={{ borderColor: "var(--rf-line)", background: "var(--rf-sidebar)" }}
     >
       {/*
@@ -134,22 +142,36 @@ function DesktopSidebar({
         heti kun ravintoloita on enemmän kuin yksi.
       */}
       <div className="px-[18px] pb-3 pt-[14px]">
-        <Link href="/" className="rf-brand flex items-center gap-2.5">
-          <span className="rf-brand-mark shrink-0">
-            <Logo size={30} />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[16px] font-extrabold leading-tight tracking-[-0.02em]">
-              Kate
+        {/*
+          Kaksi kohdetta, ei yhtä.
+
+          Lockup oli yksi linkki. Kun alarivistä tuli yrityksen
+          vaihtaja, painike linkin sisällä olisi ollut kelvotonta
+          merkkausta ja kaksi eri toimintoa samassa osoittimessa.
+          Merkki ja nimi vievät etusivulle, alarivi avaa valikon.
+        */}
+        <div className="flex items-center gap-2.5">
+          <Link href="/" className="rf-brand shrink-0" aria-label="Kate">
+            <span className="rf-brand-mark">
+              <Logo size={30} />
             </span>
-            <span
-              className="mt-0.5 block truncate text-[10.5px] font-bold uppercase"
-              style={{ color: "var(--rf-text-3)", letterSpacing: "0.07em" }}
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link
+              href="/"
+              className="block text-[16px] font-extrabold leading-tight tracking-[-0.02em]"
             >
-              {restaurantName}
-            </span>
-          </span>
-        </Link>
+              Kate
+            </Link>
+            <div className="mt-0.5">
+              <CompanySwitcher
+                current={companies.find((c) => c.name === restaurantName)?.id ?? ""}
+                companies={companies}
+                label={t.kuori.switchCompany}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <nav

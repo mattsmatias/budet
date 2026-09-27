@@ -97,7 +97,20 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
   };
 
   return (
-    <div ref={container} className="relative">
+    /*
+      Haku antaa periksi ensimmäisenä.
+
+      Leveä hakukenttä ilmestyy xl:ssä eli 1280 pikselissä, ja juuri
+      siinä kohtaa yläpalkin sisältö ei enää mahtunut riville: palkki
+      vuoti 61 pikseliä yli ja koko sivu sai vaakavierityksen. Muut
+      säätimet ovat kukin yhden asian levyisiä, mutta haku on
+      pelkkää tilaa — se on siis se joka kutistuu.
+
+      Perusleveys vain xl:stä ylöspäin: sitä kapeammassa tässä on
+      pelkkä ikonipainike, eikä sen alle saa jäädä 340 pikselin
+      kokoista tyhjää.
+    */
+    <div ref={container} className="relative shrink-0 xl:min-w-0 xl:shrink xl:basis-[340px]">
       {/*
         Painike näyttää kentältä, koska se on hakupalkin paikka.
 
@@ -111,7 +124,7 @@ export function Search({ items, t }: { items: SearchItem[]; t: AdminText }) {
         onClick={() => setOpen(true)}
         aria-label={t.loput.searchWord}
         title={mac ? t.loput.searchCmdK : t.loput.searchCtrlK}
-        className="rf-press hidden w-[340px] shrink items-center gap-[9px] px-[13px] py-2 text-start text-[14px] xl:flex"
+        className="rf-press hidden w-full items-center gap-[9px] px-[13px] py-2 text-start text-[14px] xl:flex"
         style={{
           background: "var(--rf-inset)",
           border: "1px solid var(--rf-line)",
