@@ -82,6 +82,7 @@ const getBriefing = defineTool({
       month: ctx.month,
       receipts: ctx.data.receipts,
       sales: ctx.data.sales,
+      closedWeekdays: ctx.closedWeekdays,
     });
 
     /*

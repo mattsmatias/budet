@@ -41,6 +41,8 @@ export interface MattiContext {
   now: string;
   /** Ravintolan aikavyöhyke. Päivä luetaan aina siinä ajassa. */
   timezone: string;
+  /** Viikonpäivät jolloin yritys on kiinni: 1 = maanantai ... 7 = su. */
+  closedWeekdays: number[];
   /** Missä käyttäjä on sovelluksessa. Vihje, ei valtuutus. */
   currentPage: string | null;
   /**
@@ -71,6 +73,7 @@ export async function mattiContext(
     nowTime: timeNowIn(ctx.restaurant.timezone),
     now: nowIso(),
     timezone: ctx.restaurant.timezone,
+    closedWeekdays: ctx.restaurant.closedWeekdays,
     currentPage,
     // Kieli ratkaistaan samalla ketjulla kuin muualla sovelluksessa.
     locale: await resolveLocale(),

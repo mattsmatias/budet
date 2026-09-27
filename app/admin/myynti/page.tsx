@@ -119,7 +119,12 @@ export default async function SalesPage({
       days.push(d);
     }
   }
-  const missing = missingSalesDays(days, sales, today);
+  const missing = missingSalesDays(
+    days,
+    sales,
+    today,
+    restaurant.closedWeekdays,
+  );
 
   /*
    * Kirjatut päivät joilta puuttuu ALV-erittely.

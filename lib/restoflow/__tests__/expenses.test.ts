@@ -119,6 +119,26 @@ describe("periodTotals", () => {
     expect(t.vatCents).toBe(0);
   });
 
+  /*
+   * Veroton summa on se jolla tulos lasketaan: myynti on veroton, ja
+   * verollinen kulu vertaisi eri lukuja keskenään. Verollinen summa jää
+   * silti näkyviin, koska se on se raha joka lähti tililtä.
+   */
+  it("erottaa verottoman kulun verollisesta", () => {
+    const t = periodTotals(receipts, "2026-08");
+    expect(t.totalCents).toBe(3000);
+    expect(t.netTotalCents).toBe(2595);
+    expect(t.netTotalCents).toBe(t.totalCents - t.vatCents);
+  });
+
+  it("veroton on sama kuin verollinen kun ALV puuttuu", () => {
+    const t = periodTotals(
+      [receipt({ date: "2026-08-01", totalCents: 1000 })],
+      "2026-08",
+    );
+    expect(t.netTotalCents).toBe(1000);
+  });
+
   it("palauttaa nollat kuukaudelta jossa ei ole kuitteja", () => {
     expect(periodTotals(receipts, "2026-01").totalCents).toBe(0);
   });

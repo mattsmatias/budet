@@ -52,6 +52,7 @@ function ctx(partial: Partial<RestaurantData> = {}): MattiContext {
   today: TODAY,
     now: `${TODAY}T09:00:00Z`,
     timezone: TZ,
+    closedWeekdays: [],
     currentPage: null,
     locale: "fi" as const,
     data: emptyData(partial),

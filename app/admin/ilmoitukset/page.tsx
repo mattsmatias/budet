@@ -50,6 +50,7 @@ export default async function NotificationsPage() {
     locale,
     sales: data.sales,
     tasks: data.tasks,
+    closedWeekdays: data.restaurant.closedWeekdays,
   });
 
   const critical = alerts.filter((alert) => alert.severity === "critical");

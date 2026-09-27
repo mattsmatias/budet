@@ -21,6 +21,7 @@ function ctx(businessType: BusinessType): MattiContext {
   today: "2026-09-22",
     now: "2026-09-22T09:00:00Z",
     timezone: "Europe/Helsinki",
+  closedWeekdays: [],
     currentPage: null,
     locale: "fi",
     data: {} as MattiContext["data"],

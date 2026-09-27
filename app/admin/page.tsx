@@ -319,7 +319,13 @@ export default async function AdminDashboard({
    * näyttäisi tyhjältä ilman syytä.
    */
   const pulse = isCurrentMonth
-    ? todayPulse({ today, month, receipts, sales })
+    ? todayPulse({
+        today,
+        month,
+        receipts,
+        sales,
+        closedWeekdays: restaurant.closedWeekdays,
+      })
     : null;
 
   /*
@@ -502,7 +508,7 @@ export default async function AdminDashboard({
           t={t}
           monthLabel={formatMonth(viewMonth, locale)}
           salesCents={monthSalesRows.length > 0 ? monthSalesCents : null}
-          costCents={totals.totalCents}
+          costCents={totals.netTotalCents}
           soFar={isCurrentMonth}
           canAddSales={can(role, "sales.manage")}
         />

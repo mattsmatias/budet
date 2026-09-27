@@ -137,8 +137,10 @@ export default async function SettingsPage({
               <>
                 <RestaurantForm
                   t={t}
+                  locale={locale}
                   name={restaurant.name}
                   timezone={restaurant.timezone}
+                  closedWeekdays={restaurant.closedWeekdays}
                 />
 
                 <Divider />

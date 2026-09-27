@@ -66,6 +66,13 @@ export interface RestaurantMembership {
    */
   status: string;
   trialEndsOn: string | null;
+  /**
+   * Viikonpaivat jolloin yritys on kiinni: 1 = maanantai ... 7 = su.
+   *
+   * Tyhja lista on auki joka paiva. Tata kaytetaan siihen ettei
+   * kiinni ollutta paivaa merkita puuttuvaksi myyntipaivaksi.
+   */
+  closedWeekdays: number[];
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -105,7 +112,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, timezone, currency, role, business_type, logo_path, status, trial_ends_on",
+          "id, name, slug, timezone, currency, role, business_type, logo_path, status, trial_ends_on, closed_weekdays",
         )
         .order("name");
 
@@ -124,6 +131,9 @@ export const getMemberships = cache(
         logoPath: (row.logo_path as string | null) ?? null,
         status: (row.status as string | null) ?? "active",
         trialEndsOn: (row.trial_ends_on as string | null) ?? null,
+        closedWeekdays: Array.isArray(row.closed_weekdays)
+          ? (row.closed_weekdays as number[])
+          : [],
       }));
     } catch {
       return [];

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   compareSales,
+  isClosedOn,
   labourShareOfSales,
   missingSalesDays,
   roughResult,
@@ -166,5 +167,60 @@ describe("puuttuvat päivät", () => {
     expect(missingSalesDays(paivat, [], "2026-08-24")).not.toContain(
       "2026-08-24",
     );
+  });
+});
+
+describe("kiinniolopäivät", () => {
+  /*
+   * 2026-09-06, -13 ja -20 ovat sunnuntaita, 2026-09-07 maanantai.
+   * Sunnuntaisin suljettu kahvila sai ennen neljä varoitusta
+   * kuukaudessa eikä niille voinut tehdä mitään.
+   */
+  const syyskuu = [
+    "2026-09-05",
+    "2026-09-06",
+    "2026-09-07",
+    "2026-09-12",
+    "2026-09-13",
+  ];
+
+  it("tunnistaa viikonpäivän ISO-numerolla", () => {
+    expect(isClosedOn("2026-09-07", [1])).toBe(true); // maanantai
+    expect(isClosedOn("2026-09-06", [7])).toBe(true); // sunnuntai
+    expect(isClosedOn("2026-09-06", [1])).toBe(false);
+  });
+
+  it("on auki joka päivä kun listaa ei ole", () => {
+    expect(isClosedOn("2026-09-06")).toBe(false);
+    expect(missingSalesDays(syyskuu, [], "2026-09-14")).toHaveLength(5);
+  });
+
+  it("jättää kiinniolopäivät pois puuttuvista", () => {
+    expect(missingSalesDays(syyskuu, [], "2026-09-14", [7])).toEqual([
+      "2026-09-05",
+      "2026-09-07",
+      "2026-09-12",
+    ]);
+  });
+
+  it("osaa useamman kiinniolopäivän", () => {
+    expect(missingSalesDays(syyskuu, [], "2026-09-14", [1, 7])).toEqual([
+      "2026-09-05",
+      "2026-09-12",
+    ]);
+  });
+
+  /*
+   * Kiinniolopäivä ei kumoa kirjattua myyntiä: jos yritys on
+   * poikkeuksellisesti ollut auki, päivä on kirjattu eikä se ole
+   * puuttuva kummallakaan perusteella.
+   */
+  it("ei koske kirjattuihin päiviin", () => {
+    const kirjatut = [day("2026-09-06", 42000)];
+    expect(missingSalesDays(syyskuu, kirjatut, "2026-09-14", [7])).toEqual([
+      "2026-09-05",
+      "2026-09-07",
+      "2026-09-12",
+    ]);
   });
 });

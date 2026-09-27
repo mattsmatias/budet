@@ -57,6 +57,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     locale,
     sales: data.sales,
     tasks: data.tasks,
+    closedWeekdays: restaurant.closedWeekdays,
   });
 
   /*

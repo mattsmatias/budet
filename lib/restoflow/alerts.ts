@@ -65,6 +65,13 @@ export interface AlertContext {
    * muistaa katsoa.
    */
   tasks?: Task[];
+  /**
+   * Viikonpäivät jolloin yritys on kiinni: 1 = maanantai ... 7 = su.
+   *
+   * Valinnainen samasta syystä kuin myynti: vanhat kutsujat eivät
+   * tiedä siitä. Tyhjä lista on auki joka päivä.
+   */
+  closedWeekdays?: readonly number[];
   /** Käyttöliittymän kieli: hälytysten teksti kirjoitetaan sillä. */
   locale: AppLocale;
 }
@@ -267,7 +274,7 @@ function salesMissing(ctx: AlertContext): Alert[] {
     if (day >= first) days.push(day);
   }
 
-  const missing = missingSalesDays(days, sales, ctx.today);
+  const missing = missingSalesDays(days, sales, ctx.today, ctx.closedWeekdays);
   if (missing.length === 0) return [];
 
   // Uusin puuttuva ensin: se on se joka juuri unohtui.

@@ -150,18 +150,41 @@ export function totalSalesCents(sales: DailySales[]): number {
 }
 
 /**
+ * Onko yritys kiinni tänä päivänä?
+ *
+ * Viikonpäivä ISO-numerona kuten kannassa: 1 = maanantai, 7 =
+ * sunnuntai. Tyhjä lista tarkoittaa auki joka päivä, mikä on myös
+ * oletus — asetusta ei tarvitse täyttää ennen kuin siitä on hyötyä.
+ */
+export function isClosedOn(
+  isoDate: string,
+  closedWeekdays: readonly number[] = [],
+): boolean {
+  return closedWeekdays.includes(weekdayOf(isoDate));
+}
+
+/**
  * Päivät joilta myynti puuttuu.
  *
- * Vain menneet päivät ja vain kutsujan antamat päivät: ravintola on
- * voinut olla kiinni, eikä kiinni ollut päivä ole puuttuva merkintä.
+ * Vain menneet päivät ja vain kutsujan antamat päivät.
+ *
+ * KIINNI OLLUT PÄIVÄ EI OLE PUUTTUVA MERKINTÄ.
+ *
+ * Tämä luki tässä kommenttina ennen kuin se oli totta: kutsujat
+ * antoivat kaikki kuukauden päivät, joten sunnuntaisin suljettu
+ * kahvila sai neljä varoitusta kuukaudessa eikä niille voinut tehdä
+ * mitään. Kiinniolopäivät tulevat nyt yrityksen asetuksista.
  */
 export function missingSalesDays(
   dates: string[],
   sales: DailySales[],
   today: string,
+  closedWeekdays: readonly number[] = [],
 ): string[] {
   const known = new Set(sales.map((s) => s.date));
-  return dates.filter((d) => d < today && !known.has(d));
+  return dates.filter(
+    (d) => d < today && !known.has(d) && !isClosedOn(d, closedWeekdays),
+  );
 }
 
 // ---------------------------------------------------------------------------

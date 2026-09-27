@@ -20,6 +20,7 @@
 import { receiptsInMonth } from "./expenses";
 import {
   compareSales,
+  isClosedOn,
   roughResult,
   salesBetween,
   totalSalesCents,
@@ -51,8 +52,10 @@ export function todayPulse(input: {
   month: string;
   receipts: Receipt[];
   sales: DailySales[];
+  /** Viikonpaivat jolloin yritys on kiinni: 1 = maanantai ... 7 = su. */
+  closedWeekdays?: readonly number[];
 }): Pulse {
-  const { today, month, receipts, sales } = input;
+  const { today, month, receipts, sales, closedWeekdays } = input;
 
   const todaySales = sales.find((s) => s.date === today) ?? null;
   const salesCents = todaySales?.netCents ?? null;
@@ -68,9 +71,25 @@ export function todayPulse(input: {
 
   const monthSales = salesBetween(sales, `${month}-01`, today);
   const monthSalesCents = totalSalesCents(monthSales);
-  const monthExpenseCents = receiptsInMonth(receipts, month)
-    .filter((r) => r.date <= today)
-    .reduce((sum, r) => sum + r.totalCents, 0);
+  const kuukaudenKuitit = receiptsInMonth(receipts, month).filter(
+    (r) => r.date <= today,
+  );
+  const monthExpenseCents = kuukaudenKuitit.reduce(
+    (sum, r) => sum + r.totalCents,
+    0,
+  );
+
+  /*
+   * Tulokseen kulut ilman ALV:tä.
+   *
+   * Myynti on veroton, joten verollinen kulu vertaisi eri lukuja
+   * keskenään ja tulos eroaisi kirjanpidon tuloksesta. Kuluriville jää
+   * verollinen summa: se on se raha joka lähti tililtä.
+   */
+  const monthNetExpenseCents = kuukaudenKuitit.reduce(
+    (sum, r) => sum + r.totalCents - (r.vatCents ?? 0),
+    0,
+  );
 
   /*
    * Tulos vain jos myyntiä on kirjattu.
@@ -84,7 +103,7 @@ export function todayPulse(input: {
       ? null
       : roughResult({
           netSalesCents: monthSalesCents,
-          expenseCents: monthExpenseCents,
+          expenseCents: monthNetExpenseCents,
         });
 
   return {
@@ -94,7 +113,7 @@ export function todayPulse(input: {
       salesCents: monthSalesCents,
       expenseCents: monthExpenseCents,
       resultCents,
-      missingSalesDays: countMissing(month, today, sales),
+      missingSalesDays: countMissing(month, today, sales, closedWeekdays),
     },
   };
 }
@@ -110,6 +129,7 @@ function countMissing(
   month: string,
   today: string,
   sales: DailySales[],
+  closedWeekdays: readonly number[] = [],
 ): number {
   const inMonth = sales.filter((s) => s.date.startsWith(month));
   if (inMonth.length === 0) return 0;
@@ -123,6 +143,8 @@ function countMissing(
   let missing = 0;
   for (const date of datesBetween(first, today)) {
     if (date >= today) break;
+    // Kiinni ollut paiva ei ole unohtunut merkinta.
+    if (isClosedOn(date, closedWeekdays)) continue;
     if (!known.has(date)) missing += 1;
   }
 

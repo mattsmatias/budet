@@ -634,6 +634,26 @@ const restaurantSchema = (t: AdminText) =>
   });
 
 /**
+ * Kiinniolopäivät lomakkeelta.
+ *
+ * Valintaruudut lähettävät vain rastitetut, joten koko viikon auki
+ * oleva yritys ei lähetä kenttää lainkaan — tyhjä taulukko on siis
+ * oikea tulos eikä puuttuva tieto. Kelvottomat arvot pudotetaan
+ * hiljaa: kanta tarkistaa saman asian uudelleen, ja tämä on lomakkeen
+ * siivous eikä pääsynhallinta.
+ */
+function closedWeekdaysFrom(formData: FormData): number[] {
+  const arvot = formData
+    .getAll("closedWeekdays")
+    .map((v) => Number(String(v)))
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 7);
+
+  // Koko viikko kiinni tarkoittaisi ettei yritystä ole; kanta estää sen.
+  const uniikit = [...new Set(arvot)].sort((a, b) => a - b);
+  return uniikit.length === 7 ? [] : uniikit;
+}
+
+/**
  * Ravintolan nimi ja aikavyöhyke.
  *
  * Aikavyöhyke ei ole kosmeettinen: työaika, kuukausirajat ja vuorojen
@@ -667,6 +687,7 @@ export async function updateRestaurant(
     p_restaurant: restaurant.id,
     p_name: parsed.data.name,
     p_timezone: parsed.data.timezone,
+    p_closed_weekdays: closedWeekdaysFrom(formData),
   });
 
   if (error)

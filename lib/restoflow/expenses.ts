@@ -38,6 +38,20 @@ export interface PeriodTotals {
   totalCents: number;
   receiptCount: number;
   vatCents: number;
+  /**
+   * Kulu ilman vähennettävää ALV:tä.
+   *
+   * SAMA LUKU KUIN KIRJANPIDOSSA.
+   *
+   * Tulos laskettiin ennen verollisista kuluista vaikka myynti on
+   * veroton, jolloin yleiskatsaus ja kirjanpito kertoivat eri tuloksen
+   * samasta kuukaudesta — ravintoladatalla ero oli 5 047 euroa. ALV ei
+   * ole kulu vaan läpikulkuerä: se saadaan takaisin.
+   *
+   * Verollinen summa on edelleen totalCents, koska se on se raha joka
+   * lähti tililtä.
+   */
+  netTotalCents: number;
   needsReviewCount: number;
 }
 
@@ -104,11 +118,15 @@ export function totalsByCategory(receipts: Receipt[]): CategoryTotal[] {
 export function periodTotals(receipts: Receipt[], month: string): PeriodTotals {
   const inMonth = receiptsInMonth(receipts, month);
 
+  const totalCents = inMonth.reduce((s, r) => s + r.totalCents, 0);
+  const vatCents = inMonth.reduce((s, r) => s + (r.vatCents ?? 0), 0);
+
   return {
     month,
-    totalCents: inMonth.reduce((s, r) => s + r.totalCents, 0),
+    totalCents,
     receiptCount: inMonth.length,
-    vatCents: inMonth.reduce((s, r) => s + (r.vatCents ?? 0), 0),
+    vatCents,
+    netTotalCents: totalCents - vatCents,
     needsReviewCount: inMonth.filter((r) => r.status === "needs_review").length,
   };
 }

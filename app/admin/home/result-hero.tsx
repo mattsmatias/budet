@@ -30,8 +30,14 @@ export function ResultHero({
 }: {
   t: AdminText;
   monthLabel: string;
-  /** Kuukauden verollinen myynti ilman ALV:tä. Null = ei kirjattu. */
+  /** Kuukauden veroton myynti. Null = ei kirjattu. */
   salesCents: number | null;
+  /**
+   * Kuukauden kulut ilman vähennettävää ALV:tä.
+   *
+   * Sama peruste kuin myynnissä, jotta erotus tarkoittaa jotain ja on
+   * sama luku kuin kirjanpidon tulos.
+   */
   costCents: number;
   /** Kuluva kuukausi: luku on tähänastinen, ei koko kuukauden. */
   soFar: boolean;
@@ -99,6 +105,16 @@ export function ResultHero({
                   myynti: formatMoney(salesCents ?? 0),
                   kulut: formatMoney(costCents),
                 })}
+              </p>
+              {/*
+                Miksi kuluriviltä puuttuu ALV.
+
+                Alempi kortti näyttää kirjatut kulut verollisena, koska
+                se on se raha joka lähti tililtä. Ilman tätä riviä kaksi
+                eri kulusummaa samalla sivulla näyttäisivät virheeltä.
+              */}
+              <p className="mt-1 text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+                {y.resultVatNote}
               </p>
             </>
           )}
