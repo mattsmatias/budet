@@ -340,7 +340,11 @@ export default async function WagesPage({
                     style={{ color: "var(--rf-text-3)" }}
                   >
                     {row.employee.jobTitle ?? "—"} ·{" "}
-                    {formatMoney(row.employee.hourlyCents)}/h
+                    {/* Pelkässä provisiossa tuntipalkkaa ei makseta,
+                        joten sitä ei myöskään näytetä. */}
+                    {row.employee.payModel === "commission_only"
+                      ? t.tyo.payModelOnly
+                      : `${formatMoney(row.employee.hourlyCents)}/h`}
                   </span>
                 </span>
 

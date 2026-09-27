@@ -61,10 +61,19 @@ export function EmployeeList({ t, rows }: { t: AdminText; rows: Employee[] }) {
                     style={{ color: "var(--rf-text-3)" }}
                   >
                     {row.jobTitle ?? "—"} ·{" "}
-                    {formatMoney(row.hourlyCents)}/h
-                    {/* Provisio näkyy listassa: se on osa palkkaa, ei
-                        lomakkeen sisäinen asetus. */}
-                    {row.payModel !== "hourly" && row.commissionRate > 0
+                    {/*
+                      Palkka niin kuin se maksetaan.
+
+                      Pelkässä provisiossa ei näytetä tuntipalkkaa:
+                      sitä ei makseta, ja rivillä se näyttäisi
+                      palkalta. Muissa malleissa tuntipalkka ja
+                      provisio ovat molemmat osa palkkaa.
+                    */}
+                    {row.payModel === "commission_only"
+                      ? `${t.tyo.payModelOnly} ${formatPercent(row.commissionRate)} %`
+                      : `${formatMoney(row.hourlyCents)}/h`}
+                    {row.payModel === "hourly_commission" ||
+                    row.payModel === "commission_guaranteed"
                       ? ` · ${formatPercent(row.commissionRate)} %`
                       : ""}
                   </p>
@@ -240,22 +249,34 @@ function EmployeeForm({
           />
         </Field>
 
-        <Field
-          label={t.tyo.hourly}
-          htmlFor="rf-hourly"
-          hint={t.tyo.hourlyHint}
-        >
-          <input
-            id="rf-hourly"
-            name="hourly"
-            inputMode="decimal"
-            defaultValue={hourly}
-            placeholder="14,50"
-            required
-            className={CONTROL}
-            style={CONTROL_STYLE}
-          />
-        </Field>
+        {/*
+          Tuntipalkka piiloon kun sitä ei käytetä.
+
+          Pelkässä provisiossa kenttä olisi kysymys johon ei ole
+          vastausta, ja siihen jäänyt luku näyttäisi palkalta jota ei
+          makseta. Arvo kulkee silti mukana piilokenttänä, jotta
+          mallin vaihtaminen takaisin ei hävitä sitä.
+        */}
+        {malli === "commission_only" ? (
+          <input type="hidden" name="hourly" value={hourly === "" ? "0" : hourly} />
+        ) : (
+          <Field
+            label={t.tyo.hourly}
+            htmlFor="rf-hourly"
+            hint={t.tyo.hourlyHint}
+          >
+            <input
+              id="rf-hourly"
+              name="hourly"
+              inputMode="decimal"
+              defaultValue={hourly}
+              placeholder="14,50"
+              required
+              className={CONTROL}
+              style={CONTROL_STYLE}
+            />
+          </Field>
+        )}
       </div>
 
       {/*
@@ -270,7 +291,13 @@ function EmployeeForm({
         <Field
           label={t.tyo.payModel}
           htmlFor="rf-paymodel"
-          hint={malli === "hourly" ? undefined : t.tyo.payModelHint}
+          hint={
+            malli === "commission_only"
+              ? t.tyo.payModelOnlyHint
+              : malli === "hourly"
+                ? undefined
+                : t.tyo.payModelHint
+          }
         >
           <select
             id="rf-paymodel"
@@ -285,6 +312,7 @@ function EmployeeForm({
             <option value="commission_guaranteed">
               {t.tyo.payModelGuaranteed}
             </option>
+            <option value="commission_only">{t.tyo.payModelOnly}</option>
           </select>
         </Field>
 

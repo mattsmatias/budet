@@ -86,6 +86,13 @@ describe("commissionExtraCents", () => {
     ).toBe(204000);
   });
 
+  it("pelkässä provisiossa maksetaan koko provisio", () => {
+    /* Tunnit eivät vähennä mitään: niistä ei makseta erikseen. */
+    expect(
+      commissionExtraCents("commission_only", 0.4, 800000, PERUSPALKKA),
+    ).toBe(320000);
+  });
+
   it("takuumallissa pieni myynti ei tuo mitään", () => {
     /* 40 % 2 000 eurosta = 800 € < 1 160 € tuntipalkka */
     expect(
@@ -201,6 +208,43 @@ describe("staffCost provisiolla", () => {
     );
 
     expect(hiljainen.total.totalCents).toBe(tunneilla.total.totalCents);
+  });
+
+  it("pelkässä provisiossa tunneista ei kerry palkkaa", () => {
+    const tulos = staffCost(
+      [tyontekija({ payModel: "commission_only", commissionRate: 0.4 })],
+      entries, "2026-09", AIKA, ASETUKSET, [], { a: 800000 },
+    );
+
+    /*
+     * Tunnit näkyvät, palkka ei tule niistä.
+     *
+     * Palkka 3 200,00 + loma 400,00 + sivukulut 864,00 = 4 464,00,
+     * eli sama kuin takuumallissa jossa provisio voitti — ero on
+     * siinä, ettei peruspalkkaa ole lainkaan.
+     */
+    expect(tulos.minutes).toBe(4800);
+    expect(tulos.total.baseCents).toBe(0);
+    expect(tulos.total.supplementCents).toBe(0);
+    expect(tulos.total.commissionCents).toBe(320000);
+    expect(tulos.total.totalCents).toBe(446400);
+  });
+
+  it("pelkässä provisiossa tuntipalkka ei vuoda kustannukseen", () => {
+    /* Vanha tuntipalkka on yhä rivillä, mutta sitä ei makseta. */
+    const tulos = staffCost(
+      [
+        tyontekija({
+          payModel: "commission_only",
+          commissionRate: 0.4,
+          hourlyCents: 9999,
+        }),
+      ],
+      entries, "2026-09", AIKA, ASETUKSET, [], { a: 800000 },
+    );
+
+    expect(tulos.total.baseCents).toBe(0);
+    expect(tulos.total.totalCents).toBe(446400);
   });
 
   it("laskee provision myös ilman yhtään tuntia", () => {

@@ -115,11 +115,25 @@ export function staffCost(
         )
       : 0;
 
+    /*
+     * Pelkässä provisiossa tunneista ei kerry palkkaa.
+     *
+     * Minuutit jäävät riville, koska työaika on tehty ja se näkyy
+     * tunteina ja tuntihintana. Peruspalkka ja työaikalisät ovat
+     * nollia: niillä ei ole tuntipalkkaa josta laskea, eikä
+     * tuntipalkkakenttään mahdollisesti jäänyt vanha luku saa
+     * vuotaa kustannukseen.
+     */
+    const pohja =
+      row.employee.payModel === "commission_only"
+        ? { ...EMPTY_COST, minutes: tunnit.minutes }
+        : tunnit;
+
     return {
       employee: row.employee,
       minutes: row.minutes,
       working: row.working,
-      cost: settings ? withCommission(tunnit, extra, settings) : tunnit,
+      cost: settings ? withCommission(pohja, extra, settings) : pohja,
     };
   });
 

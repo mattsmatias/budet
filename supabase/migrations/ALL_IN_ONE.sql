@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 130 migraatiota:
+-- Sisältää 131 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -142,6 +142,7 @@
 --   0126_katen_tyontekijat.sql
 --   0127_tyontekijan_ilmoitus.sql
 --   0128_provisio.sql
+--   0129_pelkka_provisio.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -29186,4 +29187,38 @@ drop trigger if exists employee_sales_touch on employee_sales;
 create trigger employee_sales_touch
   before update on employee_sales
   for each row execute function touch_updated_at();
+
+
+-- ===========================================================================
+-- 0129_pelkka_provisio.sql
+-- ===========================================================================
+
+-- 0129 Pelkka provisio
+--
+-- NELJAS MALLI: PALKKA ON KOKONAAN PROVISIOTA.
+--
+-- Osa parturi-kampaamoista maksaa pelkkaa provisiota ilman
+-- tuntipalkkaa. Aiemmat kolme mallia eivat kata sita: takuumallissa
+-- tunnit ovat aina vahimmaispalkka, ja ilman neljatta vaihtoehtoa
+-- tallainen tyontekija oli pakko kirjata vaaralla mallilla.
+--
+-- TUNNIT JAAVAT, PALKKA EI TULE NIISTA.
+--
+-- Tyoaika kirjataan edelleen: se kertoo milloin liike oli miehitetty
+-- ja se on pakollinen tieto tyoaikakirjanpitoon. Kustannus vain ei
+-- synny tunneista vaan myynnista, joten peruspalkka ja tyoaikalisat
+-- ovat talla mallilla nollia.
+
+alter table employees drop constraint if exists employees_pay_model;
+
+alter table employees add constraint employees_pay_model
+  check (pay_model in (
+    'hourly',
+    'hourly_commission',
+    'commission_guaranteed',
+    'commission_only'
+  ));
+
+comment on column employees.pay_model is
+  'hourly | hourly_commission | commission_guaranteed | commission_only';
 

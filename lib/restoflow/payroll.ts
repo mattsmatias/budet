@@ -572,18 +572,34 @@ export function costForDated(
  * KOLME MALLIA, KOSKA ALALLA ON KOLME TAPAA.
  *
  * Ravintolassa palkka on tunneista. Hiusalalla se on usein omasta
- * myynnistä: joko tuntipalkan päälle tai niin että tuntipalkka on
- * takuu ja provisio maksetaan kun se ylittää takuun. Malli on
- * työntekijäkohtainen, koska samassa liikkeessä voi olla molempia.
+ * myynnistä: tuntipalkan päälle, tuntipalkka takuuna, tai kokonaan
+ * ilman tuntipalkkaa. Malli on työntekijäkohtainen, koska samassa
+ * liikkeessä voi olla useampi näistä.
+ *
+ * PELKKÄ PROVISIO EI KATSO TUNTEJA LAINKAAN.
+ *
+ * Työaika kirjataan silti — se on työaikakirjanpitoa eikä palkan
+ * peruste — mutta peruspalkkaa ja työaikalisiä ei kerry, koska niillä
+ * ei ole tuntipalkkaa josta laskea.
  */
-export type PayModel = "hourly" | "hourly_commission" | "commission_guaranteed";
+export type PayModel =
+  | "hourly"
+  | "hourly_commission"
+  | "commission_guaranteed"
+  | "commission_only";
 
 export function isPayModel(value: unknown): value is PayModel {
   return (
     value === "hourly" ||
     value === "hourly_commission" ||
-    value === "commission_guaranteed"
+    value === "commission_guaranteed" ||
+    value === "commission_only"
   );
+}
+
+/** Onko palkka kokonaan tai osittain myynnistä? */
+export function isCommissionModel(model: PayModel): boolean {
+  return model !== "hourly";
 }
 
 /**
@@ -611,9 +627,16 @@ export function commissionExtraCents(
 
   const provisio = Math.round(netSalesCents * rate);
 
-  return model === "hourly_commission"
-    ? provisio
-    : Math.max(0, provisio - baseCents);
+  /*
+   * Takuumalli on ainoa joka vähentää peruspalkan.
+   *
+   * Tuntipalkan päälle maksettava provisio ja pelkkä provisio ovat
+   * molemmat koko summa: edellisessä tunnit maksetaan erikseen,
+   * jälkimmäisessä tunneista ei makseta mitään.
+   */
+  return model === "commission_guaranteed"
+    ? Math.max(0, provisio - baseCents)
+    : provisio;
 }
 
 /**

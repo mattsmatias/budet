@@ -22,7 +22,7 @@ import { requireContext } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
 import { can } from "@/lib/restoflow/permissions";
 import { parseHourly } from "@/lib/restoflow/employees";
-import { parsePercent } from "@/lib/restoflow/payroll";
+import { isPayModel, parsePercent } from "@/lib/restoflow/payroll";
 import { parseAmountToCents } from "@/lib/money";
 import type { AdminState } from "../actions";
 
@@ -59,7 +59,12 @@ const employeeSchema = (t: AdminText) =>
      * Tuntematon malli ei paase kantaan: valikon arvo tulee clientilta
      * ja clientilta tuleva arvo tarkistetaan aina.
      */
-    payModel: z.enum(["hourly", "hourly_commission", "commission_guaranteed"]),
+    payModel: z.enum([
+      "hourly",
+      "hourly_commission",
+      "commission_guaranteed",
+      "commission_only",
+    ]),
     commissionRate: z.number().min(0).max(1),
     active: z.boolean(),
   });
@@ -85,7 +90,17 @@ export async function saveEmployee(
    * vaihto myohemmin toisi maksuun luvun jota kukaan ei muista
    * asettaneensa.
    */
-  const malli = String(formData.get("payModel") ?? "hourly");
+  /*
+   * Tuntematon malli on virhe, ei zodin englanninkielinen viesti.
+   *
+   * Arvo tulee valikosta, joten kelvoton arvo tarkoittaa ettei
+   * lomake ja toiminto ole samaa mieltä malleista. Käyttäjälle se on
+   * tallennusvirhe; luettelo sisäisistä arvoista ei kuulu hänelle.
+   */
+  const raakaMalli = String(formData.get("payModel") ?? "hourly");
+  if (!isPayModel(raakaMalli)) return { error: t.tyo.saveFailed };
+
+  const malli = raakaMalli;
   const provisio =
     malli === "hourly" ? 0 : parsePercent(String(formData.get("commission") ?? ""));
   if (provisio === null || provisio > 1) {

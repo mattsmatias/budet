@@ -95,7 +95,19 @@ export default async function TimeClockPage() {
 
   const open = openEntry(mine);
   const minutes = totalMinutes(mine.filter((e) => e.date.startsWith(month)));
-  const payCents = estimatedPayCents(minutes, me?.hourlyCents ?? 0);
+  /*
+   * Palkka-arvio vain sille jolle tunnit ovat palkka.
+   *
+   * Provisiopalkkaisella tämä luku olisi väärä lupaus: pelkässä
+   * provisiossa tunneista ei makseta mitään, ja muissa malleissa
+   * provisio on osa palkkaa jota Kate ei tällä sivulla tiedä.
+   * Kate näyttää siis sen mitä se tietää ja sanoo mitä se ei tiedä.
+   */
+  const palkkamalli = me?.payModel ?? "hourly";
+  const payCents =
+    palkkamalli === "commission_only"
+      ? null
+      : estimatedPayCents(minutes, me?.hourlyCents ?? 0);
 
   const done = mine.filter((e) => e.clockOut !== null).slice(0, 10);
 
@@ -144,10 +156,21 @@ export default async function TimeClockPage() {
             {t.tyo.estimatedPay}
           </p>
           <p className="rf-tabular mt-1 text-[20px] font-bold">
-            {formatMoney(payCents)}
+            {payCents === null ? "—" : formatMoney(payCents)}
           </p>
         </Card>
       </div>
+
+      {palkkamalli === "hourly" ? null : (
+        <p
+          className="-mt-2 text-center text-[12px] leading-relaxed"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          {palkkamalli === "commission_only"
+            ? t.tyo.payModelOnlyHint
+            : t.tyo.payFromCommission}
+        </p>
+      )}
 
       <Card>
         <p className="text-[14px] font-semibold">{t.tyo.recent}</p>
