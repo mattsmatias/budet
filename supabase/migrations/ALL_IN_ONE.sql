@@ -11,7 +11,7 @@
 -- create or replace, drop policy if exists), joten ajo olemassa olevaa
 -- kantaa vasten on turvallinen.
 --
--- Sisältää 135 migraatiota:
+-- Sisältää 138 migraatiota:
 --   0001_schema.sql
 --   0002_rls.sql
 --   0003_functions.sql
@@ -147,6 +147,9 @@
 --   0131_tes_monta_toimialaa.sql
 --   0132_tes_saannot_tarkemmiksi.sql
 --   0133_kaupan_tes.sql
+--   0134_anon_oikeudet_suljettu.sql
+--   0135_virhelokitus.sql
+--   0136_kirjaus_alv_erittelysta.sql
 -- ---------------------------------------------------------------------------
 
 
@@ -29597,4 +29600,350 @@ begin
     (v_hki, 'saturday', 'Lauantailisä', 'eur_per_hour', 5.46, '13:00', '24:00', null, true, false),
     (v_hki, 'sunday', 'Sunnuntaikorotus', 'percent', 100, null, null, null, false, true);
 end $$;
+
+
+-- ===========================================================================
+-- 0134_anon_oikeudet_suljettu.sql
+-- ===========================================================================
+
+-- 0134 Kirjautumattomalta suljetaan kaikki paitsi kolme
+--
+-- 77 SECURITY DEFINER -funktiota oli anonin kutsuttavissa. Jokainen
+-- niista tarkistaa kutsujan itse, joten mitaan ei vuotanut — mutta
+-- turvallisuus lepasi sen varassa etta jokainen 77:sta muistaa
+-- tarkistaa. Oikea oletus on painvastainen: suljettu, ja auki vain
+-- se mille on syy.
+--
+-- AUKI JAAVAT KOLME.
+--
+--   preview_invitation       kirjautumaton tarkistaa kutsukoodin
+--   preview_kate_invitation  sama Katen oman tiimin koodille
+--   submit_contact_request   etusivun yhteydenottolomake
+--
+-- Lisaksi auki jaavat rivikaytannoissa kaytetyt apufunktiot
+-- (is_owner, my_restaurant_ids, current_user_is_super_admin ja
+-- muutama muu). Niita kutsutaan kaytannon sisalla, ja ilman
+-- EXECUTE-oikeutta anonin kysely kaatuisi virheeseen sen sijaan etta
+-- palauttaisi tyhjan. Ne palauttavat vain kutsujan oman paasyn.
+--
+-- MOLEMMAT NIMETAAN: PUBLIC JA ANON.
+--
+-- Osa oikeuksista tuli PUBLICin kautta, jolloin pelkka revoke
+-- anonilta ei tehnyt mitaan. Kirjautuneelle oikeus myonnetaan
+-- takaisin, jotta sovellus toimii tasmalleen kuten ennen.
+
+do $$
+declare
+  v_rivi record;
+  v_suljettu int := 0;
+begin
+  for v_rivi in
+    with saannoissa as (
+      select distinct p.proname
+      from pg_proc p
+      join pg_policies pol on (
+        coalesce(pol.qual, '') || ' ' || coalesce(pol.with_check, '')
+          ilike '%' || p.proname || '%'
+      )
+      where p.pronamespace = 'public'::regnamespace
+    )
+    select p.oid::regprocedure as tunnus
+    from pg_proc p
+    where p.pronamespace = 'public'::regnamespace
+      and p.prosecdef
+      and has_function_privilege('anon', p.oid, 'execute')
+      and p.proname not in (
+        'preview_invitation', 'preview_kate_invitation', 'submit_contact_request'
+      )
+      and p.proname not in (select proname from saannoissa)
+  loop
+    execute format('revoke all on function %s from public, anon', v_rivi.tunnus);
+    execute format('grant execute on function %s to authenticated', v_rivi.tunnus);
+    v_suljettu := v_suljettu + 1;
+  end loop;
+
+  raise notice 'Suljettu anonilta: % funktiota', v_suljettu;
+end $$;
+
+
+-- ===========================================================================
+-- 0135_virhelokitus.sql
+-- ===========================================================================
+
+-- 0135 Palvelinvirheet talteen
+--
+-- JOS KUKAAN EI NAE VIRHETTA, SITA EI OLE KORJATTU.
+--
+-- 500-virhe nakyi vain Vercelin lokeissa, joita kukaan ei lue ilman
+-- syyta — ja syy tuli silloin asiakkaan puhelimessa. Nyt virhe
+-- kirjautuu kantaan ja nakyy konsolissa.
+--
+-- EI ULKOISTA PALVELUA.
+--
+-- Sentry olisi parempi halytyksiin, mutta se on uusi tili, uusi avain
+-- ja uusi kolmas osapuoli jolle asiakkaan polut vuotaisivat. Tama
+-- riittaa siihen mihin sita tarvitaan: nakee etta jokin on rikki ja
+-- missa.
+--
+-- ANON SAA KIRJATA, MUTTA RAJATUSTI.
+--
+-- Kirjautumissivun virhe on juuri se joka pitaa nahda, joten kirjaus
+-- on auki myos kirjautumattomalle. Siksi funktio katkaisee jokaisen
+-- kentan ja lopettaa kirjaamisen jos virheita tulee yli kahdensadan
+-- tunnissa: sama katto kuin yhteydenottolomakkeella.
+
+create table if not exists app_errors (
+  id uuid primary key default gen_random_uuid(),
+  occurred_at timestamptz not null default now(),
+  path text,
+  message text not null,
+  digest text,
+  stack text,
+  seen boolean not null default false
+);
+
+comment on table app_errors is
+  'Palvelinvirheet. Ei henkilotietoja: vain polku, viesti ja pino.';
+
+create index if not exists app_errors_aika_idx
+  on app_errors (occurred_at desc);
+
+alter table app_errors enable row level security;
+
+revoke all on table app_errors from anon, authenticated;
+
+create or replace function log_app_error(
+  p_path text,
+  p_message text,
+  p_digest text default null,
+  p_stack text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if (select count(*) from app_errors
+      where occurred_at > now() - interval '1 hour') >= 200 then
+    return;
+  end if;
+
+  insert into app_errors (path, message, digest, stack)
+  values (
+    left(coalesce(p_path, ''), 300),
+    left(coalesce(nullif(trim(p_message), ''), 'tuntematon virhe'), 1000),
+    left(coalesce(p_digest, ''), 100),
+    left(coalesce(p_stack, ''), 4000)
+  );
+end;
+$$;
+
+revoke all on function log_app_error(text, text, text, text) from public;
+grant execute on function log_app_error(text, text, text, text) to anon, authenticated;
+
+create or replace function sa_app_errors(p_limit integer default 100)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $$
+declare
+  v jsonb;
+begin
+  if not current_user_is_super_admin() then
+    raise exception 'Vain jarjestelman yllapitaja';
+  end if;
+
+  select coalesce(jsonb_agg(row_to_json(x)::jsonb order by x.occurred_at desc), '[]'::jsonb)
+  into v
+  from (
+    select id, occurred_at, path, message, digest, stack, seen
+    from app_errors
+    order by occurred_at desc
+    limit least(greatest(coalesce(p_limit, 100), 1), 500)
+  ) x;
+
+  return v;
+end;
+$$;
+
+revoke all on function sa_app_errors(integer) from public, anon;
+grant execute on function sa_app_errors(integer) to authenticated;
+
+create or replace function sa_mark_errors_seen()
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if not current_user_is_super_admin() then
+    raise exception 'Vain jarjestelman yllapitaja';
+  end if;
+
+  update app_errors set seen = true where not seen;
+end;
+$$;
+
+revoke all on function sa_mark_errors_seen() from public, anon;
+grant execute on function sa_mark_errors_seen() to authenticated;
+
+
+-- ===========================================================================
+-- 0136_kirjaus_alv_erittelysta.sql
+-- ===========================================================================
+
+-- 0136 Paiva kirjataan myos pelkalla ALV-erittelylla
+--
+-- Kirjaus vaati myyntiryhmarivit. Kuvatusta paivaraportista tullut
+-- paiva sai ALV-erittelyn mutta ei aina riveja — silloin kun kassan
+-- ryhmanimia ei tunnistettu Katen myyntiryhmiksi. Paiva jai
+-- kirjanpidon ulkopuolelle eika kuukautta voinut sulkea, vaikka
+-- kaikki tarvittava oli tallessa: verokanta, veroton ja vero.
+--
+-- Loytyi Ravintola Demon elokuusta: kaksi paivaa jumitti kuukauden,
+-- toinen kasin kirjattuna ja toinen raportista kuvattuna. Sama vika,
+-- kaksi eri reittia.
+--
+-- Nyt rivit kaytetaan jos ne ovat, ja muuten erittely. Myyntitili
+-- haetaan kannan mukaan: se aktiivinen myyntiryhma jolla on sama
+-- kanta, ensisijaisesti oletusryhma. Jos sellaista ei ole, kirjaus
+-- menee myyntitilille 3000 — sama varatie kuin riveilla ennestaan.
+
+create or replace function public.ledger_ensure_sales_day(p_day uuid)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  v_d record; v_line record;
+  v_year uuid; v_entry uuid; v_rivi integer;
+  v_alvtili uuid; v_myyntitili uuid; v_kassatili uuid; v_pyoristys uuid;
+  v_summa bigint; v_vero bigint; v_jaannos bigint;
+begin
+  select ds.id, ds.restaurant_id, ds.sales_date, ds.gross_sales_cents
+    into v_d
+  from daily_sales ds where ds.id = p_day;
+
+  if v_d.id is null then return; end if;
+
+  if exists (select 1 from ledger_entries
+             where source_type = 'daily_sales' and source_id = p_day
+               and status <> 'proposed') then
+    return;
+  end if;
+
+  delete from ledger_entries
+   where source_type = 'daily_sales' and source_id = p_day and status = 'proposed';
+
+  if v_d.gross_sales_cents is null then return; end if;
+
+  if not exists (select 1 from daily_sales_lines where daily_sales_id = p_day)
+     and not exists (select 1 from daily_sales_vat where daily_sales_id = p_day) then
+    return;
+  end if;
+
+  if exists (select 1 from closed_months
+             where restaurant_id = v_d.restaurant_id
+               and month = date_trunc('month', v_d.sales_date)::date) then
+    return;
+  end if;
+
+  select id into v_kassatili from ledger_accounts
+   where restaurant_id = v_d.restaurant_id and number = '1750';
+  select id into v_pyoristys from ledger_accounts
+   where restaurant_id = v_d.restaurant_id and number = '3900';
+  select account_id into v_alvtili from ledger_mappings
+   where restaurant_id = v_d.restaurant_id and kind = 'vat_sales' limit 1;
+
+  if v_kassatili is null or v_alvtili is null or v_pyoristys is null then return; end if;
+
+  v_year := ledger_year_for(v_d.restaurant_id, v_d.sales_date);
+
+  insert into ledger_entries (restaurant_id, fiscal_year_id, entry_number, entry_date,
+    description, source_type, source_id, created_by)
+  values (v_d.restaurant_id, v_year, ledger_next_number(v_year), v_d.sales_date,
+    'Päivämyynti ' || to_char(v_d.sales_date, 'DD.MM.YYYY'),
+    'daily_sales', p_day, auth.uid())
+  returning id into v_entry;
+
+  v_rivi := 1;
+  v_summa := 0;
+
+  insert into ledger_lines (entry_id, line_number, account_id, debit_cents, description)
+  values (v_entry, v_rivi, v_kassatili, v_d.gross_sales_cents, 'Päivän myynti');
+  v_rivi := v_rivi + 1;
+
+  for v_line in
+    select l.sales_group_id, l.vat_rate, sum(l.net_cents)::integer as net_cents
+    from daily_sales_lines l
+    where l.daily_sales_id = p_day
+    group by l.sales_group_id, l.vat_rate
+
+    union all
+
+    select (
+             select g.id from sales_groups g
+             where g.restaurant_id = v_d.restaurant_id
+               and g.active
+               and g.vat_rate = v.vat_rate
+             order by g.is_default desc, g.sort_order
+             limit 1
+           ) as sales_group_id,
+           v.vat_rate,
+           sum(v.net_cents)::integer as net_cents
+    from daily_sales_vat v
+    where v.daily_sales_id = p_day
+      and not exists (
+        select 1 from daily_sales_lines l2 where l2.daily_sales_id = p_day
+      )
+    group by v.vat_rate
+  loop
+    v_myyntitili := null;
+
+    if v_line.sales_group_id is not null then
+      select account_id into v_myyntitili from ledger_mappings
+       where restaurant_id = v_d.restaurant_id
+         and kind = 'sales_group' and ref_id = v_line.sales_group_id;
+    end if;
+
+    if v_myyntitili is null then
+      select id into v_myyntitili from ledger_accounts
+       where restaurant_id = v_d.restaurant_id and number = '3000';
+    end if;
+
+    insert into ledger_lines (entry_id, line_number, account_id, credit_cents, vat_rate, description)
+    values (v_entry, v_rivi, v_myyntitili, v_line.net_cents, v_line.vat_rate, 'Myynti veroton');
+    v_rivi := v_rivi + 1;
+    v_summa := v_summa + v_line.net_cents;
+  end loop;
+
+  select coalesce(sum(vat_cents), 0) into v_vero
+  from daily_sales_vat where daily_sales_id = p_day;
+
+  if v_vero = 0 then
+    select coalesce(sum(vat_cents), 0) into v_vero
+    from daily_sales_lines where daily_sales_id = p_day;
+  end if;
+
+  if v_vero <> 0 then
+    insert into ledger_lines (entry_id, line_number, account_id, credit_cents, description)
+    values (v_entry, v_rivi, v_alvtili, v_vero::integer, 'Myynnin ALV');
+    v_rivi := v_rivi + 1;
+  end if;
+
+  v_jaannos := v_d.gross_sales_cents - v_summa - v_vero;
+
+  if v_jaannos > 0 then
+    insert into ledger_lines (entry_id, line_number, account_id, credit_cents, description)
+    values (v_entry, v_rivi, v_pyoristys, v_jaannos::integer, 'Pyöristys');
+  elsif v_jaannos < 0 then
+    insert into ledger_lines (entry_id, line_number, account_id, debit_cents, description)
+    values (v_entry, v_rivi, v_pyoristys, (-v_jaannos)::integer, 'Pyöristys');
+  end if;
+end;
+$function$;
 

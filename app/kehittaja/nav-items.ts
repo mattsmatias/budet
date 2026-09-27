@@ -45,6 +45,7 @@ export const DEV_NAV: DevNavSection[] = [
       { href: "/kehittaja/tila", label: "Järjestelmän tila", icon: "trend" },
       { href: "/kehittaja/liput", label: "Feature flagit", icon: "settings" },
       { href: "/kehittaja/loki", label: "Toimintaloki", icon: "report" },
+      { href: "/kehittaja/virheet", label: "Virheet", icon: "alert" },
     ],
   },
 ];

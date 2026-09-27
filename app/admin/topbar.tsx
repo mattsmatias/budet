@@ -6,6 +6,7 @@ import { LanguagePicker } from "@/components/i18n/language-picker";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { Search, type SearchItem } from "./search";
+import { CompanySwitcher } from "./company-switcher";
 import { ButtonLink } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import type { Alert, Role } from "@/lib/restoflow/types";
@@ -33,6 +34,7 @@ import type { Alert, Role } from "@/lib/restoflow/types";
  */
 export function TopBar({
   restaurantName,
+  companies,
   date,
   alerts,
   userName,
@@ -47,6 +49,8 @@ export function TopBar({
   t,
 }: {
   restaurantName: string;
+  /** Käyttäjän yritykset: vaihtaja näkyy vasta kun niitä on kaksi. */
+  companies: { id: string; name: string }[];
   /** "MA 24.08.2026" — ravintolan ajassa. */
   date: string;
   alerts: Alert[];
@@ -83,7 +87,16 @@ export function TopBar({
           className="truncate text-[11.5px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          {restaurantName} · {date}
+          {companies.length > 1 ? (
+            <CompanySwitcher
+              current={companies.find((c) => c.name === restaurantName)?.id ?? ""}
+              companies={companies}
+              label={t.kuori.switchCompany}
+            />
+          ) : (
+            restaurantName
+          )}{" "}
+          · {date}
         </p>
         <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
           <PageTitle fallback={t.kuori.admin} t={t} />

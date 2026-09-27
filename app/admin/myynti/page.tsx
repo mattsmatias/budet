@@ -121,6 +121,21 @@ export default async function SalesPage({
   }
   const missing = missingSalesDays(days, sales, today);
 
+  /*
+   * Kirjatut päivät joilta puuttuu ALV-erittely.
+   *
+   * Nämä ovat kirjattuja päiviä — myynti näkyy raporteissa ja
+   * tuloksessa — mutta ne eivät pääse kirjanpitoon, koska verosta ei
+   * ole tietoa. Ennen ne näkyivät vain kirjanpidon esteenä
+   * "myyntipäiviä ei ole kirjattu", eikä missään lukenut mikä
+   * puuttuu tai mistä sen korjaa. Nyt ne ovat siellä missä ne
+   * korjataan: myyntisivulla, samalla lomakkeella kuin muutkin.
+   */
+  const vailleErittelya = sales
+    .filter((row) => row.date.startsWith(month) && row.grossCents === null)
+    .map((row) => row.date)
+    .sort();
+
   // Lista rajataan kuukauteen; vertailut lukevat yha koko historiaa.
   const inMonth = sales.filter((row) => row.date.startsWith(month));
 
@@ -253,6 +268,45 @@ export default async function SalesPage({
               <MissingDays
                 t={t}
                 days={missing.map((day) => ({
+                  date: day,
+                  label: formatDay(day, locale),
+                }))}
+                groups={groups}
+                mappings={mappings}
+              />
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      {canManage && vailleErittelya.length > 0 ? (
+        <Card>
+          <div className="flex items-start gap-3">
+            <span
+              className="mt-0.5 shrink-0"
+              style={{ color: "var(--rf-amber-text)" }}
+            >
+              <RfIcon name="alert" size={18} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium">
+                {t.myynti.vatMissingTitle}
+              </p>
+              <p
+                className="mt-1 text-[13px] leading-relaxed"
+                style={{ color: "var(--rf-text-2)" }}
+              >
+                {fill(
+                  vailleErittelya.length === 1
+                    ? t.myynti.vatMissingOne
+                    : t.myynti.vatMissingMany,
+                  { maara: String(vailleErittelya.length) },
+                )}
+              </p>
+
+              <MissingDays
+                t={t}
+                days={vailleErittelya.map((day) => ({
                   date: day,
                   label: formatDay(day, locale),
                 }))}

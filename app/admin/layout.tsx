@@ -1,6 +1,6 @@
 import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
-import { requireContext } from "@/lib/restoflow/session";
+import { getMemberships, requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
@@ -33,6 +33,10 @@ import type { SearchItem } from "./search";
  */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { user, restaurant, role } = await requireContext("/admin");
+
+  /* Yritykset vaihtajaa varten. Sama välimuistitettu kysely kuin
+     kontekstissa, joten tämä ei maksa uutta kierrosta. */
+  const memberships = await getMemberships();
 
   const locale = await resolveLocale();
   const t = adminText(locale);
@@ -207,6 +211,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <TopBar
             nimet={nimet}
             restaurantName={restaurant.name}
+            companies={memberships.map((m) => ({ id: m.id, name: m.name }))}
             date={longDate(now, restaurant.timezone, locale)}
             alerts={alerts}
             userName={userName}

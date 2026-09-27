@@ -9,6 +9,8 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -19,7 +21,11 @@ import { ISO_DATE } from "@/lib/restoflow/dates";
 import { z } from "zod";
 import { parseHourly } from "@/lib/restoflow/employees";
 import { createClient } from "@/utils/supabase/server";
-import { requireContext } from "@/lib/restoflow/session";
+import {
+  ACTIVE_RESTAURANT_COOKIE,
+  getMemberships,
+  requireContext,
+} from "@/lib/restoflow/session";
 import { canAddReceipts } from "@/lib/restoflow/permissions";
 import { reviewReasonsForSave } from "@/lib/restoflow/receipt-ai";
 import {
@@ -873,4 +879,39 @@ function explain(
   }
 
   return message ? `${prefix}: ${message}` : `${prefix}.`;
+}
+
+// ---------------------------------------------------------------------------
+// Yrityksen vaihto
+// ---------------------------------------------------------------------------
+
+/**
+ * Vaihtaa aktiivisen yrityksen.
+ *
+ * JÄSENYYS TARKISTETAAN ENNEN EVÄSTETTÄ.
+ *
+ * Tunniste tulee clientilta. Ilman tarkistusta evästeeseen voisi
+ * kirjoittaa minkä tahansa yrityksen — se ei antaisi pääsyä, koska
+ * jokainen sivu validoi valinnan jäsenyyksiä vasten ja kanta rajaa
+ * rivit joka tapauksessa, mutta käyttäjä päätyisi tyhjään näkymään
+ * ilman selitystä. Tarkistus tässä säästää sen kierroksen.
+ */
+export async function switchRestaurant(formData: FormData): Promise<void> {
+  const id = String(formData.get("restaurantId") ?? "");
+  const memberships = await getMemberships();
+
+  if (!memberships.some((m) => m.id === id)) return;
+
+  const store = await cookies();
+  store.set(ACTIVE_RESTAURANT_COOKIE, id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    /* Vuosi: valinta on työkalu jota ei haluta tehdä joka aamu. */
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  revalidatePath("/", "layout");
+  redirect("/admin");
 }

@@ -501,3 +501,21 @@ export async function removeKateStaff(
   revalidatePath("/kehittaja", "layout");
   return { notice: "Oikeus poistettiin." };
 }
+
+// ---------------------------------------------------------------------------
+// Virheet
+// ---------------------------------------------------------------------------
+
+/** Merkitsee kaikki virheet nähdyiksi. Rivejä ei poisteta. */
+/* Ei parametreja: tila ja lomake eivät kerro tässä mitään. */
+export async function markErrorsSeen(): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("sa_mark_errors_seen");
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  return { notice: "Merkitty nähdyiksi." };
+}

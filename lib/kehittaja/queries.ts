@@ -258,3 +258,32 @@ export const fetchKateTeam = cache(async (): Promise<KateTeam> => {
     })),
   };
 });
+
+export interface AppError {
+  id: string;
+  occurredAt: string;
+  path: string | null;
+  message: string;
+  digest: string | null;
+  stack: string | null;
+  seen: boolean;
+}
+
+/** Palvelinvirheet uusin ensin. Tyhjä lista on hyvä uutinen. */
+export const fetchAppErrors = cache(async (): Promise<AppError[]> => {
+  const rows = await rpc<Record<string, unknown>[]>(
+    "sa_app_errors",
+    { p_limit: 100 },
+    [],
+  );
+
+  return rows.map((r) => ({
+    id: r.id as string,
+    occurredAt: r.occurred_at as string,
+    path: (r.path as string | null) ?? null,
+    message: r.message as string,
+    digest: (r.digest as string | null) || null,
+    stack: (r.stack as string | null) || null,
+    seen: r.seen === true,
+  }));
+});
