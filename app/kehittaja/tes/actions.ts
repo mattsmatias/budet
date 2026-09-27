@@ -42,7 +42,17 @@ export async function saveTes(
   const id = teksti(data, "id");
   const slug = teksti(data, "slug").toLowerCase();
   const name = teksti(data, "name");
-  const industry = teksti(data, "industry");
+  /*
+   * Toimialat valintaruuduista.
+   *
+   * Tuntematon arvo ei paase kantaan: lista tulee clientilta, ja
+   * clientilta tuleva arvo tarkistetaan aina.
+   */
+  const TOIMIALAT = ["restaurant", "cafe", "barber"];
+  const industries = data
+    .getAll("industries")
+    .map((arvo) => String(arvo))
+    .filter((arvo) => TOIMIALAT.includes(arvo));
   const validFrom = teksti(data, "validFrom");
   const validUntil = teksti(data, "validUntil");
 
@@ -50,7 +60,7 @@ export async function saveTes(
     return { error: "Tunnus saa sisältää vain pieniä kirjaimia ja viivoja." };
   }
   if (name === "") return { error: "Nimi puuttuu." };
-  if (industry === "") return { error: "Toimiala puuttuu." };
+  if (industries.length === 0) return { error: "Valitse ainakin yksi toimiala." };
   if (!ISO_PAIVA.test(validFrom)) {
     return { error: "Voimassaolon alku puuttuu." };
   }
@@ -64,7 +74,7 @@ export async function saveTes(
   const rivi = {
     slug,
     name,
-    industry,
+    industries,
     valid_from: validFrom,
     valid_until: validUntil === "" ? null : validUntil,
     is_active: data.get("isActive") === "on",

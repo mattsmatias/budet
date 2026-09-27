@@ -86,8 +86,12 @@ export function TesList({ agreements }: { agreements: TesAgreement[] }) {
           <p className="text-[15px] font-semibold">{versiot[0].name}</p>
           <p className="text-[12.5px]" style={{ color: "var(--rf-text-3)" }}>
             {slug} ·{" "}
-            {TOIMIALAT.find((x) => x.id === versiot[0].industry)?.label ??
-              versiot[0].industry}
+            {versiot[0].industries
+              .map(
+                (ala) =>
+                  TOIMIALAT.find((x) => x.id === ala)?.label ?? ala,
+              )
+              .join(", ")}
           </p>
 
           <ul className="mt-3 space-y-3">
@@ -185,21 +189,40 @@ function TesForm({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="block">
-          <span className="block text-[12.5px] font-semibold">Toimiala</span>
-          <select
-            name="industry"
-            defaultValue={tes?.industry ?? "restaurant"}
-            className={`${KENTTA} mt-1`}
-            style={KENTTA_TYYLI}
-          >
+        <fieldset className="block">
+          <legend className="block text-[12.5px] font-semibold">
+            Toimialat
+          </legend>
+
+          {/*
+            Monivalinta, koska soveltamisala on lista.
+
+            Sama matkailu- ja ravintola-alan sopimus koskee seka
+            ravintoloita etta kahviloita. Yksi valinta pakottaisi
+            tekemaan kahvilalle kopion samasta sopimuksesta.
+          */}
+          <div className="mt-1.5 space-y-1.5">
             {TOIMIALAT.map((x) => (
-              <option key={x.id} value={x.id}>
+              <label
+                key={x.id}
+                className="flex items-center gap-2 text-[13px]"
+              >
+                <input
+                  type="checkbox"
+                  name="industries"
+                  value={x.id}
+                  defaultChecked={
+                    tes
+                      ? tes.industries.includes(x.id)
+                      : x.id === "restaurant"
+                  }
+                  className="h-4 w-4"
+                />
                 {x.label}
-              </option>
+              </label>
             ))}
-          </select>
-        </label>
+          </div>
+        </fieldset>
 
         <Kentta
           label="Voimassa alkaen"

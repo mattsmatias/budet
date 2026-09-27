@@ -903,7 +903,8 @@ export function TesForm({
   agreements: {
     id: string;
     name: string;
-    industry: string;
+    /** Toimialat joita sopimus koskee. */
+    industries: string[];
     validFrom: string;
     validUntil: string | null;
     isActive: boolean;
@@ -911,8 +912,14 @@ export function TesForm({
 }) {
   const [state, action] = useActionState(setRestaurantTes, initial);
 
-  const omat = agreements.filter((a) => a.industry === industry && a.isActive);
-  const muut = agreements.filter((a) => a.industry !== industry && a.isActive);
+  /* Sopimus voi koskea montaa toimialaa: kahvila saa saman sopimuksen
+     kuin ravintola, koska soveltamisala mainitsee molemmat. */
+  const omat = agreements.filter(
+    (a) => a.isActive && a.industries.includes(industry),
+  );
+  const muut = agreements.filter(
+    (a) => a.isActive && !a.industries.includes(industry),
+  );
 
   return (
     <Card>

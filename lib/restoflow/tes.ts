@@ -53,8 +53,14 @@ export interface TesAgreement {
   id: string;
   slug: string;
   name: string;
-  /** Sopimuksen ala vapaana tunnuksena. Ryhmittelya varten, ei laskentaan. */
-  industry: string;
+  /**
+   * Toimialat joita sopimus koskee. Ryhmittelya varten, ei laskentaan.
+   *
+   * Lista eika yksi arvo, koska soveltamisala on lista: sama
+   * matkailu- ja ravintola-alan sopimus koskee seka ravintoloita etta
+   * kahviloita, eika kahvilalle tehda siita omaa kopiota.
+   */
+  industries: string[];
   validFrom: string;
   validUntil: string | null;
   isActive: boolean;

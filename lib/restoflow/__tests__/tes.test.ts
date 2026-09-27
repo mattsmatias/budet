@@ -25,7 +25,7 @@ function tes(
     id,
     slug: "marava",
     name: `Marava ${validFrom}`,
-    industry: "restaurant",
+    industries: ["restaurant"],
     validFrom,
     validUntil,
     isActive: true,

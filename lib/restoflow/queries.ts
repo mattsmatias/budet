@@ -1176,7 +1176,7 @@ export async function fetchTesAgreements(): Promise<TesAgreement[]> {
   const { data, error } = await supabase
     .from("tes_agreements")
     .select(
-      "id, slug, name, industry, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+      "id, slug, name, industries, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
     )
     .order("slug")
     .order("valid_from", { ascending: false });
@@ -1219,7 +1219,7 @@ export async function fetchCompanyTes(
   const { data, error } = await supabase
     .from("tes_agreements")
     .select(
-      "id, slug, name, industry, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+      "id, slug, name, industries, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
     )
     .eq("slug", slug)
     .order("valid_from", { ascending: false });
@@ -1234,7 +1234,7 @@ function tesFromRow(row: Record<string, unknown>): TesAgreement {
     id: row.id as string,
     slug: row.slug as string,
     name: row.name as string,
-    industry: row.industry as TesAgreement["industry"],
+    industries: Array.isArray(row.industries) ? (row.industries as string[]) : [],
     validFrom: row.valid_from as string,
     validUntil: (row.valid_until as string | null) ?? null,
     isActive: Boolean(row.is_active),

@@ -1,6 +1,6 @@
 import { fetchTesAgreements } from "@/lib/restoflow/queries";
 import { requireSuperAdmin } from "@/lib/restoflow/session";
-import { EmptyState } from "@/components/restoflow/ui";
+import { Card, EmptyState } from "@/components/restoflow/ui";
 import { TesList } from "./forms";
 
 export const metadata = { title: "TES-hallinta" };
@@ -39,6 +39,37 @@ export default async function TesPage() {
           sopimus valitaan yrityksen omalta sivulta.
         </p>
       </header>
+
+      {/*
+        Toimialat joilla sopimusta ei ole.
+
+        Hiusalalla ei ole valtakunnallista tyoehtosopimusta. Sita ei
+        siis voi lisata tanne, ja ilman tata huomautusta se nayttaisi
+        vain siltä että joku unohti syöttää sen. Tieto on tarkistettu
+        PAMin sivulta; jos se muuttuu, tämä teksti muuttuu.
+      */}
+      <Card>
+        <p className="text-[13.5px] font-semibold">
+          Hiusalalla ei ole valtakunnallista työehtosopimusta
+        </p>
+        <p
+          className="mt-1.5 text-[13px] leading-relaxed"
+          style={{ color: "var(--rf-text-2)" }}
+        >
+          PAM: hiusalalla ei ole sopimusta joka takaisi koko alalle
+          vähimmäistyöehdot. Alalla on yrityskohtaisia sopimuksia, ja
+          monen työntekijän kohdalla noudatetaan kaupan alan
+          työehtosopimusta. Parturi-kampaamon lisät tulevat siis
+          työsopimuksesta tai siitä sopimuksesta jota yritys noudattaa —
+          älä lisää tänne hiusalan sopimusta, jota ei ole.
+        </p>
+        <p
+          className="mt-1.5 text-[12px]"
+          style={{ color: "var(--rf-text-3)" }}
+        >
+          Lähde: pam.fi · hiusalan työehdot · tarkistettu 27.9.2026
+        </p>
+      </Card>
 
       {agreements.length === 0 ? (
         <EmptyState

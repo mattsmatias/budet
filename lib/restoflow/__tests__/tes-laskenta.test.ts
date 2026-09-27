@@ -35,7 +35,7 @@ const VANHA: TesAgreement = {
   id: "v1",
   slug: "marava",
   name: "MaRa",
-  industry: "restaurant",
+  industries: ["restaurant"],
   validFrom: "2025-09-01",
   validUntil: "2027-06-30",
   isActive: true,
