@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { BUSINESS_ID, CONTACT_URL } from "@/lib/kate-contact";
+import { BackToTop } from "./back-to-top";
 
 /**
  * Sopimussivujen kuori.
@@ -117,6 +118,8 @@ export function Legal({
           </p>
         </div>
       </main>
+
+      <BackToTop label="Takaisin ylös" />
     </div>
   );
 }

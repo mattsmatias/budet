@@ -7,6 +7,7 @@ import { LandingNav, Reveal } from "./nav";
 import { Logo } from "@/components/brand/logo";
 import { BUSINESS_ID } from "@/lib/kate-contact";
 import { CUSTOMERS } from "@/lib/kate-customers";
+import { BackToTop } from "./back-to-top";
 import {
   HeroFloaters,
   HeroPreview,
@@ -57,6 +58,7 @@ export function Landing({ appHref, locale, t }: Props) {
       </main>
 
       <Footer locale={locale} t={t} />
+      <BackToTop label={t.footer.backToTop} />
     </div>
   );
 }

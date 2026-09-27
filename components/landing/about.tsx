@@ -1,4 +1,5 @@
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
+import { BackToTop } from "./back-to-top";
 import Image from "next/image";
 import Link from "next/link";
 import { pathFor, type Locale } from "@/lib/i18n/locales";
@@ -40,6 +41,7 @@ export function About({
       </main>
 
       <Footer locale={locale} t={t} />
+      <BackToTop label={t.footer.backToTop} />
     </div>
   );
 }

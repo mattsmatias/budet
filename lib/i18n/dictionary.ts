@@ -233,6 +233,7 @@ const fi = {
     businessId: "Y-tunnus {tunnus}",
     privacy: "Tietosuoja",
     terms: "Käyttöehdot",
+    backToTop: "Takaisin ylös",
   },
 
   about: {
@@ -474,6 +475,7 @@ const en: Dictionary = {
     businessId: "Business ID {tunnus}",
     privacy: "Privacy",
     terms: "Terms",
+    backToTop: "Back to top",
   },
   about: {
     metaTitle: "About – Kate",
@@ -707,6 +709,7 @@ const sv: Dictionary = {
     businessId: "FO-nummer {tunnus}",
     privacy: "Dataskydd",
     terms: "Användarvillkor",
+    backToTop: "Till toppen",
   },
   about: {
     metaTitle: "Om oss – Kate",
@@ -940,6 +943,7 @@ const da: Dictionary = {
     businessId: "CVR-nummer {tunnus}",
     privacy: "Privatliv",
     terms: "Vilkår",
+    backToTop: "Til toppen",
   },
   about: {
     metaTitle: "Om os – Kate",
@@ -1174,6 +1178,7 @@ const tr: Dictionary = {
     businessId: "Vergi kimlik no {tunnus}",
     privacy: "Gizlilik",
     terms: "Koşullar",
+    backToTop: "Başa dön",
   },
   about: {
     metaTitle: "Hakkımızda – Kate",
@@ -1407,6 +1412,7 @@ const et: Dictionary = {
     businessId: "Registrikood {tunnus}",
     privacy: "Privaatsus",
     terms: "Tingimused",
+    backToTop: "Tagasi üles",
   },
   about: {
     metaTitle: "Meist – Kate",
@@ -1640,6 +1646,7 @@ const ar: Dictionary = {
     businessId: "الرقم التجاري {tunnus}",
     privacy: "الخصوصية",
     terms: "الشروط",
+    backToTop: "العودة إلى الأعلى",
   },
   about: {
     metaTitle: "من نحن – Kate",
