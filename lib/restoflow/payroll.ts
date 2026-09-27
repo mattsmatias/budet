@@ -39,6 +39,37 @@ export interface Supplement {
   cents: number;
   /** Osuus tuntipalkasta, esim. 1 = sadan prosentin korotus. */
   rate: number;
+  /**
+   * Viikonpäivät joina lisä maksetaan: 1 = maanantai … 7 = sunnuntai.
+   *
+   * Tyhjä tai puuttuva tarkoittaa kaikkia päiviä, jolloin käytös on
+   * sama kuin ennen tätä kenttää.
+   *
+   * MIKSI TÄTÄ TARVITAAN.
+   *
+   * Kaupan alan iltalisää ei makseta arkilauantai-iltana, koska
+   * samoista tunneista maksetaan lauantailisä. Ilman päivärajausta
+   * Kate maksaisi molemmat, ja lauantai-illan kustannus olisi liian
+   * suuri joka kuukausi.
+   */
+  days?: number[] | null;
+  /**
+   * Ei makseta sunnuntaina eikä pyhäpäivänä.
+   *
+   * Kaupan yölisä jätetään maksamatta sunnuntai- ja juhlapäiväyönä,
+   * koska niiltä tunneilta maksetaan sunnuntaikorotus. Pelkkä
+   * viikonpäivälista ei riitä: juhlapäivä voi olla mikä päivä tahansa.
+   */
+  notOnHolidays?: boolean;
+  /**
+   * Korotus lasketaan vain peruspalkasta.
+   *
+   * Kaupan sopimus sanoo suoraan: "Sunnuntaityökorvausta laskettaessa
+   * työaikalisiä ei oteta huomioon peruspalkassa." MaRassa korotus
+   * koskee myös ilta- ja yölisää, joten ero on sopimuksen eikä
+   * laskennan — ja siksi se on sopimuksen kentässä.
+   */
+  baseOnly?: boolean;
 }
 
 export const NO_SUPPLEMENT: Supplement = { cents: 0, rate: 0 };
@@ -206,6 +237,27 @@ function inWindow(minuteOfDay: number, start: number, end: number): boolean {
  * Kesken oleva vuoro palauttaa nollat: sen kesto kasvaa joka sekunti,
  * eikä lukua joka muuttuu itsestään voi esittää kustannuksena.
  */
+/**
+ * Päteekö lisä tähän päivään?
+ *
+ * Kellonaika ratkaistaan erikseen ikkunalla; tämä vastaa vain
+ * kysymykseen kuuluuko päivä lisän piiriin lainkaan. Ilman
+ * rajauksia vastaus on kyllä, jolloin käytös on sama kuin ennen
+ * näitä kenttiä.
+ */
+function paivaSallii(
+  supplement: Supplement,
+  isoWeekday: number,
+  holiday: boolean,
+): boolean {
+  if (supplement.notOnHolidays && holiday) return false;
+
+  const days = supplement.days;
+  if (!days || days.length === 0) return true;
+
+  return days.includes(isoWeekday);
+}
+
 export function splitMinutes(
   entry: TimeEntry,
   timezone: string,
@@ -233,6 +285,7 @@ export function splitMinutes(
      */
     if (
       weekday === 6 &&
+      paivaSallii(settings.saturday, 6, isSundayOrHoliday(day, weekday)) &&
       inWindow(
         minuteOfDay,
         settings.saturdayStartMinute,
@@ -249,8 +302,14 @@ export function splitMinutes(
      * vapusta ja itsenäisyyspäivästä. Päivälista on omassa
      * tiedostossaan, jotta sitä voi lukea ja testata erikseen.
      */
+    /* Pyhäpäivä sellaisenaan: rajauksiin, ei vain sunnuntailisään. */
+    const pyhapaiva = isSundayOrHoliday(day, weekday);
+
+    /* Sunnuntai on viikon 7. päivä, ei nollas. */
+    const isoWeekday = weekday === 0 ? 7 : weekday;
+
     const pyha =
-      isSundayOrHoliday(day, weekday) &&
+      pyhapaiva &&
       inWindow(
         minuteOfDay,
         settings.sundayStartMinute,
@@ -279,11 +338,13 @@ export function splitMinutes(
      * 23–06 — tällä ei ole vaikutusta.
      */
     if (
+      paivaSallii(settings.night, isoWeekday, pyhapaiva) &&
       inWindow(minuteOfDay, settings.nightStartMinute, settings.nightEndMinute)
     ) {
       split.night += 1;
       if (pyha) split.sundayNight += 1;
     } else if (
+      paivaSallii(settings.evening, isoWeekday, pyhapaiva) &&
       inWindow(
         minuteOfDay,
         settings.eveningStartMinute,
@@ -382,10 +443,19 @@ function sundayCents(
   const hours = split.sunday / 60;
   if (hours <= 0) return 0;
 
-  const korotettava =
-    hours * hourlyCents +
-    (split.sundayEvening / 60) * perHourCents(hourlyCents, settings.evening) +
-    (split.sundayNight / 60) * perHourCents(hourlyCents, settings.night);
+  /*
+   * Mistä korotus lasketaan, on sopimuksen asia.
+   *
+   * MaRassa sunnuntaikorotus koskee peruspalkkaa ja sen päälle
+   * maksettavia ilta- ja yölisiä. Kaupan sopimus sanoo päinvastoin:
+   * "Sunnuntaityökorvausta laskettaessa työaikalisiä ei oteta
+   * huomioon peruspalkassa." Kumpikaan ei ole laskennan mielipide.
+   */
+  const korotettava = settings.sunday.baseOnly
+    ? hours * hourlyCents
+    : hours * hourlyCents +
+      (split.sundayEvening / 60) * perHourCents(hourlyCents, settings.evening) +
+      (split.sundayNight / 60) * perHourCents(hourlyCents, settings.night);
 
   return hours * settings.sunday.cents + settings.sunday.rate * korotettava;
 }
@@ -407,9 +477,10 @@ function eveCents(
   const hours = split.eve / 60;
   if (hours <= 0) return 0;
 
-  const korotettava =
-    hours * hourlyCents +
-    (split.eveEvening / 60) * perHourCents(hourlyCents, settings.evening);
+  const korotettava = settings.eve.baseOnly
+    ? hours * hourlyCents
+    : hours * hourlyCents +
+      (split.eveEvening / 60) * perHourCents(hourlyCents, settings.evening);
 
   return hours * settings.eve.cents + settings.eve.rate * korotettava;
 }

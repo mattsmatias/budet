@@ -33,6 +33,9 @@ function saanto(
     value,
     startTime,
     endTime,
+  weekdays: null,
+  notOnHolidays: false,
+  baseOnly: false,
   };
 }
 
@@ -58,6 +61,7 @@ const V1: TesAgreement = {
   validFrom: "2025-09-01",
   validUntil: "2027-06-30",
   isActive: true,
+  note: null,
   rules: SAANNOT_VANHA,
 };
 

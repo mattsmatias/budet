@@ -27,7 +27,18 @@ function saanto(
   startTime: string | null = null,
   endTime: string | null = null,
 ) {
-  return { id: ruleType, ruleType, name: ruleType, unit, value, startTime, endTime };
+  return {
+    id: ruleType,
+    ruleType,
+    name: ruleType,
+    unit,
+    value,
+    startTime,
+    endTime,
+    weekdays: null,
+    notOnHolidays: false,
+    baseOnly: false,
+  };
 }
 
 /** MaRa 1.9.2025–30.6.2027. */
@@ -39,6 +50,7 @@ const VANHA: TesAgreement = {
   validFrom: "2025-09-01",
   validUntil: "2027-06-30",
   isActive: true,
+  note: null,
   rules: [
     saanto("evening", 1.4, "eur_per_hour", "18:00", "24:00"),
     saanto("night", 2.37, "eur_per_hour", "00:00", "06:00"),

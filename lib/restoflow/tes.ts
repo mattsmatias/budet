@@ -47,6 +47,15 @@ export interface TesRule {
   /** "18:00" tai null. */
   startTime: string | null;
   endTime: string | null;
+  /**
+   * Viikonpäivät joina lisä maksetaan: 1 = maanantai … 7 = sunnuntai.
+   * Tyhjä = kaikki päivät.
+   */
+  weekdays: number[] | null;
+  /** Ei makseta sunnuntaina eikä pyhäpäivänä. */
+  notOnHolidays: boolean;
+  /** Korotus vain peruspalkasta, ei työaikalisistä. */
+  baseOnly: boolean;
 }
 
 export interface TesAgreement {
@@ -64,6 +73,14 @@ export interface TesAgreement {
   validFrom: string;
   validUntil: string | null;
   isActive: boolean;
+  /**
+   * Mitä sopimuksesta on jätetty pois tai mitä käytöstä pitää tietää.
+   *
+   * Sopimuksessa on aina kohtia joita Kate ei osaa laskea. Se mitä
+   * puuttuu, on yhtä tärkeä tieto kuin se mitä on — muuten luku
+   * näyttää täydelliseltä.
+   */
+  note: string | null;
   rules: TesRule[];
 }
 
@@ -113,9 +130,16 @@ export function minuteOfDay(time: string | null): number | null {
 function supplementOf(rule: TesRule | undefined): Supplement {
   if (!rule) return NO_SUPPLEMENT;
 
+  /* Rajaukset kulkevat säännöstä laskentaan sellaisenaan. */
+  const rajat = {
+    days: rule.weekdays && rule.weekdays.length > 0 ? rule.weekdays : null,
+    notOnHolidays: rule.notOnHolidays,
+    baseOnly: rule.baseOnly,
+  };
+
   return rule.unit === "eur_per_hour"
-    ? { cents: Math.round(rule.value * 100), rate: 0 }
-    : { cents: 0, rate: rule.value / 100 };
+    ? { cents: Math.round(rule.value * 100), rate: 0, ...rajat }
+    : { cents: 0, rate: rule.value / 100, ...rajat };
 }
 
 /**

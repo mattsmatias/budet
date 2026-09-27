@@ -77,6 +77,7 @@ export async function saveTes(
     industries,
     valid_from: validFrom,
     valid_until: validUntil === "" ? null : validUntil,
+    note: teksti(data, "note") === "" ? null : teksti(data, "note"),
     is_active: data.get("isActive") === "on",
     updated_at: new Date().toISOString(),
   };
@@ -112,6 +113,21 @@ export async function saveTesRule(
   const value = luku(teksti(data, "value"));
   const startTime = teksti(data, "startTime");
   const endTime = teksti(data, "endTime");
+
+  /*
+   * Rajaukset: viikonpäivät ja pyhät.
+   *
+   * Tyhjä lista tarkoittaa "kaikki päivät" eikä "ei yhtään päivää" —
+   * juuri siksi se tallennetaan nullina eikä tyhjänä taulukkona.
+   */
+  const weekdays = data
+    .getAll("weekdays")
+    .map((arvo) => Number(arvo))
+    .filter((arvo) => Number.isInteger(arvo) && arvo >= 1 && arvo <= 7)
+    .sort((a, b) => a - b);
+
+  const notOnHolidays = data.get("notOnHolidays") === "on";
+  const baseOnly = data.get("baseOnly") === "on";
 
   if (tesId === "") return { error: "TES:iä ei tunnistettu." };
   if (!["evening", "night", "saturday", "sunday", "eve"].includes(ruleType)) {
@@ -150,6 +166,9 @@ export async function saveTesRule(
       value,
       start_time: startTime === "" ? null : startTime,
       end_time: endTime === "" ? null : endTime,
+      weekdays: weekdays.length === 0 ? null : weekdays,
+      not_on_holidays: notOnHolidays,
+      base_only: baseOnly,
     },
     { onConflict: "tes_id,rule_type" },
   );

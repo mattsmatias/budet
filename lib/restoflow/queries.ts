@@ -1176,7 +1176,7 @@ export async function fetchTesAgreements(): Promise<TesAgreement[]> {
   const { data, error } = await supabase
     .from("tes_agreements")
     .select(
-      "id, slug, name, industries, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+      "id, slug, name, industries, valid_from, valid_until, is_active, note, tes_rules ( id, rule_type, name, unit, value, start_time, end_time, weekdays, not_on_holidays, base_only )",
     )
     .order("slug")
     .order("valid_from", { ascending: false });
@@ -1219,7 +1219,7 @@ export async function fetchCompanyTes(
   const { data, error } = await supabase
     .from("tes_agreements")
     .select(
-      "id, slug, name, industries, valid_from, valid_until, is_active, tes_rules ( id, rule_type, name, unit, value, start_time, end_time )",
+      "id, slug, name, industries, valid_from, valid_until, is_active, note, tes_rules ( id, rule_type, name, unit, value, start_time, end_time, weekdays, not_on_holidays, base_only )",
     )
     .eq("slug", slug)
     .order("valid_from", { ascending: false });
@@ -1238,6 +1238,7 @@ function tesFromRow(row: Record<string, unknown>): TesAgreement {
     validFrom: row.valid_from as string,
     validUntil: (row.valid_until as string | null) ?? null,
     isActive: Boolean(row.is_active),
+    note: (row.note as string | null) ?? null,
     rules: (
       (row.tes_rules as unknown as Record<string, unknown>[] | null) ?? []
     ).map((rule) => ({
@@ -1248,6 +1249,11 @@ function tesFromRow(row: Record<string, unknown>): TesAgreement {
       value: Number(rule.value ?? 0),
       startTime: (rule.start_time as string | null) ?? null,
       endTime: (rule.end_time as string | null) ?? null,
+      weekdays: Array.isArray(rule.weekdays)
+        ? (rule.weekdays as number[]).map(Number)
+        : null,
+      notOnHolidays: rule.not_on_holidays === true,
+      baseOnly: rule.base_only === true,
     })),
   };
 }

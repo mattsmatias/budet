@@ -42,6 +42,17 @@ const LAJIT: {
   { id: "eve", label: "Aattokorotus", aika: true, yksikko: "percent" },
 ];
 
+/** Viikonpäivät ISO-numeroina: 1 = maanantai … 7 = sunnuntai. */
+const VIIKONPAIVAT = [
+  { id: 1, label: "ma" },
+  { id: 2, label: "ti" },
+  { id: 3, label: "ke" },
+  { id: 4, label: "to" },
+  { id: 5, label: "pe" },
+  { id: 6, label: "la" },
+  { id: 7, label: "su" },
+];
+
 const KENTTA =
   "w-full px-3 py-2 text-[15px] outline-none focus-visible:ring-2";
 
@@ -49,6 +60,30 @@ const KENTTA_TYYLI: React.CSSProperties = {
   background: "var(--rf-inset)",
   borderRadius: "var(--rf-r-control)",
 };
+
+/**
+ * Säännön rajaukset luettavana tekstinä.
+ *
+ * Pelkkä euromäärä kertoo puolet: 4,00 €/h maanantaista perjantaihin
+ * on eri sääntö kuin 4,00 €/h joka päivä. Rajaus näkyy siksi samassa
+ * rivissä eikä vasta muokkauslomakkeella.
+ */
+function rajausTeksti(rule: TesAgreement["rules"][number]): string {
+  const osat: string[] = [];
+
+  if (rule.weekdays && rule.weekdays.length > 0) {
+    osat.push(
+      rule.weekdays
+        .map((p) => VIIKONPAIVAT.find((v) => v.id === p)?.label ?? String(p))
+        .join(", "),
+    );
+  }
+
+  if (rule.notOnHolidays) osat.push("ei pyhinä");
+  if (rule.baseOnly) osat.push("vain peruspalkasta");
+
+  return osat.length === 0 ? "" : ` · ${osat.join(" · ")}`;
+}
 
 export function TesList({ agreements }: { agreements: TesAgreement[] }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -134,10 +169,21 @@ export function TesList({ agreements }: { agreements: TesAgreement[] }) {
                                   rule.endTime ?? ""
                                 ).slice(0, 5)})`
                               : ""}
+                            {/* Rajaukset näkyviin: ne ovat osa sääntöä. */}
+                            {rajausTeksti(rule)}
                           </li>
                         ))
                       )}
                     </ul>
+
+                    {tes.note ? (
+                      <p
+                        className="text-[12px] leading-relaxed"
+                        style={{ color: "var(--rf-amber-text)" }}
+                      >
+                        {tes.note}
+                      </p>
+                    ) : null}
 
                     <button
                       type="button"
@@ -187,6 +233,23 @@ function TesForm({
           placeholder="Matkailu-, ravintola- ja vapaa-ajan palveluiden TES"
         />
       </div>
+
+      <label className="block">
+        <span className="block text-[12.5px] font-semibold">
+          Huomautus
+          <span className="ms-1 font-normal" style={{ color: "var(--rf-text-3)" }}>
+            mitä sopimuksesta puuttuu
+          </span>
+        </span>
+        <textarea
+          name="note"
+          defaultValue={tes?.note ?? ""}
+          rows={2}
+          placeholder="Esimerkiksi: aattoiltalisää ei ole syötetty, koska…"
+          className={`${KENTTA} mt-1`}
+          style={KENTTA_TYYLI}
+        />
+      </label>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <fieldset className="block">
@@ -359,6 +422,58 @@ function RuleForm({
             style={{ background: "var(--rf-surface)", borderRadius: 8 }}
           />
         </>
+      ) : null}
+
+      {/*
+        Rajaukset: mitkä päivät ja mistä korotus lasketaan.
+
+        Nämä ovat sopimuksen tekstiä siinä missä euromääräkin. Kaupan
+        iltalisää ei makseta arkilauantaina ja yölisää ei pyhänä;
+        ilman rajausta Kate maksaisi molemmat joka päivä.
+      */}
+      <fieldset className="w-full">
+        <legend className="text-[12px]" style={{ color: "var(--rf-text-3)" }}>
+          Päivät (tyhjä = kaikki)
+        </legend>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {VIIKONPAIVAT.map((paiva) => (
+            <label
+              key={paiva.id}
+              className="flex items-center gap-1 text-[12px]"
+            >
+              <input
+                type="checkbox"
+                name="weekdays"
+                value={paiva.id}
+                defaultChecked={rule?.weekdays?.includes(paiva.id) ?? false}
+                className="h-3.5 w-3.5"
+              />
+              {paiva.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="flex items-center gap-1.5 text-[12px]">
+        <input
+          type="checkbox"
+          name="notOnHolidays"
+          defaultChecked={rule?.notOnHolidays ?? false}
+          className="h-3.5 w-3.5"
+        />
+        Ei sunnuntaina eikä pyhänä
+      </label>
+
+      {laji.id === "sunday" || laji.id === "eve" ? (
+        <label className="flex items-center gap-1.5 text-[12px]">
+          <input
+            type="checkbox"
+            name="baseOnly"
+            defaultChecked={rule?.baseOnly ?? false}
+            className="h-3.5 w-3.5"
+          />
+          Korotus vain peruspalkasta
+        </label>
       ) : null}
 
       <Tallenna />

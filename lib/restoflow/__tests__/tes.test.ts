@@ -29,6 +29,7 @@ function tes(
     validFrom,
     validUntil,
     isActive: true,
+    note: null,
     rules: [],
     ...extra,
   };
@@ -78,6 +79,9 @@ describe("TES-säännöt asetuksiksi", () => {
         value: 1.4,
         startTime: "18:00",
         endTime: "23:00",
+        weekdays: null,
+        notOnHolidays: false,
+        baseOnly: false,
       },
       {
         id: "2",
@@ -87,6 +91,9 @@ describe("TES-säännöt asetuksiksi", () => {
         value: 2.37,
         startTime: "23:00",
         endTime: "06:00",
+        weekdays: null,
+        notOnHolidays: false,
+        baseOnly: false,
       },
       {
         id: "3",
@@ -96,20 +103,25 @@ describe("TES-säännöt asetuksiksi", () => {
         value: 100,
         startTime: null,
         endTime: null,
+        weekdays: null,
+        notOnHolidays: false,
+        baseOnly: false,
       },
     ],
   });
 
   it("lukee euromääräisen lisän sentteinä", () => {
     const s = settingsFromTes(sopimus, YRITYS);
-    expect(s.evening).toEqual({ cents: 140, rate: 0 });
-    expect(s.night).toEqual({ cents: 237, rate: 0 });
+    /* Rajaukset kulkevat mukana: tyhjä tarkoittaa "koskee kaikkia". */
+    expect(s.evening).toMatchObject({ cents: 140, rate: 0, days: null });
+    expect(s.night).toMatchObject({ cents: 237, rate: 0, days: null });
   });
 
   it("lukee prosenttilisän osuutena", () => {
-    expect(settingsFromTes(sopimus, YRITYS).sunday).toEqual({
+    expect(settingsFromTes(sopimus, YRITYS).sunday).toMatchObject({
       cents: 0,
       rate: 1,
+      baseOnly: false,
     });
   });
 
@@ -158,6 +170,9 @@ describe("asetukset vuoron päivän mukaan", () => {
           value: 1.4,
           startTime: "18:00",
           endTime: "23:00",
+          weekdays: null,
+          notOnHolidays: false,
+          baseOnly: false,
         },
       ],
     }),
@@ -171,6 +186,9 @@ describe("asetukset vuoron päivän mukaan", () => {
           value: 1.9,
           startTime: "18:00",
           endTime: "23:00",
+          weekdays: null,
+          notOnHolidays: false,
+          baseOnly: false,
         },
       ],
     }),

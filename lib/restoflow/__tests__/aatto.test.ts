@@ -35,6 +35,9 @@ function saanto(
     value,
     startTime,
     endTime,
+  weekdays: null,
+  notOnHolidays: false,
+  baseOnly: false,
   };
 }
 
@@ -46,6 +49,7 @@ const TES: TesAgreement = {
   validFrom: "2025-09-01",
   validUntil: "2027-06-30",
   isActive: true,
+  note: null,
   rules: [
     saanto("evening", 1.4, "eur_per_hour", "18:00", "24:00"),
     saanto("night", 2.37, "eur_per_hour", "00:00", "06:00"),
