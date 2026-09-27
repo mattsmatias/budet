@@ -2194,3 +2194,44 @@
     display: none;
   }
 }
+
+/*
+ * Kokeilumerkki hintakortissa.
+ *
+ * OMA RIVI, EI TUNNUKSEN VIERESSÄ.
+ *
+ * Merkki oli inline-elementti heti tunnusrivin perässä, joten se
+ * asettui samalle riville "Kate"-tekstin kanssa eikä sen yläreunus
+ * tehnyt mitään. Kaksi eri asiaa — kuka tämän tekee ja mitä se
+ * maksaa — näyttivät yhdeltä sotkuiselta riviltä.
+ *
+ * TÄYTETTY, EI HAALEA.
+ *
+ * Vaalea sävypilleri katosi valkoisen kortin taustaan juuri siinä
+ * kohdassa jossa katse pysähtyy. Täytetty pinta tunnusväreissä
+ * erottuu hinnan yläpuolelta ja lukee lupauksena eikä huomautuksena.
+ * Sävy kulkee punaisesta violettiin, eli samoissa väreissä kuin
+ * otsikon korostus — uutta väriä ei tarvita.
+ */
+.bd-trial {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px 7px 13px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--bd-accent),
+    color-mix(in srgb, var(--bd-accent) 62%, #7b76e8)
+  );
+  box-shadow: 0 12px 26px -14px color-mix(in srgb, var(--bd-accent) 85%, transparent);
+}
+
+.bd-trial svg {
+  flex: none;
+  opacity: 0.9;
+}

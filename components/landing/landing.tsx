@@ -683,16 +683,17 @@ function Pricing({ appHref, t }: { appHref: string | null; t: Dictionary }) {
                   ylareunassa, koska se vastaa hinnan herattamaan
                   kysymykseen.
                 */}
-                <p
-                  className="mt-4 inline-block px-3 py-1 text-[12.5px] font-bold"
-                  style={{
-                    background: "var(--bd-accent-bg, rgba(209,56,49,0.1))",
-                    color: "var(--bd-accent, #d13831)",
-                    borderRadius: 999,
-                  }}
-                >
-                  {t.pricing.trialBadge}
-                </p>
+                <div className="mt-5">
+                  <span className="bd-trial">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true">
+                      <path
+                        d="M12 3.5 13.6 9 19 10.6 13.6 12.2 12 17.7 10.4 12.2 5 10.6 10.4 9z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {t.pricing.trialBadge}
+                  </span>
+                </div>
 
                 <p className="mt-4">
                   <span className="bd-num text-[52px] font-bold leading-none tracking-[-0.04em]">
