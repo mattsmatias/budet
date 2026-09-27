@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
+import { fill } from "@/lib/i18n/auth-text";
 import type { Labels } from "@/lib/i18n/labels";
 import { useFormStatus } from "react-dom";
 import { saveTask } from "./actions";
@@ -166,6 +167,39 @@ export function TaskForm({
           </label>
         </div>
 
+        {/*
+          Toistuvuus ensimmaisessa osassa, ei avattavan takana.
+
+          Tama oli "lisaa"-osiossa yhdessa vastuuhenkilon ja
+          nakyvyyden kanssa. Nimi ja erapaiva riittavat kertatehtavaan,
+          mutta toistuva on eri asia: vuokralasku taytetaan kerran juuri
+          siksi ettei sita tarvitse tayttaa uudelleen. Jos valintaa ei
+          nay, sita ei myoskaan loydy.
+        */}
+        <label className="block">
+          <span className="block text-[12.5px] font-semibold">
+            {t.tiimi.repeats}
+          </span>
+          <select
+            name="recurrence"
+            defaultValue={task?.recurrence ?? "none"}
+            className={`${CONTROL} mt-1.5`}
+            style={CONTROL_STYLE}
+          >
+            {Object.entries(nimet.taskRecurrence).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <span
+            className="mt-1.5 block text-[12px] leading-relaxed"
+            style={{ color: "var(--rf-text-3)" }}
+          >
+            {t.tiimi.repeatsHint}
+          </span>
+        </label>
+
         {showMore ? (
           <>
             <label className="block">
@@ -247,25 +281,6 @@ export function TaskForm({
                 </select>
               </label>
 
-              <label className="block">
-                <span className="block text-[12.5px] font-semibold">
-                  {t.tiimi.repeats}
-                </span>
-                <select
-                  name="recurrence"
-                  defaultValue={task?.recurrence ?? "none"}
-                  className={`${CONTROL} mt-1.5`}
-                  style={CONTROL_STYLE}
-                >
-                  {Object.entries(nimet.taskRecurrence).map(
-                    ([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
             </div>
 
             {/*
@@ -295,7 +310,7 @@ export function TaskForm({
                       )}
                       className="h-4 w-4"
                     />
-                    {day} pv ennen
+                    {fill(t.tiimi.remindDaysBefore, { maara: String(day) })}
                   </label>
                 ))}
 

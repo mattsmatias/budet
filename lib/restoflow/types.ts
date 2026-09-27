@@ -348,7 +348,16 @@ export type AlertKind =
   | "receipt_gap"
   // Määräaika: tehtävä joka erääntyy tänään tai on jo myöhässä.
   | "task_due"
-  | "task_overdue";
+  | "task_overdue"
+  /*
+   * Määräaika lähestyy.
+   *
+   * Syntyy tehtävän omasta muistutusasetuksesta: "muistuta 7 päivää
+   * ennen" tarkoittaa hälytystä täsmälleen sinä päivänä. Ilman tätä
+   * asetus tallentui muttei tehnyt mitään, ja toistuvan laskun
+   * eräpäivä tuli vastaan vasta sinä aamuna kun se erääntyi.
+   */
+  | "task_upcoming";
 
 /**
  * Poikkeama.

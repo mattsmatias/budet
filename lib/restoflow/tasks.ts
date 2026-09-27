@@ -108,6 +108,17 @@ export function daysLate(task: Task, today: string): number {
   return daysBetween(task.dueOn, today);
 }
 
+/**
+ * Kuinka monta päivää eräpäivään. Nolla jos se on tänään tai ohi.
+ *
+ * Tätä verrataan tehtävän omaan muistutuslistaan: "7, 3, 1" tuottaa
+ * hälytyksen täsmälleen niinä päivinä eikä niiden välissä.
+ */
+export function daysUntilDue(task: Task, today: string): number {
+  if (!isOpen(task) || task.dueOn <= today) return 0;
+  return daysBetween(today, task.dueOn);
+}
+
 export interface TaskCounts {
   overdue: number;
   dueToday: number;

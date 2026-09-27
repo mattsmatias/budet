@@ -1191,9 +1191,63 @@ describe("poikkeamat", () => {
       expect(due?.severity).toBe("warning");
     });
 
-    it("ei hälytä tulevasta tehtävästä", () => {
+    /*
+     * Tuleva tehtävä hälyttää vain omana muistutuspäivänään.
+     *
+     * Toistuva lasku tehdään kerran ja erääntyy kuukauden päästä.
+     * Ilman tätä sen eräpäivä tuli vastaan vasta sinä aamuna kun se
+     * erääntyi — asetus "muistuta 7 päivää ennen" tallentui muttei
+     * tehnyt mitään.
+     */
+    it("ei hälytä tulevasta tehtävästä muuna kuin muistutuspäivänä", () => {
       expect(
         kinds({ tasks: [task({ dueOn: "2026-08-27" })], month: "2026-08", today }),
+      ).toEqual([]);
+    });
+
+    it("hälyttää muistutuspäivänä ennen eräpäivää", () => {
+      const alerts = alertsOf({
+        tasks: [task({ dueOn: "2026-08-27", remindDaysBefore: [7, 1] })],
+        month: "2026-08",
+        today,
+      });
+      const tuleva = alerts.find((a) => a.kind === "task_upcoming");
+      expect(tuleva?.severity).toBe("info");
+      expect(tuleva?.detail).toContain("7");
+    });
+
+    it("hälyttää huomisesta omalla tekstillään", () => {
+      const alerts = alertsOf({
+        tasks: [task({ dueOn: "2026-08-21", remindDaysBefore: [1] })],
+        month: "2026-08",
+        today,
+      });
+      expect(alerts.find((a) => a.kind === "task_upcoming")?.detail).toBe(
+        "Erääntyy huomenna.",
+      );
+    });
+
+    /*
+     * Muistutus pois päältä tarkoittaa myös hälytys pois: asetus on
+     * lupaus siitä milloin Kate puuttuu asiaan.
+     */
+    it("vaikenee kun eräpäivän muistutus on otettu pois", () => {
+      expect(
+        kinds({
+          tasks: [task({ dueOn: today, remindOnDue: false })],
+          month: "2026-08",
+          today,
+        }),
+      ).toEqual([]);
+    });
+
+    it("vaikenee kun myöhästymisen muistutus on otettu pois", () => {
+      expect(
+        kinds({
+          tasks: [task({ dueOn: "2026-08-18", remindWhenOverdue: false })],
+          month: "2026-08",
+          today,
+        }),
       ).toEqual([]);
     });
 

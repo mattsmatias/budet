@@ -9,7 +9,7 @@ describe("alertIcon", () => {
    * sisään ilman ikonipäätöstä.
    */
   it("kattaa kaikki huomiotyypit", () => {
-    expect(ALERT_KINDS).toHaveLength(12);
+    expect(ALERT_KINDS).toHaveLength(13);
   });
 
   it("antaa jokaiselle ikonin", () => {
@@ -22,6 +22,7 @@ describe("alertIcon", () => {
     expect(alertIcon("receipt_needs_review")).toBe("receipt");
     expect(alertIcon("duplicate_receipt")).toBe("receipt");
     expect(alertIcon("task_due")).toBe("check");
+    expect(alertIcon("task_upcoming")).toBe("clock");
     expect(alertIcon("budget_exceeded")).toBe("budget");
   });
 

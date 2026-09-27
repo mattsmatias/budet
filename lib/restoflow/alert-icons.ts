@@ -35,6 +35,8 @@ const ICONS: Record<AlertKind, IconName> = {
   // asia kahdessa tilassa, ja tila on se mitä listasta luetaan.
   task_due: "check",
   task_overdue: "alert",
+  // Lähestyvä on kello: kyse on ajasta, ei vielä tekemättä jääneestä.
+  task_upcoming: "clock",
 };
 
 export function alertIcon(kind: AlertKind): IconName {

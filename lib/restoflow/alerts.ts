@@ -20,7 +20,7 @@ import { formatMoney } from "../money";
 import { needsReview, receiptsInMonth } from "./expenses";
 import { supplierTrends } from "./suppliers";
 import { checkVat } from "./vat";
-import { daysLate, statusOf, type Task } from "./tasks";
+import { daysLate, daysUntilDue, statusOf, type Task } from "./tasks";
 import type { Alert, Budget, Receipt } from "./types";
 import { addDays, daysBetween } from "./dates";
 import {
@@ -385,15 +385,29 @@ function receiptGap(ctx: AlertContext): Alert[] {
 }
 
 /**
- * Määräaika tänään tai jo mennyt.
+ * Määräaika tänään, jo mennyt tai lähestymässä.
  *
  * Myöhässä oleva on kriittinen: eräpäivä on ohi eikä kukaan ole
  * tehnyt mitään. Tänään erääntyvä on huomautus — päivä on vielä
  * edessä.
  *
- * Tulevat eivät ole hälytyksiä. Tehtävä jonka eräpäivä on ensi
- * viikolla ei vaadi tänään mitään, ja hälytys siitä opettaisi
- * ohittamaan hälytykset.
+ * TEHTÄVÄ PÄÄTTÄÄ ITSE MILLOIN SE MUISTUTTAA.
+ *
+ * Tässä luki ennen että tulevat eivät ole hälytyksiä. Se piti
+ * paikkansa niin kauan kuin jokainen tehtävä oli kertaluontoinen ja
+ * syntyi siinä hetkessä kun se muistettiin. Toistuva lasku on toista
+ * maata: se tehdään kerran ja se erääntyy kuukauden päästä, eikä
+ * kukaan avaa tehtävälistaa varmuuden vuoksi.
+ *
+ * Siksi hälytys tulee tehtävän omasta asetuksesta. "Muistuta 7 päivää
+ * ennen" tarkoittaa hälytystä täsmälleen sinä päivänä — ei aiemmin,
+ * jolloin se olisi taustakohinaa, eikä myöhemmin, jolloin se ei ehdi
+ * auttaa. Asetus oli olemassa ja tallentui, muttei tehnyt mitään.
+ *
+ * Samasta syystä myös eräpäivä ja myöhästyminen kysyvät asetusta:
+ * jos käyttäjä on ottanut muistutuksen pois, hälytyskin on pois.
+ * Oletuksena molemmat ovat päällä, joten vanhat tehtävät eivät
+ * muutu.
  */
 function taskDeadlines(ctx: AlertContext): Alert[] {
   const t = adminText(ctx.locale);
@@ -402,7 +416,29 @@ function taskDeadlines(ctx: AlertContext): Alert[] {
   for (const task of ctx.tasks ?? []) {
     const status = statusOf(task, ctx.today, ctx.nowTime);
 
+    if (status === "upcoming") {
+      const until = daysUntilDue(task, ctx.today);
+
+      if (!task.remindDaysBefore.includes(until)) continue;
+
+      alerts.push({
+        id: `task-upcoming-${task.id}`,
+        kind: "task_upcoming",
+        severity: task.priority === "critical" ? "warning" : "info",
+        title: task.title,
+        detail: fill(
+          until === 1 ? t.havainto.dueInOne : t.havainto.dueInMany,
+          { maara: String(until) },
+        ),
+        href: "/admin/tehtavat?suodatin=tulevat",
+        entityId: task.id,
+      });
+      continue;
+    }
+
     if (status === "overdue") {
+      if (!task.remindWhenOverdue) continue;
+
       const late = daysLate(task, ctx.today);
 
       alerts.push({
@@ -423,6 +459,8 @@ function taskDeadlines(ctx: AlertContext): Alert[] {
     }
 
     if (status === "due_today") {
+      if (!task.remindOnDue) continue;
+
       alerts.push({
         id: `task-due-${task.id}`,
         kind: "task_due",
