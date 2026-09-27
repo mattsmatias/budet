@@ -61,6 +61,21 @@ export interface StaffCost {
 }
 
 /**
+ * Tyhjä kuukausi.
+ *
+ * Näkymä jossa käyttäjällä ei ole oikeutta tunteihin tarvitsee saman
+ * muodon kuin oikea tulos: ilman tätä jokainen kutsupaikka rakentaisi
+ * oman tyhjän olionsa, ja niistä yksi unohtaisi kentän.
+ */
+export const EMPTY_STAFF_COST: StaffCost = {
+  rows: [],
+  total: { ...EMPTY_COST },
+  minutes: 0,
+  working: 0,
+  missingTes: [],
+};
+
+/**
  * Työntekijät, heidän tuntinsa ja kustannuksensa.
  *
  * Versio ratkaistaan vuoron päivällä: kuukausi voi ylittää

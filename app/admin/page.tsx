@@ -5,7 +5,7 @@ import { LOCALE_INFO } from "@/lib/i18n/app-locales";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import Link from "next/link";
-import { ISO_MONTH, monthRange } from "@/lib/restoflow/dates";
+import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { adminContext } from "@/lib/restoflow/page-context";
 import {
   budgetLines,
@@ -54,15 +54,12 @@ import { AreaChart } from "@/components/restoflow/area-chart";
 import { Spotlight } from "@/components/landing/effects";
 import { ResultHero } from "./home/result-hero";
 import {
-  fetchCompanyTes,
-  fetchEmployees,
-  fetchPayrollSettings,
   fetchPosVatRates,
   fetchSalesLines,
-  fetchTimeEntries,
 } from "@/lib/restoflow/queries";
 import { formatHours } from "@/lib/restoflow/employees";
-import { staffCost } from "@/lib/restoflow/staff-cost";
+import { EMPTY_STAFF_COST } from "@/lib/restoflow/staff-cost";
+import { staffMonth } from "@/lib/restoflow/staff-month";
 import { reconcile as reconcileSales } from "@/lib/restoflow/sales-vat";
 import {
   labourShareOfSales,
@@ -186,27 +183,10 @@ export default async function AdminDashboard({
    * Haetaan vain jos rooli hallitsee tyontekijoita: kirjanpitaja ei nae
    * korttia, joten han ei myoskaan maksa sen kyselyista.
    */
-  const [staffEmployees, staffEntries, staffPayroll, staffTes] = can(
-    role,
-    "employees.manage",
-  )
-    ? await Promise.all([
-        fetchEmployees(restaurant.id),
-        fetchTimeEntries(restaurant.id, monthRange(viewMonth).from),
-        fetchPayrollSettings(restaurant.id),
-        fetchCompanyTes(restaurant.id),
-      ])
-    : [[], [], null, []];
-
-  /* Sama laskenta kuin Palkat-sivulla ja kuukausiraportissa. */
-  const staffTime = staffCost(
-    staffEmployees,
-    staffEntries,
-    viewMonth,
-    restaurant.timezone,
-    staffPayroll,
-    staffTes,
-  );
+  /* Yksi lähde: sama haku ja sama laskenta kuin Palkat-sivulla. */
+  const staffTime = can(role, "employees.manage")
+    ? (await staffMonth(restaurant.id, viewMonth, restaurant.timezone)).cost
+    : EMPTY_STAFF_COST;
 
   /* Ketjun tunnus riville, sama kartta kuin kuittilistassa. */
   const merchantBySupplier = merchantsBySupplier(suppliers, merchants);

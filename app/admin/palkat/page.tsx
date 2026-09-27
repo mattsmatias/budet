@@ -17,14 +17,10 @@ import {
 } from "@/lib/restoflow/sales";
 import { can } from "@/lib/restoflow/permissions";
 import {
-  fetchCompanyTes,
-  fetchEmployees,
-  fetchPayrollSettings,
-  fetchTimeEntries,
 } from "@/lib/restoflow/queries";
 import { formatHours, fullName } from "@/lib/restoflow/employees";
-import { staffCost } from "@/lib/restoflow/staff-cost";
-import { fetchEmployeeSales } from "@/lib/restoflow/queries";
+import { EMPTY_STAFF_COST } from "@/lib/restoflow/staff-cost";
+import { staffMonth } from "@/lib/restoflow/staff-month";
 import { OwnSales } from "./oma-myynti";
 import { costPerHourCents } from "@/lib/restoflow/payroll";
 import { formatTesValidity, versionFor } from "@/lib/restoflow/tes";
@@ -112,27 +108,14 @@ export default async function WagesPage({
    */
   const seesHours = can(role, "employees.manage");
 
-  const [employees, timeEntries, payroll, tesVersions, employeeSales] =
-    seesHours
-      ? await Promise.all([
-          fetchEmployees(restaurant.id),
-          fetchTimeEntries(restaurant.id, from),
-          fetchPayrollSettings(restaurant.id),
-          fetchCompanyTes(restaurant.id),
-          fetchEmployeeSales(restaurant.id, month),
-        ])
-      : [[], [], null, [], {} as Record<string, number>];
+  /* Yksi lähde: sama haku ja sama laskenta kuin muissa näkymissä. */
+  const kuukausi = seesHours
+    ? await staffMonth(restaurant.id, month, restaurant.timezone)
+    : null;
 
-  /* Sama laskenta kuin yleiskatsauksessa ja kuukausiraportissa. */
-  const time = staffCost(
-    employees,
-    timeEntries,
-    month,
-    restaurant.timezone,
-    payroll,
-    tesVersions,
-    employeeSales,
-  );
+  const tesVersions = kuukausi?.tesVersions ?? [];
+  const employeeSales = kuukausi?.sales ?? {};
+  const time = kuukausi?.cost ?? EMPTY_STAFF_COST;
   const rows = time.rows;
 
   /* Voimassa oleva versio nayttoa varten. */

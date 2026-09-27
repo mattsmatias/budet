@@ -18,11 +18,7 @@ import {
   fetchDailySales,
   fetchReceipts,
   fetchSalesGroups,
-  fetchCompanyTes,
-  fetchEmployees,
-  fetchPayrollSettings,
   fetchSalesLinesBetween,
-  fetchTimeEntries,
   fetchUsers,
 } from "@/lib/restoflow/queries";
 import {
@@ -32,11 +28,10 @@ import {
 } from "@/lib/restoflow/expenses";
 import { budgetProgress } from "@/lib/restoflow/budgets";
 import { totalsBySupplier } from "@/lib/restoflow/suppliers";
-import { monthRange } from "@/lib/restoflow/dates";
 import { formatClock, fullName } from "@/lib/restoflow/employees";
 import { costForDated } from "@/lib/restoflow/payroll";
 import { settingsResolver } from "@/lib/restoflow/tes";
-import { staffCost } from "@/lib/restoflow/staff-cost";
+import { staffMonth } from "@/lib/restoflow/staff-month";
 
 export type ReportKind =
   | "kulut"
@@ -534,14 +529,12 @@ async function hoursReportRows(
   timezone: string,
   t: AdminText,
 ): Promise<string[][]> {
-  const { from } = monthRange(month);
-
-  const [employees, entries, settings, tesVersions] = await Promise.all([
-    fetchEmployees(restaurantId),
-    fetchTimeEntries(restaurantId, from),
-    fetchPayrollSettings(restaurantId),
-    fetchCompanyTes(restaurantId),
-  ]);
+  /* Yksi lähde: sama haku ja sama laskenta kuin näytön puolella. */
+  const { employees, entries, settings, tesVersions, cost } = await staffMonth(
+    restaurantId,
+    month,
+    timezone,
+  );
 
   /* Sama lisien lahde kuin Palkat-sivulla: sopimus vuoron paivalta. */
   const resolve = settingsResolver(tesVersions, settings);
@@ -599,15 +592,9 @@ async function hoursReportRows(
   ]);
 
   /* Sama laskenta kuin Palkat-sivulla ja yleiskatsauksessa. */
-  for (const row of staffCost(
-    employees,
-    entries,
-    month,
-    timezone,
-    settings,
-    tesVersions,
-  ).rows) {
-    if (row.minutes === 0) continue;
+  for (const row of cost.rows) {
+    /* Provisiopalkkainen voi olla ilman tunteja, mutta ei ilman kustannusta. */
+    if (row.minutes === 0 && row.cost.totalCents === 0) continue;
 
     rows.push([
       fullName(row.employee),
