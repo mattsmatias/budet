@@ -214,12 +214,29 @@ export async function fetchReceiptsNeedingReview(
   return (data as unknown as ReceiptRow[]).map(toReceipt);
 }
 
-export async function fetchReceipt(id: string): Promise<Receipt | null> {
+/**
+ * Yksi kuitti, valitusta yrityksestä.
+ *
+ * YRITYS ON OSA KYSYMYSTÄ, EI VAIN TUNNISTE.
+ *
+ * Tässä haettiin ennen pelkällä tunnisteella ja luotettiin RLS:ään.
+ * RLS estää toisen asiakkaan kuitin, mutta se ei estä oman toisen
+ * yrityksen kuittia: kahden toimipisteen omistaja sai auki ravintolan
+ * kuitin kahvila valittuna, ja sivu laski sen tilastot väärälle
+ * yritykselle — "ostoksia 0,00 €" toimittajalta jolta on ostettu
+ * kuukausittain. Rajaus on nyt kyselyssä, joten väärä yhdistelmä ei
+ * palauta riviä lainkaan ja sivu vastaa 404.
+ */
+export async function fetchReceipt(
+  id: string,
+  restaurantId: string,
+): Promise<Receipt | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("receipts")
     .select(RECEIPT_COLUMNS)
     .eq("id", id)
+    .eq("restaurant_id", restaurantId)
     .maybeSingle();
 
   if (error || !data) return null;

@@ -11,7 +11,7 @@ import { fill } from "@/lib/i18n/auth-text";
 import { monthName } from "@/lib/i18n/format";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { notFound, redirect } from "next/navigation";
-import { requireContext } from "@/lib/restoflow/session";
+import { getActiveRestaurant, requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import {
   fetchMerchantCategories,
@@ -43,7 +43,16 @@ export async function generateMetadata({
 }: PageProps<"/admin/kuitit/[id]">) {
   const t = adminText(await resolveLocale());
   const { id } = await params;
-  const receipt = await fetchReceipt(id);
+
+  /*
+   * Otsikko vain valitun yrityksen kuitille.
+   *
+   * Muuten selaimen välilehti kertoisi toimittajan nimen kuitista joka
+   * ei sivulla näy — ja sivun otsikko on sekin tieto.
+   */
+  const restaurant = await getActiveRestaurant();
+  const receipt = restaurant ? await fetchReceipt(id, restaurant.id) : null;
+
   return { title: receipt?.supplierName ?? t.viimeiset.receiptWord };
 }
 
@@ -65,9 +74,9 @@ export default async function AdminReceiptDetailPage({
 
   if (!can(role, "receipts.view")) redirect("/admin");
 
-  const receipt = await fetchReceipt(id);
-  // RLS palauttaa tyhjän jos oikeutta ei ole — 404 ei paljasta onko
-  // kuitti olemassa toisessa ravintolassa.
+  const receipt = await fetchReceipt(id, restaurant.id);
+  // Tyhjä tarkoittaa joko ettei kuittia ole, ettei siihen ole oikeutta
+  // tai että se kuuluu toiseen yritykseen. 404 ei kerro kumpi.
   if (!receipt) notFound();
 
   /*
