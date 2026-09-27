@@ -24,14 +24,29 @@ export function SalesForm({
   defaultNet,
   defaultTarget,
   compact,
+  groups = [],
 }: {
   t: AdminText;
   defaultDate: string;
   defaultNet: string;
   defaultTarget: string;
   compact?: boolean;
+  /** Käytössä olevat myyntiryhmät kantoineen. */
+  groups?: { id: string; name: string; vatRate: number }[];
 }) {
   const [state, action] = useActionState(saveDailySales, initial);
+
+  /*
+   * YKSI LUKU VAI LUKU RYHMITTÄIN.
+   *
+   * Parturilla ja useimmilla kahviloilla kaikki myynti on samalla
+   * verokannalla, ja silloin yksi luku riittää: Kate laskee veron
+   * siitä. Ravintolassa ruoka ja alkoholi ovat eri kannalla, eikä
+   * yhdestä summasta voi päätellä kumpaa se oli — silloin kysytään
+   * ryhmittäin, koska muuten päivä ei kelpaa kirjanpitoon.
+   */
+  const kannat = new Set(groups.map((group) => group.vatRate));
+  const ryhmittain = kannat.size > 1;
 
   return (
     <form action={action} className="mt-3 space-y-3">
@@ -44,20 +59,38 @@ export function SalesForm({
             : "grid gap-3 sm:grid-cols-2"
         }
       >
-        <Field
-          label={t.myynti.netSales}
-          hint={compact ? undefined : t.myynti.reportSum}
-        >
-          <input
-            name="net"
-            required
-            inputMode="decimal"
-            autoComplete="off"
-            defaultValue={defaultNet}
-            placeholder="2 430,00"
-            className={inputClass}
-          />
-        </Field>
+        {ryhmittain ? (
+          groups.map((group, i) => (
+            <Field
+              key={group.id}
+              label={`${group.name} (${vatLabel(group.vatRate)})`}
+              hint={compact || i > 0 ? undefined : t.myynti.rateFromGroup}
+            >
+              <input
+                name={`ryhma:${group.id}`}
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0,00"
+                className={inputClass}
+              />
+            </Field>
+          ))
+        ) : (
+          <Field
+            label={t.myynti.netSales}
+            hint={compact ? undefined : t.myynti.reportSum}
+          >
+            <input
+              name="net"
+              required
+              inputMode="decimal"
+              autoComplete="off"
+              defaultValue={defaultNet}
+              placeholder="2 430,00"
+              className={inputClass}
+            />
+          </Field>
+        )}
 
         {compact ? null : (
           <Field label={t.myynti.target} hint={t.myynti.targetHint}>
@@ -97,6 +130,11 @@ export function SalesForm({
 }
 
 // ---------------------------------------------------------------------------
+
+/** 0,255 → "25,5 %". Kanta on kentän otsikossa, ei erillisenä ohjeena. */
+function vatLabel(rate: number): string {
+  return `${String(Math.round(rate * 1000) / 10).replace(".", ",")} %`;
+}
 
 const inputClass =
   "w-full min-w-[9rem] px-3.5 py-2.5 text-[15px] [border-radius:var(--rf-r-control)] " +

@@ -714,3 +714,45 @@ export function mapReportGroups(
 function normalise(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
+
+// ---------------------------------------------------------------------------
+// Käsin kirjattu päivä
+// ---------------------------------------------------------------------------
+
+/**
+ * Yrityksen ainoa verokanta, tai null.
+ *
+ * KÄSIN KIRJATTU PÄIVÄ TARVITSEE KANNAN JOSTAIN.
+ *
+ * Kun päivä kirjataan yhtenä verottomana lukuna, kukaan ei ole
+ * kertonut mitä veroa siihen kuuluu. Parturilla ja kahvilalla vastaus
+ * on yksikäsitteinen: kaikilla myyntiryhmillä on sama kanta, joten
+ * sitä ei tarvitse kysyä. Ravintolalla ruoka ja alkoholi ovat eri
+ * kannalla, eikä yhdestä luvusta voi päätellä kumpaa se oli.
+ *
+ * Null tarkoittaa siis "en tiedä" eikä nollaa. Arvaus olisi tässä
+ * pahin vaihtoehto: se menisi kirjanpitoon ja ALV-ilmoitukseen.
+ *
+ * Käytöstä poistetut ryhmät eivät vaikuta: niille ei enää kirjata
+ * myyntiä, ja vanha ryhmä toisella kannalla estäisi muuten
+ * päättelyn ikuisesti.
+ */
+export function commonVatRate(groups: SalesGroup[]): number | null {
+  const rates = new Set(
+    groups.filter((group) => group.active).map((group) => group.vatRate),
+  );
+
+  return rates.size === 1 ? [...rates][0] : null;
+}
+
+/**
+ * Ryhmä jolle käsin kirjattu päivä kuuluu.
+ *
+ * Oletusryhmä ensin, muuten järjestyksessä ensimmäinen käytössä oleva.
+ * Ryhmä ratkaisee vain myyntitilin kirjanpidossa; vero tulee kannasta,
+ * joka on kaikilla sama silloin kun tätä käytetään.
+ */
+export function defaultSalesGroup(groups: SalesGroup[]): SalesGroup | null {
+  const active = groups.filter((group) => group.active);
+  return active.find((group) => group.isDefault) ?? active[0] ?? null;
+}

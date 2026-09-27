@@ -17,7 +17,10 @@ import { createClient } from "@/utils/supabase/server";
 import { requireContext } from "@/lib/restoflow/session";
 import { can } from "@/lib/restoflow/permissions";
 import {
+  commonVatRate,
+  defaultSalesGroup,
   lineFromGross,
+  lineFromNet,
   type PosVatRate,
   type SalesLine,
 } from "@/lib/restoflow/sales-vat";
@@ -66,7 +69,36 @@ export async function saveDailySales(
   const date = String(formData.get("date") ?? "");
   if (!ISO_DATE.test(date)) return { error: t.myynti.checkDate };
 
-  const net = parseEuros(formData.get("net"));
+  const groups = await fetchSalesGroups(restaurant.id);
+
+  /*
+   * RYHMITTÄIN KIRJATTU PÄIVÄ.
+   *
+   * Useamman verokannan yrityksessä yhdestä luvusta ei voi päätellä
+   * veroa: kahvilan kahvi on 13,5 % ja t-paita 25,5 %, eikä summa
+   * kerro kumpaa se oli. Silloin lomake kysyy summan ryhmittäin, ja
+   * jokainen rivi saa oman ryhmänsä kannan.
+   *
+   * Nollarivit jätetään pois: päivä jolloin tuotteita ei myyty ei
+   * tarvitse tuotemyynnin riviä.
+   */
+  const ryhmaRivit = groups
+    .filter((group) => group.active)
+    .map((group) => ({
+      group,
+      netCents: parseEuros(formData.get(`ryhma:${group.id}`)),
+    }))
+    .filter(
+      (rivi): rivi is { group: (typeof groups)[number]; netCents: number } =>
+        rivi.netCents !== null && rivi.netCents > 0,
+    );
+
+  /* Ryhmittäin kirjatun päivän summa on rivien summa. */
+  const net =
+    ryhmaRivit.length > 0
+      ? ryhmaRivit.reduce((sum, rivi) => sum + rivi.netCents, 0)
+      : parseEuros(formData.get("net"));
+
   if (net === null) return { error: t.myynti.enterNetSales };
 
   const target = parseEuros(formData.get("target"));
@@ -105,6 +137,56 @@ export async function saveDailySales(
   const posGross = parseEuros(formData.get("posGross"));
   const posVat = parseEuros(formData.get("posVat"));
 
+  const linesJson = String(formData.get("lines") ?? "");
+  const submitted = linesJson === "" ? [] : parseLines(linesJson);
+  if (submitted === null) return { error: t.myynti.badRows };
+
+  /*
+   * KÄSIN KIRJATTU PÄIVÄ ON YHTÄ OIKEA PÄIVÄ.
+   *
+   * Yhden luvun päivä jäi ennen kokonaan kirjanpidon ulkopuolelle:
+   * ilman bruttoa ja erittelyä kirjausesitystä ei syntynyt, ja
+   * kuukautta ei voinut sulkea. Käyttäjä näki vain "myyntipäiviä ei
+   * ole kirjattu" eikä sitä mitä puuttui.
+   *
+   * Kun yrityksellä on vain yksi verokanta, puuttuva tieto voidaan
+   * päätellä: vero on kanta kertaa veroton summa. Se on laskutoimitus
+   * eikä arvaus. Useamman kannan yrityksessä päivä jää odottamaan
+   * erittelyä — mutta se sanotaan nyt ääneen.
+   */
+  const kasin = gross === null && submitted.length === 0;
+  const yksiKanta = kasin && ryhmaRivit.length === 0 ? commonVatRate(groups) : null;
+  const oletusryhma = yksiKanta === null ? null : defaultSalesGroup(groups);
+
+  /*
+   * Johdetut rivit: ryhmittäin kirjatut sellaisenaan, yhden kannan
+   * yrityksessä koko päivä oletusryhmälle.
+   */
+  const johdetut =
+    ryhmaRivit.length > 0
+      ? ryhmaRivit.map((rivi) => ({
+          group: rivi.group,
+          vatRate: rivi.group.vatRate,
+          ...lineFromNet(rivi.netCents, rivi.group.vatRate),
+        }))
+      : yksiKanta !== null && oletusryhma !== null
+        ? [
+            {
+              group: oletusryhma,
+              vatRate: yksiKanta,
+              ...lineFromNet(net, yksiKanta),
+            },
+          ]
+        : [];
+
+  const johdettuSumma =
+    johdetut.length === 0
+      ? null
+      : {
+          grossCents: johdetut.reduce((s, r) => s + r.grossCents, 0),
+          vatCents: johdetut.reduce((s, r) => s + r.vatCents, 0),
+        };
+
   const supabase = await createClient();
   const { data: saved, error } = await supabase
     .from("daily_sales")
@@ -113,8 +195,8 @@ export async function saveDailySales(
         restaurant_id: restaurant.id,
         sales_date: date,
         net_sales_cents: net,
-        gross_sales_cents: gross,
-        vat_cents: vat,
+        gross_sales_cents: johdettuSumma?.grossCents ?? gross,
+        vat_cents: johdettuSumma?.vatCents ?? vat,
         transactions,
         source: fromReport ? "report" : "manual",
         pos_gross_cents: posGross,
@@ -142,15 +224,10 @@ export async function saveDailySales(
    * päivitys jättäisi poistetun ryhmän riville ja loppusumma ei enää
    * täsmäisi omiin riveihinsä.
    */
-  const linesJson = String(formData.get("lines") ?? "");
-  const submitted = linesJson === "" ? [] : parseLines(linesJson);
-
-  if (submitted === null) return { error: t.myynti.badRows };
-
   const lines =
     submitted.length === 0
       ? []
-      : resolveLines(submitted, await fetchSalesGroups(restaurant.id));
+      : resolveLines(submitted, groups);
 
   if (lines === null) {
     return {
@@ -175,6 +252,28 @@ export async function saveDailySales(
       .from("daily_sales_lines")
       .delete()
       .eq("daily_sales_id", saved.id);
+
+    /* Johdetut rivit: kirjanpito tarvitsee myyntitilin ja kannan. */
+    if (johdetut.length > 0) {
+      const { error: johdettuVirhe } = await supabase
+        .from("daily_sales_lines")
+        .insert(
+          johdetut.map((rivi) => ({
+            daily_sales_id: saved.id as string,
+            sales_group_id: rivi.group.id,
+            vat_rate: rivi.vatRate,
+            gross_cents: rivi.grossCents,
+            vat_cents: rivi.vatCents,
+            net_cents: rivi.netCents,
+          })),
+        );
+
+      if (johdettuVirhe) {
+        return {
+          error: fill(t.myynti.rowsSaveFailed, { viesti: johdettuVirhe.message }),
+        };
+      }
+    }
 
     if (lines.length > 0) {
       const { error: lineError } = await supabase
@@ -216,6 +315,51 @@ export async function saveDailySales(
 
     const rates = parseVatRates(formData.get("vatRates"));
 
+    /*
+     * Johdettu erittely, jotta täsmäytys vertaa samaa päivää.
+     *
+     * Tämä ei väitä kassan kertoneen mitään: kassan omat luvut ovat
+     * pos_-kentissä ja jäävät tyhjiksi. Tässä on se mitä käyttäjä
+     * kirjoitti ja mitä siitä seuraa.
+     */
+    if (johdetut.length > 0) {
+      /* Kannoittain: kaksi ryhmää samalla kannalla on verotuksessa yksi rivi. */
+      const kannoittain = new Map<
+        number,
+        { grossCents: number; vatCents: number; netCents: number }
+      >();
+
+      for (const rivi of johdetut) {
+        const nyt = kannoittain.get(rivi.vatRate) ?? {
+          grossCents: 0,
+          vatCents: 0,
+          netCents: 0,
+        };
+
+        kannoittain.set(rivi.vatRate, {
+          grossCents: nyt.grossCents + rivi.grossCents,
+          vatCents: nyt.vatCents + rivi.vatCents,
+          netCents: nyt.netCents + rivi.netCents,
+        });
+      }
+
+      const { error: alvVirhe } = await supabase.from("daily_sales_vat").insert(
+        [...kannoittain].map(([vatRate, summa]) => ({
+          daily_sales_id: saved.id as string,
+          vat_rate: vatRate,
+          gross_cents: summa.grossCents,
+          vat_cents: summa.vatCents,
+          net_cents: summa.netCents,
+        })),
+      );
+
+      if (alvVirhe) {
+        return {
+          error: fill(t.myynti.vatSaveFailed, { viesti: alvVirhe.message }),
+        };
+      }
+    }
+
     if (rates.length > 0) {
       const { error: vatError } = await supabase.from("daily_sales_vat").insert(
         rates.map((rate) => ({
@@ -238,7 +382,19 @@ export async function saveDailySales(
   // Myynti muuttaa yleiskuvan, raportit ja budjetin, joten koko
   // hallintapuoli on päivitettävä eikä vain tämä sivu.
   revalidatePath("/admin", "layout");
-  return { notice: t.myynti.salesSaved };
+
+  /*
+   * Päivä joka ei kelpaa kirjanpitoon sanotaan heti.
+   *
+   * Useamman verokannan yrityksessä yhden luvun päivästä ei voi
+   * päätellä veroa. Ennen se jäi hiljaa kirjanpidon ulkopuolelle ja
+   * ilmestyi vasta kuukauden sulkemisen esteenä.
+   */
+  const erittelyPuuttuu = kasin && johdetut.length === 0;
+
+  return {
+    notice: erittelyPuuttuu ? t.myynti.savedNeedsVat : t.myynti.salesSaved,
+  };
 }
 
 /** Poistaa päivän merkinnän. Väärin kirjattu luku on pahempi kuin puuttuva. */

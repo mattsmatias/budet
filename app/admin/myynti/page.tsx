@@ -92,6 +92,9 @@ export default async function SalesPage({
   ]);
   const canManage = can(role, "sales.manage");
 
+  /* Lomake kysyy ryhmittäin vain käytössä olevat ryhmät. */
+  const aktiivisetRyhmat = groups.filter((group) => group.active);
+
   const todayRow = sales.find((s) => s.date === today);
 
   /*
@@ -176,6 +179,7 @@ export default async function SalesPage({
             defaultTarget={
               todayRow?.targetCents ? centsToInput(todayRow.targetCents) : ""
             }
+            groups={aktiivisetRyhmat}
           />
         </Card>
       ) : null}

@@ -89,6 +89,7 @@ export function MissingDays({
                   defaultNet=""
                   defaultTarget=""
                   compact
+                  groups={groups.filter((group) => group.active)}
                 />
               </div>
             ) : null}

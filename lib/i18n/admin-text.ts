@@ -658,7 +658,7 @@ const fi = {
       "Kuukauden kirjatut kulut kategorioittain, ALV eriteltynä ja tarkistettavien määrä.",
     expensesByCategory: "Kulut kategorioittain",
     categoriesHint:
-      "Ruoka, juomat, tarvikkeet, siivous ja muut — summat ja osuudet.",
+      "Kuukauden kulut kategorioittain — summat ja osuudet.",
     receiptsWord: "Kuitit",
     receiptsHint:
       "Kaikki kuukauden kuitit riveittäin: toimittaja, kategoria, maksutapa, ALV ja tila.",
@@ -1228,6 +1228,7 @@ const fi = {
     unknownSalesGroup:
       "Tuntematon myyntiryhmä. Päivitä sivu ja yritä uudelleen.",
     salesSaved: "Myynti tallennettu.",
+    savedNeedsVat: "Myynti tallennettiin. Kirjanpitoon se tulee vasta ALV-erittelyn kanssa: kuvaa päiväraportti tai kirjaa myynti ryhmittäin.",
     salesSaveFailed: "Myynnin tallennus epäonnistui: {viesti}",
     rowsSaveFailed: "Myyntirivien tallennus epäonnistui: {viesti}",
     vatSaveFailed: "ALV-erittelyn tallennus epäonnistui: {viesti}",
@@ -1538,6 +1539,7 @@ const fi = {
       "Budjetoimaton kulu ei katoa näkyvistä. Se näytetään tässä, jotta kokonaiskuva pysyy täytenä.",
     overNote: "— yli 100 %, hälytys nousee yleiskuvaan",
     seeReceipts: "Katso kuitit",
+    mixedReceiptNote: "Kuitti jakautuu rivikohtaisesti: kahden eri kategorian tuotteita sisältävä kuitti ei kirjaudu kokonaan kumpaankaan budjettiin.",
     budgeted: "Budjetoitu",
     used: "Käytetty",
     exceeded: "Ylitetty",
@@ -2524,7 +2526,7 @@ const en: AdminText = {
       "The month's recorded expenses by category, VAT broken out and the number needing a check.",
     expensesByCategory: "Expenses by category",
     categoriesHint:
-      "Food, drinks, supplies, cleaning and the rest — sums and shares.",
+      "The month's expenses by category — sums and shares.",
     receiptsWord: "Receipts",
     receiptsHint:
       "Every receipt of the month row by row: supplier, category, payment method, VAT and status.",
@@ -3092,6 +3094,7 @@ const en: AdminText = {
     badRows: "The sales rows were invalid.",
     unknownSalesGroup: "Unknown sales group. Reload the page and try again.",
     salesSaved: "The sales are saved.",
+    savedNeedsVat: "Sales saved. It reaches the books once the VAT breakdown is there: photograph the register report or record the sales by group.",
     salesSaveFailed: "Saving the sales failed: {viesti}",
     rowsSaveFailed: "Saving the sales rows failed: {viesti}",
     vatSaveFailed: "Saving the VAT breakdown failed: {viesti}",
@@ -3405,6 +3408,7 @@ const en: AdminText = {
       "An unbudgeted expense does not disappear from view. It is shown here so the whole picture stays complete.",
     overNote: "— over 100 %, an alert rises to the overview",
     seeReceipts: "See the receipts",
+    mixedReceiptNote: "A receipt is split line by line: one that holds items from two categories is not charged in full to either budget.",
     budgeted: "Budgeted",
     used: "Used",
     exceeded: "Exceeded",
@@ -4378,7 +4382,7 @@ const sv: AdminText = {
       "Månadens registrerade kostnader per kategori, moms specificerad och antalet som ska kontrolleras.",
     expensesByCategory: "Kostnader per kategori",
     categoriesHint:
-      "Mat, dryck, förnödenheter, städning och övrigt — summor och andelar.",
+      "Månadens kostnader per kategori — summor och andelar.",
     receiptsWord: "Kvitton",
     receiptsHint:
       "Alla månadens kvitton rad för rad: leverantör, kategori, betalsätt, moms och status.",
@@ -4951,6 +4955,7 @@ const sv: AdminText = {
     unknownSalesGroup:
       "Okänd försäljningsgrupp. Ladda om sidan och försök igen.",
     salesSaved: "Försäljningen är sparad.",
+    savedNeedsVat: "Försäljningen sparades. Den når bokföringen först med momsspecifikationen: fotografera dagsrapporten eller bokför försäljningen per grupp.",
     salesSaveFailed: "Försäljningen kunde inte sparas: {viesti}",
     rowsSaveFailed: "Försäljningsraderna kunde inte sparas: {viesti}",
     vatSaveFailed: "Momsspecifikationen kunde inte sparas: {viesti}",
@@ -5263,6 +5268,7 @@ const sv: AdminText = {
       "En obudgeterad kostnad försvinner inte ur sikte. Den visas här så att helhetsbilden förblir hel.",
     overNote: "— över 100 %, en varning når översikten",
     seeReceipts: "Se kvittona",
+    mixedReceiptNote: "Ett kvitto delas radvis: ett kvitto med varor ur två kategorier bokförs inte i sin helhet i någondera budgeten.",
     budgeted: "Budgeterat",
     used: "Använt",
     exceeded: "Överskridet",
@@ -6239,7 +6245,7 @@ const da: AdminText = {
       "Månedens registrerede udgifter pr. kategori, moms specificeret og antallet, der skal tjekkes.",
     expensesByCategory: "Udgifter pr. kategori",
     categoriesHint:
-      "Mad, drikke, forsyninger, rengøring og resten — summer og andele.",
+      "Månedens udgifter pr. kategori — summer og andele.",
     receiptsWord: "Kvitteringer",
     receiptsHint:
       "Alle månedens kvitteringer række for række: leverandør, kategori, betalingsmåde, moms og status.",
@@ -6808,6 +6814,7 @@ const da: AdminText = {
     badRows: "Salgsrækkerne var ugyldige.",
     unknownSalesGroup: "Ukendt salgsgruppe. Genindlæs siden, og prøv igen.",
     salesSaved: "Salget er gemt.",
+    savedNeedsVat: "Salget blev gemt. Det når bogføringen først med momsspecifikationen: fotografér dagsrapporten, eller registrér salget pr. gruppe.",
     salesSaveFailed: "Salget kunne ikke gemmes: {viesti}",
     rowsSaveFailed: "Salgsrækkerne kunne ikke gemmes: {viesti}",
     vatSaveFailed: "Momsspecifikationen kunne ikke gemmes: {viesti}",
@@ -7121,6 +7128,7 @@ const da: AdminText = {
       "En ubudgetteret udgift forsvinder ikke ud af syne. Den vises her, så helhedsbilledet forbliver helt.",
     overNote: "— over 100 %, en advarsel når overblikket",
     seeReceipts: "Se kvitteringerne",
+    mixedReceiptNote: "En kvittering deles linje for linje: en kvittering med varer fra to kategorier bogføres ikke fuldt ud i nogen af budgetterne.",
     budgeted: "Budgetteret",
     used: "Brugt",
     exceeded: "Overskredet",
@@ -8101,7 +8109,7 @@ const tr: AdminText = {
       "Ayın kaydedilen giderleri kategoriye göre, KDV ayrıştırılmış ve kontrol edilecek adet.",
     expensesByCategory: "Kategoriye göre giderler",
     categoriesHint:
-      "Yiyecek, içecek, malzeme, temizlik ve diğerleri — tutarlar ve paylar.",
+      "Ayın giderleri kategorilere göre — tutarlar ve paylar.",
     receiptsWord: "Fişler",
     receiptsHint:
       "Ayın tüm fişleri satır satır: tedarikçi, kategori, ödeme yöntemi, KDV ve durum.",
@@ -8662,6 +8670,7 @@ const tr: AdminText = {
     badRows: "Satış satırları geçersizdi.",
     unknownSalesGroup: "Bilinmeyen satış grubu. Sayfayı yenile ve tekrar dene.",
     salesSaved: "Satış kaydedildi.",
+    savedNeedsVat: "Satış kaydedildi. Muhasebeye ancak KDV dökümüyle geçer: gün sonu raporunu fotoğraflayın veya satışı gruplara göre girin.",
     salesSaveFailed: "Satış kaydedilemedi: {viesti}",
     rowsSaveFailed: "Satış satırları kaydedilemedi: {viesti}",
     vatSaveFailed: "KDV dökümü kaydedilemedi: {viesti}",
@@ -8973,6 +8982,7 @@ const tr: AdminText = {
       "Bütçesiz gider gözden kaybolmaz. Bütün resim eksiksiz kalsın diye burada gösterilir.",
     overNote: "— % 100'ün üzerinde, uyarı genel bakışa çıkar",
     seeReceipts: "Fişleri gör",
+    mixedReceiptNote: "Fiş satır satır bölünür: iki farklı kategoriden ürün içeren bir fiş, bütçelerin hiçbirine tamamen işlenmez.",
     budgeted: "Bütçelenen",
     used: "Kullanılan",
     exceeded: "Aşıldı",
@@ -9949,7 +9959,7 @@ const et: AdminText = {
       "Kuu salvestatud kulud kategooriate kaupa, käibemaks eraldi ja kontrollimist vajavate arv.",
     expensesByCategory: "Kulud kategooriate kaupa",
     categoriesHint:
-      "Toit, joogid, tarvikud, koristus ja muu — summad ja osakaalud.",
+      "Kuu kulud kategooriate kaupa — summad ja osakaalud.",
     receiptsWord: "Tšekid",
     receiptsHint:
       "Kõik kuu tšekid rida-realt: tarnija, kategooria, makseviis, käibemaks ja olek.",
@@ -10513,6 +10523,7 @@ const et: AdminText = {
     unknownSalesGroup:
       "Tundmatu müügigrupp. Laadi leht uuesti ja proovi uuesti.",
     salesSaved: "Müük on salvestatud.",
+    savedNeedsVat: "Müük salvestati. Raamatupidamisse jõuab see alles käibemaksu jaotusega: pildista päevaaruanne või sisesta müük rühmade kaupa.",
     salesSaveFailed: "Müügi salvestamine ebaõnnestus: {viesti}",
     rowsSaveFailed: "Müügiridade salvestamine ebaõnnestus: {viesti}",
     vatSaveFailed: "Käibemaksu jaotuse salvestamine ebaõnnestus: {viesti}",
@@ -10823,6 +10834,7 @@ const et: AdminText = {
       "Eelarveta kulu ei kao silmist. Seda näidatakse siin, et tervikpilt jääks täielikuks.",
     overNote: "— üle 100 %, hoiatus tõuseb ülevaatesse",
     seeReceipts: "Vaata tšekke",
+    mixedReceiptNote: "Tšekk jaguneb ridade kaupa: kahe eri kategooria kaupu sisaldav tšekk ei kanta tervikuna kummassegi eelarvesse.",
     budgeted: "Eelarvestatud",
     used: "Kasutatud",
     exceeded: "Ületatud",
@@ -11804,7 +11816,7 @@ const ar: AdminText = {
       "مصاريف الشهر المسجّلة حسب الفئة، مع تفصيل ضريبة القيمة المضافة وعدد ما يحتاج إلى تحقق.",
     expensesByCategory: "المصاريف حسب الفئة",
     categoriesHint:
-      "الطعام، المشروبات، اللوازم، التنظيف وغيرها — المجاميع والنسب.",
+      "مصروفات الشهر حسب الفئة — المجاميع والنسب.",
     receiptsWord: "الإيصالات",
     receiptsHint:
       "كل إيصال من إيصالات الشهر صفًا بصف: المورد، الفئة، طريقة الدفع، ضريبة القيمة المضافة والحالة.",
@@ -12374,6 +12386,7 @@ const ar: AdminText = {
     badRows: "صفوف المبيعات غير صالحة.",
     unknownSalesGroup: "مجموعة مبيعات غير معروفة. أعد تحميل الصفحة وحاول مجددًا.",
     salesSaved: "تم حفظ المبيعات.",
+    savedNeedsVat: "تم حفظ المبيعات. لن تصل إلى الدفاتر إلا مع تفصيل ضريبة القيمة المضافة: صوّر تقرير اليوم أو سجّل المبيعات حسب المجموعة.",
     salesSaveFailed: "فشل حفظ المبيعات: {viesti}",
     rowsSaveFailed: "فشل حفظ صفوف المبيعات: {viesti}",
     vatSaveFailed: "فشل حفظ تفصيل ضريبة القيمة المضافة: {viesti}",
@@ -12688,6 +12701,7 @@ const ar: AdminText = {
       "لا تختفي المصروفات غير المدرجة في الميزانية من العرض. تُعرض هنا لتبقى الصورة كاملة.",
     overNote: "— تجاوز 100 %، يظهر تنبيه في النظرة العامة",
     seeReceipts: "عرض الإيصالات",
+    mixedReceiptNote: "يُقسَّم الإيصال سطرًا بسطر: الإيصال الذي يضم أصنافًا من فئتين لا يُحمَّل بالكامل على أي من الميزانيتين.",
     budgeted: "المدرج في الميزانية",
     used: "المستخدم",
     exceeded: "تم التجاوز",

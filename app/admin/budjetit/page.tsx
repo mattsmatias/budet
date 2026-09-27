@@ -317,8 +317,7 @@ export default async function BudgetsPage({
           className="mt-4 text-[12px] leading-relaxed"
           style={{ color: "var(--rf-text-3)" }}
         >
-          Sekakuitti jakautuu rivikohtaisesti useaan budjettiin. Kuitti jolla on
-          ruokaa ja pesuainetta ei kirjaudu kokonaan ruokabudjettiin.{" "}
+          {t.budjetit.mixedReceiptNote}{" "}
           <Link
             href={`/admin/kuitit?kuukausi=${month}`}
             className="underline underline-offset-4"

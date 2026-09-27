@@ -253,7 +253,18 @@ export default async function WagesPage({
           <p>
             {t.palkkaAs.tesTitle}: {tes.name} ({formatTesValidity(tes, locale, t.palkkaAs.untilFurther)})
           </p>
-        ) : null}
+        ) : (
+          /*
+           * Puuttuva sopimus sanotaan myös ääneen.
+           *
+           * Aiemmin tässä ei lukenut mitään, jos yritykselle ei ollut
+           * valittu sopimusta lainkaan: lisät tulivat omista
+           * asetuksista ja luku näytti yhtä sopimuksenmukaiselta kuin
+           * ravintolan. Hiusalalle ei ole vielä sopimusta Katessa,
+           * joten juuri parturi näki tämän joka kuukausi.
+           */
+          <p>{t.palkkaAs.tesNone}</p>
+        )}
       </div>
 
       {/* Erittely: mistä työn kustannus koostuu. */}
