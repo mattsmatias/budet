@@ -83,21 +83,27 @@ export function TopBar({
         sivun nimestä.
       */}
       <div className="me-auto min-w-[128px] flex-1">
-        <p
-          className="truncate text-[11.5px]"
+        {/*
+          Rivi eikä yksi kappale.
+
+          Kappaleella oli truncate, ja truncate on overflow: hidden —
+          se leikkasi yrityksen vaihtajan valikon pois näkyvistä heti
+          kun se avattiin. Nyt katkaisu koskee vain tekstiä, ja
+          valikko saa laskeutua rivin ulkopuolelle.
+        */}
+        <div
+          className="flex min-w-0 items-center gap-1 text-[11.5px]"
           style={{ color: "var(--rf-text-3)" }}
         >
-          {companies.length > 1 ? (
-            <CompanySwitcher
-              current={companies.find((c) => c.name === restaurantName)?.id ?? ""}
-              companies={companies}
-              label={t.kuori.switchCompany}
-            />
-          ) : (
-            restaurantName
-          )}{" "}
-          · {date}
-        </p>
+          <CompanySwitcher
+            current={
+              companies.find((c) => c.name === restaurantName)?.id ?? ""
+            }
+            companies={companies}
+            label={t.kuori.switchCompany}
+          />
+          <span className="truncate">· {date}</span>
+        </div>
         <h1 className="mt-0.5 truncate text-[18px] font-bold tracking-[-0.02em]">
           <PageTitle fallback={t.kuori.admin} t={t} />
         </h1>
