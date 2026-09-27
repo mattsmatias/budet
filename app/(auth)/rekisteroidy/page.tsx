@@ -64,9 +64,13 @@ export default async function SignUpPage({
           <p className="mt-0.5 text-[17px] font-semibold">
             {invite.preview.restaurantName}
           </p>
-          <p className="mt-0.5 text-[13px]">
-            {nimet.roles[invite.preview.role as Role]}
-          </p>
+          {/* Katen omassa kutsussa ei ole yrityksen roolia; rivi jää pois
+              sen sijaan että näkyisi tyhjänä. */}
+          {invite.preview.role ? (
+            <p className="mt-0.5 text-[13px]">
+              {nimet.roles[invite.preview.role as Role]}
+            </p>
+          ) : null}
           <p className="mt-2 text-[12px] leading-relaxed">
             {t.rekisteroidy.joiningNote}
           </p>

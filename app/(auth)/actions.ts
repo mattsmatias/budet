@@ -17,6 +17,7 @@ import { ACTIVE_RESTAURANT_COOKIE, homeForUser } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText, fill, type AuthText } from "@/lib/i18n/auth-text";
 import { clearInvite, readInvite } from "./liity/actions";
+import { acceptRpc } from "./liity/invite";
 
 export interface FormState {
   error?: string;
@@ -123,13 +124,17 @@ export async function signUp(
    * virhesivun ja pääsi sisään vasta uudella latauksella. Palvelin-
    * toiminnossa eväste saa muuttua, ja istunto on juuri syntynyt.
    */
-  const { error: joinError } = await supabase.rpc("accept_invitation", {
-    p_code: invite.code,
-  });
+  const { error: joinError } = await supabase.rpc(
+    acceptRpc(invite.preview.kind),
+    { p_code: invite.code },
+  );
   await clearInvite();
 
   revalidatePath("/", "layout");
-  redirect(joinError ? next : "/admin");
+  if (joinError) redirect(next);
+
+  /* Katen oma työntekijä ei laskeudu hallintaan: hänellä ei ole yritystä. */
+  redirect(invite.preview.kind === "kate" ? "/esittely" : "/admin");
 }
 
 export async function signOut(): Promise<void> {

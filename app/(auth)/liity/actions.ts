@@ -15,6 +15,7 @@ import { getUser, homeForUser } from "@/lib/restoflow/session";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { authText } from "@/lib/i18n/auth-text";
 import {
+  acceptRpc,
   INVITE_COOKIE,
   INVITE_TTL_SECONDS,
   type InvitePreview,
@@ -34,23 +35,53 @@ export async function readInvite(): Promise<{
   return preview ? { code, preview } : null;
 }
 
+/**
+ * Mihin koodi kelpaa.
+ *
+ * YRITYS ENSIN, KATEN OMA TIIMI SEN JÄLKEEN.
+ *
+ * Kutsut ovat eri tauluissa, joten koodi on tarkistettava molemmista.
+ * Yritysten kutsut ovat niitä joita on paljon, joten ne kysytään
+ * ensin; Katen omat koodit ovat harvinaisia ja jäävät toiseksi
+ * kyselyksi vain silloin kun ensimmäinen ei löydä mitään.
+ *
+ * Kutsu ei voi olla molempia: koodit ovat satunnaisia kahdeksan
+ * merkin jonoja, joten sama koodi kahdessa taulussa tarkoittaisi
+ * yhteentörmäystä jota ei käytännössä tule.
+ */
 async function lookup(code: string): Promise<InvitePreview | null> {
   const supabase = await createClient();
+
   const { data, error } = await supabase.rpc("preview_invitation", {
     p_code: code,
   });
 
-  if (error || !Array.isArray(data) || data.length === 0) return null;
+  if (!error && Array.isArray(data) && data.length > 0) {
+    const row = data[0] as { restaurant_name: string; role: string };
+    return {
+      kind: "restaurant",
+      restaurantName: row.restaurant_name,
+      role: row.role,
+    };
+  }
 
-  const row = data[0] as {
-    restaurant_name: string;
-    role: string;
-  };
+  const { data: kate, error: kateError } = await supabase.rpc(
+    "preview_kate_invitation",
+    { p_code: code },
+  );
 
-  return {
-    restaurantName: row.restaurant_name,
-    role: row.role,
-  };
+  if (!kateError && Array.isArray(kate) && kate.length > 0) {
+    /*
+     * Nimi on "Kate", ei kutsuun kirjoitettu nimilappu.
+     *
+     * Lappu on ylläpitäjän oma muistiinpano siitä kenelle koodi
+     * annettiin. Sen näyttäminen kutsutulle olisi outoa: hän näkee
+     * oman nimensä paikassa jossa kerrotaan mihin hän on liittymässä.
+     */
+    return { kind: "kate", restaurantName: "Kate", role: null };
+  }
+
+  return null;
 }
 
 /**
@@ -96,7 +127,9 @@ export async function checkInvite(
 
   /* Kirjautunut liitetään heti: aloitussivu ei saa muuttaa evästettä. */
   const supabase = await createClient();
-  const { error } = await supabase.rpc("accept_invitation", { p_code: code });
+  const { error } = await supabase.rpc(acceptRpc(preview.kind), {
+    p_code: code,
+  });
   await clearInvite();
   redirect(error ? "/aloitus?tila=liity" : await homeForUser());
 }

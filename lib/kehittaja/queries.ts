@@ -20,6 +20,7 @@ import { createClient } from "@/utils/supabase/server";
 import type {
   AuditRow,
   Flag,
+  KateTeam,
   Overview,
   RestaurantDetail,
   RestaurantRow,
@@ -216,3 +217,37 @@ export const fetchContactRequests = cache(
   async (): Promise<ContactRequest[]> =>
     rpc<ContactRequest[]>("sa_contact_requests", {}, []),
 );
+
+/**
+ * Katen oma tiimi: työntekijät ja avoimet kutsut.
+ *
+ * Yksi kysely kahdesta listasta, koska ne näytetään samalla sivulla ja
+ * vastaavat samaan kysymykseen — kenellä on pääsy ja kenelle on
+ * annettu koodi jota ei ole vielä käytetty.
+ */
+export const fetchKateTeam = cache(async (): Promise<KateTeam> => {
+  const data = await rpc<{
+    staff?: Record<string, unknown>[];
+    invitations?: Record<string, unknown>[];
+  }>("sa_kate_staff", {}, {});
+
+  return {
+    staff: (data.staff ?? []).map((r) => ({
+      userId: r.user_id as string,
+      name: (r.name as string | null) ?? null,
+      email: (r.email as string | null) ?? null,
+      role: r.role as string,
+      lastSignInAt: (r.last_sign_in_at as string | null) ?? null,
+      createdAt: r.created_at as string,
+      isSuperAdmin: r.is_super_admin === true,
+    })),
+    invitations: (data.invitations ?? []).map((r) => ({
+      id: r.id as string,
+      label: (r.label as string | null) ?? null,
+      role: r.role as string,
+      codeHint: r.code_hint as string,
+      expiresAt: r.expires_at as string,
+      createdAt: r.created_at as string,
+    })),
+  };
+});

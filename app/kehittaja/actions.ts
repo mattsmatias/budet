@@ -413,3 +413,91 @@ export async function setContactHandled(
   revalidatePath("/kehittaja", "layout");
   return { notice: handled ? "Merkitty hoidetuksi." : "Palautettu avoimeksi." };
 }
+
+// ---------------------------------------------------------------------------
+// Katen omat työntekijät
+// ---------------------------------------------------------------------------
+
+/**
+ * Tunnukset Katen työntekijälle.
+ *
+ * KOODI, EI VALMIS SALASANA.
+ *
+ * Konsoli ei voi luoda kirjautumistunnusta suoraan: se vaatisi
+ * Supabasen palvelinavaimen sovellukseen, ja se avain saa tehdä kaiken
+ * ohi jokaisen rivikäytännön. Yhtä sisäistä listaa ei kannata maksaa
+ * sillä hinnalla.
+ *
+ * Tilalla on sama kertakoodi jolla yrityksen omistaja pääsee sisään:
+ * ylläpitäjä luo koodin, antaa sen työntekijälle, ja työntekijä
+ * asettaa itse salasanansa. Salasana ei siis kulje kenenkään kautta
+ * eikä jää chattiin tai lokiin.
+ */
+export async function inviteKateStaff(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const supabase = await createClient();
+  const { data: code, error } = await supabase.rpc("sa_invite_kate_staff", {
+    p_label: teksti(data, "label"),
+  });
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  return {
+    code: typeof code === "string" ? code : undefined,
+    notice: "Kutsu luotiin.",
+  };
+}
+
+/** Lunastamaton koodi pois. Käytettyä ei voi perua — se on jo tunnus. */
+export async function revokeKateInvitation(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const id = String(data.get("id") ?? "");
+  if (id === "") return { error: "Kutsua ei tunnistettu." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("sa_revoke_kate_invitation", {
+    p_id: id,
+  });
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  return { notice: "Kutsu peruttiin." };
+}
+
+/**
+ * Esittelyoikeus pois.
+ *
+ * Tunnus jää olemaan: sen poistaminen on Supabasen puolen työ, ja
+ * listan painike joka poistaisi ihmisen tunnuksen olisi liian lähellä
+ * muita painikkeita. Ilman oikeutta hän ei näe esittelyä eikä mitään
+ * muutakaan — hän ei kuulu yhteenkään yritykseen.
+ */
+export async function removeKateStaff(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const user = String(data.get("user") ?? "");
+  if (user === "") return { error: "Työntekijää ei tunnistettu." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("sa_remove_kate_staff", {
+    p_user: user,
+  });
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  return { notice: "Oikeus poistettiin." };
+}

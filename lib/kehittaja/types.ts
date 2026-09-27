@@ -241,3 +241,44 @@ export function healthOf(
     reason: days === 0 ? "Kirjautui tänään" : `Kirjautui ${days} pv sitten`,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Katen omat työntekijät
+// ---------------------------------------------------------------------------
+
+/**
+ * Katen työntekijä.
+ *
+ * ERI ASIA KUIN UserRow.
+ *
+ * UserRow on jäsenyys asiakasyrityksessä: sillä on ravintola ja rooli
+ * siinä. Katen työntekijällä ei ole kumpaakaan — hän ei kuulu
+ * yhteenkään asiakkaaseen. Yhteinen tyyppi vaatisi kaksi kenttää
+ * joissa lukee aina null.
+ */
+export interface KateStaffRow {
+  userId: string;
+  /** Profiilin nimi, tai kutsuun kirjoitettu nimi jos tunnus on uusi. */
+  name: string | null;
+  email: string | null;
+  role: string;
+  lastSignInAt: string | null;
+  createdAt: string;
+  isSuperAdmin: boolean;
+}
+
+/** Lunastamaton kertakoodi. Koodi itse on vain tiivisteenä kannassa. */
+export interface KateInviteRow {
+  id: string;
+  label: string | null;
+  role: string;
+  /** Neljä viimeistä merkkiä: tunnistaa koodin, ei riitä arvaamiseen. */
+  codeHint: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface KateTeam {
+  staff: KateStaffRow[];
+  invitations: KateInviteRow[];
+}

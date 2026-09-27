@@ -31,6 +31,8 @@ export const DEV_NAV: DevNavSection[] = [
       { href: "/kehittaja/yhteydenotot", label: "Yhteydenotot", icon: "bell" },
       { href: "/kehittaja/yritykset", label: "Yritykset", icon: "suppliers" },
       { href: "/kehittaja/kayttajat", label: "Käyttäjät", icon: "staff" },
+      /* Katen oma väki. Eri lista kuin Käyttäjät: ei yritystä, ei roolia. */
+      { href: "/kehittaja/tyontekijat", label: "Työntekijät", icon: "star" },
       { href: "/kehittaja/tilaukset", label: "Tilaukset", icon: "budget" },
       { href: "/kehittaja/tes", label: "TES-hallinta", icon: "report" },
       { href: "/kehittaja/esittely", label: "Tuote-esittely", icon: "sparkle" },

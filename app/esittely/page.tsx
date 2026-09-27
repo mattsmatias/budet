@@ -3,18 +3,16 @@ import { Esittely } from "@/components/kate/esittely";
 export const metadata = { title: "Tuote-esittely" };
 
 /**
- * Tuote-esittely asiakastapaamiseen.
+ * Esittely Katen työntekijälle.
  *
- * KONSOLIN TAKANA, EI JULKISENA SIVUNA.
+ * SAMA ESITTELY KUIN KONSOLISSA.
  *
- * Esittely on myyntityökalu meille eikä markkinointisivu asiakkaalle:
- * se avataan tapaamisessa omalta koneelta. Siksi se on konsolissa,
- * jonne pääsee vain Katen hallinta — julkinen osoite vaatisi oman
- * ylläpitonsa ja vanhentuisi hiljaa.
+ * Komponentti on yksi ja sama molemmissa paikoissa. Kopio olisi
+ * vanhentunut ensimmäisen muutoksen kohdalla, ja myyntitapaamisessa
+ * olisi näytetty vanhaa tuotetta.
  *
- * Sisältö on samaa kieltä kuin etusivu ja sovellus, jotta asiakas
- * tunnistaa saman tuotteen esittelystä, verkkosivulta ja
- * ensimmäisestä kirjautumisesta.
+ * Ero on vain kuoressa: konsolissa esittely on yksi sivu muiden
+ * joukossa, tässä se on koko tunnuksen sisältö.
  */
 export default function EsittelyPage() {
   return (
@@ -28,7 +26,7 @@ export default function EsittelyPage() {
           style={{ color: "var(--rf-text-2)" }}
         >
           Katen esittely asiakastapaamiseen. Avaa koko näyttöön ja selaa
-          nuolinäppäimillä.
+          nuolinäppäimillä tai pyyhkäisemällä.
         </p>
       </div>
 

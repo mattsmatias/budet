@@ -214,6 +214,72 @@ export async function requireSuperAdmin(
   return user;
 }
 
+// ---------------------------------------------------------------------------
+// Katen oma työntekijä
+// ---------------------------------------------------------------------------
+
+/**
+ * Katen työntekijän rooli, tai null.
+ *
+ * ERILLINEN KYSELY, EI OSA PROFIILIA.
+ *
+ * Tämä voisi kulkea getUserin mukana samassa kyselyssä liitoksena,
+ * mutta silloin liitoksen epäonnistuminen tyhjentäisi myös nimen ja
+ * ylläpitäjän lipun — ja veisi pääsyn konsoliin ihmiseltä jolla se
+ * on. Omana kyselynään vika rajautuu siihen mitä se koskee.
+ *
+ * Hinta on yksi verkkokierros, ja se maksetaan vain niillä sivuilla
+ * jotka kysyvät: kirjautumisen ohjaus ja esittelynäkymä. Hallinnan
+ * sivut eivät kysy tätä lainkaan.
+ *
+ * KANTA RATKAISEE, EI TÄMÄ.
+ *
+ * kate_staff-tauluun ei ole yhtään kirjoituspolitiikkaa: rivi syntyy
+ * vain kutsukoodilla tai ylläpitäjän funktiolla. Käyttäjä voi siis
+ * lukea oman rivinsä mutta ei luoda sitä, joten luettu arvo on
+ * luotettava.
+ */
+export const getKateRole = cache(async (): Promise<string | null> => {
+  if (!isConfigured()) return null;
+
+  const user = await getUser();
+  if (!user) return null;
+
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("kate_staff")
+      .select("role")
+      // RLS rajaa jo omaan riviin; ehto on tässä sanottuna ääneen.
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    return (data?.role as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+});
+
+/**
+ * Konteksti esittelynäkymään.
+ *
+ * Katen työntekijä ja järjestelmän ylläpitäjä näkevät saman
+ * esittelyn. Kukaan muu ei: asiakasyrityksen käyttäjä ohjataan omaan
+ * kotiinsa eikä kirjautumiseen, koska hän on kirjautunut — hän on
+ * vain väärässä paikassa.
+ */
+export async function requireKateStaff(
+  returnTo = "/esittely",
+): Promise<{ user: SessionUser; role: string }> {
+  const user = await getUser();
+  if (!user) redirect(`/kirjaudu?seuraava=${encodeURIComponent(returnTo)}`);
+
+  const role = await getKateRole();
+  if (!role && !user.isSuperAdmin) redirect(await homeForUser());
+
+  return { user, role: role ?? "presenter" };
+}
+
 /**
  * Mihin kirjautunut kuuluu.
  *
@@ -221,8 +287,15 @@ export async function requireSuperAdmin(
  * hallintaan, työntekijä omaan työaikaansa. Ilman tätä kaikki
  * ohjattiin hallintaan, josta työntekijä pomppasi eteenpäin — yksi
  * turha pyyntö ja välähdys näkymästä johon hänellä ei ole asiaa.
+ *
+ * Katen oma työntekijä ei kuulu yhteenkään asiakasyritykseen, joten
+ * hänelle ei ole hallintaa eikä perustussivua: hänen kotinsa on
+ * esittely. Yritys tarkistetaan ensin, jotta tämä ei muuta kenenkään
+ * nykyistä laskeutumista.
  */
 export async function homeForUser(): Promise<string> {
   const restaurant = await getActiveRestaurant();
-  return restaurant ? landingFor(restaurant.role) : "/aloitus";
+  if (restaurant) return landingFor(restaurant.role);
+
+  return (await getKateRole()) ? "/esittely" : "/aloitus";
 }

@@ -1,12 +1,9 @@
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { readInvite } from "@/app/(auth)/liity/actions";
+import { acceptRpc } from "@/app/(auth)/liity/invite";
 import { createClient } from "@/utils/supabase/server";
-import {
-  getActiveRestaurant,
-  homeForUser,
-  requireUser,
-} from "@/lib/restoflow/session";
+import { homeForUser, requireUser } from "@/lib/restoflow/session";
 import { Card } from "@/components/restoflow/ui";
 import { SetupForm } from "./form";
 import { JoinForm } from "./join";
@@ -43,7 +40,7 @@ export default async function SetupPage({
   const invite = await readInvite();
   if (invite) {
     const supabase = await createClient();
-    const { error } = await supabase.rpc("accept_invitation", {
+    const { error } = await supabase.rpc(acceptRpc(invite.preview.kind), {
       p_code: invite.code,
     });
 
@@ -55,7 +52,15 @@ export default async function SetupPage({
     if (!error) redirect(await homeForUser());
   }
 
-  if (await getActiveRestaurant()) redirect(await homeForUser());
+  /*
+   * Kellä tahansa on jo koti, sinne mennään.
+   *
+   * Aiemmin tässä kysyttiin vain yritystä. Katen oma työntekijä ei
+   * kuulu yhteenkään yritykseen, joten hän näki sivun jolla pyydetään
+   * perustamaan ravintola — vaikka hänen kotinsa on esittely.
+   */
+  const koti = await homeForUser();
+  if (koti !== "/aloitus") redirect(koti);
 
   /*
    * Poistettu tai lukittu tunnus.
