@@ -1,4 +1,6 @@
 import { dateFormat } from "@/lib/intl-cache";
+import type { PayModel } from "./payroll";
+
 /**
  * Työtunnit ja arvioitu palkkakulu.
  *
@@ -23,6 +25,15 @@ export interface Employee {
   jobTitle: string | null;
   /** Tuntipalkka sentteinä. */
   hourlyCents: number;
+  /**
+   * Palkkamalli: tunnit, tunnit + provisio, vai provisio takuulla.
+   *
+   * Oletus on tunnit, joten ravintoloille ja kahviloille tämä ei
+   * muuta mitään — kenttä on olemassa mutta sen arvo on "hourly".
+   */
+  payModel: PayModel;
+  /** Provisio-osuus omasta myynnistä ilman alv, 0,4 = 40 %. */
+  commissionRate: number;
   active: boolean;
   /** Onko työntekijälle liitetty kirjautumistunnus. */
   linked: boolean;

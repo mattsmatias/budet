@@ -28,6 +28,8 @@ function tyontekija(hourlyCents: number): Employee {
     email: null,
     jobTitle: null,
     hourlyCents,
+    payModel: "hourly",
+    commissionRate: 0,
     active: true,
     linked: false,
   };

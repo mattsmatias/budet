@@ -19,6 +19,8 @@ function employee(id: string, extra: Partial<Employee> = {}): Employee {
     email: null,
     jobTitle: null,
     hourlyCents: 1450,
+    payModel: "hourly",
+    commissionRate: 0,
     active: true,
     linked: true,
     ...extra,

@@ -78,6 +78,8 @@ const TESTI: Employee = {
   email: null,
   jobTitle: null,
   hourlyCents: PALKKA,
+  payModel: "hourly",
+  commissionRate: 0,
   active: true,
   linked: false,
 };

@@ -14,6 +14,7 @@ import { CONTROL, CONTROL_STYLE, Field, SaveRow } from "./form-parts";
 import { Card, Pill } from "@/components/restoflow/ui";
 import { RfIcon } from "@/components/restoflow/icons";
 import { formatMoney } from "@/lib/money";
+import { formatPercent, type PayModel } from "@/lib/restoflow/payroll";
 import { fullName } from "@/lib/restoflow/employees";
 import type { Employee } from "@/lib/restoflow/employees";
 
@@ -61,6 +62,11 @@ export function EmployeeList({ t, rows }: { t: AdminText; rows: Employee[] }) {
                   >
                     {row.jobTitle ?? "—"} ·{" "}
                     {formatMoney(row.hourlyCents)}/h
+                    {/* Provisio näkyy listassa: se on osa palkkaa, ei
+                        lomakkeen sisäinen asetus. */}
+                    {row.payModel !== "hourly" && row.commissionRate > 0
+                      ? ` · ${formatPercent(row.commissionRate)} %`
+                      : ""}
                   </p>
                   {/*
                     Sähköposti näkyviin ilman muokkaustilaa.
@@ -170,6 +176,7 @@ function EmployeeForm({
 }) {
   const [state, action] = useActionState(saveEmployee, initial);
   const e = employee;
+  const [malli, setMalli] = useState<PayModel>(e?.payModel ?? "hourly");
 
   /* Sentit euroiksi kenttään: 1450 → "14,50". */
   const hourly = e ? (e.hourlyCents / 100).toFixed(2).replace(".", ",") : "";
@@ -249,6 +256,53 @@ function EmployeeForm({
             style={CONTROL_STYLE}
           />
         </Field>
+      </div>
+
+      {/*
+        Palkkamalli ja provisio.
+
+        Provisiokenttä ilmestyy vasta kun malli sitä vaatii. Aina
+        näkyvänä se olisi tyhjä ja merkityksetön niille tuhansille
+        tuntipalkkaisille, joille tämä ei kuulu — ja tyhjä kenttä
+        lomakkeella on kysymys johon pitää keksiä vastaus.
+      */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field
+          label={t.tyo.payModel}
+          htmlFor="rf-paymodel"
+          hint={malli === "hourly" ? undefined : t.tyo.payModelHint}
+        >
+          <select
+            id="rf-paymodel"
+            name="payModel"
+            value={malli}
+            onChange={(event) => setMalli(event.target.value as PayModel)}
+            className={CONTROL}
+            style={CONTROL_STYLE}
+          >
+            <option value="hourly">{t.tyo.payModelHourly}</option>
+            <option value="hourly_commission">{t.tyo.payModelPlus}</option>
+            <option value="commission_guaranteed">
+              {t.tyo.payModelGuaranteed}
+            </option>
+          </select>
+        </Field>
+
+        {malli === "hourly" ? null : (
+          <Field label={t.tyo.commissionRate} htmlFor="rf-commission">
+            <input
+              id="rf-commission"
+              name="commission"
+              inputMode="decimal"
+              defaultValue={
+                e && e.commissionRate > 0 ? formatPercent(e.commissionRate) : ""
+              }
+              placeholder="40"
+              className={CONTROL}
+              style={CONTROL_STYLE}
+            />
+          </Field>
+        )}
       </div>
 
       <label className="flex items-center gap-2.5 text-[13px] font-semibold">

@@ -24,7 +24,7 @@ import type { Task } from "./tasks";
 import type { AuditEvent } from "./audit";
 import type { Merchant } from "./merchants";
 import type { Employee, TimeEntry } from "./employees";
-import { DEFAULT_PAYROLL, type PayrollSettings } from "./payroll";
+import { DEFAULT_PAYROLL, isPayModel, type PayrollSettings } from "./payroll";
 import type { TesAgreement } from "./tes";
 import { createClient } from "@/utils/supabase/server";
 import type {
@@ -1042,7 +1042,7 @@ export async function fetchEmployees(
   const { data, error } = await supabase
     .from("employees")
     .select(
-      "id, first_name, last_name, email, job_title, hourly_cents, active, user_id",
+      "id, first_name, last_name, email, job_title, hourly_cents, pay_model, commission_rate, active, user_id",
     )
     .eq("restaurant_id", restaurantId)
     .order("first_name");
@@ -1056,6 +1056,9 @@ export async function fetchEmployees(
     email: (row.email as string | null) ?? null,
     jobTitle: (row.job_title as string | null) ?? null,
     hourlyCents: Number(row.hourly_cents ?? 0),
+    /* Tuntematon arvo on tunnit: uusi malli ei saa syntyä kirjoitusvirheestä. */
+    payModel: isPayModel(row.pay_model) ? row.pay_model : "hourly",
+    commissionRate: Number(row.commission_rate ?? 0),
     active: Boolean(row.active),
     linked: row.user_id !== null,
   }));
@@ -1247,4 +1250,32 @@ function tesFromRow(row: Record<string, unknown>): TesAgreement {
       endTime: (rule.end_time as string | null) ?? null,
     })),
   };
+}
+
+/**
+ * Työntekijöiden oma myynti kuukaudessa, sentteinä ilman alv.
+ *
+ * Avaimena työntekijän tunniste, jotta laskenta löytää luvun ilman
+ * hakua listasta. Puuttuva rivi on nolla eikä virhe: provisiopalkkaisen
+ * myynti kirjataan kuukauden lopussa, ja sitä ennen kuukausi on kesken.
+ */
+export async function fetchEmployeeSales(
+  restaurantId: string,
+  month: string,
+): Promise<Record<string, number>> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("employee_sales")
+    .select("employee_id, net_cents")
+    .eq("restaurant_id", restaurantId)
+    .eq("period_month", `${month}-01`);
+
+  if (error || !data) return {};
+
+  const out: Record<string, number> = {};
+  for (const row of data) {
+    out[row.employee_id as string] = Number(row.net_cents ?? 0);
+  }
+  return out;
 }

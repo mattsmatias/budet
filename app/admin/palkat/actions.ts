@@ -22,6 +22,8 @@ import { requireContext } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
 import { can } from "@/lib/restoflow/permissions";
 import { parseHourly } from "@/lib/restoflow/employees";
+import { parsePercent } from "@/lib/restoflow/payroll";
+import { parseAmountToCents } from "@/lib/money";
 import type { AdminState } from "../actions";
 
 const employeeSchema = (t: AdminText) =>
@@ -51,6 +53,14 @@ const employeeSchema = (t: AdminText) =>
       .max(80)
       .transform((v) => (v === "" ? null : v)),
     hourlyCents: z.number().int().min(0).max(100000),
+    /*
+     * Palkkamalli ja provisio.
+     *
+     * Tuntematon malli ei paase kantaan: valikon arvo tulee clientilta
+     * ja clientilta tuleva arvo tarkistetaan aina.
+     */
+    payModel: z.enum(["hourly", "hourly_commission", "commission_guaranteed"]),
+    commissionRate: z.number().min(0).max(1),
     active: z.boolean(),
   });
 
@@ -68,6 +78,20 @@ export async function saveEmployee(
   const hourly = parseHourly(String(formData.get("hourly") ?? ""));
   if (hourly === null) return { error: t.tyo.hourlyInvalid };
 
+  /*
+   * Provisioprosentti vain provisiomalleille.
+   *
+   * Tuntipalkkaiselle jaava prosentti olisi hiljainen ansa: mallin
+   * vaihto myohemmin toisi maksuun luvun jota kukaan ei muista
+   * asettaneensa.
+   */
+  const malli = String(formData.get("payModel") ?? "hourly");
+  const provisio =
+    malli === "hourly" ? 0 : parsePercent(String(formData.get("commission") ?? ""));
+  if (provisio === null || provisio > 1) {
+    return { error: t.tyo.commissionRateInvalid };
+  }
+
   const parsed = employeeSchema(t).safeParse({
     id: (formData.get("id") as string) || null,
     firstName: formData.get("firstName"),
@@ -75,6 +99,8 @@ export async function saveEmployee(
     email: formData.get("email") ?? "",
     jobTitle: formData.get("jobTitle") ?? "",
     hourlyCents: hourly,
+    payModel: malli,
+    commissionRate: provisio,
     active: formData.get("active") === "on",
   });
 
@@ -88,6 +114,8 @@ export async function saveEmployee(
     email: parsed.data.email,
     job_title: parsed.data.jobTitle,
     hourly_cents: parsed.data.hourlyCents,
+    pay_model: parsed.data.payModel,
+    commission_rate: parsed.data.commissionRate,
     active: parsed.data.active,
     updated_at: new Date().toISOString(),
   };
@@ -257,4 +285,75 @@ export async function inviteEmployee(
   revalidatePath("/admin/palkat");
 
   return { code: data as string, notice: t.toiminnot.inviteCreated };
+}
+
+/**
+ * Työntekijän oma myynti kuukaudessa.
+ *
+ * MIKSI TÄMÄ KIRJOITETAAN KÄSIN.
+ *
+ * Kate tietää päivän myynnin muttei sitä kuka sen teki: myynti
+ * kirjataan päivätasolla eikä kassasta tule tekijää. Provisiopalkan
+ * pohja tulee siis sieltä mistä yrittäjä sen itsekin lukee —
+ * ajanvaraus- tai kassaraportista kuukauden lopussa.
+ *
+ * Luku on veroton. Arvonlisävero ei ole yrityksen tuloa, ja siitä
+ * laskettu provisio maksaisi neljänneksen liikaa.
+ */
+export async function saveEmployeeSales(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant, role } = await requireContext("/admin/palkat");
+
+  if (!can(role, "employees.manage")) {
+    return { error: t.toiminnot.ownerOnlyBody };
+  }
+
+  const employeeId = String(formData.get("employee") ?? "");
+  const month = String(formData.get("month") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(employeeId) || !/^\d{4}-\d{2}$/.test(month)) {
+    return { error: t.tyo.saveFailed };
+  }
+
+  const raw = String(formData.get("sales") ?? "").trim();
+  const cents = raw === "" ? 0 : parseAmountToCents(raw);
+  if (cents === null || cents < 0) return { error: t.tyo.ownSalesInvalid };
+
+  const supabase = await createClient();
+
+  /*
+   * Ravintolarajaus kyselyssä eikä vain rivillä.
+   *
+   * employee_id tulee clientilta. Ilman restaurant_id-ehtoa toisen
+   * yrityksen työntekijän tunnisteella voisi kirjoittaa rivin, jonka
+   * rivikäytäntö sitten hylkäisi — mutta sitä ei jätetä
+   * rivikäytännön varaan.
+   */
+  const { data: employee } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("id", employeeId)
+    .eq("restaurant_id", restaurant.id)
+    .maybeSingle();
+
+  if (!employee) return { error: t.tyo.saveFailed };
+
+  const { error } = await supabase.from("employee_sales").upsert(
+    {
+      restaurant_id: restaurant.id,
+      employee_id: employeeId,
+      period_month: `${month}-01`,
+      net_cents: cents,
+    },
+    { onConflict: "employee_id,period_month" },
+  );
+
+  if (error) return { error: t.tyo.saveFailed };
+
+  revalidatePath("/admin/palkat");
+  revalidatePath("/admin");
+
+  return { notice: t.tyo.ownSalesSaved };
 }

@@ -24,6 +24,8 @@ import {
 } from "@/lib/restoflow/queries";
 import { formatHours, fullName } from "@/lib/restoflow/employees";
 import { staffCost } from "@/lib/restoflow/staff-cost";
+import { fetchEmployeeSales } from "@/lib/restoflow/queries";
+import { OwnSales } from "./oma-myynti";
 import { costPerHourCents } from "@/lib/restoflow/payroll";
 import { formatTesValidity, versionFor } from "@/lib/restoflow/tes";
 import { fill } from "@/lib/i18n/auth-text";
@@ -110,14 +112,16 @@ export default async function WagesPage({
    */
   const seesHours = can(role, "employees.manage");
 
-  const [employees, timeEntries, payroll, tesVersions] = seesHours
-    ? await Promise.all([
-        fetchEmployees(restaurant.id),
-        fetchTimeEntries(restaurant.id, from),
-        fetchPayrollSettings(restaurant.id),
-        fetchCompanyTes(restaurant.id),
-      ])
-    : [[], [], null, []];
+  const [employees, timeEntries, payroll, tesVersions, employeeSales] =
+    seesHours
+      ? await Promise.all([
+          fetchEmployees(restaurant.id),
+          fetchTimeEntries(restaurant.id, from),
+          fetchPayrollSettings(restaurant.id),
+          fetchCompanyTes(restaurant.id),
+          fetchEmployeeSales(restaurant.id, month),
+        ])
+      : [[], [], null, [], {} as Record<string, number>];
 
   /* Sama laskenta kuin yleiskatsauksessa ja kuukausiraportissa. */
   const time = staffCost(
@@ -127,6 +131,7 @@ export default async function WagesPage({
     restaurant.timezone,
     payroll,
     tesVersions,
+    employeeSales,
   );
   const rows = time.rows;
 
@@ -282,6 +287,12 @@ export default async function WagesPage({
               {t.palkkaAs.supplements} {formatMoney(cost.supplementCents)}
             </span>
           ) : null}
+          {/* Provisio omana eränään: se on palkkaa mutta eri alkuperää. */}
+          {cost.commissionCents > 0 ? (
+            <span>
+              {t.palkkaAs.commission} {formatMoney(cost.commissionCents)}
+            </span>
+          ) : null}
           {cost.holidayCents > 0 ? (
             <span>
               {t.palkkaAs.holiday} {formatMoney(cost.holidayCents)}
@@ -347,6 +358,22 @@ export default async function WagesPage({
                       : ""}
                   </span>
                 </span>
+
+                {/*
+                  Provisiopalkkaiselle oma myynti samaan riviin.
+
+                  Tuntipalkkaiselle kenttää ei ole: hänelle se olisi
+                  kysymys johon ei ole vastausta.
+                */}
+                {row.employee.payModel !== "hourly" ? (
+                  <OwnSales
+                    t={t}
+                    employeeId={row.employee.id}
+                    month={month}
+                    netCents={employeeSales[row.employee.id] ?? null}
+                    commissionCents={row.cost.commissionCents}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>

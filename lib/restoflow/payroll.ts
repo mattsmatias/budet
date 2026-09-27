@@ -320,6 +320,14 @@ export interface EmployerCost {
   baseCents: number;
   /** Työaikalisät yhteensä. */
   supplementCents: number;
+  /**
+   * Provisio omasta myynnistä.
+   *
+   * Nolla kaikilla tuntipalkkaisilla. Oma kenttänsä eikä osa
+   * peruspalkkaa, koska yrittäjän kysymys on juuri se kumpi osuus
+   * palkasta tuli tunneista ja kumpi myynnistä.
+   */
+  commissionCents: number;
   /** Lomakustannus. */
   holidayCents: number;
   /** Työnantajan sivukulut. */
@@ -332,6 +340,7 @@ export const EMPTY_COST: EmployerCost = {
   minutes: 0,
   baseCents: 0,
   supplementCents: 0,
+  commissionCents: 0,
   holidayCents: 0,
   sideCostCents: 0,
   totalCents: 0,
@@ -445,6 +454,7 @@ export function employerCost(
   return {
     minutes: split.total,
     baseCents,
+    commissionCents: 0,
     supplementCents: supplements,
     holidayCents,
     sideCostCents,
@@ -518,6 +528,7 @@ export function sumCosts(costs: EmployerCost[]): EmployerCost {
       minutes: sum.minutes + cost.minutes,
       baseCents: sum.baseCents + cost.baseCents,
       supplementCents: sum.supplementCents + cost.supplementCents,
+      commissionCents: sum.commissionCents + cost.commissionCents,
       holidayCents: sum.holidayCents + cost.holidayCents,
       sideCostCents: sum.sideCostCents + cost.sideCostCents,
       totalCents: sum.totalCents + cost.totalCents,
@@ -549,4 +560,91 @@ export function costForDated(
       );
     }),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Provisio
+// ---------------------------------------------------------------------------
+
+/**
+ * Palkkamalli.
+ *
+ * KOLME MALLIA, KOSKA ALALLA ON KOLME TAPAA.
+ *
+ * Ravintolassa palkka on tunneista. Hiusalalla se on usein omasta
+ * myynnistä: joko tuntipalkan päälle tai niin että tuntipalkka on
+ * takuu ja provisio maksetaan kun se ylittää takuun. Malli on
+ * työntekijäkohtainen, koska samassa liikkeessä voi olla molempia.
+ */
+export type PayModel = "hourly" | "hourly_commission" | "commission_guaranteed";
+
+export function isPayModel(value: unknown): value is PayModel {
+  return (
+    value === "hourly" ||
+    value === "hourly_commission" ||
+    value === "commission_guaranteed"
+  );
+}
+
+/**
+ * Paljonko provisiota maksetaan tuntipalkan lisäksi.
+ *
+ * TAKUU VERTAA PERUSPALKKAAN, EI LOPPUSUMMAAN.
+ *
+ * Takuupalkkamallissa verrataan tehtyjä tunteja provisioon:
+ * kumpi on suurempi, se maksetaan. Työaikalisät tulevat molempien
+ * päälle, koska ilta- ja lauantailisä maksetaan tehdystä työajasta
+ * eikä siitä kumpi palkkatapa voitti. Sivukulut ja lomakustannus
+ * lasketaan lopuksi koko palkasta samalla tavalla kuin tunneille.
+ *
+ * Pyöristys kerran, lopussa: sentin pyöristys jokaisessa välivaiheessa
+ * kertyisi kuukauden aikana euroiksi.
+ */
+export function commissionExtraCents(
+  model: PayModel,
+  rate: number,
+  netSalesCents: number,
+  baseCents: number,
+): number {
+  if (model === "hourly") return 0;
+  if (rate <= 0 || netSalesCents <= 0) return 0;
+
+  const provisio = Math.round(netSalesCents * rate);
+
+  return model === "hourly_commission"
+    ? provisio
+    : Math.max(0, provisio - baseCents);
+}
+
+/**
+ * Provisio kustannukseen.
+ *
+ * Provisio on palkkaa, joten siitä kertyy lomakustannus ja sivukulut
+ * samalla prosentilla kuin tunneista. Ilman tätä provisio näyttäisi
+ * halvemmalta kuin tuntipalkka, ja juuri sitä vertailua yrittäjä
+ * tällä sivulla tekee.
+ *
+ * Lomakustannuksen ja sivukulun prosentit ovat yrityksen omat eivätkä
+ * sopimuksen, joten tässä käytetään yrityksen asetuksia — ei sen
+ * päivän sopimusversiota, jota kuukausitason luvulla ei ole.
+ */
+export function withCommission(
+  cost: EmployerCost,
+  extraCents: number,
+  settings: PayrollSettings,
+): EmployerCost {
+  if (extraCents <= 0) return cost;
+
+  const holiday = Math.round(extraCents * settings.holidayRate);
+  const sideCost = Math.round((extraCents + holiday) * settings.sideCostRate);
+
+  return {
+    minutes: cost.minutes,
+    baseCents: cost.baseCents,
+    supplementCents: cost.supplementCents,
+    commissionCents: cost.commissionCents + extraCents,
+    holidayCents: cost.holidayCents + holiday,
+    sideCostCents: cost.sideCostCents + sideCost,
+    totalCents: cost.totalCents + extraCents + holiday + sideCost,
+  };
 }

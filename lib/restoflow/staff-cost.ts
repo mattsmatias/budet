@@ -2,9 +2,11 @@ import type { Employee, TimeEntry } from "./employees";
 import { summarise } from "./employees";
 import {
   EMPTY_COST,
+  commissionExtraCents,
   costForDated,
   costPerHourCents,
   sumCosts,
+  withCommission,
   type EmployerCost,
   type PayrollSettings,
 } from "./payroll";
@@ -73,24 +75,53 @@ export function staffCost(
   timezone: string,
   settings: PayrollSettings | null,
   tesVersions: TesAgreement[] = [],
+  /**
+   * Työntekijän oma myynti kuukaudessa ilman alv, sentteinä.
+   *
+   * Vain provisiopalkkaisilla on tässä rivi. Tyhjä taulukko tarkoittaa
+   * ettei provisiota ole — se on tuntipalkkaisen yrityksen tavallinen
+   * tila, eikä se muuta laskentaa millään tavalla.
+   */
+  sales: Record<string, number> = {},
 ): StaffCost {
   const rows = summarise(employees, entries, month);
   const inMonth = entries.filter((entry) => entry.date.startsWith(month));
   const resolve = settings ? settingsResolver(tesVersions, settings) : null;
 
-  const withCost: StaffCostRow[] = rows.map((row) => ({
-    employee: row.employee,
-    minutes: row.minutes,
-    working: row.working,
-    cost: resolve
+  const withCost: StaffCostRow[] = rows.map((row) => {
+    const tunnit = resolve
       ? costForDated(
           inMonth.filter((entry) => entry.employeeId === row.employee.id),
           row.employee.hourlyCents,
           timezone,
           resolve,
         )
-      : { ...EMPTY_COST },
-  }));
+      : { ...EMPTY_COST };
+
+    /*
+     * Provisio kuukauden lopuksi, ei vuoroittain.
+     *
+     * Myynti on kuukauden luku eikä vuoron luku, joten provisio
+     * lasketaan kerran koko kuukaudelle. Takuupalkkamalli vaatii sen:
+     * vertailu tunteihin on mahdollinen vasta kun kaikki tunnit ovat
+     * tiedossa. Vuorokohtainen vertailu antaisi toisen tuloksen.
+     */
+    const extra = settings
+      ? commissionExtraCents(
+          row.employee.payModel,
+          row.employee.commissionRate,
+          sales[row.employee.id] ?? 0,
+          tunnit.baseCents,
+        )
+      : 0;
+
+    return {
+      employee: row.employee,
+      minutes: row.minutes,
+      working: row.working,
+      cost: settings ? withCommission(tunnit, extra, settings) : tunnit,
+    };
+  });
 
   return {
     rows: withCost,
