@@ -173,7 +173,7 @@ export default async function DevOverviewPage() {
               />
             </div>
           ) : (
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <ul className="divide-y">
               {huomio.map(({ r, health }) => (
                 <li key={r.id}>
                   <Link

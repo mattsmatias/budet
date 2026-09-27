@@ -371,7 +371,7 @@ async function Yhteenveto({
             </p>
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {issues.map((issue) => {
               const teksti = huomionTeksti(issue, t, locale);
 

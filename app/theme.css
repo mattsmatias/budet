@@ -339,6 +339,26 @@ html {
   scrollbar-gutter: stable;
 }
 
+/*
+ * Listojen väliviivat kulkevat linjavärillä.
+ *
+ * VÄRI EI PERIYDY, VAIKKA SILTÄ NÄYTTI.
+ *
+ * Tailwindin divide-y antaa reunan listan LAPSILLE. Väri asetettiin
+ * emolle (ul), mutta border-color ei ole periytyvä ominaisuus, joten
+ * lapsen reuna jäi alkuarvoonsa currentColor — eli tekstin väriin.
+ * Viiva piirtyi lähes mustana (#0f1729) siinä missä sen piti olla
+ * vaalea linja (#e7ecf3). Kahdessakymmenessäkolmessa paikassa:
+ * ilmoitukset, kirjanpidon näkymät, tehtävät, loki, konsoli.
+ *
+ * Korjaus tähän eikä kahteenkymmeneenkolmeen kohtaan, koska vika on
+ * yksi ja sama. :where() pitää tarkkuuden nollassa: jokainen luokka
+ * tai tyyli joka oikeasti haluaa toisen värin voittaa tämän.
+ */
+:where(.restoflow .divide-y > *, .restoflow .divide-x > *) {
+  border-color: var(--rf-line);
+}
+
 /* Otsikot hieman tiukemmalla kirjainvälillä, kuten SF Pro Display. */
 .restoflow h1,
 .restoflow h2,

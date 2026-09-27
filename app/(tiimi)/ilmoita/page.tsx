@@ -66,7 +66,7 @@ export default async function IlmoitaPage() {
             />
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {omat.map((r) => (
               <li
                 key={r.id}

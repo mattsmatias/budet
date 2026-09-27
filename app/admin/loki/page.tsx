@@ -275,7 +275,7 @@ export default async function AuditLogPage({
         />
       ) : (
         <Card padded={false}>
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {events.map((event) => (
               <li key={event.id} className="px-5 py-3.5">
                 <Tapahtuma

@@ -158,7 +158,7 @@ function Ryhma({
         <CardHeader title={title} subtitle={subtitle} />
       </div>
 
-      <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+      <ul className="divide-y">
         {alerts.map((alert) => (
           <li key={alert.id}>
             <Link

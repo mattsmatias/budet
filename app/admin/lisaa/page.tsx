@@ -63,7 +63,7 @@ export default async function AdminMorePage() {
         <section>
           <SectionLabel>{t.loput.views}</SectionLabel>
           <Card padded={false}>
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <ul className="divide-y">
               {overflow.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -90,7 +90,7 @@ export default async function AdminMorePage() {
       <section>
         <SectionLabel>{t.loput.change}</SectionLabel>
         <Card padded={false}>
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             <li>
               <Link
                 href="/admin/ilmoitukset"

@@ -315,7 +315,7 @@ export default async function DevRestaurantPage({
               />
             </div>
 
-            <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+            <ul className="divide-y">
               {users.map((u) => (
                 <li key={u.membershipId}>
                   <UserRow user={u} />
@@ -447,7 +447,7 @@ export default async function DevRestaurantPage({
             />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {flags.map((flag) => (
               <FlagRow key={flag.key} id={id} flag={flag} />
             ))}

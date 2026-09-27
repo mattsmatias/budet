@@ -342,7 +342,7 @@ export function Paakirja({
             </p>
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {account.lines.map((line, i) => (
               <li key={`${line.entryId}-${i}`}>
                 <LahdeLinkki line={line}>
@@ -442,7 +442,7 @@ export function Tilikartta({
             />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {ryhma.rows.map((account) => (
               <li
                 key={account.id}
@@ -788,7 +788,7 @@ export function Raportit({
             />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {income.revenue.map((row) => (
               <Rivi
                 key={row.number}
@@ -834,7 +834,7 @@ export function Raportit({
             />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {balance.assets.map((row) => (
               <Rivi
                 key={row.number}

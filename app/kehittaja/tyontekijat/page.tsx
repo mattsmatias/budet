@@ -166,7 +166,7 @@ export default async function DevKateStaffPage() {
             />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {invitations.map((k) => {
               const jaljella = paiviaJaljella(k.expiresAt, now);
 

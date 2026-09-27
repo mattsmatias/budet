@@ -143,7 +143,7 @@ export default async function DevAuditPage({
             <CardHeader title="Tapahtumat" subtitle="Uusin ensin" />
           </div>
 
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {rows.map((row) => (
               <li key={row.id} className="flex items-start gap-3.5 px-5 py-3.5">
                 <span

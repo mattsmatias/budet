@@ -100,7 +100,7 @@ export default async function DevHealthPage() {
           <CardHeader title="Palvelut" subtitle="Vasteaika kertoo kuormasta" />
         </div>
 
-        <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+        <ul className="divide-y">
           {checks.map((check) => {
             const tila = TILA[check.state];
             return (

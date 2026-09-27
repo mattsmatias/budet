@@ -100,7 +100,7 @@ export default async function DevPlansPage() {
             />
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
+          <ul className="divide-y">
             {kokeilut.map((r) => {
               const ohi = (r.trialEndsOn ?? "") < today;
               return (
