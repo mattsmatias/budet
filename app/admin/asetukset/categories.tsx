@@ -272,7 +272,11 @@ function CategoryForm({
         <select
           id={`c-base-${category?.id ?? "new"}`}
           name="base"
-          defaultValue={category?.baseCategory ?? "food"}
+          defaultValue={
+            /* Toimialan ensimmäinen luokka: "food" ei ole parturin
+               valikossa lainkaan, joten se ei kelpaa oletukseksi. */
+            category?.baseCategory ?? categoryOptions(nimet)[0]?.[0] ?? "other"
+          }
           className="mt-1.5 w-full px-3.5 py-2.5 text-[16px] outline-none"
           style={{
             background: "var(--rf-card)",

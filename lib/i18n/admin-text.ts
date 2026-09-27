@@ -781,7 +781,7 @@ const fi = {
     timezone: "Aikavyöhyke",
     timezoneHint: "Päivien ja kuukausien rajat lasketaan tässä ajassa. Palvelin käy UTC:ssä, joten väärä vyöhyke siirtäisi illan myynnin väärälle päivälle.",
     noOwnCategories:
-      "Omia kategorioita ei ole. Ilman niitä kuitit näkyvät yhdeksällä perusluokalla.",
+      "Omia kategorioita ei ole. Ilman niitä kuitit näkyvät vakiokategorioilla.",
     newCategory: "Uusi kategoria",
     addCategory: "Lisää kategoria",
     ownCategoryHint:
@@ -2648,7 +2648,7 @@ const en: AdminText = {
     timezone: "Time zone",
     timezoneHint: "Day and month boundaries are calculated in this time. The server runs in UTC, so the wrong zone would move evening sales to the wrong day.",
     noOwnCategories:
-      "There are no own categories. Without them receipts show under the nine base classes.",
+      "There are no own categories. Without them receipts show under the standard categories.",
     newCategory: "New category",
     addCategory: "Add a category",
     ownCategoryHint:
@@ -4505,7 +4505,7 @@ const sv: AdminText = {
     timezone: "Tidszon",
     timezoneHint: "Dygnets och månadens gränser beräknas i denna tid. Servern går i UTC, så fel zon skulle flytta kvällens försäljning till fel dag.",
     noOwnCategories:
-      "Det finns inga egna kategorier. Utan dem visas kvittona under de nio grundklasserna.",
+      "Det finns inga egna kategorier. Utan dem visas kvittona under standardkategorierna.",
     newCategory: "Ny kategori",
     addCategory: "Lägg till en kategori",
     ownCategoryHint:
@@ -6367,7 +6367,7 @@ const da: AdminText = {
     timezone: "Tidszone",
     timezoneHint: "Døgnets og månedens grænser beregnes i denne tid. Serveren kører i UTC, så en forkert zone ville flytte aftenens salg til den forkerte dag.",
     noOwnCategories:
-      "Der er ingen egne kategorier. Uden dem vises kvitteringerne under de ni grundklasser.",
+      "Der er ingen egne kategorier. Uden dem vises kvitteringerne under standardkategorierne.",
     newCategory: "Ny kategori",
     addCategory: "Tilføj en kategori",
     ownCategoryHint:
@@ -8231,7 +8231,7 @@ const tr: AdminText = {
     timezone: "Saat dilimi",
     timezoneHint: "Gün ve ay sınırları bu saate göre hesaplanır. Sunucu UTC ile çalışır, yanlış dilim akşam satışını yanlış güne taşır.",
     noOwnCategories:
-      "Kendi kategorin yok. Onlar olmadan fişler dokuz ana sınıfta görünür.",
+      "Kendi kategorin yok. Onlar olmadan fişler standart kategorilerde görünür.",
     newCategory: "Yeni kategori",
     addCategory: "Kategori ekle",
     ownCategoryHint:
@@ -10080,7 +10080,7 @@ const et: AdminText = {
     timezone: "Ajavöönd",
     timezoneHint: "Päeva ja kuu piirid arvutatakse selles ajas. Server töötab UTC-s, seega vale ajavöönd nihutaks õhtuse müügi valele päevale.",
     noOwnCategories:
-      "Oma kategooriaid ei ole. Ilma nendeta kuvatakse tšekid üheksa põhiklassi all.",
+      "Oma kategooriaid ei ole. Ilma nendeta kuvatakse tšekid standardkategooriate all.",
     newCategory: "Uus kategooria",
     addCategory: "Lisa kategooria",
     ownCategoryHint:
@@ -11939,7 +11939,7 @@ const ar: AdminText = {
     timezone: "المنطقة الزمنية",
     timezoneHint: "تُحسب حدود اليوم والشهر بهذا التوقيت. يعمل الخادم بتوقيت UTC، لذا فإن منطقة خاطئة تنقل مبيعات المساء إلى يوم خاطئ.",
     noOwnCategories:
-      "لا توجد فئات خاصة. بدونها تظهر الإيصالات ضمن الفئات الأساسية التسع.",
+      "لا توجد فئات خاصة. بدونها تظهر الإيصالات ضمن الفئات القياسية.",
     newCategory: "فئة جديدة",
     addCategory: "إضافة فئة",
     ownCategoryHint:

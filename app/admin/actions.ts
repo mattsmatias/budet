@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
+import { categoriesFor } from "@/lib/restoflow/business";
 import { lineVatCents } from "@/lib/restoflow/vat";
 import { parseReceiptPages } from "@/lib/restoflow/receipt-pages";
 import { ISO_DATE } from "@/lib/restoflow/dates";
@@ -771,6 +772,19 @@ export async function saveCategory(
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const { restaurant } = await requireContext("/admin/asetukset");
+
+  /*
+   * Perusluokka on toimialan luokka, ei mikä tahansa luokka.
+   *
+   * Valikko tarjoaa vain toimialan luokat, mutta valikko on
+   * clientillä. Ilman tätä parturin oma kategoria voisi kytkeytyä
+   * alkoholiostoihin — ja sen kautta tiliin jota hänen
+   * tilikartassaan ei edes ole.
+   */
+  if (!categoriesFor(restaurant.businessType).includes(parsed.data.base)) {
+    return { error: t.toiminnot.categorySaveFailed };
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("upsert_expense_category", {
