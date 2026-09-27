@@ -102,6 +102,7 @@ export default async function AdminDashboard({
     receipts,
     budgets,
     sales,
+    tasks,
     month,
     today,
     nowTime,
@@ -250,10 +251,25 @@ export default async function AdminDashboard({
    */
   const emptyMonthOnly = totals.receiptCount === 0 && elsewhere !== undefined;
 
+  /*
+   * Sama aineisto kuin kellon huomioissa.
+   *
+   * Tästä puuttui kaksi kenttää, ja kumpikin puute näkyi käyttäjälle
+   * eri lukuna samalla sivulla: yleiskatsaus laski tehtävät pois ja
+   * kiinniolopäivät mukaan, kello toisin päin. Lista väitti siis
+   * myynnin puuttuvan maanantailta ravintolalta joka on maanantaisin
+   * kiinni, eikä kertonut lähestyvästä vuokralaskusta jonka kello
+   * näytti.
+   *
+   * Hälytykset rakentuvat samasta funktiosta molemmissa, joten ero ei
+   * ollut logiikassa vaan siinä mitä sille annettiin.
+   */
   const dashboardInput = {
     receipts,
     budgets,
     sales,
+    tasks,
+    closedWeekdays: restaurant.closedWeekdays,
     month: viewMonth,
     today,
     nowTime,

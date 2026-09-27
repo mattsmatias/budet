@@ -41,6 +41,14 @@ export interface DashboardInput {
   /* Tehtävät kulkevat samassa paketissa: yksi kysymys, yksi lista. */
   tasks?: Task[];
   sales?: DailySales[];
+  /**
+   * Viikonpäivät jolloin yritys on kiinni: 1 = maanantai ... 7 = su.
+   *
+   * Kulkee mukana samasta syystä kuin tehtävät: ilman sitä tämä lista
+   * laskisi kiinni olleen päivän puuttuvaksi myyntipäiväksi ja eroaisi
+   * kellon huomioista, jotka saavat asetuksen.
+   */
+  closedWeekdays?: readonly number[];
   /** Käyttöliittymän kieli. */
   locale: AppLocale;
 }
@@ -103,6 +111,7 @@ export function attention(input: DashboardInput): Attention {
     locale: input.locale,
     sales: input.sales,
     tasks: input.tasks,
+    closedWeekdays: input.closedWeekdays,
   });
 
   const counts = alertCounts(alerts);

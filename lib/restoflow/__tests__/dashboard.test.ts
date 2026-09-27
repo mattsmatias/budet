@@ -12,6 +12,8 @@ import {
   type DashboardInput,
 } from "../dashboard";
 import type { Budget, ExpenseCategory, Receipt } from "../types";
+import type { DailySales } from "../sales";
+import type { Task } from "../tasks";
 
 // ---------------------------------------------------------------------------
 
@@ -346,5 +348,102 @@ describe("yhdistetty huomiolista", () => {
     ]);
 
     expect(items[0].href).toBe("/admin/kulut");
+  });
+});
+
+/*
+ * Yleiskatsauksen lista ja kellon huomiot lukevat saman aineiston.
+ *
+ * Nama erosivat kerran: yleiskatsaus ei saanut tehtavia eika
+ * kiinniolopaivia, joten sama sivu vaitti kahta eri totuutta samasta
+ * paivasta. Halytykset rakentuvat samasta funktiosta, joten ero ei
+ * ollut logiikassa vaan siina mita sille annettiin -- ja juuri siksi
+ * se on testattava taalla eika alerts.ts:n puolella.
+ */
+describe("yleiskatsaus ja kellon huomiot", () => {
+  const TANAAN = "2026-09-28";
+
+  function tehtava(): Task {
+    return {
+      id: "task-1",
+      restaurantId: "rest-1",
+      title: "Toimitilan vuokra",
+      description: null,
+      dueOn: "2026-10-05",
+      dueTime: null,
+      priority: "normal",
+      visibility: "managers",
+      assignedTo: null,
+      completedAt: null,
+      completedBy: null,
+      cancelledAt: null,
+      cancelledBy: null,
+      recurrence: "monthly",
+      parentTaskId: null,
+      remindDaysBefore: [7],
+      remindOnDue: true,
+      remindWhenOverdue: true,
+      createdBy: "u1",
+      createdAt: "2026-09-01T10:00:00.000Z",
+    };
+  }
+
+  function myyntipaiva(date: string): DailySales {
+    return {
+      date,
+      netCents: 100000,
+      targetCents: null,
+      note: null,
+      grossCents: null,
+      vatCents: null,
+      transactions: null,
+      source: "manual",
+      posGrossCents: null,
+      posVatCents: null,
+    };
+  }
+
+  it("valittaa tehtavien muistutukset listaan", () => {
+    const items = focusItems(
+      input({ month: "2026-09", today: TANAAN, tasks: [tehtava()] }),
+      [],
+    );
+
+    expect(items.map((i) => i.id)).toContain("task-upcoming-task-1");
+  });
+
+  it("ei laske kiinniolopaivaa puuttuvaksi myyntipaivaksi", () => {
+    /*
+     * Ikkuna on seitseman paivaa taaksepain: 21.-27.9. Lista alkaa
+     * ensimmaisesta kirjatusta paivasta, joten mukana on myos 20.9.
+     * Kaikilta muilta on myynti, joten ainoa puuttuva on maanantai
+     * 21.9. -- juuri se paiva jona ravintola on kiinni.
+     */
+    const myynnit = [
+      "2026-09-20",
+      "2026-09-22",
+      "2026-09-23",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+    ].map(myyntipaiva);
+
+    const ilman = focusItems(
+      input({ month: "2026-09", today: TANAAN, sales: myynnit }),
+      [],
+    );
+    const kanssa = focusItems(
+      input({
+        month: "2026-09",
+        today: TANAAN,
+        sales: myynnit,
+        closedWeekdays: [1],
+      }),
+      [],
+    );
+
+    expect(ilman.some((i) => i.id.startsWith("sales-missing"))).toBe(true);
+    expect(kanssa.some((i) => i.id.startsWith("sales-missing"))).toBe(false);
   });
 });
