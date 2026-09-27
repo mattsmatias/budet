@@ -210,6 +210,13 @@ export interface ContactRequest {
   locale: string;
   createdAt: string;
   handledAt: string | null;
+  /**
+   * Katen tyontekija joka toi liidin, tai null kun se tuli etusivulta.
+   *
+   * Nimi eika tunniste: rivi voi olla vuosien takaa, ja silloin
+   * kysymys on "kuka taman toi" eika "kenen tunnus".
+   */
+  referredName: string | null;
 }
 
 /** Käsittelemättömät ensin, uusin ylimpänä. */

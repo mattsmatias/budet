@@ -5,12 +5,19 @@ import { HandledToggle } from "./toggle";
 export const metadata = { title: "Yhteydenotot" };
 
 /**
- * Yhteydenotot etusivulta.
+ * Yhteydenotot etusivulta ja tapaamisista.
  *
  * Kate ei tarjoa itserekisteröitymistä, joten tämä on uusien asiakkaiden
  * ovi: ravintola jättää pyynnön, ja tästä se otetaan työn alle. Kun
  * tunnukset on luotu (Yritykset → Luo yritys), pyyntö merkitään
  * hoidetuksi.
+ *
+ * KAKSI LÄHDETTÄ, YKSI LISTA.
+ *
+ * Toiset tulevat etusivun lomakkeelta, toiset Katen työntekijän
+ * ilmoittamina tapaamisen jälkeen. Jälkimmäisissä on ilmoittajan nimi,
+ * ja se kannattaa lukea ennen soittoa: joku on jo puhunut heille.
+ * Kaksi listaa olisi tarkoittanut että toinen jää katsomatta.
  */
 export default async function DevContactsPage() {
   const requests = await fetchContactRequests();
@@ -23,9 +30,10 @@ export default async function DevContactsPage() {
           Yhteydenotot
         </h1>
         <p className="mt-1 text-[13px]" style={{ color: "var(--rf-text-2)" }}>
-          Etusivun lomakkeelta. {open === 0 ? "Ei avoimia." : `${open} avoinna.`}{" "}
-          Luo tunnukset kohdasta Yritykset → Luo yritys ja merkitse pyyntö
-          sitten hoidetuksi.
+          Etusivun lomakkeelta ja työntekijöiden tapaamisista.{" "}
+          {open === 0 ? "Ei avoimia." : `${open} avoinna.`} Luo tunnukset
+          kohdasta Yritykset → Luo yritys ja merkitse pyyntö sitten
+          hoidetuksi.
         </p>
       </header>
 
@@ -33,7 +41,7 @@ export default async function DevContactsPage() {
         <Card>
           <EmptyState
             title="Ei yhteydenottoja"
-            description="Etusivun lomakkeelta lähetetyt pyynnöt näkyvät täällä."
+            description="Etusivun lomakkeelta ja työntekijöiden ilmoittamat pyynnöt näkyvät täällä."
           />
         </Card>
       ) : (
@@ -49,6 +57,15 @@ export default async function DevContactsPage() {
                     <Pill tone={r.handledAt ? "ok" : "warn"}>
                       {r.handledAt ? "Hoidettu" : "Avoin"}
                     </Pill>
+                    {/*
+                      Ilmoittaja erottuu heti otsikkorivillä.
+                      Tapaamisesta tullut liidi on eri tilanne kuin
+                      etusivun lomake: joku on jo puhunut heille, ja
+                      soitto alkaa toisin.
+                    */}
+                    {r.referredName ? (
+                      <Pill tone="info">{r.referredName}</Pill>
+                    ) : null}
                   </div>
 
                   <p className="mt-1 text-[13px]">
@@ -93,7 +110,10 @@ export default async function DevContactsPage() {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}{" "}
-                    · kieli {r.locale}
+                    ·{" "}
+                    {r.referredName
+                      ? `ilmoitti ${r.referredName}`
+                      : `etusivun lomake · kieli ${r.locale}`}
                   </p>
                 </div>
 
