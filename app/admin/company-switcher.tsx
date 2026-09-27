@@ -128,7 +128,7 @@ export function CompanySwitcher({
   }
 
   return (
-    <span ref={container} className="relative block" onKeyDown={onKeyDown}>
+    <span ref={container} className="block" onKeyDown={onKeyDown}>
       <button
         type="button"
         onClick={() => {
@@ -163,7 +163,19 @@ export function CompanySwitcher({
         <ul
           role="listbox"
           aria-label={label}
-          className="rf-enter absolute start-0 top-[calc(100%+6px)] z-40 max-h-[17rem] w-60 overflow-y-auto p-1.5"
+          /*
+            Valikko kiskon levyinen, ei painikkeen levyinen.
+
+            Tässä oli kiinteä 240 pikseliä ja ankkuri painikkeessa,
+            joka alkaa merkin jälkeen sisennettynä. Valikko alkoi siis
+            liian oikealta ja jatkui 66 pikseliä kiskon ulkopuolelle
+            sisällön päälle: se näytti irralliselta laatikolta joka
+            leikkaa sekä navigaation että ensimmäisen kortin.
+
+            Ankkuri on nyt tunnuslohko ja reunat samassa linjassa
+            navigaation rivien kanssa, joten valikko on kiskon osa.
+          */
+          className="rf-enter absolute start-3 end-3 top-[calc(100%+2px)] z-40 max-h-[17rem] overflow-y-auto p-1.5"
           style={{
             background: "var(--rf-card)",
             border: "1px solid var(--rf-line)",

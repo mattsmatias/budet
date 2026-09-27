@@ -141,7 +141,15 @@ function DesktopSidebar({
         Hallinnassa se on ravintolan nimi: se on sama tieto ja hyödyllinen
         heti kun ravintoloita on enemmän kuin yksi.
       */}
-      <div className="px-[18px] pb-3 pt-[14px]">
+      {/*
+        Tunnuslohko on vaihtajan valikon ankkuri.
+
+        Valikko asemoitiin ennen painikkeeseen, joka alkaa merkin
+        jälkeen sisennettynä — silloin se ei voinut olla kiskon
+        levyinen eikä samassa linjassa navigaation kanssa. Sijoittelun
+        konteksti on siksi tässä eikä komponentin sisällä.
+      */}
+      <div className="relative px-[18px] pb-3 pt-[14px]">
         {/*
           Kaksi kohdetta, ei yhtä.
 
