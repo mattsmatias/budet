@@ -206,8 +206,17 @@ export default async function AdminReceiptDetailPage({
 
       <LinkedFiles t={t} tag={LOCALE_INFO[locale].tag} files={linked} />
 
+      {/*
+        Sarakkeet saavat kutistua.
+
+        Grid-lapsen oletus on min-width: auto, eli se ei mene sisaltonsa
+        minimia kapeammaksi. Puhelimessa se tarkoitti 414 pikselia 375
+        pikselin ruudulla: koko sivu sai vaakavierityksen ja kortit
+        jatkuivat reunan yli. min-w-0 antaa sarakkeen kaventua, ja
+        katkaisut ja rivitykset sisalla hoitavat loput.
+      */}
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {vat.explanation ? (
             <div
               className="flex items-start gap-2.5 px-4 py-3 text-[13px] leading-relaxed"
@@ -249,8 +258,16 @@ export default async function AdminReceiptDetailPage({
               />
 
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="truncate text-[17px] font-semibold">
+                {/*
+                  Nimi ja summa allekkain kapealla ruudulla.
+
+                  Samalla rivilla summa on shrink-0 ja vie tilansa
+                  ensin, joten 320 pikselin puhelimessa nimesta jai
+                  nakyviin "Ra…". Nimi on kortin aihe: se saa oman
+                  rivin silloin kun rivi ei riita kahdelle.
+                */}
+                <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <p className="max-w-full truncate text-[17px] font-semibold">
                     {merchant?.name ?? receipt.supplierName}
                   </p>
 
@@ -342,7 +359,14 @@ export default async function AdminReceiptDetailPage({
               <ReviewPanel t={t} nimet={nimet} receipt={receipt} />
             ) : null}
 
-            <dl className="mt-4 grid grid-cols-3 gap-3">
+            {/*
+              Kaksi saraketta puhelimessa, kolme siita ylospain.
+
+              Kolmeen sarakkeeseen jai 70 pikselia lukua kohti, ja
+              "15 700,00 €" tarvitsee 97. Luvut leikkautuivat juuri
+              siita paasta jossa on eurot.
+            */}
+            <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Stat
                 label={fill(t.kuitit.purchasesIn, {
                   kuukausi: monthWord(month, locale),
@@ -530,7 +554,7 @@ export default async function AdminReceiptDetailPage({
           ) : null}
         </div>
 
-        <aside className="space-y-4">
+        <aside className="min-w-0 space-y-4">
           <Card>
             <p className="mb-3 text-[13px] font-semibold">
               {imageUrls.length > 1
