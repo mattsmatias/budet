@@ -874,6 +874,26 @@
     color-mix(in srgb, var(--bd-accent) 16%, transparent),
     transparent 70%
   );
+  /*
+   * Tunnuksen takana oleva valo hengittaa.
+   *
+   * Hehku oli liikkumaton, joten sivun avautumisen jalkeen keskus
+   * kuoli paikalleen samalla kun rengas pyori sen ympari. Hidas
+   * vaihtelu pitaa keskuksen elossa ilman etta se vilkkuu: kuusi
+   * sekuntia edestakaisin on hitaampi kuin hengitys.
+   */
+  animation: bd-orbit-breathe 6s ease-in-out infinite alternate;
+}
+
+@keyframes bd-orbit-breathe {
+  from {
+    opacity: 0.65;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
 }
 
 @keyframes bd-orbit-spin {
@@ -1324,6 +1344,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .bd-reveal[data-shown="true"] .bd-timeline-node-kate,
+  .bd-orbit-ring::after,
   .bd-stage-glow,
   .bd-frame-in,
   .bd-live-dot,
@@ -1841,8 +1863,16 @@
   }
 }
 
+/*
+ * Kate-solmu hehkuu koko ajan.
+ *
+ * Hehku kavi aiemmin kahdesti ja sammui. Solmu on kuvan ainoa kohta
+ * joka kertoo missa Kate on ketjussa, ja sammunut hehku jatti sen
+ * nayttamaan samalta kuin muut vaiheet. Toisto on hidas ja
+ * pehmea — nopea vilkkuminen veisi katseen pois tekstista.
+ */
 .bd-reveal[data-shown="true"] .bd-timeline-node-kate {
-  animation: bd-node-glow 1000ms ease-out 900ms 2;
+  animation: bd-node-glow 2600ms ease-out 900ms infinite;
 }
 
 @media (min-width: 900px) {
