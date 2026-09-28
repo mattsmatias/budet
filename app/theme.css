@@ -546,6 +546,7 @@ html {
   .rf-column-grow,
   .rf-pulse-dot,
   .rf-draw-line,
+  .rf-donut-spin,
   .rf-enter {
     animation: none !important;
   }
@@ -987,6 +988,45 @@ a:hover > .rf-card-lift,
 }
 .rf-arc {
   animation: rf-arc 620ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/*
+ * Rengas kiertää hitaasti.
+ *
+ * Aloituskulma ei kerro mitään. Siivujen järjestys, koko ja väri
+ * pysyvät samoina; vain se kohta kehää josta ensimmäinen siivu alkaa
+ * vaihtuu. Siksi kierto on koriste jonka saa tehdä — mikään luku ei
+ * liiku sen mukana.
+ *
+ * Kierto on svg-elementissä eikä sen sisällä olevassa ryhmässä.
+ * Ryhmällä on rotate(-90) piirtoattribuuttina, ja css:n transform
+ * korvaisi sen kokonaan, jolloin siivut hyppäisivät neljänneksen
+ * väärään kohtaan heti ensimmäisellä ruudulla. Svg puolestaan on
+ * tavallinen laatikko, joka kiertyy keskipisteensä ympäri ilman
+ * transform-boxin selainkohtaisia eroja: sama jälki puhelimessa,
+ * tabletilla ja työpöydällä. Renkaan ulkoreuna on 85 pikselin
+ * säteellä 94 pikselin puolikkaasta, joten pyörivä neliö ei vie
+ * piirtoa laatikkonsa ulkopuolelle.
+ *
+ * Keskellä oleva summa on omassa kerroksessaan svg:n päällä, joten se
+ * pysyy paikallaan ja luettavana.
+ *
+ * Kierros 36 sekunnissa: liikkeen huomaa vasta kun sitä katsoo, eikä
+ * se kilpaile lukujen kanssa. Viive odottaa että siivut ovat ensin
+ * piirtyneet paikalleen (620 ms + viimeisen siivun 280 ms porrastus).
+ *
+ * will-change nostaa renkaan omaksi tasokseen, jolloin jokainen ruutu
+ * on näytönohjaimen siirto eikä koko kortin uudelleenpiirto — se on
+ * halvoilla puhelimilla ero sulavan ja nykivän välillä.
+ */
+@keyframes rf-donut-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rf-donut-spin {
+  animation: rf-donut-spin 36s linear 900ms infinite;
+  will-change: transform;
 }
 
 /*
