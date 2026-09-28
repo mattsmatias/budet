@@ -267,6 +267,14 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    * oikeudella kuin kulut. Kirjoitus vaatii receipts.edit-oikeuden,
    * ja se tarkistetaan teossa eika reitissa.
    */
+  /*
+   * Laskut: kirjanpitaja nakee saatavat, omistaja laskuttaa.
+   *
+   * Luku samalla oikeudella kuin kulut; kirjoitus vaatii
+   * receipts.edit-oikeuden ja kanta is_managerin, ja se tarkistetaan
+   * teossa eika reitissa.
+   */
+  { href: "/admin/laskut", requires: "expenses.view" },
   { href: "/admin/asiakkaat", requires: "expenses.view" },
   { href: "/admin/palaute", requires: "expenses.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
@@ -514,6 +522,13 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
+  {
+    href: "/admin/laskut",
+    key: "invoices",
+    icon: "receipt",
+    requires: "expenses.view",
+    section: "finance",
+  },
   {
     href: "/admin/asiakkaat",
     key: "customers",
