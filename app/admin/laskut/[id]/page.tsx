@@ -8,7 +8,9 @@ import { fetchInvoice, type InvoiceStatus } from "@/lib/restoflow/invoices";
 import { onMyohassa } from "@/lib/restoflow/invoice-math";
 import { todayIn } from "@/lib/restoflow/local-time";
 import { formatMoney } from "@/lib/money";
+import { fill } from "@/lib/i18n/auth-text";
 import { Card, Pill, type Tone } from "@/components/restoflow/ui";
+import { SendForm } from "./send-form";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -87,6 +89,26 @@ export default async function InvoicePage({
             <Pill tone={tilaVari[lasku.status]}>{tilaTeksti[lasku.status]}</Pill>
           )}
 
+          {/*
+            PDF uuteen välilehteen: se on sama tiedosto joka lähtee
+            liitteenä, ja sen näkeminen ennen lähetystä on ainoa tapa
+            varmistua siitä miltä asiakkaalle menevä paperi näyttää.
+          */}
+          <a
+            href={`/admin/laskut/${lasku.id}/pdf`}
+            target="_blank"
+            rel="noopener"
+            className="rf-press rf-touch px-4 text-[13px] font-bold"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: 980,
+              background: "var(--rf-inset)",
+            }}
+          >
+            {t.laskut.downloadPdf}
+          </a>
+
           <Link
             href={`/admin/laskut/${lasku.id}/tulosta`}
             className="rf-press rf-touch px-4 text-[13px] font-bold"
@@ -114,7 +136,38 @@ export default async function InvoicePage({
             arvo={formatMoney(lasku.totalCents)}
           />
         </div>
+
+        {/*
+          Lähetyshetki pysyvänä tietona eikä ohimenevänä ilmoituksena.
+
+          Lähetyksen jälkeen lomake poistuu näkyvistä ja sen mukana
+          katosi myös "lasku lähetetty" -viesti. Päivämäärä kortissa
+          vastaa samaan kysymykseen vielä viikonkin päästä.
+        */}
+        {lasku.sentAt ? (
+          <p
+            className="mt-3 border-t pt-3 text-[12.5px]"
+            style={{ borderColor: "var(--rf-line)", color: "var(--rf-text-2)" }}
+          >
+            {fill(t.laskut.sentTo, { osoite: lasku.recipientEmail ?? "" })}{" "}
+            {new Date(lasku.sentAt).toLocaleDateString(tag, {
+              day: "numeric",
+              month: "numeric",
+              year: "numeric",
+            })}
+          </p>
+        ) : null}
       </Card>
+
+      {/*
+        Lähetys vain luonnokselle: lähetetty lasku on tosite, ja sen
+        lähettäminen uudelleen tekisi samasta laskusta kaksi.
+      */}
+      {lasku.status === "draft" ? (
+        <Card>
+          <SendForm t={t} id={lasku.id} osoite={lasku.recipientEmail} />
+        </Card>
+      ) : null}
 
       <Card>
         <h2 className="text-[13px] font-semibold">{t.laskut.rows}</h2>

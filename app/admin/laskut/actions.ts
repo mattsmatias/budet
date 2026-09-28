@@ -12,6 +12,11 @@ import {
   voikoLaskuttaa,
 } from "@/lib/restoflow/invoicing";
 import { parseAmountToCents } from "@/lib/money";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
+import { fill } from "@/lib/i18n/auth-text";
+import { fetchInvoice } from "@/lib/restoflow/invoices";
+import { invoiceFileName, renderInvoicePdf } from "@/lib/restoflow/invoice-pdf";
+import { sendInvoiceEmail } from "@/lib/restoflow/invoice-email";
 import type { AdminState } from "../actions";
 
 /**
@@ -189,4 +194,98 @@ function kantavirhe(
   ];
 
   return omat.some((alku) => viesti.includes(alku)) ? viesti : oletus;
+}
+
+/**
+ * Laskun lähetys sähköpostilla.
+ *
+ * LÄHETYS ON TILAN VAIHTO, EI VAIN VIESTI.
+ *
+ * Kun lasku lähtee, se lakkaa olemasta luonnos: siitä tulee tosite,
+ * jonka summaa ja vastaanottajaa ei enää saa muuttaa. Kanta valvoo
+ * sen, ja siksi tila merkitään vasta kun viesti on oikeasti mennyt
+ * läpi — epäonnistunut lähetys jättää laskun luonnokseksi, jotta sen
+ * voi korjata ja yrittää uudelleen.
+ *
+ * PDF TEHDÄÄN TÄSSÄ EIKÄ TALLENNETA.
+ *
+ * Lasku on kannassa, ja sama tiedosto syntyy siitä aina samanlaisena.
+ * Tallennettu PDF olisi toinen totuus samasta laskusta ja vanhentuisi
+ * hiljaa, jos myyjän tiedot muuttuvat.
+ */
+export async function sendInvoice(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const { restaurant, role } = await requireContext("/admin/laskut");
+
+  if (!can(role, "receipts.edit")) {
+    return { error: t.toiminnot.ownerOnlyBody };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  if (id === "") return { error: t.laskut.sendFailed };
+
+  const [lasku, myyja] = await Promise.all([
+    fetchInvoice(id, restaurant.id),
+    fetchInvoicingSettings(restaurant.id),
+  ]);
+
+  if (!lasku) return { error: t.laskut.sendFailed };
+  if (lasku.status !== "draft") return { error: t.laskut.alreadySent };
+  if (!lasku.recipientEmail) return { error: t.laskut.sendNoEmail };
+  if (!voikoLaskuttaa(myyja)) return { error: t.laskut.needSettings };
+
+  const pdf = await renderInvoicePdf({
+    lasku,
+    myyja,
+    myyjanNimi: restaurant.name,
+    t,
+    tag: LOCALE_INFO[locale].tag,
+  });
+
+  const tulos = await sendInvoiceEmail({
+    lasku,
+    myyja,
+    myyjanNimi: restaurant.name,
+    vastausOsoite: myyja.email,
+    pdf,
+    tiedostonimi: invoiceFileName(lasku),
+    t,
+    tag: LOCALE_INFO[locale].tag,
+  });
+
+  if (!tulos.ok) {
+    console.error("laskun lahetys epaonnistui", tulos.syy, tulos.viesti);
+
+    if (tulos.syy === "no-key") return { error: t.laskut.sendNoKey };
+    if (tulos.syy === "no-recipient") return { error: t.laskut.sendNoEmail };
+    return { error: t.laskut.sendFailed };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("invoices")
+    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .eq("id", lasku.id)
+    .eq("restaurant_id", restaurant.id);
+
+  /*
+   * Viesti on mennyt, mutta tila jäi vaihtumatta.
+   *
+   * Tätä ei saa esittää epäonnistumisena: lasku on asiakkaalla.
+   * Kerrotaan lähetys tapahtuneeksi, ja tila korjautuu kun sivu
+   * seuraavan kerran ladataan tai lähetystä yritetään uudelleen —
+   * jolloin kanta estää kaksoislähetyksen tilan perusteella.
+   */
+  if (error) console.error("laskun tilan paivitys epaonnistui", error.message);
+
+  revalidatePath("/admin/laskut");
+  revalidatePath(`/admin/laskut/${lasku.id}`);
+
+  return {
+    notice: fill(t.laskut.sentTo, { osoite: lasku.recipientEmail }),
+  };
 }

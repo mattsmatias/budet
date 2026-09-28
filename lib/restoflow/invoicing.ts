@@ -11,6 +11,8 @@ import { createClient } from "@/utils/supabase/server";
  */
 
 export interface InvoicingSettings {
+  /** Myyjan oma osoite: asiakkaan vastaus laskuun menee tanne. */
+  email: string | null;
   businessId: string | null;
   iban: string | null;
   termsDays: number;
@@ -19,6 +21,7 @@ export interface InvoicingSettings {
 
 /** Oletus kun mitään ei ole vielä asetettu tai kysely ei onnistu. */
 export const TYHJA_LASKUTUS: InvoicingSettings = {
+  email: null,
   businessId: null,
   iban: null,
   termsDays: 14,
@@ -31,7 +34,7 @@ export const fetchInvoicingSettings = cache(
       const supabase = await createClient();
       const { data, error } = await supabase
         .from("restaurants")
-        .select("business_id, iban, invoice_terms_days, invoice_note")
+        .select("business_id, iban, invoice_terms_days, invoice_note, email")
         .eq("id", restaurantId)
         .maybeSingle();
 
@@ -41,6 +44,7 @@ export const fetchInvoicingSettings = cache(
         typeof arvo === "string" && arvo.trim() !== "" ? arvo : null;
 
       return {
+        email: teksti(data.email),
         businessId: teksti(data.business_id),
         iban: teksti(data.iban),
         termsDays:

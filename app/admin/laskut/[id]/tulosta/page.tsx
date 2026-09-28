@@ -85,7 +85,7 @@ export default async function InvoicePrintPage({
           </div>
 
           <div className="text-end">
-            <p className="text-[18px] font-bold">{t.laskut.title}</p>
+            <p className="text-[18px] font-bold">{t.laskut.one}</p>
             <p className="rf-tabular mt-1 text-[12.5px]">
               {t.laskut.invoiceNumber} {lasku.number}
             </p>
