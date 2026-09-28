@@ -1,5 +1,5 @@
 import { requireSuperAdmin } from "@/lib/restoflow/session";
-import { fetchOpenFeedbackCount } from "@/lib/kehittaja/queries";
+import { fetchConsoleCounts } from "@/lib/kehittaja/queries";
 import { DevNav, DevNavMobile } from "./nav";
 
 export const metadata = {
@@ -29,14 +29,11 @@ export default async function DevLayout({
   /*
    * Luvut valikkoon, avaimena polku.
    *
-   * Sama muoto kuin ravintolan puolella, jotta seuraavan merkin
-   * lisaaminen on yksi rivi eika uusi rakenne. Toistaiseksi vain
-   * palaute: virheet ja yhteydenotot nayttavat lukunsa sivun
-   * otsikossa, eika niita nostettu tassa ohimennen.
+   * Kolme kohtaa jotka odottavat ihmistä: uudet palautteet, näkemättömät
+   * virheet ja avoimet yhteydenotot. Muut konsolin sivut ovat hakuja
+   * eivätkä jonoja — niissä luku olisi koriste.
    */
-  const counts: Record<string, number> = {
-    "/kehittaja/palaute": await fetchOpenFeedbackCount(),
-  };
+  const counts = await fetchConsoleCounts();
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--rf-bg)" }}>

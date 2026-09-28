@@ -161,6 +161,10 @@ export function DevNavMobile({ counts }: { counts: Record<string, number> }) {
  *
  * VAIN SE MIKÄ ODOTTAA IHMISTÄ.
  *
+ * Kolme kohtaa kantaa merkkia: uudet palautteet, nakemattomat virheet
+ * ja avoimet yhteydenotot. Sana on sama kaikille ("odottaa"), koska
+ * kolme eri sanaa samalle merkille luettaisiin kolmena eri asiana.
+ *
  * Nolla ei piirry lainkaan: nolla merkkinä on koriste, ja koristeluku
  * opettaa ohittamaan myös ne jotka eivät ole nollia. Sama peruste ja
  * sama ulkoasu kuin ravintolan puolen kiskossa, jotta kahta
@@ -183,7 +187,7 @@ function Merkki({ maara }: { maara: number }) {
       }}
     >
       <span aria-hidden="true">{maara > 99 ? "99+" : maara}</span>
-      <span className="sr-only">{maara} uutta</span>
+      <span className="sr-only">{maara} odottaa</span>
     </span>
   );
 }

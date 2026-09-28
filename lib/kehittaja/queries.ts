@@ -340,18 +340,29 @@ export const fetchDevFeedback = cache(async (): Promise<DevFeedback[]> => {
 });
 
 /**
- * Avoimet ilmoitukset valikon merkkiin.
+ * Konsolin kiskon luvut yhdellä kierroksella.
  *
- * VAIN UUDET, EI KAIKKI AVOIMET.
+ * Kolme pientä kyselyä rinnakkain eikä peräkkäin: ne eivät riipu
+ * toisistaan, ja valikko odottaa hitainta joka tapauksessa.
  *
- * Työn alla oleva on jo nähty ja otettu vastaan; sen laskeminen
- * merkkiin tarkoittaisi että luku ei koskaan nollaudu ennen kuin asia
- * on valmis — ja luku joka ei nollaudu lakkaa olemasta merkki.
- *
- * Oma funktionsa eikä listan pituus: valikko piirretään jokaisella
- * konsolin sivulla, eikä kahdensadan rivin hakeminen kuulu siihen.
+ * Luvut ovat samat kuin sivujen otsikoissa. Virheissä lasketaan rivit
+ * eikä erillisiä vikoja, vaikka sama vika tuottaa monta riviä — muuten
+ * kisko ja sivu sanoisivat samasta asiasta eri luvun.
  */
-export const fetchOpenFeedbackCount = cache(async (): Promise<number> => {
-  const arvo = await rpc<number>("sa_feedback_open", {}, 0);
-  return typeof arvo === "number" ? arvo : 0;
-});
+export const fetchConsoleCounts = cache(
+  async (): Promise<Record<string, number>> => {
+    const [palaute, virheet, yhteydenotot] = await Promise.all([
+      rpc<number>("sa_feedback_open", {}, 0),
+      rpc<number>("sa_app_errors_unseen", {}, 0),
+      rpc<number>("sa_contact_requests_open", {}, 0),
+    ]);
+
+    const luku = (arvo: unknown) => (typeof arvo === "number" ? arvo : 0);
+
+    return {
+      "/kehittaja/palaute": luku(palaute),
+      "/kehittaja/virheet": luku(virheet),
+      "/kehittaja/yhteydenotot": luku(yhteydenotot),
+    };
+  },
+);
