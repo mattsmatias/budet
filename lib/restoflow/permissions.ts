@@ -394,6 +394,25 @@ export const ADMIN_NAV: NavEntry[] = [
     section: "finance",
   },
 
+  /*
+   * Laskut myynnin jälkeen, ennen ostopuolta.
+   *
+   * Kumpikin on myyntiä: myynti on kassasta saatu raha, lasku on
+   * myyty mutta vielä saamatta. Ne luetaan peräkkäin, koska yhdessä
+   * ne kertovat paljonko kuussa myytiin — erikseen kumpikaan ei.
+   *
+   * Tämä oli ensin ylivuotovalikossa, jolloin se ei näkynyt Talous-
+   * osiossa lainkaan: osastot rakennetaan ADMIN_NAVista, ja
+   * MORE_NAVin section-kenttä ei ohjaa mitään.
+   */
+  {
+    href: "/admin/laskut",
+    key: "invoices",
+    icon: "receipt",
+    requires: "expenses.view",
+    section: "finance",
+  },
+
   {
     href: "/admin/kuitit",
     key: "receipts",
@@ -522,13 +541,14 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
-  {
-    href: "/admin/laskut",
-    key: "invoices",
-    icon: "receipt",
-    requires: "expenses.view",
-    section: "finance",
-  },
+  /*
+   * Asiakasrekisteri jää ylivuotoon.
+   *
+   * Sitä ylläpidetään harvoin ja se avataan yleensä laskua tehdessä,
+   * jolloin sinne pääsee lomakkeelta. Päävalikko on kuutta kohtaa
+   * varten kirjoitettu lista, ja jokainen lisäys siihen on pois
+   * niiden löydettävyydestä jotka siellä jo ovat.
+   */
   {
     href: "/admin/asiakkaat",
     key: "customers",

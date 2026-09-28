@@ -806,8 +806,16 @@ describe("oikeudet", () => {
     expect(capabilityForPath("/admin/palkat")).toBe("expenses.view");
   });
 
-  it("pitää päävalikon yhdessätoista kohdassa", () => {
-    expect(adminNavFor("owner", KAIKKI_OSIOT)).toHaveLength(11);
+  /*
+   * Luku on vartija eikä tavoite.
+   *
+   * Päävalikko kirjoitettiin kuudelle kohdalle, ja se on kasvanut
+   * kahteentoista. Testi ei estä kasvua vaan tekee siitä tietoisen:
+   * jos tämä luku muuttuu vahingossa, jokin on lisätty valikkoon
+   * miettimättä mikä siitä jää huomaamatta.
+   */
+  it("pitää päävalikon kahdessatoista kohdassa", () => {
+    expect(adminNavFor("owner", KAIKKI_OSIOT)).toHaveLength(12);
     expect(primaryNavFor("owner", KAIKKI_OSIOT)).toHaveLength(4);
   });
 
@@ -849,6 +857,8 @@ describe("oikeudet", () => {
     expect(finance.items.map((i) => i.href)).toEqual([
       // Myynti ensin: paljonko tuli, sitten paljonko meni.
       "/admin/myynti",
+      // Lasku on myyty mutta saamatta - myynnin pari, ei ostopuolta.
+      "/admin/laskut",
       "/admin/kuitit",
       "/admin/kulut",
       "/admin/palkat",
