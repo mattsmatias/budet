@@ -109,8 +109,10 @@ export default async function NotificationsPage() {
 
           {rest.length > 0 ? (
             <Ryhma
-              title={t.loput.otherNotes}
-              subtitle={t.loput.whenYouHaveTime}
+              title={critical.length > 0 ? t.loput.otherNotes : undefined}
+              subtitle={
+                critical.length > 0 ? t.loput.whenYouHaveTime : undefined
+              }
               alerts={rest}
             />
           ) : null}
@@ -163,15 +165,26 @@ function Ryhma({
   subtitle,
   alerts,
 }: {
-  title: string;
-  subtitle: string;
+  /*
+   * Otsikko vain kun ryhmiä on kaksi.
+   *
+   * "Muut huomiot · hoidettavissa kun ehtii" luki ryhmän yllä myös
+   * silloin kun se oli ainoa ryhmä: muita ei ollut, ja joukossa oli
+   * tarkistettavia joita ei hoideta kun ehtii. Sivun oma rivi kertoo
+   * jo montako asiaa vaatii huomiota, joten yksinäinen ryhmä ei
+   * tarvitse omaa nimeä.
+   */
+  title?: string;
+  subtitle?: string;
   alerts: FocusItem[];
 }) {
   return (
     <Card padded={false}>
-      <div className="px-5 pt-4">
-        <CardHeader title={title} subtitle={subtitle} />
-      </div>
+      {title ? (
+        <div className="px-5 pt-4">
+          <CardHeader title={title} subtitle={subtitle ?? ""} />
+        </div>
+      ) : null}
 
       <ul className="divide-y">
         {alerts.map((alert) => (
