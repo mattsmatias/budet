@@ -15,6 +15,7 @@ import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
 import { RestaurantForm } from "./forms";
 import { LogoForm } from "./logo-form";
+import { InvoicingForm } from "./laskutus-form";
 import { PayrollToggle } from "./payroll-toggle";
 import { PayrollForm } from "./payroll-form";
 import { EmployeeList } from "./employees";
@@ -29,6 +30,7 @@ import {
   fetchRestaurantLogoUrl,
   fetchSalesGroups,
 } from "@/lib/restoflow/queries";
+import { fetchInvoicingSettings } from "@/lib/restoflow/invoicing";
 import { revokeInvitation } from "../actions";
 import { InviteForm, MemberForm } from "./users";
 import { SectionNav } from "./section-nav";
@@ -88,6 +90,18 @@ export default async function SettingsPage({
   const payroll =
     section.id === "palkat" && canEdit && restaurant.payrollEnabled
       ? await fetchPayrollSettings(restaurant.id)
+      : null;
+
+  /*
+   * Myyjan omat laskutustiedot.
+   *
+   * Luetaan suoraan taulusta eika istunnosta: naita tarvitaan vain
+   * tassa osiossa ja laskua tehdessa, eika niita kannata kantaa
+   * jokaisella sivunlatauksella.
+   */
+  const laskutus =
+    section.id === "laskutus" && canEdit
+      ? await fetchInvoicingSettings(restaurant.id)
       : null;
 
   /* Voimassa oleva sopimusversio nayttoa varten. */
@@ -164,6 +178,10 @@ export default async function SettingsPage({
                   note={t.asetus.fixedSettingsHint}
                 />
               </>
+            ) : null}
+
+            {shown.id === "laskutus" && laskutus ? (
+              <InvoicingForm t={t} arvot={laskutus} />
             ) : null}
 
             {shown.id === "palkat" ? (

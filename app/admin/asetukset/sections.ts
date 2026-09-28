@@ -84,6 +84,20 @@ export const settingsSections = (t: AdminText): SettingsSection[] => [
     icon: "staff",
     ownerOnly: true,
   },
+  /*
+   * Laskutus: omat tiedot jotka nakyvat asiakkaalle.
+   *
+   * Omana osastonaan eika ravintolan perustietojen jatkona: Y-tunnus ja
+   * tilinumero ovat lain vaatimia laskulla, ja niita etsitaan nimella
+   * silloin kun ensimmaista laskua ollaan tekemassa.
+   */
+  {
+    id: "laskutus",
+    label: t.laskutus.section,
+    summary: t.laskutus.sectionHint,
+    icon: "report",
+    ownerOnly: true,
+  },
   {
     id: "verotus",
     label: t.asetus.secTax,
