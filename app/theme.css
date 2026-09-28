@@ -546,7 +546,6 @@ html {
   .rf-column-grow,
   .rf-pulse-dot,
   .rf-draw-line,
-  .rf-donut-spin,
   .rf-enter {
     animation: none !important;
   }
@@ -991,45 +990,6 @@ a:hover > .rf-card-lift,
 }
 
 /*
- * Rengas kiertää hitaasti.
- *
- * Aloituskulma ei kerro mitään. Siivujen järjestys, koko ja väri
- * pysyvät samoina; vain se kohta kehää josta ensimmäinen siivu alkaa
- * vaihtuu. Siksi kierto on koriste jonka saa tehdä — mikään luku ei
- * liiku sen mukana.
- *
- * Kierto on svg-elementissä eikä sen sisällä olevassa ryhmässä.
- * Ryhmällä on rotate(-90) piirtoattribuuttina, ja css:n transform
- * korvaisi sen kokonaan, jolloin siivut hyppäisivät neljänneksen
- * väärään kohtaan heti ensimmäisellä ruudulla. Svg puolestaan on
- * tavallinen laatikko, joka kiertyy keskipisteensä ympäri ilman
- * transform-boxin selainkohtaisia eroja: sama jälki puhelimessa,
- * tabletilla ja työpöydällä. Renkaan ulkoreuna on 85 pikselin
- * säteellä 94 pikselin puolikkaasta, joten pyörivä neliö ei vie
- * piirtoa laatikkonsa ulkopuolelle.
- *
- * Keskellä oleva summa on omassa kerroksessaan svg:n päällä, joten se
- * pysyy paikallaan ja luettavana.
- *
- * Kierros 36 sekunnissa: liikkeen huomaa vasta kun sitä katsoo, eikä
- * se kilpaile lukujen kanssa. Viive odottaa että siivut ovat ensin
- * piirtyneet paikalleen (620 ms + viimeisen siivun 280 ms porrastus).
- *
- * will-change nostaa renkaan omaksi tasokseen, jolloin jokainen ruutu
- * on näytönohjaimen siirto eikä koko kortin uudelleenpiirto — se on
- * halvoilla puhelimilla ero sulavan ja nykivän välillä.
- */
-@keyframes rf-donut-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.rf-donut-spin {
-  animation: rf-donut-spin 36s linear 900ms infinite;
-  will-change: transform;
-}
-
-/*
  * Luuranko.
  *
  * Vaimeneva pulssi, ei liukuva kiilto: kiilto näyttää siltä että jotain
@@ -1391,7 +1351,30 @@ details[open] .rf-summary-chevron {
   }
 }
 
-/* Reuna: tunnusvärien liukuma ohuena kehänä. */
+/*
+ * Reuna: tunnusvärit kiertävät korttia.
+ *
+ * Kehä oli kiinteä 120 asteen liukuma, eli värit olivat aina samoissa
+ * kulmissa. Nyt liukuma on kartiomainen ja sen aloituskulma kiertää
+ * ympäri, jolloin värit kulkevat reunaa pitkin kortin ympäri.
+ *
+ * Kulma on rekisteröity muuttuja (@property alempana). Tavallinen
+ * custom property on selaimelle pelkkä merkkijono eikä se osaa
+ * välittää sitä kahden arvon välillä: animaatio hyppäisi nollasta
+ * 360:een kerran kierroksessa. Rekisteröity <angle> välitetään
+ * asteina, jolloin liike on tasainen.
+ *
+ * Kartion keskipiste on kortin keskellä. Leveällä kortilla valo
+ * viipyy päädyissä ja pyyhkäisee ylä- ja alareunan nopeasti — se on
+ * kartiomaisen liukuman luonne, ja juuri siltä kiertäminen näyttää.
+ *
+ * Liukuma alkaa ja päättyy läpinäkyvään, joten kierroksen sauma ei
+ * näy. Kierros 9 sekunnissa: liike on selvästi nähtävissä mutta ei
+ * vilku luvun vieressä.
+ *
+ * Vanha selain joka ei tunne @propertyä piirtää saman kehän
+ * paikallaan: aloituskulma jää alkuarvoonsa eikä mitään rikkoudu.
+ */
 .rf-result-hero::before {
   content: "";
   position: absolute;
@@ -1399,12 +1382,16 @@ details[open] .rf-summary-chevron {
   z-index: -1;
   padding: 1px;
   border-radius: inherit;
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--rf-accent) 55%, transparent),
-    transparent 35%,
-    transparent 65%,
-    rgba(123, 118, 232, 0.5)
+  background: conic-gradient(
+    from var(--rf-reuna-kulma),
+    transparent 0deg,
+    color-mix(in srgb, var(--rf-accent) 70%, transparent) 45deg,
+    transparent 115deg,
+    transparent 175deg,
+    rgba(123, 118, 232, 0.55) 225deg,
+    rgba(74, 163, 240, 0.45) 265deg,
+    transparent 330deg,
+    transparent 360deg
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
@@ -1412,6 +1399,26 @@ details[open] .rf-summary-chevron {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+  animation: rf-reuna-kierto 9s linear infinite;
+}
+
+@property --rf-reuna-kulma {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes rf-reuna-kierto {
+  to {
+    --rf-reuna-kulma: 360deg;
+  }
+}
+
+/* Kiertävä reuna on koristetta: pysäytetään kun liikettä vältellään. */
+@media (prefers-reduced-motion: reduce) {
+  .rf-result-hero::before {
+    animation: none !important;
+  }
 }
 
 @keyframes rf-glow-in {

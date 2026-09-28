@@ -436,13 +436,7 @@ export function Donut({
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      {/*
-        Rengas kiertää hitaasti: kierto on svg:ssä, koska sisemmällä
-        ryhmällä on jo oma rotate-attribuuttinsa. Keskellä oleva summa
-        on svg:n ulkopuolella eikä siis kierry mukana.
-      */}
       <svg
-        className="rf-donut-spin"
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
