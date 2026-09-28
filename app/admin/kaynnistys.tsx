@@ -97,10 +97,15 @@ export function Kaynnistys({ teksti }: { teksti: string }) {
 
   return (
     <div className="rf-launch rf-z-launch" data-tila={tila} role="status">
+      {/*
+        Tunnuksen koko tulee tyylistä eikä propista: käyttöjärjestelmän
+        oma aloitusruutu piirtää kuvakkeen isona, ja tämä jatkaa siitä
+        samassa mitassa — tabletilla suurempana kuin puhelimessa.
+      */}
       <div className="rf-launch-merkki" aria-hidden="true">
         <span className="rf-launch-hehku" />
         <span className="rf-launch-keha" />
-        <Logo size={76} />
+        <Logo size={96} />
       </div>
 
       <p className="rf-launch-teksti">{teksti}</p>

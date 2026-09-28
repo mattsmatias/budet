@@ -31,20 +31,62 @@ import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import type { SearchItem } from "./search";
 
 /**
- * Managerin kuori.
+ * Managerin kuori kahdessa osassa.
+ *
+ * MIKSI KAHDESSA.
+ *
+ * Kuori haki ennen kaikki tietonsa ennen kuin palautti riviäkään, ja
+ * koska palvelin lähettää sivun vasta kun juurikomponentti on valmis,
+ * ensimmäinen tavu lähti vasta kyselyiden jälkeen. Selaimella ei ollut
+ * siihen asti mitään piirrettävää — ja kotinäytöltä avattaessa
+ * käyttöjärjestelmän oma aloitusruutu jää ruudulle juuri niin pitkäksi
+ * aikaa kuin ensimmäistä maalausta odotetaan. Iso kuvake harmaalla
+ * taustalla oli siis se mitä sovelluksen avaaminen näytti.
+ *
+ * Nyt tämä uloin osa odottaa vain kieltä, joka on jo haettu juuressa ja
+ * tulee välimuistista ilmaiseksi. Se palauttaa käynnistysnäytön heti,
+ * ja raskas osa saapuu perässä omana palanaan. Käynnistysnäyttö peittää
+ * ruudun siihen asti, joten odotus näyttää sovelluksen omalta.
+ */
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+
+  return (
+    <>
+      <Kaynnistys teksti={t.kuori.launching} />
+
+      {/*
+        Tyhjä varasisältö: käynnistysnäyttö on jo ruudulla sen päällä,
+        eikä sen alle kannata piirtää luurankoa jota kukaan ei näe.
+      */}
+      <Suspense fallback={null}>
+        <AdminKuori locale={locale}>{children}</AdminKuori>
+      </Suspense>
+    </>
+  );
+}
+
+/**
+ * Kuoren raskas osa: kisko, palkit ja niiden tarvitsema aineisto.
  *
  * Sivupalkki työpöydällä, alapalkki puhelimessa. Puhelimessa on lisäksi
  * yläpalkki, koska muuten ravintolan nimi ja uloskirjautuminen jäisivät
  * kokonaan näkymättä.
  */
-export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+async function AdminKuori({
+  locale,
+  children,
+}: {
+  locale: AppLocale;
+  children: React.ReactNode;
+}) {
   const { user, restaurant, role } = await requireContext("/admin");
 
   /* Yritykset vaihtajaa varten. Sama välimuistitettu kysely kuin
      kontekstissa, joten tämä ei maksa uutta kierrosta. */
   const memberships = await getMemberships();
 
-  const locale = await resolveLocale();
   const t = adminText(locale);
   const nimet = labels(locale);
 
@@ -178,13 +220,6 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
      * kertoi mitään.
      */
     <div className="min-h-screen">
-      {/*
-        Käynnistysnäyttö ensimmäisenä, jotta se on rungossa ennen muuta
-        sisältöä: se peittää ruudun siihen asti kunnes sivu on valmis,
-        ja väistyy sitten itsestään.
-      */}
-      <Kaynnistys teksti={t.kuori.launching} />
-
       <ScrollTop />
 
       <div className="flex min-h-screen">
