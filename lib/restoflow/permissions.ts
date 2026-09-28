@@ -253,6 +253,14 @@ export const ROUTE_ACCESS: RouteAccess[] = [
   { href: "/admin/tiedostot", requires: "files.view" },
   { href: "/admin/raportit", requires: "reports.view" },
   { href: "/admin/ilmoitukset", requires: "alerts.view" },
+  /*
+   * Palaute on auki kaikille jotka paasevat sovellukseen.
+   *
+   * Sama vaatimus kuin yleiskatsauksella: jos nakymassa on jotain
+   * rikki, siita saa kertoa riippumatta siita mita muuta rooli saa
+   * tehda. Kanta rajaa nakyvyyden omiin ilmoituksiin.
+   */
+  { href: "/admin/palaute", requires: "expenses.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
 ];
 
@@ -498,6 +506,20 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
+  /*
+   * Palaute ylivuotovalikkoon eika paavalikkoon.
+   *
+   * Sita ei avata paivittain, mutta sen on loydyttava silloin kun
+   * jokin on rikki — ja silloin etsitaan valikosta eika muistella
+   * osoitetta.
+   */
+  {
+    href: "/admin/palaute",
+    key: "feedback",
+    icon: "bell",
+    requires: "expenses.view",
+    section: "restaurant",
+  },
   {
     href: "/admin/budjetit",
     key: "budgets",

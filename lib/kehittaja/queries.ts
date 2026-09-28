@@ -287,3 +287,54 @@ export const fetchAppErrors = cache(async (): Promise<AppError[]> => {
     seen: r.seen === true,
   }));
 });
+
+// ---------------------------------------------------------------------------
+// Palaute
+// ---------------------------------------------------------------------------
+
+export interface DevFeedback {
+  id: string;
+  createdAt: string;
+  kind: "bug" | "idea" | "contact";
+  status: "new" | "in_progress" | "done" | "declined";
+  title: string;
+  body: string;
+  path: string | null;
+  reply: string | null;
+  repliedAt: string | null;
+  restaurantId: string;
+  restaurantName: string;
+  reporter: string | null;
+  reporterEmail: string | null;
+}
+
+/**
+ * Asiakkaiden ilmoitukset uusin ensin.
+ *
+ * Yritys ja lähettäjä tulevat mukana kannasta, koska juuri ne
+ * puuttuivat aiemmasta kanavasta: virheloki tiesi pinon muttei
+ * ketään, ja yhteydenottolomake tiesi nimen muttei näkymää.
+ */
+export const fetchDevFeedback = cache(async (): Promise<DevFeedback[]> => {
+  const rows = await rpc<Record<string, unknown>[]>(
+    "sa_feedback",
+    { p_limit: 200 },
+    [],
+  );
+
+  return rows.map((r) => ({
+    id: r.id as string,
+    createdAt: r.created_at as string,
+    kind: r.kind as DevFeedback["kind"],
+    status: r.status as DevFeedback["status"],
+    title: (r.title as string) ?? "",
+    body: (r.body as string) ?? "",
+    path: (r.path as string | null) ?? null,
+    reply: (r.reply as string | null) ?? null,
+    repliedAt: (r.replied_at as string | null) ?? null,
+    restaurantId: r.restaurant_id as string,
+    restaurantName: (r.restaurant_name as string) ?? "—",
+    reporter: (r.reporter as string | null) ?? null,
+    reporterEmail: (r.reporter_email as string | null) ?? null,
+  }));
+});

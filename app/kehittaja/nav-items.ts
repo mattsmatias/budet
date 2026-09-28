@@ -28,6 +28,14 @@ export const DEV_NAV: DevNavSection[] = [
     label: "Hallinta",
     items: [
       { href: "/kehittaja", label: "Yleiskatsaus", icon: "overview" },
+      /*
+       * Palaute ennen Yhteydenottoja.
+       *
+       * Yhteydenotot ovat uusien asiakkaiden ovi, Palaute nykyisten
+       * ääni. Jälkimmäinen kertoo mikä on rikki juuri nyt, ja se
+       * luetaan ennen myyntiä.
+       */
+      { href: "/kehittaja/palaute", label: "Palaute", icon: "alert" },
       { href: "/kehittaja/yhteydenotot", label: "Yhteydenotot", icon: "bell" },
       { href: "/kehittaja/yritykset", label: "Yritykset", icon: "suppliers" },
       { href: "/kehittaja/kayttajat", label: "Käyttäjät", icon: "staff" },

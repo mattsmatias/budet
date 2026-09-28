@@ -519,3 +519,62 @@ export async function markErrorsSeen(): Promise<DevState> {
   revalidatePath("/kehittaja", "layout");
   return { notice: "Merkitty nähdyiksi." };
 }
+
+// ---------------------------------------------------------------------------
+// Palaute: asiakkaiden bugi-ilmoitukset, ehdotukset ja yhteydenotot
+// ---------------------------------------------------------------------------
+
+const PALAUTE_TILAT = ["new", "in_progress", "done", "declined"] as const;
+type PalauteTila = (typeof PALAUTE_TILAT)[number];
+
+function onTila(arvo: string): arvo is PalauteTila {
+  return (PALAUTE_TILAT as readonly string[]).includes(arvo);
+}
+
+/**
+ * Tilan ja vastauksen kirjaus yhdellä lähetyksellä.
+ *
+ * KAKSI KENTTÄÄ, YKSI PAINIKE.
+ *
+ * Tilan siirtäminen ja vastauksen kirjoittaminen ovat sama hetki: kun
+ * asia otetaan työn alle, siitä kerrotaan. Kaksi erillistä painiketta
+ * olisi tarkoittanut että toinen niistä unohtuu — ja unohtuva puoli
+ * olisi vastaus, koska se vaatii enemmän työtä.
+ *
+ * Tyhjä vastaus ei pyyhi aiempaa. Kanta hoitaa sen, jotta pelkkä tilan
+ * vaihto ei vahingossa poista jo lähetettyä viestiä.
+ */
+export async function respondToFeedback(
+  _prev: DevState,
+  data: FormData,
+): Promise<DevState> {
+  await requireSuperAdmin();
+
+  const id = String(data.get("id") ?? "");
+  if (id === "") return { error: "Ilmoitusta ei tunnistettu." };
+
+  const tila = String(data.get("status") ?? "");
+  const reply = String(data.get("reply") ?? "").trim();
+
+  if (tila !== "" && !onTila(tila)) {
+    return { error: "Tuntematon tila." };
+  }
+
+  if (reply.length > 2000) {
+    return { error: "Vastaus on liian pitkä." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("sa_feedback_respond", {
+    p_id: id,
+    p_status: tila === "" ? null : tila,
+    p_reply: reply === "" ? null : reply,
+  });
+
+  if (error) return { error: virhe(error.message) };
+
+  revalidatePath("/kehittaja", "layout");
+  revalidatePath("/admin/palaute");
+
+  return { notice: reply === "" ? "Tila päivitetty." : "Vastaus lähetetty." };
+}
