@@ -5,6 +5,7 @@ import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { Suspense } from "react";
 import { buildAlerts } from "@/lib/restoflow/alerts";
 import { HuomioBanneri } from "./huomio-banneri";
+import { Kaynnistys } from "./kaynnistys";
 import { attentionList } from "@/lib/restoflow/dashboard";
 import { loadExpiring } from "@/lib/restoflow/file-queries";
 import { expirySummary } from "@/lib/restoflow/files";
@@ -177,6 +178,13 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
      * kertoi mitään.
      */
     <div className="min-h-screen">
+      {/*
+        Käynnistysnäyttö ensimmäisenä, jotta se on rungossa ennen muuta
+        sisältöä: se peittää ruudun siihen asti kunnes sivu on valmis,
+        ja väistyy sitten itsestään.
+      */}
+      <Kaynnistys teksti={t.kuori.launching} />
+
       <ScrollTop />
 
       <div className="flex min-h-screen">

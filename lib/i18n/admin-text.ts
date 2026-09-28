@@ -209,6 +209,7 @@ const fi = {
     searchPlaceholder: "Etsi sivuja ja toimittajia…",
     searchHint: "Kirjoita nimi tai sivun nimi.",
     noUrgent: "Ei kiireellisiä",
+    launching: "Kate käynnistyy…",
     noObservations:
       "Ei huomioita juuri nyt. Ne ilmestyvät tänne itsestään kun aineistossa on jotain kerrottavaa.",
     settings: "Asetukset",
@@ -2088,6 +2089,7 @@ const en: AdminText = {
     searchPlaceholder: "Search pages and suppliers…",
     searchHint: "Type a name or the name of a page.",
     noUrgent: "Nothing urgent",
+    launching: "Starting Kate…",
     noObservations:
       "Nothing to note right now. Observations appear here on their own when there is something to say about the data.",
     settings: "Settings",
@@ -3962,6 +3964,7 @@ const sv: AdminText = {
     searchPlaceholder: "Sök sidor och leverantörer…",
     searchHint: "Skriv ett namn eller namnet på en sida.",
     noUrgent: "Inget brådskande",
+    launching: "Kate startar…",
     noObservations:
       "Inget att notera just nu. Observationerna dyker upp här av sig själva när det finns något att säga om underlaget.",
     settings: "Inställningar",
@@ -5836,6 +5839,7 @@ const da: AdminText = {
     searchPlaceholder: "Søg sider og leverandører…",
     searchHint: "Skriv et navn eller navnet på en side.",
     noUrgent: "Intet hastende",
+    launching: "Kate starter…",
     noObservations:
       "Intet at bemærke lige nu. Observationerne dukker op her af sig selv, når der er noget at sige om materialet.",
     settings: "Indstillinger",
@@ -7710,6 +7714,7 @@ const tr: AdminText = {
     searchPlaceholder: "Sayfa ve tedarikçi ara…",
     searchHint: "Bir ad ya da sayfa adı yaz.",
     noUrgent: "Acil bir şey yok",
+    launching: "Kate başlatılıyor…",
     noObservations:
       "Şu anda not edilecek bir şey yok. Verilerde söylenecek bir şey olduğunda gözlemler buraya kendiliğinden gelir.",
     settings: "Ayarlar",
@@ -9577,6 +9582,7 @@ const et: AdminText = {
     searchPlaceholder: "Otsi lehti ja tarnijaid…",
     searchHint: "Kirjuta nimi või lehe nimi.",
     noUrgent: "Kiireloomulist pole",
+    launching: "Kate käivitub…",
     noObservations:
       "Praegu pole midagi märkida. Tähelepanekud ilmuvad siia ise, kui andmetes on midagi öelda.",
     settings: "Seaded",
@@ -11442,6 +11448,7 @@ const ar: AdminText = {
     searchPlaceholder: "بحث في الصفحات والموردين…",
     searchHint: "اكتب اسمًا أو اسم صفحة.",
     noUrgent: "لا شيء عاجل",
+    launching: "جارٍ تشغيل Kate…",
     noObservations:
       "لا شيء يستحق الملاحظة الآن. تظهر الملاحظات هنا تلقائيًا عندما يكون هناك ما يُقال عن البيانات.",
     settings: "الإعدادات",
