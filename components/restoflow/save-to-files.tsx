@@ -24,6 +24,7 @@ import { RfIcon } from "./icons";
 import { Button } from "./ui";
 import {
   folderChoices,
+  saveInvoiceToFiles,
   saveReceiptToFiles,
   saveReportToFiles,
   type FolderChoice,
@@ -47,7 +48,9 @@ export type SaveSource =
       month: string;
       format: ReportFormat;
     }
-  | { kind: "receipt"; receiptId: string };
+  | { kind: "receipt"; receiptId: string }
+  /* Lasku PDF:na, sama tiedosto joka lahti asiakkaalle. */
+  | { kind: "invoice"; invoiceId: string };
 
 export function SaveToFiles({
   t,
@@ -191,10 +194,15 @@ export function SaveToFiles({
                               format: source.format,
                               folderId: target,
                             })
-                          : await saveReceiptToFiles({
-                              receiptId: source.receiptId,
-                              folderId: target,
-                            });
+                          : source.kind === "invoice"
+                            ? await saveInvoiceToFiles({
+                                invoiceId: source.invoiceId,
+                                folderId: target,
+                              })
+                            : await saveReceiptToFiles({
+                                receiptId: source.receiptId,
+                                folderId: target,
+                              });
 
                       if (result.error) {
                         setError(result.error);

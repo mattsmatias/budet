@@ -289,3 +289,56 @@ export async function sendInvoice(
     notice: fill(t.laskut.sentTo, { osoite: lasku.recipientEmail }),
   };
 }
+
+/**
+ * Laskun merkitseminen maksetuksi.
+ *
+ * PÄIVÄ ON SYÖTE, EI NYT-HETKI.
+ *
+ * Tiliote kertoo milloin raha tuli, ja se voi olla eri kuin se hetki
+ * jona joku ehtii merkitä sen. Väärä päivä siirtäisi suorituksen
+ * väärälle kuukaudelle, ja kuukausi on kirjanpidossa se yksikkö joka
+ * suljetaan.
+ *
+ * Kirjaus syntyy kannan liipaisimesta: maksu purkaa myyntisaamisen
+ * (pankki debet, myyntisaamiset kredit) omana tositteenaan, koska
+ * lasku ja sen maksu ovat eri tapahtumia.
+ */
+export async function markInvoicePaid(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  /*
+   * Yritysta ei tarvita: mark_invoice_paid tarkistaa is_managerin ja
+   * laskun omistajuuden itse, eika tassa haluta toista tarkistusta
+   * joka voi vanhentua erikseen.
+   */
+  const { role } = await requireContext("/admin/laskut");
+
+  if (!can(role, "receipts.edit")) {
+    return { error: t.toiminnot.ownerOnlyBody };
+  }
+
+  const id = String(formData.get("id") ?? "");
+  const paiva = String(formData.get("paidOn") ?? "").trim();
+
+  if (id === "") return { error: t.laskut.failed };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_invoice_paid", {
+    p_invoice: id,
+    p_date: /^\d{4}-\d{2}-\d{2}$/.test(paiva) ? paiva : null,
+  });
+
+  if (error) {
+    console.error("maksumerkinta epaonnistui", error.code, error.message);
+    return { error: kantavirhe(error, t.laskut.failed) };
+  }
+
+  revalidatePath("/admin/laskut");
+  revalidatePath(`/admin/laskut/${id}`);
+  revalidatePath("/admin/kirjanpito");
+
+  return { notice: t.laskut.markedPaid };
+}

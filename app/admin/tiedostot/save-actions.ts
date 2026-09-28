@@ -26,6 +26,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { adminText } from "@/lib/i18n/admin-text";
+import { LOCALE_INFO } from "@/lib/i18n/app-locales";
+import { fetchInvoice } from "@/lib/restoflow/invoices";
+import { fetchInvoicingSettings } from "@/lib/restoflow/invoicing";
+import { invoiceFileName, renderInvoicePdf } from "@/lib/restoflow/invoice-pdf";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
 import { can } from "@/lib/restoflow/permissions";
@@ -343,4 +347,66 @@ export async function supplierChoices(): Promise<SupplierChoice[]> {
     id: row.id,
     name: row.name,
   }));
+}
+
+/**
+ * Lasku kaappiin PDF:nä.
+ *
+ * SAMA TIEDOSTO KUIN ASIAKKAALLE MENI.
+ *
+ * Lasku piirretään samasta lähteestä ja samalla funktiolla kuin
+ * sähköpostin liite, joten arkistoon tallentuu se mitä vastaanottaja
+ * sai — ei toisintoa joka näyttää suunnilleen samalta.
+ *
+ * Tallennettu tiedosto elää omaa elämäänsä siitä hetkestä: laskun
+ * myöhempi mitätöinti ei tyhjennä kaappia, koska tosite on tosite
+ * myös silloin kun se on kumottu.
+ */
+export async function saveInvoiceToFiles(input: {
+  invoiceId: string;
+  folderId: string | null;
+}): Promise<FileState> {
+  const locale = await resolveLocale();
+  const t = adminText(locale);
+  const { restaurant, role } = await requireContext("/admin/laskut");
+
+  if (!can(role, "files.manage")) {
+    return { error: t.tiedosto.readOnly };
+  }
+
+  const parsed = z
+    .object({ invoiceId: UUID, folderId: UUID.nullable() })
+    .safeParse(input);
+
+  if (!parsed.success) return { error: t.tiedosto.errorGeneric };
+
+  const [lasku, myyja] = await Promise.all([
+    fetchInvoice(parsed.data.invoiceId, restaurant.id),
+    fetchInvoicingSettings(restaurant.id),
+  ]);
+
+  if (!lasku) return { error: t.tiedosto.errorGeneric };
+
+  const pdf = await renderInvoicePdf({
+    lasku,
+    myyja,
+    myyjanNimi: restaurant.name,
+    t,
+    tag: LOCALE_INFO[locale].tag,
+  });
+
+  const nimi = invoiceFileName(lasku);
+
+  const problem = await store(
+    restaurant.id,
+    parsed.data.folderId,
+    nimi,
+    "application/pdf",
+    new Uint8Array(pdf),
+  );
+
+  if (problem) return { error: t.tiedosto.errorUpload };
+
+  revalidatePath("/admin/tiedostot");
+  return { notice: nimi };
 }

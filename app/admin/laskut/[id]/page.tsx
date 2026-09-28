@@ -11,6 +11,8 @@ import { formatMoney } from "@/lib/money";
 import { fill } from "@/lib/i18n/auth-text";
 import { Card, Pill, type Tone } from "@/components/restoflow/ui";
 import { SendForm } from "./send-form";
+import { PaidForm } from "./paid-form";
+import { SaveToFiles } from "@/components/restoflow/save-to-files";
 
 export async function generateMetadata() {
   const t = adminText(await resolveLocale());
@@ -109,6 +111,20 @@ export default async function InvoicePage({
             {t.laskut.downloadPdf}
           </a>
 
+          {/*
+            Sama PDF kaappiin.
+
+            Lasku on tosite jonka myyjä on velvollinen säilyttämään.
+            Tallennus tehdään samasta lähteestä kuin liite, joten
+            arkistoon menee se mitä asiakas sai.
+          */}
+          <SaveToFiles
+            t={t}
+            title={`${t.laskut.one} ${lasku.number} · ${lasku.recipientName}`}
+            label={t.laskut.saveToFiles}
+            source={{ kind: "invoice", invoiceId: lasku.id }}
+          />
+
           <Link
             href={`/admin/laskut/${lasku.id}/tulosta`}
             className="rf-press rf-touch px-4 text-[13px] font-bold"
@@ -166,6 +182,18 @@ export default async function InvoicePage({
       {lasku.status === "draft" ? (
         <Card>
           <SendForm t={t} id={lasku.id} osoite={lasku.recipientEmail} />
+        </Card>
+      ) : null}
+
+      {/*
+        Maksumerkintä vain lähetetylle.
+
+        Luonnosta ei ole lähetetty kenellekään, joten sitä ei voi olla
+        maksettu; maksettua ei makseta toista kertaa.
+      */}
+      {lasku.status === "sent" ? (
+        <Card>
+          <PaidForm t={t} id={lasku.id} tanaan={tanaan} />
         </Card>
       ) : null}
 
