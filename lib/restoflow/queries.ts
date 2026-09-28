@@ -535,6 +535,32 @@ export interface RestaurantData {
   posMappings: PosMapping[];
   /* Tehtävät samassa paketissa: yksi lähde, monta näkymää. */
   tasks: Task[];
+  /** Huomiot jotka omistaja on merkinnyt tarkistetuiksi. */
+  alertAcks: { alertId: string; month: string }[];
+}
+
+/**
+ * Kuitatut huomiot: mitkä ilmoitukset omistaja on merkinnyt
+ * tarkistetuiksi.
+ *
+ * Kuukausi on osa avainta, koska tunnisteet kuten "budget-food"
+ * toistuvat kuukaudesta toiseen. Haku kattaa kaikki kuukaudet, ja
+ * suodatus tehdään siellä missä kuukausi tiedetään — sama aineisto
+ * palvelee montaa kuukausinäkymää.
+ */
+export async function fetchAlertAcks(
+  restaurantId: string,
+): Promise<{ alertId: string; month: string }[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("alert_acks")
+    .select("alert_id, month")
+    .eq("restaurant_id", restaurantId);
+
+  return ((data as { alert_id: string; month: string }[] | null) ?? []).map(
+    (row) => ({ alertId: row.alert_id, month: row.month }),
+  );
 }
 
 /**
@@ -569,6 +595,7 @@ async function loadRestaurantData(
     salesGroups,
     posMappings,
     tasks,
+    alertAcks,
   ] = await Promise.all([
     fetchReceipts(restaurantId),
     fetchReceiptsNeedingReview(restaurantId),
@@ -583,6 +610,7 @@ async function loadRestaurantData(
     fetchSalesGroups(restaurantId),
     fetchPosMappings(restaurantId),
     fetchTasks(restaurantId),
+    fetchAlertAcks(restaurantId),
   ]);
 
   return {
@@ -599,6 +627,7 @@ async function loadRestaurantData(
     salesGroups,
     posMappings,
     tasks,
+    alertAcks,
   };
 }
 

@@ -567,6 +567,7 @@ const fi = {
     alertsDerived:
       "Ilmoitukset johdetaan aineiston tilasta joka latauksella, eikä niitä tallenneta. Kun asia on hoidettu, ilmoitus katoaa itsestään.",
     notifications: "Ilmoitukset",
+    markChecked: "Tarkistettu",
     nothingToNote: "Ei mitään huomautettavaa",
     allInOrder: "Kaikki kunnossa",
     allInOrderBody: "Kuitit on käsitelty eikä määräaikoja ole ohitettu. Ilmoitukset ilmestyvät tähän itsestään kun jotain vaatii huomiota.",
@@ -2446,6 +2447,7 @@ const en: AdminText = {
     alertsDerived:
       "Notifications are derived from the state of the data on every load and are not stored. Once a matter is handled, the notification disappears by itself.",
     notifications: "Notifications",
+    markChecked: "Checked",
     nothingToNote: "Nothing to note",
     allInOrder: "Everything is in order",
     allInOrderBody: "Receipts are handled and no deadlines have been missed. Notifications appear here by themselves when something needs attention.",
@@ -4314,6 +4316,7 @@ const sv: AdminText = {
     alertsDerived:
       "Aviseringarna härleds ur datans tillstånd vid varje laddning och sparas inte. När saken är åtgärdad försvinner aviseringen av sig själv.",
     notifications: "Aviseringar",
+    markChecked: "Kontrollerad",
     nothingToNote: "Inget att anmärka",
     allInOrder: "Allt är i ordning",
     allInOrderBody: "Kvittona är hanterade och inga tidsfrister har missats. Aviseringar dyker upp här av sig själva när något kräver uppmärksamhet.",
@@ -6189,6 +6192,7 @@ const da: AdminText = {
     alertsDerived:
       "Notifikationerne udledes af datas tilstand ved hver indlæsning og gemmes ikke. Når sagen er klaret, forsvinder notifikationen af sig selv.",
     notifications: "Notifikationer",
+    markChecked: "Kontrolleret",
     nothingToNote: "Intet at bemærke",
     allInOrder: "Alt er i orden",
     allInOrderBody: "Kvitteringerne er behandlet, og ingen frister er overskredet. Notifikationer dukker op her af sig selv, når noget kræver opmærksomhed.",
@@ -8065,6 +8069,7 @@ const tr: AdminText = {
     alertsDerived:
       "Bildirimler her yüklemede verinin durumundan türetilir ve saklanmaz. Konu halledildiğinde bildirim kendiliğinden kaybolur.",
     notifications: "Bildirimler",
+    markChecked: "Kontrol edildi",
     nothingToNote: "Belirtilecek bir şey yok",
     allInOrder: "Her şey yolunda",
     allInOrderBody: "Fişler işlendi ve hiçbir son tarih kaçmadı. Bir şey dikkat gerektirdiğinde bildirimler burada kendiliğinden görünür.",
@@ -9928,6 +9933,7 @@ const et: AdminText = {
     alertsDerived:
       "Teated tuletatakse andmete olekust igal laadimisel ja neid ei salvestata. Kui asi on tehtud, kaob teade ise.",
     notifications: "Teated",
+    markChecked: "Kontrollitud",
     nothingToNote: "Märkida ei ole midagi",
     allInOrder: "Kõik on korras",
     allInOrderBody: "Tšekid on käsitletud ja tähtaegu pole ületatud. Teated ilmuvad siia ise, kui midagi vajab tähelepanu.",
@@ -11796,6 +11802,7 @@ const ar: AdminText = {
     alertsDerived:
       "تُشتق الإشعارات من حالة البيانات عند كل تحميل ولا يتم تخزينها. بمجرد معالجة المسألة، يختفي الإشعار من تلقاء نفسه.",
     notifications: "الإشعارات",
+    markChecked: "تم التحقق",
     nothingToNote: "لا شيء يستدعي الملاحظة",
     allInOrder: "كل شيء على ما يرام",
     allInOrderBody: "عولجت الإيصالات ولم تفُت أي مواعيد. تظهر التنبيهات هنا تلقائيًا عندما يحتاج شيء إلى انتباه.",

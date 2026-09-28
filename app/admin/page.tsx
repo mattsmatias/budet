@@ -101,6 +101,7 @@ export default async function AdminDashboard({
     budgets,
     sales,
     tasks,
+    alertAcks,
     month,
     today,
     nowTime,
@@ -268,6 +269,9 @@ export default async function AdminDashboard({
     sales,
     tasks,
     closedWeekdays: restaurant.closedWeekdays,
+    ackedAlerts: alertAcks
+      .filter((a) => a.month === viewMonth)
+      .map((a) => a.alertId),
     month: viewMonth,
     today,
     nowTime,

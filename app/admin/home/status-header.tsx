@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { alertHref } from "@/lib/restoflow/alert-link";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { RfIcon } from "@/components/restoflow/icons";
 import { severityColor } from "@/components/restoflow/ui";
@@ -97,7 +98,7 @@ export function StatusHeader({
           {shown.map((focus) => (
             <li key={focus.id}>
               <Link
-                href={focus.href}
+                href={alertHref(focus.href, focus.id)}
                 className="rf-press flex items-start gap-[11px] py-[11px] pe-[13px] ps-[11px]"
                 style={{
                   background: "var(--rf-inset)",

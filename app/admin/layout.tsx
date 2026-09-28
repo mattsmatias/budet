@@ -2,7 +2,9 @@ import { labels } from "@/lib/i18n/labels";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import { getMemberships, requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
+import { Suspense } from "react";
 import { buildAlerts } from "@/lib/restoflow/alerts";
+import { HuomioBanneri } from "./huomio-banneri";
 import { attentionList } from "@/lib/restoflow/dashboard";
 import { loadExpiring } from "@/lib/restoflow/file-queries";
 import { expirySummary } from "@/lib/restoflow/files";
@@ -85,6 +87,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       sales: data.sales,
       tasks: data.tasks,
       closedWeekdays: restaurant.closedWeekdays,
+      ackedAlerts: data.alertAcks
+        .filter((a) => a.month === month)
+        .map((a) => a.alertId),
       month,
       today,
       nowTime,
@@ -274,6 +279,21 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           />
 
           <main className="rf-main w-full flex-1 px-4 py-5 lg:px-6 lg:pb-10 lg:pt-5">
+            {/*
+              Huomio sen sivun ylle jonne se vei.
+
+              Kuoressa eika jokaisella sivulla erikseen: huomioita on
+              kymmenta lajia ja ne vievat kymmeneen eri nakymaan.
+            */}
+            <Suspense fallback={null}>
+              <HuomioBanneri
+                huomiot={huomiot}
+                month={month}
+                canAck={can(role, "alerts.manage")}
+                t={t}
+              />
+            </Suspense>
+
             {children}
           </main>
         </div>

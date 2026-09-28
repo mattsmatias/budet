@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { alertHref } from "@/lib/restoflow/alert-link";
 import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -64,6 +65,9 @@ export default async function NotificationsPage() {
       sales: data.sales,
       tasks: data.tasks,
       closedWeekdays: data.restaurant.closedWeekdays,
+      ackedAlerts: data.alertAcks
+        .filter((a) => a.month === data.month)
+        .map((a) => a.alertId),
     },
     expiry,
   );
@@ -190,7 +194,7 @@ function Ryhma({
         {alerts.map((alert) => (
           <li key={alert.id}>
             <Link
-              href={alert.href}
+              href={alertHref(alert.href, alert.id)}
               className="rf-press flex items-start gap-3.5 px-5 py-3.5"
             >
               <span

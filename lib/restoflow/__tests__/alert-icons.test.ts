@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { alertHref } from "../alert-link";
 import { ALERT_KINDS, alertIcon } from "../alert-icons";
 
 describe("alertIcon", () => {
@@ -32,5 +33,28 @@ describe("alertIcon", () => {
    */
   it("ei erottele vakavuutta muodolla", () => {
     expect(alertIcon("budget_warning")).toBe(alertIcon("budget_exceeded"));
+  });
+});
+
+/*
+ * Huomion tunniste kulkee osoitteessa, jotta kohdesivu tietaa mista
+ * tultiin ja voi tarjota "Tarkistettu"-painikkeen.
+ */
+describe("alertHref", () => {
+  it("liittaa tunnisteen polkuun", () => {
+    expect(alertHref("/admin/kuitit", "vat-abc")).toBe(
+      "/admin/kuitit?huomio=vat-abc",
+    );
+  });
+
+  it("kayttaa &-merkkia kun polussa on jo kysely", () => {
+    expect(alertHref("/admin/kuitit?kuukausi=2026-09", "vat-abc")).toBe(
+      "/admin/kuitit?kuukausi=2026-09&huomio=vat-abc",
+    );
+  });
+
+  /* Tehtava merkitaan tehdyksi tehtavalistassa, ei kuitata. */
+  it("jattaa tehtavan polun ennalleen", () => {
+    expect(alertHref("/admin/tehtavat", "task-due-1")).toBe("/admin/tehtavat");
   });
 });

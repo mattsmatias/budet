@@ -936,3 +936,40 @@ export async function switchRestaurant(formData: FormData): Promise<void> {
   revalidatePath("/", "layout");
   redirect("/admin");
 }
+
+// ---------------------------------------------------------------------------
+// Huomion kuittaus
+// ---------------------------------------------------------------------------
+
+/**
+ * Merkitsee huomion tarkistetuksi.
+ *
+ * TARKISTETTU EI OLE KORJATTU.
+ *
+ * Osa huomioista katoaa itsestään kun asia hoidetaan: kuitti
+ * tarkistetaan, myynti kirjataan. Osassa ei ole mitään korjattavaa —
+ * toimittajan hinnat nousivat, budjetti on 90 prosentissa — ja ne
+ * jäivät listalle joka päivä. Lista jota ei voi tyhjentää opettaa
+ * ohittamaan koko listan.
+ *
+ * Kuittaus koskee kuukautta, koska sama huomio syntyy uudelleen ensi
+ * kuussa samalla tunnisteella. Kanta tarkistaa oikeuden ja torjuu
+ * tehtävät: ne merkitään tehdyksi tehtävälistassa.
+ */
+export async function acknowledgeAlert(formData: FormData): Promise<void> {
+  const alertId = String(formData.get("alertId") ?? "").trim();
+  const month = String(formData.get("month") ?? "");
+
+  if (!alertId || !/^[0-9]{4}-[0-9]{2}$/.test(month)) return;
+
+  const { restaurant } = await requireContext("/admin");
+  const supabase = await createClient();
+
+  await supabase.rpc("ack_alert", {
+    p_restaurant: restaurant.id,
+    p_alert: alertId,
+    p_month: month,
+  });
+
+  revalidatePath("/admin", "layout");
+}

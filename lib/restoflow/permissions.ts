@@ -27,6 +27,15 @@ export type Capability =
   | "reports.view"
   | "reports.export"
   | "alerts.view"
+  /*
+   * Huomion kuittaus: "tarkistettu".
+   *
+   * Erillinen katseluoikeudesta, koska kuittaus poistaa rivin myös
+   * muilta. Kanta vaatii is_managerin, joten tämä on sama rajaus
+   * näkymän puolella — muuten painike näkyisi sille joka saa
+   * vastaukseksi virheen.
+   */
+  | "alerts.manage"
   | "matti.use"
   /*
    * Tehtävät kahtena oikeutena.
@@ -105,6 +114,7 @@ const OWNER: Capability[] = [
    */
   "audit.view",
   "alerts.view",
+  "alerts.manage",
   "settings.view",
   "settings.edit",
   "employees.manage",

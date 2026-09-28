@@ -496,3 +496,50 @@ describe("attentionList", () => {
     expect(items.some((i) => i.id === "files-expiry")).toBe(false);
   });
 });
+
+/*
+ * Kuitattu huomio katoaa listalta.
+ *
+ * Kuukausi on osa avainta: "budget-food" syntyy uudelleen ensi
+ * kuussa samalla tunnisteella, eika kertakuittaus saa vaientaa sita
+ * ikuisiksi ajoiksi. Suodatus tehdaan tassa, ja kutsuja antaa vain
+ * tarkasteltavan kuukauden kuittaukset.
+ */
+describe("kuitatut huomiot", () => {
+  /* Sama kuitti molemmissa kutsuissa: tunniste juoksee tehtaassa. */
+  const kuitti = receipt({
+    totalCents: 5000,
+    date: "2026-08-04",
+    status: "needs_review",
+    reviewReasons: ["vat_missing"],
+    vatCents: null,
+  });
+
+  it("suodattaa kuitatun pois", () => {
+    const ilman = attentionList(input({ receipts: [kuitti] }));
+    expect(ilman.length).toBeGreaterThan(0);
+
+    const kanssa = attentionList(
+      input({ receipts: [kuitti], ackedAlerts: ilman.map((i) => i.id) }),
+    );
+    expect(kanssa).toEqual([]);
+  });
+
+  it("kuittaa myos vanhenevan asiakirjan", () => {
+    const ilman = attentionList(input(), { expired: 1, soon: 0 });
+    expect(ilman[0].id).toBe("files-expiry");
+
+    const kanssa = attentionList(input({ ackedAlerts: ["files-expiry"] }), {
+      expired: 1,
+      soon: 0,
+    });
+    expect(kanssa.some((i) => i.id === "files-expiry")).toBe(false);
+  });
+
+  it("ei vaikuta muihin huomioihin", () => {
+    const items = attentionList(
+      input({ receipts: [kuitti], ackedAlerts: ["jokin-muu"] }),
+    );
+    expect(items.length).toBeGreaterThan(0);
+  });
+});

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { alertHref } from "@/lib/restoflow/alert-link";
 import type { Labels } from "@/lib/i18n/labels";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
@@ -251,7 +252,7 @@ function NotificationMenu({
               {shown.map((alert) => (
                 <li key={alert.id}>
                   <Link
-                    href={alert.href}
+                    href={alertHref(alert.href, alert.id)}
                     role="menuitem"
                     onClick={close}
                     className="rf-press rf-alert-row flex items-start gap-[11px] py-[11px] ps-[11px] pe-[13px]"

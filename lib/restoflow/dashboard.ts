@@ -49,6 +49,14 @@ export interface DashboardInput {
    * kellon huomioista, jotka saavat asetuksen.
    */
   closedWeekdays?: readonly number[];
+  /**
+   * Huomiot jotka omistaja on merkinnyt tarkistetuiksi.
+   *
+   * Vain tämän kuukauden kuittaukset: "budget-food" syntyy uudelleen
+   * ensi kuussa, eikä kertakuittaus saa vaientaa sitä ikuisiksi
+   * ajoiksi.
+   */
+  ackedAlerts?: readonly string[];
   /** Käyttöliittymän kieli. */
   locale: AppLocale;
 }
@@ -336,7 +344,23 @@ export function attentionList(
   input: DashboardInput,
   expiry?: ExpirySummary,
 ): FocusItem[] {
-  const items = focusItems(input, buildInsights(input));
+  const kuitatut = new Set(input.ackedAlerts ?? []);
+
+  /*
+   * Kuitattu huomio katoaa listalta.
+   *
+   * Osa huomioista korjaantuu itsestään kun asia hoidetaan: kuitti
+   * tarkistetaan, myynti kirjataan. Osassa ei ole mitään korjattavaa
+   * — toimittajan hinnat nousivat, budjetti on 90 prosentissa — ja ne
+   * jäivät listalle joka päivä. Lista jota ei voi tyhjentää opettaa
+   * ohittamaan koko listan, joten omistaja voi merkitä huomion
+   * tarkistetuksi.
+   *
+   * Tehtävät eivät ole mukana: niillä on oma "merkitse tehdyksi".
+   */
+  const items = focusItems(input, buildInsights(input)).filter(
+    (item) => !kuitatut.has(item.id),
+  );
 
   /*
    * Vanhenevat asiakirjat yhtenä rivinä.
@@ -345,7 +369,11 @@ export function attentionList(
    * ja anniskeluluvan umpeutuminen sulkee anniskelun — siksi
    * vanhentunut on kriittinen eikä varoitus.
    */
-  if (expiry && (expiry.expired > 0 || expiry.soon > 0)) {
+  if (
+    expiry &&
+    (expiry.expired > 0 || expiry.soon > 0) &&
+    !kuitatut.has("files-expiry")
+  ) {
     const t = adminText(input.locale);
     const { expired, soon } = expiry;
 
