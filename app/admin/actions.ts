@@ -23,6 +23,7 @@ import { parseHourly } from "@/lib/restoflow/employees";
 import { createClient } from "@/utils/supabase/server";
 import {
   ACTIVE_RESTAURANT_COOKIE,
+  CHART_RANGE_COOKIE,
   getMemberships,
   requireContext,
 } from "@/lib/restoflow/session";
@@ -972,4 +973,45 @@ export async function acknowledgeAlert(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/admin", "layout");
+}
+
+// ---------------------------------------------------------------------------
+// Kaavion jakso
+// ---------------------------------------------------------------------------
+
+/**
+ * Muistaa valitun jakson Myynti ja kulut -kaaviossa.
+ *
+ * VALINTA JÄÄ SIIHEN MIHIN SE JÄTETTIIN.
+ *
+ * Jakso oli pelkästään osoitteessa, ja oletus riippui aineiston
+ * määrästä. Kuukausinäkymän valinnut palasi seuraavalla kerralla
+ * kuuden kuukauden kaavioon, ja valinta oli tehtävä joka kerta
+ * uudelleen. Osoite säilyy yhä — linkin voi jakaa — mutta ilman
+ * parametria käytetään viimeksi valittua.
+ *
+ * Eväste eikä tili, koska kyse on tämän laitteen näkymästä eikä
+ * yrityksen asetuksesta: sama kuin valittu yritys, samalla kuvion.
+ */
+export async function chooseChartRange(formData: FormData): Promise<void> {
+  const months = Number(formData.get("months"));
+  const month = String(formData.get("kuukausi") ?? "");
+
+  if (![1, 3, 6, 12].includes(months)) return;
+
+  const store = await cookies();
+  store.set(CHART_RANGE_COOKIE, String(months), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    /* Vuosi, kuten yritysvalinta: näkymä ei ole päivän mittainen. */
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  const kohde = /^[0-9]{4}-[0-9]{2}$/.test(month)
+    ? `/admin?kuukausi=${month}&kaavio=${months}`
+    : `/admin?kaavio=${months}`;
+
+  redirect(kohde);
 }

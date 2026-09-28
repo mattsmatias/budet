@@ -18,6 +18,14 @@ import { isBusinessType, type BusinessType } from "./business";
 
 export const ACTIVE_RESTAURANT_COOKIE = "rf_restaurant";
 
+/**
+ * Yleiskatsauksen kaavion jakso.
+ *
+ * Nakyman valinta eika yrityksen asetus, joten se on evasteessa
+ * samoin kuin valittu yritys: se koskee tata laitetta.
+ */
+export const CHART_RANGE_COOKIE = "rf_kaavio";
+
 export interface SessionUser {
   id: string;
   email: string | null;

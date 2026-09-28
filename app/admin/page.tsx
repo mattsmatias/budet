@@ -6,7 +6,10 @@ import { adminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import Link from "next/link";
 import { ISO_MONTH } from "@/lib/restoflow/dates";
+import { cookies } from "next/headers";
 import { adminContext } from "@/lib/restoflow/page-context";
+import { CHART_RANGE_COOKIE } from "@/lib/restoflow/session";
+import { chooseChartRange } from "./actions";
 import {
   budgetLines,
   compareToPreviousMonth,
@@ -147,13 +150,32 @@ export default async function AdminDashboard({
   const monthsWithData = history.costs.filter(
     (cost, i) => cost > 0 || history.sales[i] !== null,
   ).length;
+
+  /*
+   * Järjestys: osoite, muisti, aineisto.
+   *
+   * Osoite voittaa, jotta jaettu linkki näyttää sen mitä lähettäjä
+   * näki. Ilman parametria käytetään viimeksi valittua: jakso oli
+   * ennen pelkästään osoitteessa, joten kuukausinäkymän valinnut
+   * palasi seuraavalla kerralla kuuden kuukauden kaavioon ja valinta
+   * oli tehtävä joka kerta uudelleen.
+   *
+   * Vasta jos kumpaakaan ei ole, aineisto ratkaisee: kuuden kuukauden
+   * kaavio uudella yrityksellä on viisi nollaa ja yksi piste.
+   */
+  const rememberedChart = Number(
+    (await cookies()).get(CHART_RANGE_COOKIE)?.value,
+  );
+
   const chartMonths: number = CHART_RANGES.some(
     (r) => r.months === requestedChart,
   )
     ? requestedChart
-    : monthsWithData < 2
-      ? 1
-      : 6;
+    : CHART_RANGES.some((r) => r.months === rememberedChart)
+      ? rememberedChart
+      : monthsWithData < 2
+        ? 1
+        : 6;
 
   // Valittavat kuukaudet: kuluvasta taaksepäin vuosi.
   const selectable: string[] = [];
@@ -878,24 +900,33 @@ export default async function AdminDashboard({
               className="flex gap-0.5 p-[3px]"
               style={{ background: "var(--rf-inset)", borderRadius: 980 }}
             >
+              {/*
+                Lomake linkin sijaan, jotta valinta muistetaan.
+                Painike kantaa arvon itse, joten piilokenttiä tarvitaan
+                vain kuukausi — ja ilman javascriptiä valinta on yhä
+                tavallinen lomakkeen lähetys.
+              */}
               {CHART_RANGES.map((range) => {
                 const on = range.months === chartMonths;
                 return (
-                  <Link
-                    key={range.months}
-                    href={`/admin?kuukausi=${viewMonth}&kaavio=${range.months}`}
-                    scroll={false}
-                    aria-current={on ? "true" : undefined}
-                    className="rf-press rf-touch px-3 py-[5px] text-[12px] font-semibold"
-                    style={{
-                      background: on ? "var(--rf-card)" : "transparent",
-                      color: on ? "var(--rf-text)" : "var(--rf-text-2)",
-                      boxShadow: on ? "var(--rf-shadow-sm)" : "none",
-                      borderRadius: 980,
-                    }}
-                  >
-                    {range.label}
-                  </Link>
+                  <form key={range.months} action={chooseChartRange}>
+                    <input type="hidden" name="kuukausi" value={viewMonth} />
+                    <button
+                      type="submit"
+                      name="months"
+                      value={range.months}
+                      aria-current={on ? "true" : undefined}
+                      className="rf-press rf-touch px-3 py-[5px] text-[12px] font-semibold"
+                      style={{
+                        background: on ? "var(--rf-card)" : "transparent",
+                        color: on ? "var(--rf-text)" : "var(--rf-text-2)",
+                        boxShadow: on ? "var(--rf-shadow-sm)" : "none",
+                        borderRadius: 980,
+                      }}
+                    >
+                      {range.label}
+                    </button>
+                  </form>
                 );
               })}
             </div>
