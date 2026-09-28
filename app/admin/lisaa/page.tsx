@@ -27,7 +27,7 @@ export default async function AdminMorePage() {
   const t = adminText(locale);
   const nimet = labels(locale);
 
-  const items = moreNavFor(role);
+  const items = moreNavFor(role, { payroll: restaurant.payrollEnabled });
 
   // Ilman yhtäkään hallintanäkymää tämä sivu on tyhjä kuori.
   if (items.length === 0) redirect(landingFor(role));

@@ -699,6 +699,51 @@ export async function updateRestaurant(
   return { notice: t.toiminnot.restaurantSaved };
 }
 
+/**
+ * Palkkaosio käyttöön tai pois.
+ *
+ * OMA TEKONSA EIKÄ KENTTÄ RAVINTOLALOMAKKEESSA.
+ *
+ * Sama peruste kuin muillakin osioilla: jokainen lomake lähettää vain
+ * omat kenttänsä ja kanta tulkitsee nullin "älä koske" -merkiksi. Jos
+ * tämä olisi ravintolan perustietojen lomakkeessa, nimen vaihtaminen
+ * kirjoittaisi samalla osion tilan — ja kaksi eri asiaa yhdessä
+ * lähetyksessä on kaksi eri asiaa jotka voivat mennä eri suuntiin.
+ *
+ * Mitään ei poisteta. Työntekijät, leimaukset ja palkka-asetukset
+ * jäävät kantaan, joten osion voi ottaa takaisin käyttöön ja kaikki on
+ * tallella. Kytkin piilottaa näkymän ja estää uudet kirjoitukset.
+ */
+export async function setPayrollEnabled(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const t = adminText(await resolveLocale());
+  const { restaurant } = await requireContext("/admin/asetukset");
+
+  const enabled = formData.get("enabled") === "1";
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_restaurant", {
+    p_restaurant: restaurant.id,
+    p_payroll_enabled: enabled,
+  });
+
+  if (error)
+    return { error: explain(error, t.toiminnot.settingsSaveFailed, t) };
+
+  /*
+   * Koko kuori uudelleen: kytkin muuttaa valikkoa, hakua ja
+   * alapalkkia, eivät vain tätä sivua.
+   */
+  revalidatePath("/admin", "layout");
+  revalidatePath("/tyoaika");
+
+  return {
+    notice: enabled ? t.asetus.payrollTurnedOn : t.asetus.payrollTurnedOff,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Kuukauden sulkeminen
 // ---------------------------------------------------------------------------

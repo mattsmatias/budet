@@ -53,6 +53,35 @@ export default async function TimeClockPage() {
 
   if (!can(role, "timeclock.use")) redirect(landingFor(role));
 
+  /*
+   * Palkat pois päältä: leimausta ei ole, mutta ohjaus olisi ansa.
+   *
+   * Työntekijän laskeutumissivu ON tämä sivu, joten uudelleenohjaus
+   * veisi takaisin tähän ja selain jäisi kiertämään. Sitä paitsi
+   * työntekijälle ei ole muuta näkymää johon ohjata: hänen ainoa
+   * oikeutensa on leimaus. Siksi sivu jää paikalleen ja kertoo miksi
+   * painiketta ei ole — kanta torjuu leimauksen joka tapauksessa.
+   */
+  if (!restaurant.payrollEnabled) {
+    return (
+      <main className="mx-auto w-full max-w-md px-4 py-10">
+        <EmptyState
+          title={t.tyo.payrollOff}
+          description={t.tyo.payrollOffHint}
+        />
+        <form action={signOut} className="mt-6 text-center">
+          <button
+            type="submit"
+            className="rf-press text-[13px] font-semibold underline-offset-4 hover:underline"
+            style={{ color: "var(--rf-text-2)" }}
+          >
+            {t.kuori.signOut}
+          </button>
+        </form>
+      </main>
+    );
+  }
+
   const month = monthIn(restaurant.timezone);
   const { from } = monthRange(month);
 

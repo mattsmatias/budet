@@ -15,6 +15,7 @@ import { MonthClosing } from "./settings-form";
 import { CategoryManager } from "./categories";
 import { RestaurantForm } from "./forms";
 import { LogoForm } from "./logo-form";
+import { PayrollToggle } from "./payroll-toggle";
 import { PayrollForm } from "./payroll-form";
 import { EmployeeList } from "./employees";
 import { NameForm, PasswordForm } from "./profile-forms";
@@ -85,13 +86,13 @@ export default async function SettingsPage({
 
   /* Palkkakulut vain omalle osastolleen, samasta syystä. */
   const payroll =
-    section.id === "palkat" && canEdit
+    section.id === "palkat" && canEdit && restaurant.payrollEnabled
       ? await fetchPayrollSettings(restaurant.id)
       : null;
 
   /* Voimassa oleva sopimusversio nayttoa varten. */
   const tesVersions =
-    section.id === "palkat" && canEdit
+    section.id === "palkat" && canEdit && restaurant.payrollEnabled
       ? await fetchCompanyTes(restaurant.id)
       : [];
   const tes = versionFor(tesVersions, month + "-01");
@@ -104,7 +105,7 @@ export default async function SettingsPage({
    * sähköpostia, eikä leimaus löytänyt häntä.
    */
   const employees =
-    section.id === "kayttajat" && canEdit
+    section.id === "kayttajat" && canEdit && restaurant.payrollEnabled
       ? await fetchEmployees(restaurant.id)
       : [];
 
@@ -165,7 +166,12 @@ export default async function SettingsPage({
               </>
             ) : null}
 
+            {shown.id === "palkat" ? (
+              <PayrollToggle t={t} enabled={restaurant.payrollEnabled} />
+            ) : null}
+
             {shown.id === "palkat" && payroll ? (
+              <div className="mt-4">
               <PayrollForm
                 t={t}
                 settings={payroll}
@@ -179,6 +185,7 @@ export default async function SettingsPage({
                 }
                 industry={BUSINESS_TYPE_NAMES_FI[restaurant.businessType]}
               />
+              </div>
             ) : null}
 
             {shown.id === "profiili" ? (
@@ -223,14 +230,24 @@ export default async function SettingsPage({
                   työn kustannus ovat Palkat-sivulla — siellä katsotaan
                   rahaa, täällä ylläpidetään ihmisiä.
                 */}
-                <div>
-                  <h3 className="text-[13.5px] font-bold">
-                    {t.tyo.listTitle}
-                  </h3>
-                  <div className="mt-3">
-                    <EmployeeList t={t} rows={employees} />
+                {/*
+                  Työntekijälista kuuluu palkkaosioon.
+
+                  Tuntipalkka ja tehtävä ovat palkanlaskennan tietoja,
+                  eivät tunnuksen tietoja. Ilman palkkaosiota tässä
+                  kysyttäisiin tuntipalkkaa yritykseltä joka ei laske
+                  palkkoja. Kutsut ja roolit jäävät: ne ovat tunnuksia.
+                */}
+                {restaurant.payrollEnabled ? (
+                  <div>
+                    <h3 className="text-[13.5px] font-bold">
+                      {t.tyo.listTitle}
+                    </h3>
+                    <div className="mt-3">
+                      <EmployeeList t={t} rows={employees} />
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 {invitations.length > 0 ? (
                   <div>

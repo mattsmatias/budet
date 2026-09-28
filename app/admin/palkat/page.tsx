@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { LOCALE_INFO } from "@/lib/i18n/app-locales";
@@ -70,6 +71,15 @@ export default async function WagesPage({
 }) {
   const { receipts, sales, restaurant, role, month: nykyinen } =
     await adminContext("/admin/palkat");
+
+  /*
+   * Osio pois päältä: sivua ei ole.
+   *
+   * Valikosta se on jo piilotettu, mutta osoitteen voi kirjoittaa
+   * käsin ja se jää selaimen historiaan. Tarkistus on tässä eikä
+   * pelkässä valikossa, koska valikko on esitystä eikä pääsyä.
+   */
+  if (!restaurant.payrollEnabled) redirect("/admin");
 
   const locale = await resolveLocale();
   const t = adminText(locale);

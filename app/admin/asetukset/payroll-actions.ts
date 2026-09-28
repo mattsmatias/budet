@@ -44,6 +44,16 @@ export async function updatePayrollSettings(
     return { error: t.toiminnot.ownerOnlyBody };
   }
 
+  /*
+   * Palkkakulujen asetuksia ei säädetä ilman palkkaosiota.
+   *
+   * Lomake on piilossa silloin, mutta lomakkeen piilottaminen ei estä
+   * lähetystä — tarkistus kuuluu tänne.
+   */
+  if (!restaurant.payrollEnabled) {
+    return { error: t.tyo.payrollOff };
+  }
+
   const teksti = (nimi: string) => String(formData.get(nimi) ?? "");
 
   const prosentit = {

@@ -69,6 +69,22 @@ const employeeSchema = (t: AdminText) =>
     active: z.boolean(),
   });
 
+/**
+ * Palkkaosion oma portti.
+ *
+ * Rooli kertoo saako tama ihminen hallita tyontekijoita; tama kertoo
+ * onko tassa yrityksessa tyontekijoita hallittavana lainkaan. Kaksi
+ * eri kysymysta, ja kumpikin on kysyttava palvelimella: valikon
+ * piilottaminen ei estä kutsua joka tulee suoraan.
+ *
+ * Kanta torjuu leimauksen omalla ehdollaan, mutta muut kirjoitukset
+ * kulkevat tavallisen RLS:n lapi eika se tieda osiosta mitaan. Siksi
+ * portti on tassa, kaikkien palkkatekojen edessa.
+ */
+function palkatPois(restaurant: { payrollEnabled: boolean }, t: AdminText) {
+  return restaurant.payrollEnabled ? null : { error: t.tyo.payrollOff };
+}
+
 export async function saveEmployee(
   _prev: AdminState,
   formData: FormData,
@@ -79,6 +95,9 @@ export async function saveEmployee(
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
   }
+
+  const pois = palkatPois(restaurant, t);
+  if (pois) return pois;
 
   const hourly = parseHourly(String(formData.get("hourly") ?? ""));
   if (hourly === null) return { error: t.tyo.hourlyInvalid };
@@ -168,6 +187,9 @@ export async function setEmployeeActive(
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
   }
+
+  const pois = palkatPois(restaurant, t);
+  if (pois) return pois;
 
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "1";
@@ -274,6 +296,9 @@ export async function inviteEmployee(
     return { error: t.toiminnot.ownerOnlyBody };
   }
 
+  const pois = palkatPois(restaurant, t);
+  if (pois) return pois;
+
   const id = String(formData.get("id") ?? "");
   if (id === "") return { error: t.tyo.saveFailed };
 
@@ -325,6 +350,9 @@ export async function saveEmployeeSales(
   if (!can(role, "employees.manage")) {
     return { error: t.toiminnot.ownerOnlyBody };
   }
+
+  const pois = palkatPois(restaurant, t);
+  if (pois) return pois;
 
   const employeeId = String(formData.get("employee") ?? "");
   const month = String(formData.get("month") ?? "");

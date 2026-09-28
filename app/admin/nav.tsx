@@ -6,6 +6,7 @@ import {
   can,
   adminNavSectionsFor,
   primaryNavFor,
+  type Features,
   type NavEntry,
 } from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
@@ -30,6 +31,7 @@ import { CompanySwitcher } from "./company-switcher";
  */
 export function AdminNav({
   role,
+  features,
   counts,
   briefing,
   greeting,
@@ -41,6 +43,8 @@ export function AdminNav({
   t,
 }: {
   role: Role;
+  /** Yrityksessa kaytossa olevat osiot: poiskytketty ei kuulu valikkoon. */
+  features: Features;
   userName: string;
   /** Roolin nimi käyttäjän kielellä, Lisää-paneelin tilikorttiin. */
   roleLabel: string;
@@ -63,8 +67,8 @@ export function AdminNav({
    */
   counts: Record<string, number>;
 }) {
-  const sections = adminNavSectionsFor(role);
-  const primary = primaryNavFor(role);
+  const sections = adminNavSectionsFor(role, features);
+  const primary = primaryNavFor(role, features);
 
   return (
     <>
@@ -81,6 +85,7 @@ export function AdminNav({
       <MobileNav
         items={primary}
         role={role}
+        features={features}
         counts={counts}
         t={t}
         canAddReceipt={can(role, "receipts.add")}

@@ -18,7 +18,12 @@ import {
   timeNowIn,
   todayIn,
 } from "@/lib/restoflow/local-time";
-import { NAV_SECTIONS, adminNavFor, can } from "@/lib/restoflow/permissions";
+import {
+  NAV_SECTIONS,
+  adminNavFor,
+  can,
+  type Features,
+} from "@/lib/restoflow/permissions";
 import { countTasks } from "@/lib/restoflow/tasks";
 import { AdminNav } from "./nav";
 import { ScrollTop } from "./scroll-top";
@@ -82,6 +87,14 @@ async function AdminKuori({
   children: React.ReactNode;
 }) {
   const { user, restaurant, role } = await requireContext("/admin");
+
+  /*
+   * Yrityksessa kaytossa olevat osiot.
+   *
+   * Kulkee valikkoon, hakuun ja alapalkkiin samasta paikasta, jotta
+   * poiskytketty osio ei jaa nakyviin yhteen niista.
+   */
+  const features: Features = { payroll: restaurant.payrollEnabled };
 
   /* Yritykset vaihtajaa varten. Sama välimuistitettu kysely kuin
      kontekstissa, joten tämä ei maksa uutta kierrosta. */
@@ -225,6 +238,7 @@ async function AdminKuori({
       <div className="flex min-h-screen">
         <AdminNav
           role={role}
+          features={features}
           counts={counts}
           restaurantName={restaurant.name}
           companies={memberships.map((m) => ({ id: m.id, name: m.name }))}
@@ -298,7 +312,7 @@ async function AdminKuori({
             alerts={huomiot}
             userName={userName}
             role={role}
-            search={searchItems(role, data.suppliers, t)}
+            search={searchItems(role, features, data.suppliers, t)}
             canOpenSettings={can(role, "settings.view")}
             months={months}
             month={month}
@@ -384,12 +398,13 @@ function longDate(iso: string, timeZone: string, locale: AppLocale): string {
  */
 function searchItems(
   role: Parameters<typeof adminNavFor>[0],
+  features: Features,
   suppliers: { id: string; name: string }[],
   t: AdminText,
 ): SearchItem[] {
   const sectionLabel = new Map(NAV_SECTIONS.map((s) => [s.id, t.nav[s.key]]));
 
-  const pages: SearchItem[] = adminNavFor(role).map((entry) => ({
+  const pages: SearchItem[] = adminNavFor(role, features).map((entry) => ({
     id: `page-${entry.href}`,
     label: t.nav[entry.key],
     // Osaston nimi eikä polku: "/admin/kuitit" on osoite, ei selitys.

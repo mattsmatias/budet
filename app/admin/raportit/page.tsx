@@ -118,7 +118,17 @@ export default async function ReportsPage({
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        {raportit(t).map((report) => (
+        {/*
+          Tuntiraportti kuuluu palkkaosioon.
+
+          Se lukee leimauksia, ja ilman palkkaosiota niitä ei kerry.
+          Tyhjä raportti tarjolla listassa lupaisi tiedon jota ei ole.
+        */}
+        {raportit(t)
+          .filter(
+            (report) => report.kind !== "tunnit" || restaurant.payrollEnabled,
+          )
+          .map((report) => (
           <Card key={report.kind} hover>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
@@ -175,7 +185,7 @@ export default async function ReportsPage({
               />
             </div>
           </Card>
-        ))}
+          ))}
       </div>
 
       <Card>

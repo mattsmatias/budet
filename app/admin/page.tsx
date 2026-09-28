@@ -206,9 +206,10 @@ export default async function AdminDashboard({
    * korttia, joten han ei myoskaan maksa sen kyselyista.
    */
   /* Yksi lähde: sama haku ja sama laskenta kuin Palkat-sivulla. */
-  const staffTime = can(role, "employees.manage")
-    ? (await staffMonth(restaurant.id, viewMonth, restaurant.timezone)).cost
-    : EMPTY_STAFF_COST;
+  const staffTime =
+    restaurant.payrollEnabled && can(role, "employees.manage")
+      ? (await staffMonth(restaurant.id, viewMonth, restaurant.timezone)).cost
+      : EMPTY_STAFF_COST;
 
   /* Ketjun tunnus riville, sama kartta kuin kuittilistassa. */
   const merchantBySupplier = merchantsBySupplier(suppliers, merchants);
@@ -803,15 +804,20 @@ export default async function AdminDashboard({
            * Kirjattu palkka avaa Palkat, tuntiarvio Työntekijät. Muuten
            * kortti veisi näkymään jossa sen omaa lukua ei ole.
            */
+          /*
+           * Ilman palkkaosiota kortti vie kuluihin.
+           *
+           * Luku on yha totta — henkilostokulut ovat kuiteista kuten
+           * kaikki muutkin kulut — mutta Palkat-sivua ei ole, ja
+           * linkki umpikujaan on huonompi kuin ei linkkia lainkaan.
+           */
           href={
-            staffCents > 0 || staffTime.minutes === 0
+            restaurant.payrollEnabled
               ? `/admin/palkat?kuukausi=${viewMonth}`
-              : `/admin/palkat?kuukausi=${viewMonth}`
+              : `/admin/kulut?kuukausi=${viewMonth}`
           }
           linkLabel={
-            staffCents > 0 || staffTime.minutes === 0
-              ? t.palkat.title
-              : t.tyo.title
+            restaurant.payrollEnabled ? t.palkat.title : t.sanat.expenses
           }
         />
       </Spotlight>

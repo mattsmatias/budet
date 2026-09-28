@@ -292,6 +292,38 @@ export interface NavEntry {
   icon: IconName;
   requires: Capability;
   section: NavSection;
+  /**
+   * Yrityskohtaisesti kytkettävä osa, jos kohta kuuluu sellaiseen.
+   *
+   * Oikeus ja osio ovat eri kysymyksiä: oikeus kertoo saako tämä
+   * ihminen nähdä, osio kertoo onko asia tässä yrityksessä olemassa.
+   * Omistaja saa nähdä palkat, mutta yhden ihmisen toiminimessä niitä
+   * ei ole — silloin kohta ei kuulu valikkoon kenellekään.
+   */
+  feature?: Feature;
+}
+
+/**
+ * Yrityskohtaisesti kytkettävät osat.
+ *
+ * Toistaiseksi yksi. Nimetty silti listaksi eikä yhdeksi lipuksi,
+ * koska seuraava kytkin ei saa vaatia jokaisen kutsupaikan muuttamista
+ * uudelleen.
+ */
+export type Feature = "payroll";
+
+export interface Features {
+  payroll: boolean;
+}
+
+/**
+ * Onko kohta käytössä tässä yrityksessä.
+ *
+ * Kohta jolla ei ole osiota on aina käytössä: valtaosa valikosta on
+ * sovelluksen perusta eikä valinnainen lisä.
+ */
+function featureOn(entry: NavEntry, features: Features): boolean {
+  return entry.feature === undefined || features[entry.feature];
 }
 
 /**
@@ -364,6 +396,7 @@ export const ADMIN_NAV: NavEntry[] = [
     icon: "staff",
     requires: "expenses.view",
     section: "finance",
+    feature: "payroll",
   },
   {
     href: "/admin/budjetit",
@@ -481,8 +514,17 @@ export const MORE_NAV: NavEntry[] = [
   },
 ];
 
-export function adminNavFor(role: Role): NavEntry[] {
-  return ADMIN_NAV.filter((entry) => can(role, entry.requires));
+/*
+ * Osiot ovat pakollinen argumentti eivätkä valinnainen lisä.
+ *
+ * Oletusarvo olisi väistämättä "kaikki päällä", ja silloin unohtunut
+ * kutsupaikka näyttäisi kohdan yritykselle jolla sitä ei ole. Kun
+ * argumentti on pakollinen, kääntäjä löytää jokaisen paikan.
+ */
+export function adminNavFor(role: Role, features: Features): NavEntry[] {
+  return ADMIN_NAV.filter(
+    (entry) => can(role, entry.requires) && featureOn(entry, features),
+  );
 }
 
 /**
@@ -493,8 +535,9 @@ export function adminNavFor(role: Role): NavEntry[] {
  */
 export function adminNavSectionsFor(
   role: Role,
+  features: Features,
 ): { id: NavSection; key: NavKey; items: NavEntry[] }[] {
-  const items = adminNavFor(role);
+  const items = adminNavFor(role, features);
 
   return NAV_SECTIONS.map((section) => ({
     id: section.id,
@@ -521,18 +564,20 @@ const PRIMARY_HREFS = [
   "/admin/myynti",
 ];
 
-export function primaryNavFor(role: Role): NavEntry[] {
-  return adminNavFor(role)
+export function primaryNavFor(role: Role, features: Features): NavEntry[] {
+  return adminNavFor(role, features)
     .filter((entry) => PRIMARY_HREFS.includes(entry.href))
     .slice(0, 4);
 }
 
 /** Ylivuotovalikon kohdat: mitä ei mahtunut alapalkkiin. */
-export function moreNavFor(role: Role): NavEntry[] {
-  const primary = new Set(primaryNavFor(role).map((entry) => entry.href));
+export function moreNavFor(role: Role, features: Features): NavEntry[] {
+  const primary = new Set(
+    primaryNavFor(role, features).map((entry) => entry.href),
+  );
 
   return [
-    ...adminNavFor(role).filter((entry) => !primary.has(entry.href)),
+    ...adminNavFor(role, features).filter((entry) => !primary.has(entry.href)),
     ...MORE_NAV.filter((entry) => can(role, entry.requires)),
   ].filter(
     (entry, index, all) =>
@@ -571,5 +616,12 @@ export function landingFor(role: Role): string {
    */
   if (role === "employee") return "/tyoaika";
 
-  return adminNavFor(role)[0]?.href ?? "/aloitus";
+  /*
+   * Laskeutuminen ei riipu osioista.
+   *
+   * Ensimmainen kohta on aina yleiskatsaus, joka on jokaisella
+   * paalla. Palkat ei voi olla listan karjessa, joten poiskytketty
+   * osio ei voi ohjata ketaan umpikujaan.
+   */
+  return adminNavFor(role, { payroll: true })[0]?.href ?? "/aloitus";
 }

@@ -25,7 +25,17 @@ import {
   canAddReceipts,
   capabilityForPath,
   landingFor,
+  type Features,
 } from "../permissions";
+
+/*
+ * Osiot paalla naissa testeissa.
+ *
+ * Nama testit kysyvat mita ROOLI nakee, eivat mita osio piilottaa.
+ * Poiskytketyn osion vaikutus on omissa testeissaan alempana, jotta
+ * kumpikaan ei piiloudu toisen sisaan.
+ */
+const KAIKKI_OSIOT: Features = { payroll: true };
 import { buildAlerts, type AlertContext } from "../alerts";
 import type { DailySales } from "../sales";
 import type { Task } from "../tasks";
@@ -641,10 +651,10 @@ describe("oikeudet", () => {
   });
 
   it("suodattaa navigaation rooleittain", () => {
-    const accountantNav = adminNavFor("accountant").map((e) => e.href);
+    const accountantNav = adminNavFor("accountant", KAIKKI_OSIOT).map((e) => e.href);
     expect(accountantNav).toContain("/admin/kulut");
     expect(accountantNav).not.toContain("/admin/tehtavat");
-    expect(adminNavFor("owner").length).toBeGreaterThan(accountantNav.length);
+    expect(adminNavFor("owner", KAIKKI_OSIOT).length).toBeGreaterThan(accountantNav.length);
   });
 
   /**
@@ -721,7 +731,7 @@ describe("oikeudet", () => {
       "/admin/asetukset",
     ];
 
-    const navHrefs = adminNavFor("owner").map((entry) => entry.href);
+    const navHrefs = adminNavFor("owner", KAIKKI_OSIOT).map((entry) => entry.href);
 
     for (const path of hidden) {
       expect(navHrefs).not.toContain(path);
@@ -740,9 +750,65 @@ describe("oikeudet", () => {
    * miten se jakautui. Kymmenen kohtaa kattaa sen, ja jokainen uusi
    * kohta on päätös siitä kuuluuko se siihen kysymykseen.
    */
+  /*
+   * Poiskytketty osio.
+   *
+   * Oikeus ja osio ovat eri kysymyksiä. Omistaja saa nähdä palkat,
+   * mutta yhden ihmisen toiminimessä niitä ei ole — silloin kohta ei
+   * kuulu valikkoon kenellekään, ei myöskään omistajalle.
+   */
+  const ILMAN_PALKKOJA: Features = { payroll: false };
+
+  it("jättää palkat pois valikosta kun osio ei ole käytössä", () => {
+    const paalla = adminNavFor("owner", KAIKKI_OSIOT).map((e) => e.href);
+    const pois = adminNavFor("owner", ILMAN_PALKKOJA).map((e) => e.href);
+
+    expect(paalla).toContain("/admin/palkat");
+    expect(pois).not.toContain("/admin/palkat");
+
+    /* Vain palkat lähtee: muu valikko on sovelluksen perusta. */
+    expect(pois).toEqual(paalla.filter((href) => href !== "/admin/palkat"));
+  });
+
+  it("jättää palkat pois myös ylivuodosta ja osastoista", () => {
+    expect(moreNavFor("owner", ILMAN_PALKKOJA).map((e) => e.href)).not.toContain(
+      "/admin/palkat",
+    );
+
+    const kohdat = adminNavSectionsFor("owner", ILMAN_PALKKOJA).flatMap((s) =>
+      s.items.map((i) => i.href),
+    );
+    expect(kohdat).not.toContain("/admin/palkat");
+  });
+
+  /*
+   * Alapalkki ei saa muuttua osion mukana.
+   *
+   * Palkat ei ole alapalkin neljän joukossa, joten sen kytkeminen ei
+   * saa nostaa sinne mitään muutakaan tilalle: puhelimen alapalkki on
+   * lihasmuistia.
+   */
+  it("pitää alapalkin samana ilman palkkoja", () => {
+    expect(primaryNavFor("owner", ILMAN_PALKKOJA)).toEqual(
+      primaryNavFor("owner", KAIKKI_OSIOT),
+    );
+  });
+
+  /*
+   * Pääsytarkistus ei ole valikossa.
+   *
+   * Reitin vaatima oikeus luetaan ROUTE_ACCESS:sta, eikä valikosta
+   * piilotettu reitti saa menettää sitä. Sivu itse tarkistaa osion
+   * erikseen ja ohjaa pois — mutta jos tämä palauttaisi nullin,
+   * kirjanpitäjän pääsy riippuisi valikosta.
+   */
+  it("säilyttää palkkasivun oikeusvaatimuksen vaikka osio olisi pois", () => {
+    expect(capabilityForPath("/admin/palkat")).toBe("expenses.view");
+  });
+
   it("pitää päävalikon yhdessätoista kohdassa", () => {
-    expect(adminNavFor("owner")).toHaveLength(11);
-    expect(primaryNavFor("owner")).toHaveLength(4);
+    expect(adminNavFor("owner", KAIKKI_OSIOT)).toHaveLength(11);
+    expect(primaryNavFor("owner", KAIKKI_OSIOT)).toHaveLength(4);
   });
 
   /**
@@ -753,7 +819,7 @@ describe("oikeudet", () => {
    * kirjataan joka ilta — useimmiten puhelimella.
    */
   it("pitää myynnin puhelimen alapalkissa", () => {
-    const bar = primaryNavFor("owner").map((entry) => entry.href);
+    const bar = primaryNavFor("owner", KAIKKI_OSIOT).map((entry) => entry.href);
     expect(bar).toEqual([
       "/admin",
       "/admin/myynti",
@@ -763,15 +829,15 @@ describe("oikeudet", () => {
   });
 
   it("pitää budjetit tavoitettavana molemmissa", () => {
-    const sidebar = adminNavFor("owner").map((entry) => entry.href);
-    const overflow = moreNavFor("owner").map((entry) => entry.href);
+    const sidebar = adminNavFor("owner", KAIKKI_OSIOT).map((entry) => entry.href);
+    const overflow = moreNavFor("owner", KAIKKI_OSIOT).map((entry) => entry.href);
 
     expect(sidebar).toContain("/admin/budjetit");
     expect(overflow).toContain("/admin/budjetit");
   });
 
   it("ryhmittelee valikon osastoihin", () => {
-    const sections = adminNavSectionsFor("owner");
+    const sections = adminNavSectionsFor("owner", KAIKKI_OSIOT);
 
     expect(sections.map((s) => s.id)).toEqual([
       "main",
@@ -803,7 +869,7 @@ describe("oikeudet", () => {
       "accountant",
       "employee",
     ] as const) {
-      for (const section of adminNavSectionsFor(role)) {
+      for (const section of adminNavSectionsFor(role, KAIKKI_OSIOT)) {
         expect(section.items.length).toBeGreaterThan(0);
       }
     }
@@ -814,7 +880,7 @@ describe("oikeudet", () => {
      * tarvitsee. Lukuoikeus riittää — kaapin järjestys on ravintolan
      * oma asia.
      */
-    const muut = adminNavSectionsFor("accountant").find(
+    const muut = adminNavSectionsFor("accountant", KAIKKI_OSIOT).find(
       (x) => x.id === "restaurant",
     );
     expect(muut?.items.map((i) => i.href)).toEqual([
@@ -831,12 +897,12 @@ describe("oikeudet", () => {
    * voi kirjoittaa itse.
    */
   it("pitää asetukset valikon ulkopuolella mutta suojattuna", () => {
-    const inSections = adminNavSectionsFor("owner").flatMap((s) =>
+    const inSections = adminNavSectionsFor("owner", KAIKKI_OSIOT).flatMap((s) =>
       s.items.map((i) => i.href),
     );
 
     expect(inSections).not.toContain("/admin/asetukset");
-    expect(adminNavFor("owner").map((e) => e.href)).not.toContain(
+    expect(adminNavFor("owner", KAIKKI_OSIOT).map((e) => e.href)).not.toContain(
       "/admin/asetukset",
     );
 
@@ -848,12 +914,12 @@ describe("oikeudet", () => {
 
   /** Ylivuotovalikkoon ei saa jäädä kahdesti samaa kohtaa. */
   it("ei toista kohtaa ylivuotovalikossa", () => {
-    const hrefs = moreNavFor("owner").map((entry) => entry.href);
+    const hrefs = moreNavFor("owner", KAIKKI_OSIOT).map((entry) => entry.href);
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
   it("suodattaa ylivuotovalikon rooleittain", () => {
-    const accountant = moreNavFor("accountant").map((entry) => entry.href);
+    const accountant = moreNavFor("accountant", KAIKKI_OSIOT).map((entry) => entry.href);
     expect(accountant).toContain("/admin/budjetit");
     expect(accountant).not.toContain("/admin/tehtavat");
   });

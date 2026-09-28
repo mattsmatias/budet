@@ -10,7 +10,12 @@ import {
   useTransition,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { can, moreNavFor, type NavEntry } from "@/lib/restoflow/permissions";
+import {
+  can,
+  moreNavFor,
+  type Features,
+  type NavEntry,
+} from "@/lib/restoflow/permissions";
 import type { Role } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import type { AdminText } from "@/lib/i18n/admin-text";
@@ -38,6 +43,7 @@ import { switchRestaurant } from "./actions";
 export function MobileNav({
   items,
   role,
+  features,
   counts,
   t,
   canAddReceipt,
@@ -49,6 +55,8 @@ export function MobileNav({
 }: {
   items: NavEntry[];
   role: Role;
+  /** Yrityksessa kaytossa olevat osiot. */
+  features: Features;
   counts: Record<string, number>;
   t: AdminText;
   canAddReceipt: boolean;
@@ -62,7 +70,7 @@ export function MobileNav({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const closeSheet = useCallback(() => setOpen(false), []);
-  const more = moreNavFor(role);
+  const more = moreNavFor(role, features);
 
   const isActive = (href: string) =>
     href === "/admin" ? pathname === href : pathname.startsWith(href);

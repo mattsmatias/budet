@@ -81,6 +81,18 @@ export interface RestaurantMembership {
    * kiinni ollutta paivaa merkita puuttuvaksi myyntipaivaksi.
    */
   closedWeekdays: number[];
+  /**
+   * Onko palkkaosio käytössä.
+   *
+   * Työntekijät, leimaus ja työnantajakustannus ovat sovelluksen ainoa
+   * osa jota iso osa yrityksistä ei tarvitse lainkaan: yhden ihmisen
+   * toiminimi ei pidä kirjaa työntekijöistä. Heille se oli sivu
+   * valikossa ja osio asetuksissa, jotka molemmat kertoivat tyhjästä.
+   *
+   * Lippu piilottaa näkymän eikä muuta yhtään lukua: henkilöstökulut
+   * tulevat kuiteista kuten kaikki muutkin kulut.
+   */
+  payrollEnabled: boolean;
 }
 
 export const getUser = cache(async (): Promise<SessionUser | null> => {
@@ -120,7 +132,7 @@ export const getMemberships = cache(
       const { data, error } = await supabase
         .from("my_restaurants")
         .select(
-          "id, name, slug, timezone, currency, role, business_type, logo_path, status, trial_ends_on, closed_weekdays",
+          "id, name, slug, timezone, currency, role, business_type, logo_path, status, trial_ends_on, closed_weekdays, payroll_enabled",
         )
         .order("name");
 
@@ -142,6 +154,14 @@ export const getMemberships = cache(
         closedWeekdays: Array.isArray(row.closed_weekdays)
           ? (row.closed_weekdays as number[])
           : [],
+        /*
+         * Puuttuva arvo on pois päältä.
+         *
+         * Jos näkymä jostain syystä ei palauta saraketta, osio pysyy
+         * piilossa. Väärä suunta näyttäisi sivun jota kanta ei
+         * hyväksy — kirjoitukset torjuttaisiin silti.
+         */
+        payrollEnabled: row.payroll_enabled === true,
       }));
     } catch {
       return [];
