@@ -160,6 +160,30 @@ function NotificationMenu({
 }) {
   const shown = alerts.slice(0, 5);
   const critical = alerts.filter((a) => a.severity === "critical").length;
+  const warning = alerts.filter((a) => a.severity === "warning").length;
+  const info = alerts.filter((a) => a.severity === "info").length;
+
+  /*
+   * Jakauma kun kiireellisiä ei ole.
+   *
+   * Tässä luki "Ei kiireellisiä" aina kun mikään ei ollut kriittinen.
+   * Se on totta muttei vastaus: viiden kohdan listan yllä, jossa
+   * lasku erääntyy huomenna, se lukee kuin mitään ei olisi. Nyt rivi
+   * kertoo mistä ne viisi koostuvat, samoilla sanoilla kuin
+   * yleiskatsauksen sama luku — kaksi eri sanamuotoa samasta
+   * luvusta on kaksi eri lukua lukijan silmissä.
+   */
+  const jakauma =
+    warning > 0 && info > 0
+      ? fill(info === 1 ? t.tila.checksAndOne : t.tila.checksAndMany, {
+          tarkistettavia: String(warning),
+          havaintoja: String(info),
+        })
+      : info > 0 && warning === 0
+        ? fill(info === 1 ? t.tila.oneInsight : t.tila.manyInsights, {
+            maara: String(info),
+          })
+        : null;
 
   const pathname = usePathname();
   const { isSeen, markSeen } = useSeenIds("kate-alerts-seen");
@@ -202,7 +226,7 @@ function NotificationMenu({
               tilanne kuin kahdeksan tarkistettavaa, ja ero ratkaisee
               keskeyttääkö käyttäjä sen mitä on tekemässä.
             */}
-            {alerts.length > 0 ? (
+            {alerts.length > 0 && (critical > 0 || jakauma) ? (
               <p
                 className="mt-[3px] text-[12.5px]"
                 style={{ color: "var(--rf-text-2)" }}
@@ -220,7 +244,7 @@ function NotificationMenu({
                       : ""}
                   </>
                 ) : (
-                  t.kuori.noUrgent
+                  jakauma
                 )}
               </p>
             ) : null}
