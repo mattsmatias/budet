@@ -260,6 +260,14 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    * rikki, siita saa kertoa riippumatta siita mita muuta rooli saa
    * tehda. Kanta rajaa nakyvyyden omiin ilmoituksiin.
    */
+  /*
+   * Asiakasrekisteri on laskutuksen puoli.
+   *
+   * Kirjanpitaja nakee saatavat, joten luku riittaa samalla
+   * oikeudella kuin kulut. Kirjoitus vaatii receipts.edit-oikeuden,
+   * ja se tarkistetaan teossa eika reitissa.
+   */
+  { href: "/admin/asiakkaat", requires: "expenses.view" },
   { href: "/admin/palaute", requires: "expenses.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
 ];
@@ -506,6 +514,13 @@ export const ADMIN_NAV: NavEntry[] = [
  * Alapalkkiin mahtuu neljä kohtaa; nämä ovat harvemmin tarvittavat.
  */
 export const MORE_NAV: NavEntry[] = [
+  {
+    href: "/admin/asiakkaat",
+    key: "customers",
+    icon: "suppliers",
+    requires: "expenses.view",
+    section: "finance",
+  },
   /*
    * Palaute ylivuotovalikkoon eika paavalikkoon.
    *
