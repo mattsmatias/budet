@@ -3,6 +3,9 @@ import type { AppLocale } from "@/lib/i18n/app-locales";
 import { getMemberships, requireContext } from "@/lib/restoflow/session";
 import { fetchRestaurantData } from "@/lib/restoflow/queries";
 import { buildAlerts } from "@/lib/restoflow/alerts";
+import { attentionList } from "@/lib/restoflow/dashboard";
+import { loadExpiring } from "@/lib/restoflow/file-queries";
+import { expirySummary } from "@/lib/restoflow/files";
 import { buildBriefing, greeting } from "@/lib/matti/briefing";
 import { MattiPanel } from "./matti/panel";
 import { MobileTitle } from "./mobile-title";
@@ -59,6 +62,36 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     tasks: data.tasks,
     closedWeekdays: restaurant.closedWeekdays,
   });
+
+  /*
+   * Yksi huomiolista koko kuorelle.
+   *
+   * Kello, Ilmoitukset ja yleiskatsauksen lista vastaavat samaan
+   * kysymykseen, joten ne lukevat saman listan. Kello rakensi ennen
+   * omansa pelkistä hälytyksistä ja näytti siksi eri luvun kuin sivu
+   * sen alla.
+   *
+   * Vanhenevat asiakirjat vain jos rooli näkee tiedostot: muuten
+   * kello kertoisi paperista jota käyttäjä ei pääse avaamaan.
+   */
+  const expiry = can(role, "files.view")
+    ? expirySummary(await loadExpiring(restaurant.id), today)
+    : undefined;
+
+  const huomiot = attentionList(
+    {
+      receipts: data.receipts,
+      budgets: data.budgets,
+      sales: data.sales,
+      tasks: data.tasks,
+      closedWeekdays: restaurant.closedWeekdays,
+      month,
+      today,
+      nowTime,
+      locale,
+    },
+    expiry,
+  );
 
   /*
    * Matin tilannekatsaus.
@@ -182,7 +215,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             <HeaderMenus
               nimet={nimet}
               t={t}
-              alerts={alerts}
+              alerts={huomiot}
               userName={userName}
               restaurantName={restaurant.name}
               role={role}
@@ -214,7 +247,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             nimet={nimet}
             restaurantName={restaurant.name}
             date={longDate(now, restaurant.timezone, locale)}
-            alerts={alerts}
+            alerts={huomiot}
             userName={userName}
             role={role}
             search={searchItems(role, data.suppliers, t)}

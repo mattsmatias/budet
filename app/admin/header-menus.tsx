@@ -6,11 +6,11 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useSeenIds } from "@/components/restoflow/seen-store";
 import { signOut } from "@/app/(auth)/actions";
-import { type Alert, type Role } from "@/lib/restoflow/types";
+import { type Role } from "@/lib/restoflow/types";
+import type { FocusItem } from "@/lib/restoflow/dashboard";
 import { RfIcon } from "@/components/restoflow/icons";
 import { personInitials } from "@/lib/restoflow/initials";
 import { severityColor } from "@/components/restoflow/ui";
-import { alertIcon } from "@/lib/restoflow/alert-icons";
 import { useDismiss } from "@/components/restoflow/use-dismiss";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
@@ -145,7 +145,14 @@ function NotificationMenu({
   onClose,
 }: {
   t: AdminText;
-  alerts: Alert[];
+  /*
+   * Sama lista kuin yleiskatsauksessa ja Ilmoituksissa.
+   *
+   * Kello rakensi ennen omansa halytyksista, joten se ei tiennyt
+   * vanhenevista papereista eika seurattavista havainnoista -- ja
+   * naytti siksi eri luvun kuin sivu sen alla.
+   */
+  alerts: FocusItem[];
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -258,7 +265,7 @@ function NotificationMenu({
                       className="mt-px shrink-0"
                       style={{ color: severityColor(alert.severity) }}
                     >
-                      <RfIcon name={alertIcon(alert.kind)} size={15} />
+                      <RfIcon name={alert.icon} size={15} />
                     </span>
 
                     <span className="min-w-0 flex-1">
@@ -431,7 +438,7 @@ export function HeaderMenus({
   t: AdminText;
   /** Jaetut nimikkeet. */
   nimet: Labels;
-  alerts: Alert[];
+  alerts: FocusItem[];
   userName: string;
   restaurantName: string;
   role: Role;

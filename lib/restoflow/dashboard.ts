@@ -12,14 +12,14 @@
  */
 
 import { alertCounts, buildAlerts } from "./alerts";
-import type { AdminText } from "@/lib/i18n/admin-text";
+import { adminText, type AdminText } from "@/lib/i18n/admin-text";
 import { fill } from "@/lib/i18n/auth-text";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { IconName } from "@/components/restoflow/icons";
 import { alertIcon } from "./alert-icons";
 import { budgetProgress } from "./budgets";
 import { findDuplicates } from "./duplicates";
-import type { Insight } from "./insights";
+import { buildInsights, type Insight } from "./insights";
 import {
   needsReview,
   periodTotals,
@@ -311,6 +311,68 @@ export interface FocusItem {
  * Hälytykset ensin: ne ovat todettuja puutteita. Havainnot ovat
  * suuntia, ja suunta on harvoin yhtä kiireellinen kuin puuttuva ALV.
  */
+/** Vanhenevien asiakirjojen tiivistelmä huomiolistaa varten. */
+export interface ExpirySummary {
+  expired: number;
+  soon: number;
+}
+
+/**
+ * Yksi huomiolista koko sovellukselle.
+ *
+ * KOLME PINTAA, YKSI LISTA.
+ *
+ * Kello, Ilmoitukset-sivu ja yleiskatsauksen lista vastaavat samaan
+ * kysymykseen: mitä tässä yrityksessä vaatii huomiota juuri nyt.
+ * Aiemmin ne rakensivat vastauksensa itse, ja siksi ne antoivat eri
+ * luvun: kello ei tiennyt vanhenevista papereista, yleiskatsaus ei
+ * tehtävistä. Kahdesta eri luvusta samalla ruudulla lukija päättelee
+ * ettei kumpaankaan voi luottaa.
+ *
+ * Lista rakennetaan siis kerran ja luetaan kolmesti. Järjestys on
+ * vakavuus: kriittinen, varoitus, seurattava.
+ */
+export function attentionList(
+  input: DashboardInput,
+  expiry?: ExpirySummary,
+): FocusItem[] {
+  const items = focusItems(input, buildInsights(input));
+
+  /*
+   * Vanhenevat asiakirjat yhtenä rivinä.
+   *
+   * Jokainen vanheneva paperi omana rivinään hukuttaisi kaiken muun,
+   * ja anniskeluluvan umpeutuminen sulkee anniskelun — siksi
+   * vanhentunut on kriittinen eikä varoitus.
+   */
+  if (expiry && (expiry.expired > 0 || expiry.soon > 0)) {
+    const t = adminText(input.locale);
+    const { expired, soon } = expiry;
+
+    items.unshift({
+      id: "files-expiry",
+      severity: expired > 0 ? "critical" : "warning",
+      /*
+       * Yksikkö ja monikko erikseen: "1 asiakirjaa vanhenee pian" on
+       * väärää suomea, ja sama ongelma on jokaisella kielellä.
+       */
+      title:
+        expired > 0
+          ? expired === 1
+            ? t.tiedosto.focusExpiredOne
+            : fill(t.tiedosto.focusExpired, { maara: String(expired) })
+          : soon === 1
+            ? t.tiedosto.focusExpiringOne
+            : fill(t.tiedosto.focusExpiring, { maara: String(soon) }),
+      detail: t.tiedosto.focusExpiryDetail,
+      href: "/admin/tiedostot?nakyma=expiring",
+      icon: "folder",
+    });
+  }
+
+  return items;
+}
+
 export function focusItems(
   input: DashboardInput,
   insights: Insight[],

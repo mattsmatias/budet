@@ -4,10 +4,11 @@ import { fill } from "@/lib/i18n/auth-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
 import { labels } from "@/lib/i18n/labels";
 import { adminContext } from "@/lib/restoflow/page-context";
-import { buildAlerts } from "@/lib/restoflow/alerts";
-import { alertIcon } from "@/lib/restoflow/alert-icons";
+import { attentionList, type FocusItem } from "@/lib/restoflow/dashboard";
+import { loadExpiring } from "@/lib/restoflow/file-queries";
+import { expirySummary } from "@/lib/restoflow/files";
+import { can } from "@/lib/restoflow/permissions";
 import { needsReview, reviewReasonCounts } from "@/lib/restoflow/expenses";
-import { type Alert } from "@/lib/restoflow/types";
 import { RfIcon } from "@/components/restoflow/icons";
 import { Card, CardHeader, EmptyState, Pill } from "@/components/restoflow/ui";
 
@@ -41,17 +42,31 @@ export default async function NotificationsPage() {
   const nimet = labels(locale);
   const data = await adminContext("/admin/ilmoitukset");
 
-  const alerts = buildAlerts({
-    receipts: data.receipts,
-    budgets: data.budgets,
-    month: data.month,
-    today: data.today,
-    nowTime: data.nowTime,
-    locale,
-    sales: data.sales,
-    tasks: data.tasks,
-    closedWeekdays: data.restaurant.closedWeekdays,
-  });
+  /*
+   * Sama lista kuin kellossa ja yleiskatsauksessa.
+   *
+   * Tämä sivu rakensi ennen omat hälytyksensä, joten se ei tuntenut
+   * vanhenevia asiakirjoja eikä seurattavia havaintoja — kello sen
+   * yläpuolella näytti eri luvun kuin sivu itse.
+   */
+  const expiry = can(data.role, "files.view")
+    ? expirySummary(await loadExpiring(data.restaurant.id), data.today)
+    : undefined;
+
+  const alerts = attentionList(
+    {
+      receipts: data.receipts,
+      budgets: data.budgets,
+      month: data.month,
+      today: data.today,
+      nowTime: data.nowTime,
+      locale,
+      sales: data.sales,
+      tasks: data.tasks,
+      closedWeekdays: data.restaurant.closedWeekdays,
+    },
+    expiry,
+  );
 
   const critical = alerts.filter((alert) => alert.severity === "critical");
   const rest = alerts.filter((alert) => alert.severity !== "critical");
@@ -150,7 +165,7 @@ function Ryhma({
 }: {
   title: string;
   subtitle: string;
-  alerts: Alert[];
+  alerts: FocusItem[];
 }) {
   return (
     <Card padded={false}>
@@ -184,7 +199,7 @@ function Ryhma({
                   borderRadius: "50%",
                 }}
               >
-                <RfIcon name={alertIcon(alert.kind)} size={16} />
+                <RfIcon name={alert.icon} size={16} />
               </span>
 
               <span className="min-w-0 flex-1">

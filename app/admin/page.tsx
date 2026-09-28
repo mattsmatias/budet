@@ -10,10 +10,9 @@ import { adminContext } from "@/lib/restoflow/page-context";
 import {
   budgetLines,
   compareToPreviousMonth,
-  focusItems,
+  attentionList,
   receiptSplit,
 } from "@/lib/restoflow/dashboard";
-import { buildInsights } from "@/lib/restoflow/insights";
 import {
   formatChange,
   formatMonth,
@@ -42,7 +41,6 @@ import { Rhythm } from "./home/rhythm";
 import { StatusHeader } from "./home/status-header";
 import { loadExpiring } from "@/lib/restoflow/file-queries";
 import { expirySummary } from "@/lib/restoflow/files";
-import { fill as taytaTeksti } from "@/lib/i18n/auth-text";
 import {
   COST_COLOR,
   Donut,
@@ -276,55 +274,20 @@ export default async function AdminDashboard({
     locale,
   };
 
-  // Havainnot syötetään samaan listaan. Käyttäjän kannalta ero
-  // hälytyksen ja havainnon välillä on keinotekoinen — molemmat ovat
-  // asioita joihin pitää reagoida, ja kahdesta listasta toinen jäisi
-  // katsomatta.
-  const insights = buildInsights(dashboardInput);
-  const items = focusItems(dashboardInput, insights);
-
   /*
-   * Vanhenevat asiakirjat samaan huomiolistaan.
+   * Sama huomiolista kuin kellossa ja Ilmoituksissa.
    *
-   * Oma lohkonsa olisi toinen vastaus kysymykseen "onko kaikki
-   * kunnossa" — juuri se virhe jonka tämä sivu on kerran jo tehnyt ja
-   * korjannut. Yksi rivi listassa, ei kaksikymmentä: jokainen
-   * vanheneva paperi omana rivinään hukuttaisi kaiken muun.
-   *
-   * Anniskeluluvan umpeutuminen sulkee anniskelun, joten vanhentunut
-   * on kriittinen eikä varoitus.
+   * Rakennus oli ennen tässä: hälytykset, havainnot ja vanhenevat
+   * asiakirjat koottiin sivulla, ja kello kokosi omansa erikseen.
+   * Kaksi kokoajaa antoi kaksi lukua samasta yrityksestä, ja lukija
+   * päätteli ettei kumpaankaan voi luottaa. Nyt lista rakennetaan
+   * kerran jaetussa funktiossa ja luetaan kolmessa paikassa.
    */
-  if (can(role, "files.view")) {
-    const { expired, soon } = expirySummary(
-      await loadExpiring(restaurant.id),
-      today,
-    );
+  const expiry = can(role, "files.view")
+    ? expirySummary(await loadExpiring(restaurant.id), today)
+    : undefined;
 
-    if (expired > 0 || soon > 0) {
-      items.unshift({
-        id: "files-expiry",
-        severity: expired > 0 ? "critical" : "warning",
-        /*
-         * Yksikko ja monikko erikseen.
-         *
-         * "1 asiakirjaa vanhenee pian" on vaaraa suomea, ja sama
-         * ongelma on jokaisella kuudella kielella. Luku yksi on
-         * tavallisin tapaus: yleensa vanhenee yksi lupa kerrallaan.
-         */
-        title:
-          expired > 0
-            ? expired === 1
-              ? t.tiedosto.focusExpiredOne
-              : taytaTeksti(t.tiedosto.focusExpired, { maara: String(expired) })
-            : soon === 1
-              ? t.tiedosto.focusExpiringOne
-              : taytaTeksti(t.tiedosto.focusExpiring, { maara: String(soon) }),
-        detail: t.tiedosto.focusExpiryDetail,
-        href: "/admin/tiedostot?nakyma=expiring",
-        icon: "folder",
-      });
-    }
-  }
+  const items = attentionList(dashboardInput, expiry);
 
   const budgets_ = budgetLines(t, receipts, budgets, viewMonth);
 

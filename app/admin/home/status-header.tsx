@@ -139,10 +139,16 @@ export function StatusHeader({
       {/*
         Loput eivät katoa mutta eivät myöskään täytä kärkeä.
         Neljä kohtaa luetaan, viisitoista selataan ohi.
+
+        Linkki vie samaan listaan josta kärki on otettu, ei
+        Havaintoihin. Ne ovat eri sivu: Havainnot kertoo mitä luvuissa
+        on tapahtunut, myös hyvät uutiset. "Kolme muuta kohtaa" on
+        lupaus siitä että loput kolme näkyvät seuraavalla sivulla —
+        eikä se pitänyt paikkaansa ennen kuin listat yhdistettiin.
       */}
       {rest > 0 ? (
         <Link
-          href="/admin/havainnot"
+          href="/admin/ilmoitukset"
           className="rf-press rf-hit mt-3 inline-flex items-center gap-1.5 self-start text-[12.5px] font-bold"
           style={{ color: "var(--rf-accent)" }}
         >

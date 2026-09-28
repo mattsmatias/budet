@@ -6,6 +6,7 @@ import {
   budgetTone,
   compareToPreviousMonth,
   evaluability,
+  attentionList,
   focusItems,
   hasChartHistory,
   receiptSplit,
@@ -445,5 +446,53 @@ describe("yleiskatsaus ja kellon huomiot", () => {
 
     expect(ilman.some((i) => i.id.startsWith("sales-missing"))).toBe(true);
     expect(kanssa.some((i) => i.id.startsWith("sales-missing"))).toBe(false);
+  });
+});
+
+/*
+ * Yksi lista kolmelle pinnalle.
+ *
+ * Kello, Ilmoitukset ja yleiskatsaus lukevat taman saman funktion.
+ * Aiemmin jokainen kokosi omansa, ja siksi ne antoivat eri luvun
+ * samasta yrityksesta.
+ */
+describe("attentionList", () => {
+  it("kokoaa halytykset ja seurattavat havainnot", () => {
+    const items = attentionList(
+      input({
+        receipts: [
+          receipt({
+            totalCents: 5000,
+            date: "2026-08-04",
+            status: "needs_review",
+            reviewReasons: ["vat_missing"],
+            vatCents: null,
+          }),
+        ],
+      }),
+    );
+
+    expect(items.length).toBeGreaterThan(0);
+    expect(items.every((i) => i.href && i.icon)).toBe(true);
+  });
+
+  it("nostaa vanhentuneen asiakirjan karkeen kriittisena", () => {
+    const items = attentionList(input(), { expired: 2, soon: 0 });
+
+    expect(items[0].id).toBe("files-expiry");
+    expect(items[0].severity).toBe("critical");
+  });
+
+  it("pitaa pian vanhenevan varoituksena", () => {
+    const items = attentionList(input(), { expired: 0, soon: 1 });
+
+    expect(items[0].id).toBe("files-expiry");
+    expect(items[0].severity).toBe("warning");
+  });
+
+  it("jattaa asiakirjarivin pois kun mikaan ei vanhene", () => {
+    const items = attentionList(input(), { expired: 0, soon: 0 });
+
+    expect(items.some((i) => i.id === "files-expiry")).toBe(false);
   });
 });

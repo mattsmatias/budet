@@ -6,7 +6,8 @@ import { LanguagePicker } from "@/components/i18n/language-picker";
 import type { AppLocale } from "@/lib/i18n/app-locales";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import { Search, type SearchItem } from "./search";
-import type { Alert, Role } from "@/lib/restoflow/types";
+import type { Role } from "@/lib/restoflow/types";
+import type { FocusItem } from "@/lib/restoflow/dashboard";
 
 /**
  * Työpöydän yläpalkki.
@@ -48,7 +49,8 @@ export function TopBar({
   restaurantName: string;
   /** "MA 24.08.2026" — ravintolan ajassa. */
   date: string;
-  alerts: Alert[];
+  /** Yhteinen huomiolista: sama jonka yleiskatsaus ja Ilmoitukset nayttavat. */
+  alerts: FocusItem[];
   userName: string;
   role: Role;
   search: SearchItem[];
