@@ -18,7 +18,7 @@ import { Logo } from "@/components/brand/logo";
  * Ero on otsikossa, ei tyylissä: kisko sanoo "Developer", jotta
  * järjestelmätason näkymää ei sekoita oman ravintolan näkymään.
  */
-export function DevNav() {
+export function DevNav({ counts }: { counts: Record<string, number> }) {
   const pathname = usePathname();
 
   return (
@@ -83,6 +83,7 @@ export function DevNav() {
                     >
                       <RfIcon name={item.icon} size={17} strokeWidth={1.8} />
                       <span className="flex-1">{item.label}</span>
+                      <Merkki maara={counts[item.href] ?? 0} />
                     </Link>
                   </li>
                 );
@@ -121,7 +122,7 @@ export function DevNav() {
  * Konsoli on työpöytätyökalu, mutta tabletilla pitää päästä
  * katsomaan. Vaakarivi vierittyy eikä yritä mahtua kerralla.
  */
-export function DevNavMobile() {
+export function DevNavMobile({ counts }: { counts: Record<string, number> }) {
   const pathname = usePathname();
   const items = DEV_NAV.flatMap((s) => s.items);
 
@@ -147,9 +148,42 @@ export function DevNavMobile() {
           >
             <RfIcon name={item.icon} size={16} strokeWidth={1.8} />
             {item.label}
+            <Merkki maara={counts[item.href] ?? 0} />
           </Link>
         );
       })}
     </nav>
+  );
+}
+
+/**
+ * Lukumerkki valikkoriville.
+ *
+ * VAIN SE MIKÄ ODOTTAA IHMISTÄ.
+ *
+ * Nolla ei piirry lainkaan: nolla merkkinä on koriste, ja koristeluku
+ * opettaa ohittamaan myös ne jotka eivät ole nollia. Sama peruste ja
+ * sama ulkoasu kuin ravintolan puolen kiskossa, jotta kahta
+ * samannäköistä merkkiä ei lueta eri tavoin.
+ *
+ * Ruudunlukijalle luku sanotaan sanoin: pelkkä numero linkin perässä
+ * kuuluu siltä kuin se olisi osa sivun nimeä.
+ */
+function Merkki({ maara }: { maara: number }) {
+  if (maara <= 0) return null;
+
+  return (
+    <span
+      className="rf-tabular shrink-0 px-1.5 py-px text-[10.5px] font-semibold"
+      style={{
+        background: "var(--rf-amber-bg)",
+        color: "var(--rf-amber-text)",
+        borderRadius: 980,
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      <span aria-hidden="true">{maara > 99 ? "99+" : maara}</span>
+      <span className="sr-only">{maara} uutta</span>
+    </span>
   );
 }

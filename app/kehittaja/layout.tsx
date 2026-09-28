@@ -1,4 +1,5 @@
 import { requireSuperAdmin } from "@/lib/restoflow/session";
+import { fetchOpenFeedbackCount } from "@/lib/kehittaja/queries";
 import { DevNav, DevNavMobile } from "./nav";
 
 export const metadata = {
@@ -25,12 +26,24 @@ export default async function DevLayout({
 }: LayoutProps<"/kehittaja">) {
   await requireSuperAdmin();
 
+  /*
+   * Luvut valikkoon, avaimena polku.
+   *
+   * Sama muoto kuin ravintolan puolella, jotta seuraavan merkin
+   * lisaaminen on yksi rivi eika uusi rakenne. Toistaiseksi vain
+   * palaute: virheet ja yhteydenotot nayttavat lukunsa sivun
+   * otsikossa, eika niita nostettu tassa ohimennen.
+   */
+  const counts: Record<string, number> = {
+    "/kehittaja/palaute": await fetchOpenFeedbackCount(),
+  };
+
   return (
     <div className="flex min-h-screen" style={{ background: "var(--rf-bg)" }}>
-      <DevNav />
+      <DevNav counts={counts} />
 
       <div className="min-w-0 flex-1">
-        <DevNavMobile />
+        <DevNavMobile counts={counts} />
 
         <main className="mx-auto w-full max-w-[1180px] px-4 py-5 md:px-7 md:py-7">
           {children}

@@ -338,3 +338,20 @@ export const fetchDevFeedback = cache(async (): Promise<DevFeedback[]> => {
     reporterEmail: (r.reporter_email as string | null) ?? null,
   }));
 });
+
+/**
+ * Avoimet ilmoitukset valikon merkkiin.
+ *
+ * VAIN UUDET, EI KAIKKI AVOIMET.
+ *
+ * Työn alla oleva on jo nähty ja otettu vastaan; sen laskeminen
+ * merkkiin tarkoittaisi että luku ei koskaan nollaudu ennen kuin asia
+ * on valmis — ja luku joka ei nollaudu lakkaa olemasta merkki.
+ *
+ * Oma funktionsa eikä listan pituus: valikko piirretään jokaisella
+ * konsolin sivulla, eikä kahdensadan rivin hakeminen kuulu siihen.
+ */
+export const fetchOpenFeedbackCount = cache(async (): Promise<number> => {
+  const arvo = await rpc<number>("sa_feedback_open", {}, 0);
+  return typeof arvo === "number" ? arvo : 0;
+});
