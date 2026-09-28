@@ -941,6 +941,49 @@ describe("poikkeamat", () => {
     expect(d?.severity).toBe("critical");
   });
 
+  /*
+   * Tarkistettu kuitti ei enaa huomauta ALV:sta.
+   *
+   * Kauppakuitin sekakanta on tavallisin syy: ruokaa 14 prosentilla ja
+   * pesuainetta 25,5:lla, jolloin yhdistetty kanta on 15,8 eika vastaa
+   * kumpaakaan. Kuittilistalla luki "tarkistettu" ja ilmoituksissa
+   * samaan aikaan "vaatii huomiota" -- sama kuitti kahdessa eri
+   * totuudessa.
+   */
+  const sekakuitti = {
+    date: "2026-08-10",
+    totalCents: 16087,
+    vatCents: 2192,
+    category: "food" as const,
+    supplierName: "Lidl",
+  };
+
+  it("huomauttaa ALV-kannasta kun kuitti odottaa tarkistusta", () => {
+    const alerts = alertsOf({
+      receipts: [
+        receipt({
+          ...sekakuitti,
+          status: "needs_review",
+          reviewReasons: ["vat_uncertain"],
+        }),
+      ],
+      month: "2026-08",
+      today: "2026-08-20",
+    });
+
+    expect(alerts.some((a) => a.kind === "vat_mismatch")).toBe(true);
+  });
+
+  it("ei huomauta tarkistetun kuitin ALV-kannasta", () => {
+    const alerts = alertsOf({
+      receipts: [receipt({ ...sekakuitti, status: "confirmed" })],
+      month: "2026-08",
+      today: "2026-08-20",
+    });
+
+    expect(alerts.some((a) => a.kind === "vat_mismatch")).toBe(false);
+  });
+
   it("nostaa budjetin ylityksen ja varoituksen", () => {
     const budgets: Budget[] = [
       {

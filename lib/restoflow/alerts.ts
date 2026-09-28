@@ -194,9 +194,30 @@ function supplierSpikeAlerts(ctx: AlertContext): Alert[] {
     }));
 }
 
+/**
+ * ALV-kanta ei vastaa kategorian odotusta.
+ *
+ * VAIN TARKISTAMATTOMAT.
+ *
+ * Tämä katsoi ennen kaikkia kuukauden kuitteja eikä välittänyt
+ * tilasta. Kuittilistalla luki siis "tarkistettu" ja ilmoituksissa
+ * samaan aikaan "vaatii huomiota" — sama kuitti kahdessa eri
+ * totuudessa. Tarkistus on juuri se hetki jossa ihminen katsoo luvut
+ * ja korjaa ne tai toteaa ne oikeiksi; sen jälkeen kysymys on
+ * vastattu.
+ *
+ * Kauppakuitin sekakanta on tavallisin syy: Lidlin ostoksessa on
+ * ruokaa 14 prosentilla ja pesuainetta 25,5:llä, jolloin yhdistetty
+ * kanta on 15,8 eikä vastaa kumpaakaan. Konetta ei voi opettaa
+ * hyväksymään sitä, mutta ihminen näkee sen yhdellä silmäyksellä —
+ * ja hänen päätöksensä jää voimaan.
+ *
+ * Sama rajaus kuin tarkistusjonon hälytyksessä, joka on aina lukenut
+ * vain needsReview-kuitit.
+ */
 function vatMismatchAlerts(ctx: AlertContext): Alert[] {
   const t = adminText(ctx.locale);
-  return receiptsInMonth(ctx.receipts, ctx.month)
+  return needsReview(receiptsInMonth(ctx.receipts, ctx.month))
     .filter((r) => r.vatCents !== null)
     .map((r) => ({
       receipt: r,
