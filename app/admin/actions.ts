@@ -48,6 +48,15 @@ export interface AdminState {
   code?: string;
   /** Tallennetun kuitin tunniste — käyttöliittymä voi avata sen. */
   receiptId?: string;
+  /**
+   * Tallennettu asiakas.
+   *
+   * Laskulomake tarvitsee sen heti: vastaanottaja valitaan listalta,
+   * ja juuri lisätty puuttuisi siltä siihen asti kunnes sivu ladataan
+   * uudelleen — eli juuri silloin kun laskua ollaan tekemässä. Pelkkä
+   * tunniste ei riitä, koska valikkoon on kirjoitettava myös nimi.
+   */
+  customer?: { id: string; name: string; businessId: string | null };
 }
 
 /** "14,50" tai "14.50" → 1450. Tyhjä → null. */
@@ -298,7 +307,8 @@ export async function removeMember(
 
   revalidatePath("/admin", "layout");
   return {
-    notice: data === "removed" ? t.asetus.memberRemoved : t.asetus.memberDeleted,
+    notice:
+      data === "removed" ? t.asetus.memberRemoved : t.asetus.memberDeleted,
   };
 }
 

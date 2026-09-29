@@ -22,6 +22,7 @@ import {
 export type IconName =
   | "overview"
   | "receipt"
+  | "invoice"
   | "expenses"
   | "suppliers"
   | "sparkle"
@@ -69,6 +70,18 @@ const PATHS: Record<IconName, string> = {
   // Kuitti: repäisty alareuna tekee siitä tunnistettavan pienenäkin.
   receipt:
     "M5.5 3h13v18l-2.2-1.5-2.2 1.5-2.1-1.5-2.2 1.5-2.1-1.5L5.5 21zM9 8h6M9 12h4",
+
+  /*
+   * Lasku: arkki ja euro.
+   *
+   * Kuitti on laskun naapuri valikossa, ja niillä oli sama merkki. Ero
+   * ei voi olla yksityiskohdassa vaan siluetissa: kuitissa on revitty
+   * alareuna ja tekstirivit, laskussa suora reuna ja summa. Euro
+   * piirretään lähes arkin levyisenä, koska seitsemässätoista
+   * pikselissä hienovarainen merkki katoaa kokonaan.
+   */
+  invoice:
+    "M5 3h14v18H5zM15.4 7.4a4.6 4.6 0 1 0 0 9.2M8.6 10.2h6.2M8.6 13.8h6.2",
 
   // Pylväät, nouseva järjestys — kulut ajassa.
   expenses: "M4 20.5V13M9.3 20.5V7.5M14.7 20.5v-4.5M20 20.5V10",
@@ -129,7 +142,8 @@ const PATHS: Record<IconName, string> = {
    * Tähti on viisisakarainen umpimuoto ääriviivana: puolikas tai
    * pyöristetty tähti näyttäisi kuvakekoossa läiskältä.
    */
-  folder: "M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2.5h9A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
+  folder:
+    "M3 6.5A1.5 1.5 0 0 1 4.5 5h4l2 2.5h9A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z",
 
   star: "M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z",
 

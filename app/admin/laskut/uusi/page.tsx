@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { adminText } from "@/lib/i18n/admin-text";
 import { resolveLocale } from "@/lib/i18n/resolve";
@@ -11,7 +10,7 @@ import {
 } from "@/lib/restoflow/invoicing";
 import { erapaiva } from "@/lib/restoflow/invoice-math";
 import { todayIn } from "@/lib/restoflow/local-time";
-import { Card, EmptyState } from "@/components/restoflow/ui";
+import { Card } from "@/components/restoflow/ui";
 import { InvoiceForm } from "./form";
 
 export async function generateMetadata() {
@@ -22,12 +21,15 @@ export async function generateMetadata() {
 /**
  * Uusi lasku.
  *
- * KAKSI ESTETTÄ TARKISTETAAN ENNEN LOMAKETTA.
+ * YKSI ESTE, EI KAHTA.
  *
- * Ilman Y-tunnusta ja tilinumeroa syntyisi lasku jota ei voi lähettää.
- * Ilman yhtäkään asiakasta ei ole ketään laskutettavaa. Kumpikin on
- * parempi kertoa tyhjän lomakkeen sijaan — ja molempiin on suora
- * linkki sinne missä puute korjataan.
+ * Ilman Y-tunnusta ja tilinumeroa syntyisi lasku jota ei voi lähettää,
+ * ja se on parempi kertoa tyhjän lomakkeen sijaan.
+ *
+ * Tyhjä asiakasrekisteri oli ennen toinen este, ja sivu ohjasi
+ * silloin rekisteriin. Se ei ole enää este: vastaanottaja lisätään
+ * lomakkeelta, eikä ensimmäistä laskua varten tarvitse käydä
+ * etukäteen toisaalla.
  */
 export default async function NewInvoicePage() {
   const { restaurant } = await adminContext("/admin/laskut");
@@ -53,31 +55,15 @@ export default async function NewInvoicePage() {
         </h1>
       </header>
 
-      {asiakkaat.length === 0 ? (
-        <Card>
-          <EmptyState
-            title={t.asiakkaat.empty}
-            description={t.asiakkaat.emptyHint}
-          />
-          <Link
-            href="/admin/asiakkaat"
-            className="rf-press mt-3 inline-flex text-[13px] font-semibold"
-            style={{ color: "var(--rf-accent)" }}
-          >
-            {t.asiakkaat.title} →
-          </Link>
-        </Card>
-      ) : (
-        <Card>
-          <InvoiceForm
-            t={t}
-            asiakkaat={asiakkaat}
-            kannat={kannat}
-            laskunPaiva={tanaan}
-            erapaiva={erapaiva(tanaan, asetukset.termsDays)}
-          />
-        </Card>
-      )}
+      <Card>
+        <InvoiceForm
+          t={t}
+          asiakkaat={asiakkaat}
+          kannat={kannat}
+          laskunPaiva={tanaan}
+          erapaiva={erapaiva(tanaan, asetukset.termsDays)}
+        />
+      </Card>
     </div>
   );
 }

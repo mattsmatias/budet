@@ -275,6 +275,17 @@ export const ROUTE_ACCESS: RouteAccess[] = [
    * teossa eika reitissa.
    */
   { href: "/admin/laskut", requires: "expenses.view" },
+  /*
+   * Asiakkaat laskujen alla, ja vanha osoite silti listassa.
+   *
+   * Uusi polku perisi vaatimuksen /admin/laskuilta jo pituussäännön
+   * nojalla, mutta kirjoitettuna se kestää sen että laskujen oma
+   * vaatimus joskus muuttuu. Vanha /admin/asiakkaat on pelkkä ohjaus
+   * eikä lue mitään, mutta jos se putoaisi listalta, se perisi
+   * /admin-juuren vaatimuksen — ja ohjaus on parempi tehdä samalla
+   * oikeudella kuin kohde.
+   */
+  { href: "/admin/laskut/asiakkaat", requires: "expenses.view" },
   { href: "/admin/asiakkaat", requires: "expenses.view" },
   { href: "/admin/palaute", requires: "expenses.view" },
   { href: "/admin/asetukset", requires: "settings.view" },
@@ -408,7 +419,15 @@ export const ADMIN_NAV: NavEntry[] = [
   {
     href: "/admin/laskut",
     key: "invoices",
-    icon: "receipt",
+    /*
+     * Oma merkki, ei kuitin.
+     *
+     * Laskut ja Kuitit ovat valikossa allekkain, ja niillä oli sama
+     * ikoni — silloin kisko ei erota niitä lainkaan ja kohta
+     * valitaan tekstistä. Lasku on arkki ja euro, kuitti on revitty
+     * alareuna.
+     */
+    icon: "invoice",
     requires: "expenses.view",
     section: "finance",
   },
@@ -542,20 +561,13 @@ export const ADMIN_NAV: NavEntry[] = [
  */
 export const MORE_NAV: NavEntry[] = [
   /*
-   * Asiakasrekisteri jää ylivuotoon.
+   * Asiakasrekisteri ei ole enää valikossa lainkaan.
    *
-   * Sitä ylläpidetään harvoin ja se avataan yleensä laskua tehdessä,
-   * jolloin sinne pääsee lomakkeelta. Päävalikko on kuutta kohtaa
-   * varten kirjoitettu lista, ja jokainen lisäys siihen on pois
-   * niiden löydettävyydestä jotka siellä jo ovat.
+   * Se on laskujen välilehti, koska sitä käytetään vain laskuja
+   * tehdessä. Omana kohtanaan se oli erillään ainoasta asiasta joka
+   * sitä tarvitsee, ja ylivuotovalikossa vielä piilossa — laskuttaja
+   * etsi vastaanottajaansa väärästä paikasta.
    */
-  {
-    href: "/admin/asiakkaat",
-    key: "customers",
-    icon: "suppliers",
-    requires: "expenses.view",
-    section: "finance",
-  },
   /*
    * Palaute ylivuotovalikkoon eika paavalikkoon.
    *

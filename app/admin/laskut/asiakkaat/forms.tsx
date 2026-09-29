@@ -1,13 +1,22 @@
 "use client";
 
-import { useActionState, useEffect, useId, useState, useTransition } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  useState,
+  useTransition,
+} from "react";
 import type { AdminText } from "@/lib/i18n/admin-text";
 import type { Customer } from "@/lib/restoflow/customers";
-import type { AdminState } from "../actions";
+import type { AdminState } from "../../actions";
 import { saveCustomer, searchRecipients, type HakuTulos } from "./actions";
-import { CONTROL, CONTROL_STYLE, Field } from "../asetukset/form-parts";
+import { CONTROL, CONTROL_STYLE, Field } from "../../asetukset/form-parts";
 
 const initial: AdminState = {};
+
+/** Se mitä tallennuksesta palaa — laskulomake tarvitsee nimen valikkoon. */
+export type TallennettuAsiakas = NonNullable<AdminState["customer"]>;
 
 /** Tyhjä tulos: sama muoto kuin haulta, jottei erikoistapausta tarvita. */
 const TYHJA: HakuTulos = { omat: [], ytj: [], ytjVirhe: false };
@@ -26,7 +35,20 @@ const TYHJA: HakuTulos = { omat: [], ytj: [], ytjVirhe: false };
  * osoite on se jossa virhe on. Rekisteristä poimittu on oikein
  * määritelmän mukaan.
  */
-export function CustomerPicker({ t }: { t: AdminText }) {
+export function CustomerPicker({
+  t,
+  onSaved,
+}: {
+  t: AdminText;
+  /**
+   * Kutsutaan kun asiakas on tallennettu.
+   *
+   * Rekisterisivu ei anna tätä: siellä tallennus näkyy listassa kun
+   * sivu päivittyy, eikä muuta tarvita. Laskulomake antaa, koska sen
+   * on valittava juuri lisätty vastaanottaja saman tien.
+   */
+  onSaved?: (asiakas: TallennettuAsiakas) => void;
+}) {
   const [hakusana, setHakusana] = useState("");
   /*
    * Tulos kantaa hakusanan jolle se kuuluu.
@@ -75,6 +97,7 @@ export function CustomerPicker({ t }: { t: AdminText }) {
         t={t}
         arvot={lomake}
         peruuta={() => setLomake(null)}
+        onSaved={onSaved}
       />
     );
   }
@@ -169,9 +192,7 @@ export function CustomerPicker({ t }: { t: AdminText }) {
       */}
       <button
         type="button"
-        onClick={() =>
-          setLomake({ name: sana, country: "FI" })
-        }
+        onClick={() => setLomake({ name: sana, country: "FI" })}
         className="rf-press rf-touch w-full text-[13px] font-bold"
         style={{
           borderRadius: 980,
@@ -210,10 +231,7 @@ function Ryhma({
       >
         {otsikko}
       </p>
-      <ul
-        className="divide-y"
-        style={{ borderColor: "var(--rf-line)" }}
-      >
+      <ul className="divide-y" style={{ borderColor: "var(--rf-line)" }}>
         {children}
       </ul>
     </div>
@@ -262,13 +280,27 @@ function CustomerForm({
   t,
   arvot,
   peruuta,
+  onSaved,
 }: {
   t: AdminText;
   arvot: Partial<Customer>;
   peruuta: () => void;
+  onSaved?: (asiakas: TallennettuAsiakas) => void;
 }) {
   const [state, action, pending] = useActionState(saveCustomer, initial);
   const id = useId();
+
+  /*
+   * Ilmoitus tallennuksesta, ei uudelleenohjaus.
+   *
+   * Teko palaa tilassa eikä tapahtumana, joten kuuntelu tehdään
+   * efektillä. Kutsu ei voi toistua: vastaanottaja sulkee lomakkeen,
+   * jolloin tämä irtoaa puusta.
+   */
+  const tallennettu = state.customer;
+  useEffect(() => {
+    if (tallennettu) onSaved?.(tallennettu);
+  }, [tallennettu, onSaved]);
 
   return (
     <form action={action} className="space-y-4">
@@ -391,7 +423,10 @@ function CustomerForm({
         </button>
 
         {state.error ? (
-          <span className="text-[12.5px]" style={{ color: "var(--rf-red-text)" }}>
+          <span
+            className="text-[12.5px]"
+            style={{ color: "var(--rf-red-text)" }}
+          >
             {state.error}
           </span>
         ) : null}

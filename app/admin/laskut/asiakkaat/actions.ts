@@ -6,10 +6,13 @@ import { resolveLocale } from "@/lib/i18n/resolve";
 import { requireContext } from "@/lib/restoflow/session";
 import { createClient } from "@/utils/supabase/server";
 import { can } from "@/lib/restoflow/permissions";
-import { onKelvollinenYTunnus, siistiYTunnus } from "@/lib/restoflow/yritystunnus";
+import {
+  onKelvollinenYTunnus,
+  siistiYTunnus,
+} from "@/lib/restoflow/yritystunnus";
 import { haeYtj, type YtjOsuma } from "@/lib/restoflow/ytj";
 import { searchCustomers, type Customer } from "@/lib/restoflow/customers";
-import type { AdminState } from "../actions";
+import type { AdminState } from "../../actions";
 
 export interface HakuTulos {
   omat: Customer[];
@@ -30,7 +33,7 @@ export interface HakuTulos {
  * palauttaisi satoja osumia eikä kertoisi mitään.
  */
 export async function searchRecipients(hakusana: string): Promise<HakuTulos> {
-  const { restaurant, role } = await requireContext("/admin/asiakkaat");
+  const { restaurant, role } = await requireContext("/admin/laskut/asiakkaat");
 
   if (!can(role, "expenses.view")) {
     return { omat: [], ytj: [], ytjVirhe: false };
@@ -66,7 +69,9 @@ export async function saveCustomer(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant, role, user } = await requireContext("/admin/asiakkaat");
+  const { restaurant, role, user } = await requireContext(
+    "/admin/laskut/asiakkaat",
+  );
 
   if (!can(role, "expenses.view") || !can(role, "receipts.edit")) {
     return { error: t.toiminnot.ownerOnlyBody };
@@ -112,14 +117,28 @@ export async function saveCustomer(
   const supabase = await createClient();
   const id = teksti("id");
 
-  const { error } =
+  /*
+   * Tallennettu rivi luetaan takaisin.
+   *
+   * Laskulomake voi lisätä asiakkaan kesken laskun kirjoittamisen, ja
+   * silloin se tarvitsee tunnuksen ja nimen voidakseen valita hänet
+   * heti. Ilman paluuarvoa valinta odottaisi sivun uudelleenlatausta,
+   * joka pyyhkisi juuri kirjoitetut rivit.
+   */
+  const { data, error } =
     id === ""
-      ? await supabase.from("customers").insert({ ...rivi, created_by: user.id })
+      ? await supabase
+          .from("customers")
+          .insert({ ...rivi, created_by: user.id })
+          .select("id, name, business_id")
+          .single()
       : await supabase
           .from("customers")
           .update(rivi)
           .eq("id", id)
-          .eq("restaurant_id", restaurant.id);
+          .eq("restaurant_id", restaurant.id)
+          .select("id, name, business_id")
+          .single();
 
   if (error) {
     /* 23505 on ainutkertaisuus: sama Y-tunnus on jo rekisterissä. */
@@ -127,9 +146,12 @@ export async function saveCustomer(
     return { error: t.asiakkaat.failed };
   }
 
-  revalidatePath("/admin/asiakkaat");
+  revalidatePath("/admin/laskut/asiakkaat");
 
-  return { notice: t.asiakkaat.saved };
+  return {
+    notice: t.asiakkaat.saved,
+    customer: { id: data.id, name: data.name, businessId: data.business_id },
+  };
 }
 
 /**
@@ -143,7 +165,7 @@ export async function archiveCustomer(
   formData: FormData,
 ): Promise<AdminState> {
   const t = adminText(await resolveLocale());
-  const { restaurant, role } = await requireContext("/admin/asiakkaat");
+  const { restaurant, role } = await requireContext("/admin/laskut/asiakkaat");
 
   if (!can(role, "receipts.edit")) {
     return { error: t.toiminnot.ownerOnlyBody };
@@ -161,7 +183,7 @@ export async function archiveCustomer(
 
   if (error) return { error: t.asiakkaat.failed };
 
-  revalidatePath("/admin/asiakkaat");
+  revalidatePath("/admin/laskut/asiakkaat");
 
   return { notice: t.asiakkaat.archived };
 }
